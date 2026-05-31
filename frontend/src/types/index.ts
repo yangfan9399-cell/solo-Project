@@ -107,6 +107,15 @@ export interface Archive {
 
 export type ArchiveType = 'image' | 'document' | 'record' | 'other';
 
+export interface MaterialUsage {
+  id: string;
+  process_id: string;
+  material_id: string;
+  quantity: number;
+  used_by: string;
+  used_at: string;
+}
+
 export interface Schedule {
   id: string;
   book_id: string;

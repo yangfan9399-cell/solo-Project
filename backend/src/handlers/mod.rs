@@ -3,6 +3,7 @@ pub mod books;
 pub mod diseases;
 pub mod processes;
 pub mod materials;
+pub mod material_usages;
 pub mod reviews;
 pub mod archives;
 pub mod schedules;

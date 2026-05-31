@@ -64,6 +64,11 @@ fn rocket() -> _ {
             materials::delete_material,
             materials::get_low_stock_materials,
 
+            material_usages::get_material_usages,
+            material_usages::get_material_usage,
+            material_usages::create_material_usage,
+            material_usages::delete_material_usage,
+
             reviews::get_reviews,
             reviews::get_review,
             reviews::create_review,
