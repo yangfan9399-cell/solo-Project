@@ -249,3 +249,51 @@ export interface TraceReport {
   quarantine_events: QuarantineRecord[];
   recall_events: RecallRecord[];
 }
+
+export interface CreateColdStorageRequest {
+  name: string;
+  code: string;
+  location: string;
+  capacity: number;
+  min_temp: number;
+  max_temp: number;
+}
+
+export interface UpdateColdStorageRequest {
+  name: string;
+  code: string;
+  location: string;
+  capacity: number;
+  min_temp: number;
+  max_temp: number;
+  status: ColdStorage['status'];
+}
+
+export interface CreateTransportBoxRequest {
+  name: string;
+  code: string;
+  model?: string;
+  capacity: number;
+  min_temp: number;
+  max_temp: number;
+  current_location?: string;
+}
+
+export interface UpdateTransportBoxRequest {
+  name: string;
+  code: string;
+  model?: string;
+  capacity: number;
+  min_temp: number;
+  max_temp: number;
+  current_location?: string;
+  status: TransportBox['status'];
+}
+
+export interface CreateReviewRequest {
+  quarantine_id: string;
+  deviation_id?: string;
+  review_opinion: string;
+  review_result: 'release' | 'recall' | 'destroy';
+  reviewer_id?: string;
+}

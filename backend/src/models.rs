@@ -271,3 +271,56 @@ pub struct TraceReport {
     pub quarantine_events: Vec<QuarantineRecord>,
     pub recall_events: Vec<RecallRecord>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateColdStorageRequest {
+    pub name: String,
+    pub code: String,
+    pub location: String,
+    pub capacity: i32,
+    pub min_temp: f64,
+    pub max_temp: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateColdStorageRequest {
+    pub name: String,
+    pub code: String,
+    pub location: String,
+    pub capacity: i32,
+    pub min_temp: f64,
+    pub max_temp: f64,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTransportBoxRequest {
+    pub name: String,
+    pub code: String,
+    pub model: Option<String>,
+    pub capacity: i32,
+    pub min_temp: f64,
+    pub max_temp: f64,
+    pub current_location: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateTransportBoxRequest {
+    pub name: String,
+    pub code: String,
+    pub model: Option<String>,
+    pub capacity: i32,
+    pub min_temp: f64,
+    pub max_temp: f64,
+    pub current_location: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateReviewRequest {
+    pub quarantine_id: String,
+    pub deviation_id: Option<String>,
+    pub review_opinion: String,
+    pub review_result: String,
+    pub reviewer_id: Option<String>,
+}

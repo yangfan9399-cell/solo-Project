@@ -1,7 +1,7 @@
 use rocket::{serde::json::Json, State};
 use sqlx::SqlitePool;
 use uuid::Uuid;
-use crate::models::{ApiResponse, TransportBox};
+use crate::models::{ApiResponse, TransportBox, CreateTransportBoxRequest, UpdateTransportBoxRequest};
 
 #[get("/api/transport-boxes")]
 pub async fn get_all(pool: &State<SqlitePool>) -> Json<ApiResponse<Vec<TransportBox>>> {
@@ -36,7 +36,7 @@ pub async fn get_by_id(pool: &State<SqlitePool>, id: String) -> Json<ApiResponse
 }
 
 #[post("/api/transport-boxes", data = "<data>")]
-pub async fn create(pool: &State<SqlitePool>, data: Json<TransportBox>) -> Json<ApiResponse<TransportBox>> {
+pub async fn create(pool: &State<SqlitePool>, data: Json<CreateTransportBoxRequest>) -> Json<ApiResponse<TransportBox>> {
     let id = Uuid::new_v4().to_string();
     
     let result = sqlx::query!(
@@ -72,7 +72,7 @@ pub async fn create(pool: &State<SqlitePool>, data: Json<TransportBox>) -> Json<
 }
 
 #[put("/api/transport-boxes/<id>", data = "<data>")]
-pub async fn update(pool: &State<SqlitePool>, id: String, data: Json<TransportBox>) -> Json<ApiResponse<TransportBox>> {
+pub async fn update(pool: &State<SqlitePool>, id: String, data: Json<UpdateTransportBoxRequest>) -> Json<ApiResponse<TransportBox>> {
     let result = sqlx::query!(
         r#"UPDATE transport_boxes SET name = ?, code = ?, model = ?, capacity = ?, min_temp = ?, max_temp = ?, current_location = ?, status = ? WHERE id = ?"#,
         data.name,

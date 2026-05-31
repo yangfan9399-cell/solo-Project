@@ -1,12 +1,18 @@
-import { component$, useResource$, Resource, useSignal, $ } from '@builder.io/qwik';
+import { component$, useResource$, Resource, useSignal, $, useTask$ } from '@builder.io/qwik';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { DataTable, LoadingState, ErrorState, EmptyState } from '~/components/ui/table';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { Modal } from '~/components/ui/modal';
 import { api } from '~/lib/api';
-import type { TransportBox } from '~/types';
-import { Plus, Edit, Trash2, Truck, X, Save, MapPin } from 'lucide-qwik';
+import type { TransportBox, CreateTransportBoxRequest, UpdateTransportBoxRequest } from '~/types';
+import { Plus, Edit, Trash2, Truck, X, Save, MapPin, CheckCircle, AlertCircle, Loader2 } from 'lucide-qwik';
+
+interface ToastState {
+  show: boolean;
+  type: 'success' | 'error';
+  message: string;
+}
 
 export default component$(() => {
   const showModal = useSignal(false);
@@ -14,6 +20,8 @@ export default component$(() => {
   const editingItem = useSignal<TransportBox | null>(null);
   const deletingItem = useSignal<TransportBox | null>(null);
   const refreshSignal = useSignal(0);
+  const isSubmitting = useSignal(false);
+  const toast = useSignal<ToastState>({ show: false, type: 'success', message: '' });
 
   const formData = useSignal({
     name: '',
@@ -27,6 +35,20 @@ export default component$(() => {
   });
 
   const errors = useSignal<Record<string, string>>({});
+
+  useTask$(({ track }) => {
+    track(() => toast.value.show);
+    if (toast.value.show) {
+      const timer = setTimeout(() => {
+        toast.value = { ...toast.value, show: false };
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  });
+
+  const showToast = $((type: 'success' | 'error', message: string) => {
+    toast.value = { show: true, type, message };
+  });
 
   const resource = useResource$<TransportBox[]>(async ({ track }) => {
     track(() => refreshSignal.value);
@@ -89,30 +111,69 @@ export default component$(() => {
   const handleSubmit = $(async () => {
     if (!validateForm()) return;
 
+    isSubmitting.value = true;
     let response;
-    if (editingItem.value) {
-      response = await api.put(`/api/transport-boxes/${editingItem.value.id}`, formData.value);
-    } else {
-      response = await api.post('/api/transport-boxes', formData.value);
-    }
 
-    if (response.success) {
-      showModal.value = false;
-      editingItem.value = null;
-      refreshSignal.value++;
-    } else {
-      errors.value = { submit: response.message || '操作失败' };
+    try {
+      if (editingItem.value) {
+        const request: UpdateTransportBoxRequest = {
+          name: formData.value.name,
+          code: formData.value.code,
+          model: formData.value.model || undefined,
+          capacity: formData.value.capacity,
+          min_temp: formData.value.min_temp,
+          max_temp: formData.value.max_temp,
+          current_location: formData.value.current_location || undefined,
+          status: formData.value.status,
+        };
+        response = await api.put(`/api/transport-boxes/${editingItem.value.id}`, request);
+      } else {
+        const request: CreateTransportBoxRequest = {
+          name: formData.value.name,
+          code: formData.value.code,
+          model: formData.value.model || undefined,
+          capacity: formData.value.capacity,
+          min_temp: formData.value.min_temp,
+          max_temp: formData.value.max_temp,
+          current_location: formData.value.current_location || undefined,
+        };
+        response = await api.post('/api/transport-boxes', request);
+      }
+
+      if (response.success) {
+        showModal.value = false;
+        editingItem.value = null;
+        refreshSignal.value++;
+        showToast('success', editingItem.value ? '转运箱信息更新成功！' : '转运箱创建成功！');
+      } else {
+        errors.value = { submit: response.message || '操作失败' };
+        showToast('error', response.message || '操作失败');
+      }
+    } catch (e) {
+      showToast('error', '网络异常，请稍后重试');
+    } finally {
+      isSubmitting.value = false;
     }
   });
 
   const handleDelete = $(async () => {
     if (!deletingItem.value) return;
 
-    const response = await api.delete(`/api/transport-boxes/${deletingItem.value.id}`);
-    if (response.success) {
-      showDeleteModal.value = false;
-      deletingItem.value = null;
-      refreshSignal.value++;
+    isSubmitting.value = true;
+    try {
+      const response = await api.delete(`/api/transport-boxes/${deletingItem.value.id}`);
+      if (response.success) {
+        showDeleteModal.value = false;
+        deletingItem.value = null;
+        refreshSignal.value++;
+        showToast('success', '转运箱删除成功！');
+      } else {
+        showToast('error', response.message || '删除失败');
+      }
+    } catch (e) {
+      showToast('error', '网络异常，请稍后重试');
+    } finally {
+      isSubmitting.value = false;
     }
   });
 
@@ -327,12 +388,16 @@ export default component$(() => {
           </div>
 
           <div class="flex justify-end space-x-3 pt-4 border-t">
-            <Button variant="secondary" onClick$={() => { showModal.value = false; }}>
+            <Button variant="secondary" onClick$={() => { showModal.value = false; }} disabled={isSubmitting.value}>
               <X class="w-4 h-4 mr-1" />
               取消
             </Button>
-            <Button onClick$={handleSubmit}>
-              <Save class="w-4 h-4 mr-1" />
+            <Button onClick$={handleSubmit} disabled={isSubmitting.value}>
+              {isSubmitting.value ? (
+                <Loader2 class="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <Save class="w-4 h-4 mr-1" />
+              )}
               {editingItem.value ? '保存修改' : '创建设备'}
             </Button>
           </div>
@@ -354,17 +419,46 @@ export default component$(() => {
               <p class="text-sm text-red-600 mt-1">此操作不可撤销，相关数据将被永久删除。</p>
             </div>
             <div class="flex justify-end space-x-3">
-              <Button variant="secondary" onClick$={() => { showDeleteModal.value = false; }}>
+              <Button variant="secondary" onClick$={() => { showDeleteModal.value = false; }} disabled={isSubmitting.value}>
                 取消
               </Button>
-              <Button variant="danger" onClick$={handleDelete}>
-                <Trash2 class="w-4 h-4 mr-1" />
+              <Button variant="danger" onClick$={handleDelete} disabled={isSubmitting.value}>
+                {isSubmitting.value ? (
+                  <Loader2 class="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <Trash2 class="w-4 h-4 mr-1" />
+                )}
                 确认删除
               </Button>
             </div>
           </div>
         )}
       </Modal>
+
+      {toast.value.show && (
+        <div class="fixed top-4 right-4 z-50 animate-pulse">
+          <div
+            class={`flex items-center p-4 rounded-lg shadow-lg ${
+              toast.value.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            {toast.value.type === 'success' ? (
+              <CheckCircle class="w-5 h-5 text-green-500 mr-3" />
+            ) : (
+              <AlertCircle class="w-5 h-5 text-red-500 mr-3" />
+            )}
+            <p
+              class={`font-medium ${
+                toast.value.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }`}
+            >
+              {toast.value.message}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

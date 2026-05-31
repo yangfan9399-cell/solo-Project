@@ -1,13 +1,19 @@
-import { component$, useResource$, Resource, useSignal, $ } from '@builder.io/qwik';
+import { component$, useResource$, Resource, useSignal, $, useTask$ } from '@builder.io/qwik';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Modal } from '~/components/ui/modal';
 import { LoadingState, ErrorState, EmptyState } from '~/components/ui/table';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { api } from '~/lib/api';
-import type { QuarantineRecord } from '~/types';
+import type { QuarantineRecord, CreateReviewRequest } from '~/types';
 import { QuarantineStatusLabels } from '~/types';
-import { CheckCircle, XCircle, AlertTriangle, Clock, FileText } from 'lucide-qwik';
+import { CheckCircle, XCircle, AlertTriangle, Clock, FileText, Loader2, AlertCircle } from 'lucide-qwik';
+
+interface ToastState {
+  show: boolean;
+  type: 'success' | 'error';
+  message: string;
+}
 
 export default component$(() => {
   const showModal = useSignal(false);
@@ -15,6 +21,22 @@ export default component$(() => {
   const reviewOpinion = useSignal('');
   const reviewResult = useSignal<'release' | 'recall' | 'destroy'>('release');
   const refreshSignal = useSignal(0);
+  const isSubmitting = useSignal(false);
+  const toast = useSignal<ToastState>({ show: false, type: 'success', message: '' });
+
+  useTask$(({ track }) => {
+    track(() => toast.value.show);
+    if (toast.value.show) {
+      const timer = setTimeout(() => {
+        toast.value = { ...toast.value, show: false };
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  });
+
+  const showToast = $((type: 'success' | 'error', message: string) => {
+    toast.value = { show: true, type, message };
+  });
 
   const pendingResource = useResource$<QuarantineRecord[]>(async ({ track }) => {
     track(() => refreshSignal.value);
@@ -37,18 +59,32 @@ export default component$(() => {
   const submitReview = $(async () => {
     if (!selectedRecord.value) return;
 
-    const response = await api.post('/api/review-records', {
-      quarantine_id: selectedRecord.value.id,
-      deviation_id: selectedRecord.value.deviation_id,
-      review_opinion: reviewOpinion.value,
-      review_result: reviewResult.value,
-    });
+    isSubmitting.value = true;
+    try {
+      const request: CreateReviewRequest = {
+        quarantine_id: selectedRecord.value.id,
+        deviation_id: selectedRecord.value.deviation_id,
+        review_opinion: reviewOpinion.value,
+        review_result: reviewResult.value,
+      };
+      const response = await api.post('/api/review-records', request);
 
-    if (response.success) {
-      showModal.value = false;
-      selectedRecord.value = null;
-      reviewOpinion.value = '';
-      refreshSignal.value++;
+      if (response.success) {
+        showModal.value = false;
+        selectedRecord.value = null;
+        reviewOpinion.value = '';
+        refreshSignal.value++;
+        
+        const resultMsg = reviewResult.value === 'release' ? '放行' : 
+                         reviewResult.value === 'recall' ? '召回' : '销毁';
+        showToast('success', `复核完成，批次已${resultMsg}！`);
+      } else {
+        showToast('error', response.message || '复核失败');
+      }
+    } catch (e) {
+      showToast('error', '网络异常，请稍后重试');
+    } finally {
+      isSubmitting.value = false;
     }
   });
 
@@ -223,18 +259,46 @@ export default component$(() => {
             </div>
 
             <div class="flex justify-end space-x-3 pt-4 border-t">
-              <Button variant="secondary" onClick$={() => { showModal.value = false; }}>取消</Button>
+              <Button variant="secondary" onClick$={() => { showModal.value = false; }} disabled={isSubmitting.value}>取消</Button>
               <Button 
                 onClick$={submitReview} 
-                disabled={!reviewOpinion.value}
+                disabled={!reviewOpinion.value || isSubmitting.value}
                 variant={reviewResult.value === 'release' ? 'primary' : reviewResult.value === 'recall' ? 'secondary' : 'danger'}
               >
+                {isSubmitting.value ? (
+                  <Loader2 class="w-4 h-4 mr-1 animate-spin" />
+                ) : null}
                 确认提交
               </Button>
             </div>
           </div>
         )}
       </Modal>
+
+      {toast.value.show && (
+        <div class="fixed top-4 right-4 z-50 animate-pulse">
+          <div
+            class={`flex items-center p-4 rounded-lg shadow-lg ${
+              toast.value.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            {toast.value.type === 'success' ? (
+              <CheckCircle class="w-5 h-5 text-green-500 mr-3" />
+            ) : (
+              <AlertCircle class="w-5 h-5 text-red-500 mr-3" />
+            )}
+            <p
+              class={`font-medium ${
+                toast.value.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }`}
+            >
+              {toast.value.message}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

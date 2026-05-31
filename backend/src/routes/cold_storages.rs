@@ -1,7 +1,7 @@
 use rocket::{serde::json::Json, State};
 use sqlx::SqlitePool;
 use uuid::Uuid;
-use crate::models::{ApiResponse, ColdStorage};
+use crate::models::{ApiResponse, ColdStorage, CreateColdStorageRequest, UpdateColdStorageRequest};
 
 #[get("/api/cold-storages")]
 pub async fn get_all(pool: &State<SqlitePool>) -> Json<ApiResponse<Vec<ColdStorage>>> {
@@ -36,7 +36,7 @@ pub async fn get_by_id(pool: &State<SqlitePool>, id: String) -> Json<ApiResponse
 }
 
 #[post("/api/cold-storages", data = "<data>")]
-pub async fn create(pool: &State<SqlitePool>, data: Json<ColdStorage>) -> Json<ApiResponse<ColdStorage>> {
+pub async fn create(pool: &State<SqlitePool>, data: Json<CreateColdStorageRequest>) -> Json<ApiResponse<ColdStorage>> {
     let id = Uuid::new_v4().to_string();
     
     let result = sqlx::query!(
@@ -71,7 +71,7 @@ pub async fn create(pool: &State<SqlitePool>, data: Json<ColdStorage>) -> Json<A
 }
 
 #[put("/api/cold-storages/<id>", data = "<data>")]
-pub async fn update(pool: &State<SqlitePool>, id: String, data: Json<ColdStorage>) -> Json<ApiResponse<ColdStorage>> {
+pub async fn update(pool: &State<SqlitePool>, id: String, data: Json<UpdateColdStorageRequest>) -> Json<ApiResponse<ColdStorage>> {
     let result = sqlx::query!(
         r#"UPDATE cold_storages SET name = ?, code = ?, location = ?, capacity = ?, min_temp = ?, max_temp = ?, status = ? WHERE id = ?"#,
         data.name,
