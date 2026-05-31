@@ -1,5 +1,5 @@
-use rocket::{serde::json::Json, State};
-use sqlx::SqlitePool;
+use rocket::{serde::json::Json, serde::{Serialize, Deserialize}, State};
+use sqlx::{SqlitePool, FromRow};
 use crate::models::{ApiResponse, TraceReport, TemperatureRecord, QuarantineRecord, RecallRecord};
 
 #[get("/api/trace/<batch_id>")]
@@ -26,8 +26,8 @@ pub async fn get_trace_report(pool: &State<SqlitePool>, batch_id: String) -> Jso
     .await
     .unwrap_or_default();
 
-    let deviation_count = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) as count FROM temperature_deviations WHERE affected_batches LIKE ?"#,
+    let deviation_count: i64 = sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM temperature_deviations WHERE affected_batches LIKE ?"#,
         format!("%{}%", batch_id)
     )
     .fetch_one(pool.inner())
@@ -63,13 +63,24 @@ pub async fn get_trace_report(pool: &State<SqlitePool>, batch_id: String) -> Jso
     }))
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+struct TraceReportItem {
+    pub id: String,
+    pub batch_no: String,
+    pub vaccine_name: String,
+    pub manufacturer: String,
+    pub status: String,
+    pub quarantine_count: i64,
+    pub recall_count: i64,
+}
+
 #[get("/api/trace/reports?<date_from>&<date_to>&<vaccine_name>")]
 pub async fn get_trace_reports(
     pool: &State<SqlitePool>,
     date_from: Option<String>,
     date_to: Option<String>,
     vaccine_name: Option<String>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> Json<ApiResponse<Vec<TraceReportItem>>> {
     let mut query = r#"
         SELECT 
             b.id,
@@ -101,7 +112,7 @@ pub async fn get_trace_reports(
     
     query.push_str(" GROUP BY b.id ORDER BY b.created_at DESC");
 
-    let mut query_builder = sqlx::query(&query);
+    let mut query_builder = sqlx::query_as::<_, TraceReportItem>(&query);
     for param in &params {
         query_builder = query_builder.bind(param);
     }
@@ -109,20 +120,7 @@ pub async fn get_trace_reports(
     let rows = query_builder.fetch_all(pool.inner()).await;
     
     match rows {
-        Ok(records) => {
-            let result: Vec<serde_json::Value> = records.iter().map(|row| {
-                serde_json::json!({
-                    "id": row.try_get::<String, _>("id").unwrap_or_default(),
-                    "batch_no": row.try_get::<String, _>("batch_no").unwrap_or_default(),
-                    "vaccine_name": row.try_get::<String, _>("vaccine_name").unwrap_or_default(),
-                    "manufacturer": row.try_get::<String, _>("manufacturer").unwrap_or_default(),
-                    "status": row.try_get::<String, _>("status").unwrap_or_default(),
-                    "quarantine_count": row.try_get::<i64, _>("quarantine_count").unwrap_or(0),
-                    "recall_count": row.try_get::<i64, _>("recall_count").unwrap_or(0),
-                })
-            }).collect();
-            Json(ApiResponse::success(result))
-        }
+        Ok(records) => Json(ApiResponse::success(records)),
         Err(e) => Json(ApiResponse::error(format!("查询失败: {}", e))),
     }
 }

@@ -14,13 +14,24 @@ export default component$(() => {
   const selectedRecord = useSignal<QuarantineRecord | null>(null);
   const reviewOpinion = useSignal('');
   const reviewResult = useSignal<'release' | 'recall' | 'destroy'>('release');
+  const refreshSignal = useSignal(0);
 
-  const resource = useResource$<QuarantineRecord[]>(async () => {
+  const pendingResource = useResource$<QuarantineRecord[]>(async ({ track }) => {
+    track(() => refreshSignal.value);
     const response = await api.get<QuarantineRecord[]>('/api/quarantine-records?status=pending_review');
     if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.message || '加载失败');
+  });
+
+  const allResource = useResource$<QuarantineRecord[]>(async ({ track }) => {
+    track(() => refreshSignal.value);
+    const response = await api.get<QuarantineRecord[]>('/api/quarantine-records');
+    if (response.success && response.data) {
+      return response.data;
+    }
+    return [];
   });
 
   const submitReview = $(async () => {
@@ -37,7 +48,7 @@ export default component$(() => {
       showModal.value = false;
       selectedRecord.value = null;
       reviewOpinion.value = '';
-      resource.track(() => {});
+      refreshSignal.value++;
     }
   });
 
@@ -55,39 +66,58 @@ export default component$(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">待复核批次</p>
-              <p class="text-3xl font-bold text-yellow-600 mt-1">--</p>
-            </div>
-            <Clock class="w-10 h-10 text-yellow-500" />
+      <Resource
+        value={allResource}
+        onPending={() => (
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <div class="h-20 animate-pulse bg-gray-100 rounded" />
+              </Card>
+            ))}
           </div>
-        </Card>
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">已放行</p>
-              <p class="text-3xl font-bold text-green-600 mt-1">--</p>
+        )}
+        onResolved={(allRecords) => {
+          const pendingCount = allRecords.filter(r => r.status === 'pending_review').length;
+          const releasedCount = allRecords.filter(r => r.status === 'released').length;
+          const recalledCount = allRecords.filter(r => r.status === 'recalled' || r.status === 'destroyed').length;
+          return (
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">待复核批次</p>
+                    <p class="text-3xl font-bold text-yellow-600 mt-1">{pendingCount}</p>
+                  </div>
+                  <Clock class="w-10 h-10 text-yellow-500" />
+                </div>
+              </Card>
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">已放行</p>
+                    <p class="text-3xl font-bold text-green-600 mt-1">{releasedCount}</p>
+                  </div>
+                  <CheckCircle class="w-10 h-10 text-green-500" />
+                </div>
+              </Card>
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">已召回/销毁</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1">{recalledCount}</p>
+                  </div>
+                  <XCircle class="w-10 h-10 text-red-500" />
+                </div>
+              </Card>
             </div>
-            <CheckCircle class="w-10 h-10 text-green-500" />
-          </div>
-        </Card>
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">已召回/销毁</p>
-              <p class="text-3xl font-bold text-red-600 mt-1">--</p>
-            </div>
-            <XCircle class="w-10 h-10 text-red-500" />
-          </div>
-        </Card>
-      </div>
+          );
+        }}
+      />
 
       <Card title="待复核批次" subtitle="按优先级排序">
         <Resource
-          value={resource}
+          value={pendingResource}
           onPending={() => <LoadingState />}
           onRejected={(error) => <ErrorState message={error.message} />}
           onResolved={(records) =>

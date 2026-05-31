@@ -1,19 +1,119 @@
-import { component$, useResource$, Resource } from '@builder.io/qwik';
+import { component$, useResource$, Resource, useSignal, $ } from '@builder.io/qwik';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { DataTable, LoadingState, ErrorState, EmptyState } from '~/components/ui/table';
 import { StatusBadge } from '~/components/ui/status-badge';
+import { Modal } from '~/components/ui/modal';
 import { api } from '~/lib/api';
 import type { TransportBox } from '~/types';
-import { Plus, Edit, Trash2, Truck } from 'lucide-qwik';
+import { Plus, Edit, Trash2, Truck, X, Save, MapPin } from 'lucide-qwik';
 
 export default component$(() => {
-  const resource = useResource$<TransportBox[]>(async () => {
+  const showModal = useSignal(false);
+  const showDeleteModal = useSignal(false);
+  const editingItem = useSignal<TransportBox | null>(null);
+  const deletingItem = useSignal<TransportBox | null>(null);
+  const refreshSignal = useSignal(0);
+
+  const formData = useSignal({
+    name: '',
+    code: '',
+    model: '',
+    capacity: 500,
+    min_temp: 2,
+    max_temp: 8,
+    current_location: '',
+    status: 'idle' as TransportBox['status'],
+  });
+
+  const errors = useSignal<Record<string, string>>({});
+
+  const resource = useResource$<TransportBox[]>(async ({ track }) => {
+    track(() => refreshSignal.value);
     const response = await api.get<TransportBox[]>('/api/transport-boxes');
     if (response.success && response.data) {
       return response.data;
     }
     throw new Error(response.message || '加载失败');
+  });
+
+  const validateForm = $(() => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.value.name.trim()) newErrors.name = '请输入转运箱名称';
+    if (!formData.value.code.trim()) newErrors.code = '请输入设备编号';
+    if (formData.value.capacity <= 0) newErrors.capacity = '容量必须大于0';
+    if (formData.value.min_temp >= formData.value.max_temp) {
+      newErrors.temp = '最低温度必须小于最高温度';
+    }
+    errors.value = newErrors;
+    return Object.keys(newErrors).length === 0;
+  });
+
+  const openCreate = $(() => {
+    editingItem.value = null;
+    formData.value = {
+      name: '',
+      code: '',
+      model: '',
+      capacity: 500,
+      min_temp: 2,
+      max_temp: 8,
+      current_location: '',
+      status: 'idle',
+    };
+    errors.value = {};
+    showModal.value = true;
+  });
+
+  const openEdit = $((item: TransportBox) => {
+    editingItem.value = item;
+    formData.value = {
+      name: item.name,
+      code: item.code,
+      model: item.model || '',
+      capacity: item.capacity,
+      min_temp: item.min_temp,
+      max_temp: item.max_temp,
+      current_location: item.current_location || '',
+      status: item.status,
+    };
+    errors.value = {};
+    showModal.value = true;
+  });
+
+  const openDelete = $((item: TransportBox) => {
+    deletingItem.value = item;
+    showDeleteModal.value = true;
+  });
+
+  const handleSubmit = $(async () => {
+    if (!validateForm()) return;
+
+    let response;
+    if (editingItem.value) {
+      response = await api.put(`/api/transport-boxes/${editingItem.value.id}`, formData.value);
+    } else {
+      response = await api.post('/api/transport-boxes', formData.value);
+    }
+
+    if (response.success) {
+      showModal.value = false;
+      editingItem.value = null;
+      refreshSignal.value++;
+    } else {
+      errors.value = { submit: response.message || '操作失败' };
+    }
+  });
+
+  const handleDelete = $(async () => {
+    if (!deletingItem.value) return;
+
+    const response = await api.delete(`/api/transport-boxes/${deletingItem.value.id}`);
+    if (response.success) {
+      showDeleteModal.value = false;
+      deletingItem.value = null;
+      refreshSignal.value++;
+    }
   });
 
   const statusVariant = (status: string) => {
@@ -41,7 +141,7 @@ export default component$(() => {
           <h1 class="text-2xl font-bold text-gray-900">转运箱管理</h1>
           <p class="text-gray-500 mt-1">管理疫苗转运冷藏箱设备</p>
         </div>
-        <Button onClick$={() => {}}>
+        <Button onClick$={openCreate}>
           <Plus class="w-4 h-4 mr-2" />
           新增转运箱
         </Button>
@@ -71,7 +171,12 @@ export default component$(() => {
                       </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-500">{box.model || '-'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500">{box.current_location || '-'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                      <div class="flex items-center">
+                        <MapPin class="w-3 h-3 mr-1" />
+                        {box.current_location || '-'}
+                      </div>
+                    </td>
                     <td class="px-6 py-4 text-sm text-gray-900">{box.capacity} 支</td>
                     <td class="px-6 py-4 text-sm text-gray-500">
                       {box.min_temp}°C ~ {box.max_temp}°C
@@ -81,10 +186,10 @@ export default component$(() => {
                     </td>
                     <td class="px-6 py-4">
                       <div class="flex space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick$={() => openEdit(box)}>
                           <Edit class="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick$={() => openDelete(box)}>
                           <Trash2 class="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
@@ -96,6 +201,170 @@ export default component$(() => {
           }
         />
       </Card>
+
+      <Modal
+        title={editingItem.value ? '编辑转运箱' : '新增转运箱'}
+        isOpen={showModal.value}
+        onClose$={() => { showModal.value = false; }}
+        size="lg"
+      >
+        <div class="space-y-4">
+          {errors.value.submit && (
+            <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {errors.value.submit}
+            </div>
+          )}
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                转运箱名称 <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                class={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.value.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="如：1号冷链转运箱"
+                value={formData.value.name}
+                onInput$={(e) => { formData.value.name = (e.target as HTMLInputElement).value; }}
+              />
+              {errors.value.name && <p class="text-red-500 text-xs mt-1">{errors.value.name}</p>}
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                设备编号 <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                class={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.value.code ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="如：ZY-001"
+                value={formData.value.code}
+                onInput$={(e) => { formData.value.code = (e.target as HTMLInputElement).value; }}
+              />
+              {errors.value.code && <p class="text-red-500 text-xs mt-1">{errors.value.code}</p>}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">型号</label>
+              <input
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="如：GSP-20L"
+                value={formData.value.model}
+                onInput$={(e) => { formData.value.model = (e.target as HTMLInputElement).value; }}
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                容量（支）<span class="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                class={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.value.capacity ? 'border-red-500' : 'border-gray-300'
+                }`}
+                value={formData.value.capacity}
+                onInput$={(e) => { formData.value.capacity = parseInt((e.target as HTMLInputElement).value) || 0; }}
+              />
+              {errors.value.capacity && <p class="text-red-500 text-xs mt-1">{errors.value.capacity}</p>}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">最低温度 (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                value={formData.value.min_temp}
+                onInput$={(e) => { formData.value.min_temp = parseFloat((e.target as HTMLInputElement).value) || 0; }}
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">最高温度 (°C)</label>
+              <input
+                type="number"
+                step="0.1"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                value={formData.value.max_temp}
+                onInput$={(e) => { formData.value.max_temp = parseFloat((e.target as HTMLInputElement).value) || 0; }}
+              />
+            </div>
+          </div>
+          {errors.value.temp && <p class="text-red-500 text-xs">{errors.value.temp}</p>}
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">当前位置</label>
+            <input
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="如：疾控中心仓库 / 运输途中"
+              value={formData.value.current_location}
+              onInput$={(e) => { formData.value.current_location = (e.target as HTMLInputElement).value; }}
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+            <select
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              value={formData.value.status}
+              onChange$={(e) => { formData.value.status = (e.target as HTMLSelectElement).value as any; }}
+            >
+              <option value="idle">空闲</option>
+              <option value="in_transit">运输中</option>
+              <option value="maintenance">维护中</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="secondary" onClick$={() => { showModal.value = false; }}>
+              <X class="w-4 h-4 mr-1" />
+              取消
+            </Button>
+            <Button onClick$={handleSubmit}>
+              <Save class="w-4 h-4 mr-1" />
+              {editingItem.value ? '保存修改' : '创建设备'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        title="确认删除"
+        isOpen={showDeleteModal.value}
+        onClose$={() => { showDeleteModal.value = false; }}
+        size="md"
+      >
+        {deletingItem.value && (
+          <div class="space-y-4">
+            <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+              <p class="text-red-700">
+                确定要删除转运箱 <span class="font-semibold">{deletingItem.value.name}</span> 吗？
+              </p>
+              <p class="text-sm text-red-600 mt-1">此操作不可撤销，相关数据将被永久删除。</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+              <Button variant="secondary" onClick$={() => { showDeleteModal.value = false; }}>
+                取消
+              </Button>
+              <Button variant="danger" onClick$={handleDelete}>
+                <Trash2 class="w-4 h-4 mr-1" />
+                确认删除
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 });

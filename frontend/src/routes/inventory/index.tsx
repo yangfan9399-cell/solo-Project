@@ -12,8 +12,10 @@ export default component$(() => {
   const showModal = useSignal(false);
   const selectedInventory = useSignal<SiteInventory | null>(null);
   const actualQuantity = useSignal(0);
+  const refreshSignal = useSignal(0);
 
-  const resource = useResource$<SiteInventory[]>(async () => {
+  const resource = useResource$<SiteInventory[]>(async ({ track }) => {
+    track(() => refreshSignal.value);
     const response = await api.get<SiteInventory[]>('/api/site-inventories');
     if (response.success && response.data) {
       return response.data;
@@ -37,7 +39,7 @@ export default component$(() => {
     if (response.success) {
       showModal.value = false;
       selectedInventory.value = null;
-      resource.track(() => {});
+      refreshSignal.value++;
     }
   });
 
@@ -68,35 +70,54 @@ export default component$(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">库存记录</p>
-              <p class="text-3xl font-bold text-blue-600 mt-1">--</p>
-            </div>
-            <Database class="w-10 h-10 text-blue-500" />
+      <Resource
+        value={resource}
+        onPending={() => (
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <div class="h-20 animate-pulse bg-gray-100 rounded" />
+              </Card>
+            ))}
           </div>
-        </Card>
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">账实不一致</p>
-              <p class="text-3xl font-bold text-red-600 mt-1">--</p>
+        )}
+        onResolved={(inventories) => {
+          const totalCount = inventories.length;
+          const mismatchCount = inventories.filter(i => i.status === 'mismatch').length;
+          const reconciledCount = inventories.filter(i => i.status === 'reconciled').length;
+          return (
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">库存记录</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-1">{totalCount}</p>
+                  </div>
+                  <Database class="w-10 h-10 text-blue-500" />
+                </div>
+              </Card>
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">账实不一致</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1">{mismatchCount}</p>
+                  </div>
+                  <AlertTriangle class="w-10 h-10 text-red-500" />
+                </div>
+              </Card>
+              <Card>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">已完成对账</p>
+                    <p class="text-3xl font-bold text-green-600 mt-1">{reconciledCount}</p>
+                  </div>
+                  <CheckCircle class="w-10 h-10 text-green-500" />
+                </div>
+              </Card>
             </div>
-            <AlertTriangle class="w-10 h-10 text-red-500" />
-          </div>
-        </Card>
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">已完成对账</p>
-              <p class="text-3xl font-bold text-green-600 mt-1">--</p>
-            </div>
-            <CheckCircle class="w-10 h-10 text-green-500" />
-          </div>
-        </Card>
-      </div>
+          );
+        }}
+      />
 
       <Card title="库存明细">
         <Resource

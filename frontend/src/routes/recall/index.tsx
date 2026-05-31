@@ -11,8 +11,11 @@ import { Plus, RotateCcw, CheckCircle, Clock, AlertCircle, Send } from 'lucide-q
 export default component$(() => {
   const showModal = useSignal(false);
   const selectedStatus = useSignal<string>('all');
+  const refreshSignal = useSignal(0);
 
-  const resource = useResource$<RecallRecord[]>(async () => {
+  const resource = useResource$<RecallRecord[]>(async ({ track }) => {
+    track(() => refreshSignal.value);
+    track(() => selectedStatus.value);
     let url = '/api/recall-records';
     if (selectedStatus.value !== 'all') {
       url += `?status=${selectedStatus.value}`;
@@ -27,7 +30,7 @@ export default component$(() => {
   const updateStatus = $(async (id: string, status: string) => {
     const response = await api.put(`/api/recall-records/${id}/status`, { status });
     if (response.success) {
-      resource.track(() => {});
+      refreshSignal.value++;
     }
   });
 
