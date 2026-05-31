@@ -11,18 +11,30 @@ import clsx from 'clsx';
 
 export const useMaterialsData = routeLoader$(async () => {
   try {
-    const [materials, lowStockMaterials, processes, users] = await Promise.all([
+    const [materials, lowStockMaterials, processes, users, materialUsages] = await Promise.all([
       serverFetch<Material[]>('/materials'),
       serverFetch<Material[]>('/materials/low-stock'),
       serverFetch<Process[]>('/processes'),
       serverFetch<User[]>('/users'),
+      serverFetch<MaterialUsage[]>('/material-usages'),
     ]);
-    return { materials, lowStockMaterials, processes, users, success: true };
+    return { materials, lowStockMaterials, processes, users, materialUsages, success: true };
   } catch (e) {
     console.error('Failed to load materials data:', e);
-    return { materials: [], lowStockMaterials: [], processes: [], users: [], success: false };
+    return { materials: [], lowStockMaterials: [], processes: [], users: [], materialUsages: [], success: false };
   }
 });
+
+const formatDateTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export default component$(() => {
   const initialData = useMaterialsData();
@@ -31,6 +43,7 @@ export default component$(() => {
     lowStockMaterials: [] as Material[],
     processes: [] as Process[],
     users: [] as User[],
+    materialUsages: [] as MaterialUsage[],
     filterCategory: '',
     searchQuery: '',
     showLowStockOnly: false,
@@ -51,6 +64,7 @@ export default component$(() => {
     state.lowStockMaterials = initialData.value.lowStockMaterials;
     state.processes = initialData.value.processes;
     state.users = initialData.value.users.filter(u => u.role === 'restorer');
+    state.materialUsages = initialData.value.materialUsages;
   });
 
   const filteredMaterials = state.materials.filter(m => {
@@ -68,12 +82,21 @@ export default component$(() => {
     return { text: '库存充足', class: 'text-green-600 bg-green-100' };
   };
 
+  const getMaterialName = (materialId: string) => {
+    return state.materials.find(m => m.id === materialId)?.name || '未知材料';
+  };
+
   const getProcessName = (processId: string) => {
     return state.processes.find(p => p.id === processId)?.name || '未知工序';
   };
 
   const getUserName = (userId: string) => {
-    return state.users.find(u => u.id === userId)?.name || '未知用户';
+    const user = state.users.find(u => u.id === userId);
+    return user?.name || (initialData.value.users.find(u => u.id === userId)?.name) || '未知用户';
+  };
+
+  const getMaterialUnit = (materialId: string) => {
+    return state.materials.find(m => m.id === materialId)?.unit || '';
   };
 
   const openUsageModal = $((material: Material) => {
@@ -115,27 +138,33 @@ export default component$(() => {
     state.error = '';
 
     try {
-      await fetchApi<MaterialUsage>('/material-usages', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/material-usages`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(state.form),
       });
 
-      // 刷新材料列表和低库存预警
-      const [materials, lowStockMaterials] = await Promise.all([
+      if (!response.ok) {
+        const errorData = await response.json();
+        state.error = errorData.error || `领用失败（${response.status}）`;
+        state.isSubmitting = false;
+        return;
+      }
+
+      const [materials, lowStockMaterials, materialUsages] = await Promise.all([
         fetchApi<Material[]>('/materials'),
         fetchApi<Material[]>('/materials/low-stock'),
+        fetchApi<MaterialUsage[]>('/material-usages'),
       ]);
       state.materials = materials;
       state.lowStockMaterials = lowStockMaterials;
+      state.materialUsages = materialUsages;
 
       closeUsageModal();
     } catch (e: any) {
-      try {
-        const errorData = await e.json?.();
-        state.error = errorData?.error || '领用失败，请重试';
-      } catch {
-        state.error = '领用失败，请重试';
-      }
+      state.error = e.message || '网络错误，请重试';
     } finally {
       state.isSubmitting = false;
     }
@@ -249,7 +278,8 @@ export default component$(() => {
         </div>
 
         {/* Materials Grid */}
-        <div class="card">
+        <div class="card mb-6">
+          <h2 class="font-semibold text-gray-900 mb-4">材料库存</h2>
           {filteredMaterials.length === 0 ? (
             <Empty title="暂无材料数据" />
           ) : (
@@ -319,6 +349,48 @@ export default component$(() => {
           )}
         </div>
 
+        {/* Material Usages List */}
+        <div class="card">
+          <h2 class="font-semibold text-gray-900 mb-4">领用记录</h2>
+          {state.materialUsages.length === 0 ? (
+            <Empty title="暂无领用记录" />
+          ) : (
+            <div class="overflow-x-auto">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">材料</th>
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">关联工序</th>
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">领用人</th>
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">领用数量</th>
+                    <th class="text-left py-3 px-4 font-medium text-gray-700">领用时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.materialUsages.slice(0, 20).map(usage => (
+                    <tr key={usage.id} class="border-t border-gray-100 hover:bg-gray-50">
+                      <td class="py-3 px-4 font-medium">{getMaterialName(usage.material_id)}</td>
+                      <td class="py-3 px-4 text-gray-600">{getProcessName(usage.process_id)}</td>
+                      <td class="py-3 px-4 text-gray-600">{getUserName(usage.used_by)}</td>
+                      <td class="py-3 px-4">
+                        <span class="font-medium text-antique-700">
+                          {usage.quantity} {getMaterialUnit(usage.material_id)}
+                        </span>
+                      </td>
+                      <td class="py-3 px-4 text-gray-500 text-sm">{formatDateTime(usage.used_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {state.materialUsages.length > 20 && (
+                <p class="text-center text-sm text-gray-500 mt-4 py-2">
+                  显示最近 20 条记录，共 {state.materialUsages.length} 条
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Usage Modal */}
         <Modal
           isOpen={state.isUsageModalOpen}
@@ -368,7 +440,7 @@ export default component$(() => {
                     <option value="">请选择工序</option>
                     {state.processes.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - {getProcessName(p.id)}
+                        {p.name}
                       </option>
                     ))}
                   </select>
