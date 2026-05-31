@@ -1,0 +1,13 @@
+pub mod cold_storages;
+pub mod transport_boxes;
+pub mod vaccine_batches;
+pub mod temperature_records;
+pub mod temperature_deviations;
+pub mod quarantine_records;
+pub mod review_records;
+pub mod recall_records;
+pub mod vaccination_sites;
+pub mod site_inventories;
+pub mod dashboard;
+pub mod trace;
+pub mod users;

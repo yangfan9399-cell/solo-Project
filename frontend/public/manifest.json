@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "疫苗冷链温控系统",
+  "short_name": "疫苗冷链",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "description": "县域疫苗冷链温控偏差处置与追溯系统"
+}

@@ -1,0 +1,7 @@
+[default]
+address = "0.0.0.0"
+port = 8000
+limits = { forms = "32KB", json = "1MiB" }
+
+[default.databases.vaccine_db]
+url = "sqlite:vaccine.db?mode=rwc"
