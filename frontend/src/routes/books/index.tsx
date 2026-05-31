@@ -5,14 +5,14 @@ import { Loading } from '~/components/ui/loading';
 import { Empty } from '~/components/ui/empty';
 import { Modal } from '~/components/ui/modal';
 import { StatusBadge } from '~/components/ui/status-badge';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Book, User } from '~/types';
 
 export const useBooksData = routeLoader$(async () => {
   try {
     const [books, users] = await Promise.all([
-      fetchApi<Book[]>('/books'),
-      fetchApi<User[]>('/users'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<User[]>('/users'),
     ]);
     return { books, users };
   } catch (e) {

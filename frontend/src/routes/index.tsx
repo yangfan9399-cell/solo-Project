@@ -5,15 +5,15 @@ import { Loading, PageLoading } from '~/components/ui/loading';
 import { Empty } from '~/components/ui/empty';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { AppStore, BOOK_STATUS_LABELS, DISEASE_SEVERITY_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Book, Disease, Material } from '~/types';
 
 export const useDashboardData = routeLoader$(async () => {
   try {
     const [books, diseases, materials] = await Promise.all([
-      fetchApi<Book[]>('/books'),
-      fetchApi<Disease[]>('/diseases'),
-      fetchApi<Material[]>('/materials/low-stock'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<Disease[]>('/diseases'),
+      serverFetch<Material[]>('/materials/low-stock'),
     ]);
     return { books, diseases, materials };
   } catch (e) {

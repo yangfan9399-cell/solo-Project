@@ -9,7 +9,9 @@ export interface AppState {
 
 export const AppStore = createContextId<AppState>('app-store');
 
-export const API_BASE = '/api';
+export const API_BASE_URL = typeof window !== 'undefined' 
+  ? '/api' 
+  : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api');
 
 export const ROLE_LABELS: Record<string, string> = {
   restorer: '修复师',

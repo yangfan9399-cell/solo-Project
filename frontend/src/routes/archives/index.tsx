@@ -3,15 +3,15 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Layout } from '~/components/layout/layout';
 import { Empty } from '~/components/ui/empty';
 import { ARCHIVE_TYPE_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Archive, Book, ArchiveStatistics } from '~/types';
 
 export const useArchivesData = routeLoader$(async () => {
   try {
     const [archives, books, statistics] = await Promise.all([
-      fetchApi<Archive[]>('/archives'),
-      fetchApi<Book[]>('/books'),
-      fetchApi<ArchiveStatistics>('/archives/statistics'),
+      serverFetch<Archive[]>('/archives'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<ArchiveStatistics>('/archives/statistics'),
     ]);
     return { archives, books, statistics };
   } catch (e) {

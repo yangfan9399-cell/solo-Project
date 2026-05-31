@@ -4,15 +4,15 @@ import { Layout } from '~/components/layout/layout';
 import { Empty } from '~/components/ui/empty';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { DISEASE_TYPE_LABELS, DISEASE_SEVERITY_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Disease, Book } from '~/types';
 import clsx from 'clsx';
 
 export const useDiseasesData = routeLoader$(async () => {
   try {
     const [diseases, books] = await Promise.all([
-      fetchApi<Disease[]>('/diseases'),
-      fetchApi<Book[]>('/books'),
+      serverFetch<Disease[]>('/diseases'),
+      serverFetch<Book[]>('/books'),
     ]);
     return { diseases, books };
   } catch (e) {

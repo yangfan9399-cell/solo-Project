@@ -1,51 +1,61 @@
-import { component$, useStore, $ } from '@builder.io/qwik';
+import { component$, useStore, $, useVisibleTask$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 import { Layout } from '~/components/layout/layout';
 import { Empty } from '~/components/ui/empty';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { PROCESS_STATUS_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
-import type { Process, Book, User } from '~/types';
+import { fetchApi, serverFetch } from '~/utils/api';
+import type { Process, Book, User, ProcessStatus } from '~/types';
 import clsx from 'clsx';
 
 export const useProcessesData = routeLoader$(async () => {
   try {
     const [processes, books, users] = await Promise.all([
-      fetchApi<Process[]>('/processes'),
-      fetchApi<Book[]>('/books'),
-      fetchApi<User[]>('/users'),
+      serverFetch<Process[]>('/processes'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<User[]>('/users'),
     ]);
-    return { processes, books, users };
+    return { processes, books, users, success: true };
   } catch (e) {
-    return { processes: [], books: [], users: [] };
+    console.error('Failed to load processes data:', e);
+    return { processes: [], books: [], users: [], success: false };
   }
 });
 
 export default component$(() => {
-  const data = useProcessesData();
+  const initialData = useProcessesData();
   const state = useStore({
+    processes: [] as Process[],
+    books: [] as Book[],
+    users: [] as User[],
     filterBook: '',
     filterStatus: '',
     draggingProcess: null as string | null,
-    processOrder: [] as string[],
+    isLoading: false,
+    error: '',
+  });
+
+  useVisibleTask$(() => {
+    state.processes = initialData.value.processes;
+    state.books = initialData.value.books;
+    state.users = initialData.value.users;
   });
 
   const getBookTitle = (bookId: string) => {
-    return data.value.books.find(b => b.id === bookId)?.title || '未知古籍';
+    return state.books.find(b => b.id === bookId)?.title || '未知古籍';
   };
 
   const getUserName = (userId?: string) => {
     if (!userId) return '未分配';
-    return data.value.users.find(u => u.id === userId)?.name || '未知用户';
+    return state.users.find(u => u.id === userId)?.name || '未知用户';
   };
 
-  const filteredProcesses = data.value.processes.filter(p => {
+  const filteredProcesses = state.processes.filter(p => {
     const matchBook = !state.filterBook || p.book_id === state.filterBook;
     const matchStatus = !state.filterStatus || p.status === state.filterStatus;
     return matchBook && matchStatus;
   }).sort((a, b) => a.order_index - b.order_index);
 
-  // Group by status for Kanban view
   const processesByStatus = {
     pending: filteredProcesses.filter(p => p.status === 'pending'),
     in_progress: filteredProcesses.filter(p => p.status === 'in_progress'),
@@ -60,15 +70,49 @@ export default component$(() => {
     skipped: 'border-gray-400',
   };
 
+  const updateProcessStatus = $(async (processId: string, newStatus: ProcessStatus) => {
+    try {
+      state.isLoading = true;
+      state.error = '';
+      
+      await fetchApi(`/processes/${processId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const index = state.processes.findIndex(p => p.id === processId);
+      if (index !== -1) {
+        state.processes[index].status = newStatus;
+      }
+    } catch (e) {
+      state.error = '更新工序状态失败，请重试';
+      console.error('Failed to update process status:', e);
+    } finally {
+      state.isLoading = false;
+    }
+  });
+
   const handleDragStart = $((processId: string) => {
     state.draggingProcess = processId;
   });
 
-  const handleDrop = $((targetStatus: string) => {
+  const handleDragEnd = $(() => {
+    state.draggingProcess = null;
+  });
+
+  const handleDrop = $(async (targetStatus: ProcessStatus) => {
     if (!state.draggingProcess) return;
     
-    console.log('Moving process', state.draggingProcess, 'to', targetStatus);
+    const process = state.processes.find(p => p.id === state.draggingProcess);
+    if (process && process.status !== targetStatus) {
+      await updateProcessStatus(state.draggingProcess, targetStatus);
+    }
+    
     state.draggingProcess = null;
+  });
+
+  const handleDragOver = $((e: DragEvent) => {
+    e.preventDefault();
   });
 
   return (
@@ -78,6 +122,12 @@ export default component$(() => {
           <h1 class="text-2xl font-bold text-gray-900">修复工序</h1>
           <p class="text-gray-500 mt-1">管理和跟踪修复工序进度</p>
         </div>
+
+        {state.error && (
+          <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+            {state.error}
+          </div>
+        )}
 
         {/* Filters */}
         <div class="card mb-6">
@@ -90,7 +140,7 @@ export default component$(() => {
                 onChange$={(_, el) => state.filterBook = el.value}
               >
                 <option value="">全部古籍</option>
-                {data.value.books.map(book => (
+                {state.books.map(book => (
                   <option key={book.id} value={book.id}>{book.title}</option>
                 ))}
               </select>
@@ -119,17 +169,17 @@ export default component$(() => {
 
         {/* Kanban Board */}
         <div class="mb-6">
-          <h2 class="text-lg font-semibold mb-4">工序看板（拖拽更新状态）</h2>
+          <h2 class="text-lg font-semibold mb-4">工序看板（拖拽卡片更新状态）</h2>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             {(['pending', 'in_progress', 'completed', 'skipped'] as const).map(status => (
               <div 
                 key={status}
                 class={clsx(
-                  'min-h-[400px] bg-gray-50 rounded-xl p-4 border-t-4 transition-colors',
+                  'min-h-[400px] bg-gray-50 rounded-xl p-4 border-t-4 transition-all',
                   statusColors[status],
-                  state.draggingProcess ? 'bg-antique-50' : ''
+                  state.draggingProcess ? 'bg-antique-50 scale-[1.01]' : ''
                 )}
-                onDragOver$={(e) => e.preventDefault()}
+                onDragOver$={handleDragOver}
                 onDrop$={() => handleDrop(status)}
               >
                 <div class="flex items-center justify-between mb-4">
@@ -140,20 +190,23 @@ export default component$(() => {
                 </div>
                 <div class="space-y-3">
                   {processesByStatus[status].length === 0 ? (
-                    <p class="text-gray-400 text-center py-8 text-sm">暂无工序</p>
+                    <p class="text-gray-400 text-center py-8 text-sm">
+                      {state.draggingProcess ? '拖放到此处' : '暂无工序'}
+                    </p>
                   ) : (
                     processesByStatus[status].map(process => (
                       <div
                         key={process.id}
                         draggable={true}
                         onDragStart$={() => handleDragStart(process.id)}
+                        onDragEnd$={handleDragEnd}
                         class={clsx(
-                          'p-4 bg-white rounded-lg shadow-sm border cursor-move hover:shadow-md transition-all',
-                          state.draggingProcess === process.id ? 'opacity-50 scale-105' : ''
+                          'p-4 bg-white rounded-lg shadow-sm border cursor-move hover:shadow-md transition-all select-none',
+                          state.draggingProcess === process.id ? 'opacity-50 scale-105 shadow-lg' : ''
                         )}
                       >
-                        <p class="font-medium mb-1">{process.name}</p>
-                        <p class="text-xs text-gray-500 mb-2">
+                        <p class="font-medium mb-1 truncate">{process.name}</p>
+                        <p class="text-xs text-gray-500 mb-2 truncate">
                           {getBookTitle(process.book_id)}
                         </p>
                         <div class="flex items-center justify-between text-xs">
@@ -208,8 +261,21 @@ export default component$(() => {
                         <StatusBadge status={process.status} type="process" />
                       </td>
                       <td class="py-3 px-4">
-                        <button class="text-blue-600 hover:underline text-sm mr-2">
-                          编辑
+                        <button 
+                          class="text-blue-600 hover:underline text-sm mr-2"
+                          onClick$={async () => {
+                            const nextStatus: Record<string, ProcessStatus> = {
+                              pending: 'in_progress',
+                              in_progress: 'completed',
+                              completed: 'completed',
+                              skipped: 'pending',
+                            };
+                            if (nextStatus[process.status] !== process.status) {
+                              await updateProcessStatus(process.id, nextStatus[process.status]);
+                            }
+                          }}
+                        >
+                          推进
                         </button>
                         <button class="text-gray-600 hover:underline text-sm">
                           删除

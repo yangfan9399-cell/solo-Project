@@ -31,6 +31,9 @@ export default component$(() => {
       });
 
       store.currentUser = response.user;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+      }
       nav('/');
     } catch (e) {
       form.error = '用户名或密码错误';

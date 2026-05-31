@@ -9,6 +9,9 @@ export const Layout = component$(() => {
 
   const handleLogout = $(() => {
     store.currentUser = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser');
+    }
     nav('/login');
   });
 

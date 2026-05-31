@@ -3,15 +3,15 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { Layout } from '~/components/layout/layout';
 import { Empty } from '~/components/ui/empty';
 import { MATERIAL_CATEGORY_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Material } from '~/types';
 import clsx from 'clsx';
 
 export const useMaterialsData = routeLoader$(async () => {
   try {
     const [materials, lowStockMaterials] = await Promise.all([
-      fetchApi<Material[]>('/materials'),
-      fetchApi<Material[]>('/materials/low-stock'),
+      serverFetch<Material[]>('/materials'),
+      serverFetch<Material[]>('/materials/low-stock'),
     ]);
     return { materials, lowStockMaterials };
   } catch (e) {

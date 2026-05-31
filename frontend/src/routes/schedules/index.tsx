@@ -4,15 +4,15 @@ import { Layout } from '~/components/layout/layout';
 import { Empty } from '~/components/ui/empty';
 import { Modal } from '~/components/ui/modal';
 import { Loading } from '~/components/ui/loading';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Schedule, Book, User, ScheduleConflict } from '~/types';
 
 export const useSchedulesData = routeLoader$(async () => {
   try {
     const [schedules, books, users] = await Promise.all([
-      fetchApi<Schedule[]>('/schedules'),
-      fetchApi<Book[]>('/books'),
-      fetchApi<User[]>('/users'),
+      serverFetch<Schedule[]>('/schedules'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<User[]>('/users'),
     ]);
     return { schedules, books, users };
   } catch (e) {

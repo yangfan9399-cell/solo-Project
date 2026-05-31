@@ -5,16 +5,16 @@ import { Empty } from '~/components/ui/empty';
 import { Modal } from '~/components/ui/modal';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { REVIEW_TYPE_LABELS, REVIEW_STATUS_LABELS } from '~/constants';
-import { fetchApi } from '~/utils/api';
+import { fetchApi, serverFetch } from '~/utils/api';
 import type { Review, Book, User } from '~/types';
 import clsx from 'clsx';
 
 export const useReviewsData = routeLoader$(async () => {
   try {
     const [reviews, books, users] = await Promise.all([
-      fetchApi<Review[]>('/reviews'),
-      fetchApi<Book[]>('/books'),
-      fetchApi<User[]>('/users'),
+      serverFetch<Review[]>('/reviews'),
+      serverFetch<Book[]>('/books'),
+      serverFetch<User[]>('/users'),
     ]);
     return { reviews, books, users };
   } catch (e) {
