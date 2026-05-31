@@ -99,19 +99,30 @@ pub async fn create(pool: &State<SqlitePool>, data: Json<CreateReviewRequest>) -
             }
         };
 
-        let sites = match sqlx::query!(
-            r#"SELECT GROUP_CONCAT(DISTINCT vs.name) as site_names FROM site_inventory si JOIN vaccination_sites vs ON si.site_id = vs.id WHERE si.batch_id = ? AND si.status != 'reconciled'"#,
+        let inventories = match sqlx::query!(
+            r#"SELECT si.site_id, vs.name as site_name, si.expected_quantity, si.actual_quantity 
+               FROM site_inventories si 
+               JOIN vaccination_sites vs ON si.site_id = vs.id 
+               WHERE si.batch_id = ? AND si.status != 'reconciled'"#,
             quarantine.batch_id
         )
-        .fetch_optional(&mut *tx)
+        .fetch_all(&mut *tx)
         .await {
-            Ok(s) => s.and_then(|row| row.site_names),
-            Err(_) => None,
+            Ok(rows) => rows,
+            Err(e) => {
+                let _ = tx.rollback().await;
+                return Json(ApiResponse::error(format!("查询接种点库存失败: {}", e)));
+            }
         };
 
         let recall_id = Uuid::new_v4().to_string();
         let recall_no = format!("RC{:08}", chrono::Utc::now().timestamp());
         let recall_reason = format!("温控偏差复核召回：{}", data.review_opinion);
+        let sites_concat = inventories.iter()
+            .map(|i| i.site_name.clone())
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sites_value = if sites_concat.is_empty() { None } else { Some(sites_concat) };
 
         if let Err(e) = sqlx::query!(
             r#"INSERT INTO recall_records (id, recall_no, batch_id, batch_no, vaccine_name, total_quantity, reason, initiator_id, status, vaccination_sites) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
@@ -124,12 +135,30 @@ pub async fn create(pool: &State<SqlitePool>, data: Json<CreateReviewRequest>) -
             recall_reason,
             data.reviewer_id,
             "notified",
-            sites
+            sites_value
         )
         .execute(&mut *tx)
         .await {
             let _ = tx.rollback().await;
             return Json(ApiResponse::error(format!("创建召回记录失败: {}", e)));
+        }
+
+        for inv in inventories {
+            let notification_id = Uuid::new_v4().to_string();
+            if let Err(e) = sqlx::query!(
+                r#"INSERT INTO recall_site_notifications (id, recall_id, site_id, site_name, quantity, notified, confirmed) 
+                   VALUES (?, ?, ?, ?, ?, 1, 0)"#,
+                notification_id,
+                recall_id,
+                inv.site_id,
+                inv.site_name,
+                inv.actual_quantity
+            )
+            .execute(&mut *tx)
+            .await {
+                let _ = tx.rollback().await;
+                return Json(ApiResponse::error(format!("创建接种点通知失败: {}", e)));
+            }
         }
     }
 

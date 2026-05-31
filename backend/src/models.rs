@@ -343,12 +343,46 @@ pub struct UpdateRecallStatusRequest {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SiteNotification {
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct RecallSiteNotification {
+    pub id: String,
+    pub recall_id: String,
     pub site_id: String,
     pub site_name: String,
+    pub quantity: i32,
     pub notified: bool,
+    pub notified_at: Option<DateTime<Utc>>,
     pub confirmed: bool,
-    pub confirmed_at: Option<String>,
+    pub confirmed_at: Option<DateTime<Utc>>,
+    pub returned_quantity: Option<i32>,
     pub note: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PendingRecallBatch {
+    pub batch_id: String,
+    pub batch_no: String,
+    pub vaccine_name: String,
+    pub manufacturer: String,
+    pub total_quantity: i32,
+    pub quarantine_id: String,
+    pub deviation_id: Option<String>,
+    pub deviation_reason: Option<String>,
+    pub site_inventories: Vec<SiteInventorySummary>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct SiteInventorySummary {
+    pub site_id: String,
+    pub site_name: String,
+    pub expected_quantity: i32,
+    pub actual_quantity: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecallDetail {
+    #[serde(flatten)]
+    pub record: RecallRecord,
+    pub notifications: Vec<RecallSiteNotification>,
 }

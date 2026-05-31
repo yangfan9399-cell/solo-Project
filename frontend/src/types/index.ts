@@ -314,11 +314,53 @@ export interface UpdateRecallStatusRequest {
   note?: string;
 }
 
-export interface SiteNotification {
+export interface RecallSiteNotification {
+  id: string;
+  recall_id: string;
   site_id: string;
   site_name: string;
+  quantity: number;
   notified: boolean;
+  notified_at?: string;
   confirmed: boolean;
   confirmed_at?: string;
+  returned_quantity?: number;
   note?: string;
+  created_at: string;
+}
+
+export interface SiteInventorySummary {
+  site_id: string;
+  site_name: string;
+  expected_quantity: number;
+  actual_quantity: number;
+}
+
+export interface PendingRecallBatch {
+  batch_id: string;
+  batch_no: string;
+  vaccine_name: string;
+  manufacturer: string;
+  total_quantity: number;
+  quarantine_id: string;
+  deviation_id?: string;
+  deviation_reason?: string;
+  site_inventories: SiteInventorySummary[];
+}
+
+export interface RecallDetail {
+  id: string;
+  recall_no: string;
+  batch_id: string;
+  batch_no: string;
+  vaccine_name: string;
+  total_quantity: number;
+  reason: string;
+  initiator_id?: string;
+  status: 'notified' | 'in_progress' | 'completed' | 'cancelled';
+  vaccination_sites?: string;
+  notified_at: string;
+  completed_at?: string;
+  created_at: string;
+  notifications: RecallSiteNotification[];
 }
