@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "古籍修复馆",
+  "short_name": "古籍修复",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "古籍修复馆纸张病害诊断与修复排程系统",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
