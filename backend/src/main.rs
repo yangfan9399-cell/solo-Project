@@ -64,6 +64,7 @@ async fn rocket() -> _ {
                 recall_records::get_all,
                 recall_records::create,
                 recall_records::update_status,
+                recall_records::get_pending_recalls,
                 vaccination_sites::get_all,
                 vaccination_sites::create,
                 site_inventories::get_all,

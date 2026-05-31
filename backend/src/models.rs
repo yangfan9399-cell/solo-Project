@@ -324,3 +324,31 @@ pub struct CreateReviewRequest {
     pub review_result: String,
     pub reviewer_id: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateRecallRequest {
+    pub batch_id: String,
+    pub batch_no: String,
+    pub vaccine_name: String,
+    pub total_quantity: i32,
+    pub reason: String,
+    pub initiator_id: Option<String>,
+    pub vaccination_sites: Option<String>,
+    pub quarantine_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateRecallStatusRequest {
+    pub status: String,
+    pub note: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SiteNotification {
+    pub site_id: String,
+    pub site_name: String,
+    pub notified: bool,
+    pub confirmed: bool,
+    pub confirmed_at: Option<String>,
+    pub note: Option<String>,
+}

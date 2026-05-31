@@ -1,7 +1,7 @@
 use rocket::{serde::json::Json, State};
 use sqlx::SqlitePool;
 use uuid::Uuid;
-use crate::models::{ApiResponse, RecallRecord};
+use crate::models::{ApiResponse, RecallRecord, CreateRecallRequest, UpdateRecallStatusRequest};
 
 #[get("/api/recall-records?<status>")]
 pub async fn get_all(
@@ -32,7 +32,7 @@ pub async fn get_all(
 }
 
 #[post("/api/recall-records", data = "<data>")]
-pub async fn create(pool: &State<SqlitePool>, data: Json<RecallRecord>) -> Json<ApiResponse<RecallRecord>> {
+pub async fn create(pool: &State<SqlitePool>, data: Json<CreateRecallRequest>) -> Json<ApiResponse<RecallRecord>> {
     let id = Uuid::new_v4().to_string();
     let recall_no = format!("RC{:08}", chrono::Utc::now().timestamp());
     
@@ -73,9 +73,9 @@ pub async fn create(pool: &State<SqlitePool>, data: Json<RecallRecord>) -> Json<
 pub async fn update_status(
     pool: &State<SqlitePool>,
     id: String,
-    data: Json<serde_json::Value>,
+    data: Json<UpdateRecallStatusRequest>,
 ) -> Json<ApiResponse<RecallRecord>> {
-    let new_status = data["status"].as_str().unwrap_or("in_progress");
+    let new_status = data.status.as_str();
     
     let result = if new_status == "completed" {
         sqlx::query!(
@@ -109,5 +109,20 @@ pub async fn update_status(
             Json(ApiResponse::success(item))
         }
         Err(e) => Json(ApiResponse::error(format!("更新失败: {}", e))),
+    }
+}
+
+#[get("/api/recall-records/pending")]
+pub async fn get_pending_recalls(pool: &State<SqlitePool>) -> Json<ApiResponse<Vec<RecallRecord>>> {
+    let result = sqlx::query_as!(
+        RecallRecord,
+        r#"SELECT id, recall_no, batch_id, batch_no, vaccine_name, total_quantity, reason, initiator_id, status, vaccination_sites, notified_at as "notified_at: _", completed_at as "completed_at: _", created_at as "created_at: _" FROM recall_records WHERE status IN ('notified', 'in_progress') ORDER BY created_at DESC"#
+    )
+    .fetch_all(pool.inner())
+    .await;
+
+    match result {
+        Ok(items) => Json(ApiResponse::success(items)),
+        Err(e) => Json(ApiResponse::error(format!("查询失败: {}", e))),
     }
 }

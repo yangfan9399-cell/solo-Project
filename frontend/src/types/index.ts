@@ -297,3 +297,28 @@ export interface CreateReviewRequest {
   review_result: 'release' | 'recall' | 'destroy';
   reviewer_id?: string;
 }
+
+export interface CreateRecallRequest {
+  batch_id: string;
+  batch_no: string;
+  vaccine_name: string;
+  total_quantity: number;
+  reason: string;
+  initiator_id?: string;
+  vaccination_sites?: string;
+  quarantine_id?: string;
+}
+
+export interface UpdateRecallStatusRequest {
+  status: 'notified' | 'in_progress' | 'completed' | 'cancelled';
+  note?: string;
+}
+
+export interface SiteNotification {
+  site_id: string;
+  site_name: string;
+  notified: boolean;
+  confirmed: boolean;
+  confirmed_at?: string;
+  note?: string;
+}
