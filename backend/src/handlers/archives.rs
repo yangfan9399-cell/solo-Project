@@ -97,8 +97,70 @@ pub async fn get_archive(conn: DbConn, id: String) -> Result<Json<Archive>, Stat
 }
 
 #[post("/archives", data = "<req>")]
-pub async fn create_archive(conn: DbConn, req: Json<CreateArchiveRequest>) -> Result<Json<Archive>, Status> {
-    let archive = Archive::new(req.into_inner());
+pub async fn create_archive(conn: DbConn, req: Json<CreateArchiveRequest>) -> Result<(Status, Json<Archive>), (Status, Json<serde_json::Value>)> {
+    let request = req.into_inner();
+
+    // 校验必填字段
+    if request.book_id.is_empty() {
+        return Err((
+            Status::BadRequest,
+            Json(serde_json::json!({
+                "error": "请选择关联古籍",
+                "code": 400,
+                "field": "book_id"
+            }))
+        ));
+    }
+    if request.title.is_empty() {
+        return Err((
+            Status::BadRequest,
+            Json(serde_json::json!({
+                "error": "请填写档案标题",
+                "code": 400,
+                "field": "title"
+            }))
+        ));
+    }
+    if request.uploaded_by.is_empty() {
+        return Err((
+            Status::BadRequest,
+            Json(serde_json::json!({
+                "error": "请选择上传人",
+                "code": 400,
+                "field": "uploaded_by"
+            }))
+        ));
+    }
+
+    // 检查古籍是否存在
+    let book_exists = conn.run(move |c| {
+        let count: i64 = c.query_row(
+            "SELECT COUNT(*) FROM books WHERE id = ?1",
+            params![request.book_id],
+            |r| r.get(0)
+        )?;
+        Ok::<bool, rusqlite::Error>(count > 0)
+    }).await.map_err(|_| (
+        Status::InternalServerError,
+        Json(serde_json::json!({
+            "error": "校验古籍信息失败，请重试",
+            "code": 500
+        }))
+    ))?;
+
+    if !book_exists {
+        return Err((
+            Status::BadRequest,
+            Json(serde_json::json!({
+                "error": "所选古籍不存在",
+                "code": 400,
+                "field": "book_id"
+            }))
+        ));
+    }
+
+    let archive = Archive::new(request);
+    let archive_id = archive.id.clone();
     
     conn.run(move |c| {
         c.execute(
@@ -115,9 +177,43 @@ pub async fn create_archive(conn: DbConn, req: Json<CreateArchiveRequest>) -> Re
                 archive.uploaded_at,
             ],
         )
-    }).await.map_err(|_| Status::InternalServerError)?;
-    
-    Ok(Json(archive))
+    }).await.map_err(|e| {
+        eprintln!("Create archive error: {:?}", e);
+        (
+            Status::InternalServerError,
+            Json(serde_json::json!({
+                "error": "档案创建失败，请重试",
+                "code": 500
+            }))
+        )
+    })?;
+
+    // 查询并返回创建的档案
+    let result = conn.run(move |c| {
+        let mut stmt = c.prepare("SELECT id, book_id, title, type, file_path, file_size, description, uploaded_by, uploaded_at FROM archives WHERE id = ?1")?;
+        let archive = stmt.query_row(params![archive_id], |row| {
+            Ok(Archive {
+                id: row.get(0)?,
+                book_id: row.get(1)?,
+                title: row.get(2)?,
+                r#type: ArchiveType::from_str(&row.get::<_, String>(3)?).unwrap_or(ArchiveType::Other),
+                file_path: row.get(4)?,
+                file_size: row.get(5)?,
+                description: row.get(6)?,
+                uploaded_by: row.get(7)?,
+                uploaded_at: row.get(8)?,
+            })
+        })?;
+        Ok::<Archive, rusqlite::Error>(archive)
+    }).await.map_err(|_| (
+        Status::InternalServerError,
+        Json(serde_json::json!({
+            "error": "档案创建成功，但查询失败",
+            "code": 500
+        }))
+    ))?;
+
+    Ok((Status::Created, Json(result)))
 }
 
 #[put("/archives/<id>", data = "<req>")]
