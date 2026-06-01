@@ -269,6 +269,62 @@ router.put('/:id/arrive', (req: Request, res: Response): void => {
   }
 })
 
+router.put('/:id/renewal/:renewalId', (req: Request, res: Response): void => {
+  try {
+    const id = Number(req.params.id)
+    const renewalId = Number(req.params.renewalId)
+    const { approved, remark } = req.body as { approved: boolean; remark?: string }
+    const userId = 1
+    const user = db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as { name: string } | undefined
+    const operatorName = user?.name || '系统'
+
+    const request = db.prepare('SELECT * FROM interlibrary_requests WHERE id = ?').get(id) as { status: RequestStatus; due_date: string | null } | undefined
+    if (!request) {
+      res.status(404).json({ success: false, error: '申请不存在' })
+      return
+    }
+
+    const renewal = db.prepare('SELECT * FROM renewal_requests WHERE id = ? AND request_id = ?').get(renewalId, id) as { requested_due_date: string; status: string } | undefined
+    if (!renewal) {
+      res.status(404).json({ success: false, error: '续借申请不存在' })
+      return
+    }
+
+    if (renewal.status !== 'pending') {
+      res.status(400).json({ success: false, error: '续借申请已处理' })
+      return
+    }
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    const renewalStatus = approved ? 'approved' : 'rejected'
+    const newRequestStatus = approved ? 'renewal_approved' : 'renewal_rejected'
+
+    db.prepare(`
+      UPDATE renewal_requests
+      SET status = ?, reviewed_by = ?, reviewed_at = ?
+      WHERE id = ?
+    `).run(renewalStatus, userId, now, renewalId)
+
+    let newDueDate = request.due_date
+    if (approved) {
+      newDueDate = renewal.requested_due_date
+      db.prepare('UPDATE interlibrary_requests SET status = ?, due_date = ?, updated_at = ? WHERE id = ?').run(newRequestStatus, newDueDate, now, id)
+    } else {
+      db.prepare('UPDATE interlibrary_requests SET status = ?, updated_at = ? WHERE id = ?').run(newRequestStatus, now, id)
+    }
+
+    db.prepare(`
+      INSERT INTO status_transitions (request_id, from_status, to_status, operated_by, operator_name, remark, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, request.status, newRequestStatus, userId, operatorName, remark || (approved ? `续借批准，到期日更新为${newDueDate}` : '续借拒绝'), now)
+
+    const updated = db.prepare('SELECT * FROM interlibrary_requests WHERE id = ?').get(id)
+    res.json({ success: true, data: updated })
+  } catch (error) {
+    res.status(500).json({ success: false, error: (error as Error).message })
+  }
+})
+
 router.put('/:id/return', (req: Request, res: Response): void => {
   try {
     const id = Number(req.params.id)
@@ -298,6 +354,37 @@ router.put('/:id/return', (req: Request, res: Response): void => {
     `).run(id, fromStatus, userId, operatorName, returnTrackingNumber ? `归还物流单号: ${returnTrackingNumber}` : '归还验收', now)
 
     res.json({ success: true, data: { message: '归还已登记' } })
+  } catch (error) {
+    res.status(500).json({ success: false, error: (error as Error).message })
+  }
+})
+
+router.put('/:id/complete', (req: Request, res: Response): void => {
+  try {
+    const id = Number(req.params.id)
+    const { remark } = req.body as { remark?: string }
+    const userId = 1
+    const user = db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as { name: string } | undefined
+    const operatorName = user?.name || '系统'
+
+    const request = db.prepare('SELECT status FROM interlibrary_requests WHERE id = ?').get(id) as { status: RequestStatus } | undefined
+    if (!request) {
+      res.status(404).json({ success: false, error: '申请不存在' })
+      return
+    }
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    const fromStatus = request.status
+
+    db.prepare('UPDATE interlibrary_requests SET status = ?, actual_return_date = ?, updated_at = ? WHERE id = ?').run('completed', now, now, id)
+
+    db.prepare(`
+      INSERT INTO status_transitions (request_id, from_status, to_status, operated_by, operator_name, remark, created_at)
+      VALUES (?, ?, 'completed', ?, ?, ?, ?)
+    `).run(id, fromStatus, userId, operatorName, remark || '归还验收完成', now)
+
+    const updated = db.prepare('SELECT * FROM interlibrary_requests WHERE id = ?').get(id)
+    res.json({ success: true, data: updated })
   } catch (error) {
     res.status(500).json({ success: false, error: (error as Error).message })
   }

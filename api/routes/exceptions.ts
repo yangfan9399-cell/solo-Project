@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express'
 import db from '../db.js'
-import type { CreateExceptionInput } from '../../shared/types.js'
+import type { CreateExceptionInput, RequestStatus } from '../../shared/types.js'
 
 const router = Router()
 
@@ -26,18 +26,27 @@ router.post('/', (req: Request, res: Response): void => {
     const userId = 1
     const user = db.prepare('SELECT name FROM users WHERE id = ?').get(userId) as { name: string } | undefined
 
-    const request = db.prepare('SELECT id, status FROM interlibrary_requests WHERE id = ?').get(request_id)
+    const request = db.prepare('SELECT id, status FROM interlibrary_requests WHERE id = ?').get(request_id) as { id: number; status: RequestStatus } | undefined
     if (!request) {
       res.status(404).json({ success: false, error: '申请不存在' })
       return
     }
 
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    const operatorName = user?.name || '系统'
 
     db.prepare(`
       INSERT INTO exception_records (request_id, type, description, handler_id, handler_name, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, 'open', ?, ?)
-    `).run(request_id, type, description, userId, user?.name || null, now, now)
+    `).run(request_id, type, description, userId, operatorName, now, now)
+
+    const fromStatus = request.status
+    db.prepare('UPDATE interlibrary_requests SET status = ?, updated_at = ? WHERE id = ?').run('exception', now, request_id)
+
+    db.prepare(`
+      INSERT INTO status_transitions (request_id, from_status, to_status, operated_by, operator_name, remark, created_at)
+      VALUES (?, ?, 'exception', ?, ?, ?, ?)
+    `).run(request_id, fromStatus, userId, operatorName, `异常登记: ${type} - ${description.substring(0, 50)}`, now)
 
     res.status(201).json({ success: true, data: { message: '异常记录已创建' } })
   } catch (error) {

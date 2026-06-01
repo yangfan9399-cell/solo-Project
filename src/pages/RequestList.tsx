@@ -37,7 +37,7 @@ export default function RequestList() {
 
   const queryParams = new URLSearchParams()
   if (statusFilter) queryParams.set('status', statusFilter)
-  if (libraryFilter) queryParams.set('library_id', libraryFilter)
+  if (libraryFilter) queryParams.set('libraryId', libraryFilter)
   if (searchText) queryParams.set('reader_name', searchText)
   const queryStr = queryParams.toString()
   const url = `/api/requests${queryStr ? `?${queryStr}` : ''}`

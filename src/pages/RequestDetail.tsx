@@ -41,6 +41,7 @@ export default function RequestDetail() {
   const { put: putShip } = useApiPut<void, ShippingForm>('')
   const { put: putArrive } = useApiPut<void>('')
   const { put: putReturn } = useApiPut<void>('')
+  const { put: putComplete } = useApiPut<void>('')
 
   const [shippingModal, setShippingModal] = useState(false)
   const [renewalModal, setRenewalModal] = useState(false)
@@ -59,9 +60,24 @@ export default function RequestDetail() {
   const handleReject = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'rejected', remark: '拒绝借出' })
   const handleMarkTransit = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'in_transit', remark: '标记运输中' })
   const handleReading = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'reading', remark: '读者取书' })
-  const handleApproveRenewal = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'renewal_approved', remark: '续借批准' })
-  const handleRejectRenewal = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'renewal_rejected', remark: '续借拒绝' })
-  const handleComplete = () => handleStatusUpdate(`/api/requests/${id}/status`, { toStatus: 'completed', remark: '流程完成' })
+  const handleApproveRenewal = () => {
+    const pendingRenewal = data?.renewal_requests?.find(r => r.status === 'pending')
+    if (pendingRenewal) {
+      handleStatusUpdate(`/api/requests/${id}/renewal/${pendingRenewal.id}`, { approved: true, remark: '续借批准' })
+    }
+  }
+  const handleRejectRenewal = () => {
+    const pendingRenewal = data?.renewal_requests?.find(r => r.status === 'pending')
+    if (pendingRenewal) {
+      handleStatusUpdate(`/api/requests/${id}/renewal/${pendingRenewal.id}`, { approved: false, remark: '续借拒绝' })
+    }
+  }
+  const handleComplete = async () => {
+    setActionLoading(true)
+    await putComplete(`/api/requests/${id}/complete`, { remark: '流程完成' })
+    await refetch()
+    setActionLoading(false)
+  }
 
   const handleShip = async () => {
     setActionLoading(true)
