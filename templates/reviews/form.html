@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}创建复盘 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}创建复盘{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">创建复盘</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('reviews.list_reviews') }}" class="btn btn--ghost">取消</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__body">
+        <form method="POST" class="form">
+            <div class="form__group">
+                <label class="form__label" for="booking_id">关联预订</label>
+                <select id="booking_id" name="booking_id" class="form__input" required>
+                    <option value="">请选择已完成的预订</option>
+                    {% for booking in bookings %}
+                    <option value="{{ booking.id }}">{{ booking.title }} — {{ booking.client_name }} — {{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form__row">
+                <div class="form__group">
+                    <label class="form__label" for="overall_rating">综合评分 (1-5)</label>
+                    <input type="number" id="overall_rating" name="overall_rating" class="form__input" min="1" max="5" value="3" required>
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="service_rating">服务评分 (1-5)</label>
+                    <input type="number" id="service_rating" name="service_rating" class="form__input" min="1" max="5" value="3" required>
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="facility_rating">设施评分 (1-5)</label>
+                    <input type="number" id="facility_rating" name="facility_rating" class="form__input" min="1" max="5" value="3" required>
+                </div>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="issues_summary">问题摘要</label>
+                <textarea id="issues_summary" name="issues_summary" class="form__input form__textarea" rows="4" placeholder="记录会议中出现的问题"></textarea>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="improvements">改进建议</label>
+                <textarea id="improvements" name="improvements" class="form__input form__textarea" rows="4" placeholder="记录改进方向和建议"></textarea>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="notes">备注</label>
+                <textarea id="notes" name="notes" class="form__input form__textarea" rows="3" placeholder="其他补充说明"></textarea>
+            </div>
+
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">创建复盘</button>
+                <a href="{{ url_for('reviews.list_reviews') }}" class="btn btn--ghost">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

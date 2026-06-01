@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}新建茶歇需求 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}新建茶歇需求{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">新建茶歇需求</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('caterings.list_caterings') }}" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            返回列表
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__body">
+        <form method="post" class="form">
+            <div class="form-group">
+                <label class="form-label" for="booking_id">关联预订</label>
+                <select id="booking_id" name="booking_id" class="form-select" required>
+                    <option value="">请选择预订</option>
+                    {% for booking in bookings %}
+                    <option value="{{ booking.id }}">{{ booking.title }}（{{ booking.start_time.strftime('%Y-%m-%d %H:%M') }}）</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="package_type">套餐类型</label>
+                <select id="package_type" name="package_type" class="form-select" required>
+                    <option value="简约套餐">简约套餐</option>
+                    <option value="标准套餐">标准套餐</option>
+                    <option value="豪华套餐">豪华套餐</option>
+                    <option value="尊享套餐">尊享套餐</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="pax">人数</label>
+                <input type="number" id="pax" name="pax" class="form-input" min="1" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="extra_items">额外项目</label>
+                <textarea id="extra_items" name="extra_items" class="form-textarea" rows="3" placeholder="如：额外咖啡机、特色甜点等"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="equipment_needs">设备需求</label>
+                <textarea id="equipment_needs" name="equipment_needs" class="form-textarea" rows="3" placeholder="如：展示架、加热设备等"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="serve_time">服务时间</label>
+                <input type="datetime-local" id="serve_time" name="serve_time" class="form-input">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary">提交</button>
+                <a href="{{ url_for('caterings.list_caterings') }}" class="btn btn--outline">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

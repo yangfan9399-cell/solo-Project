@@ -1,0 +1,65 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}茶歇设备详情 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}茶歇设备详情{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">需求 #{{ catering.id }}</h2>
+        {{ status_badge(catering.status) }}
+    </div>
+    <div class="page-header__actions">
+        {% if catering.status == 'pending' %}
+        <form method="post" action="{{ url_for('caterings.confirm_catering', id=catering.id) }}">
+            <button type="submit" class="btn btn--primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                确认
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('caterings.list_caterings') }}" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            返回列表
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__body">
+        <h3 class="card__title">茶歇需求信息</h3>
+        <div class="info-list">
+            <div class="info-list__item">
+                <span class="info-list__label">关联预订</span>
+                <span class="info-list__value"><a href="/bookings/{{ catering.booking.id }}">{{ catering.booking.title }}</a></span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">套餐类型</span>
+                <span class="info-list__value">{{ catering.package_type }}</span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">人数</span>
+                <span class="info-list__value">{{ catering.pax }} 人</span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">额外项目</span>
+                <span class="info-list__value">{{ catering.extra_items if catering.extra_items else '无' }}</span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">设备需求</span>
+                <span class="info-list__value">{{ catering.equipment_needs if catering.equipment_needs else '无' }}</span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">服务时间</span>
+                <span class="info-list__value">{{ catering.serve_time.strftime('%Y-%m-%d %H:%M') if catering.serve_time else '-' }}</span>
+            </div>
+            <div class="info-list__item">
+                <span class="info-list__label">状态</span>
+                <span class="info-list__value">{{ status_badge(catering.status) }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

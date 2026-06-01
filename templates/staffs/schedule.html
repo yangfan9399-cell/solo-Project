@@ -1,0 +1,89 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block page_title %}排班日历{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">排班日历</h1>
+    <div class="page-header__actions">
+        <a href="{{ url_for('staffs.list_staffs') }}" class="btn btn--secondary btn--sm">人员列表</a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card" id="schedule-section">
+            <div class="card__header" style="display: flex; align-items: center; justify-content: space-between;">
+                <button class="btn btn--sm btn--secondary"
+                        hx-get="/staffs/schedule?week_offset={{ week_offset - 1 }}"
+                        hx-target="#schedule-section"
+                        hx-swap="outerHTML">
+                    &larr; 上一周
+                </button>
+                <span style="font-weight: 600;">{{ week_start_str }} - {{ week_end_str }}</span>
+                <button class="btn btn--sm btn--secondary"
+                        hx-get="/staffs/schedule?week_offset={{ week_offset + 1 }}"
+                        hx-target="#schedule-section"
+                        hx-swap="outerHTML">
+                    下一周 &rarr;
+                </button>
+            </div>
+            <div class="calendar">
+                {% for day in calendar_days %}
+                <div class="calendar__cell">
+                    <div class="calendar__day">{{ day.name }} {{ day.date.strftime('%m/%d') }}</div>
+                    {% for a in day.assignments %}
+                    <div class="calendar__event calendar__event--confirmed">
+                        <div>{{ a.staff.name }} · {{ a.role }}</div>
+                        <div style="font-size: 11px; color: var(--text-light);">{{ a.booking.title }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card__header">
+                <h3 class="card__title">新增排班</h3>
+            </div>
+            <form method="POST" action="{{ url_for('staffs.schedule', week_offset=week_offset) }}">
+                <div class="form-group">
+                    <label class="form-label">会议预订</label>
+                    <select name="booking_id" class="form-select" required>
+                        <option value="">请选择预订</option>
+                        {% for b in bookings %}
+                        <option value="{{ b.id }}">{{ b.title }} ({{ b.start_time.strftime('%m/%d %H:%M') }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">服务人员</label>
+                    <select name="staff_id" class="form-select" required>
+                        <option value="">请选择人员</option>
+                        {% for s in staffs %}
+                        <option value="{{ s.id }}">{{ s.name }} - {{ s.role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">职务</label>
+                    <input type="text" name="role" class="form-input" placeholder="如：接待、技术支持" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">开始时间</label>
+                    <input type="datetime-local" name="shift_start" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">结束时间</label>
+                    <input type="datetime-local" name="shift_end" class="form-input" required>
+                </div>
+                <button type="submit" class="btn btn--primary" style="width:100%;">分配排班</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

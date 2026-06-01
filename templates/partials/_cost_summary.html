@@ -1,0 +1,33 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+
+{% macro render(cost_items) %}
+<div class="cost-summary">
+    <table class="cost-summary__table">
+        <thead>
+            <tr>
+                <th>类别</th>
+                <th>说明</th>
+                <th class="cost-summary__amount">金额</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cost_items %}
+            <tr>
+                <td>{{ item.category }}</td>
+                <td>{{ item.description }}</td>
+                <td class="cost-summary__amount">¥{{ "%.2f"|format(item.amount) }}</td>
+                <td>{{ status_badge(item.status) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2"><strong>合计</strong></td>
+                <td class="cost-summary__amount"><strong>¥{{ "%.2f"|format(cost_items | sum(attribute='amount')) }}</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endmacro %}

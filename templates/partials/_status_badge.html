@@ -1,0 +1,22 @@
+{% macro render(status, color='') %}
+{% set status_map = {
+    'draft': {'label': '草稿', 'color': 'gray'},
+    'confirmed': {'label': '已确认', 'color': 'blue'},
+    'in_progress': {'label': '进行中', 'color': 'amber'},
+    'completed': {'label': '已完成', 'color': 'green'},
+    'cancelled': {'label': '已取消', 'color': 'red'},
+    'pending': {'label': '待确认', 'color': 'amber'},
+    'open': {'label': '待处理', 'color': 'blue'},
+    'resolved': {'label': '已解决', 'color': 'green'},
+    'closed': {'label': '已关闭', 'color': 'gray'},
+    'approved': {'label': '已审批', 'color': 'green'},
+    'rejected': {'label': '已退回', 'color': 'red'},
+    'assigned': {'label': '已分配', 'color': 'blue'},
+    'checked_in': {'label': '已签到', 'color': 'teal'},
+    'absent': {'label': '缺席', 'color': 'red'},
+    'serving': {'label': '服务中', 'color': 'amber'},
+} %}
+{% set info = status_map.get(status, {'label': status, 'color': 'gray'}) %}
+{% set badge_color = color if color else info.color %}
+<span class="badge badge--{{ badge_color }}">{{ info.label }}</span>
+{% endmacro %}

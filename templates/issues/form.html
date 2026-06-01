@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}提交问题反馈 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}提交问题反馈{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">提交问题反馈</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('issues.list_issues') }}" class="btn btn--ghost">取消</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__body">
+        <form method="POST" class="form">
+            <div class="form__group">
+                <label class="form__label" for="booking_id">关联预订</label>
+                <select id="booking_id" name="booking_id" class="form__input" required>
+                    <option value="">请选择预订</option>
+                    {% for booking in bookings %}
+                    <option value="{{ booking.id }}">{{ booking.title }}（{{ booking.start_time.strftime('%Y-%m-%d') }}）</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="title">问题标题</label>
+                <input type="text" id="title" name="title" class="form__input" required>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="description">问题描述</label>
+                <textarea id="description" name="description" class="form__input form__textarea" rows="4"></textarea>
+            </div>
+
+            <div class="form__group">
+                <label class="form__label" for="priority">优先级</label>
+                <select id="priority" name="priority" class="form__input">
+                    <option value="low">低</option>
+                    <option value="medium" selected>中</option>
+                    <option value="high">高</option>
+                    <option value="urgent">紧急</option>
+                </select>
+            </div>
+
+            <div class="form__row">
+                <div class="form__group">
+                    <label class="form__label" for="reported_by">报告人</label>
+                    <input type="text" id="reported_by" name="reported_by" class="form__input">
+                </div>
+                <div class="form__group">
+                    <label class="form__label" for="assigned_to">指派处理人</label>
+                    <input type="text" id="assigned_to" name="assigned_to" class="form__input">
+                </div>
+            </div>
+
+            <div class="form__actions">
+                <button type="submit" class="btn btn--primary">提交</button>
+                <a href="{{ url_for('issues.list_issues') }}" class="btn btn--ghost">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

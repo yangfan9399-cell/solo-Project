@@ -1,0 +1,73 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}茶歇设备 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}茶歇设备{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">茶歇设备</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('caterings.new_catering') }}" class="btn btn--primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            新建茶歇需求
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar__form">
+        <select name="status" class="filter-select" onchange="this.form.submit()">
+            <option value="">全部状态</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>待确认</option>
+            <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>已确认</option>
+            <option value="serving" {% if status_filter == 'serving' %}selected{% endif %}>服务中</option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>已完成</option>
+        </select>
+    </form>
+</div>
+
+{% if caterings %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>预订</th>
+                <th>套餐类型</th>
+                <th>人数</th>
+                <th>额外项目</th>
+                <th>服务时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for catering in caterings %}
+            <tr>
+                <td><a href="{{ url_for('caterings.detail', id=catering.id) }}">{{ catering.booking.title }}</a></td>
+                <td>{{ catering.package_type }}</td>
+                <td>{{ catering.pax }}</td>
+                <td>{{ catering.extra_items[:30] }}{% if catering.extra_items|length > 30 %}…{% endif %}</td>
+                <td>{{ catering.serve_time.strftime('%Y-%m-%d %H:%M') if catering.serve_time else '-' }}</td>
+                <td>{{ status_badge(catering.status) }}</td>
+                <td>
+                    <a href="{{ url_for('caterings.detail', id=catering.id) }}" class="btn btn--sm btn--ghost">查看</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state__icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+    </div>
+    <p class="empty-state__text">暂无茶歇设备需求</p>
+    <p class="empty-state__hint">点击上方按钮创建新需求</p>
+</div>
+{% endif %}
+{% endblock %}

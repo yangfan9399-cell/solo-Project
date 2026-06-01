@@ -1,0 +1,96 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block page_title %}{{ room.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">{{ room.name }}</h1>
+    <div class="page-header__actions">
+        <a href="/rooms/" class="btn btn--secondary btn--sm">返回列表</a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">会议室信息</h2>
+            </div>
+            <table class="data-table">
+                <tr><td style="width:100px;font-weight:500;">名称</td><td>{{ room.name }}</td></tr>
+                <tr><td style="font-weight:500;">楼层</td><td>{{ room.floor }}层</td></tr>
+                <tr><td style="font-weight:500;">容量</td><td>可容纳{{ room.capacity }}人</td></tr>
+                <tr><td style="font-weight:500;">设备</td><td>
+                    {% if room.equipment %}
+                    {% for tag in room.equipment.split(',') %}
+                    {% if tag.strip() %}
+                    <span class="badge" style="margin:2px;">{{ tag.strip() }}</span>
+                    {% endif %}
+                    {% endfor %}
+                    {% else %}
+                    <span style="color:var(--text-light);">无</span>
+                    {% endif %}
+                </td></tr>
+                <tr><td style="font-weight:500;">状态</td><td>{{ status_badge(room.status) }}</td></tr>
+            </table>
+        </div>
+
+        <div class="card" id="schedule-section">
+            <div class="card__header" style="display: flex; align-items: center; justify-content: space-between;">
+                <button class="btn btn--sm btn--secondary"
+                        hx-get="/rooms/{{ room.id }}?week_offset={{ week_offset - 1 }}"
+                        hx-target="#schedule-section"
+                        hx-swap="outerHTML">
+                    &larr; 上一周
+                </button>
+                <h2 class="card__title">{{ week_start_str }} - {{ week_end_str }}</h2>
+                <button class="btn btn--sm btn--secondary"
+                        hx-get="/rooms/{{ room.id }}?week_offset={{ week_offset + 1 }}"
+                        hx-target="#schedule-section"
+                        hx-swap="outerHTML">
+                    下一周 &rarr;
+                </button>
+            </div>
+            <div class="calendar">
+                {% for day in calendar_days %}
+                <div class="calendar__cell {% if day.is_today %}calendar__cell--today{% endif %}">
+                    <div class="calendar__day">{{ day.name }} {{ day.date.strftime('%m/%d') }}</div>
+                    {% for b in day.bookings %}
+                    <a href="{{ url_for('bookings.detail', id=b.id) }}"
+                       class="calendar__event calendar__event--{{ b.status }}">
+                        {{ b.start_time.strftime('%H:%M') }} {{ b.title }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">近期预订</h2>
+            </div>
+            {% if bookings %}
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                {% for booking in bookings %}
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <a href="{{ url_for('bookings.detail', id=booking.id) }}" style="font-weight: 500; color: var(--text); text-decoration: none;">{{ booking.title }}</a>
+                        {{ status_badge(booking.status) }}
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-light); margin-top: 4px;">
+                        {{ booking.client_name }} · {{ booking.start_time.strftime('%m/%d %H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div style="text-align: center; padding: 24px; color: var(--text-light);">本周暂无预订</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% from "partials/_priority_badge.html" import render as priority_badge %}
+{% from "partials/_empty_state.html" import render as empty_state %}
+{% extends "base.html" %}
+
+{% block title %}问题反馈 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}问题反馈{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">问题反馈</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('issues.new_issue') }}" class="btn btn--primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            提交问题
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <select name="status" class="filter-select" hx-get="{{ url_for('issues.list_issues') }}" hx-target="#issue-list" hx-trigger="change">
+        <option value="">全部状态</option>
+        <option value="open" {% if status_filter == 'open' %}selected{% endif %}>待处理</option>
+        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>处理中</option>
+        <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>已解决</option>
+        <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>已关闭</option>
+    </select>
+    <select name="priority" class="filter-select" hx-get="{{ url_for('issues.list_issues') }}" hx-target="#issue-list" hx-trigger="change">
+        <option value="">全部优先级</option>
+        <option value="low" {% if priority_filter == 'low' %}selected{% endif %}>低</option>
+        <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>中</option>
+        <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>高</option>
+        <option value="urgent" {% if priority_filter == 'urgent' %}selected{% endif %}>紧急</option>
+    </select>
+</div>
+
+<div id="issue-list">
+    {% if issues %}
+    <div class="issue-cards">
+        {% for issue in issues %}
+        {% set priority_colors = {'urgent': '#7F1D1D', 'high': '#DC2626', 'medium': '#D97706', 'low': '#6B7280'} %}
+        <div class="issue-card">
+            <div class="issue-card__bar" style="background-color: {{ priority_colors.get(issue.priority, '#6B7280') }};"></div>
+            <div class="issue-card__body">
+                <div class="issue-card__main">
+                    <div class="issue-card__title">
+                        <a href="{{ url_for('issues.detail', id=issue.id) }}">{{ issue.title }}</a>
+                    </div>
+                    {% if issue.booking %}
+                    <div class="issue-card__booking">
+                        <a href="{{ url_for('bookings.detail', id=issue.booking_id) }}">{{ issue.booking.title }}</a>
+                    </div>
+                    {% endif %}
+                    {% if issue.description %}
+                    <div class="issue-card__desc">{{ issue.description[:80] }}{% if issue.description|length > 80 %}…{% endif %}</div>
+                    {% endif %}
+                </div>
+                <div class="issue-card__meta">
+                    <div class="issue-card__badges">
+                        {{ status_badge(issue.status) }}
+                        {{ priority_badge(issue.priority) }}
+                    </div>
+                    <div class="issue-card__info">
+                        <span class="issue-card__time">{{ issue.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        {% if issue.assigned_to %}
+                        <span class="issue-card__assignee">处理人: {{ issue.assigned_to }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    {{ empty_state(
+        '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>',
+        '暂无问题反馈',
+        '点击提交问题按钮创建第一条问题反馈',
+        url_for('issues.new_issue'),
+        '提交问题'
+    ) }}
+    {% endif %}
+</div>
+
+<style>
+.issue-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.issue-card {
+    display: flex;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+.issue-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.issue-card__bar {
+    width: 4px;
+    flex-shrink: 0;
+}
+.issue-card__body {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    gap: 24px;
+}
+.issue-card__main {
+    flex: 1;
+    min-width: 0;
+}
+.issue-card__title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+.issue-card__title a {
+    color: #111827;
+    text-decoration: none;
+}
+.issue-card__title a:hover {
+    color: #2563eb;
+}
+.issue-card__booking {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+.issue-card__booking a {
+    color: #6b7280;
+    text-decoration: none;
+}
+.issue-card__booking a:hover {
+    color: #2563eb;
+}
+.issue-card__desc {
+    font-size: 13px;
+    color: #9ca3af;
+    line-height: 1.5;
+}
+.issue-card__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.issue-card__badges {
+    display: flex;
+    gap: 6px;
+}
+.issue-card__info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+</style>
+{% endblock %}

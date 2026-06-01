@@ -1,0 +1,10 @@
+{% macro render(priority) %}
+{% set priority_map = {
+    'low': '低',
+    'medium': '中',
+    'high': '高',
+    'urgent': '紧急',
+} %}
+{% set label = priority_map.get(priority, priority) %}
+<span class="badge badge--{{ priority }}">{{ label }}</span>
+{% endmacro %}

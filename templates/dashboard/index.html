@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% from "partials/_priority_badge.html" import render as priority_badge %}
+
+{% block page_title %}工作台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-header__title">工作台</h1>
+</div>
+
+<div class="grid grid--4" style="margin-bottom: 24px;">
+  <div class="stat-card">
+    <div class="stat-card__value">{{ stats.total_bookings }}</div>
+    <div class="stat-card__label">总预订数</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value" style="color: var(--primary);">{{ stats.confirmed_bookings }}</div>
+    <div class="stat-card__label">已确认</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value" style="color: var(--accent);">{{ stats.in_progress }}</div>
+    <div class="stat-card__label">进行中</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value" style="color: var(--danger);">{{ stats.open_issues }}</div>
+    <div class="stat-card__label">异常工单</div>
+  </div>
+</div>
+
+<div class="grid grid--2" style="margin-bottom: 24px;">
+  <div class="card">
+    <div class="card__header">
+      <h2 class="card__title">近期会议</h2>
+    </div>
+    {% if upcoming_bookings %}
+    <ul style="list-style: none; padding: 0; margin: 0;">
+      {% for booking in upcoming_bookings %}
+      <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
+        <div>
+          <a href="{{ url_for('bookings.detail', id=booking.id) }}" style="font-weight: 500; color: var(--text); text-decoration: none;">{{ booking.title }}</a>
+          <div style="font-size: 13px; color: var(--text-light); margin-top: 2px;">{{ booking.room.name }} · {{ booking.start_time.strftime('%m/%d %H:%M') }}</div>
+        </div>
+        {{ status_badge(booking.status) }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div style="text-align: center; padding: 24px; color: var(--text-light);">暂无近期会议</div>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom: 20px;">
+      <div class="card__header">
+        <h2 class="card__title">今日安排</h2>
+      </div>
+      {% if today_bookings %}
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        {% for booking in today_bookings %}
+        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
+          <div>
+            <a href="{{ url_for('bookings.detail', id=booking.id) }}" style="font-weight: 500; color: var(--text); text-decoration: none;">{{ booking.title }}</a>
+            <div style="font-size: 13px; color: var(--text-light); margin-top: 2px;">{{ booking.start_time.strftime('%H:%M') }} - {{ booking.end_time.strftime('%H:%M') }}</div>
+          </div>
+          {{ status_badge(booking.status) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div style="text-align: center; padding: 24px; color: var(--text-light);">今日无会议安排</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h2 class="card__title">异常提醒</h2>
+      </div>
+      {% if open_issues %}
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        {% for issue in open_issues %}
+        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
+          <div>
+            <a href="{{ url_for('issues.detail', id=issue.id) }}" style="font-weight: 500; color: var(--text); text-decoration: none;">{{ issue.title }}</a>
+            <div style="font-size: 13px; color: var(--text-light); margin-top: 2px;">{{ issue.created_at.strftime('%m/%d %H:%M') }}</div>
+          </div>
+          {{ priority_badge(issue.priority) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div style="text-align: center; padding: 24px; color: var(--text-light);">暂无异常工单</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="calendar-section" class="card">
+  <div class="card__header" style="display: flex; align-items: center; justify-content: space-between;">
+    <button class="btn btn--sm btn--secondary"
+            hx-get="/?week_offset={{ week_offset - 1 }}"
+            hx-target="#calendar-section"
+            hx-swap="outerHTML">
+      &larr; 上一周
+    </button>
+    <h2 class="card__title">本周日历</h2>
+    <button class="btn btn--sm btn--secondary"
+            hx-get="/?week_offset={{ week_offset + 1 }}"
+            hx-target="#calendar-section"
+            hx-swap="outerHTML">
+      下一周 &rarr;
+    </button>
+  </div>
+  <div class="calendar">
+    {% for day in calendar_days %}
+    <div class="calendar__cell {% if day.is_today %}calendar__cell--today{% endif %}">
+      <div class="calendar__day">{{ day.name }} {{ day.date.strftime('%m/%d') }}</div>
+      {% for booking in day.bookings %}
+      <a href="{{ url_for('bookings.detail', id=booking.id) }}"
+         class="calendar__event calendar__event--{{ booking.status }}">
+        {{ booking.start_time.strftime('%H:%M') }} {{ booking.title }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}复盘详情 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}复盘详情{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">复盘详情</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('reviews.list_reviews') }}" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            返回列表
+        </a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-grid__left">
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">预订信息</h3>
+                <div class="info-list">
+                    <div class="info-list__item">
+                        <span class="info-list__label">会议名称</span>
+                        <span class="info-list__value">
+                            <a href="{{ url_for('bookings.detail', id=review.booking.id) }}">{{ review.booking.title }}</a>
+                        </span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">客户</span>
+                        <span class="info-list__value">{{ review.booking.client_name }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">会议时间</span>
+                        <span class="info-list__value">
+                            <a href="{{ url_for('bookings.detail', id=review.booking.id) }}">
+                                {{ review.booking.start_time.strftime('%Y-%m-%d %H:%M') }} — {{ review.booking.end_time.strftime('%H:%M') }}
+                            </a>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">评分</h3>
+                <div class="info-list">
+                    <div class="info-list__item">
+                        <span class="info-list__label">综合评分</span>
+                        <span class="info-list__value">
+                            <div class="rating">
+                                {% for i in range(5) %}
+                                <span class="rating__star {% if i < review.overall_rating %}rating__star--filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                            <span style="margin-left: 6px; color: var(--text-muted);">{{ review.overall_rating }}/5</span>
+                        </span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">服务评分</span>
+                        <span class="info-list__value">
+                            <div class="rating">
+                                {% for i in range(5) %}
+                                <span class="rating__star {% if i < review.service_rating %}rating__star--filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                            <span style="margin-left: 6px; color: var(--text-muted);">{{ review.service_rating }}/5</span>
+                        </span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">设施评分</span>
+                        <span class="info-list__value">
+                            <div class="rating">
+                                {% for i in range(5) %}
+                                <span class="rating__star {% if i < review.facility_rating %}rating__star--filled{% endif %}">★</span>
+                                {% endfor %}
+                            </div>
+                            <span style="margin-left: 6px; color: var(--text-muted);">{{ review.facility_rating }}/5</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-grid__right">
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">问题摘要</h3>
+                {% if review.issues_summary %}
+                <p style="white-space: pre-wrap;">{{ review.issues_summary }}</p>
+                {% else %}
+                <p class="text-muted">无</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">改进建议</h3>
+                {% if review.improvements %}
+                <p style="white-space: pre-wrap;">{{ review.improvements }}</p>
+                {% else %}
+                <p class="text-muted">无</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">备注</h3>
+                {% if review.notes %}
+                <p style="white-space: pre-wrap;">{{ review.notes }}</p>
+                {% else %}
+                <p class="text-muted">无</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__body">
+                <div class="info-list">
+                    <div class="info-list__item">
+                        <span class="info-list__label">创建时间</span>
+                        <span class="info-list__value">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

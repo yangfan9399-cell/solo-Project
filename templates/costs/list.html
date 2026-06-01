@@ -1,0 +1,72 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}费用确认 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}费用确认{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">费用列表</h2>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar__form" hx-get="{{ url_for('costs.list_costs') }}" hx-target="main .content" hx-push-url="true">
+        <select name="status" class="filter-select" onchange="htmx.trigger(this.form, 'submit')">
+            <option value="">全部状态</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>待审批</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>已审批</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>已退回</option>
+        </select>
+    </form>
+</div>
+
+{% if costs %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>预订</th>
+                <th>类别</th>
+                <th>说明</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>审批人</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cost in costs %}
+            <tr>
+                <td><a href="{{ url_for('bookings.detail', id=cost.booking.id) }}">{{ cost.booking.title }}</a></td>
+                <td>{{ cost.category }}</td>
+                <td>{{ cost.description[:30] }}{% if cost.description|length > 30 %}…{% endif %}</td>
+                <td>¥{{ "%.2f"|format(cost.amount) }}</td>
+                <td>{{ status_badge(cost.status) }}</td>
+                <td>{{ cost.approved_by or '—' }}</td>
+                <td>
+                    <a href="{{ url_for('costs.detail', id=cost.id) }}" class="btn btn--sm btn--ghost">查看</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3"><strong>合计</strong></td>
+                <td><strong>¥{{ "%.2f"|format(costs | sum(attribute='amount')) }}</strong></td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state__icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    </div>
+    <p class="empty-state__text">暂无费用记录</p>
+</div>
+{% endif %}
+{% endblock %}

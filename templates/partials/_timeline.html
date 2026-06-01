@@ -1,0 +1,23 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+
+{% macro render(events) %}
+<div class="timeline">
+    {% for event in events %}
+    <div class="timeline__item">
+        <div class="timeline__dot"></div>
+        <div class="timeline__content">
+            <div class="timeline__header">
+                <span class="timeline__label">{{ event.label }}</span>
+                {{ status_badge(event.status) }}
+            </div>
+            <div class="timeline__meta">
+                <span class="timeline__date">{{ event.date }}</span>
+                {% if event.user %}
+                <span class="timeline__user">{{ event.user }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}

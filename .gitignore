@@ -3,3 +3,7 @@ target/
 .env
 .DS_Store
 runs/
+venv/
+instance/
+__pycache__/
+*.pyc

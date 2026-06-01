@@ -1,0 +1,90 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}布场需求详情 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}布场需求详情{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">布场需求 #{{ setup.id }}</h2>
+        {{ status_badge(setup.status) }}
+    </div>
+    <div class="page-header__actions">
+        {% if setup.status == 'pending' %}
+        <form method="post" action="{{ url_for('setups.confirm_setup', id=setup.id) }}">
+            <button type="submit" class="btn btn--primary">确认布场方案</button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('setups.list_setups') }}" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            返回列表
+        </a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-grid__left">
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">布场信息</h3>
+                <div class="info-list">
+                    <div class="info-list__item">
+                        <span class="info-list__label">关联预订</span>
+                        <span class="info-list__value">
+                            <a href="{{ url_for('bookings.detail', id=setup.booking.id) }}">{{ setup.booking.title }}</a>
+                        </span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">客户</span>
+                        <span class="info-list__value">{{ setup.booking.client_name }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">会议时间</span>
+                        <span class="info-list__value">
+                            <a href="{{ url_for('bookings.detail', id=setup.booking.id) }}">
+                                {{ setup.booking.start_time.strftime('%Y-%m-%d %H:%M') }} - {{ setup.booking.end_time.strftime('%H:%M') }}
+                            </a>
+                        </span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">布局类型</span>
+                        <span class="info-list__value">{{ setup.layout_type }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">需求说明</span>
+                        <span class="info-list__value">{{ setup.requirements or '—' }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">特殊要求</span>
+                        <span class="info-list__value">{{ setup.special_requests or '—' }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">预期完成时间</span>
+                        <span class="info-list__value">{{ setup.expected_complete.strftime('%Y-%m-%d %H:%M') if setup.expected_complete else '—' }}</span>
+                    </div>
+                    <div class="info-list__item">
+                        <span class="info-list__label">确认时间</span>
+                        <span class="info-list__value">{{ setup.confirmed_at.strftime('%Y-%m-%d %H:%M') if setup.confirmed_at else '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-grid__right">
+        {% if setup.status == 'pending' %}
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">操作</h3>
+                <p class="text-muted">该布场需求待确认，确认后将通知相关人员开始布置。</p>
+                <form method="post" action="{{ url_for('setups.confirm_setup', id=setup.id) }}">
+                    <button type="submit" class="btn btn--primary btn--block">确认布场方案</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

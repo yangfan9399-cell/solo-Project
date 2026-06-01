@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}新建布场需求 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}新建布场需求{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">新建布场需求</h2>
+    </div>
+    <div class="page-header__actions">
+        <a href="{{ url_for('setups.list_setups') }}" class="btn btn--outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            取消
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__body">
+        <form method="post" action="{{ url_for('setups.new_setup') }}">
+            <div class="form-group">
+                <label class="form-label" for="booking_id">关联预订</label>
+                <select name="booking_id" id="booking_id" class="form-select" required>
+                    <option value="">请选择预订</option>
+                    {% for booking in bookings %}
+                    <option value="{{ booking.id }}">{{ booking.title }}（{{ booking.start_time.strftime('%m/%d %H:%M') }} - {{ booking.client_name }}）</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="layout_type">布局类型</label>
+                <select name="layout_type" id="layout_type" class="form-select" required>
+                    <option value="">请选择布局</option>
+                    <option value="剧院式">剧院式</option>
+                    <option value="课桌式">课桌式</option>
+                    <option value="U型">U型</option>
+                    <option value="宴会式">宴会式</option>
+                    <option value="中空式">中空式</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="requirements">需求说明</label>
+                <textarea name="requirements" id="requirements" class="form-textarea" rows="4" placeholder="请输入布场需求说明"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="special_requests">特殊要求</label>
+                <textarea name="special_requests" id="special_requests" class="form-textarea" rows="3" placeholder="请输入特殊要求（如有）"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="expected_complete">预期完成时间</label>
+                <input type="datetime-local" name="expected_complete" id="expected_complete" class="form-input">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary">提交</button>
+                <a href="{{ url_for('setups.list_setups') }}" class="btn btn--outline">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% from "partials/_status_badge.html" import render as status_badge %}
+{% extends "base.html" %}
+
+{% block title %}会议室管理 - 酒店会务管理系统{% endblock %}
+
+{% block page_title %}会议室管理{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header__left">
+        <h2 class="page-header__title">会议室列表</h2>
+    </div>
+    <div class="page-header__filters">
+        <select name="floor" class="filter-select" hx-get="/rooms" hx-target="#room-list" hx-trigger="change" hx-include="[name='capacity']">
+            <option value="">全部楼层</option>
+            {% for f in floors %}
+            <option value="{{ f[0] }}" {% if current_floor == f[0] %}selected{% endif %}>{{ f[0] }}层</option>
+            {% endfor %}
+        </select>
+        <select name="capacity" class="filter-select" hx-get="/rooms" hx-target="#room-list" hx-trigger="change" hx-include="[name='floor']">
+            <option value="">全部容量</option>
+            <option value="20" {% if current_capacity == 20 %}selected{% endif %}>20人以上</option>
+            <option value="50" {% if current_capacity == 50 %}selected{% endif %}>50人以上</option>
+            <option value="100" {% if current_capacity == 100 %}selected{% endif %}>100人以上</option>
+            <option value="200" {% if current_capacity == 200 %}selected{% endif %}>200人以上</option>
+        </select>
+    </div>
+</div>
+
+<div id="room-list" class="grid grid--3">
+    {% for room in rooms %}
+    <div class="card">
+        <div class="card__image-wrapper">
+            {% if room.image_url %}
+            <img src="{{ room.image_url }}" alt="{{ room.name }}" class="card__image">
+            {% else %}
+            <div class="card__image card__image--placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card__body">
+            <div class="card__header">
+                <h3 class="card__title">{{ room.name }}</h3>
+                {{ status_badge(room.status) }}
+            </div>
+            <div class="card__meta">
+                <span class="card__meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 3v18"/></svg>
+                    {{ room.floor }}层
+                </span>
+                <span class="card__meta-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    可容纳{{ room.capacity }}人
+                </span>
+            </div>
+            {% if room.equipment %}
+            <div class="card__tags">
+                {% for tag in room.equipment.split(',') %}
+                {% if tag.strip() %}
+                <span class="badge">{{ tag.strip() }}</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="card__footer">
+            <a href="/rooms/{{ room.id }}" class="btn btn--sm btn--primary">查看详情</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state__icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg>
+        </div>
+        <p class="empty-state__text">暂无符合条件的会议室</p>
+        <p class="empty-state__hint">请尝试调整筛选条件</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
