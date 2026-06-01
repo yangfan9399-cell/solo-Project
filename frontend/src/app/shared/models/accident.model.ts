@@ -1,4 +1,4 @@
-export type AccidentStatus = 'pending_review' | 'reviewed' | 'in_repair' | 'in_claim' | 'completed' | 'rejected';
+export type AccidentStatus = 'pending_review' | 'reviewed' | 'in_repair' | 'in_claim' | 'pending_resume' | 'completed' | 'rejected';
 
 export interface Vehicle {
   id: string;
@@ -6,6 +6,11 @@ export interface Vehicle {
   model: string;
   type?: string;
   status: 'active' | 'out_of_service' | 'in_repair';
+  outOfServiceReason?: string;
+  outOfServiceTime?: Date;
+  expectedResumeTime?: Date;
+  dispatcherId?: string;
+  dispatcher?: any;
   createdAt: Date;
   updatedAt: Date;
 }

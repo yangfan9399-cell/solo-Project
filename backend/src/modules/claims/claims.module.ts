@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClaimsService } from './claims.service';
 import { ClaimsController } from './claims.controller';
-import { Claim } from '../../database/entities';
+import { Claim, Accident, Repair } from '../../database/entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Claim])],
+  imports: [TypeOrmModule.forFeature([Claim, Accident, Repair])],
   controllers: [ClaimsController],
   providers: [ClaimsService],
   exports: [ClaimsService],

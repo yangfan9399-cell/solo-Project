@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Vehicle } from './vehicle.entity';
 import { User } from './user.entity';
 
-export type AccidentStatus = 'pending_review' | 'reviewed' | 'in_repair' | 'in_claim' | 'completed' | 'rejected';
+export type AccidentStatus = 'pending_review' | 'reviewed' | 'in_repair' | 'in_claim' | 'pending_resume' | 'completed' | 'rejected';
 
 @Entity('accidents')
 export class Accident {

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,9 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { LayoutComponent } from '../../shared/components/layout.component';
 import { LoadingComponent } from '../../shared/components/loading.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
@@ -24,6 +27,97 @@ import { Claim } from '../../shared/models/claim.model';
 import { Attachment } from '../../shared/models/attachment.model';
 
 @Component({
+  selector: 'app-schedule-out-of-service-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatDialogModule,
+  ],
+  template: `
+    <h2 mat-dialog-title>安排车辆停运</h2>
+    <mat-dialog-content>
+      <form [formGroup]="form" class="schedule-form">
+        <mat-form-field appearance="outline">
+          <mat-label>停运原因 *</mat-label>
+          <textarea matInput formControlName="outOfServiceReason" rows="3" placeholder="请填写停运原因"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>预计复运时间</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="expectedResumeTime">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>备注</mat-label>
+          <input matInput formControlName="remark" placeholder="请输入备注">
+        </mat-form-field>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>取消</button>
+      <button mat-raised-button color="primary" [disabled]="!form.valid || saving" (click)="onSubmit()">
+        <mat-icon *ngIf="saving">sync</mat-icon>
+        {{ saving ? '提交中...' : '确认安排' }}
+      </button>
+    </mat-dialog-actions>
+  `,
+  styles: [`
+    .schedule-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 450px;
+    }
+  `]
+})
+export class ScheduleOutOfServiceDialogComponent {
+  private fb = inject(FormBuilder);
+  private accidentService = inject(AccidentService);
+  private dialogRef = inject(MatDialogRef);
+  private accidentId = inject('ACCIDENT_ID') as string;
+
+  saving = false;
+  form: FormGroup;
+
+  constructor() {
+    this.form = this.fb.group({
+      outOfServiceReason: ['', Validators.required],
+      expectedResumeTime: [null],
+      remark: [''],
+    });
+  }
+
+  onSubmit() {
+    if (this.form.invalid) return;
+
+    this.saving = true;
+    const value = this.form.value;
+
+    this.accidentService.scheduleOutOfService(this.accidentId, {
+      outOfServiceReason: value.outOfServiceReason,
+      expectedResumeTime: value.expectedResumeTime ? value.expectedResumeTime.toISOString() : undefined,
+      remark: value.remark,
+    }).subscribe({
+      next: () => {
+        this.saving = false;
+        this.dialogRef.close(true);
+      },
+      error: () => {
+        this.saving = false;
+      },
+    });
+  }
+}
+
+@Component({
   selector: 'app-accident-detail',
   standalone: true,
   imports: [
@@ -36,6 +130,9 @@ import { Attachment } from '../../shared/models/attachment.model';
     MatSelectModule,
     MatInputModule,
     MatFormFieldModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatDialogModule,
     LayoutComponent,
     LoadingComponent,
     EmptyStateComponent,
@@ -107,7 +204,60 @@ import { Attachment } from '../../shared/models/attachment.model';
                     </mat-card-content>
                   </mat-card>
 
-                  <mat-card class="status-card" *ngIf="canUpdateStatus">
+                  <mat-card class="dispatch-card" *ngIf="accident.vehicle">
+                    <mat-card-header>
+                      <mat-card-title>调度信息</mat-card-title>
+                      <div class="card-actions">
+                        <button
+                          *ngIf="canScheduleOutOfService"
+                          mat-raised-button
+                          color="primary"
+                          (click)="openScheduleDialog()"
+                        >
+                          <mat-icon>event_busy</mat-icon>
+                          安排停运
+                        </button>
+                        <button
+                          *ngIf="canConfirmResume"
+                          mat-raised-button
+                          color="accent"
+                          (click)="confirmResume()"
+                        >
+                          <mat-icon>check_circle</mat-icon>
+                          确认复运
+                        </button>
+                      </div>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <div class="dispatch-grid" *ngIf="accident.vehicle.outOfServiceReason">
+                        <div class="info-item">
+                          <label>停运原因</label>
+                          <span>{{ accident.vehicle.outOfServiceReason }}</span>
+                        </div>
+                        <div class="info-item">
+                          <label>停运时间</label>
+                          <span>{{ formatDate(accident.vehicle.outOfServiceTime) }}</span>
+                        </div>
+                        <div class="info-item" *ngIf="accident.vehicle.expectedResumeTime">
+                          <label>预计复运时间</label>
+                          <span>{{ formatDate(accident.vehicle.expectedResumeTime) }}</span>
+                        </div>
+                        <div class="info-item" *ngIf="accident.vehicle.dispatcher">
+                          <label>调度员</label>
+                          <span>{{ accident.vehicle.dispatcher.name }}</span>
+                        </div>
+                      </div>
+                      <div class="no-dispatch-info" *ngIf="!accident.vehicle.outOfServiceReason">
+                        <app-empty-state
+                          icon="schedule"
+                          title="暂无调度安排"
+                          [description]="canScheduleOutOfService ? '请点击上方按钮安排车辆停运' : '等待调度员安排停运'"
+                        ></app-empty-state>
+                      </div>
+                    </mat-card-content>
+                  </mat-card>
+
+                  <mat-card class="status-card" *ngIf="canUpdateStatus && !canScheduleOutOfService && !canConfirmResume">
                     <mat-card-header>
                       <mat-card-title>状态变更</mat-card-title>
                     </mat-card-header>
@@ -120,6 +270,7 @@ import { Attachment } from '../../shared/models/attachment.model';
                             <mat-option value="reviewed">已审核</mat-option>
                             <mat-option value="in_repair">维修中</mat-option>
                             <mat-option value="in_claim">理赔中</mat-option>
+                            <mat-option value="pending_resume">待复运确认</mat-option>
                             <mat-option value="completed">已完成</mat-option>
                             <mat-option value="rejected">已驳回</mat-option>
                           </mat-select>
@@ -416,8 +567,29 @@ import { Attachment } from '../../shared/models/attachment.model';
     .status-badge.reviewed { background: #e3f2fd; color: #1565c0; }
     .status-badge.in_repair { background: #ffebee; color: #c62828; }
     .status-badge.in_claim { background: #f3e5f5; color: #7b1fa2; }
+    .status-badge.pending_resume { background: #e8f5e9; color: #2e7d32; }
     .status-badge.completed { background: #e8f5e9; color: #2e7d32; }
     .status-badge.rejected { background: #ffebee; color: #c62828; }
+    .dispatch-card {
+      margin-bottom: 16px;
+    }
+    .dispatch-card mat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dispatch-card .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .dispatch-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .no-dispatch-info {
+      padding: 24px 0;
+    }
     .tab-actions {
       display: flex;
       justify-content: flex-end;
@@ -504,6 +676,17 @@ export class AccidentDetailComponent implements OnInit {
   get canManageClaim(): boolean {
     return this.authService.hasRole(['insurance_specialist']);
   }
+
+  get canScheduleOutOfService(): boolean {
+    return this.authService.hasRole(['dispatcher']) && this.accident?.status === 'reviewed';
+  }
+
+  get canConfirmResume(): boolean {
+    return this.authService.hasRole(['dispatcher']) && this.accident?.status === 'pending_resume';
+  }
+
+  private dialog = inject(MatDialog);
+  confirming = false;
 
   constructor() {
     this.statusForm = this.fb.group({
@@ -600,6 +783,7 @@ export class AccidentDetailComponent implements OnInit {
       reviewed: '已审核',
       in_repair: '维修中',
       in_claim: '理赔中',
+      pending_resume: '待复运确认',
       completed: '已完成',
       rejected: '已驳回',
     };
@@ -654,6 +838,37 @@ export class AccidentDetailComponent implements OnInit {
     this.claimService.findByAccident(this.accidentId).subscribe({
       next: (claims) => {
         this.claims = claims;
+      },
+    });
+  }
+
+  openScheduleDialog() {
+    const dialogRef = this.dialog.open(ScheduleOutOfServiceDialogComponent, {
+      width: '520px',
+      providers: [
+        { provide: 'ACCIDENT_ID', useValue: this.accidentId },
+      ],
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loadData();
+      }
+    });
+  }
+
+  confirmResume() {
+    if (this.confirming) return;
+    if (!confirm('确认该车辆已维修完成、理赔结束，可恢复运营吗？')) return;
+
+    this.confirming = true;
+    this.accidentService.confirmResume(this.accidentId).subscribe({
+      next: () => {
+        this.confirming = false;
+        this.loadData();
+      },
+      error: () => {
+        this.confirming = false;
       },
     });
   }

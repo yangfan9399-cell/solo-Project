@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Claim, ClaimStatus } from '../../database/entities';
+import { Repository, DataSource } from 'typeorm';
+import { Claim, ClaimStatus, Accident, Repair } from '../../database/entities';
 
 export interface CreateClaimDto {
   accidentId: string;
@@ -23,6 +23,11 @@ export class ClaimsService {
   constructor(
     @InjectRepository(Claim)
     private claimRepository: Repository<Claim>,
+    @InjectRepository(Accident)
+    private accidentRepository: Repository<Accident>,
+    @InjectRepository(Repair)
+    private repairRepository: Repository<Repair>,
+    private dataSource: DataSource,
   ) {}
 
   async create(createClaimDto: CreateClaimDto, insuranceSpecialistId: string): Promise<Claim> {
@@ -59,13 +64,39 @@ export class ClaimsService {
   }
 
   async update(id: string, updateClaimDto: UpdateClaimDto): Promise<Claim> {
-    const claim = await this.claimRepository.findOne({ where: { id } });
-    if (!claim) {
-      throw new NotFoundException('理赔记录不存在');
-    }
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    Object.assign(claim, updateClaimDto);
-    return this.claimRepository.save(claim);
+    try {
+      const claim = await queryRunner.manager.findOne(Claim, { where: { id } });
+      if (!claim) {
+        throw new NotFoundException('理赔记录不存在');
+      }
+
+      Object.assign(claim, updateClaimDto);
+      const savedClaim = await queryRunner.manager.save(claim);
+
+      if (updateClaimDto.status === 'paid') {
+        const repair = await queryRunner.manager.findOne(Repair, {
+          where: { accidentId: claim.accidentId },
+        });
+
+        if (repair && repair.status === 'completed') {
+          await queryRunner.manager.update(Accident, claim.accidentId, {
+            status: 'pending_resume',
+          });
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      return savedClaim;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAll(page = 1, limit = 10, status?: ClaimStatus) {

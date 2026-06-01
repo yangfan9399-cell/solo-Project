@@ -3,6 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AccidentsService } from './accidents.service';
 import { CreateAccidentDto } from './dto/create-accident.dto';
 import { UpdateAccidentStatusDto } from './dto/update-accident-status.dto';
+import { ScheduleOutOfServiceDto } from './dto/schedule-out-of-service.dto';
+import { ConfirmResumeDto } from './dto/confirm-resume.dto';
 import { AccidentStatus } from '../../database/entities';
 import { Roles } from '../../shared/decorators/roles.decorator';
 import { RolesGuard } from '../../shared/guards/roles.guard';
@@ -50,6 +52,28 @@ export class AccidentsController {
     @Request() req,
   ) {
     return this.accidentsService.updateStatus(id, updateStatusDto, req.user.id);
+  }
+
+  @Post(':id/schedule-out-of-service')
+  @UseGuards(RolesGuard)
+  @Roles('dispatcher')
+  async scheduleOutOfService(
+    @Param('id') id: string,
+    @Body() dto: ScheduleOutOfServiceDto,
+    @Request() req,
+  ) {
+    return this.accidentsService.scheduleOutOfService(id, dto, req.user.id);
+  }
+
+  @Post(':id/confirm-resume')
+  @UseGuards(RolesGuard)
+  @Roles('dispatcher')
+  async confirmResume(
+    @Param('id') id: string,
+    @Body() dto: ConfirmResumeDto,
+    @Request() req,
+  ) {
+    return this.accidentsService.confirmResume(id, dto, req.user.id);
   }
 
   @Get(':id/logs')

@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Vehicle } from '../../database/entities';
+import { Vehicle, Accident } from '../../database/entities';
 
 @Injectable()
 export class VehiclesService {
   constructor(
     @InjectRepository(Vehicle)
     private vehicleRepository: Repository<Vehicle>,
+    @InjectRepository(Accident)
+    private accidentRepository: Repository<Accident>,
   ) {}
 
   async findAll(status?: string) {
@@ -34,9 +36,27 @@ export class VehiclesService {
   async findOutOfService() {
     const outOfServiceVehicles = await this.vehicleRepository
       .createQueryBuilder('vehicle')
+      .leftJoinAndSelect('vehicle.dispatcher', 'dispatcher')
       .where('vehicle.status IN (:...statuses)', { statuses: ['out_of_service', 'in_repair'] })
       .orderBy('vehicle.updatedAt', 'DESC')
       .getMany();
+
+    const vehiclesWithAccident = await Promise.all(
+      outOfServiceVehicles.map(async (vehicle) => {
+        const accident = await this.accidentRepository
+          .createQueryBuilder('accident')
+          .leftJoinAndSelect('accident.reporter', 'reporter')
+          .where('accident.vehicleId = :vehicleId', { vehicleId: vehicle.id })
+          .andWhere('accident.status != :status', { status: 'completed' })
+          .orderBy('accident.createdAt', 'DESC')
+          .getOne();
+        
+        return {
+          ...vehicle,
+          currentAccident: accident,
+        };
+      }),
+    );
 
     const stats = {
       total: outOfServiceVehicles.length,
@@ -45,7 +65,7 @@ export class VehiclesService {
     };
 
     return {
-      vehicles: outOfServiceVehicles,
+      vehicles: vehiclesWithAccident,
       stats,
     };
   }

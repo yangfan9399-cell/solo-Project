@@ -41,6 +41,18 @@ export class AccidentService {
     return this.http.get<StatusLog[]>(`${this.apiUrl}/${id}/logs`);
   }
 
+  scheduleOutOfService(id: string, request: {
+    outOfServiceReason: string;
+    expectedResumeTime?: string;
+    remark?: string;
+  }): Observable<Accident> {
+    return this.http.post<Accident>(`${this.apiUrl}/${id}/schedule-out-of-service`, request);
+  }
+
+  confirmResume(id: string, request?: { remark?: string }): Observable<Accident> {
+    return this.http.post<Accident>(`${this.apiUrl}/${id}/confirm-resume`, request || {});
+  }
+
   getStats(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/stats`);
   }
