@@ -142,9 +142,10 @@ function TicketList({ currentUser }) {
                   <th>工单号</th>
                   <th>标题</th>
                   <th>业主信息</th>
-                  <th>分类</th>
                   <th>优先级</th>
                   <th>状态</th>
+                  <th>SLA</th>
+                  <th>回访</th>
                   <th>维修人员</th>
                   <th>创建时间</th>
                   <th>操作</th>
@@ -152,8 +153,11 @@ function TicketList({ currentUser }) {
               </thead>
               <tbody>
                 {tickets.map(ticket => (
-                  <tr key={ticket.id}>
-                    <td><span className="tag">{ticket.ticket_no}</span></td>
+                  <tr key={ticket.id} style={{ background: ticket.is_overdue ? '#fff1f0' : 'inherit' }}>
+                    <td>
+                      <span className="tag">{ticket.ticket_no}</span>
+                      {ticket.is_overdue && <span className="badge badge-urgent" style={{ marginLeft: '4px' }}>超时</span>}
+                    </td>
                     <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {ticket.title}
                     </td>
@@ -161,7 +165,6 @@ function TicketList({ currentUser }) {
                       <div>{ticket.owner_name}</div>
                       <div style={{ fontSize: '12px', color: '#999' }}>{ticket.owner_phone}</div>
                     </td>
-                    <td>{ticket.category_name || '-'}</td>
                     <td>
                       <span className={`badge badge-${ticket.priority}`}>
                         {ticket.priority === 'urgent' ? '紧急' : 
@@ -176,6 +179,27 @@ function TicketList({ currentUser }) {
                          ticket.status === 'in_progress' ? '维修中' :
                          ticket.status === 'completed' ? '已完成' : '已关闭'}
                       </span>
+                    </td>
+                    <td style={{ fontSize: '13px' }}>
+                      <div style={{ color: ticket.is_overdue ? '#cf1322' : '#666' }}>
+                        {ticket.sla_deadline ? dayjs(ticket.sla_deadline).format('MM-DD HH:mm') : '-'}
+                      </div>
+                      {ticket.is_overdue && (
+                        <div style={{ color: '#cf1322', fontSize: '12px' }}>
+                          已超时 {dayjs().diff(ticket.sla_deadline, 'hour')} 小时
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {ticket.follow_up_done ? (
+                        <span className="badge badge-completed">
+                          已回访 ({ticket.avg_satisfaction}⭐)
+                        </span>
+                      ) : ticket.status === 'completed' ? (
+                        <span className="badge badge-pending">待回访</span>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '12px' }}>-</span>
+                      )}
                     </td>
                     <td>{ticket.assignee_name || '-'}</td>
                     <td>{dayjs(ticket.created_at).format('MM-DD HH:mm')}</td>

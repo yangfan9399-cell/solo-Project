@@ -36,6 +36,42 @@ function generateTicketNo() {
   return prefix + '001'
 }
 
+function calculateSLADeadline(priority, createdAt) {
+  const hoursMap = {
+    urgent: 2,
+    high: 24,
+    normal: 48,
+    low: 72
+  }
+  const hours = hoursMap[priority] || 48
+  const deadline = new Date(createdAt)
+  deadline.setHours(deadline.getHours() + hours)
+  return deadline.toISOString()
+}
+
+function isOverdue(slaDeadline, status) {
+  if (!slaDeadline || ['completed', 'closed'].includes(status)) {
+    return false
+  }
+  return new Date() > new Date(slaDeadline)
+}
+
+function getFollowUpStats(ticketId) {
+  const followUps = db.prepare(`
+    SELECT COUNT(*) as total,
+           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+           AVG(satisfaction) as avg_satisfaction
+    FROM follow_ups
+    WHERE ticket_id = ?
+  `).get(ticketId)
+  
+  return {
+    follow_up_count: followUps.total || 0,
+    follow_up_done: followUps.completed > 0,
+    avg_satisfaction: followUps.avg_satisfaction ? Math.round(followUps.avg_satisfaction * 10) / 10 : null
+  }
+}
+
 fastify.get('/api/health', async () => ({ status: 'ok' }))
 
 fastify.get('/api/users', async () => {
@@ -105,7 +141,17 @@ fastify.get('/api/tickets', async (request) => {
   sql += " ORDER BY CASE t.priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 END, t.created_at DESC"
   
   const tickets = db.prepare(sql).all(...params)
-  return { data: tickets }
+  
+  const ticketsWithExtra = tickets.map(ticket => {
+    const followUpStats = getFollowUpStats(ticket.id)
+    return {
+      ...ticket,
+      ...followUpStats,
+      is_overdue: isOverdue(ticket.sla_deadline, ticket.status)
+    }
+  })
+  
+  return { data: ticketsWithExtra }
 })
 
 fastify.get('/api/tickets/:id', async (request, reply) => {
@@ -157,9 +203,13 @@ fastify.get('/api/tickets/:id', async (request, reply) => {
     ORDER BY er.created_at DESC
   `).all(id)
   
+  const followUpStats = getFollowUpStats(id)
+  
   return { 
     data: { 
       ...ticket, 
+      ...followUpStats,
+      is_overdue: isOverdue(ticket.sla_deadline, ticket.status),
       logs, 
       materials, 
       follow_ups: followUps,
@@ -177,15 +227,19 @@ fastify.post('/api/tickets', async (request) => {
   
   const ticket_no = generateTicketNo()
   const status = assignee_id ? 'assigned' : 'pending'
+  const createdAt = new Date()
+  const sla_deadline = calculateSLADeadline(priority, createdAt)
   
   const result = db.prepare(`
     INSERT INTO tickets 
     (ticket_no, title, description, category_id, priority, status,
-     owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours,
+     sla_deadline, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     ticket_no, title, description, category_id, priority, status,
-    owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours
+    owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours,
+    sla_deadline, createdAt.toISOString()
   )
   
   db.prepare(`
@@ -194,7 +248,15 @@ fastify.post('/api/tickets', async (request) => {
   `).run(result.lastInsertRowid, 'create', status, creator_id, '创建报修单')
   
   const ticket = db.prepare('SELECT * FROM tickets WHERE id = ?').get(result.lastInsertRowid)
-  return { data: ticket }
+  const followUpStats = getFollowUpStats(result.lastInsertRowid)
+  
+  return { 
+    data: {
+      ...ticket,
+      ...followUpStats,
+      is_overdue: false
+    }
+  }
 })
 
 fastify.put('/api/tickets/:id/assign', async (request, reply) => {

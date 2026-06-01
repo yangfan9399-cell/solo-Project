@@ -63,24 +63,36 @@ function FollowUp({ currentUser }) {
     !t.follow_up_done
   ) || []
 
+  const followUpDoneTickets = completedTickets?.data?.filter(t => 
+    t.follow_up_done
+  ) || []
+
+  const avgSatisfaction = followUpDoneTickets.length > 0
+    ? (followUpDoneTickets.reduce((sum, t) => sum + (t.avg_satisfaction || 0), 0) / followUpDoneTickets.length).toFixed(1)
+    : '-'
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">质保回访管理</h1>
       </div>
 
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <div className="stat-card stat-card-warning">
           <div className="stat-card-value">{ticketsToFollowUp.length}</div>
           <div className="stat-card-label">待回访工单</div>
         </div>
         <div className="stat-card stat-card-success">
-          <div className="stat-card-value">{pendingFollowUps?.data?.length || 0}</div>
-          <div className="stat-card-label">进行中回访</div>
+          <div className="stat-card-value">{followUpDoneTickets.length}</div>
+          <div className="stat-card-label">已完成回访</div>
         </div>
         <div className="stat-card stat-card-info">
-          <div className="stat-card-value">96%</div>
+          <div className="stat-card-value">{avgSatisfaction}⭐</div>
           <div className="stat-card-label">平均满意度</div>
+        </div>
+        <div className="stat-card stat-card-primary">
+          <div className="stat-card-value">{completedTickets?.data?.length || 0}</div>
+          <div className="stat-card-label">完工单总数</div>
         </div>
       </div>
 
@@ -141,6 +153,49 @@ function FollowUp({ currentUser }) {
           )}
         </div>
       </div>
+
+      {followUpDoneTickets.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">已完成回访</div>
+          </div>
+          <div className="card-body">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>工单号</th>
+                  <th>标题</th>
+                  <th>业主</th>
+                  <th>维修人员</th>
+                  <th>完成时间</th>
+                  <th>满意度</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {followUpDoneTickets.map(ticket => (
+                  <tr key={ticket.id}>
+                    <td><span className="tag">{ticket.ticket_no}</span></td>
+                    <td>{ticket.title}</td>
+                    <td>{ticket.owner_name}</td>
+                    <td>{ticket.assignee_name || '-'}</td>
+                    <td>{dayjs(ticket.completed_at).format('YYYY-MM-DD')}</td>
+                    <td>
+                      <span className="badge badge-completed">
+                        {'⭐'.repeat(Math.round(ticket.avg_satisfaction || 0))}
+                        {' '}{ticket.avg_satisfaction}分
+                      </span>
+                    </td>
+                    <td>
+                      <Link to={`/tickets/${ticket.id}`} className="link-text">详情</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-header">

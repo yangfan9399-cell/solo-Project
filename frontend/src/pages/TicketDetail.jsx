@@ -207,8 +207,22 @@ function TicketDetail({ currentUser }) {
         </div>
       </div>
 
-      {ticket.escalations?.length > 0 && (
+      {ticket.is_overdue && (
         <div className="escalation-banner">
+          <span>⏰</span>
+          <span>SLA 已超时！截止时间：{dayjs(ticket.sla_deadline).format('YYYY-MM-DD HH:mm')}，已超时 {dayjs().diff(ticket.sla_deadline, 'hour')} 小时</span>
+          <button
+            className="btn btn-danger btn-sm"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => setShowEscalateModal(true)}
+          >
+            立即升级
+          </button>
+        </div>
+      )}
+
+      {ticket.escalations?.length > 0 && (
+        <div className="escalation-banner" style={{ background: '#fff7e6', borderColor: '#ffd591', color: '#d46b08' }}>
           <span>⚠️</span>
           <span>该工单已升级到第 {ticket.escalations[0].level} 级：{ticket.escalations[0].reason}</span>
         </div>
@@ -275,6 +289,28 @@ function TicketDetail({ currentUser }) {
                 <div className="detail-row">
                   <span className="detail-label">实际工时</span>
                   <span className="detail-value">{ticket.actual_hours ? `${ticket.actual_hours} 小时` : '-'}</span>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="detail-row">
+                  <span className="detail-label">SLA 截止</span>
+                  <span className="detail-value" style={{ color: ticket.is_overdue ? '#cf1322' : 'inherit' }}>
+                    {ticket.sla_deadline ? dayjs(ticket.sla_deadline).format('YYYY-MM-DD HH:mm') : '-'}
+                    {ticket.is_overdue && ' ⚠️ 已超时'}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">回访状态</span>
+                  <span className="detail-value">
+                    {ticket.follow_up_done ? (
+                      <span className="badge badge-completed">已回访 ({ticket.avg_satisfaction}⭐)</span>
+                    ) : ticket.status === 'completed' ? (
+                      <span className="badge badge-pending">待回访</span>
+                    ) : (
+                      <span style={{ color: '#999' }}>未到回访阶段</span>
+                    )}
+                  </span>
                 </div>
               </div>
 

@@ -45,6 +45,7 @@ export function initDatabase() {
       estimated_hours REAL,
       actual_hours REAL,
       warranty_period INTEGER DEFAULT 30,
+      sla_deadline DATETIME,
       completed_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

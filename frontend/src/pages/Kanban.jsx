@@ -119,17 +119,28 @@ function Kanban({ currentUser }) {
                   <div
                     key={ticket.id}
                     className={`kanban-card kanban-card-${ticket.priority}`}
+                    style={{ 
+                      boxShadow: ticket.is_overdue ? '0 0 0 2px #ff4d4f, 0 2px 8px rgba(255,77,79,0.2)' : undefined,
+                      borderColor: ticket.is_overdue ? '#ff4d4f' : undefined
+                    }}
                     draggable={ticket.status === 'pending'}
                     onDragStart={(e) => handleDragStart(e, ticket)}
                     onClick={() => navigate(`/tickets/${ticket.id}`)}
                   >
-                    <div className="kanban-card-title">{ticket.title}</div>
+                    <div className="kanban-card-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {ticket.is_overdue && <span style={{ color: '#ff4d4f' }}>⏰</span>}
+                      {ticket.title}
+                    </div>
                     <div className="kanban-card-meta">
                       <span>{ticket.ticket_no}</span>
                       <span>{ticket.owner_name}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                      {ticket.assignee_name || '未分派'} · {dayjs(ticket.created_at).format('MM-DD')}
+                    <div style={{ fontSize: '12px', color: ticket.is_overdue ? '#ff4d4f' : '#999', marginTop: '4px' }}>
+                      {ticket.assignee_name || '未分派'} · 
+                      {ticket.is_overdue 
+                        ? ` 已超时 ${dayjs().diff(ticket.sla_deadline, 'hour')}h`
+                        : ` ${dayjs(ticket.sla_deadline).format('MM-DD HH:mm')}`
+                      }
                     </div>
                     <div style={{ marginTop: '8px' }}>
                       <span className={`badge badge-${ticket.priority}`} style={{ marginRight: '4px' }}>
@@ -139,6 +150,9 @@ function Kanban({ currentUser }) {
                       </span>
                       {ticket.category_name && (
                         <span className="tag">{ticket.category_name}</span>
+                      )}
+                      {ticket.is_overdue && (
+                        <span className="badge badge-urgent" style={{ marginTop: '4px' }}>超时</span>
                       )}
                     </div>
                   </div>

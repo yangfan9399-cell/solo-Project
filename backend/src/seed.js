@@ -13,6 +13,19 @@ if (!fs.existsSync(dataDir)) {
 
 initDatabase()
 
+function calculateSLADeadline(priority, createdAt) {
+  const hoursMap = {
+    urgent: 2,
+    high: 24,
+    normal: 48,
+    low: 72
+  }
+  const hours = hoursMap[priority] || 48
+  const deadline = new Date(createdAt)
+  deadline.setHours(deadline.getHours() + hours)
+  return deadline.toISOString()
+}
+
 const users = [
   { name: '张客服', role: 'customer_service', phone: '13800000001' },
   { name: '李班长', role: 'team_leader', phone: '13800000002' },
@@ -169,17 +182,36 @@ function seed() {
   materials.forEach(m => insertMaterial.run(m.name, m.unit, m.unit_price, m.stock))
   console.log('✓ 插入材料数据')
 
+  const now = new Date()
+  
   const insertTicket = db.prepare(`
     INSERT INTO tickets 
-    (ticket_no, title, description, category_id, priority, status, owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours, actual_hours, completed_at, created_at, updated_at)
+    (ticket_no, title, description, category_id, priority, status, owner_name, owner_phone, owner_address, creator_id, assignee_id, estimated_hours, actual_hours, completed_at, sla_deadline, created_at, updated_at)
     VALUES 
-    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `)
-  tickets.forEach(t => insertTicket.run(
-    t.ticket_no, t.title, t.description, t.category_id, t.priority, t.status,
-    t.owner_name, t.owner_phone, t.owner_address, t.creator_id, t.assignee_id,
-    t.estimated_hours, t.actual_hours, t.completed_at
-  ))
+  
+  tickets.forEach((t, index) => {
+    const createdAt = new Date(now)
+    createdAt.setHours(createdAt.getHours() - (index * 5 + 2))
+    
+    let slaDeadline
+    if (index >= 3) {
+      const overdueDate = new Date(createdAt)
+      overdueDate.setHours(overdueDate.getHours() - 1)
+      slaDeadline = overdueDate.toISOString()
+    } else {
+      slaDeadline = calculateSLADeadline(t.priority, createdAt)
+    }
+    
+    insertTicket.run(
+      t.ticket_no, t.title, t.description, t.category_id, t.priority, t.status,
+      t.owner_name, t.owner_phone, t.owner_address, t.creator_id, t.assignee_id,
+      t.estimated_hours, t.actual_hours, t.completed_at,
+      slaDeadline,
+      createdAt.toISOString()
+    )
+  })
   console.log('✓ 插入报修单数据')
 
   const insertTicketMaterial = db.prepare('INSERT INTO ticket_materials (ticket_id, material_id, quantity, unit_price) VALUES (?, ?, ?, ?)')
