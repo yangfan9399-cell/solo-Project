@@ -50,6 +50,10 @@ function FollowUp({ currentUser }) {
 
   const handleSubmit = () => {
     if (!selectedTicket) return
+    if (satisfaction < 3 && (!feedback || !feedback.trim())) {
+      alert('满意度低于3分时必须填写反馈原因')
+      return
+    }
     followUpMutation.mutate({
       ticketId: selectedTicket.id,
       satisfaction,
@@ -173,24 +177,33 @@ function FollowUp({ currentUser }) {
                 </tr>
               </thead>
               <tbody>
-                {followUpDoneTickets.map(ticket => (
-                  <tr key={ticket.id}>
-                    <td><span className="tag">{ticket.ticket_no}</span></td>
-                    <td>{ticket.title}</td>
-                    <td>{ticket.owner_name}</td>
-                    <td>{ticket.assignee_name || '-'}</td>
-                    <td>{dayjs(ticket.completed_at).format('YYYY-MM-DD')}</td>
-                    <td>
-                      <span className="badge badge-completed">
-                        {'⭐'.repeat(Math.round(ticket.avg_satisfaction || 0))}
-                        {' '}{ticket.avg_satisfaction}分
-                      </span>
-                    </td>
-                    <td>
-                      <Link to={`/tickets/${ticket.id}`} className="link-text">详情</Link>
-                    </td>
-                  </tr>
-                ))}
+                {followUpDoneTickets.map(ticket => {
+                  const isLowSatisfaction = ticket.avg_satisfaction < 3
+                  return (
+                    <tr key={ticket.id} style={isLowSatisfaction ? { background: '#fff1f0' } : {}}>
+                      <td>
+                        <span className="tag">{ticket.ticket_no}</span>
+                        {isLowSatisfaction && <span className="badge badge-urgent" style={{ marginLeft: '4px' }}>异常</span>}
+                      </td>
+                      <td>{ticket.title}</td>
+                      <td>{ticket.owner_name}</td>
+                      <td>{ticket.assignee_name || '-'}</td>
+                      <td>{dayjs(ticket.completed_at).format('YYYY-MM-DD')}</td>
+                      <td>
+                        <span className={`badge ${isLowSatisfaction ? 'badge-urgent' : 'badge-completed'}`}>
+                          {'⭐'.repeat(Math.round(ticket.avg_satisfaction || 0))}
+                          {' '}{ticket.avg_satisfaction}分
+                          {isLowSatisfaction && ' ⚠️'}
+                        </span>
+                      </td>
+                      <td>
+                        <Link to={`/tickets/${ticket.id}`} className="link-text">
+                          {isLowSatisfaction ? '查看异常' : '详情'}
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -290,17 +303,29 @@ function FollowUp({ currentUser }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">回访反馈</label>
+                <label className="form-label">
+                  回访反馈{satisfaction < 3 ? ' *' : ''}
+                </label>
                 <textarea
                   className="form-textarea"
-                  placeholder="请输入业主反馈意见，如满意度较低请记录具体原因..."
+                  placeholder={satisfaction < 3 
+                    ? '满意度低于3分，必须填写反馈原因，提交后将自动生成升级记录' 
+                    : '请输入业主反馈意见，如满意度较低请记录具体原因...'}
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  style={{ minHeight: '120px' }}
+                  style={{ 
+                    minHeight: '120px',
+                    borderColor: satisfaction < 3 && (!feedback || !feedback.trim()) ? '#ff4d4f' : undefined
+                  }}
                 />
+                {satisfaction < 3 && (!feedback || !feedback.trim()) && (
+                  <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
+                    满意度低于3分时，反馈原因为必填项
+                  </div>
+                )}
               </div>
 
-              {satisfaction <= 2 && (
+              {satisfaction < 3 && (
                 <div style={{
                   padding: '12px',
                   background: '#fff1f0',
@@ -309,11 +334,11 @@ function FollowUp({ currentUser }) {
                   color: '#cf1322',
                   fontSize: '14px',
                 }}>
-                  ⚠️ 满意度较低，建议：
+                  ⚠️ 满意度低于3分，提交后将自动处理：
                   <ul style={{ margin: '8px 0 0 20px' }}>
-                    <li>详细记录业主不满意的具体原因</li>
-                    <li>确认是否需要安排返工或进一步处理</li>
-                    <li>必要时升级到班组长或主管处理</li>
+                    <li>生成异常升级记录（满意度1分→三级升级，2分→二级升级）</li>
+                    <li>工单详情将显示异常回访标记</li>
+                    <li>相关管理人员将收到异常通知</li>
                   </ul>
                 </div>
               )}

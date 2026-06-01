@@ -102,18 +102,26 @@ function TicketDetail({ currentUser }) {
   })
 
   const followUpMutation = useMutation({
-    mutationFn: () => ticketsAPI.addFollowUp(id, {
-      operator_id: 1,
-      satisfaction: followUpSatisfaction,
-      feedback: followUpFeedback,
-      follow_up_date: new Date().toISOString(),
-      status: 'completed',
-    }),
+    mutationFn: () => {
+      if (followUpSatisfaction < 3 && (!followUpFeedback || !followUpFeedback.trim())) {
+        throw new Error('满意度低于3分时必须填写反馈原因')
+      }
+      return ticketsAPI.addFollowUp(id, {
+        operator_id: 1,
+        satisfaction: followUpSatisfaction,
+        feedback: followUpFeedback,
+        follow_up_date: new Date().toISOString(),
+        status: 'completed',
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['ticket', id])
       setShowFollowUpModal(false)
       setFollowUpFeedback('')
       setFollowUpSatisfaction(5)
+    },
+    onError: (error) => {
+      alert(error.message || '提交失败')
     },
   })
 
@@ -169,7 +177,7 @@ function TicketDetail({ currentUser }) {
     return buttons
   }
 
-  const getActionLabel = (action) => {
+  const getActionLabel = (action, remark) => {
     const labels = {
       create: '创建工单',
       assign: '派工',
@@ -177,7 +185,7 @@ function TicketDetail({ currentUser }) {
       complete: '完成维修',
       close: '关闭工单',
       escalate: '异常升级',
-      followup: '质保回访',
+      followup: remark?.includes('异常回访') ? '异常回访' : '质保回访',
     }
     return labels[action] || action
   }
@@ -405,19 +413,30 @@ function TicketDetail({ currentUser }) {
                 {ticket.follow_ups.map((fu, index) => (
                   <div key={index} style={{
                     padding: '16px',
-                    background: '#fafafa',
+                    background: fu.satisfaction < 3 ? '#fff1f0' : '#fafafa',
+                    border: fu.satisfaction < 3 ? '1px solid #ffa39e' : 'none',
                     borderRadius: '8px',
                     marginBottom: '12px',
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: 600 }}>
+                      <span style={{ fontWeight: 600, color: fu.satisfaction < 3 ? '#cf1322' : 'inherit' }}>
                         满意度：{'⭐'.repeat(fu.satisfaction || 0)}
+                        {fu.satisfaction < 3 && (
+                          <span className="badge badge-urgent" style={{ marginLeft: '8px' }}>
+                            异常回访
+                          </span>
+                        )}
                       </span>
                       <span style={{ fontSize: '12px', color: '#999' }}>
                         {fu.operator_name} · {dayjs(fu.created_at).format('MM-DD HH:mm')}
                       </span>
                     </div>
                     <div style={{ color: '#666', fontSize: '14px' }}>{fu.feedback || '无反馈'}</div>
+                    {fu.satisfaction < 3 && ticket.escalations?.length > 0 && (
+                      <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff7e6', borderRadius: '4px', fontSize: '13px', color: '#d46b08' }}>
+                        ⚠️ 已自动升级：{ticket.escalations.find(e => e.reason?.includes(`${fu.satisfaction}分`))?.reason || `低满意度（${fu.satisfaction}分）已触发升级流程`}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -432,17 +451,23 @@ function TicketDetail({ currentUser }) {
             </div>
             <div className="card-body">
               <div className="timeline">
-                {ticket.logs?.map((log, index) => (
-                  <div key={index} className={`timeline-item timeline-item-${log.action}`}>
-                    <div className="timeline-content">
-                      <div className="timeline-action">{getActionLabel(log.action)}</div>
-                      {log.remark && <div className="timeline-remark">{log.remark}</div>}
-                      <div className="timeline-meta">
-                        {log.operator_name || '系统'} · {dayjs(log.created_at).format('MM-DD HH:mm')}
+                {ticket.logs?.map((log, index) => {
+                  const isAbnormalFollowUp = log.action === 'followup' && log.remark?.includes('异常回访')
+                  return (
+                    <div key={index} className={`timeline-item ${isAbnormalFollowUp ? 'timeline-item-escalate' : `timeline-item-${log.action}`}`}>
+                      <div className="timeline-content" style={isAbnormalFollowUp ? { background: '#fff1f0', border: '1px solid #ffa39e' } : {}}>
+                        <div className="timeline-action" style={isAbnormalFollowUp ? { color: '#cf1322' } : {}}>
+                          {getActionLabel(log.action, log.remark)}
+                          {isAbnormalFollowUp && <span className="badge badge-urgent" style={{ marginLeft: '8px' }}>异常</span>}
+                        </div>
+                        {log.remark && <div className="timeline-remark">{log.remark}</div>}
+                        <div className="timeline-meta">
+                          {log.operator_name || '系统'} · {dayjs(log.created_at).format('MM-DD HH:mm')}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -602,27 +627,63 @@ function TicketDetail({ currentUser }) {
             <div className="modal-body">
               <div className="form-group">
                 <label className="form-label">满意度评分</label>
-                <div className="rating-stars">
+                <div className="rating-stars" style={{ marginBottom: '8px' }}>
                   {[1, 2, 3, 4, 5].map(star => (
                     <span
                       key={star}
                       className={`star ${star <= followUpSatisfaction ? 'active' : ''}`}
                       onClick={() => setFollowUpSatisfaction(star)}
+                      style={{ cursor: 'pointer', fontSize: '32px' }}
                     >
                       ★
                     </span>
                   ))}
                 </div>
+                <div style={{ fontSize: '14px', color: followUpSatisfaction < 3 ? '#cf1322' : '#666' }}>
+                  {followUpSatisfaction === 1 && '非常不满意'}
+                  {followUpSatisfaction === 2 && '不满意'}
+                  {followUpSatisfaction === 3 && '一般'}
+                  {followUpSatisfaction === 4 && '满意'}
+                  {followUpSatisfaction === 5 && '非常满意'}
+                </div>
               </div>
               <div className="form-group">
-                <label className="form-label">回访反馈</label>
+                <label className="form-label">
+                  回访反馈{followUpSatisfaction < 3 ? ' *' : ''}
+                </label>
                 <textarea
                   className="form-textarea"
-                  placeholder="请输入业主反馈意见"
+                  placeholder={followUpSatisfaction < 3 
+                    ? '满意度低于3分，必须填写反馈原因，提交后将自动生成升级记录' 
+                    : '请输入业主反馈意见'}
                   value={followUpFeedback}
                   onChange={(e) => setFollowUpFeedback(e.target.value)}
+                  style={{ 
+                    borderColor: followUpSatisfaction < 3 && (!followUpFeedback || !followUpFeedback.trim()) ? '#ff4d4f' : undefined 
+                  }}
                 />
+                {followUpSatisfaction < 3 && (!followUpFeedback || !followUpFeedback.trim()) && (
+                  <div style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px' }}>
+                    满意度低于3分时，反馈原因为必填项
+                  </div>
+                )}
               </div>
+              {followUpSatisfaction < 3 && (
+                <div style={{
+                  padding: '12px',
+                  background: '#fff1f0',
+                  border: '1px solid #ffa39e',
+                  borderRadius: '6px',
+                  color: '#cf1322',
+                  fontSize: '14px',
+                }}>
+                  ⚠️ 满意度低于3分，提交后将自动处理：
+                  <ul style={{ margin: '8px 0 0 20px' }}>
+                    <li>生成异常升级记录（1分→三级升级，2分→二级升级）</li>
+                    <li>工单详情将显示异常回访标记</li>
+                  </ul>
+                </div>
+              )}
             </div>
             <div className="modal-footer">
               <button className="btn btn-default" onClick={() => setShowFollowUpModal(false)}>取消</button>

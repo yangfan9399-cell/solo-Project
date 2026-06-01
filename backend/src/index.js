@@ -379,18 +379,37 @@ fastify.post('/api/tickets/:id/followup', async (request, reply) => {
   if (!ticket) {
     return reply.code(404).send({ error: 'Ticket not found' })
   }
+
+  if (satisfaction < 3 && (!feedback || !feedback.trim())) {
+    return reply.code(400).send({ error: '满意度低于3分时必须填写反馈原因' })
+  }
   
   const result = db.prepare(`
     INSERT INTO follow_ups (ticket_id, operator_id, satisfaction, feedback, follow_up_date, next_follow_up_date, status)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(id, operator_id, satisfaction, feedback, follow_up_date, next_follow_up_date, status || 'pending')
   
-  db.prepare(`
-    INSERT INTO ticket_logs (ticket_id, action, operator_id, remark)
-    VALUES (?, ?, ?, ?)
-  `).run(id, 'followup', operator_id, `质保回访：满意度${satisfaction}分`)
+  if (satisfaction < 3) {
+    const level = satisfaction === 1 ? 3 : 2
+    const reason = `低满意度回访（${satisfaction}分）：${feedback || '业主不满意'}`
+    
+    db.prepare(`
+      INSERT INTO escalation_records (ticket_id, level, reason, operator_id)
+      VALUES (?, ?, ?, ?)
+    `).run(id, level, reason, operator_id)
+    
+    db.prepare(`
+      INSERT INTO ticket_logs (ticket_id, action, operator_id, remark)
+      VALUES (?, ?, ?, ?)
+    `).run(id, 'followup', operator_id, `异常回访：满意度${satisfaction}分，已自动升级到第${level}级`)
+  } else {
+    db.prepare(`
+      INSERT INTO ticket_logs (ticket_id, action, operator_id, remark)
+      VALUES (?, ?, ?, ?)
+    `).run(id, 'followup', operator_id, `质保回访：满意度${satisfaction}分`)
+  }
   
-  return { data: { id: result.lastInsertRowid, success: true } }
+  return { data: { id: result.lastInsertRowid, success: true, escalated: satisfaction < 3 } }
 })
 
 fastify.get('/api/dashboard/stats', async () => {
