@@ -59,6 +59,7 @@ export default function LoanDetail() {
   const fetcher = useFetcher();
   const [activeTab, setActiveTab] = useState("info");
   const [showTransitionModal, setShowTransitionModal] = useState(false);
+  const [expandedInspection, setExpandedInspection] = useState<number | null>(null);
 
   const currentStageIndex = STAGES.findIndex((s) => s.key === loan.current_stage);
   const nextStage = STAGES[currentStageIndex + 1];
@@ -505,26 +506,33 @@ export default function LoanDetail() {
               <div className="empty-state-title">暂无巡检记录</div>
             </div>
           ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>巡检日期</th>
-                    <th>巡检人</th>
-                    <th>温度</th>
-                    <th>湿度</th>
-                    <th>状态</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inspections.map((inspection) => (
-                    <tr key={inspection.id}>
-                      <td>{inspection.inspection_date.slice(0, 10)}</td>
-                      <td>{inspection.inspector_name}</td>
-                      <td>{inspection.temperature || "-"}</td>
-                      <td>{inspection.humidity || "-"}</td>
-                      <td>
+            <div>
+              {inspections.map((inspection) => {
+                const isExpanded = expandedInspection === inspection.id;
+                const hasAbnormality = inspection.condition_status && inspection.condition_status !== "完好";
+
+                return (
+                  <div
+                    key={inspection.id}
+                    style={{
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      marginBottom: "12px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "12px 16px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        background: hasAbnormality ? "#fff8f0" : "#fafafa",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setExpandedInspection(isExpanded ? null : inspection.id)}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         <span
                           className={`badge ${
                             inspection.condition_status === "完好"
@@ -534,14 +542,112 @@ export default function LoanDetail() {
                         >
                           {inspection.condition_status || "未知"}
                         </span>
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-secondary">查看</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <strong>{inspection.inspection_date.slice(0, 10)}</strong>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                          巡检人: {inspection.inspector_name}
+                        </span>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                          {inspection.temperature || "-"} / {inspection.humidity || "-"}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                        {isExpanded ? "▲ 收起" : "▼ 展开"}
+                      </span>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ padding: "16px", borderTop: "1px solid var(--border)" }}>
+                        <div className="detail-grid">
+                          <div className="detail-item">
+                            <div className="detail-label">环境检查</div>
+                            <div className="detail-value">{inspection.environment_check || "无异常"}</div>
+                          </div>
+                          <div className="detail-item">
+                            <div className="detail-label">展陈检查</div>
+                            <div className="detail-value">{inspection.display_check || "无异常"}</div>
+                          </div>
+                          <div className="detail-item">
+                            <div className="detail-label">安保检查</div>
+                            <div className="detail-value">{inspection.security_check || "无异常"}</div>
+                          </div>
+                          <div className="detail-item">
+                            <div className="detail-label">展品状态</div>
+                            <div className="detail-value">
+                              <span
+                                className={`badge ${
+                                  inspection.condition_status === "完好"
+                                    ? "badge-success"
+                                    : "badge-warning"
+                                }`}
+                              >
+                                {inspection.condition_status || "未知"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {inspection.findings && (
+                          <div className="detail-item" style={{ marginTop: "12px" }}>
+                            <div className="detail-label">发现问题</div>
+                            <p style={{
+                              padding: "8px 12px",
+                              background: inspection.condition_status === "完好" ? "#f9f9f9" : "#fff3e0",
+                              borderRadius: "6px",
+                              borderLeft: inspection.condition_status === "完好" ? "3px solid var(--border)" : "3px solid var(--warning-color)",
+                            }}>
+                              {inspection.findings}
+                            </p>
+                          </div>
+                        )}
+
+                        {inspection.recommendations && (
+                          <div className="detail-item" style={{ marginTop: "8px" }}>
+                            <div className="detail-label">建议</div>
+                            <p style={{
+                              padding: "8px 12px",
+                              background: "#f0f7ff",
+                              borderRadius: "6px",
+                              borderLeft: "3px solid var(--accent-color)",
+                            }}>
+                              {inspection.recommendations}
+                            </p>
+                          </div>
+                        )}
+
+                        {hasAbnormality && (
+                          <div style={{
+                            marginTop: "16px",
+                            padding: "12px",
+                            background: "#fff8f0",
+                            borderRadius: "8px",
+                            border: "1px dashed var(--warning-color)",
+                            display: "flex",
+                            gap: "12px",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                          }}>
+                            <span style={{ fontWeight: 500, color: "var(--warning-color)" }}>
+                              ⚠️ 本次巡检发现异常，可快速操作：
+                            </span>
+                            <Link
+                              to={`/exceptions/new?loanId=${loan.id}&exhibitId=${loan.exhibit_id}`}
+                              className="btn btn-sm btn-warning"
+                            >
+                              📋 记录异常
+                            </Link>
+                            <Link
+                              to={`/damages/new?loanId=${loan.id}&exhibitId=${loan.exhibit_id}`}
+                              className="btn btn-sm btn-danger"
+                            >
+                              🔧 记录损伤
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
