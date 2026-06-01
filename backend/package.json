@@ -1,0 +1,17 @@
+{
+  "name": "property-maintenance-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seed.js",
+    "build": "echo 'Backend build complete'"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "better-sqlite3": "^11.0.0",
+    "dayjs": "^1.11.11",
+    "fastify": "^4.27.0"
+  }
+}
