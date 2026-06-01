@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}返工单管理 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <h1 style="font-size: 1.5rem;">返工单管理</h1>
+  <a href="/reworks/new" class="btn btn-primary">+ 新建返工单</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="filter-bar">
+      <span style="font-size: 0.875rem; color: var(--gray-600);">状态筛选：</span>
+      <a href="/reworks" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+      {% for status in statuses %}
+      <a href="/reworks?status={{ status.value }}" class="btn btn-sm {% if current_status == status.value %}btn-primary{% else %}btn-outline{% endif %}">
+        {{ status.value }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if reworks %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>返工单号</th>
+          <th>产品名称</th>
+          <th>批次号</th>
+          <th>数量</th>
+          <th>缺陷类型</th>
+          <th>状态</th>
+          <th>创建时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rework in reworks %}
+        <tr>
+          <td><strong>{{ rework.order_no }}</strong></td>
+          <td>{{ rework.product_name }}</td>
+          <td>{{ rework.batch_no }}</td>
+          <td>{{ rework.quantity }}</td>
+          <td>
+            <span class="badge badge-info">{{ rework.defect_category.value }}</span>
+          </td>
+          <td>
+            <span class="badge badge-{{ rework.status.value }}">{{ rework.status.value }}</span>
+          </td>
+          <td>{{ rework.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            <a href="/reworks/{{ rework.id }}" class="btn btn-sm btn-outline">查看详情</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-text">暂无返工单数据</div>
+      <a href="/reworks/new" class="btn btn-primary">创建第一个返工单</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

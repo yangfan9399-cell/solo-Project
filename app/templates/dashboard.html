@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}数据概览 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem; font-size: 1.5rem;">数据概览</h1>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_reworks or 0 }}</div>
+    <div class="stat-label">返工单总数</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-value">{{ stats.pending_count or 0 }}</div>
+    <div class="stat-label">待处理</div>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-value">{{ stats.in_progress_count or 0 }}</div>
+    <div class="stat-label">进行中</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-value">{{ stats.completed_count or 0 }}</div>
+    <div class="stat-label">已完成</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-value">{{ stats.scrap_count or 0 }}</div>
+    <div class="stat-label">已报废</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>按缺陷类型统计</h2>
+  </div>
+  <div class="card-body">
+    {% if stats.by_defect_category %}
+    <div class="bar-chart">
+      {% for category, count in stats.by_defect_category.items() %}
+      <div class="bar-item">
+        <div class="bar" style="height: {{ (count / (stats.by_defect_category.values()|max or 1)) * 100 }}%"></div>
+        <div class="bar-value">{{ count }}</div>
+        <div class="bar-label">{{ category.value if category else '未知' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <div class="empty-state-text">暂无统计数据</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>月度趋势</h2>
+  </div>
+  <div class="card-body">
+    {% if stats.by_month %}
+    <div class="bar-chart">
+      {% for month, count in stats.by_month.items() %}
+      <div class="bar-item">
+        <div class="bar" style="height: {{ (count / (stats.by_month.values()|max or 1)) * 100 }}%"></div>
+        <div class="bar-value">{{ count }}</div>
+        <div class="bar-label">{{ month }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📈</div>
+      <div class="empty-state-text">暂无月度数据</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}提交异常反馈 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/exceptions" class="btn btn-outline">← 返回列表</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>提交异常反馈</h2>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/exceptions">
+      <div class="form-group">
+        <label class="form-label">关联返工单（可选）</label>
+        <select name="rework_order_id" class="form-select">
+          <option value="">无</option>
+          {% for rework in reworks %}
+          <option value="{{ rework.id }}" {% if selected_rework_id == rework.id %}selected{% endif %}>
+            {{ rework.order_no }} - {{ rework.product_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">标题 *</label>
+        <input type="text" name="title" class="form-control" required placeholder="简要描述问题">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">优先级</label>
+        <select name="priority" class="form-select">
+          <option value="low">低</option>
+          <option value="normal" selected>普通</option>
+          <option value="high">高</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">问题描述 *</label>
+        <textarea name="description" class="form-control form-textarea" required
+          placeholder="详细描述遇到的问题..."></textarea>
+      </div>
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">提交反馈</button>
+        <a href="/exceptions" class="btn btn-outline">取消</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

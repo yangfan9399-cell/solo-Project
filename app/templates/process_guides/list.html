@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}工艺指导 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <h1 style="font-size: 1.5rem;">工艺指导</h1>
+  <a href="/process-guides/new" class="btn btn-primary">+ 新增指导</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="filter-bar">
+      <span style="font-size: 0.875rem; color: var(--gray-600);">缺陷类型：</span>
+      <a href="/process-guides" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+      {% for category in categories %}
+      <a href="/process-guides?category={{ category.value }}" class="btn btn-sm {% if current_category == category.value %}btn-primary{% else %}btn-outline{% endif %}">
+        {{ category.value }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if guides %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+      {% for guide in guides %}
+      <div style="border: 1px solid var(--gray-200); border-radius: 0.5rem; padding: 1rem; cursor: pointer;"
+           onclick="window.location.href='/process-guides/{{ guide.id }}'">
+        <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">{{ guide.title }}</h3>
+        <span class="badge badge-info">{{ guide.defect_category.value }}</span>
+        <p style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--gray-600); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+          {{ guide.content }}
+        </p>
+        <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--gray-400);">
+          创建于 {{ guide.created_at.strftime('%Y-%m-%d') }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📖</div>
+      <div class="empty-state-text">暂无工艺指导文档</div>
+      <a href="/process-guides/new" class="btn btn-primary">创建第一个工艺指导</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

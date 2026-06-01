@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}制造车间返工单流转与质检复判系统{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>🏭 制造质量管理系统</h1>
+        <p>返工单流转与质检复判</p>
+      </div>
+      <nav class="nav-menu">
+        <a href="/" class="nav-item {% if active_menu == 'dashboard' %}active{% endif %}">
+          📊 数据概览
+        </a>
+        <a href="/reworks" class="nav-item {% if active_menu == 'reworks' %}active{% endif %}">
+          📋 返工单管理
+        </a>
+        <a href="/kanban" class="nav-item {% if active_menu == 'kanban' %}active{% endif %}">
+          📌 返工看板
+        </a>
+        <a href="/process-guides" class="nav-item {% if active_menu == 'process_guides' %}active{% endif %}">
+          📖 工艺指导
+        </a>
+        <a href="/exceptions" class="nav-item {% if active_menu == 'exceptions' %}active{% endif %}">
+          ⚠️ 异常反馈
+        </a>
+        <a href="/statistics" class="nav-item {% if active_menu == 'statistics' %}active{% endif %}">
+          📈 质量统计
+        </a>
+      </nav>
+    </aside>
+    
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <span class="loading htmx-indicator">加载中...</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <span>👤 演示用户</span>
+        </div>
+      </header>
+      
+      <div class="page-content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+  
+  {% block scripts %}{% endblock %}
+</body>
+</html>

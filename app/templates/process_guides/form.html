@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{% if guide %}编辑工艺指导{% else %}新增工艺指导{% endif %} - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/process-guides" class="btn btn-outline">← 返回列表</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>{% if guide %}编辑工艺指导{% else %}新增工艺指导{% endif %}</h2>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/process-guides">
+      <div class="form-group">
+        <label class="form-label">标题 *</label>
+        <input type="text" name="title" class="form-control" required
+               value="{{ guide.title if guide else '' }}">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">缺陷类型 *</label>
+        <select name="defect_category" class="form-select" required>
+          {% for category in defect_categories %}
+          <option value="{{ category.value }}" {% if guide and guide.defect_category == category %}selected{% endif %}>
+            {{ category.value }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">工艺指导内容 *</label>
+        <textarea name="content" class="form-control form-textarea" required style="min-height: 300px;"
+          >{{ guide.content if guide else '' }}</textarea>
+      </div>
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/process-guides" class="btn btn-outline">取消</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

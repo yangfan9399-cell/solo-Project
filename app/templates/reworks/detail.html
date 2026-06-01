@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}{{ rework.order_no }} - 返工单详情{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/reworks" class="btn btn-outline">← 返回列表</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div>
+        <h2>{{ rework.order_no }}</h2>
+        <span class="badge badge-{{ rework.status.value }}" style="margin-top: 0.5rem;">{{ rework.status.value }}</span>
+      </div>
+      <div class="actions-row">
+        {% if rework.status.value == 'pending' %}
+        <button class="btn btn-primary" onclick="showAssignModal()">派工</button>
+        {% endif %}
+        
+        {% if rework.status.value == 'assigned' %}
+        <form method="POST" action="/reworks/{{ rework.id }}/start" style="display: inline;">
+          <button type="submit" class="btn btn-primary">开始返工</button>
+        </form>
+        {% endif %}
+        
+        {% if rework.status.value == 'in_progress' %}
+        <form method="POST" action="/reworks/{{ rework.id }}/submit-inspection" style="display: inline;">
+          <button type="submit" class="btn btn-success">提交复检</button>
+        </form>
+        <form method="POST" action="/reworks/{{ rework.id }}/scrap-request" style="display: inline;">
+          <button type="submit" class="btn btn-danger">申请报废</button>
+        </form>
+        {% endif %}
+        
+        {% if rework.status.value == 'reinspection' %}
+        <button class="btn btn-success" onclick="showInspectModal()">复检判定</button>
+        {% endif %}
+        
+        {% if rework.status.value == 'scrap' %}
+        <form method="POST" action="/reworks/{{ rework.id }}/scrap-approve" style="display: inline;">
+          <button type="submit" class="btn btn-danger">批准报废</button>
+        </form>
+        {% endif %}
+        
+        <button class="btn btn-warning" onclick="window.location.href='/exceptions/new?rework_id={{ rework.id }}'">
+          异常反馈
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div>
+    <div class="card">
+      <div class="card-body">
+        <div class="detail-section">
+          <h3>基本信息</h3>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">产品名称</span>
+              <span class="detail-value">{{ rework.product_name }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">产品编码</span>
+              <span class="detail-value">{{ rework.product_code }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">批次号</span>
+              <span class="detail-value">{{ rework.batch_no }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">数量</span>
+              <span class="detail-value">{{ rework.quantity }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">缺陷类型</span>
+              <span class="detail-value">
+                <span class="badge badge-info">{{ rework.defect_category.value }}</span>
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">缺陷描述</span>
+              <span class="detail-value">{{ rework.defect_description }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h3>返工工序</h3>
+          {% if rework.rework_steps %}
+            {% for step in rework.rework_steps %}
+            <div class="step-item {% if step.is_completed %}completed{% endif %}">
+              <div class="step-number">{{ step.step_order }}</div>
+              <div class="step-content">
+                <div class="step-title">{{ step.step_name }}</div>
+                <div class="step-desc">{{ step.step_description }}</div>
+              </div>
+              {% if not step.is_completed and rework.status.value == 'in_progress' %}
+              <form method="POST" action="/reworks/{{ rework.id }}/steps/{{ step.id }}/complete">
+                <button type="submit" class="btn btn-sm btn-success">完成</button>
+              </form>
+              {% elif step.is_completed %}
+              <span style="color: var(--success); font-size: 0.875rem;">✓ 已完成</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state" style="padding: 1rem;">
+              <div class="empty-state-text">暂无工序安排</div>
+            </div>
+          {% endif %}
+        </div>
+        
+        {% if rework.process_guide %}
+        <div class="detail-section">
+          <h3>工艺指导</h3>
+          <div style="background: var(--gray-50); padding: 1rem; border-radius: 0.375rem;">
+            <h4 style="margin-bottom: 0.5rem;">{{ rework.process_guide.title }}</h4>
+            <p style="white-space: pre-wrap; font-size: 0.875rem;">{{ rework.process_guide.content }}</p>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if inspections %}
+        <div class="detail-section">
+          <h3>质检记录</h3>
+          {% for inspection in inspections %}
+          <div style="background: var(--gray-50); padding: 1rem; border-radius: 0.375rem; margin-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span class="badge {% if inspection.result == 'pass' %}badge-success{% else %}badge-warning{% endif %}">
+                {{ '合格' if inspection.result == 'pass' else '需返工' }}
+              </span>
+              <span style="font-size: 0.75rem; color: var(--gray-500);">
+                {{ inspection.created_at.strftime('%Y-%m-%d %H:%M') }}
+              </span>
+            </div>
+            <div style="font-size: 0.875rem;">
+              合格: {{ inspection.quantity_passed }} | 不合格: {{ inspection.quantity_failed }}
+            </div>
+            {% if inspection.remarks %}
+            <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.5rem;">
+              备注: {{ inspection.remarks }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div>
+    <div class="card">
+      <div class="card-body">
+        <div class="detail-section">
+          <h3>状态流转</h3>
+          {% if status_logs %}
+          <div class="timeline">
+            {% for log in status_logs %}
+            <div class="timeline-item">
+              <div class="timeline-time">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              <div class="timeline-status">
+                <span class="badge badge-{{ log.to_status }}">{{ log.to_status }}</span>
+              </div>
+              {% if log.remarks %}
+              <div class="timeline-remarks">{{ log.remarks }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state" style="padding: 1rem;">
+            <div class="empty-state-text">暂无状态记录</div>
+          </div>
+          {% endif %}
+        </div>
+        
+        <div class="detail-section">
+          <h3>人员信息</h3>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">创建人</span>
+              <span class="detail-value">{{ rework.creator.name if rework.creator else '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">负责人</span>
+              <span class="detail-value">{{ rework.assignee.name if rework.assignee else '-' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">创建时间</span>
+              <span class="detail-value">{{ rework.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            {% if rework.completed_at %}
+            <div class="detail-item">
+              <span class="detail-label">完成时间</span>
+              <span class="detail-value">{{ rework.completed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="assignModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 1.5rem; border-radius: 0.5rem; width: 400px; max-width: 90%;">
+    <h3 style="margin-bottom: 1rem;">派工安排</h3>
+    <form method="POST" action="/reworks/{{ rework.id }}/assign">
+      <div class="form-group">
+        <label class="form-label">指派人员</label>
+        <select name="assignee_id" class="form-select" required>
+          {% for user in users %}
+          <option value="{{ user.id }}">{{ user.name }} ({{ user.role.value }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">工艺指导（可选）</label>
+        <select name="process_guide_id" class="form-select">
+          <option value="">无</option>
+          {% for guide in guides %}
+          <option value="{{ guide.id }}">{{ guide.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">确认派工</button>
+        <button type="button" class="btn btn-outline" onclick="hideAssignModal()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="inspectModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 1.5rem; border-radius: 0.5rem; width: 400px; max-width: 90%;">
+    <h3 style="margin-bottom: 1rem;">复检判定</h3>
+    <form method="POST" action="/reworks/{{ rework.id }}/inspect">
+      <div class="form-group">
+        <label class="form-label">判定结果</label>
+        <select name="result" class="form-select" required>
+          <option value="pass">合格通过</option>
+          <option value="rework">继续返工</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">合格数量</label>
+          <input type="number" name="quantity_passed" class="form-control" required min="0" value="{{ rework.quantity }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">不合格数量</label>
+          <input type="number" name="quantity_failed" class="form-control" required min="0" value="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">备注</label>
+        <textarea name="remarks" class="form-control form-textarea"></textarea>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">确认判定</button>
+        <button type="button" class="btn btn-outline" onclick="hideInspectModal()">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showAssignModal() {
+  document.getElementById('assignModal').style.display = 'flex';
+}
+
+function hideAssignModal() {
+  document.getElementById('assignModal').style.display = 'none';
+}
+
+function showInspectModal() {
+  document.getElementById('inspectModal').style.display = 'flex';
+}
+
+function hideInspectModal() {
+  document.getElementById('inspectModal').style.display = 'none';
+}
+</script>
+{% endblock %}

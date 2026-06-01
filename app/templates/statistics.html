@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}质量统计 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem; font-size: 1.5rem;">质量统计</h1>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ stats.total_reworks or 0 }}</div>
+    <div class="stat-label">返工单总数</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-value">{{ stats.completed_count or 0 }}</div>
+    <div class="stat-label">已完成</div>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-value">
+      {% if stats.total_reworks %}
+      {{ "%.1f"|format((stats.completed_count / stats.total_reworks) * 100) }}%
+      {% else %}
+      0%
+      {% endif %}
+    </div>
+    <div class="stat-label">完成率</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-value">{{ stats.scrap_count or 0 }}</div>
+    <div class="stat-label">报废数量</div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+  <div class="card">
+    <div class="card-header">
+      <h2>按缺陷类型分布</h2>
+    </div>
+    <div class="card-body">
+      {% if stats.by_defect_category %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>缺陷类型</th>
+            <th>数量</th>
+            <th>占比</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category, count in stats.by_defect_category.items() %}
+          <tr>
+            <td>{{ category.value if category else '未知' }}</td>
+            <td>{{ count }}</td>
+            <td>{{ "%.1f"|format((count / (stats.total_reworks or 1)) * 100) }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">暂无数据</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>月度趋势</h2>
+    </div>
+    <div class="card-body">
+      {% if stats.by_month %}
+      <div class="bar-chart" style="height: 250px;">
+        {% for month, count in stats.by_month.items() %}
+        <div class="bar-item">
+          <div class="bar" style="height: {{ (count / (stats.by_month.values()|max or 1)) * 100 }}%"></div>
+          <div class="bar-value">{{ count }}</div>
+          <div class="bar-label">{{ month }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📈</div>
+        <div class="empty-state-text">暂无数据</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>状态分布</h2>
+  </div>
+  <div class="card-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+      <div style="text-align: center; padding: 1rem; background: #fef3c7; border-radius: 0.5rem;">
+        <div style="font-size: 2rem; font-weight: 700; color: #92400e;">{{ stats.pending_count or 0 }}</div>
+        <div style="font-size: 0.875rem; color: #92400e;">待处理</div>
+      </div>
+      <div style="text-align: center; padding: 1rem; background: #dbeafe; border-radius: 0.5rem;">
+        <div style="font-size: 2rem; font-weight: 700; color: #1e40af;">{{ stats.in_progress_count or 0 }}</div>
+        <div style="font-size: 0.875rem; color: #1e40af;">进行中</div>
+      </div>
+      <div style="text-align: center; padding: 1rem; background: #d1fae5; border-radius: 0.5rem;">
+        <div style="font-size: 2rem; font-weight: 700; color: #065f46;">{{ stats.completed_count or 0 }}</div>
+        <div style="font-size: 0.875rem; color: #065f46;">已完成</div>
+      </div>
+      <div style="text-align: center; padding: 1rem; background: #fee2e2; border-radius: 0.5rem;">
+        <div style="font-size: 2rem; font-weight: 700; color: #991b1b;">{{ stats.scrap_count or 0 }}</div>
+        <div style="font-size: 0.875rem; color: #991b1b;">已报废</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

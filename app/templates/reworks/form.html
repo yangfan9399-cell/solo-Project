@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{% if rework %}编辑返工单{% else %}新建返工单{% endif %} - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+  <a href="/reworks" class="btn btn-outline">← 返回列表</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>{% if rework %}编辑返工单{% else %}新建返工单{% endif %}</h2>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/reworks">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">产品名称 *</label>
+          <input type="text" name="product_name" class="form-control" required 
+                 value="{{ rework.product_name if rework else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">产品编码 *</label>
+          <input type="text" name="product_code" class="form-control" required
+                 value="{{ rework.product_code if rework else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">批次号 *</label>
+          <input type="text" name="batch_no" class="form-control" required
+                 value="{{ rework.batch_no if rework else '' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">数量 *</label>
+          <input type="number" name="quantity" class="form-control" required min="1"
+                 value="{{ rework.quantity if rework else '' }}">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">缺陷类型 *</label>
+          <select name="defect_category" class="form-select" required>
+            {% for category in defect_categories %}
+            <option value="{{ category.value }}" {% if rework and rework.defect_category == category %}selected{% endif %}>
+              {{ category.value }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">缺陷描述 *</label>
+        <textarea name="defect_description" class="form-control form-textarea" required
+          >{{ rework.defect_description if rework else '' }}</textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">返工工序（可选）</label>
+        <div id="steps-container">
+          <div class="step-form-row" style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; margin-bottom: 0.5rem;">
+            <input type="text" name="step_names" class="form-control" placeholder="工序名称">
+            <input type="text" name="step_descriptions" class="form-control" placeholder="工序说明">
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addStep()" style="margin-top: 0.5rem;">
+          + 添加工序
+        </button>
+      </div>
+      
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">提交</button>
+        <a href="/reworks" class="btn btn-outline">取消</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addStep() {
+  const container = document.getElementById('steps-container');
+  const row = document.createElement('div');
+  row.className = 'step-form-row';
+  row.style.cssText = 'display: grid; grid-template-columns: 1fr 2fr auto; gap: 1rem; margin-bottom: 0.5rem;';
+  row.innerHTML = `
+    <input type="text" name="step_names" class="form-control" placeholder="工序名称">
+    <input type="text" name="step_descriptions" class="form-control" placeholder="工序说明">
+    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">删除</button>
+  `;
+  container.appendChild(row);
+}
+</script>
+{% endblock %}

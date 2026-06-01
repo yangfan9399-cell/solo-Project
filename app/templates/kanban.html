@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}返工看板 - 制造质量管理系统{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem; font-size: 1.5rem;">返工看板</h1>
+
+<div class="kanban-board">
+  <div class="kanban-column">
+    <div class="kanban-header">
+      <span>待派工</span>
+      <span class="kanban-count">{{ pending|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for rework in pending %}
+      <div class="kanban-card" onclick="window.location.href='/reworks/{{ rework.id }}'">
+        <div class="kanban-card-title">{{ rework.order_no }}</div>
+        <div class="kanban-card-meta">{{ rework.product_name }}</div>
+        <div class="kanban-card-meta">{{ rework.batch_no }} | {{ rework.quantity }}件</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 1rem;">
+        <div style="font-size: 0.75rem; color: var(--gray-400);">暂无数据</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="kanban-column">
+    <div class="kanban-header">
+      <span>已派工</span>
+      <span class="kanban-count">{{ assigned|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for rework in assigned %}
+      <div class="kanban-card" onclick="window.location.href='/reworks/{{ rework.id }}'">
+        <div class="kanban-card-title">{{ rework.order_no }}</div>
+        <div class="kanban-card-meta">{{ rework.product_name }}</div>
+        <div class="kanban-card-meta">{{ rework.batch_no }} | {{ rework.quantity }}件</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 1rem;">
+        <div style="font-size: 0.75rem; color: var(--gray-400);">暂无数据</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="kanban-column">
+    <div class="kanban-header">
+      <span>返工中</span>
+      <span class="kanban-count">{{ in_progress|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for rework in in_progress %}
+      <div class="kanban-card" onclick="window.location.href='/reworks/{{ rework.id }}'">
+        <div class="kanban-card-title">{{ rework.order_no }}</div>
+        <div class="kanban-card-meta">{{ rework.product_name }}</div>
+        <div class="kanban-card-meta">{{ rework.batch_no }} | {{ rework.quantity }}件</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 1rem;">
+        <div style="font-size: 0.75rem; color: var(--gray-400);">暂无数据</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="kanban-column">
+    <div class="kanban-header">
+      <span>待复检</span>
+      <span class="kanban-count">{{ reinspection|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for rework in reinspection %}
+      <div class="kanban-card" onclick="window.location.href='/reworks/{{ rework.id }}'">
+        <div class="kanban-card-title">{{ rework.order_no }}</div>
+        <div class="kanban-card-meta">{{ rework.product_name }}</div>
+        <div class="kanban-card-meta">{{ rework.batch_no }} | {{ rework.quantity }}件</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 1rem;">
+        <div style="font-size: 0.75rem; color: var(--gray-400);">暂无数据</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <div class="kanban-column">
+    <div class="kanban-header">
+      <span>待报废审批</span>
+      <span class="kanban-count">{{ scrap|length }}</span>
+    </div>
+    <div class="kanban-cards">
+      {% for rework in scrap %}
+      <div class="kanban-card" onclick="window.location.href='/reworks/{{ rework.id }}'">
+        <div class="kanban-card-title">{{ rework.order_no }}</div>
+        <div class="kanban-card-meta">{{ rework.product_name }}</div>
+        <div class="kanban-card-meta">{{ rework.batch_no }} | {{ rework.quantity }}件</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding: 1rem;">
+        <div style="font-size: 0.75rem; color: var(--gray-400);">暂无数据</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
