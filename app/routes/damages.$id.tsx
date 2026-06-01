@@ -1,5 +1,6 @@
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { Form, Link, useLoaderData, useActionData, useNavigation, useState } from "@remix-run/react";
+import { Form, Link, useLoaderData, useActionData, useNavigation } from "@remix-run/react";
+import { useState } from "react";
 import Layout from "~/components/Layout";
 import { getDamageById, updateDamageRecord } from "~/services/damageService";
 import { getExhibitById } from "~/services/exhibitService";

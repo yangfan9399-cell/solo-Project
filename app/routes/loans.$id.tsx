@@ -364,7 +364,7 @@ export default function LoanDetail() {
                     <th>实际出发</th>
                     <th>状态</th>
                     <th>操作</th>
-                  </tr
+                  </tr>
                 </thead>
                 <tbody>
                   {transports.map((transport) => (
@@ -397,17 +397,92 @@ export default function LoanDetail() {
                         </span>
                       </td>
                       <td>
-                        <Link
-                          to={`/loans/${loan.id}/transport/${transport.id}`}
-                          className="btn btn-sm btn-secondary"
-                        >
-                          查看
-                        </Link>
+                        <span className="btn btn-sm btn-secondary" style={{ opacity: 0.6, cursor: "default" }}>
+                          详情见下方
+                        </span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <div style={{ marginTop: "16px" }}>
+                {transports.map((transport) => (
+                  <div
+                    key={transport.id}
+                    style={{
+                      padding: "16px",
+                      border: "1px solid var(--border)",
+                      borderRadius: "8px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                      <strong>{transport.transport_type} - {transport.carrier || "未指定承运商"}</strong>
+                      <span
+                        className={`badge ${
+                          transport.status === "completed"
+                            ? "badge-success"
+                            : transport.status === "in_transit"
+                            ? "badge-warning"
+                            : transport.status === "delayed"
+                            ? "badge-danger"
+                            : "badge-primary"
+                        }`}
+                      >
+                        {transport.status === "scheduled"
+                          ? "已计划"
+                          : transport.status === "in_transit"
+                          ? "运输中"
+                          : transport.status === "completed"
+                          ? "已完成"
+                          : "已延误"}
+                      </span>
+                    </div>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <div className="detail-label">车辆编号</div>
+                        <div className="detail-value">{transport.vehicle_number || "-"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">司机</div>
+                        <div className="detail-value">{transport.driver_name || "-"} {transport.driver_phone || ""}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">出发地</div>
+                        <div className="detail-value">{transport.departure_location || "-"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">目的地</div>
+                        <div className="detail-value">{transport.destination || "-"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">计划时间</div>
+                        <div className="detail-value">{transport.scheduled_departure?.slice(0, 16) || "-"} ~ {transport.scheduled_arrival?.slice(0, 16) || "-"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">实际时间</div>
+                        <div className="detail-value">{transport.actual_departure?.slice(0, 16) || "-"} ~ {transport.actual_arrival?.slice(0, 16) || "-"}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">押运人</div>
+                        <div className="detail-value">{transport.escort_name || "-"} {transport.escort_phone || ""}</div>
+                      </div>
+                    </div>
+                    {transport.security_measures && (
+                      <div className="detail-item" style={{ marginTop: "8px" }}>
+                        <div className="detail-label">安保措施</div>
+                        <p>{transport.security_measures}</p>
+                      </div>
+                    )}
+                    {transport.remarks && (
+                      <div className="detail-item" style={{ marginTop: "4px" }}>
+                        <div className="detail-label">备注</div>
+                        <p>{transport.remarks}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
