@@ -21,15 +21,8 @@ const entityList = Object.values(entities).filter(
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: './database.sqlite',
-      entities: entityList,
-      synchronize: true,
-      logging: false,
-    }),
-    TypeOrmModule.forFeature(entityList),
     DatabaseModule,
+    TypeOrmModule.forFeature(entityList),
     AuthModule,
     AccidentsModule,
     VehiclesModule,

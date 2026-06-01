@@ -281,7 +281,7 @@ export class ExceptionListComponent implements OnInit {
     ).subscribe({
       next: (result) => {
         if (this.mineControl.value) {
-          const userId = this.authService.currentUser?.id;
+          const userId = this.authService.getCurrentUser()?.id;
           result.data = result.data.filter((e: Exception) => e.reporterId === userId);
           result.total = result.data.length;
         }
