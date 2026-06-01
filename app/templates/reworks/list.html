@@ -12,10 +12,12 @@
   <div class="card-body">
     <div class="filter-bar">
       <span style="font-size: 0.875rem; color: var(--gray-600);">状态筛选：</span>
-      <a href="/reworks" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+      <a href="/reworks" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">
+        全部{% if status_counts %} ({{ status_counts.values()|sum }}){% endif %}
+      </a>
       {% for status in statuses %}
       <a href="/reworks?status={{ status.value }}" class="btn btn-sm {% if current_status == status.value %}btn-primary{% else %}btn-outline{% endif %}">
-        {{ status.value }}
+        {{ status_labels.get(status.value, status.value) }}{% if status_counts.get(status.value) %} ({{ status_counts[status.value] }}){% endif %}
       </a>
       {% endfor %}
     </div>
@@ -23,6 +25,16 @@
 </div>
 
 <div class="card">
+  <div class="card-header">
+    <h2>
+      {% if current_status %}
+        {{ status_labels.get(current_status, current_status) }}的返工单
+      {% else %}
+        全部返工单
+      {% endif %}
+    </h2>
+    <span style="font-size: 0.875rem; color: var(--gray-500);">共 {{ reworks|length }} 条</span>
+  </div>
   <div class="card-body">
     {% if reworks %}
     <table class="table">
@@ -49,7 +61,7 @@
             <span class="badge badge-info">{{ rework.defect_category.value }}</span>
           </td>
           <td>
-            <span class="badge badge-{{ rework.status.value }}">{{ rework.status.value }}</span>
+            <span class="badge badge-{{ rework.status.value }}">{{ status_labels.get(rework.status.value, rework.status.value) }}</span>
           </td>
           <td>{{ rework.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
           <td>
@@ -62,8 +74,14 @@
     {% else %}
     <div class="empty-state">
       <div class="empty-state-icon">📋</div>
+      {% if current_status %}
+      <div class="empty-state-text">没有{{ status_labels.get(current_status, current_status) }}状态的返工单</div>
+      <a href="/reworks" class="btn btn-outline" style="margin-right: 0.5rem;">查看全部</a>
+      <a href="/reworks/new" class="btn btn-primary">新建返工单</a>
+      {% else %}
       <div class="empty-state-text">暂无返工单数据</div>
       <a href="/reworks/new" class="btn btn-primary">创建第一个返工单</a>
+      {% endif %}
     </div>
     {% endif %}
   </div>

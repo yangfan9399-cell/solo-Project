@@ -4,7 +4,25 @@ from sqlalchemy import func, desc
 
 from app.models import User, ReworkOrder, ReworkStep, ProcessGuide, Inspection, StatusLog, ExceptionFeedback
 from app.schemas import UserCreate, ReworkOrderCreate, ReworkOrderUpdate, ProcessGuideCreate, InspectionCreate, ExceptionFeedbackCreate
-from app.constants import ReworkStatus
+from app.constants import ReworkStatus, DefectCategory
+
+
+VALID_TRANSITIONS = {
+    ReworkStatus.PENDING: [ReworkStatus.ASSIGNED],
+    ReworkStatus.ASSIGNED: [ReworkStatus.IN_PROGRESS],
+    ReworkStatus.IN_PROGRESS: [ReworkStatus.REINSPECTION, ReworkStatus.SCRAP],
+    ReworkStatus.REINSPECTION: [ReworkStatus.APPROVED, ReworkStatus.IN_PROGRESS],
+    ReworkStatus.SCRAP: [ReworkStatus.SCRAP_APPROVED],
+    ReworkStatus.APPROVED: [],
+    ReworkStatus.REJECTED: [],
+    ReworkStatus.SCRAP_APPROVED: [],
+}
+
+
+class BusinessError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
 
 
 def get_user(db: Session, user_id: int):
@@ -55,10 +73,29 @@ def get_rework_order_by_no(db: Session, order_no: str):
     return db.query(ReworkOrder).filter(ReworkOrder.order_no == order_no).first()
 
 
+def _resolve_status(status_str: str):
+    if status_str is None:
+        return None
+    try:
+        return ReworkStatus(status_str)
+    except ValueError:
+        return None
+
+
+def _resolve_category(category_str: str):
+    if category_str is None:
+        return None
+    try:
+        return DefectCategory(category_str)
+    except ValueError:
+        return None
+
+
 def get_rework_orders(db: Session, skip: int = 0, limit: int = 100, status: str = None):
     query = db.query(ReworkOrder).order_by(desc(ReworkOrder.created_at))
-    if status:
-        query = query.filter(ReworkOrder.status == status)
+    resolved = _resolve_status(status)
+    if resolved is not None:
+        query = query.filter(ReworkOrder.status == resolved)
     return query.offset(skip).limit(limit).all()
 
 
@@ -116,8 +153,9 @@ def create_process_guide(db: Session, guide: ProcessGuideCreate, author_id: int)
 
 def get_process_guides(db: Session, skip: int = 0, limit: int = 100, category: str = None):
     query = db.query(ProcessGuide).order_by(desc(ProcessGuide.created_at))
-    if category:
-        query = query.filter(ProcessGuide.defect_category == category)
+    resolved = _resolve_category(category)
+    if resolved is not None:
+        query = query.filter(ProcessGuide.defect_category == resolved)
     return query.offset(skip).limit(limit).all()
 
 
@@ -202,3 +240,26 @@ def get_quality_statistics(db: Session):
         "by_defect_category": {cat: cnt for cat, cnt in by_category},
         "by_month": {month: cnt for month, cnt in by_month}
     }
+
+
+def get_rework_status_counts(db: Session):
+    rows = db.query(
+        ReworkOrder.status, func.count(ReworkOrder.id)
+    ).group_by(ReworkOrder.status).all()
+    return {status.value: count for status, count in rows}
+
+
+def get_guide_category_counts(db: Session):
+    rows = db.query(
+        ProcessGuide.defect_category, func.count(ProcessGuide.id)
+    ).group_by(ProcessGuide.defect_category).all()
+    return {cat.value: count for cat, count in rows}
+
+
+def validate_status_transition(current_status: ReworkStatus, target_status: ReworkStatus):
+    allowed = VALID_TRANSITIONS.get(current_status, [])
+    if target_status not in allowed:
+        raise BusinessError(
+            f"当前状态 [{current_status.value}] 不允许变更为 [{target_status.value}]，"
+            f"允许的目标状态: {', '.join(s.value for s in allowed) or '无'}"
+        )

@@ -7,15 +7,21 @@
   <a href="/exceptions" class="btn btn-outline">← 返回列表</a>
 </div>
 
+{% if error %}
+<div class="alert alert-error">
+  ⚠️ {{ error }}
+</div>
+{% endif %}
+
 <div class="card">
   <div class="card-header">
     <h2>提交异常反馈</h2>
   </div>
   <div class="card-body">
-    <form method="POST" action="/exceptions">
+    <form method="POST" action="/exceptions" id="exceptionForm">
       <div class="form-group">
         <label class="form-label">关联返工单（可选）</label>
-        <select name="rework_order_id" class="form-select">
+        <select name="rework_order_id" class="form-select" id="reworkSelect">
           <option value="">无</option>
           {% for rework in reworks %}
           <option value="{{ rework.id }}" {% if selected_rework_id == rework.id %}selected{% endif %}>
@@ -27,12 +33,13 @@
       
       <div class="form-group">
         <label class="form-label">标题 *</label>
-        <input type="text" name="title" class="form-control" required placeholder="简要描述问题">
+        <input type="text" name="title" class="form-control" required placeholder="简要描述问题" maxlength="200" id="titleInput">
+        <span class="form-hint" style="font-size: 0.75rem; color: var(--gray-400);">不能为空</span>
       </div>
       
       <div class="form-group">
         <label class="form-label">优先级</label>
-        <select name="priority" class="form-select">
+        <select name="priority" class="form-select" id="prioritySelect">
           <option value="low">低</option>
           <option value="normal" selected>普通</option>
           <option value="high">高</option>
@@ -42,7 +49,8 @@
       <div class="form-group">
         <label class="form-label">问题描述 *</label>
         <textarea name="description" class="form-control form-textarea" required
-          placeholder="详细描述遇到的问题..."></textarea>
+          placeholder="详细描述遇到的问题..." id="descInput"></textarea>
+        <span class="form-hint" style="font-size: 0.75rem; color: var(--gray-400);">不能为空</span>
       </div>
       
       <div style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -52,4 +60,29 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('exceptionForm').addEventListener('submit', function(e) {
+  var title = document.getElementById('titleInput').value.trim();
+  var desc = document.getElementById('descInput').value.trim();
+  if (!title) {
+    e.preventDefault();
+    alert('标题不能为空');
+    return;
+  }
+  if (!desc) {
+    e.preventDefault();
+    alert('问题描述不能为空');
+    return;
+  }
+  var priority = document.getElementById('prioritySelect').value;
+  if (['low', 'normal', 'high'].indexOf(priority) === -1) {
+    e.preventDefault();
+    alert('优先级无效');
+    return;
+  }
+});
+</script>
 {% endblock %}

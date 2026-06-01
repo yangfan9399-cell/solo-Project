@@ -12,10 +12,12 @@
   <div class="card-body">
     <div class="filter-bar">
       <span style="font-size: 0.875rem; color: var(--gray-600);">缺陷类型：</span>
-      <a href="/process-guides" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+      <a href="/process-guides" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}">
+        全部{% if category_counts %} ({{ category_counts.values()|sum }}){% endif %}
+      </a>
       {% for category in categories %}
       <a href="/process-guides?category={{ category.value }}" class="btn btn-sm {% if current_category == category.value %}btn-primary{% else %}btn-outline{% endif %}">
-        {{ category.value }}
+        {{ defect_labels.get(category.value, category.value) }}{% if category_counts.get(category.value) %} ({{ category_counts[category.value] }}){% endif %}
       </a>
       {% endfor %}
     </div>
@@ -23,6 +25,16 @@
 </div>
 
 <div class="card">
+  <div class="card-header">
+    <h2>
+      {% if current_category %}
+        {{ defect_labels.get(current_category, current_category) }}类工艺指导
+      {% else %}
+        全部工艺指导
+      {% endif %}
+    </h2>
+    <span style="font-size: 0.875rem; color: var(--gray-500);">共 {{ guides|length }} 条</span>
+  </div>
   <div class="card-body">
     {% if guides %}
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
@@ -30,7 +42,7 @@
       <div style="border: 1px solid var(--gray-200); border-radius: 0.5rem; padding: 1rem; cursor: pointer;"
            onclick="window.location.href='/process-guides/{{ guide.id }}'">
         <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">{{ guide.title }}</h3>
-        <span class="badge badge-info">{{ guide.defect_category.value }}</span>
+        <span class="badge badge-info">{{ defect_labels.get(guide.defect_category.value, guide.defect_category.value) }}</span>
         <p style="margin-top: 0.75rem; font-size: 0.875rem; color: var(--gray-600); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
           {{ guide.content }}
         </p>
@@ -43,8 +55,14 @@
     {% else %}
     <div class="empty-state">
       <div class="empty-state-icon">📖</div>
+      {% if current_category %}
+      <div class="empty-state-text">没有{{ defect_labels.get(current_category, current_category) }}类型的工艺指导</div>
+      <a href="/process-guides" class="btn btn-outline" style="margin-right: 0.5rem;">查看全部</a>
+      <a href="/process-guides/new" class="btn btn-primary">新增工艺指导</a>
+      {% else %}
       <div class="empty-state-text">暂无工艺指导文档</div>
       <a href="/process-guides/new" class="btn btn-primary">创建第一个工艺指导</a>
+      {% endif %}
     </div>
     {% endif %}
   </div>

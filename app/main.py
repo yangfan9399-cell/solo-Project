@@ -18,7 +18,8 @@ from app.crud import (
     create_process_guide, get_process_guides, get_process_guide,
     create_inspection, get_inspections_by_rework, get_status_logs_by_rework,
     create_exception_feedback, get_exception_feedbacks, get_exception_feedback, resolve_exception_feedback,
-    get_quality_statistics
+    get_quality_statistics, get_rework_status_counts, get_guide_category_counts,
+    validate_status_transition, BusinessError
 )
 from app.constants import ReworkStatus, DefectCategory, UserRole
 
@@ -28,6 +29,38 @@ app = FastAPI(title="制造车间返工单流转与质检复判系统")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+
+STATUS_LABELS = {
+    "pending": "待处理", "assigned": "已派工", "in_progress": "返工中",
+    "reinspection": "待复检", "approved": "已完成", "rejected": "已驳回",
+    "scrap": "待报废审批", "scrap_approved": "已报废",
+}
+
+DEFECT_LABELS = {
+    "surface": "表面缺陷", "dimension": "尺寸偏差", "assembly": "装配问题",
+    "material": "材料缺陷", "function": "功能问题", "other": "其他",
+}
+
+
+def _render_rework_detail(request, db, rework_id, error=None):
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    inspections = get_inspections_by_rework(db, rework_id)
+    status_logs = get_status_logs_by_rework(db, rework_id)
+    users = get_users(db)
+    guides = get_process_guides(db)
+    return templates.TemplateResponse(
+        "reworks/detail.html",
+        {
+            "request": request, "rework": rework,
+            "inspections": inspections, "status_logs": status_logs,
+            "active_menu": "reworks", "statuses": ReworkStatus,
+            "users": users, "guides": guides,
+            "error": error,
+        }
+    )
 
 
 def get_current_user(db: Session = Depends(get_db)):
@@ -55,6 +88,7 @@ async def reworks_list(
     db: Session = Depends(get_db)
 ):
     reworks = get_rework_orders(db, status=status)
+    status_counts = get_rework_status_counts(db)
     return templates.TemplateResponse(
         "reworks/list.html",
         {
@@ -62,13 +96,15 @@ async def reworks_list(
             "reworks": reworks,
             "active_menu": "reworks",
             "current_status": status,
-            "statuses": ReworkStatus
+            "statuses": ReworkStatus,
+            "status_counts": status_counts,
+            "status_labels": STATUS_LABELS,
         }
     )
 
 
 @app.get("/reworks/new", response_class=HTMLResponse)
-async def new_rework_form(request: Request, db: Session = Depends(get_db)):
+async def new_rework_form(request: Request, error: Optional[str] = None, db: Session = Depends(get_db)):
     users = get_users(db)
     guides = get_process_guides(db)
     return templates.TemplateResponse(
@@ -77,9 +113,11 @@ async def new_rework_form(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "active_menu": "reworks",
             "defect_categories": DefectCategory,
+            "defect_labels": DEFECT_LABELS,
             "users": users,
             "guides": guides,
-            "rework": None
+            "rework": None,
+            "error": error,
         }
     )
 
@@ -98,7 +136,18 @@ async def create_rework(
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
-    
+    if not current_user:
+        return RedirectResponse("/reworks/new?error=无法获取当前用户，请检查系统用户配置", status_code=303)
+
+    if quantity < 1:
+        return RedirectResponse("/reworks/new?error=不良品数量必须大于0", status_code=303)
+
+    if not product_name.strip() or not product_code.strip() or not batch_no.strip():
+        return RedirectResponse("/reworks/new?error=产品名称、产品编码和批次号不能为空", status_code=303)
+
+    if not defect_description.strip():
+        return RedirectResponse("/reworks/new?error=缺陷描述不能为空", status_code=303)
+
     steps = []
     for i, (name, desc) in enumerate(zip(step_names, step_descriptions)):
         if name and desc:
@@ -109,12 +158,12 @@ async def create_rework(
             })
     
     rework_data = ReworkOrderCreate(
-        product_name=product_name,
-        product_code=product_code,
-        batch_no=batch_no,
+        product_name=product_name.strip(),
+        product_code=product_code.strip(),
+        batch_no=batch_no.strip(),
         quantity=quantity,
         defect_category=defect_category,
-        defect_description=defect_description,
+        defect_description=defect_description.strip(),
         steps=steps
     )
     
@@ -123,39 +172,32 @@ async def create_rework(
 
 
 @app.get("/reworks/{rework_id}", response_class=HTMLResponse)
-async def rework_detail(request: Request, rework_id: int, db: Session = Depends(get_db)):
-    rework = get_rework_order(db, rework_id)
-    if not rework:
-        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
-    
-    inspections = get_inspections_by_rework(db, rework_id)
-    status_logs = get_status_logs_by_rework(db, rework_id)
-    users = get_users(db)
-    guides = get_process_guides(db)
-    
-    return templates.TemplateResponse(
-        "reworks/detail.html",
-        {
-            "request": request,
-            "rework": rework,
-            "inspections": inspections,
-            "status_logs": status_logs,
-            "active_menu": "reworks",
-            "statuses": ReworkStatus,
-            "users": users,
-            "guides": guides
-        }
-    )
+async def rework_detail(request: Request, rework_id: int, error: Optional[str] = None, db: Session = Depends(get_db)):
+    return _render_rework_detail(request, db, rework_id, error=error)
 
 
 @app.post("/reworks/{rework_id}/assign", response_class=HTMLResponse)
 async def assign_rework(
+    request: Request,
     rework_id: int,
     assignee_id: int = Form(...),
     process_guide_id: Optional[int] = Form(None),
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+    try:
+        validate_status_transition(rework.status, ReworkStatus.ASSIGNED)
+    except BusinessError as e:
+        return _render_rework_detail(request, db, rework_id, error=e.message)
+
+    assignee = get_user(db, assignee_id)
+    if not assignee:
+        return _render_rework_detail(request, db, rework_id, error="指派人员不存在，请选择有效用户")
+
     update_rework_order(db, rework_id, ReworkOrderUpdate(
         assignee_id=assignee_id,
         process_guide_id=process_guide_id
@@ -165,8 +207,15 @@ async def assign_rework(
 
 
 @app.post("/reworks/{rework_id}/start", response_class=HTMLResponse)
-async def start_rework(rework_id: int, db: Session = Depends(get_db)):
+async def start_rework(request: Request, rework_id: int, db: Session = Depends(get_db)):
     current_user = get_current_user(db)
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    try:
+        validate_status_transition(rework.status, ReworkStatus.IN_PROGRESS)
+    except BusinessError as e:
+        return _render_rework_detail(request, db, rework_id, error=e.message)
     update_rework_status(db, rework_id, ReworkStatus.IN_PROGRESS, operator_id=current_user.id, remarks="开始返工")
     return RedirectResponse(f"/reworks/{rework_id}", status_code=303)
 
@@ -178,14 +227,22 @@ async def complete_step(rework_id: int, step_id: int, db: Session = Depends(get_
 
 
 @app.post("/reworks/{rework_id}/submit-inspection", response_class=HTMLResponse)
-async def submit_for_inspection(rework_id: int, db: Session = Depends(get_db)):
+async def submit_for_inspection(request: Request, rework_id: int, db: Session = Depends(get_db)):
     current_user = get_current_user(db)
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    try:
+        validate_status_transition(rework.status, ReworkStatus.REINSPECTION)
+    except BusinessError as e:
+        return _render_rework_detail(request, db, rework_id, error=e.message)
     update_rework_status(db, rework_id, ReworkStatus.REINSPECTION, operator_id=current_user.id, remarks="提交复检")
     return RedirectResponse(f"/reworks/{rework_id}", status_code=303)
 
 
 @app.post("/reworks/{rework_id}/inspect", response_class=HTMLResponse)
 async def inspect_rework(
+    request: Request,
     rework_id: int,
     result: str = Form(...),
     quantity_passed: int = Form(...),
@@ -194,7 +251,25 @@ async def inspect_rework(
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
-    
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+    if rework.status != ReworkStatus.REINSPECTION:
+        return _render_rework_detail(request, db, rework_id, error=f"当前状态 [{rework.status.value}] 不允许复检操作，只有待复检状态才能进行复检判定")
+
+    if result not in ("pass", "rework"):
+        return _render_rework_detail(request, db, rework_id, error="判定结果无效，请选择「合格通过」或「继续返工」")
+
+    if quantity_passed < 0 or quantity_failed < 0:
+        return _render_rework_detail(request, db, rework_id, error="合格数量和不合格数量不能为负数")
+
+    if quantity_passed + quantity_failed <= 0:
+        return _render_rework_detail(request, db, rework_id, error="合格数量与不合格数量之和必须大于0")
+
+    if quantity_passed + quantity_failed > rework.quantity:
+        return _render_rework_detail(request, db, rework_id, error=f"合格+不合格数量（{quantity_passed + quantity_failed}）不能超过返工单总数（{rework.quantity}）")
+
     inspection = InspectionCreate(
         result=result,
         quantity_passed=quantity_passed,
@@ -212,15 +287,29 @@ async def inspect_rework(
 
 
 @app.post("/reworks/{rework_id}/scrap-request", response_class=HTMLResponse)
-async def scrap_request(rework_id: int, db: Session = Depends(get_db)):
+async def scrap_request(request: Request, rework_id: int, db: Session = Depends(get_db)):
     current_user = get_current_user(db)
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    try:
+        validate_status_transition(rework.status, ReworkStatus.SCRAP)
+    except BusinessError as e:
+        return _render_rework_detail(request, db, rework_id, error=e.message)
     update_rework_status(db, rework_id, ReworkStatus.SCRAP, operator_id=current_user.id, remarks="申请报废")
     return RedirectResponse(f"/reworks/{rework_id}", status_code=303)
 
 
 @app.post("/reworks/{rework_id}/scrap-approve", response_class=HTMLResponse)
-async def scrap_approve(rework_id: int, db: Session = Depends(get_db)):
+async def scrap_approve(request: Request, rework_id: int, db: Session = Depends(get_db)):
     current_user = get_current_user(db)
+    rework = get_rework_order(db, rework_id)
+    if not rework:
+        return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    try:
+        validate_status_transition(rework.status, ReworkStatus.SCRAP_APPROVED)
+    except BusinessError as e:
+        return _render_rework_detail(request, db, rework_id, error=e.message)
     update_rework_status(db, rework_id, ReworkStatus.SCRAP_APPROVED, operator_id=current_user.id, remarks="报废审批通过")
     return RedirectResponse(f"/reworks/{rework_id}", status_code=303)
 
@@ -254,6 +343,7 @@ async def process_guides_list(
     db: Session = Depends(get_db)
 ):
     guides = get_process_guides(db, category=category)
+    category_counts = get_guide_category_counts(db)
     return templates.TemplateResponse(
         "process_guides/list.html",
         {
@@ -261,7 +351,9 @@ async def process_guides_list(
             "guides": guides,
             "active_menu": "process_guides",
             "categories": DefectCategory,
-            "current_category": category
+            "current_category": category,
+            "category_counts": category_counts,
+            "defect_labels": DEFECT_LABELS,
         }
     )
 
@@ -323,7 +415,7 @@ async def exceptions_list(
 
 
 @app.get("/exceptions/new", response_class=HTMLResponse)
-async def new_exception_form(request: Request, rework_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def new_exception_form(request: Request, rework_id: Optional[int] = None, error: Optional[str] = None, db: Session = Depends(get_db)):
     reworks = get_rework_orders(db)
     return templates.TemplateResponse(
         "exceptions/form.html",
@@ -331,7 +423,8 @@ async def new_exception_form(request: Request, rework_id: Optional[int] = None, 
             "request": request,
             "active_menu": "exceptions",
             "reworks": reworks,
-            "selected_rework_id": rework_id
+            "selected_rework_id": rework_id,
+            "error": error,
         }
     )
 
@@ -346,9 +439,26 @@ async def create_exception(
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
+    if not current_user:
+        return RedirectResponse("/exceptions/new?error=无法获取当前用户，请检查系统用户配置", status_code=303)
+
+    if not title.strip():
+        return RedirectResponse("/exceptions/new?error=标题不能为空", status_code=303)
+
+    if not description.strip():
+        return RedirectResponse("/exceptions/new?error=问题描述不能为空", status_code=303)
+
+    if priority not in ("low", "normal", "high"):
+        return RedirectResponse("/exceptions/new?error=优先级无效", status_code=303)
+
+    if rework_order_id is not None:
+        rework = get_rework_order(db, rework_order_id)
+        if not rework:
+            return RedirectResponse("/exceptions/new?error=关联的返工单不存在", status_code=303)
+
     feedback_data = ExceptionFeedbackCreate(
-        title=title,
-        description=description,
+        title=title.strip(),
+        description=description.strip(),
         priority=priority,
         rework_order_id=rework_order_id
     )
