@@ -1,4 +1,4 @@
-import db, { initDatabase } from './db.js'
+import db, { initDatabase, calculateSLADeadline } from './db.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -12,19 +12,6 @@ if (!fs.existsSync(dataDir)) {
 }
 
 initDatabase()
-
-function calculateSLADeadline(priority, createdAt) {
-  const hoursMap = {
-    urgent: 2,
-    high: 24,
-    normal: 48,
-    low: 72
-  }
-  const hours = hoursMap[priority] || 48
-  const deadline = new Date(createdAt)
-  deadline.setHours(deadline.getHours() + hours)
-  return deadline.toISOString()
-}
 
 const users = [
   { name: '张客服', role: 'customer_service', phone: '13800000001' },
@@ -168,7 +155,28 @@ const escalationRecords = [
 ]
 
 function seed() {
-  console.log('开始插入示例数据...')
+  console.log('开始重置数据库并插入示例数据...')
+
+  db.pragma('foreign_keys = OFF')
+  
+  const tables = [
+    'escalation_records',
+    'follow_ups',
+    'ticket_materials',
+    'ticket_logs',
+    'tickets',
+    'materials',
+    'categories',
+    'users'
+  ]
+  
+  tables.forEach(table => {
+    db.exec(`DELETE FROM ${table}`)
+    db.exec(`DELETE FROM sqlite_sequence WHERE name = '${table}'`)
+  })
+  
+  db.pragma('foreign_keys = ON')
+  console.log('✓ 清空现有数据')
 
   const insertUser = db.prepare('INSERT INTO users (name, role, phone) VALUES (?, ?, ?)')
   users.forEach(u => insertUser.run(u.name, u.role, u.phone))
@@ -218,6 +226,24 @@ function seed() {
   ticketMaterials.forEach(tm => insertTicketMaterial.run(tm.ticket_id, tm.material_id, tm.quantity, tm.unit_price))
   console.log('✓ 插入报修单材料数据')
 
+  const insertTicketLog = db.prepare(`
+    INSERT INTO ticket_logs (ticket_id, action, to_status, operator_id, remark)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  tickets.forEach((t, index) => {
+    insertTicketLog.run(index + 1, 'create', t.status, t.creator_id, '创建报修单')
+    if (t.assignee_id) {
+      insertTicketLog.run(index + 1, 'assign', 'assigned', 2, '分派维修人员')
+    }
+    if (t.status === 'in_progress') {
+      insertTicketLog.run(index + 1, 'accept', 'in_progress', t.assignee_id, '接单开始维修')
+    }
+    if (t.status === 'completed') {
+      insertTicketLog.run(index + 1, 'complete', 'completed', t.assignee_id, '维修完成')
+    }
+  })
+  console.log('✓ 插入操作日志数据')
+
   const insertFollowUp = db.prepare(`
     INSERT INTO follow_ups (ticket_id, operator_id, satisfaction, feedback, follow_up_date, status)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -229,7 +255,7 @@ function seed() {
   escalationRecords.forEach(e => insertEscalation.run(e.ticket_id, e.level, e.reason, e.operator_id))
   console.log('✓ 插入升级记录数据')
 
-  console.log('\n示例数据插入完成！')
+  console.log('\n示例数据重置完成！')
 }
 
 seed()

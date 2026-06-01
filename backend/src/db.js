@@ -11,6 +11,24 @@ const db = new Database(dbPath)
 db.pragma('journal_mode = WAL')
 db.pragma('foreign_keys = ON')
 
+export function calculateSLADeadline(priority, createdAt) {
+  const hoursMap = {
+    urgent: 2,
+    high: 24,
+    normal: 48,
+    low: 72
+  }
+  const hours = hoursMap[priority] || 48
+  const deadline = new Date(createdAt)
+  deadline.setHours(deadline.getHours() + hours)
+  return deadline.toISOString()
+}
+
+function columnExists(tableName, columnName) {
+  const result = db.prepare(`PRAGMA table_info(${tableName})`).all()
+  return result.some(col => col.name === columnName)
+}
+
 export function initDatabase() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -45,7 +63,6 @@ export function initDatabase() {
       estimated_hours REAL,
       actual_hours REAL,
       warranty_period INTEGER DEFAULT 30,
-      sla_deadline DATETIME,
       completed_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -108,6 +125,22 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_ticket_logs_ticket ON ticket_logs(ticket_id);
     CREATE INDEX IF NOT EXISTS idx_follow_ups_ticket ON follow_ups(ticket_id);
   `)
+
+  if (!columnExists('tickets', 'sla_deadline')) {
+    console.log('新增 sla_deadline 列到 tickets 表...')
+    db.exec('ALTER TABLE tickets ADD COLUMN sla_deadline DATETIME')
+    
+    const tickets = db.prepare('SELECT id, priority, created_at FROM tickets WHERE sla_deadline IS NULL').all()
+    if (tickets.length > 0) {
+      console.log(`为 ${tickets.length} 个历史工单补算 SLA 截止时间...`)
+      const updateStmt = db.prepare('UPDATE tickets SET sla_deadline = ? WHERE id = ?')
+      tickets.forEach(ticket => {
+        const deadline = calculateSLADeadline(ticket.priority, ticket.created_at)
+        updateStmt.run(deadline, ticket.id)
+      })
+      console.log('历史工单 SLA 补算完成')
+    }
+  }
 }
 
 export default db

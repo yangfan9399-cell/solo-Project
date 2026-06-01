@@ -3,7 +3,7 @@ import cors from '@fastify/cors'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import db, { initDatabase } from './db.js'
+import db, { initDatabase, calculateSLADeadline } from './db.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -34,19 +34,6 @@ function generateTicketNo() {
     return prefix + String(num).padStart(3, '0')
   }
   return prefix + '001'
-}
-
-function calculateSLADeadline(priority, createdAt) {
-  const hoursMap = {
-    urgent: 2,
-    high: 24,
-    normal: 48,
-    low: 72
-  }
-  const hours = hoursMap[priority] || 48
-  const deadline = new Date(createdAt)
-  deadline.setHours(deadline.getHours() + hours)
-  return deadline.toISOString()
 }
 
 function isOverdue(slaDeadline, status) {
