@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Repair, RepairItem, RepairStatus, Accident, Claim } from '../../database/entities';
+import { Repair, RepairItem, RepairStatus, Accident, Claim, Vehicle } from '../../database/entities';
 
 export interface CreateRepairDto {
   accidentId: string;
@@ -96,7 +96,7 @@ export class RepairsService {
     await queryRunner.startTransaction();
 
     try {
-      const repair = await queryRunner.manager.findOne(Repair, { where: { id }, relations: ['items'] });
+      const repair = await queryRunner.manager.findOne(Repair, { where: { id }, relations: ['items', 'accident'] });
       if (!repair) {
         throw new NotFoundException('维修记录不存在');
       }
@@ -139,6 +139,12 @@ export class RepairsService {
       }
 
       const savedRepair = await queryRunner.manager.save(repair);
+
+      if (updateRepairDto.status === 'in_progress') {
+        await queryRunner.manager.update(Vehicle, { id: repair.accident.vehicleId }, {
+          status: 'in_repair',
+        });
+      }
 
       if (updateRepairDto.status === 'completed') {
         const claim = await queryRunner.manager.findOne(Claim, {

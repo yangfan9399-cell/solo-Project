@@ -11,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { LayoutComponent } from '../../shared/components/layout.component';
 import { LoadingComponent } from '../../shared/components/loading.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
@@ -82,7 +82,8 @@ export class ScheduleOutOfServiceDialogComponent {
   private fb = inject(FormBuilder);
   private accidentService = inject(AccidentService);
   private dialogRef = inject(MatDialogRef);
-  private accidentId = inject('ACCIDENT_ID') as string;
+  private data = inject(MAT_DIALOG_DATA);
+  private accidentId = this.data.accidentId;
 
   saving = false;
   form: FormGroup;
@@ -230,6 +231,10 @@ export class ScheduleOutOfServiceDialogComponent {
                     </mat-card-header>
                     <mat-card-content>
                       <div class="dispatch-grid" *ngIf="accident.vehicle.outOfServiceReason">
+                        <div class="info-item">
+                          <label>车辆状态</label>
+                          <span class="status-badge" [class]="accident.vehicle.status">{{ getVehicleStatusLabel(accident.vehicle.status) }}</span>
+                        </div>
                         <div class="info-item">
                           <label>停运原因</label>
                           <span>{{ accident.vehicle.outOfServiceReason }}</span>
@@ -565,6 +570,7 @@ export class ScheduleOutOfServiceDialogComponent {
     }
     .status-badge.pending_review { background: #fff3e0; color: #e65100; }
     .status-badge.reviewed { background: #e3f2fd; color: #1565c0; }
+    .status-badge.out_of_service { background: #fff3e0; color: #e65100; }
     .status-badge.in_repair { background: #ffebee; color: #c62828; }
     .status-badge.in_claim { background: #f3e5f5; color: #7b1fa2; }
     .status-badge.pending_resume { background: #e8f5e9; color: #2e7d32; }
@@ -845,9 +851,9 @@ export class AccidentDetailComponent implements OnInit {
   openScheduleDialog() {
     const dialogRef = this.dialog.open(ScheduleOutOfServiceDialogComponent, {
       width: '520px',
-      providers: [
-        { provide: 'ACCIDENT_ID', useValue: this.accidentId },
-      ],
+      data: {
+        accidentId: this.accidentId,
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -871,6 +877,15 @@ export class AccidentDetailComponent implements OnInit {
         this.confirming = false;
       },
     });
+  }
+
+  getVehicleStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      active: '运营中',
+      out_of_service: '待维修',
+      in_repair: '维修中',
+    };
+    return labels[status] || status;
   }
 
   goBack() {

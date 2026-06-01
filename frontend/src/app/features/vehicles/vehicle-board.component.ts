@@ -188,10 +188,10 @@ interface VehicleWithAccident extends Vehicle {
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .vehicle-card.out_of_service {
-      border-left: 4px solid #f44336;
+      border-left: 4px solid #ff9800;
     }
     .vehicle-card.in_repair {
-      border-left: 4px solid #ff9800;
+      border-left: 4px solid #f44336;
     }
     .vehicle-status {
       display: flex;
@@ -205,8 +205,8 @@ interface VehicleWithAccident extends Vehicle {
       height: 8px;
       border-radius: 50%;
     }
-    .out_of_service .status-dot { background: #f44336; }
-    .in_repair .status-dot { background: #ff9800; }
+    .out_of_service .status-dot { background: #ff9800; }
+    .in_repair .status-dot { background: #f44336; }
     .plate-number {
       font-size: 20px;
       font-weight: 600;

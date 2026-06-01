@@ -176,7 +176,7 @@ export class AccidentsService {
       await queryRunner.manager.save(accident);
 
       const vehicleUpdate: Partial<Vehicle> = {
-        status: 'in_repair',
+        status: 'out_of_service',
         outOfServiceReason: dto.outOfServiceReason,
         outOfServiceTime: new Date(),
         dispatcherId: operatorId,
