@@ -72,10 +72,16 @@ class ScheduleController extends Controller {
         Auth::requireAuth();
         $model = new Schedule();
         $schedule = $model->find($id);
+        
+        if (!$schedule) {
+            $this->with('error', '排班不存在')->redirect('/schedules');
+        }
+        
+        $bookingId = $schedule['booking_id'];
         $model->delete($id);
         
         $bookingModel = new Booking();
-        $bookingModel->update($schedule['booking_id'], ['status' => 'confirmed']);
+        $bookingModel->update($bookingId, ['status' => 'confirmed']);
         
         $this->with('success', '排班已取消')->redirect('/schedules');
     }

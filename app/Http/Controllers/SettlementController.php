@@ -21,8 +21,12 @@ class SettlementController extends Controller {
         $model = new Settlement();
         $settlement = $model->find($id);
         
+        if (!$settlement) {
+            $this->with('error', '结算记录不存在')->redirect('/settlements');
+        }
+        
         $subsidyModel = new Subsidy();
-        $subsidy = $subsidyModel->find($settlement['subsidy_id']);
+        $subsidy = !empty($settlement['subsidy_id']) ? ($subsidyModel->find($settlement['subsidy_id']) ?: null) : null;
         
         $this->view('settlements/show', [
             'settlement' => $settlement,
@@ -33,6 +37,12 @@ class SettlementController extends Controller {
     public function pay($id) {
         Auth::requireAuth();
         $model = new Settlement();
+        $settlement = $model->find($id);
+        
+        if (!$settlement) {
+            $this->with('error', '结算记录不存在')->redirect('/settlements');
+        }
+        
         $model->update($id, [
             'status' => 'paid',
             'paid_at' => date('Y-m-d H:i:s'),

@@ -2,6 +2,7 @@
 
 require_once ROOT_PATH . '/core/Controller.php';
 require_once ROOT_PATH . '/app/Models/Field.php';
+require_once ROOT_PATH . '/app/Models/Booking.php';
 require_once ROOT_PATH . '/app/Models/User.php';
 
 class FieldController extends Controller {
@@ -44,9 +45,12 @@ class FieldController extends Controller {
         $model = new Field();
         $field = $model->find($id);
         
+        if (!$field) {
+            $this->with('error', '地块不存在')->redirect('/fields');
+        }
+        
         $bookingModel = new Booking();
-        require_once ROOT_PATH . '/app/Models/Booking.php';
-        $bookings = $bookingModel->where('field_id', $id);
+        $bookings = $bookingModel->where('field_id', $id) ?: [];
         
         $this->view('fields/show', [
             'field' => $field,

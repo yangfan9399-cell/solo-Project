@@ -22,11 +22,15 @@ class JobController extends Controller {
         $model = new JobRecord();
         $job = $model->find($id);
         
+        if (!$job) {
+            $this->with('error', '作业记录不存在')->redirect('/jobs');
+        }
+        
         $scheduleModel = new Schedule();
-        $schedule = $scheduleModel->find($job['schedule_id']);
+        $schedule = $scheduleModel->find($job['schedule_id']) ?: [];
         
         $bookingModel = new Booking();
-        $booking = $bookingModel->find($schedule['booking_id']);
+        $booking = !empty($schedule['booking_id']) ? ($bookingModel->find($schedule['booking_id']) ?: []) : [];
         
         $this->view('jobs/show', [
             'job' => $job,

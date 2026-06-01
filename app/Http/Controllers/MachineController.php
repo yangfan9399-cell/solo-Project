@@ -2,6 +2,7 @@
 
 require_once ROOT_PATH . '/core/Controller.php';
 require_once ROOT_PATH . '/app/Models/Machine.php';
+require_once ROOT_PATH . '/app/Models/Schedule.php';
 require_once ROOT_PATH . '/app/Models/User.php';
 
 class MachineController extends Controller {
@@ -20,9 +21,12 @@ class MachineController extends Controller {
         $model = new Machine();
         $machine = $model->find($id);
         
+        if (!$machine) {
+            $this->with('error', '农机不存在')->redirect('/machines');
+        }
+        
         $scheduleModel = new Schedule();
-        require_once ROOT_PATH . '/app/Models/Schedule.php';
-        $schedules = $scheduleModel->where('machine_id', $id);
+        $schedules = $scheduleModel->where('machine_id', $id) ?: [];
         
         $this->view('machines/show', [
             'machine' => $machine,

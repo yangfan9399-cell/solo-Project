@@ -52,8 +52,12 @@ class SubsidyController extends Controller {
         $model = new Subsidy();
         $subsidy = $model->find($id);
         
+        if (!$subsidy) {
+            $this->with('error', '油补核算记录不存在')->redirect('/subsidies');
+        }
+        
         $jobModel = new JobRecord();
-        $job = $jobModel->find($subsidy['job_record_id']);
+        $job = $jobModel->find($subsidy['job_record_id']) ?: [];
         
         $this->view('subsidies/show', [
             'subsidy' => $subsidy,

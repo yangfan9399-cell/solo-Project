@@ -25,6 +25,10 @@ class AssignmentController extends Controller {
         $scheduleModel = new Schedule();
         $schedule = $scheduleModel->find($id);
         
+        if (!$schedule) {
+            $this->with('error', '排班不存在')->redirect('/assignments');
+        }
+        
         $jobModel = new JobRecord();
         $jobId = $jobModel->create([
             'schedule_id' => $id,
@@ -43,6 +47,10 @@ class AssignmentController extends Controller {
         $jobModel = new JobRecord();
         $job = $jobModel->findOneWhere('schedule_id', $id);
         
+        if (!$job) {
+            $this->with('error', '作业记录不存在')->redirect('/assignments');
+        }
+        
         $jobModel->update($job['id'], [
             'checkout_time' => date('Y-m-d H:i:s'),
             'actual_area' => $_POST['actual_area'],
@@ -56,7 +64,10 @@ class AssignmentController extends Controller {
         
         $bookingModel = new Booking();
         $schedule = $scheduleModel->find($id);
-        $bookingModel->update($schedule['booking_id'], ['status' => 'completed']);
+        
+        if ($schedule) {
+            $bookingModel->update($schedule['booking_id'], ['status' => 'completed']);
+        }
         
         $this->with('success', '签退成功，作业已完成')->redirect('/assignments');
     }

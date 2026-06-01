@@ -3,6 +3,7 @@
 require_once ROOT_PATH . '/core/Controller.php';
 require_once ROOT_PATH . '/app/Models/Booking.php';
 require_once ROOT_PATH . '/app/Models/Field.php';
+require_once ROOT_PATH . '/app/Models/Schedule.php';
 require_once ROOT_PATH . '/app/Models/User.php';
 
 class BookingController extends Controller {
@@ -60,12 +61,15 @@ class BookingController extends Controller {
         $model = new Booking();
         $booking = $model->find($id);
         
+        if (!$booking) {
+            $this->with('error', '预约不存在')->redirect('/bookings');
+        }
+        
         $fieldModel = new Field();
-        $field = $fieldModel->find($booking['field_id']);
+        $field = $fieldModel->find($booking['field_id']) ?: [];
         
         $scheduleModel = new Schedule();
-        require_once ROOT_PATH . '/app/Models/Schedule.php';
-        $schedule = $scheduleModel->findOneWhere('booking_id', $id);
+        $schedule = $scheduleModel->findOneWhere('booking_id', $id) ?: null;
         
         $this->view('bookings/show', [
             'booking' => $booking,

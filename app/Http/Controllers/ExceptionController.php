@@ -53,6 +53,10 @@ class ExceptionController extends Controller {
         $model = new ExceptionRecord();
         $exception = $model->find($id);
         
+        if (!$exception) {
+            $this->with('error', '异常记录不存在')->redirect('/exceptions');
+        }
+        
         $this->view('exceptions/show', [
             'exception' => $exception,
         ]);
@@ -61,6 +65,12 @@ class ExceptionController extends Controller {
     public function resolve($id) {
         Auth::requireAuth();
         $model = new ExceptionRecord();
+        $exception = $model->find($id);
+        
+        if (!$exception) {
+            $this->with('error', '异常记录不存在')->redirect('/exceptions');
+        }
+        
         $model->update($id, [
             'status' => 'resolved',
             'handler_id' => Auth::id(),
