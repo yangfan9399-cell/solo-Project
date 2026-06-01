@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Form, useActionData, useNavigation, useNavigate } from "@remix-run/react";
-import type { ActionFunctionArgs } from "@remix-run/node";
+import { Form, useActionData, useNavigation, useNavigate, useLoaderData } from "@remix-run/react";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { z } from "zod";
-import { requireRole } from "../../../.server/session.server";
-import { prisma } from "../../../.server/db.server";
+import { requireRole } from "../../.server/session.server";
+import { prisma } from "../../.server/db.server";
 import { AppLayout } from "~/components/layout/AppLayout";
 import { Card } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
@@ -74,7 +74,7 @@ export async function action({ request }: ActionFunctionArgs) {
   return redirect("/donations");
 }
 
-export async function loader({ request }: ActionFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireRole(request, ["ADMIN", "MANAGER"]);
   const materials = await prisma.material.findMany({
     orderBy: { name: "asc" },

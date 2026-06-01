@@ -9,14 +9,7 @@ import { StatusBadge } from "~/components/ui/StatusBadge";
 import { Button } from "~/components/ui/Button";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { format } from "date-fns";
-
-const exceptionTypeLabels: Record<string, string> = {
-  QUALITY_ISSUE: "质量问题",
-  QUANTITY_MISMATCH: "数量不符",
-  DAMAGE: "损坏",
-  LOSS: "丢失",
-  OTHER: "其他",
-};
+import { exceptionTypeLabels } from "~/utils/labels";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireRole(request, ["ADMIN", "MANAGER"]);

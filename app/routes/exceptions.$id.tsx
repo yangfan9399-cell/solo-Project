@@ -10,6 +10,7 @@ import { StatusBadge } from "~/components/ui/StatusBadge";
 import { Button } from "~/components/ui/Button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { exceptionTypeLabels, exceptionStatusLabels } from "~/utils/labels";
 
 type ExceptionStatus = "OPEN" | "PROCESSING" | "RESOLVED" | "CLOSED";
 
@@ -44,14 +45,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
   return redirect(`/exceptions/${params.id}`);
 }
 
-const exceptionTypeLabels: Record<string, string> = {
-  QUALITY_ISSUE: "质量问题",
-  QUANTITY_MISMATCH: "数量不符",
-  DAMAGE: "损坏",
-  LOSS: "丢失",
-  OTHER: "其他",
-};
-
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const user = await requireRole(request, ["ADMIN", "MANAGER"]);
 
@@ -60,8 +53,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     include: {
       reporter: { select: { name: true } },
       processor: { select: { name: true } },
-      batch: { select: { batchNo: true, donorName: true } },
-      distribution: { select: { distNo: true } },
+      batch: { select: { id: true, batchNo: true, donorName: true } },
+      distribution: { select: { id: true, distNo: true } },
     },
   });
 
