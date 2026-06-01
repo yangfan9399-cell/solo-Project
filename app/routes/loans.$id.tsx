@@ -671,54 +671,108 @@ export default function LoanDetail() {
             </div>
           ) : (
             <div>
-              {returns.map((ret) => (
-                <div
-                  key={ret.id}
-                  style={{
-                    padding: "16px",
-                    border: "1px solid var(--border)",
-                    borderRadius: "8px",
-                    marginBottom: "12px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <strong>归还日期: {ret.return_date.slice(0, 10)}</strong>
-                    <span className="badge badge-success">已归还</span>
+              {returns.map((ret) => {
+                const hasDiscrepancies = !!ret.discrepancies;
+                const hasConditionIssue = ret.overall_condition && ret.overall_condition !== "完好" && !ret.overall_condition.includes("完好");
+                const hasAbnormality = hasDiscrepancies || hasConditionIssue;
+                const discrepancySummary = ret.discrepancies ? ret.discrepancies.slice(0, 100) : "";
+                const prefillTitle = encodeURIComponent(`归还点交异常 - ${loan.exhibit_name}`);
+                const prefillDescription = encodeURIComponent(
+                  `归还日期：${ret.return_date.slice(0, 10)}\n` +
+                  `归还地点：${ret.return_location}\n` +
+                  `处理人：${ret.handler_name}\n` +
+                  `整体状况：${ret.overall_condition || "未填写"}\n` +
+                  (ret.discrepancies ? `差异说明：${ret.discrepancies}` : "整体状况异常，需进一步检查")
+                );
+
+                return (
+                  <div
+                    key={ret.id}
+                    style={{
+                      padding: "16px",
+                      border: hasAbnormality ? "2px solid var(--warning-color)" : "1px solid var(--border)",
+                      borderRadius: "8px",
+                      marginBottom: "12px",
+                      background: hasAbnormality ? "#fffbf0" : "transparent",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <strong>归还日期: {ret.return_date.slice(0, 10)}</strong>
+                        {hasAbnormality ? (
+                          <span className="badge badge-warning">有异常</span>
+                        ) : (
+                          <span className="badge badge-success">已归还</span>
+                        )}
+                      </div>
+                      {hasAbnormality && (
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <Link
+                            to={`/exceptions/new?loanId=${loan.id}&exhibitId=${loan.exhibit_id}&title=${prefillTitle}&description=${prefillDescription}&type=conservation&severity=high`}
+                            className="btn btn-sm btn-warning"
+                          >
+                            📋 记录异常
+                          </Link>
+                          <Link
+                            to={`/damages/new?loanId=${loan.id}&exhibitId=${loan.exhibit_id}&description=${prefillDescription}`}
+                            className="btn btn-sm btn-danger"
+                          >
+                            🔧 记录损伤
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <div className="detail-label">处理人</div>
+                        <div className="detail-value">{ret.handler_name}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">归还地点</div>
+                        <div className="detail-value">{ret.return_location}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">接收人</div>
+                        <div className="detail-value">{ret.receiver_name}</div>
+                      </div>
+                      <div className="detail-item">
+                        <div className="detail-label">包装状况</div>
+                        <div className="detail-value">{ret.package_condition || "-"}</div>
+                      </div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">整体状况</div>
+                      <div className="detail-value">
+                        <span
+                          className={`badge ${
+                            hasConditionIssue ? "badge-warning" : "badge-success"
+                          }`}
+                        >
+                          {ret.overall_condition || "未填写"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">核对项目</div>
+                      <div className="detail-value">{ret.items_checked || "-"}</div>
+                    </div>
+                    {ret.discrepancies && (
+                      <div className="detail-item">
+                        <div className="detail-label">差异说明</div>
+                        <p style={{
+                          color: "var(--danger-color)",
+                          padding: "8px 12px",
+                          background: "#fff3f0",
+                          borderRadius: "6px",
+                          borderLeft: "3px solid var(--danger-color)",
+                        }}>
+                          {ret.discrepancies}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <div className="detail-label">处理人</div>
-                      <div className="detail-value">{ret.handler_name}</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">归还地点</div>
-                      <div className="detail-value">{ret.return_location}</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">接收人</div>
-                      <div className="detail-value">{ret.receiver_name}</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">包装状况</div>
-                      <div className="detail-value">{ret.package_condition || "-"}</div>
-                    </div>
-                  </div>
-                  <div className="detail-item">
-                    <div className="detail-label">整体状况</div>
-                    <div className="detail-value">{ret.overall_condition || "-"}</div>
-                  </div>
-                  <div className="detail-item">
-                    <div className="detail-label">核对项目</div>
-                    <div className="detail-value">{ret.items_checked || "-"}</div>
-                  </div>
-                  {ret.discrepancies && (
-                    <div className="detail-item">
-                      <div className="detail-label">差异说明</div>
-                      <p style={{ color: "var(--danger-color)" }}>{ret.discrepancies}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

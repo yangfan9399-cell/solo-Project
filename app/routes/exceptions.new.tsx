@@ -10,11 +10,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const loanId = url.searchParams.get("loanId");
   const exhibitId = url.searchParams.get("exhibitId");
+  const title = url.searchParams.get("title");
+  const description = url.searchParams.get("description");
+  const type = url.searchParams.get("type");
+  const severity = url.searchParams.get("severity");
 
   const users = getAllUsers();
   const loans = getAllLoans();
 
-  return json({ users, loans, preselectedLoanId: loanId, preselectedExhibitId: exhibitId });
+  return json({
+    users,
+    loans,
+    preselectedLoanId: loanId,
+    preselectedExhibitId: exhibitId,
+    prefilledTitle: title,
+    prefilledDescription: description,
+    preselectedType: type,
+    preselectedSeverity: severity,
+  });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -61,7 +74,16 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function NewException() {
-  const { users, loans, preselectedLoanId, preselectedExhibitId } = useLoaderData<typeof loader>();
+  const {
+    users,
+    loans,
+    preselectedLoanId,
+    preselectedExhibitId,
+    prefilledTitle,
+    prefilledDescription,
+    preselectedType,
+    preselectedSeverity,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -82,11 +104,17 @@ export default function NewException() {
           <div className="alert alert-danger">{actionData.error}</div>
         )}
 
+        {(prefilledTitle || prefilledDescription) && (
+          <div className="alert alert-info" style={{ marginBottom: "16px" }}>
+            ℹ️ 已根据归还点交差异自动预填部分信息，请核对后提交
+          </div>
+        )}
+
         <Form method="post">
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">异常类型 *</label>
-              <select name="type" className="form-control" required>
+              <select name="type" className="form-control" required defaultValue={preselectedType || ""}>
                 <option value="">请选择类型</option>
                 {EXCEPTION_TYPES.map((t) => (
                   <option key={t.key} value={t.key}>
@@ -97,7 +125,7 @@ export default function NewException() {
             </div>
             <div className="form-group">
               <label className="form-label">严重程度 *</label>
-              <select name="severity" className="form-control" required>
+              <select name="severity" className="form-control" required defaultValue={preselectedSeverity || "medium"}>
                 <option value="low">低</option>
                 <option value="medium">中</option>
                 <option value="high">高</option>
@@ -113,6 +141,7 @@ export default function NewException() {
               name="title"
               className="form-control"
               required
+              defaultValue={prefilledTitle || ""}
               placeholder="请简要描述异常"
             />
           </div>
@@ -124,6 +153,7 @@ export default function NewException() {
               className="form-control"
               rows={4}
               required
+              defaultValue={prefilledDescription || ""}
               placeholder="请详细描述异常情况"
             />
           </div>

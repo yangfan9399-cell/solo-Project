@@ -11,12 +11,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const loanId = url.searchParams.get("loanId");
   const exhibitId = url.searchParams.get("exhibitId");
+  const description = url.searchParams.get("description");
 
   const users = getAllUsers();
   const exhibits = getAllExhibits();
   const loans = getAllLoans();
 
-  return json({ users, exhibits, loans, preselectedLoanId: loanId, preselectedExhibitId: exhibitId });
+  return json({
+    users,
+    exhibits,
+    loans,
+    preselectedLoanId: loanId,
+    preselectedExhibitId: exhibitId,
+    prefilledDescription: description,
+  });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -57,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function NewDamage() {
-  const { users, exhibits, loans, preselectedLoanId, preselectedExhibitId } = useLoaderData<typeof loader>();
+  const { users, exhibits, loans, preselectedLoanId, preselectedExhibitId, prefilledDescription } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -76,6 +84,12 @@ export default function NewDamage() {
       <div className="card">
         {actionData?.error && (
           <div className="alert alert-danger">{actionData.error}</div>
+        )}
+
+        {prefilledDescription && (
+          <div className="alert alert-info" style={{ marginBottom: "16px" }}>
+            ℹ️ 已根据归还点交差异自动预填损伤描述，请核对后补充完整信息
+          </div>
         )}
 
         <Form method="post">
@@ -170,6 +184,7 @@ export default function NewDamage() {
               className="form-control"
               rows={3}
               required
+              defaultValue={prefilledDescription || ""}
               placeholder="请详细描述损伤情况"
             />
           </div>
