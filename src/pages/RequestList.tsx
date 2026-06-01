@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, RotateCcw } from 'lucide-react'
+import { Plus, Search, RotateCcw, Calendar } from 'lucide-react'
 import { useApi } from '@/hooks/useApi'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import EmptyState from '@/components/EmptyState'
@@ -31,6 +31,8 @@ export default function RequestList() {
   const [statusFilter, setStatusFilter] = useState('')
   const [libraryFilter, setLibraryFilter] = useState('')
   const [searchText, setSearchText] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [page, setPage] = useState(1)
 
   const { data: libraries } = useApi<PartnerLibrary[]>('/api/libraries')
@@ -38,11 +40,17 @@ export default function RequestList() {
   const queryParams = new URLSearchParams()
   if (statusFilter) queryParams.set('status', statusFilter)
   if (libraryFilter) queryParams.set('libraryId', libraryFilter)
-  if (searchText) queryParams.set('reader_name', searchText)
+  if (searchText) queryParams.set('readerName', searchText)
+  if (startDate) queryParams.set('startDate', startDate)
+  if (endDate) queryParams.set('endDate', `${endDate} 23:59:59`)
   const queryStr = queryParams.toString()
   const url = `/api/requests${queryStr ? `?${queryStr}` : ''}`
 
   const { data: requests, loading, error, refetch } = useApi<InterlibraryRequest[]>(url)
+
+  const hasActiveFilters = useMemo(() => {
+    return !!(statusFilter || libraryFilter || searchText || startDate || endDate)
+  }, [statusFilter, libraryFilter, searchText, startDate, endDate])
 
   const totalPages = useMemo(() => {
     if (!requests) return 1
@@ -58,6 +66,8 @@ export default function RequestList() {
     setStatusFilter('')
     setLibraryFilter('')
     setSearchText('')
+    setStartDate('')
+    setEndDate('')
     setPage(1)
   }
 
@@ -77,7 +87,7 @@ export default function RequestList() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 bg-white rounded-xl p-4 shadow-sm">
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
@@ -111,6 +121,28 @@ export default function RequestList() {
           />
         </div>
 
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setPage(1) }}
+              className="h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+            />
+          </div>
+          <span className="text-sm text-slate-400">至</span>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setPage(1) }}
+              className="h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 w-40"
+            />
+          </div>
+        </div>
+
         <button
           onClick={handleReset}
           className="inline-flex items-center gap-1.5 h-9 px-3 text-sm text-slate-500 hover:text-slate-700 transition-colors"
@@ -122,7 +154,14 @@ export default function RequestList() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {!requests || requests.length === 0 ? (
-          <EmptyState title="暂无申请" description="没有找到符合条件的互借申请" />
+          hasActiveFilters ? (
+            <EmptyState
+              title="未找到匹配的申请"
+              description="当前筛选条件下没有符合的互借申请，请尝试调整筛选条件或点击重置"
+            />
+          ) : (
+            <EmptyState title="暂无申请" description="还没有任何互借申请记录，点击右上角新建申请" />
+          )
         ) : (
           <>
             <table className="w-full text-sm">
