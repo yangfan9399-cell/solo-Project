@@ -49,7 +49,7 @@ def dashboard(request):
     role_todos = []
 
     if role == "clerk":
-        pending_reminders = PickupReminder.objects.filter(response="").select_related("package")[:5]
+        pending_reminders = PickupReminder.objects.filter(response="no_response").select_related("package")[:5]
         pending_abnormals = AbnormalPackage.objects.filter(status="pending").select_related("package", "package__station")[:5]
         todays_checkins = Package.objects.filter(checked_in_at__date=timezone.now().date()).count()
 

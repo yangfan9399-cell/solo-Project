@@ -51,7 +51,7 @@
                             </span>
                         </td>
                         <td>
-                            {% if r.response %}
+                            {% if r.response and r.response != 'no_response' %}
                             <span class="badge {% if r.response == 'confirmed_pickup' %}badge-green{% elif r.response == 'rejected' %}badge-red{% else %}badge-yellow{% endif %}">
                                 {{ r.get_response_display }}
                             </span>

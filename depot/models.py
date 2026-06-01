@@ -128,7 +128,7 @@ class PickupReminder(models.Model):
     sent_at = models.DateTimeField("发送时间", auto_now_add=True)
     sent_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True, verbose_name="发送人")
     status = models.CharField("发送状态", max_length=20, choices=STATUS_CHOICES, default="sent")
-    response = models.CharField("客户回应", max_length=20, choices=RESPONSE_CHOICES, blank=True, default="")
+    response = models.CharField("客户回应", max_length=20, choices=RESPONSE_CHOICES, blank=True, default="no_response")
     note = models.TextField("备注", blank=True, default="")
 
     class Meta:
