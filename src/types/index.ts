@@ -38,6 +38,7 @@ export interface InterlibraryRequest {
   updated_at: string
   shipping_records?: ShippingRecord[]
   renewal_requests?: RenewalRequest[]
+  exception_records?: ExceptionRecord[]
 }
 
 export interface ShippingRecord {

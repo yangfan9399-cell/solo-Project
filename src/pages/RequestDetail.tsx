@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   CheckCircle, XCircle, Truck, ArrowRight, BookCheck, RotateCcw,
-  Package, CalendarClock, X, Loader2, UserCircle, Clock
+  Package, CalendarClock, X, Loader2, UserCircle, Clock,
+  AlertTriangle, Wrench
 } from 'lucide-react'
 import { useApi, useApiPost, useApiPut } from '@/hooks/useApi'
 import StatusBadge, { statusConfig } from '@/components/StatusBadge'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorState from '@/components/ErrorState'
 import { useAppStore, roleLabels, type UserRole } from '@/stores/appStore'
-import type { InterlibraryRequest, StatusTransition, RequestStatus } from '@/types'
+import type { InterlibraryRequest, StatusTransition, RequestStatus, ExceptionRecord } from '@/types'
 
 function formatDateTime(dateStr: string | null) {
   if (!dateStr) return '-'
@@ -22,6 +23,19 @@ function formatDateTime(dateStr: string | null) {
   return `${y}-${m}-${day} ${h}:${min}`
 }
 
+const exTypeMap: Record<string, string> = {
+  damage: '图书损坏',
+  lost: '图书丢失',
+  delay: '物流延误',
+  other: '其他',
+}
+
+const exStatusConfig: Record<string, { label: string; className: string }> = {
+  open: { label: '待处理', className: 'bg-red-100 text-red-700' },
+  processing: { label: '处理中', className: 'bg-amber-100 text-amber-700' },
+  resolved: { label: '已解决', className: 'bg-green-100 text-green-700' },
+}
+
 interface ShippingForm {
   carrier: string
   tracking_number: string
@@ -31,6 +45,16 @@ interface ShippingForm {
 interface RenewalForm {
   requested_due_date: string
   reason: string
+}
+
+interface ExceptionForm {
+  type: string
+  description: string
+}
+
+interface HandleExceptionForm {
+  status: string
+  resolution: string
 }
 
 interface ActionDef {
@@ -123,13 +147,21 @@ export default function RequestDetail() {
   const { put: putArrive } = useApiPut<void>('')
   const { put: putReturn } = useApiPut<void>('')
   const { put: putComplete } = useApiPut<void>('')
+  const { post: postException } = useApiPost<void, ExceptionForm & { request_id: number }>('')
+  const { put: putHandleException } = useApiPut<void, HandleExceptionForm>('')
 
   const { currentRole, setCurrentRole } = useAppStore()
 
   const [shippingModal, setShippingModal] = useState(false)
   const [renewalModal, setRenewalModal] = useState(false)
+  const [exceptionModal, setExceptionModal] = useState(false)
+  const [handleExceptionModal, setHandleExceptionModal] = useState(false)
+  const [handleExceptionModalType, setHandleExceptionModalType] = useState<'process' | 'resolve'>('process')
+  const [selectedException, setSelectedException] = useState<ExceptionRecord | null>(null)
   const [shipForm, setShipForm] = useState<ShippingForm>({ carrier: '', tracking_number: '', estimated_arrival: '' })
   const [renewalForm, setRenewalForm] = useState<RenewalForm>({ requested_due_date: '', reason: '' })
+  const [exceptionForm, setExceptionForm] = useState<ExceptionForm>({ type: 'damage', description: '' })
+  const [handleExceptionForm, setHandleExceptionForm] = useState<HandleExceptionForm>({ status: 'processing', resolution: '' })
   const [actionLoading, setActionLoading] = useState(false)
 
   const handleStatusUpdate = async (url: string, body?: unknown) => {
@@ -192,22 +224,58 @@ export default function RequestDetail() {
     setActionLoading(false)
   }
 
+  const handleSubmitException = async () => {
+    if (!id) return
+    setActionLoading(true)
+    await postException('/api/exceptions', { ...exceptionForm, request_id: Number(id) })
+    setExceptionModal(false)
+    setExceptionForm({ type: 'damage', description: '' })
+    await refetch()
+    setActionLoading(false)
+  }
+
+  const openProcessExceptionModal = (record: ExceptionRecord) => {
+    setSelectedException(record)
+    setHandleExceptionModalType('process')
+    setHandleExceptionForm({ status: 'processing', resolution: '' })
+    setHandleExceptionModal(true)
+  }
+
+  const openResolveExceptionModal = (record: ExceptionRecord) => {
+    setSelectedException(record)
+    setHandleExceptionModalType('resolve')
+    setHandleExceptionForm({ status: 'resolved', resolution: '' })
+    setHandleExceptionModal(true)
+  }
+
+  const handleSubmitHandleException = async () => {
+    if (!selectedException) return
+    setActionLoading(true)
+    await putHandleException(`/api/exceptions/${selectedException.id}`, handleExceptionForm)
+    setHandleExceptionModal(false)
+    await refetch()
+    setActionLoading(false)
+  }
+
   const getRoleActions = (status: RequestStatus, role: UserRole): ActionDef[] => {
     const btn = (label: string, color: string, icon: React.ReactNode, onClick: () => void): ActionDef => ({
       label, color, icon, onClick,
     })
 
+    const exceptionBtn = btn('登记异常', 'bg-red-600 text-white hover:bg-red-700', <AlertTriangle className="w-3.5 h-3.5" />, () => setExceptionModal(true))
+
     const roleActions: Record<UserRole, Partial<Record<RequestStatus, ActionDef[]>>> = {
       librarian: {
-        in_transit: [btn('确认到馆', 'bg-teal-600 text-white hover:bg-teal-700', <Package className="w-3.5 h-3.5" />, handleArrive)],
-        arrived: [btn('读者取书', 'bg-green-600 text-white hover:bg-green-700', <BookCheck className="w-3.5 h-3.5" />, handleReading)],
+        in_transit: [btn('确认到馆', 'bg-teal-600 text-white hover:bg-teal-700', <Package className="w-3.5 h-3.5" />, handleArrive), exceptionBtn],
+        arrived: [btn('读者取书', 'bg-green-600 text-white hover:bg-green-700', <BookCheck className="w-3.5 h-3.5" />, handleReading), exceptionBtn],
         reading: [
           btn('申请续借', 'bg-purple-600 text-white hover:bg-purple-700', <CalendarClock className="w-3.5 h-3.5" />, () => setRenewalModal(true)),
           btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook),
+          exceptionBtn,
         ],
-        renewal_approved: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
-        renewal_rejected: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
-        returning: [btn('确认完成', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleComplete)],
+        renewal_approved: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook), exceptionBtn],
+        renewal_rejected: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook), exceptionBtn],
+        returning: [btn('确认完成', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleComplete), exceptionBtn],
         overdue: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
         exception: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
       },
@@ -219,12 +287,14 @@ export default function RequestDetail() {
         pending: [
           btn('批准', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleApprove),
           btn('拒绝', 'bg-red-600 text-white hover:bg-red-700', <XCircle className="w-3.5 h-3.5" />, handleReject),
+          exceptionBtn,
         ],
         renewal_pending: [
           btn('批准续借', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleApproveRenewal),
           btn('拒绝续借', 'bg-red-600 text-white hover:bg-red-700', <XCircle className="w-3.5 h-3.5" />, handleRejectRenewal),
+          exceptionBtn,
         ],
-        overdue: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+        overdue: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook), exceptionBtn],
         exception: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
       },
     }
@@ -239,6 +309,7 @@ export default function RequestDetail() {
   const actions = getRoleActions(data.status, currentRole)
   const hint = nextStepHints[data.status]?.[currentRole]
   const isTerminal = data.status === 'completed' || data.status === 'rejected'
+  const hasExceptions = data.exception_records && data.exception_records.length > 0
 
   const roles: UserRole[] = ['librarian', 'partner', 'supervisor']
 
@@ -275,16 +346,16 @@ export default function RequestDetail() {
           {actions.length > 0 && (
             <div className="flex items-center gap-2">
               {actions.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={action.onClick}
-                  disabled={actionLoading}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${action.color}`}
-                >
-                  {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : action.icon}
-                  {action.label}
-                </button>
-              ))}
+              <button
+                key={action.label}
+                onClick={action.onClick}
+                disabled={actionLoading}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${action.color}`}
+              >
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : action.icon}
+                {action.label}
+              </button>
+            ))}
             </div>
           )}
         </div>
@@ -365,6 +436,64 @@ export default function RequestDetail() {
         </div>
       )}
 
+      {hasExceptions && (
+        <div className="bg-red-50 rounded-xl border border-red-200 p-6">
+          <h2 className="text-lg font-medium text-red-800 mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            异常记录
+          </h2>
+          {data.exception_records?.map((ex) => {
+            const statusConf = exStatusConfig[ex.status] || exStatusConfig.open
+            const canProcess = currentRole !== 'partner' && ex.status !== 'resolved'
+            return (
+              <div key={ex.id} className="bg-white rounded-lg border border-red-100 p-4 mb-3 last:mb-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusConf.className}`}>
+                        {statusConf.label}
+                      </span>
+                      <span className="text-sm font-medium text-slate-800">
+                        {exTypeMap[ex.type] || ex.type}
+                      </span>
+                      <span className="text-xs text-slate-400">·</span>
+                      <span className="text-xs text-slate-400">{formatDateTime(ex.created_at)}</span>
+                    </div>
+                    <p className="text-sm text-slate-600 mb-1">{ex.description}</p>
+                    {ex.resolution && (
+                      <p className="text-xs text-slate-500">处理方案：{ex.resolution}</p>
+                    )}
+                    {ex.handler_name && (
+                      <p className="text-xs text-slate-400 mt-1">处理人：{ex.handler_name}</p>
+                    )}
+                  </div>
+                  {canProcess && (
+                    <div className="flex items-center gap-2">
+                      {ex.status === 'open' && (
+                        <button
+                          onClick={() => openProcessExceptionModal(ex)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-300 rounded hover:bg-indigo-50 transition-colors">
+                          <Wrench className="w-3 h-3" />
+                          处理
+                        </button>
+                      )}
+                      {ex.status === 'processing' && (
+                        <button
+                          onClick={() => openResolveExceptionModal(ex)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-600 border border-green-300 rounded hover:bg-green-50 transition-colors">
+                          <CheckCircle className="w-3 h-3" />
+                          完成
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {data.shipping_records && data.shipping_records.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h2 className="text-lg font-medium text-slate-700 mb-4">物流信息</h2>
@@ -440,6 +569,89 @@ export default function RequestDetail() {
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setRenewalModal(false)} className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">取消</button>
               <button onClick={handleSubmitRenewal} disabled={actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50">提交</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {exceptionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-slate-700 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                登记异常
+              </h3>
+              <button onClick={() => setExceptionModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">异常类型</label>
+              <select
+                value={exceptionForm.type}
+                onChange={(e) => setExceptionForm((p) => ({ ...p, type: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="damage">图书损坏</option>
+                <option value="lost">图书丢失</option>
+                <option value="delay">物流延误</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">异常描述</label>
+              <textarea
+                rows={3}
+                value={exceptionForm.description}
+                onChange={(e) => setExceptionForm((p) => ({ ...p, description: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="请详细描述异常情况..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setExceptionModal(false)} className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">取消</button>
+              <button onClick={handleSubmitException} disabled={actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50">确认登记</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {handleExceptionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-slate-700">
+                {handleExceptionModalType === 'process' ? '处理异常' : '完成处理'}
+              </h3>
+              <button onClick={() => setHandleExceptionModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+            </div>
+            {handleExceptionModalType === 'process' && (
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">处理状态</label>
+                <select
+                  value={handleExceptionForm.status}
+                  onChange={(e) => setHandleExceptionForm((p) => ({ ...p, status: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="processing">处理中</option>
+                  <option value="resolved">已解决</option>
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-slate-600 mb-1">
+                {handleExceptionModalType === 'process' ? '处理方案' : '解决方案'}
+              </label>
+              <textarea
+                rows={3}
+                value={handleExceptionForm.resolution}
+                onChange={(e) => setHandleExceptionForm((p) => ({ ...p, resolution: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="请描述处理方案..."
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setHandleExceptionModal(false)} className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50">取消</button>
+              <button onClick={handleSubmitHandleException} disabled={actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50">确认</button>
             </div>
           </div>
         </div>

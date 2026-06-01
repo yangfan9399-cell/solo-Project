@@ -69,9 +69,13 @@ router.get('/:id', (req: Request, res: Response): void => {
       'SELECT * FROM renewal_requests WHERE request_id = ? ORDER BY created_at DESC'
     ).all(id)
 
+    const exceptionRecords = db.prepare(
+      'SELECT * FROM exception_records WHERE request_id = ? ORDER BY created_at DESC'
+    ).all(id)
+
     res.json({
       success: true,
-      data: { ...request, shipping_records: shippingRecords, renewal_requests: renewalRequests },
+      data: { ...request, shipping_records: shippingRecords, renewal_requests: renewalRequests, exception_records: exceptionRecords },
     })
   } catch (error) {
     res.status(500).json({ success: false, error: (error as Error).message })
