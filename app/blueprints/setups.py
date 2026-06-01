@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models import SetupRequest, Booking, CostItem
 from app import db
 from datetime import datetime
+from app.blueprints.costs import update_booking_total_cost
 
 setups_bp = Blueprint("setups", __name__)
 
@@ -12,14 +13,6 @@ SETUP_COSTS = {
     "宴会式": 2500,
     "中空式": 1600,
 }
-
-
-def update_booking_total_cost(booking_id):
-    booking = Booking.query.get(booking_id)
-    if booking:
-        total = sum(ci.amount for ci in booking.cost_items if ci.status == "approved")
-        booking.total_cost = total
-        db.session.commit()
 
 
 @setups_bp.route("/")
@@ -59,6 +52,7 @@ def new_setup():
         )
         db.session.add(cost)
         db.session.commit()
+        update_booking_total_cost(booking_id)
 
         flash("布场需求创建成功，已生成待审批费用项", "success")
         return redirect(url_for("setups.detail", id=setup.id))

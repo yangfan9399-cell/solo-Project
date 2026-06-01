@@ -2,16 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models import Staff, StaffAssignment, Booking, CostItem
 from app import db
 from datetime import datetime, timedelta
+from app.blueprints.costs import update_booking_total_cost
 
 staffs_bp = Blueprint("staffs", __name__)
-
-
-def update_booking_total_cost(booking_id):
-    booking = Booking.query.get(booking_id)
-    if booking:
-        total = sum(ci.amount for ci in booking.cost_items if ci.status == "approved")
-        booking.total_cost = total
-        db.session.commit()
 
 
 @staffs_bp.route("/")
@@ -64,6 +57,7 @@ def schedule():
         )
         db.session.add(cost)
         db.session.commit()
+        update_booking_total_cost(booking_id)
 
         flash("排班分配成功，已生成待审批费用项", "success")
         return redirect(url_for("staffs.schedule", week_offset=week_offset))

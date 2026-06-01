@@ -9,7 +9,7 @@ costs_bp = Blueprint("costs", __name__)
 def update_booking_total_cost(booking_id):
     booking = Booking.query.get(booking_id)
     if booking:
-        total = sum(ci.amount for ci in booking.cost_items if ci.status == "approved")
+        total = sum(ci.amount for ci in booking.cost_items if ci.status != "rejected")
         booking.total_cost = total
         db.session.commit()
 

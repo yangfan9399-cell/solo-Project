@@ -204,7 +204,7 @@ def seed_data():
     db.session.add_all(cost_items)
 
     for booking in bookings:
-        total = sum(ci.amount for ci in booking.cost_items)
+        total = sum(ci.amount for ci in booking.cost_items if ci.status != "rejected")
         booking.total_cost = total
 
     reviews = [
