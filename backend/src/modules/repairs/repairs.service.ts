@@ -16,8 +16,10 @@ export interface CreateRepairDto {
 }
 
 export interface UpdateRepairDto {
+  estimatedCost?: number;
   actualCost?: number;
   startTime?: string;
+  estimatedEndTime?: string;
   actualEndTime?: string;
   status?: RepairStatus;
   notes?: string;
@@ -84,7 +86,7 @@ export class RepairsService {
   }
 
   async update(id: string, updateRepairDto: UpdateRepairDto): Promise<Repair> {
-    const repair = await this.repairRepository.findOne({ where: { id } });
+    const repair = await this.repairRepository.findOne({ where: { id }, relations: ['items'] });
     if (!repair) {
       throw new NotFoundException('维修记录不存在');
     }
@@ -103,6 +105,27 @@ export class RepairsService {
     }
     if (updateRepairDto.notes !== undefined) {
       repair.notes = updateRepairDto.notes;
+    }
+    if (updateRepairDto.estimatedCost !== undefined) {
+      repair.estimatedCost = updateRepairDto.estimatedCost;
+    }
+    if (updateRepairDto.estimatedEndTime) {
+      repair.estimatedEndTime = new Date(updateRepairDto.estimatedEndTime);
+    }
+
+    if (updateRepairDto.items) {
+      await this.repairItemRepository.delete({ repairId: id });
+      
+      const newItems = updateRepairDto.items.map(item => ({
+        ...item,
+        subtotal: item.quantity * item.unitPrice,
+        repairId: id,
+      }));
+      
+      await this.repairItemRepository.save(newItems);
+      
+      const newEstimatedCost = newItems.reduce((sum, item) => sum + item.subtotal, 0);
+      repair.estimatedCost = newEstimatedCost;
     }
 
     return this.repairRepository.save(repair);

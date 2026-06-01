@@ -168,16 +168,32 @@ import { Attachment } from '../../shared/models/attachment.model';
 
               <mat-tab label="维修记录">
                 <div class="tab-content">
+                  <div class="tab-actions" *ngIf="canManageRepair">
+                    <button mat-raised-button color="primary" (click)="createRepair()" *ngIf="!repairs?.length">
+                      <mat-icon>add</mat-icon>
+                      新增维修估价
+                    </button>
+                    <button mat-stroked-button (click)="refreshRepairs()">
+                      <mat-icon>refresh</mat-icon>
+                      刷新
+                    </button>
+                  </div>
                   <ng-container *ngIf="repairs?.length; else noRepairs">
                     <mat-card *ngFor="let repair of repairs" class="repair-card">
                       <mat-card-header>
                         <mat-card-title>维修估价 #{{ repair.id.slice(0, 8) }}</mat-card-title>
-                        <span class="status-badge" [class]="repair.status">{{ getRepairStatusLabel(repair.status) }}</span>
+                        <div class="card-actions">
+                          <span class="status-badge" [class]="repair.status">{{ getRepairStatusLabel(repair.status) }}</span>
+                          <button mat-icon-button color="primary" (click)="editRepair(repair.id)" *ngIf="canManageRepair">
+                            <mat-icon>edit</mat-icon>
+                          </button>
+                        </div>
                       </mat-card-header>
                       <mat-card-content>
                         <div class="repair-info">
-                          <p>预估费用: ¥{{ repair.estimatedCost }}</p>
-                          <p *ngIf="repair.actualCost">实际费用: ¥{{ repair.actualCost }}</p>
+                          <p>预估费用: ¥{{ repair.estimatedCost?.toFixed(2) }}</p>
+                          <p *ngIf="repair.actualCost">实际费用: ¥{{ repair.actualCost?.toFixed(2) }}</p>
+                          <p *ngIf="repair.items">维修项: {{ repair.items.length }} 项</p>
                           <p>维修主管: {{ repair.repairManager?.name }}</p>
                           <p *ngIf="repair.notes">备注: {{ repair.notes }}</p>
                         </div>
@@ -189,24 +205,44 @@ import { Attachment } from '../../shared/models/attachment.model';
                       icon="build"
                       title="暂无维修记录"
                       description="该事故还没有维修记录"
-                    ></app-empty-state>
+                    >
+                      <button mat-raised-button color="primary" (click)="createRepair()" *ngIf="canManageRepair">
+                        <mat-icon>add</mat-icon>
+                        新增维修估价
+                      </button>
+                    </app-empty-state>
                   </ng-template>
                 </div>
               </mat-tab>
 
               <mat-tab label="理赔记录">
                 <div class="tab-content">
+                  <div class="tab-actions" *ngIf="canManageClaim">
+                    <button mat-raised-button color="primary" (click)="createClaim()" *ngIf="!claims?.length">
+                      <mat-icon>add</mat-icon>
+                      新增理赔申请
+                    </button>
+                    <button mat-stroked-button (click)="refreshClaims()">
+                      <mat-icon>refresh</mat-icon>
+                      刷新
+                    </button>
+                  </div>
                   <ng-container *ngIf="claims?.length; else noClaims">
                     <mat-card *ngFor="let claim of claims" class="claim-card">
                       <mat-card-header>
                         <mat-card-title>理赔申请 #{{ claim.id.slice(0, 8) }}</mat-card-title>
-                        <span class="status-badge" [class]="claim.status">{{ getClaimStatusLabel(claim.status) }}</span>
+                        <div class="card-actions">
+                          <span class="status-badge" [class]="claim.status">{{ getClaimStatusLabel(claim.status) }}</span>
+                          <button mat-icon-button color="primary" (click)="editClaim(claim.id)" *ngIf="canManageClaim">
+                            <mat-icon>edit</mat-icon>
+                          </button>
+                        </div>
                       </mat-card-header>
                       <mat-card-content>
                         <div class="claim-info">
                           <p *ngIf="claim.policyNo">保单号: {{ claim.policyNo }}</p>
-                          <p *ngIf="claim.claimAmount">理赔金额: ¥{{ claim.claimAmount }}</p>
-                          <p *ngIf="claim.paidAmount">已赔付: ¥{{ claim.paidAmount }}</p>
+                          <p *ngIf="claim.claimAmount">理赔金额: ¥{{ claim.claimAmount?.toFixed(2) }}</p>
+                          <p *ngIf="claim.paidAmount">已赔付: ¥{{ claim.paidAmount?.toFixed(2) }}</p>
                           <p>保险专员: {{ claim.insuranceSpecialist?.name }}</p>
                           <p *ngIf="claim.notes">备注: {{ claim.notes }}</p>
                         </div>
@@ -218,7 +254,12 @@ import { Attachment } from '../../shared/models/attachment.model';
                       icon="receipt"
                       title="暂无理赔记录"
                       description="该事故还没有理赔记录"
-                    ></app-empty-state>
+                    >
+                      <button mat-raised-button color="primary" (click)="createClaim()" *ngIf="canManageClaim">
+                        <mat-icon>add</mat-icon>
+                        新增理赔申请
+                      </button>
+                    </app-empty-state>
                   </ng-template>
                 </div>
               </mat-tab>
@@ -377,6 +418,12 @@ import { Attachment } from '../../shared/models/attachment.model';
     .status-badge.in_claim { background: #f3e5f5; color: #7b1fa2; }
     .status-badge.completed { background: #e8f5e9; color: #2e7d32; }
     .status-badge.rejected { background: #ffebee; color: #c62828; }
+    .tab-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
     .repair-card, .claim-card {
       margin-bottom: 16px;
     }
@@ -384,6 +431,11 @@ import { Attachment } from '../../shared/models/attachment.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .repair-info p, .claim-info p {
       margin: 8px 0;
@@ -443,6 +495,14 @@ export class AccidentDetailComponent implements OnInit {
 
   get canUpdateStatus(): boolean {
     return this.authService.hasRole(['dispatcher', 'repair_manager', 'insurance_specialist']);
+  }
+
+  get canManageRepair(): boolean {
+    return this.authService.hasRole(['repair_manager']);
+  }
+
+  get canManageClaim(): boolean {
+    return this.authService.hasRole(['insurance_specialist']);
   }
 
   constructor() {
@@ -564,6 +624,38 @@ export class AccidentDetailComponent implements OnInit {
       rejected: '已拒绝',
     };
     return labels[status] || status;
+  }
+
+  createRepair() {
+    this.router.navigate(['/repairs/new'], { queryParams: { accidentId: this.accidentId } });
+  }
+
+  editRepair(repairId: string) {
+    this.router.navigate(['/repairs', repairId], { queryParams: { accidentId: this.accidentId } });
+  }
+
+  refreshRepairs() {
+    this.repairService.findByAccident(this.accidentId).subscribe({
+      next: (repairs) => {
+        this.repairs = repairs;
+      },
+    });
+  }
+
+  createClaim() {
+    this.router.navigate(['/claims/new'], { queryParams: { accidentId: this.accidentId } });
+  }
+
+  editClaim(claimId: string) {
+    this.router.navigate(['/claims', claimId], { queryParams: { accidentId: this.accidentId } });
+  }
+
+  refreshClaims() {
+    this.claimService.findByAccident(this.accidentId).subscribe({
+      next: (claims) => {
+        this.claims = claims;
+      },
+    });
   }
 
   goBack() {

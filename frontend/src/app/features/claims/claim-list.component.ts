@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -100,6 +101,14 @@ interface PaginatedResult<T> {
                       <span class="status-badge" [class]="row.status">{{ getStatusLabel(row.status) }}</span>
                     </td>
                   </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>操作</th>
+                    <td mat-cell *matCellDef="let row">
+                      <button mat-icon-button color="primary" (click)="editClaim(row.id)" *ngIf="canEdit">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
                   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
@@ -168,11 +177,16 @@ interface PaginatedResult<T> {
 export class ClaimListComponent implements OnInit {
   private claimService = inject(ClaimService);
   private authService = inject(AuthService);
+  private router = inject(Router);
+
+  get canEdit(): boolean {
+    return this.authService.hasRole(['insurance_specialist']);
+  }
 
   loading = true;
   error = false;
   data: PaginatedResult<Claim> = { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
-  displayedColumns = ['accidentId', 'insuranceSpecialist', 'policyNo', 'claimAmount', 'paidAmount', 'createdAt', 'status'];
+  displayedColumns = ['accidentId', 'insuranceSpecialist', 'policyNo', 'claimAmount', 'paidAmount', 'createdAt', 'status', 'actions'];
   statusControl = new FormControl('');
   pageIndex = 1;
   pageSize = 10;
@@ -225,5 +239,9 @@ export class ClaimListComponent implements OnInit {
       rejected: '已驳回',
     };
     return labels[status];
+  }
+
+  editClaim(id: string) {
+    this.router.navigate(['/claims', id]);
   }
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -102,6 +103,14 @@ interface PaginatedResult<T> {
                     <th mat-header-cell *matHeaderCellDef>维修项</th>
                     <td mat-cell *matCellDef="let row">{{ row.items?.length || 0 }}项</td>
                   </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>操作</th>
+                    <td mat-cell *matCellDef="let row">
+                      <button mat-icon-button color="primary" (click)="editRepair(row.id)" *ngIf="canEdit">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
                   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
@@ -168,11 +177,16 @@ interface PaginatedResult<T> {
 export class RepairListComponent implements OnInit {
   private repairService = inject(RepairService);
   private authService = inject(AuthService);
+  private router = inject(Router);
+
+  get canEdit(): boolean {
+    return this.authService.hasRole(['repair_manager']);
+  }
 
   loading = true;
   error = false;
   data: PaginatedResult<Repair> = { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
-  displayedColumns = ['accidentId', 'repairManager', 'estimatedCost', 'actualCost', 'startTime', 'estimatedEndTime', 'items', 'status'];
+  displayedColumns = ['accidentId', 'repairManager', 'estimatedCost', 'actualCost', 'startTime', 'estimatedEndTime', 'items', 'status', 'actions'];
   statusControl = new FormControl('');
   pageIndex = 1;
   pageSize = 10;
@@ -223,5 +237,9 @@ export class RepairListComponent implements OnInit {
       completed: '已完成',
     };
     return labels[status];
+  }
+
+  editRepair(id: string) {
+    this.router.navigate(['/repairs', id]);
   }
 }

@@ -54,6 +54,16 @@ export const routes: Routes = [
             loadComponent: () => import('./features/repairs/repair-list.component').then(m => m.RepairListComponent),
             data: { roles: ['repair_manager', 'dispatcher'] },
           },
+          {
+            path: 'new',
+            loadComponent: () => import('./features/repairs/repair-detail.component').then(m => m.RepairDetailComponent),
+            data: { roles: ['repair_manager'] },
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/repairs/repair-detail.component').then(m => m.RepairDetailComponent),
+            data: { roles: ['repair_manager'] },
+          },
         ],
       },
       {
@@ -63,6 +73,16 @@ export const routes: Routes = [
             path: '',
             loadComponent: () => import('./features/claims/claim-list.component').then(m => m.ClaimListComponent),
             data: { roles: ['insurance_specialist', 'dispatcher'] },
+          },
+          {
+            path: 'new',
+            loadComponent: () => import('./features/claims/claim-detail.component').then(m => m.ClaimDetailComponent),
+            data: { roles: ['insurance_specialist'] },
+          },
+          {
+            path: ':id',
+            loadComponent: () => import('./features/claims/claim-detail.component').then(m => m.ClaimDetailComponent),
+            data: { roles: ['insurance_specialist'] },
           },
         ],
       },

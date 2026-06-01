@@ -39,9 +39,16 @@ export interface CreateRepairRequest {
 }
 
 export interface UpdateRepairRequest {
+  estimatedCost?: number;
   actualCost?: number;
   startTime?: string;
+  estimatedEndTime?: string;
   actualEndTime?: string;
   status?: RepairStatus;
   notes?: string;
+  items?: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
 }
