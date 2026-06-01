@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AppointmentForm from '../../components/AppointmentForm.tsx';
+---
+
+<BaseLayout title="新建预约 - 园区访客预约系统" currentPage="/appointments">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <a href="/appointments" class="hover:text-primary-600 transition-colors">访客预约</a>
+      <span>/</span>
+      <span class="text-gray-900">新建预约</span>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900">新建预约</h2>
+    <p class="mt-1 text-sm text-gray-500">填写访客预约信息并提交审批</p>
+  </div>
+  <AppointmentForm client:load />
+</BaseLayout>

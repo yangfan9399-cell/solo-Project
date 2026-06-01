@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AppointmentList from '../../components/AppointmentList.tsx';
+
+const status = Astro.url.searchParams.get('status') || undefined;
+const visitee_id = Astro.url.searchParams.get('visitee_id') || undefined;
+---
+
+<BaseLayout title="访客预约 - 园区访客预约系统" currentPage="/appointments">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">访客预约</h2>
+      <p class="mt-1 text-sm text-gray-500">管理所有访客预约记录</p>
+    </div>
+    <a
+      href="/appointments/new"
+      class="inline-flex items-center px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+    >
+      + 新建预约
+    </a>
+  </div>
+  <AppointmentList client:load status={status} visitee_id={visitee_id} />
+</BaseLayout>

@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Dashboard from '../components/Dashboard.tsx';
+---
+
+<BaseLayout title="工作台 - 园区访客预约系统" currentPage="/">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">工作台</h2>
+    <p class="mt-1 text-sm text-gray-500">园区访客预约审批与门禁核验系统概览</p>
+  </div>
+  <Dashboard client:load />
+</BaseLayout>

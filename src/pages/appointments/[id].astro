@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AppointmentDetail from '../../components/AppointmentDetail.tsx';
+
+const { id } = Astro.params;
+---
+
+<BaseLayout title="预约详情 - 园区访客预约系统" currentPage="/appointments">
+  <div class="mb-6">
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
+      <a href="/appointments" class="hover:text-primary-600 transition-colors">访客预约</a>
+      <span>/</span>
+      <span class="text-gray-900">预约详情</span>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900">预约详情</h2>
+    <p class="mt-1 text-sm text-gray-500">查看预约详细信息与审批状态</p>
+  </div>
+  <AppointmentDetail client:load id={Number(id)} />
+</BaseLayout>

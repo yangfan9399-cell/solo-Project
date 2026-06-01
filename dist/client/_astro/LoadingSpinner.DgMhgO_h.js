@@ -1,0 +1,1 @@
+import{j as e}from"./jsx-runtime.D_zvdyIk.js";function t({text:r="加载中..."}){return e.jsxs("div",{className:"flex flex-col items-center justify-center py-12",children:[e.jsx("div",{className:"w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"}),e.jsx("p",{className:"mt-4 text-sm text-gray-500",children:r})]})}export{t as L};

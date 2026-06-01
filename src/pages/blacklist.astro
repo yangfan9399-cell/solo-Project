@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BlacklistManager from '../components/BlacklistManager.tsx';
+---
+
+<BaseLayout title="黑名单管理 - 园区访客预约系统" currentPage="/blacklist">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">黑名单管理</h2>
+    <p class="mt-1 text-sm text-gray-500">管理被禁止入园的访客黑名单记录</p>
+  </div>
+  <BlacklistManager client:load />
+</BaseLayout>

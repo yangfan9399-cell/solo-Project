@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GateVerify from '../components/GateVerify.tsx';
+---
+
+<BaseLayout title="门岗核验 - 园区访客预约系统" currentPage="/gate">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">门岗核验</h2>
+    <p class="mt-1 text-sm text-gray-500">核验访客身份与预约信息，办理入园区登记</p>
+  </div>
+  <GateVerify client:load />
+</BaseLayout>
