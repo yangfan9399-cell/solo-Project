@@ -1,7 +1,7 @@
 /* empty css                                */
 import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_D2NMvV5T.mjs';
 import 'piccolore';
-import { $ as $$BaseLayout } from '../chunks/BaseLayout_DpfIgqQ0.mjs';
+import { $ as $$BaseLayout } from '../chunks/BaseLayout_B74mddp9.mjs';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
 import { L as LoadingSpinner } from '../chunks/LoadingSpinner_BsJ3zWzQ.mjs';
@@ -20,6 +20,7 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [filterUser, setFilterUser] = useState("");
   const [filterRead, setFilterRead] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -52,6 +53,7 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
   };
   const markAsRead = async (id) => {
     setActionLoading(true);
+    setActionError("");
     try {
       const res = await fetch("/api/notifications", {
         method: "PUT",
@@ -59,9 +61,9 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
         body: JSON.stringify({ id })
       });
       if (!res.ok) throw new Error("标记已读失败");
-      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: 1 } : n));
+      await fetchNotifications();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "操作失败");
+      setActionError(err instanceof Error ? err.message : "操作失败");
     } finally {
       setActionLoading(false);
     }
@@ -69,6 +71,7 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
   const markAllAsRead = async () => {
     if (!filterUser) return;
     setActionLoading(true);
+    setActionError("");
     try {
       const res = await fetch("/api/notifications", {
         method: "PUT",
@@ -76,9 +79,9 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
         body: JSON.stringify({ mark_all: true, user_id: parseInt(filterUser) })
       });
       if (!res.ok) throw new Error("标记全部已读失败");
-      setNotifications((prev) => prev.map((n) => n.user_id === parseInt(filterUser) ? { ...n, is_read: 1 } : n));
+      await fetchNotifications();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "操作失败");
+      setActionError(err instanceof Error ? err.message : "操作失败");
     } finally {
       setActionLoading(false);
     }
@@ -89,8 +92,30 @@ function NotificationCenter({ showUserFilter = true, compact = false }) {
   }, [filterUser, filterRead]);
   const unreadCount = notifications.filter((n) => n.is_read === 0).length;
   if (loading) return /* @__PURE__ */ jsx(LoadingSpinner, { text: "加载通知列表..." });
-  if (error) return /* @__PURE__ */ jsx(ErrorState, { message: error, onRetry: fetchNotifications });
+  if (error && notifications.length === 0) return /* @__PURE__ */ jsx(ErrorState, { message: error, onRetry: fetchNotifications });
   return /* @__PURE__ */ jsxs("div", { className: compact ? "" : "space-y-4", children: [
+    actionError && /* @__PURE__ */ jsxs("div", { className: "p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("span", { children: actionError }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: () => setActionError(""),
+          className: "text-red-500 hover:text-red-700 ml-2",
+          children: "✕"
+        }
+      )
+    ] }),
+    error && notifications.length > 0 && /* @__PURE__ */ jsxs("div", { className: "p-3 rounded-lg bg-amber-50 text-amber-700 text-sm border border-amber-200 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("span", { children: error }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: () => setError(""),
+          className: "text-amber-500 hover:text-amber-700 ml-2",
+          children: "✕"
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-3", children: [
       showUserFilter && /* @__PURE__ */ jsxs(
         "select",

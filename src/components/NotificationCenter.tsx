@@ -37,6 +37,7 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [filterUser, setFilterUser] = useState<string>('');
   const [filterRead, setFilterRead] = useState<string>('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -73,6 +74,7 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
 
   const markAsRead = async (id: number) => {
     setActionLoading(true);
+    setActionError('');
     try {
       const res = await fetch('/api/notifications', {
         method: 'PUT',
@@ -80,9 +82,9 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error('标记已读失败');
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
+      await fetchNotifications();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '操作失败');
+      setActionError(err instanceof Error ? err.message : '操作失败');
     } finally {
       setActionLoading(false);
     }
@@ -91,6 +93,7 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
   const markAllAsRead = async () => {
     if (!filterUser) return;
     setActionLoading(true);
+    setActionError('');
     try {
       const res = await fetch('/api/notifications', {
         method: 'PUT',
@@ -98,9 +101,9 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
         body: JSON.stringify({ mark_all: true, user_id: parseInt(filterUser) }),
       });
       if (!res.ok) throw new Error('标记全部已读失败');
-      setNotifications(prev => prev.map(n => n.user_id === parseInt(filterUser) ? { ...n, is_read: 1 } : n));
+      await fetchNotifications();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '操作失败');
+      setActionError(err instanceof Error ? err.message : '操作失败');
     } finally {
       setActionLoading(false);
     }
@@ -114,10 +117,32 @@ export default function NotificationCenter({ showUserFilter = true, compact = fa
   const unreadCount = notifications.filter(n => n.is_read === 0).length;
 
   if (loading) return <LoadingSpinner text="加载通知列表..." />;
-  if (error) return <ErrorState message={error} onRetry={fetchNotifications} />;
+  if (error && notifications.length === 0) return <ErrorState message={error} onRetry={fetchNotifications} />;
 
   return (
     <div className={compact ? '' : 'space-y-4'}>
+      {actionError && (
+        <div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200 flex items-center justify-between">
+          <span>{actionError}</span>
+          <button
+            onClick={() => setActionError('')}
+            className="text-red-500 hover:text-red-700 ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {error && notifications.length > 0 && (
+        <div className="p-3 rounded-lg bg-amber-50 text-amber-700 text-sm border border-amber-200 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError('')}
+            className="text-amber-500 hover:text-amber-700 ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         {showUserFilter && (
           <select
