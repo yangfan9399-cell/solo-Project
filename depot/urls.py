@@ -24,6 +24,7 @@ urlpatterns = [
     path("complaints/create/", views.complaint_create, name="complaint_create"),
     path("complaints/<int:pk>/", views.complaint_detail, name="complaint_detail"),
     path("complaints/<int:complaint_pk>/responsibility/", views.responsibility_create, name="responsibility_create"),
+    path("responsibilities/", views.responsibility_list, name="responsibility_list"),
     path("responsibilities/<int:pk>/action/", views.responsibility_confirm, name="responsibility_confirm"),
     path("returns/", views.return_list, name="return_list"),
     path("returns/create/<int:package_pk>/", views.return_create, name="return_create"),

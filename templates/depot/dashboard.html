@@ -76,7 +76,7 @@
                     <div class="text-muted text-sm">暂无待办</div>
                     {% endif %}
                     <div style="margin-top:8px;">
-                        <a href="{% url todo.url %}" class="btn btn-sm btn-outline" style="width:100%;justify-content:center;">查看全部</a>
+                        <a href="{% url todo.url %}{% if todo.url_params %}?{{ todo.url_params }}{% endif %}" class="btn btn-sm btn-outline" style="width:100%;justify-content:center;">查看全部</a>
                     </div>
                 </div>
             </div>

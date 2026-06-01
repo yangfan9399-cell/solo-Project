@@ -55,10 +55,11 @@ def dashboard(request):
 
         role_todos = [
             {
-                "title": "📩 待发送取件提醒",
+                "title": "📩 未回应取件提醒",
                 "count": len(pending_reminders),
                 "items": pending_reminders,
                 "url": "depot:reminder_list",
+                "url_params": "response=no_response",
                 "color": "blue",
             },
             {
@@ -66,6 +67,7 @@ def dashboard(request):
                 "count": len(pending_abnormals),
                 "items": pending_abnormals,
                 "url": "depot:abnormal_list",
+                "url_params": "status=pending",
                 "color": "red",
             },
             {
@@ -73,6 +75,7 @@ def dashboard(request):
                 "count": todays_checkins,
                 "items": [],
                 "url": "depot:package_list",
+                "url_params": "status=checked_in",
                 "color": "green",
             },
         ]
@@ -88,13 +91,15 @@ def dashboard(request):
                 "count": len(unresolved_alerts),
                 "items": unresolved_alerts,
                 "url": "depot:retention_list",
+                "url_params": "resolved=no",
                 "color": "orange",
             },
             {
                 "title": "⚖️ 待确认责任处理",
                 "count": len(pending_responsibilities),
                 "items": pending_responsibilities,
-                "url": "depot:complaint_list",
+                "url": "depot:responsibility_list",
+                "url_params": "status=pending",
                 "color": "purple",
             },
             {
@@ -102,6 +107,7 @@ def dashboard(request):
                 "count": retention_by_station,
                 "items": [],
                 "url": "depot:dashboard",
+                "url_params": "",
                 "color": "blue",
             },
         ]
@@ -117,6 +123,7 @@ def dashboard(request):
                 "count": len(pending_complaints),
                 "items": pending_complaints,
                 "url": "depot:complaint_list",
+                "url_params": "status=pending",
                 "color": "red",
             },
             {
@@ -124,6 +131,7 @@ def dashboard(request):
                 "count": len(processing_complaints),
                 "items": processing_complaints,
                 "url": "depot:complaint_list",
+                "url_params": "status=accepted",
                 "color": "blue",
             },
             {
@@ -131,6 +139,7 @@ def dashboard(request):
                 "count": len(new_abnormals),
                 "items": new_abnormals,
                 "url": "depot:abnormal_list",
+                "url_params": "status=pending",
                 "color": "orange",
             },
         ]
@@ -146,6 +155,7 @@ def dashboard(request):
                 "count": len(recent_alerts),
                 "items": recent_alerts,
                 "url": "depot:retention_list",
+                "url_params": "resolved=no",
                 "color": "red",
             },
             {
@@ -153,6 +163,7 @@ def dashboard(request):
                 "count": len(recent_complaints),
                 "items": recent_complaints,
                 "url": "depot:complaint_list",
+                "url_params": "",
                 "color": "orange",
             },
             {
@@ -160,13 +171,21 @@ def dashboard(request):
                 "count": len(recent_abnormals),
                 "items": recent_abnormals,
                 "url": "depot:abnormal_list",
+                "url_params": "",
                 "color": "purple",
             },
         ]
 
+    recent_alerts = RetentionAlert.objects.filter(is_resolved=False).select_related("package", "package__station")[:10]
+    recent_complaints = Complaint.objects.filter(status__in=["pending", "accepted", "processing"]).select_related("station")[:5]
+    recent_abnormals = AbnormalPackage.objects.filter(status__in=["pending", "processing"]).select_related("package")[:5]
+
     context = {
         **stats,
         "role_todos": role_todos,
+        "recent_alerts": recent_alerts,
+        "recent_complaints": recent_complaints,
+        "recent_abnormals": recent_abnormals,
         "active_tab": "dashboard",
     }
     return render(request, "depot/dashboard.html", context)
@@ -260,7 +279,7 @@ def reminder_list(request):
     response_filter = request.GET.get("response", "")
 
     if role == "clerk" and not status_filter and not response_filter:
-        response_filter = ""
+        response_filter = "no_response"
 
     qs = PickupReminder.objects.select_related("package", "package__station", "sent_by")
     if status_filter:
@@ -567,6 +586,29 @@ def responsibility_confirm(request, pk):
     if request.htmx:
         return HttpResponse("")
     return redirect("depot:complaint_detail", pk=resp.complaint.pk)
+
+
+@login_required
+def responsibility_list(request):
+    role = get_user_role(request)
+    status_filter = request.GET.get("status", "")
+
+    if role == "supervisor" and not status_filter:
+        status_filter = "pending"
+
+    qs = Responsibility.objects.select_related(
+        "responsible_staff", "complaint", "complaint__station", "created_by"
+    )
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    responsibilities = qs.order_by("-created_at")
+    context = {
+        "responsibilities": responsibilities,
+        "status_filter": status_filter,
+        "status_choices": Responsibility.STATUS_CHOICES,
+        "active_tab": "responsibilities",
+    }
+    return render(request, "depot/responsibility_list.html", context)
 
 
 @login_required

@@ -55,6 +55,10 @@
                 <span class="nav-icon">💬</span> 客户投诉
                 {% if current_role == 'cs_specialist' %}<span class="nav-badge">核心</span>{% endif %}
             </a>
+            <a href="{% url 'depot:responsibility_list' %}" class="{% if active_tab == 'responsibilities' %}active{% endif %}{% if current_role == 'supervisor' %} role-highlight{% endif %}">
+                <span class="nav-icon">⚖️</span> 责任处理
+                {% if current_role == 'supervisor' %}<span class="nav-badge">重点</span>{% endif %}
+            </a>
             <a href="{% url 'depot:return_list' %}" class="{% if active_tab == 'returns' %}active{% endif %}">
                 <span class="nav-icon">↩️</span> 退回出站
             </a>
