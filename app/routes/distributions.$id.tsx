@@ -4,6 +4,7 @@ import { json, redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireRole } from "../../.server/session.server";
 import { prisma } from "../../.server/db.server";
+import { checkAndCreateStockAlert } from "../../.server/stock-alert.server";
 import { AppLayout } from "~/components/layout/AppLayout";
 import { Card } from "~/components/ui/Card";
 import { StatusBadge } from "~/components/ui/StatusBadge";
@@ -59,6 +60,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
               reservedQty: { decrement: item.quantity },
             },
           });
+
+          await checkAndCreateStockAlert(tx, item.materialId, null);
         }
 
         await tx.application.update({

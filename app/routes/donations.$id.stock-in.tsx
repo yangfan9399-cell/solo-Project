@@ -5,6 +5,7 @@ import { json, redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireRole } from "../../.server/session.server";
 import { prisma } from "../../.server/db.server";
+import { resolveStockAlerts } from "../../.server/stock-alert.server";
 import { AppLayout } from "~/components/layout/AppLayout";
 import { Card } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
@@ -74,6 +75,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
           warehouseLocation: result.data.warehouseLocation,
         },
       });
+
+      await resolveStockAlerts(tx, m.materialId, result.data.warehouseLocation);
     }
 
     await tx.donationBatch.update({
