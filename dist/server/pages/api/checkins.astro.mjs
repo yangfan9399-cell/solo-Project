@@ -52,7 +52,7 @@ const POST = async ({ request }) => {
       });
     }
     const blacklistCheck = db.prepare(`
-      SELECT b.id FROM blacklist bl
+      SELECT bl.id FROM blacklist bl
       JOIN visitors v ON bl.visitor_id = v.id
       JOIN appointments a ON a.visitor_id_number = v.id_number
       WHERE a.id = ?

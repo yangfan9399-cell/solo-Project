@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const dbInstance = getDb();
   const blacklistEntry = dbInstance
-    .prepare(`SELECT b.*, v.name as visitor_name FROM blacklist b JOIN visitors v ON b.visitor_id = v.id WHERE v.id_number = ?`)
+    .prepare(`SELECT bl.*, v.name as visitor_name FROM blacklist bl JOIN visitors v ON bl.visitor_id = v.id WHERE v.id_number = ?`)
     .get(visitor_id_number) as { id: number; reason: string; visitor_name: string } | undefined;
 
   if (blacklistEntry) {
@@ -64,6 +64,15 @@ export const POST: APIRoute = async ({ request }) => {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  const existingVisitor = db.prepare('SELECT * FROM visitors WHERE id_number = ?').get(visitor_id_number);
+  if (existingVisitor) {
+    db.prepare(`UPDATE visitors SET name = ?, phone = ?, id_type = ?, company = ? WHERE id_number = ?`)
+      .run(visitor_name, visitor_phone, visitor_id_type || '身份证', visitor_company || null, visitor_id_number);
+  } else {
+    db.prepare(`INSERT INTO visitors (name, phone, id_type, id_number, company) VALUES (?, ?, ?, ?, ?)`)
+      .run(visitor_name, visitor_phone, visitor_id_type || '身份证', visitor_id_number, visitor_company || null);
   }
 
   const result = db
