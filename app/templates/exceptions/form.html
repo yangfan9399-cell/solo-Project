@@ -24,11 +24,19 @@
         <select name="rework_order_id" class="form-select" id="reworkSelect">
           <option value="">无</option>
           {% for rework in reworks %}
-          <option value="{{ rework.id }}" {% if selected_rework_id == rework.id or selected_rework_id|string == rework.id|string %}selected{% endif %}>
+          <option value="{{ rework.id }}" {% if selected_rework_id == rework.id %}selected{% endif %}>
             {{ rework.order_no }} - {{ rework.product_name }}
           </option>
           {% endfor %}
         </select>
+        {% if raw_rework_order_id and raw_rework_order_id.strip() != '' %}
+        <span class="form-hint" style="font-size: 0.75rem; {% if error and '关联返工单' in error %}color: var(--danger);{% else %}color: var(--gray-400);{% endif %}">
+          您提交的值：{{ raw_rework_order_id }}
+          {% if error and '关联返工单' in error %}
+            （无效，已重置为「无」，请重新选择）
+          {% endif %}
+        </span>
+        {% endif %}
       </div>
       
       <div class="form-group">

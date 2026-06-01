@@ -446,7 +446,11 @@ async def exceptions_list(
     )
 
 
-def _render_exception_form(request, db, error=None, form_data=None):
+def _render_exception_form(request, db, error=None, form_data=None, raw_rework_id=None, selected_rework_id=None):
+    """
+    raw_rework_id: 用户原始提交的字符串值（用于出错后原样保留）
+    selected_rework_id: 已解析的有效 int 值（用于下拉框选中匹配）
+    """
     reworks = get_rework_orders(db)
     if form_data is None:
         form_data = {}
@@ -456,7 +460,8 @@ def _render_exception_form(request, db, error=None, form_data=None):
             "request": request,
             "active_menu": "exceptions",
             "reworks": reworks,
-            "selected_rework_id": form_data.get("rework_order_id"),
+            "raw_rework_order_id": raw_rework_id if raw_rework_id is not None else form_data.get("raw_rework_order_id"),
+            "selected_rework_id": selected_rework_id if selected_rework_id is not None else form_data.get("selected_rework_id"),
             "form_title": form_data.get("title", ""),
             "form_description": form_data.get("description", ""),
             "form_priority": form_data.get("priority", "normal"),
@@ -467,7 +472,11 @@ def _render_exception_form(request, db, error=None, form_data=None):
 
 @app.get("/exceptions/new", response_class=HTMLResponse)
 async def new_exception_form(request: Request, rework_id: Optional[int] = None, error: Optional[str] = None, db: Session = Depends(get_db)):
-    return _render_exception_form(request, db, error=error, form_data={"rework_order_id": rework_id})
+    form_data = {}
+    if rework_id is not None:
+        form_data["selected_rework_id"] = rework_id
+        form_data["raw_rework_order_id"] = str(rework_id)
+    return _render_exception_form(request, db, error=error, form_data=form_data)
 
 
 @app.post("/exceptions", response_class=HTMLResponse)
@@ -480,35 +489,48 @@ async def create_exception(
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
+    raw_rework_id = rework_order_id  # 保留用户原始提交的字符串
     form_data = {
         "title": title,
         "description": description,
         "priority": priority,
-        "rework_order_id": rework_order_id,
+        "raw_rework_order_id": raw_rework_id,
     }
     
     if not current_user:
-        return _render_exception_form(request, db, error="无法获取当前用户，请检查系统用户配置", form_data=form_data)
+        return _render_exception_form(request, db, error="无法获取当前用户，请检查系统用户配置", form_data=form_data, raw_rework_id=raw_rework_id)
 
     if not title.strip():
-        return _render_exception_form(request, db, error="标题不能为空", form_data=form_data)
+        return _render_exception_form(request, db, error="标题不能为空", form_data=form_data, raw_rework_id=raw_rework_id)
 
     if not description.strip():
-        return _render_exception_form(request, db, error="问题描述不能为空", form_data=form_data)
+        return _render_exception_form(request, db, error="问题描述不能为空", form_data=form_data, raw_rework_id=raw_rework_id)
 
     if priority not in ("low", "normal", "high"):
-        return _render_exception_form(request, db, error="优先级无效", form_data=form_data)
+        return _render_exception_form(request, db, error="优先级无效", form_data=form_data, raw_rework_id=raw_rework_id)
 
-    parsed_rework_id, parse_error = _parse_optional_int(rework_order_id)
-    if parse_error:
-        return _render_exception_form(request, db, error=f"关联返工单 {parse_error}", form_data=form_data)
+    parsed_rework_id, parse_error = _parse_optional_int(raw_rework_id)
+    form_data["selected_rework_id"] = parsed_rework_id
     
-    form_data["rework_order_id"] = parsed_rework_id
+    if parse_error:
+        return _render_exception_form(
+            request, db,
+            error=f"关联返工单 {parse_error}。您提交的值：{raw_rework_id}",
+            form_data=form_data,
+            raw_rework_id=raw_rework_id,
+            selected_rework_id=parsed_rework_id
+        )
     
     if parsed_rework_id is not None:
         rework = get_rework_order(db, parsed_rework_id)
         if not rework:
-            return _render_exception_form(request, db, error="关联的返工单不存在", form_data=form_data)
+            return _render_exception_form(
+                request, db,
+                error=f"关联的返工单不存在。您提交的值：{raw_rework_id}",
+                form_data=form_data,
+                raw_rework_id=raw_rework_id,
+                selected_rework_id=parsed_rework_id
+            )
 
     feedback_data = ExceptionFeedbackCreate(
         title=title.strip(),
