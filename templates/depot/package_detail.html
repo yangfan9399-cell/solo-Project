@@ -1,0 +1,232 @@
+{% extends "depot/base.html" %}
+{% block title %}包裹详情 - {{ package.tracking_number }}{% endblock %}
+{% block header_title %}包裹详情{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'depot:package_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+</div>
+
+<div class="alert-bar {% if package.status == 'retention' %}alert-warning{% elif package.status == 'abnormal' %}alert-danger{% elif package.status == 'picked_up' %}alert-success{% else %}alert-info{% endif %}">
+    当前状态: <strong>{{ package.status_display }}</strong>
+    {% if package.status == 'retention' %} · 已滞留{{ package.days_at_station }}天{% endif %}
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>📦 基本信息</span>
+                <div class="actions-bar">
+                    {% if package.status == 'checked_in' %}
+                    <form method="post" action="{% url 'depot:package_status_update' package.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_status" value="pending_pickup">
+                        <button type="submit" class="btn btn-sm btn-primary">转为待取件</button>
+                    </form>
+                    {% endif %}
+                    {% if package.status in "checked_in,pending_pickup" %}
+                    <form method="post" action="{% url 'depot:package_status_update' package.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_status" value="picked_up">
+                        <input type="text" name="picked_up_by_name" placeholder="取件人姓名" style="padding:4px 8px;font-size:12px;border:1px solid var(--gray-300);border-radius:4px;width:100px;">
+                        <button type="submit" class="btn btn-sm btn-success">确认取件</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">快递单号</span>
+                        <span class="detail-value">{{ package.tracking_number }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">快递公司</span>
+                        <span class="detail-value">{{ package.carrier_display }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">寄件人</span>
+                        <span class="detail-value">{{ package.sender_name }} ({{ package.sender_phone }})</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">收件人</span>
+                        <span class="detail-value">{{ package.receiver_name }} ({{ package.receiver_phone }})</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">所属驿站</span>
+                        <span class="detail-value">{{ package.station.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">货架编码</span>
+                        <span class="detail-value">{{ package.shelf_code|default:"未分配" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">入站时间</span>
+                        <span class="detail-value">{{ package.checked_in_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">入站操作员</span>
+                        <span class="detail-value">{{ package.checked_in_by.name|default:"-" }}</span>
+                    </div>
+                    {% if package.picked_up_at %}
+                    <div class="detail-item">
+                        <span class="detail-label">取件时间</span>
+                        <span class="detail-value">{{ package.picked_up_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">取件人</span>
+                        <span class="detail-value">{{ package.picked_up_by_name|default:"-" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if package.remark %}
+                    <div class="detail-item" style="grid-column:1/-1;">
+                        <span class="detail-label">备注</span>
+                        <span class="detail-value">{{ package.remark }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>🔔 取件提醒 ({{ reminders|length }})</span>
+                {% if package.status in "checked_in,pending_pickup" %}
+                <a href="{% url 'depot:reminder_create' package.pk %}" class="btn btn-sm btn-primary">发送提醒</a>
+                {% endif %}
+            </div>
+            <div class="card-body no-padding">
+                {% if reminders %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>方式</th>
+                            <th>发送时间</th>
+                            <th>状态</th>
+                            <th>客户回应</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reminders %}
+                        <tr>
+                            <td>{{ r.get_reminder_type_display }}</td>
+                            <td>{{ r.sent_at|date:"m-d H:i" }}</td>
+                            <td><span class="badge {% if r.status == 'sent' %}badge-blue{% elif r.status == 'delivered' %}badge-green{% else %}badge-red{% endif %}">{{ r.get_status_display }}</span></td>
+                            <td>{{ r.get_response_display|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="empty-icon">🔕</div>
+                    <div class="empty-title">暂无提醒记录</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">⚠️ 滞留预警 ({{ alerts|length }})</div>
+            <div class="card-body">
+                {% if alerts %}
+                {% for alert in alerts %}
+                <div style="padding:8px 0;border-bottom:1px solid var(--gray-100);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="badge {% if alert.alert_level == 'urgent' %}badge-red{% elif alert.alert_level == 'critical' %}badge-orange{% else %}badge-yellow{% endif %}">
+                            {{ alert.alert_level_display }}
+                        </span>
+                        <span class="text-sm text-muted">{{ alert.days_retained }}天</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ alert.triggered_at|date:"m-d H:i" }}</div>
+                    {% if alert.is_resolved %}
+                    <div class="text-xs" style="color:var(--success);">已处理: {{ alert.resolution_note }}</div>
+                    {% else %}
+                    <form method="post" action="{% url 'depot:retention_resolve' alert.pk %}" style="margin-top:4px;">
+                        {% csrf_token %}
+                        <input type="text" name="resolution_note" placeholder="处理说明" style="padding:2px 6px;font-size:12px;border:1px solid var(--gray-300);border-radius:4px;width:70%;">
+                        <button type="submit" class="btn btn-xs btn-success">处理</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-sm text-muted">无滞留预警</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>❗ 异常记录 ({{ abnormals|length }})</span>
+                {% if package.status != 'abnormal' %}
+                <a href="{% url 'depot:abnormal_register' %}?package={{ package.pk }}" class="btn btn-xs btn-danger">登记异常</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if abnormals %}
+                {% for ab in abnormals %}
+                <div style="padding:6px 0;border-bottom:1px solid var(--gray-100);">
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'depot:abnormal_detail' ab.pk %}">{{ ab.abnormal_type_display }}</a>
+                        <span class="badge {% if ab.status == 'pending' %}badge-yellow{% elif ab.status == 'processing' %}badge-blue{% else %}badge-green{% endif %}">{{ ab.status_display }}</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ ab.description|truncatechars:40 }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-sm text-muted">无异常记录</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>💬 投诉记录 ({{ complaints|length }})</span>
+                <a href="{% url 'depot:complaint_create' %}?package={{ package.pk }}" class="btn btn-xs btn-primary">新建投诉</a>
+            </div>
+            <div class="card-body">
+                {% if complaints %}
+                {% for c in complaints %}
+                <div style="padding:6px 0;border-bottom:1px solid var(--gray-100);">
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'depot:complaint_detail' c.pk %}">{{ c.complaint_number }}</a>
+                        <span class="badge {% if c.status == 'pending' %}badge-yellow{% elif c.status == 'processing' %}badge-blue{% else %}badge-green{% endif %}">{{ c.status_display }}</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ c.complaint_type_display }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-sm text-muted">无投诉记录</div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if package.status in "checked_in,pending_pickup,retention,abnormal" %}
+        <div class="card">
+            <div class="card-header">↩️ 退回出站</div>
+            <div class="card-body">
+                <a href="{% url 'depot:return_create' package.pk %}" class="btn btn-danger" style="width:100%;justify-content:center;">退回此包裹</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if returns %}
+        <div class="card mt-6">
+            <div class="card-header">退回记录 ({{ returns|length }})</div>
+            <div class="card-body">
+                {% for r in returns %}
+                <div style="padding:6px 0;border-bottom:1px solid var(--gray-100);">
+                    <div>{{ r.get_return_reason_display }}</div>
+                    <div class="text-xs text-muted">{{ r.returned_at|date:"Y-m-d H:i" }} · {{ r.returned_to }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

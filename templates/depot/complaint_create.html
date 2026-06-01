@@ -1,0 +1,58 @@
+{% extends "depot/base.html" %}
+{% block title %}新建投诉{% endblock %}
+{% block header_title %}新建投诉{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'depot:complaint_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+</div>
+
+<div class="card" style="max-width:720px;">
+    <div class="card-header">
+        <span>💬 新建客户投诉</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert-bar alert-danger">
+                {% for field,errors in form.errors.items %}
+                {% for e in errors %}{{ e }}{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+                <div class="form-group">
+                    <label>{{ form.complainant_name.label }} *</label>
+                    {{ form.complainant_name }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.complainant_phone.label }} *</label>
+                    {{ form.complainant_phone }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.complaint_type.label }} *</label>
+                    {{ form.complaint_type }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.station.label }} *</label>
+                    {{ form.station }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.package.label }}</label>
+                {{ form.package }}
+                <span class="text-xs text-muted">可从包裹详情页快速创建投诉，自动关联包裹</span>
+            </div>
+            <div class="form-group">
+                <label>{{ form.description.label }} *</label>
+                {{ form.description }}
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn btn-primary">提交投诉</button>
+                <a href="{% url 'depot:complaint_list' %}" class="btn btn-outline">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

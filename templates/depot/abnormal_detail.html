@@ -1,0 +1,102 @@
+{% extends "depot/base.html" %}
+{% block title %}异常件处理 - {{ abnormal.package.tracking_number }}{% endblock %}
+{% block header_title %}异常件处理{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'depot:abnormal_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>❗ 异常件信息</span>
+                <span class="badge {% if abnormal.status == 'pending' %}badge-yellow{% elif abnormal.status == 'processing' %}badge-blue{% else %}badge-green{% endif %}">
+                    {{ abnormal.status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">快递单号</span>
+                        <span class="detail-value">
+                            <a href="{% url 'depot:package_detail' abnormal.package.pk %}">{{ abnormal.package.tracking_number }}</a>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">异常类型</span>
+                        <span class="detail-value">
+                            <span class="badge badge-red">{{ abnormal.abnormal_type_display }}</span>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">驿站</span>
+                        <span class="detail-value">{{ abnormal.package.station.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">登记人</span>
+                        <span class="detail-value">{{ abnormal.registered_by.name|default:"-" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">登记时间</span>
+                        <span class="detail-value">{{ abnormal.registered_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% if abnormal.resolved_by %}
+                    <div class="detail-item">
+                        <span class="detail-label">处理人</span>
+                        <span class="detail-value">{{ abnormal.resolved_by.name }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item" style="grid-column:1/-1;">
+                        <span class="detail-label">异常描述</span>
+                        <span class="detail-value">{{ abnormal.description }}</span>
+                    </div>
+                    {% if abnormal.resolution %}
+                    <div class="detail-item" style="grid-column:1/-1;">
+                        <span class="detail-label">处理结果</span>
+                        <span class="detail-value">{{ abnormal.resolution }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">处理异常</div>
+            <div class="card-body">
+                {% if abnormal.status != 'resolved' %}
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert-bar alert-danger">
+                        {% for field,errors in form.errors.items %}
+                        {% for e in errors %}{{ e }}{% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>{{ form.status.label }}</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.resolution.label }}</label>
+                        {{ form.resolution }}
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">提交处理</button>
+                </form>
+                {% else %}
+                <div class="alert-bar alert-success">
+                    该异常已处理完毕
+                </div>
+                <div class="text-sm text-muted mt-4">
+                    处理时间: {{ abnormal.resolved_at|date:"Y-m-d H:i" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

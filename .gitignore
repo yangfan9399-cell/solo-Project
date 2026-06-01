@@ -3,3 +3,12 @@ target/
 .env
 .DS_Store
 runs/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+*.egg-info/
+dist/
+build/
+media/

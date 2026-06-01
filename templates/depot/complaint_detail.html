@@ -1,0 +1,190 @@
+{% extends "depot/base.html" %}
+{% block title %}投诉处理 - {{ complaint.complaint_number }}{% endblock %}
+{% block header_title %}投诉处理 - {{ complaint.complaint_number }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'depot:complaint_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+</div>
+
+<div class="alert-bar {% if complaint.status == 'pending' %}alert-warning{% elif complaint.status in 'accepted,processing' %}alert-info{% elif complaint.status == 'resolved' %}alert-success{% else %}alert-info{% endif %}">
+    投诉状态: <strong>{{ complaint.status_display }}</strong>
+    {% if complaint.package %} · 关联包裹: <a href="{% url 'depot:package_detail' complaint.package.pk %}">{{ complaint.package.tracking_number }}</a>{% endif %}
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">📋 投诉信息</div>
+            <div class="card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">投诉编号</span>
+                        <span class="detail-value">{{ complaint.complaint_number }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">投诉类型</span>
+                        <span class="detail-value">
+                            <span class="badge badge-orange">{{ complaint.complaint_type_display }}</span>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">投诉人</span>
+                        <span class="detail-value">{{ complaint.complainant_name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">联系电话</span>
+                        <span class="detail-value">{{ complaint.complainant_phone }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">涉事驿站</span>
+                        <span class="detail-value">{{ complaint.station.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">投诉时间</span>
+                        <span class="detail-value">{{ complaint.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% if complaint.accepted_by %}
+                    <div class="detail-item">
+                        <span class="detail-label">受理人</span>
+                        <span class="detail-value">{{ complaint.accepted_by.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">受理时间</span>
+                        <span class="detail-value">{{ complaint.accepted_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item" style="grid-column:1/-1;">
+                        <span class="detail-label">投诉内容</span>
+                        <span class="detail-value">{{ complaint.description }}</span>
+                    </div>
+                    {% if complaint.resolution %}
+                    <div class="detail-item" style="grid-column:1/-1;">
+                        <span class="detail-label">处理结果</span>
+                        <span class="detail-value">{{ complaint.resolution }}</span>
+                    </div>
+                    {% endif %}
+                    {% if complaint.satisfaction %}
+                    <div class="detail-item">
+                        <span class="detail-label">满意度评分</span>
+                        <span class="detail-value">{{ complaint.satisfaction }}/5</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>⚖️ 责任处理 ({{ responsibilities|length }})</span>
+                {% if complaint.status in 'accepted,processing' %}
+                <a href="{% url 'depot:responsibility_create' complaint.pk %}" class="btn btn-sm btn-primary">新增责任</a>
+                {% endif %}
+            </div>
+            <div class="card-body no-padding">
+                {% if responsibilities %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>责任人</th>
+                            <th>责任类型</th>
+                            <th>处罚</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resp in responsibilities %}
+                        <tr>
+                            <td>{{ resp.responsible_staff.name }}</td>
+                            <td>
+                                <span class="badge {% if resp.responsibility_type == 'full' %}badge-red{% elif resp.responsibility_type == 'partial' %}badge-orange{% else %}badge-green{% endif %}">
+                                    {{ resp.responsibility_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ resp.penalty_type_display }}
+                                {% if resp.penalty_amount %}({{ resp.penalty_amount }}元){% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if resp.status == 'pending' %}badge-yellow{% elif resp.status == 'confirmed' %}badge-blue{% elif resp.status == 'executed' %}badge-green{% else %}badge-purple{% endif %}">
+                                    {{ resp.status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if resp.status == 'pending' %}
+                                <form method="post" action="{% url 'depot:responsibility_confirm' resp.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="confirm">
+                                    <button type="submit" class="btn btn-xs btn-success">确认</button>
+                                </form>
+                                {% elif resp.status == 'confirmed' %}
+                                <form method="post" action="{% url 'depot:responsibility_confirm' resp.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="execute">
+                                    <button type="submit" class="btn btn-xs btn-primary">执行</button>
+                                </form>
+                                {% elif resp.status == 'executed' %}
+                                <form method="post" action="{% url 'depot:responsibility_confirm' resp.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="appeal">
+                                    <input type="text" name="appeal_note" placeholder="申诉理由" style="padding:2px 6px;font-size:11px;border:1px solid var(--gray-300);border-radius:4px;width:80px;">
+                                    <button type="submit" class="btn btn-xs btn-outline">申诉</button>
+                                </form>
+                                {% elif resp.status == 'appealed' %}
+                                <span class="text-xs text-muted">已申诉</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="empty-icon">⚖️</div>
+                    <div class="empty-title">暂无责任记录</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">处理投诉</div>
+            <div class="card-body">
+                {% if complaint.status != 'closed' %}
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert-bar alert-danger">
+                        {% for field,errors in form.errors.items %}
+                        {% for e in errors %}{{ e }}{% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>{{ form.status.label }}</label>
+                        {{ form.status }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.resolution.label }}</label>
+                        {{ form.resolution }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.satisfaction.label }}</label>
+                        {{ form.satisfaction }}
+                        <span class="text-xs text-muted">1-5分，可选</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">提交</button>
+                </form>
+                {% else %}
+                <div class="alert-bar alert-success">
+                    该投诉已关闭
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

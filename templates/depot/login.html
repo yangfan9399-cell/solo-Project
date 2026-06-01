@@ -1,0 +1,30 @@
+{% extends "depot/base.html" %}
+{% block title %}登录 - 快递驿站管理系统{% endblock %}
+{% block header_title %}登录{% endblock %}
+
+{% block content_nosidebar %}
+<div class="login-container">
+    <div class="login-card">
+        <h1>📦 快递驿站</h1>
+        <p class="login-subtitle">滞留件预警与投诉处理系统</p>
+        {% if error %}
+        <div class="login-error">{{ error }}</div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" name="username" class="form-input" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" name="password" class="form-input" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="btn btn-primary">登 录</button>
+        </form>
+        <p class="text-sm text-muted mt-4" style="text-align:center">
+            演示账号: admin / admin123
+        </p>
+    </div>
+</div>
+{% endblock %}

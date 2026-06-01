@@ -1,0 +1,23 @@
+<tr id="reminder-{{ reminder.pk }}">
+    <td><a href="{% url 'depot:package_detail' reminder.package.pk %}">{{ reminder.package.tracking_number }}</a></td>
+    <td>{{ reminder.package.receiver_name }}</td>
+    <td>{{ reminder.get_reminder_type_display }}</td>
+    <td class="text-sm">{{ reminder.sent_at|date:"m-d H:i" }}</td>
+    <td>
+        <span class="badge {% if reminder.status == 'sent' %}badge-blue{% elif reminder.status == 'delivered' %}badge-green{% else %}badge-red{% endif %}">
+            {{ reminder.get_status_display }}
+        </span>
+    </td>
+    <td>
+        {% if reminder.response %}
+        <span class="badge {% if reminder.response == 'confirmed_pickup' %}badge-green{% elif reminder.response == 'rejected' %}badge-red{% else %}badge-yellow{% endif %}">
+            {{ reminder.get_response_display }}
+        </span>
+        {% else %}
+        -
+        {% endif %}
+    </td>
+    <td>
+        <a href="{% url 'depot:package_detail' reminder.package.pk %}" class="btn btn-xs btn-outline">详情</a>
+    </td>
+</tr>

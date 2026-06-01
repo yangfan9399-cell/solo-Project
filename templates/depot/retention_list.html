@@ -1,0 +1,90 @@
+{% extends "depot/base.html" %}
+{% block title %}滞留预警{% endblock %}
+{% block header_title %}滞留预警{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <select name="level">
+            <option value="">全部等级</option>
+            {% for val,label in level_choices %}
+            <option value="{{ val }}" {% if level_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="resolved">
+            <option value="">全部状态</option>
+            <option value="no" {% if resolved_filter == 'no' %}selected{% endif %}>未处理</option>
+            <option value="yes" {% if resolved_filter == 'yes' %}selected{% endif %}>已处理</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">筛选</button>
+        <a href="{% url 'depot:retention_list' %}" class="btn btn-outline btn-sm">重置</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body no-padding">
+        {% if alerts %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>快递单号</th>
+                        <th>收件人</th>
+                        <th>驿站</th>
+                        <th>预警等级</th>
+                        <th>滞留天数</th>
+                        <th>触发时间</th>
+                        <th>处理状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr id="retention-{{ alert.pk }}">
+                        <td><a href="{% url 'depot:package_detail' alert.package.pk %}">{{ alert.package.tracking_number }}</a></td>
+                        <td>{{ alert.package.receiver_name }}</td>
+                        <td>{{ alert.package.station.name }}</td>
+                        <td>
+                            <span class="badge {% if alert.alert_level == 'urgent' %}badge-red{% elif alert.alert_level == 'critical' %}badge-orange{% else %}badge-yellow{% endif %}">
+                                {{ alert.alert_level_display }}
+                            </span>
+                        </td>
+                        <td><strong>{{ alert.days_retained }}</strong>天</td>
+                        <td class="text-sm">{{ alert.triggered_at|date:"m-d H:i" }}</td>
+                        <td>
+                            {% if alert.is_resolved %}
+                            <span class="badge badge-green">已处理</span>
+                            {% else %}
+                            <span class="badge badge-red">未处理</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not alert.is_resolved %}
+                            <form method="post" action="{% url 'depot:retention_resolve' alert.pk %}"
+                                  hx-post="{% url 'depot:retention_resolve' alert.pk %}"
+                                  hx-target="#retention-{{ alert.pk }}"
+                                  hx-swap="outerHTML"
+                                  style="display:flex;gap:4px;align-items:center;">
+                                {% csrf_token %}
+                                <input type="text" name="resolution_note" placeholder="处理说明" style="padding:2px 6px;font-size:12px;border:1px solid var(--gray-300);border-radius:4px;width:120px;">
+                                <button type="submit" class="btn btn-xs btn-success">处理</button>
+                            </form>
+                            {% else %}
+                            <span class="text-xs text-muted">{{ alert.resolution_note|truncatechars:20 }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <div class="empty-title">暂无滞留预警</div>
+            <div class="empty-desc">所有包裹正常流转中</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}快递驿站管理系统{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-request.htmx-indicator { display: inline-block; }
+    </style>
+</head>
+<body>
+{% if not hide_sidebar %}
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">📦</div>
+            <span>驿站预警系统</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">业务管理</div>
+            <a href="{% url 'depot:dashboard' %}" class="{% if active_tab == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon">📊</span> 滞留风险看板
+            </a>
+            <a href="{% url 'depot:package_list' %}" class="{% if active_tab == 'packages' %}active{% endif %}">
+                <span class="nav-icon">📋</span> 包裹管理
+            </a>
+            <a href="{% url 'depot:reminder_list' %}" class="{% if active_tab == 'reminders' %}active{% endif %}">
+                <span class="nav-icon">🔔</span> 取件提醒
+            </a>
+            <a href="{% url 'depot:retention_list' %}" class="{% if active_tab == 'retention' %}active{% endif %}">
+                <span class="nav-icon">⚠️</span> 滞留预警
+            </a>
+
+            <div class="sidebar-section">异常处理</div>
+            <a href="{% url 'depot:abnormal_list' %}" class="{% if active_tab == 'abnormals' %}active{% endif %}">
+                <span class="nav-icon">❗</span> 异常件登记
+            </a>
+            <a href="{% url 'depot:complaint_list' %}" class="{% if active_tab == 'complaints' %}active{% endif %}">
+                <span class="nav-icon">💬</span> 客户投诉
+            </a>
+            <a href="{% url 'depot:return_list' %}" class="{% if active_tab == 'returns' %}active{% endif %}">
+                <span class="nav-icon">↩️</span> 退回出站
+            </a>
+
+            <div class="sidebar-section">系统</div>
+            <a href="/admin/" target="_blank">
+                <span class="nav-icon">⚙️</span> 后台管理
+            </a>
+            <a href="{% url 'depot:logout' %}">
+                <span class="nav-icon">🚪</span> 退出登录
+            </a>
+        </nav>
+    </aside>
+    <div class="main">
+        <header class="header">
+            <div class="header-title">{% block header_title %}{% endblock %}</div>
+            <div class="header-actions">
+                <span class="text-sm text-muted">{{ request.user.username }}</span>
+            </div>
+        </header>
+        <main class="content">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert-bar alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% else %}
+    {% block content_nosidebar %}{% endblock %}
+{% endif %}
+</body>
+</html>

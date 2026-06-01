@@ -1,0 +1,75 @@
+{% extends "depot/base.html" %}
+{% block title %}异常件登记{% endblock %}
+{% block header_title %}异常件登记{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <select name="type">
+            <option value="">全部异常类型</option>
+            {% for val,label in type_choices %}
+            <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="status">
+            <option value="">全部处理状态</option>
+            {% for val,label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">筛选</button>
+        <a href="{% url 'depot:abnormal_list' %}" class="btn btn-outline btn-sm">重置</a>
+    </form>
+    <a href="{% url 'depot:abnormal_register' %}" class="btn btn-danger">❗ 登记异常件</a>
+</div>
+
+<div class="card">
+    <div class="card-body no-padding">
+        {% if abnormals %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>快递单号</th>
+                        <th>异常类型</th>
+                        <th>驿站</th>
+                        <th>描述</th>
+                        <th>登记时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ab in abnormals %}
+                    <tr>
+                        <td><a href="{% url 'depot:package_detail' ab.package.pk %}">{{ ab.package.tracking_number }}</a></td>
+                        <td>
+                            <span class="badge badge-red">{{ ab.abnormal_type_display }}</span>
+                        </td>
+                        <td>{{ ab.package.station.name }}</td>
+                        <td class="text-sm">{{ ab.description|truncatechars:30 }}</td>
+                        <td class="text-sm">{{ ab.registered_at|date:"m-d H:i" }}</td>
+                        <td>
+                            <span class="badge {% if ab.status == 'pending' %}badge-yellow{% elif ab.status == 'processing' %}badge-blue{% else %}badge-green{% endif %}">
+                                {{ ab.status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'depot:abnormal_detail' ab.pk %}" class="btn btn-xs btn-outline">处理</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <div class="empty-title">暂无异常件</div>
+            <div class="empty-desc">所有包裹正常流转中</div>
+            <a href="{% url 'depot:abnormal_register' %}" class="btn btn-primary">登记异常件</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

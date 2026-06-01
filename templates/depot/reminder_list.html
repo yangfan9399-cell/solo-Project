@@ -1,0 +1,91 @@
+{% extends "depot/base.html" %}
+{% block title %}取件提醒{% endblock %}
+{% block header_title %}取件提醒{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <select name="status">
+            <option value="">全部发送状态</option>
+            {% for val,label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="response">
+            <option value="">全部客户回应</option>
+            {% for val,label in response_choices %}
+            <option value="{{ val }}" {% if response_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">筛选</button>
+        <a href="{% url 'depot:reminder_list' %}" class="btn btn-outline btn-sm">重置</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body no-padding">
+        {% if reminders %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>快递单号</th>
+                        <th>收件人</th>
+                        <th>提醒方式</th>
+                        <th>发送时间</th>
+                        <th>发送状态</th>
+                        <th>客户回应</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reminders %}
+                    <tr id="reminder-{{ r.pk }}">
+                        <td><a href="{% url 'depot:package_detail' r.package.pk %}">{{ r.package.tracking_number }}</a></td>
+                        <td>{{ r.package.receiver_name }}</td>
+                        <td>{{ r.get_reminder_type_display }}</td>
+                        <td class="text-sm">{{ r.sent_at|date:"m-d H:i" }}</td>
+                        <td>
+                            <span class="badge {% if r.status == 'sent' %}badge-blue{% elif r.status == 'delivered' %}badge-green{% else %}badge-red{% endif %}">
+                                {{ r.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if r.response %}
+                            <span class="badge {% if r.response == 'confirmed_pickup' %}badge-green{% elif r.response == 'rejected' %}badge-red{% else %}badge-yellow{% endif %}">
+                                {{ r.get_response_display }}
+                            </span>
+                            {% else %}
+                            <form method="post" action="{% url 'depot:reminder_response' r.pk %}"
+                                  hx-post="{% url 'depot:reminder_response' r.pk %}"
+                                  hx-target="#reminder-{{ r.pk }}"
+                                  hx-swap="outerHTML"
+                                  style="display:flex;gap:4px;align-items:center;">
+                                {% csrf_token %}
+                                <select name="response" style="padding:2px 4px;font-size:12px;">
+                                    {% for val,label in response_choices %}
+                                    <option value="{{ val }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-xs btn-primary">提交</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'depot:package_detail' r.package.pk %}" class="btn btn-xs btn-outline">详情</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔕</div>
+            <div class="empty-title">暂无提醒记录</div>
+            <div class="empty-desc">没有找到符合条件的提醒记录</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

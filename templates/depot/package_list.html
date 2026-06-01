@@ -1,0 +1,86 @@
+{% extends "depot/base.html" %}
+{% block title %}包裹管理{% endblock %}
+{% block header_title %}包裹管理{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input type="text" name="search" value="{{ search }}" placeholder="搜索单号/收件人/电话" style="min-width:200px;">
+        <select name="status">
+            <option value="">全部状态</option>
+            {% for val,label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="station">
+            <option value="">全部驿站</option>
+            {% for sid,sname in stations %}
+            <option value="{{ sid }}" {% if station_filter|add:0 == sid %}selected{% endif %}>{{ sname }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+        <a href="{% url 'depot:package_list' %}" class="btn btn-outline btn-sm">重置</a>
+    </form>
+    <a href="{% url 'depot:package_checkin' %}" class="btn btn-primary">📦 包裹入站</a>
+</div>
+
+<div class="card">
+    <div class="card-body no-padding">
+        {% if packages %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>快递单号</th>
+                        <th>快递公司</th>
+                        <th>收件人</th>
+                        <th>电话</th>
+                        <th>驿站</th>
+                        <th>货架</th>
+                        <th>状态</th>
+                        <th>入站时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pkg in packages %}
+                    <tr>
+                        <td><a href="{% url 'depot:package_detail' pkg.pk %}" style="font-weight:600;">{{ pkg.tracking_number }}</a></td>
+                        <td>{{ pkg.carrier_display }}</td>
+                        <td>{{ pkg.receiver_name }}</td>
+                        <td>{{ pkg.receiver_phone }}</td>
+                        <td>{{ pkg.station.name }}</td>
+                        <td>{{ pkg.shelf_code|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if pkg.status == 'checked_in' %}badge-blue{% elif pkg.status == 'pending_pickup' %}badge-yellow{% elif pkg.status == 'picked_up' %}badge-green{% elif pkg.status == 'retention' %}badge-orange{% elif pkg.status == 'abnormal' %}badge-red{% else %}badge-gray{% endif %}">
+                                {{ pkg.status_display }}
+                            </span>
+                        </td>
+                        <td class="text-sm">{{ pkg.checked_in_at|date:"m-d H:i" }}</td>
+                        <td>
+                            <div class="actions-bar">
+                                <a href="{% url 'depot:package_detail' pkg.pk %}" class="btn btn-xs btn-outline">详情</a>
+                                {% if pkg.status in "checked_in,pending_pickup" %}
+                                <a href="{% url 'depot:reminder_create' pkg.pk %}" class="btn btn-xs btn-primary">提醒</a>
+                                {% endif %}
+                                {% if pkg.status in "checked_in,pending_pickup,retention" %}
+                                <a href="{% url 'depot:return_create' pkg.pk %}" class="btn btn-xs btn-danger">退回</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">暂无包裹</div>
+            <div class="empty-desc">没有找到符合条件的包裹记录</div>
+            <a href="{% url 'depot:package_checkin' %}" class="btn btn-primary">包裹入站</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

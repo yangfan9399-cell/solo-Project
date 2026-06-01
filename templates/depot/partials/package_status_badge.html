@@ -1,0 +1,3 @@
+<span class="badge {% if package.status == 'checked_in' %}badge-blue{% elif package.status == 'pending_pickup' %}badge-yellow{% elif package.status == 'picked_up' %}badge-green{% elif package.status == 'retention' %}badge-orange{% elif package.status == 'abnormal' %}badge-red{% else %}badge-gray{% endif %}">
+    {{ package.status_display }}
+</span>

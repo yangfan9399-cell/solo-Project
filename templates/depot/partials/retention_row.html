@@ -1,0 +1,26 @@
+<tr id="retention-{{ alert.pk }}">
+    <td><a href="{% url 'depot:package_detail' alert.package.pk %}">{{ alert.package.tracking_number }}</a></td>
+    <td>{{ alert.package.receiver_name }}</td>
+    <td>{{ alert.package.station.name }}</td>
+    <td>
+        <span class="badge {% if alert.alert_level == 'urgent' %}badge-red{% elif alert.alert_level == 'critical' %}badge-orange{% else %}badge-yellow{% endif %}">
+            {{ alert.alert_level_display }}
+        </span>
+    </td>
+    <td><strong>{{ alert.days_retained }}</strong>天</td>
+    <td class="text-sm">{{ alert.triggered_at|date:"m-d H:i" }}</td>
+    <td>
+        {% if alert.is_resolved %}
+        <span class="badge badge-green">已处理</span>
+        {% else %}
+        <span class="badge badge-red">未处理</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if alert.is_resolved %}
+        <span class="text-xs text-muted">{{ alert.resolution_note|truncatechars:20 }}</span>
+        {% else %}
+        <span class="text-xs text-muted">待处理</span>
+        {% endif %}
+    </td>
+</tr>

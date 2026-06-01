@@ -1,0 +1,225 @@
+{% extends "depot/base.html" %}
+{% block title %}滞留风险看板{% endblock %}
+{% block header_title %}滞留风险看板{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card stat-primary">
+        <span class="stat-label">总包裹数</span>
+        <span class="stat-value">{{ total_packages }}</span>
+        <span class="stat-sub">所有入站包裹</span>
+    </div>
+    <div class="stat-card stat-success">
+        <span class="stat-label">待取件</span>
+        <span class="stat-value">{{ pending_packages }}</span>
+        <span class="stat-sub">已入站/待取件</span>
+    </div>
+    <div class="stat-card stat-warning">
+        <span class="stat-label">滞留件</span>
+        <span class="stat-value">{{ retention_packages }}</span>
+        <span class="stat-sub">需关注处理</span>
+    </div>
+    <div class="stat-card stat-danger">
+        <span class="stat-label">异常件</span>
+        <span class="stat-value">{{ abnormal_packages }}</span>
+        <span class="stat-sub">破损/丢失/错分</span>
+    </div>
+    <div class="stat-card stat-orange">
+        <span class="stat-label">未处理预警</span>
+        <span class="stat-value">{{ unresolved_alerts }}</span>
+        <span class="stat-sub">其中紧急 {{ urgent_alerts }} 件</span>
+    </div>
+    <div class="stat-card stat-purple">
+        <span class="stat-label">待处理投诉</span>
+        <span class="stat-value">{{ pending_complaints }}</span>
+        <span class="stat-sub">处理中 {{ processing_complaints }} 件</span>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>⚠️ 滞留风险分布</span>
+            </div>
+            <div class="card-body">
+                <div class="risk-meter">
+                    <div class="risk-segment" style="background:var(--warning-light);color:var(--warning);">
+                        预警(3天)<br>{{ alert_level_counts.warning }}
+                    </div>
+                    <div class="risk-segment" style="background:var(--orange-light);color:var(--orange);">
+                        严重(5天)<br>{{ alert_level_counts.critical }}
+                    </div>
+                    <div class="risk-segment" style="background:var(--danger-light);color:var(--danger);">
+                        紧急(7天+)<br>{{ alert_level_counts.urgent }}
+                    </div>
+                </div>
+                <div class="progress-bar mt-4">
+                    {% if unresolved_alerts > 0 %}
+                    <div class="progress-fill fill-danger" style="width:{% widthratio urgent_alerts unresolved_alerts 100 %}%"></div>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-muted mt-4">紧急占比: {% if unresolved_alerts > 0 %}{{ urgent_alerts|floatformat:0 }}/{% endif %}{{ unresolved_alerts }}</p>
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>🏠 各驿站滞留情况</span>
+            </div>
+            <div class="card-body no-padding">
+                {% if station_stats %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>驿站</th>
+                            <th>待取件</th>
+                            <th>滞留</th>
+                            <th>异常</th>
+                            <th>风险</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in station_stats %}
+                        <tr>
+                            <td><a href="{% url 'depot:package_list' %}?station={{ s.station.id }}">{{ s.station.name }}</a></td>
+                            <td>{{ s.pending }}</td>
+                            <td><strong style="color:var(--warning)">{{ s.retention }}</strong></td>
+                            <td><strong style="color:var(--danger)">{{ s.abnormal }}</strong></td>
+                            <td>
+                                <div class="progress-bar" style="width:100px;">
+                                    {% with total=s.pending|add:s.retention|add:s.abnormal %}
+                                    {% if total > 0 %}
+                                    <div class="progress-fill {% if s.retention > 3 %}fill-danger{% elif s.retention > 0 %}fill-warning{% else %}fill-success{% endif %}" style="width:{% widthratio s.retention total 100 %}%"></div>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <div class="empty-title">暂无驿站数据</div>
+                    <div class="empty-desc">请先添加驿站信息</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>📋 今日动态</span>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;gap:24px;">
+                    <div>
+                        <span class="text-muted text-sm">今日提醒</span>
+                        <div style="font-size:24px;font-weight:700;">{{ today_reminders }}</div>
+                    </div>
+                    <div>
+                        <span class="text-muted text-sm">今日退回</span>
+                        <div style="font-size:24px;font-weight:700;">{{ today_returns }}</div>
+                    </div>
+                    <div>
+                        <span class="text-muted text-sm">待处理异常</span>
+                        <div style="font-size:24px;font-weight:700;color:var(--orange);">{{ pending_abnormals }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>🚨 最新滞留预警</span>
+                <a href="{% url 'depot:retention_list' %}" class="btn btn-sm btn-outline">查看全部</a>
+            </div>
+            <div class="card-body no-padding">
+                {% if recent_alerts %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>单号</th>
+                            <th>等级</th>
+                            <th>天数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in recent_alerts %}
+                        <tr>
+                            <td><a href="{% url 'depot:package_detail' alert.package.pk %}">{{ alert.package.tracking_number }}</a></td>
+                            <td>
+                                <span class="badge {% if alert.alert_level == 'urgent' %}badge-red{% elif alert.alert_level == 'critical' %}badge-orange{% else %}badge-yellow{% endif %}">
+                                    {{ alert.alert_level_display }}
+                                </span>
+                            </td>
+                            <td><strong>{{ alert.days_retained }}</strong>天</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-title">无滞留预警</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card-header">
+                <span>❗ 待处理异常</span>
+                <a href="{% url 'depot:abnormal_list' %}" class="btn btn-sm btn-outline">查看全部</a>
+            </div>
+            <div class="card-body no-padding">
+                {% if recent_abnormals %}
+                {% for ab in recent_abnormals %}
+                <div style="padding:10px 16px;border-bottom:1px solid var(--gray-100);">
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'depot:abnormal_detail' ab.pk %}">{{ ab.package.tracking_number }}</a>
+                        <span class="badge {% if ab.status == 'pending' %}badge-yellow{% elif ab.status == 'processing' %}badge-blue{% else %}badge-green{% endif %}">{{ ab.status_display }}</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ ab.abnormal_type_display }} · {{ ab.registered_at|date:"m-d H:i" }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-title">无异常件</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span>💬 待处理投诉</span>
+                <a href="{% url 'depot:complaint_list' %}" class="btn btn-sm btn-outline">查看全部</a>
+            </div>
+            <div class="card-body no-padding">
+                {% if recent_complaints %}
+                {% for c in recent_complaints %}
+                <div style="padding:10px 16px;border-bottom:1px solid var(--gray-100);">
+                    <div style="display:flex;justify-content:space-between;">
+                        <a href="{% url 'depot:complaint_detail' c.pk %}">{{ c.complaint_number }}</a>
+                        <span class="badge {% if c.status == 'pending' %}badge-yellow{% elif c.status == 'processing' %}badge-blue{% else %}badge-orange{% endif %}">{{ c.status_display }}</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ c.complainant_name }} · {{ c.complaint_type_display }}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state" style="padding:24px;">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-title">无投诉</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
