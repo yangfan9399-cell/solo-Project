@@ -53,11 +53,21 @@ class PickupReminderResponseForm(forms.ModelForm):
 class AbnormalPackageForm(forms.ModelForm):
     class Meta:
         model = AbnormalPackage
-        fields = ["abnormal_type", "description"]
+        fields = ["package", "abnormal_type", "description"]
         widgets = {
+            "package": forms.Select(attrs={"class": "form-input"}),
             "abnormal_type": forms.Select(attrs={"class": "form-input"}),
             "description": forms.Textarea(attrs={"class": "form-input", "rows": 4, "placeholder": "请描述异常情况"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["package"].required = True
+        self.fields["package"].queryset = Package.objects.exclude(
+            status__in=["picked_up", "returned"]
+        ).select_related("station").order_by("-checked_in_at")
+        self.fields["package"].label = "关联包裹 *"
+        self.fields["package"].empty_label = "请选择包裹"
 
 
 class AbnormalResolveForm(forms.ModelForm):

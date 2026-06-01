@@ -7,33 +7,58 @@
     <a href="{% url 'depot:abnormal_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
 </div>
 
-<div class="card" style="max-width:600px;">
+<div class="card" style="max-width:720px;">
     <div class="card-header">
         <span>❗ 登记异常件</span>
     </div>
     <div class="card-body">
+        {% if selected_package %}
+        <div class="alert-bar alert-info">
+            <strong>已自动关联包裹：</strong>
+            <a href="{% url 'depot:package_detail' selected_package.pk %}">{{ selected_package.tracking_number }}</a>
+            ({{ selected_package.receiver_name }}) - 状态：{{ selected_package.status_display }}
+        </div>
+        {% endif %}
+
         <form method="post">
             {% csrf_token %}
-            {% if form.errors %}
+            {% if form.non_field_errors %}
             <div class="alert-bar alert-danger">
-                {% for field,errors in form.errors.items %}
-                {% for e in errors %}{{ e }}{% endfor %}
-                {% endfor %}
+                {% for e in form.non_field_errors %}{{ e }}{% endfor %}
             </div>
             {% endif %}
+
+            <div class="form-group">
+                <label>{{ form.package.label }}</label>
+                {{ form.package }}
+                {% if form.package.errors %}
+                <div class="text-sm" style="color:var(--danger);margin-top:4px;">
+                    {% for e in form.package.errors %}⚠️ {{ e }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
             <div class="form-group">
                 <label>{{ form.abnormal_type.label }} *</label>
                 {{ form.abnormal_type }}
+                {% if form.abnormal_type.errors %}
+                <div class="text-sm" style="color:var(--danger);margin-top:4px;">
+                    {% for e in form.abnormal_type.errors %}⚠️ {{ e }}{% endfor %}
+                </div>
+                {% endif %}
             </div>
-            <div class="form-group">
-                <label>关联包裹 (在详情页登记时自动关联)</label>
-                <input type="text" class="form-input" value="{{ request.GET.package|default:'请从包裹详情页登记' }}" disabled>
-            </div>
+
             <div class="form-group">
                 <label>{{ form.description.label }} *</label>
                 {{ form.description }}
+                {% if form.description.errors %}
+                <div class="text-sm" style="color:var(--danger);margin-top:4px;">
+                    {% for e in form.description.errors %}⚠️ {{ e }}{% endfor %}
+                </div>
+                {% endif %}
             </div>
-            <div style="display:flex;gap:12px;">
+
+            <div style="display:flex;gap:12px;margin-top:8px;">
                 <button type="submit" class="btn btn-danger">确认登记</button>
                 <a href="{% url 'depot:abnormal_list' %}" class="btn btn-outline">取消</a>
             </div>

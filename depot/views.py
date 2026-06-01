@@ -289,6 +289,13 @@ def abnormal_detail(request, pk):
 @login_required
 def abnormal_register(request):
     package_pk = request.GET.get("package", "")
+    selected_package = None
+    if package_pk:
+        try:
+            selected_package = Package.objects.get(pk=package_pk)
+        except (Package.DoesNotExist, ValueError):
+            selected_package = None
+
     if request.method == "POST":
         form = AbnormalPackageForm(request.POST)
         if form.is_valid():
@@ -298,15 +305,20 @@ def abnormal_register(request):
             except Staff.DoesNotExist:
                 pass
             abnormal.save()
-            abnormal.package.status = "abnormal"
-            abnormal.package.save(update_fields=["status"])
+            if abnormal.package:
+                abnormal.package.status = "abnormal"
+                abnormal.package.save(update_fields=["status"])
             return redirect("depot:abnormal_detail", pk=abnormal.pk)
     else:
         initial = {}
-        if package_pk:
-            initial["package"] = package_pk
+        if selected_package:
+            initial["package"] = selected_package.pk
         form = AbnormalPackageForm(initial=initial)
-    context = {"form": form, "active_tab": "abnormals"}
+    context = {
+        "form": form,
+        "selected_package": selected_package,
+        "active_tab": "abnormals",
+    }
     return render(request, "depot/abnormal_register.html", context)
 
 
