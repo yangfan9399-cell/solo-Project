@@ -36,6 +36,56 @@
     </div>
 </div>
 
+{% if role_todos %}
+<div class="card mb-6">
+    <div class="card-header">
+        <span>📋 {{ current_role_display }}待办事项</span>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+            {% for todo in role_todos %}
+            <div class="card" style="border:1px solid var(--gray-200);">
+                <div class="card-header" style="padding:12px 16px;background:{% if todo.color == 'blue' %}var(--primary-light){% elif todo.color == 'red' %}var(--danger-light){% elif todo.color == 'orange' %}var(--orange-light){% elif todo.color == 'green' %}var(--success-light){% elif todo.color == 'purple' %}var(--purple-light){% else %}var(--gray-100){% endif %};border-bottom:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="fw-600">{{ todo.title }}</span>
+                        <span class="badge {% if todo.color == 'blue' %}badge-blue{% elif todo.color == 'red' %}badge-red{% elif todo.color == 'orange' %}badge-orange{% elif todo.color == 'green' %}badge-green{% elif todo.color == 'purple' %}badge-purple{% else %}badge-gray{% endif %}" style="font-size:14px;padding:4px 12px;">
+                            {{ todo.count }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body" style="padding:12px 16px;">
+                    {% if todo.items %}
+                    <div style="max-height:160px;overflow-y:auto;">
+                        {% for item in todo.items %}
+                        <div style="padding:6px 0;border-bottom:1px solid var(--gray-100);font-size:13px;">
+                            {% if item.tracking_number %}
+                            <a href="{% url 'depot:package_detail' item.pk %}">{{ item.tracking_number }}</a>
+                            {% elif item.complaint_number %}
+                            <a href="{% url 'depot:complaint_detail' item.pk %}">{{ item.complaint_number }}</a>
+                            {% elif item.responsible_staff %}
+                            <span>{{ item.responsible_staff.name }} · {{ item.complaint.complaint_number }}</span>
+                            {% elif item.package %}
+                            <a href="{% url 'depot:package_detail' item.package.pk %}">{{ item.package.tracking_number }}</a>
+                            {% else %}
+                            <span>{{ item }}</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-sm">暂无待办</div>
+                    {% endif %}
+                    <div style="margin-top:8px;">
+                        <a href="{% url todo.url %}" class="btn btn-sm btn-outline" style="width:100%;justify-content:center;">查看全部</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="two-col">
     <div>
         <div class="card mb-6">

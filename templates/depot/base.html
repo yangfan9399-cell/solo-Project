@@ -19,29 +19,41 @@
     <aside class="sidebar">
         <div class="sidebar-brand">
             <div class="brand-icon">📦</div>
-            <span>驿站预警系统</span>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+                <span>驿站预警系统</span>
+                {% if current_role %}
+                <span style="font-size:11px;font-weight:500;color:var(--primary);">
+                    角色：{{ current_role_display }}
+                </span>
+                {% endif %}
+            </div>
         </div>
         <nav class="sidebar-nav">
             <div class="sidebar-section">业务管理</div>
-            <a href="{% url 'depot:dashboard' %}" class="{% if active_tab == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'depot:dashboard' %}" class="{% if active_tab == 'dashboard' %}active{% endif %}{% if current_role == 'supervisor' %} role-highlight{% endif %}">
                 <span class="nav-icon">📊</span> 滞留风险看板
+                {% if current_role == 'supervisor' %}<span class="nav-badge">重点</span>{% endif %}
             </a>
             <a href="{% url 'depot:package_list' %}" class="{% if active_tab == 'packages' %}active{% endif %}">
                 <span class="nav-icon">📋</span> 包裹管理
             </a>
-            <a href="{% url 'depot:reminder_list' %}" class="{% if active_tab == 'reminders' %}active{% endif %}">
+            <a href="{% url 'depot:reminder_list' %}" class="{% if active_tab == 'reminders' %}active{% endif %}{% if current_role == 'clerk' %} role-highlight{% endif %}">
                 <span class="nav-icon">🔔</span> 取件提醒
+                {% if current_role == 'clerk' %}<span class="nav-badge">优先</span>{% endif %}
             </a>
-            <a href="{% url 'depot:retention_list' %}" class="{% if active_tab == 'retention' %}active{% endif %}">
+            <a href="{% url 'depot:retention_list' %}" class="{% if active_tab == 'retention' %}active{% endif %}{% if current_role == 'supervisor' %} role-highlight{% endif %}">
                 <span class="nav-icon">⚠️</span> 滞留预警
+                {% if current_role == 'supervisor' %}<span class="nav-badge">重点</span>{% endif %}
             </a>
 
             <div class="sidebar-section">异常处理</div>
-            <a href="{% url 'depot:abnormal_list' %}" class="{% if active_tab == 'abnormals' %}active{% endif %}">
+            <a href="{% url 'depot:abnormal_list' %}" class="{% if active_tab == 'abnormals' %}active{% endif %}{% if current_role == 'clerk' %} role-highlight{% endif %}">
                 <span class="nav-icon">❗</span> 异常件登记
+                {% if current_role == 'clerk' %}<span class="nav-badge">优先</span>{% endif %}
             </a>
-            <a href="{% url 'depot:complaint_list' %}" class="{% if active_tab == 'complaints' %}active{% endif %}">
+            <a href="{% url 'depot:complaint_list' %}" class="{% if active_tab == 'complaints' %}active{% endif %}{% if current_role == 'cs_specialist' %} role-highlight{% endif %}">
                 <span class="nav-icon">💬</span> 客户投诉
+                {% if current_role == 'cs_specialist' %}<span class="nav-badge">核心</span>{% endif %}
             </a>
             <a href="{% url 'depot:return_list' %}" class="{% if active_tab == 'returns' %}active{% endif %}">
                 <span class="nav-icon">↩️</span> 退回出站

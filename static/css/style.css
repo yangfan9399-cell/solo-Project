@@ -102,6 +102,11 @@ a:hover { color: var(--primary-hover); text-decoration: underline; }
     color: white;
 }
 
+.sidebar-nav a.role-highlight {
+    background: rgba(37, 99, 235, 0.15);
+    border-left: 3px solid var(--primary);
+}
+
 .sidebar-nav a .nav-icon {
     width: 20px;
     text-align: center;

@@ -15,6 +15,7 @@ from .forms import (
     ResponsibilityForm, ReturnRecordForm,
 )
 from .services import check_retention_alerts, get_dashboard_stats
+from .role_utils import get_user_role
 
 
 def login_view(request):
@@ -43,14 +44,129 @@ def logout_view(request):
 def dashboard(request):
     check_retention_alerts()
     stats = get_dashboard_stats()
-    recent_alerts = RetentionAlert.objects.filter(is_resolved=False).select_related("package", "package__station")[:10]
-    recent_complaints = Complaint.objects.filter(status__in=["pending", "accepted", "processing"]).select_related("station")[:5]
-    recent_abnormals = AbnormalPackage.objects.filter(status__in=["pending", "processing"]).select_related("package")[:5]
+    role = get_user_role(request)
+
+    role_todos = []
+
+    if role == "clerk":
+        pending_reminders = PickupReminder.objects.filter(response="").select_related("package")[:5]
+        pending_abnormals = AbnormalPackage.objects.filter(status="pending").select_related("package", "package__station")[:5]
+        todays_checkins = Package.objects.filter(checked_in_at__date=timezone.now().date()).count()
+
+        role_todos = [
+            {
+                "title": "📩 待发送取件提醒",
+                "count": len(pending_reminders),
+                "items": pending_reminders,
+                "url": "depot:reminder_list",
+                "color": "blue",
+            },
+            {
+                "title": "❗ 待登记异常件",
+                "count": len(pending_abnormals),
+                "items": pending_abnormals,
+                "url": "depot:abnormal_list",
+                "color": "red",
+            },
+            {
+                "title": "📦 今日入站包裹",
+                "count": todays_checkins,
+                "items": [],
+                "url": "depot:package_list",
+                "color": "green",
+            },
+        ]
+
+    elif role == "supervisor":
+        unresolved_alerts = RetentionAlert.objects.filter(is_resolved=False).select_related("package", "package__station")[:5]
+        pending_responsibilities = Responsibility.objects.filter(status="pending").select_related("responsible_staff", "complaint")[:5]
+        retention_by_station = RetentionAlert.objects.filter(is_resolved=False).values("package__station__name").distinct().count()
+
+        role_todos = [
+            {
+                "title": "⚠️ 待处理滞留预警",
+                "count": len(unresolved_alerts),
+                "items": unresolved_alerts,
+                "url": "depot:retention_list",
+                "color": "orange",
+            },
+            {
+                "title": "⚖️ 待确认责任处理",
+                "count": len(pending_responsibilities),
+                "items": pending_responsibilities,
+                "url": "depot:complaint_list",
+                "color": "purple",
+            },
+            {
+                "title": "🏠 涉及驿站数量",
+                "count": retention_by_station,
+                "items": [],
+                "url": "depot:dashboard",
+                "color": "blue",
+            },
+        ]
+
+    elif role == "cs_specialist":
+        pending_complaints = Complaint.objects.filter(status="pending").select_related("station")[:5]
+        processing_complaints = Complaint.objects.filter(status__in=["accepted", "processing"]).select_related("station")[:5]
+        new_abnormals = AbnormalPackage.objects.filter(status="pending").select_related("package")[:5]
+
+        role_todos = [
+            {
+                "title": "💬 待受理投诉",
+                "count": len(pending_complaints),
+                "items": pending_complaints,
+                "url": "depot:complaint_list",
+                "color": "red",
+            },
+            {
+                "title": "🔄 处理中投诉",
+                "count": len(processing_complaints),
+                "items": processing_complaints,
+                "url": "depot:complaint_list",
+                "color": "blue",
+            },
+            {
+                "title": "❗ 新异常反馈",
+                "count": len(new_abnormals),
+                "items": new_abnormals,
+                "url": "depot:abnormal_list",
+                "color": "orange",
+            },
+        ]
+
+    else:
+        recent_alerts = RetentionAlert.objects.filter(is_resolved=False).select_related("package", "package__station")[:5]
+        recent_complaints = Complaint.objects.filter(status__in=["pending", "accepted", "processing"]).select_related("station")[:5]
+        recent_abnormals = AbnormalPackage.objects.filter(status__in=["pending", "processing"]).select_related("package")[:5]
+
+        role_todos = [
+            {
+                "title": "🚨 最新滞留预警",
+                "count": len(recent_alerts),
+                "items": recent_alerts,
+                "url": "depot:retention_list",
+                "color": "red",
+            },
+            {
+                "title": "💬 待处理投诉",
+                "count": len(recent_complaints),
+                "items": recent_complaints,
+                "url": "depot:complaint_list",
+                "color": "orange",
+            },
+            {
+                "title": "❗ 待处理异常",
+                "count": len(recent_abnormals),
+                "items": recent_abnormals,
+                "url": "depot:abnormal_list",
+                "color": "purple",
+            },
+        ]
+
     context = {
         **stats,
-        "recent_alerts": recent_alerts,
-        "recent_complaints": recent_complaints,
-        "recent_abnormals": recent_abnormals,
+        "role_todos": role_todos,
         "active_tab": "dashboard",
     }
     return render(request, "depot/dashboard.html", context)
@@ -139,8 +255,13 @@ def package_status_update(request, pk):
 
 @login_required
 def reminder_list(request):
+    role = get_user_role(request)
     status_filter = request.GET.get("status", "")
     response_filter = request.GET.get("response", "")
+
+    if role == "clerk" and not status_filter and not response_filter:
+        response_filter = ""
+
     qs = PickupReminder.objects.select_related("package", "package__station", "sent_by")
     if status_filter:
         qs = qs.filter(status=status_filter)
@@ -199,8 +320,13 @@ def reminder_response(request, pk):
 
 @login_required
 def retention_list(request):
+    role = get_user_role(request)
     level_filter = request.GET.get("level", "")
     resolved_filter = request.GET.get("resolved", "")
+
+    if role == "supervisor" and not resolved_filter:
+        resolved_filter = "no"
+
     qs = RetentionAlert.objects.select_related("package", "package__station", "resolved_by")
     if level_filter:
         qs = qs.filter(alert_level=level_filter)
@@ -239,8 +365,13 @@ def retention_resolve(request, pk):
 
 @login_required
 def abnormal_list(request):
+    role = get_user_role(request)
     type_filter = request.GET.get("type", "")
     status_filter = request.GET.get("status", "")
+
+    if role == "clerk" and not status_filter:
+        status_filter = "pending"
+
     qs = AbnormalPackage.objects.select_related("package", "package__station", "registered_by", "resolved_by")
     if type_filter:
         qs = qs.filter(abnormal_type=type_filter)
@@ -324,8 +455,13 @@ def abnormal_register(request):
 
 @login_required
 def complaint_list(request):
+    role = get_user_role(request)
     type_filter = request.GET.get("type", "")
     status_filter = request.GET.get("status", "")
+
+    if role == "cs_specialist" and not status_filter:
+        status_filter = "pending"
+
     qs = Complaint.objects.select_related("station", "package", "accepted_by")
     if type_filter:
         qs = qs.filter(complaint_type=type_filter)
