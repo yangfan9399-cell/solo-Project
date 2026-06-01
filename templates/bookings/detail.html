@@ -1,5 +1,5 @@
 {% from "partials/_status_badge.html" import render as status_badge %}
-{% from "partials/_cost_summary.html" import render as cost_summary %}
+{% from "partials/_cost_summary.html" import render as render_cost_summary %}
 {% from "partials/_timeline.html" import render as timeline %}
 {% extends "base.html" %}
 
@@ -210,8 +210,8 @@
         <div class="card">
             <div class="card__body">
                 <h3 class="card__title">费用汇总</h3>
-                {% if cost_summary and cost_summary.items %}
-                {{ cost_summary(cost_summary) }}
+                {% if booking_cost_summary and booking_cost_summary.cost_items %}
+                {{ render_cost_summary(booking_cost_summary) }}
                 {% else %}
                 <div class="empty-state empty-state--compact">
                     <p class="empty-state__text">暂无费用记录</p>

@@ -1,23 +1,23 @@
 {% from "partials/_status_badge.html" import render as status_badge %}
 
-{% macro render(cost_summary) %}
+{% macro render(summary_data) %}
 <div class="cost-summary">
     <div class="cost-summary__stats" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px;">
         <div class="cost-summary__stat" style="background:var(--bg-secondary); padding:12px; border-radius:8px; text-align:center;">
             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">合计(含待审批)</div>
-            <div style="font-size:18px; font-weight:600; color:var(--text-primary);">¥{{ "%.2f"|format(cost_summary.total) }}</div>
+            <div style="font-size:18px; font-weight:600; color:var(--text-primary);">¥{{ "%.2f"|format(summary_data.total) }}</div>
         </div>
         <div class="cost-summary__stat" style="background:rgba(22,163,74,0.08); padding:12px; border-radius:8px; text-align:center;">
             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">已审批</div>
-            <div style="font-size:18px; font-weight:600; color:#16a34a;">¥{{ "%.2f"|format(cost_summary.approved) }}</div>
+            <div style="font-size:18px; font-weight:600; color:#16a34a;">¥{{ "%.2f"|format(summary_data.approved) }}</div>
         </div>
         <div class="cost-summary__stat" style="background:rgba(234,179,8,0.08); padding:12px; border-radius:8px; text-align:center;">
             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">待审批</div>
-            <div style="font-size:18px; font-weight:600; color:#eab308;">¥{{ "%.2f"|format(cost_summary.pending) }}</div>
+            <div style="font-size:18px; font-weight:600; color:#eab308;">¥{{ "%.2f"|format(summary_data.pending) }}</div>
         </div>
         <div class="cost-summary__stat" style="background:rgba(239,68,68,0.08); padding:12px; border-radius:8px; text-align:center;">
             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">已退回</div>
-            <div style="font-size:18px; font-weight:600; color:#ef4444;">¥{{ "%.2f"|format(cost_summary.rejected) }}</div>
+            <div style="font-size:18px; font-weight:600; color:#ef4444;">¥{{ "%.2f"|format(summary_data.rejected) }}</div>
         </div>
     </div>
 
@@ -32,7 +32,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in cost_summary.items %}
+            {% for item in summary_data.cost_items %}
             <tr>
                 <td>{{ item.category }}</td>
                 <td>{{ item.description }}</td>
@@ -47,7 +47,7 @@
         <tfoot>
             <tr>
                 <td colspan="2"><strong>合计</strong></td>
-                <td class="cost-summary__amount"><strong>¥{{ "%.2f"|format(cost_summary.total) }}</strong></td>
+                <td class="cost-summary__amount"><strong>¥{{ "%.2f"|format(summary_data.total) }}</strong></td>
                 <td colspan="2"></td>
             </tr>
         </tfoot>

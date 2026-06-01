@@ -86,13 +86,13 @@ class Booking(db.Model):
         approved = sum(ci.amount for ci in cost_items if ci.status == "approved")
         pending = sum(ci.amount for ci in cost_items if ci.status == "pending")
         rejected = sum(ci.amount for ci in cost_items if ci.status == "rejected")
-        total = approved + pending
+        total = calculate_booking_total(cost_items)
         return {
             "total": total,
             "approved": approved,
             "pending": pending,
             "rejected": rejected,
-            "items": cost_items,
+            "cost_items": cost_items,
         }
 
     def __repr__(self):
