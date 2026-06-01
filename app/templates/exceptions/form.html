@@ -24,7 +24,7 @@
         <select name="rework_order_id" class="form-select" id="reworkSelect">
           <option value="">无</option>
           {% for rework in reworks %}
-          <option value="{{ rework.id }}" {% if selected_rework_id == rework.id %}selected{% endif %}>
+          <option value="{{ rework.id }}" {% if selected_rework_id == rework.id or selected_rework_id|string == rework.id|string %}selected{% endif %}>
             {{ rework.order_no }} - {{ rework.product_name }}
           </option>
           {% endfor %}
@@ -33,23 +33,23 @@
       
       <div class="form-group">
         <label class="form-label">标题 *</label>
-        <input type="text" name="title" class="form-control" required placeholder="简要描述问题" maxlength="200" id="titleInput">
+        <input type="text" name="title" class="form-control" required placeholder="简要描述问题" maxlength="200" id="titleInput" value="{{ form_title or '' }}">
         <span class="form-hint" style="font-size: 0.75rem; color: var(--gray-400);">不能为空</span>
       </div>
       
       <div class="form-group">
         <label class="form-label">优先级</label>
         <select name="priority" class="form-select" id="prioritySelect">
-          <option value="low">低</option>
-          <option value="normal" selected>普通</option>
-          <option value="high">高</option>
+          <option value="low" {% if form_priority == 'low' %}selected{% endif %}>低</option>
+          <option value="normal" {% if form_priority == 'normal' or not form_priority %}selected{% endif %}>普通</option>
+          <option value="high" {% if form_priority == 'high' %}selected{% endif %}>高</option>
         </select>
       </div>
       
       <div class="form-group">
         <label class="form-label">问题描述 *</label>
         <textarea name="description" class="form-control form-textarea" required
-          placeholder="详细描述遇到的问题..." id="descInput"></textarea>
+          placeholder="详细描述遇到的问题..." id="descInput">{{ form_description or '' }}</textarea>
         <span class="form-hint" style="font-size: 0.75rem; color: var(--gray-400);">不能为空</span>
       </div>
       
