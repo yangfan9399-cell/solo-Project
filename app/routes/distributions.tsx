@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const distributions = await prisma.distribution.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      application: { include: { recipient: { select: { name: true } } },
+      application: { include: { recipient: { select: { name: true } } } },
       distributor: { select: { name: true } },
     },
   });

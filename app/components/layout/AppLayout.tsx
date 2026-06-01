@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
-import type { User } from "@prisma/client";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 interface AppLayoutProps {
-  user: Pick<User, "id" | "name" | "role" | "username">;
+  user: { id: string; name: string; role: string; username: string };
   children: ReactNode;
 }
 

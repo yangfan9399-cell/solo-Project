@@ -1,7 +1,5 @@
-import type { DonationStatus, ApplicationStatus, DistributionStatus, ExceptionStatus, InspectionResult } from "@prisma/client";
-
 interface StatusBadgeProps {
-  status: DonationStatus | ApplicationStatus | DistributionStatus | ExceptionStatus | InspectionResult;
+  status: string;
   type: "donation" | "application" | "distribution" | "exception" | "inspection";
 }
 

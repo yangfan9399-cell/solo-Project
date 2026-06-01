@@ -1,9 +1,8 @@
 import { Form } from "@remix-run/react";
-import type { User } from "@prisma/client";
-import { getRoleName } from "../../../.server/session.server";
+import { getRoleName } from "~/utils/labels";
 
 interface HeaderProps {
-  user: Pick<User, "name" | "role">;
+  user: Pick<{ name: string; role: string }, "name" | "role">;
 }
 
 export function Header({ user }: HeaderProps) {

@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useNavigate, useNavigation, useSearchParams } from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigate, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { requireRole } from "../../.server/session.server";
@@ -158,14 +158,5 @@ function InfoItem({ label, value }: { label: string; value: string }) {
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
       <dd className="mt-1 text-sm text-gray-900">{value}</dd>
     </div>
-  );
-}
-
-function Link({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) {
-  const navigate = useNavigate();
-  return (
-    <button onClick={() => navigate(to)} className={className}>
-      {children}
-    </button>
   );
 }

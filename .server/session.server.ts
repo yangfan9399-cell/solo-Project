@@ -1,7 +1,8 @@
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db.server";
-import type { UserRole } from "@prisma/client";
+
+type UserRole = "ADMIN" | "SOCIAL_WORKER" | "MANAGER";
 
 const sessionSecret = process.env.SESSION_SECRET || "default-secret-change-in-production";
 
@@ -107,11 +108,4 @@ export async function verifyLogin(username: string, password: string) {
   return { id: user.id, name: user.name, role: user.role, username: user.username };
 }
 
-export function getRoleName(role: UserRole): string {
-  const roleMap: Record<UserRole, string> = {
-    ADMIN: "物资管理员",
-    SOCIAL_WORKER: "项目社工",
-    MANAGER: "机构负责人",
-  };
-  return roleMap[role];
-}
+export { getRoleName } from "../app/utils/labels";

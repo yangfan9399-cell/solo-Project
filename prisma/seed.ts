@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, DonationStatus, InspectionResult, ApplicationStatus, DistributionStatus, ExceptionType, ExceptionStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ async function main() {
       username: "admin",
       password: hashedPassword,
       name: "张管理员",
-      role: UserRole.ADMIN,
+      role: "ADMIN",
       phone: "13800138001",
       email: "admin@charity.org",
     },
@@ -26,7 +26,7 @@ async function main() {
       username: "worker",
       password: hashedPassword,
       name: "李社工",
-      role: UserRole.SOCIAL_WORKER,
+      role: "SOCIAL_WORKER",
       phone: "13800138002",
       email: "worker@charity.org",
     },
@@ -39,7 +39,7 @@ async function main() {
       username: "manager",
       password: hashedPassword,
       name: "王负责人",
-      role: UserRole.MANAGER,
+      role: "MANAGER",
       phone: "13800138003",
       email: "manager@charity.org",
     },
@@ -91,7 +91,7 @@ async function main() {
       donorPhone: "010-88888888",
       donorEmail: "contact@companya.com",
       description: "春节慰问物资捐赠",
-      status: DonationStatus.STORED,
+      status: "STORED",
       totalItems: 500,
       totalValue: 25000,
       receivedAt: new Date("2024-01-15"),
@@ -111,7 +111,7 @@ async function main() {
     data: {
       batchId: batch1.id,
       inspectorId: admin.id,
-      result: InspectionResult.PASSED,
+      result: "PASSED",
       remark: "全部合格，包装完好",
       inspectionDate: new Date("2024-01-16"),
       items: {
@@ -119,7 +119,7 @@ async function main() {
           donationMaterialId: m.id,
           quantity: m.quantity,
           qualifiedQty: m.quantity,
-          result: InspectionResult.PASSED,
+          result: "PASSED",
         })),
       },
     },
@@ -171,7 +171,7 @@ async function main() {
       donorName: "阳光公益基金会",
       donorPhone: "010-66666666",
       description: "开学季文具捐赠",
-      status: DonationStatus.PENDING,
+      status: "PENDING",
       totalItems: 600,
       totalValue: 18000,
       receivedAt: new Date("2024-02-20"),
@@ -191,7 +191,7 @@ async function main() {
       donorName: "市民张先生",
       donorPhone: "13800138888",
       description: "个人爱心捐赠",
-      status: DonationStatus.INSPECTING,
+      status: "INSPECTING",
       totalItems: 50,
       totalValue: 7500,
       receivedAt: new Date("2024-02-25"),
@@ -213,7 +213,7 @@ async function main() {
       applicantId: worker.id,
       title: "春节物资申请",
       description: "陈大爷春节慰问物资申请",
-      status: ApplicationStatus.DISTRIBUTED,
+      status: "DISTRIBUTED",
       appliedAt: new Date("2024-01-20"),
       approvedAt: new Date("2024-01-21"),
       approvedBy: manager.id,
@@ -234,7 +234,7 @@ async function main() {
       distNo: "DIST-2024-0001",
       applicationId: app1.id,
       distributorId: worker.id,
-      status: DistributionStatus.SIGNED,
+      status: "SIGNED",
       shippedAt: new Date("2024-01-22"),
       deliveredAt: new Date("2024-01-22"),
       signedAt: new Date("2024-01-22"),
@@ -257,7 +257,7 @@ async function main() {
       applicantId: worker.id,
       title: "春节物资申请",
       description: "刘阿姨春节慰问物资申请",
-      status: ApplicationStatus.APPROVED,
+      status: "APPROVED",
       appliedAt: new Date("2024-01-20"),
       approvedAt: new Date("2024-01-21"),
       approvedBy: manager.id,
@@ -278,7 +278,7 @@ async function main() {
       applicantId: worker.id,
       title: "开学文具申请",
       description: "王小明同学开学文具申请",
-      status: ApplicationStatus.PENDING,
+      status: "PENDING",
       appliedAt: new Date("2024-02-20"),
       items: {
         create: [
@@ -296,7 +296,7 @@ async function main() {
       applicantId: worker.id,
       title: "开学文具申请",
       description: "张小花同学开学文具申请",
-      status: ApplicationStatus.REJECTED,
+      status: "REJECTED",
       appliedAt: new Date("2024-02-18"),
       approvedAt: new Date("2024-02-19"),
       approvedBy: manager.id,
@@ -313,10 +313,10 @@ async function main() {
   await prisma.exceptionRecord.create({
     data: {
       exceptionNo: "EXC-2024-0001",
-      type: ExceptionType.QUALITY_ISSUE,
+      type: "QUALITY_ISSUE",
       title: "部分棉被有破损",
       description: "在质检过程中发现有3床棉被外包装破损，需要确认内部是否完好",
-      status: ExceptionStatus.PROCESSING,
+      status: "PROCESSING",
       relatedBatchId: batch1.id,
       reportedBy: admin.id,
       processedBy: admin.id,
@@ -328,10 +328,10 @@ async function main() {
   await prisma.exceptionRecord.create({
     data: {
       exceptionNo: "EXC-2024-0002",
-      type: ExceptionType.QUANTITY_MISMATCH,
+      type: "QUANTITY_MISMATCH",
       title: "物资数量不符",
       description: "捐赠清单显示食用油150桶，实际清点只有148桶",
-      status: ExceptionStatus.RESOLVED,
+      status: "RESOLVED",
       relatedBatchId: batch1.id,
       reportedBy: admin.id,
       processedBy: manager.id,

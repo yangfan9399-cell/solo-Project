@@ -1,5 +1,6 @@
 import { NavLink } from "@remix-run/react";
-import type { UserRole } from "@prisma/client";
+
+type UserRole = "ADMIN" | "SOCIAL_WORKER" | "MANAGER";
 
 interface SidebarProps {
   userRole: UserRole;
@@ -15,8 +16,8 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { label: "仪表盘", to: "/dashboard", icon: "📊", roles: ["ADMIN", "SOCIAL_WORKER", "MANAGER"] },
   { label: "捐赠批次", to: "/donations", icon: "📦", roles: ["ADMIN", "MANAGER"] },
-  { label: "物资质检", to: "/inspections", icon: "✅", roles: ["ADMIN"] },
-  { label: "仓储入库", to: "/stock-entries", icon: "📥", roles: ["ADMIN"] },
+  { label: "待质检批次", to: "/donations?status=PENDING", icon: "✅", roles: ["ADMIN"] },
+  { label: "待入库批次", to: "/donations?status=APPROVED", icon: "📥", roles: ["ADMIN"] },
   { label: "库存管理", to: "/stock", icon: "🏪", roles: ["ADMIN", "MANAGER"] },
   { label: "受助对象", to: "/recipients", icon: "👥", roles: ["SOCIAL_WORKER", "MANAGER"] },
   { label: "发放申请", to: "/applications", icon: "📝", roles: ["SOCIAL_WORKER", "MANAGER"] },

@@ -1,5 +1,5 @@
-import { Form, useActionData, useNavigation, useNavigate } from "@remix-run/react";
-import type { ActionFunctionArgs } from "@remix-run/node";
+import { Form, useLoaderData, useActionData, useNavigation, useNavigate } from "@remix-run/react";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { z } from "zod";
 import { requireRole } from "../../.server/session.server";
@@ -41,19 +41,20 @@ export async function action({ request }: ActionFunctionArgs) {
   return redirect("/recipients");
 }
 
-export async function loader({ request }: ActionFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireRole(request, ["SOCIAL_WORKER", "MANAGER"]);
   return json({ user });
 }
 
 export default function NewRecipient() {
+  const loaderData = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const navigate = useNavigate();
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <AppLayout user={actionData?.user || (await loader({ request: {} as any }).then(d => d.user))}>
+    <AppLayout user={loaderData.user}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">新建受助对象</h1>

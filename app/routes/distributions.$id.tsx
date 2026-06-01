@@ -10,7 +10,8 @@ import { StatusBadge } from "~/components/ui/StatusBadge";
 import { Button } from "~/components/ui/Button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import type { DistributionStatus } from "@prisma/client";
+
+type DistributionStatus = "PREPARING" | "SHIPPED" | "DELIVERED" | "SIGNED" | "CANCELLED";
 
 const statusSchema = z.object({
   status: z.enum(["SHIPPED", "DELIVERED", "SIGNED"]),

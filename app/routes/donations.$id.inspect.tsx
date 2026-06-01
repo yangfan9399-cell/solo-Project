@@ -9,7 +9,8 @@ import { AppLayout } from "~/components/layout/AppLayout";
 import { Card } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
 import { StatusBadge } from "~/components/ui/StatusBadge";
-import type { InspectionResult } from "@prisma/client";
+
+type InspectionResult = "PASSED" | "FAILED" | "PARTIAL";
 
 const inspectionSchema = z.object({
   result: z.enum(["PASSED", "FAILED", "PARTIAL"]),
@@ -44,7 +45,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       data: {
         batchId: params.id!,
         inspectorId: user.id,
-        result: result.data.result as InspectionResult,
+        result: result.data.result,
         remark: result.data.remark,
         items: {
           create: result.data.items.map((item: any) => ({
