@@ -42,7 +42,7 @@ class Subsidy extends Model {
         $schedule = $db->fetchOne("SELECT * FROM schedules WHERE id = ?", [$jobRecord['schedule_id']]);
         $booking = $schedule ? $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$schedule['booking_id']]) : null;
 
-        $area = $jobRecord['actual_area'] ?? ($booking['confirmed_area'] ?? $booking['area'] ?? 0);
+        $area = $booking['confirmed_area'] ?? ($jobRecord['actual_area'] ?? ($booking['area'] ?? 0));
         $fuelUsed = $jobRecord['fuel_used'] ?? 0;
 
         $fuelSubsidy = $fuelUsed * $fuelRate;

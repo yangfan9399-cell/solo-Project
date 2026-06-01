@@ -25,6 +25,12 @@
                 <span class="detail-label">签退时间</span>
                 <span class="detail-value"><?php echo formatDateTime($job['checkout_time'] ?? null); ?></span>
             </div>
+            <?php if (!empty($booking['confirmed_area'])): ?>
+            <div class="detail-row">
+                <span class="detail-label">预约锁定面积</span>
+                <span class="detail-value"><strong><?php echo formatArea($booking['confirmed_area']); ?></strong></span>
+            </div>
+            <?php endif; ?>
             <div class="detail-row">
                 <span class="detail-label">实际作业面积</span>
                 <span class="detail-value"><?php echo formatArea($job['actual_area'] ?? 0); ?></span>
@@ -71,6 +77,20 @@
             </div>
         </div>
     </div>
+
+    <?php
+    $lockedArea = floatval($booking['confirmed_area'] ?? 0);
+    $actualArea = floatval($job['actual_area'] ?? 0);
+    $areaDiff = abs($lockedArea - $actualArea);
+    ?>
+
+    <?php if ($lockedArea > 0 && $areaDiff > 0.01): ?>
+    <div class="alert alert-warning" style="margin-top:1rem;">
+        <p><strong>⚠️ 面积差异提醒</strong></p>
+        <p>预约锁定面积 <strong><?php echo formatArea($lockedArea); ?></strong> 与实际作业面积 <strong><?php echo formatArea($actualArea); ?></strong> 不一致，差异为 <strong><?php echo formatArea($areaDiff); ?></strong> 亩。</p>
+        <p class="text-sm text-muted">油补核算将以锁定面积为基础。</p>
+    </div>
+    <?php endif; ?>
     
     <?php if (!empty($job['inspection_notes'])): ?>
     <div class="detail-row">

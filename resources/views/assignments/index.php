@@ -34,7 +34,7 @@
                                 <button type="submit" class="btn btn-sm btn-success">签到开始</button>
                             </form>
                         <?php elseif ($schedule['status'] == 'in_progress'): ?>
-                            <button type="button" class="btn btn-sm btn-warning" onclick="showCheckoutForm(<?php echo $schedule['id']; ?>)">签退完成</button>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="showCheckoutForm(<?php echo $schedule['id']; ?>, <?php echo e((string)($lockedAreas[$schedule['id']] ?? 0)); ?>)">签退完成</button>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -51,8 +51,14 @@
         </div>
         <form id="checkoutForm" method="POST">
             <div class="form-group">
+                <label class="form-label">预约锁定面积（亩）</label>
+                <input type="text" id="lockedAreaDisplay" class="form-control" readonly>
+                <p class="text-sm text-muted">此为合作社确认后的锁定面积</p>
+            </div>
+            <div class="form-group">
                 <label class="form-label">实际作业面积（亩）</label>
-                <input type="number" name="actual_area" class="form-control" step="0.01" required>
+                <input type="number" id="actualAreaInput" name="actual_area" class="form-control" step="0.01" required>
+                <p class="text-sm text-muted">默认与锁定面积一致，可根据实际情况调整</p>
             </div>
             <div class="form-group">
                 <label class="form-label">耗油量（升）</label>
@@ -77,9 +83,11 @@
 </div>
 
 <script>
-function showCheckoutForm(id) {
+function showCheckoutForm(id, lockedArea) {
     document.getElementById('checkoutModal').style.display = 'block';
     document.getElementById('checkoutForm').action = '/assignments/' + id + '/checkout';
+    document.getElementById('lockedAreaDisplay').value = lockedArea + ' 亩';
+    document.getElementById('actualAreaInput').value = lockedArea;
 }
 function hideCheckoutForm() {
     document.getElementById('checkoutModal').style.display = 'none';
