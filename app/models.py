@@ -81,8 +81,28 @@ class Booking(db.Model):
     def status_color(self):
         return self.STATUS_COLORS.get(self.status, "gray")
 
+    def calculate_cost_summary(self):
+        cost_items = self.cost_items.all()
+        approved = sum(ci.amount for ci in cost_items if ci.status == "approved")
+        pending = sum(ci.amount for ci in cost_items if ci.status == "pending")
+        rejected = sum(ci.amount for ci in cost_items if ci.status == "rejected")
+        total = approved + pending
+        return {
+            "total": total,
+            "approved": approved,
+            "pending": pending,
+            "rejected": rejected,
+            "items": cost_items,
+        }
+
     def __repr__(self):
         return f"<Booking {self.title}>"
+
+
+def calculate_booking_total(cost_items):
+    approved = sum(ci.amount for ci in cost_items if ci.status == "approved")
+    pending = sum(ci.amount for ci in cost_items if ci.status == "pending")
+    return approved + pending
 
 
 class SetupRequest(db.Model):

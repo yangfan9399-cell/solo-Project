@@ -1,5 +1,5 @@
 from app import db
-from app.models import Room, Staff, Booking, SetupRequest, CateringRequest, StaffAssignment, IssueReport, CostItem, Review
+from app.models import Room, Staff, Booking, SetupRequest, CateringRequest, StaffAssignment, IssueReport, CostItem, Review, calculate_booking_total
 from datetime import datetime, timedelta
 
 
@@ -204,8 +204,7 @@ def seed_data():
     db.session.add_all(cost_items)
 
     for booking in bookings:
-        total = sum(ci.amount for ci in booking.cost_items if ci.status != "rejected")
-        booking.total_cost = total
+        booking.total_cost = calculate_booking_total(booking.cost_items)
 
     reviews = [
         Review(booking_id=bookings[5].id, overall_rating=4, service_rating=4, facility_rating=3, issues_summary="空调温度过高，调整后改善", improvements="建议提前检查空调系统", notes="整体满意，团队建设活动圆满完成", created_at=now - timedelta(days=2)),

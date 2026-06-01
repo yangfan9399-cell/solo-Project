@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.models import CostItem, Booking
+from app.models import CostItem, Booking, calculate_booking_total
 from app import db
 from datetime import datetime
 
@@ -9,8 +9,7 @@ costs_bp = Blueprint("costs", __name__)
 def update_booking_total_cost(booking_id):
     booking = Booking.query.get(booking_id)
     if booking:
-        total = sum(ci.amount for ci in booking.cost_items if ci.status != "rejected")
-        booking.total_cost = total
+        booking.total_cost = calculate_booking_total(booking.cost_items.all())
         db.session.commit()
 
 

@@ -45,9 +45,9 @@ def detail(id):
     catering_requests = booking.catering_requests.all()
     staff_assignments = booking.staff_assignments.all()
     issue_reports = booking.issue_reports.all()
-    cost_items = booking.cost_items.all()
+    cost_summary = booking.calculate_cost_summary()
     review = booking.review
-    return render_template("bookings/detail.html", booking=booking, setup_requests=setup_requests, catering_requests=catering_requests, staff_assignments=staff_assignments, issue_reports=issue_reports, cost_items=cost_items, review=review)
+    return render_template("bookings/detail.html", booking=booking, setup_requests=setup_requests, catering_requests=catering_requests, staff_assignments=staff_assignments, issue_reports=issue_reports, cost_summary=cost_summary, review=review)
 
 @bookings_bp.route("/<int:id>/edit", methods=["GET", "POST"])
 def edit_booking(id):
