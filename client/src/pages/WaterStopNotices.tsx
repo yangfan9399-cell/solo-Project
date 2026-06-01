@@ -98,10 +98,12 @@ export function WaterStopNotices() {
     }
   };
 
-  const filteredNotices = notices.filter((notice) =>
-    notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    notice.affected_area.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNotices = notices.filter((notice) => {
+    const matchesSearch = notice.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notice.affected_area.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !statusFilter || notice.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) return <LoadingCard />;
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;

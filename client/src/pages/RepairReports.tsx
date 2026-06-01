@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, User, Phone } from 'lucide-react';
+import { Plus, Search, Filter, User as UserIcon, Phone } from 'lucide-react';
 import { repairReportsApi, repairTeamsApi, usersApi } from '../services/api';
 import { LoadingCard, ErrorState, EmptyState } from '../components/Loading';
 import { StatusBadge, UrgencyBadge } from '../components/StatusBadge';
@@ -22,7 +22,7 @@ export function RepairReports() {
   const [selectedReport, setSelectedReport] = useState<RepairReport | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState('');
-  const { currentRole, roleLabels } = useRole();
+  const { currentRole } = useRole();
   const [formData, setFormData] = useState({
     type: 'pipe_leak',
     title: '',
@@ -203,7 +203,7 @@ export function RepairReports() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-1 text-gray-600">
-                      <User className="w-4 h-4" />
+                      <UserIcon className="w-4 h-4" />
                       <span>{report.contact_name}</span>
                       <Phone className="w-4 h-4 ml-2" />
                       <span>{report.contact_phone}</span>
