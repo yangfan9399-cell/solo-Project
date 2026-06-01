@@ -93,6 +93,17 @@ app.put('/:id/end', async (c) => {
   db.prepare('UPDATE water_stop_notices SET status = ?, updated_at = ? WHERE id = ?')
     .run('ended', now, id);
   const notice = db.prepare('SELECT * FROM water_stop_notices WHERE id = ?').get(id);
+
+  const notifId = `notif_${Date.now()}`;
+  db.prepare(`
+    INSERT INTO notifications (id, type, title, content, target_roles, is_read, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    notifId, 'water_stop', '恢复供水通知',
+    `【恢复供水：${notice.affected_area} 区域已恢复正常供水。停水原因为：${notice.reason}。`,
+    'hotline,admin,chemist,repair_crew', 0, now
+  );
+
   return c.json(notice);
 });
 

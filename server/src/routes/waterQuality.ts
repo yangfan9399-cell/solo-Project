@@ -97,6 +97,19 @@ app.post('/:id/recheck', async (c) => {
   db.prepare('UPDATE water_quality_tests SET status = ?, updated_at = ? WHERE id = ?')
     .run(newStatus, now, id);
   
+  if (isPass) {
+    const originalTest = db.prepare('SELECT * FROM water_quality_tests WHERE id = ?').get(id);
+    const notifId = `notif_${Date.now()}`;
+    db.prepare(`
+      INSERT INTO notifications (id, type, title, content, target_roles, is_read, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      notifId, 'water_stop', '恢复供水通知',
+      `【恢复供水】${originalTest.location_name} 区域水质复测合格，已恢复正常供水。`,
+      'chemist,admin,hotline,repair_crew', 0, now
+    );
+  }
+  
   const recheck = db.prepare('SELECT * FROM recheck_records WHERE id = ?').get(recheckId);
   return c.json(recheck, 201);
 });

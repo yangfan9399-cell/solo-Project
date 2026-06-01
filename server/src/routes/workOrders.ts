@@ -50,6 +50,19 @@ app.put('/:id/status', async (c) => {
     db.prepare('UPDATE repair_reports SET status = ?, updated_at = ? WHERE id = ?')
       .run('completed', now, order.repair_report_id);
     
+    const report = db.prepare('SELECT * FROM repair_reports WHERE id = ?').get(order.repair_report_id);
+    if (report?.water_stop_needed === 1 || report?.water_stop_needed === true) {
+      const notifId = `notif_${Date.now()}`;
+      db.prepare(`
+        INSERT INTO notifications (id, type, title, content, target_roles, is_read, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        notifId, 'water_stop', '恢复供水通知',
+        `【恢复供水】${report.location} 区域抢修已完成，已恢复正常供水。`,
+        'repair_crew,admin,hotline,chemist', 0, now
+      );
+    }
+    
     const pendingOrders = db.prepare('SELECT COUNT(*) as count FROM work_orders WHERE team_id = ? AND status != ?').get(order.team_id, 'completed');
     if (pendingOrders.count === 0) {
       db.prepare('UPDATE repair_teams SET status = ? WHERE id = ?').run('available', order.team_id);
