@@ -58,6 +58,8 @@ try {
             operation_type VARCHAR(100) NOT NULL,
             requested_date DATE NOT NULL,
             area DECIMAL(10,2) NOT NULL,
+            area_status VARCHAR(50) DEFAULT 'pending',
+            confirmed_area DECIMAL(10,2),
             status VARCHAR(50) DEFAULT 'pending',
             priority VARCHAR(50) DEFAULT 'normal',
             notes TEXT,

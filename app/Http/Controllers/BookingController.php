@@ -81,9 +81,44 @@ class BookingController extends Controller {
     public function confirm($id) {
         Auth::requireAuth();
         $model = new Booking();
+        $booking = $model->find($id);
+        if (!$booking) {
+            $this->with('error', '预约不存在')->redirect('/bookings');
+        }
         $model->update($id, ['status' => 'confirmed']);
-        
         $this->with('success', '预约已确认')->redirect('/bookings/' . $id);
+    }
+
+    public function confirmArea($id) {
+        Auth::requireAuth();
+        $model = new Booking();
+        $booking = $model->find($id);
+        if (!$booking) {
+            $this->with('error', '预约不存在')->redirect('/bookings');
+        }
+        if (($booking['area_status'] ?? '') === 'confirmed') {
+            $this->with('error', '面积已确认，无需重复操作')->redirect('/bookings/' . $id);
+        }
+        $confirmedArea = $_POST['confirmed_area'] ?? $booking['area'];
+        $model->update($id, [
+            'area_status' => 'confirmed',
+            'confirmed_area' => $confirmedArea,
+        ]);
+        $this->with('success', '面积已确认，锁定为 ' . formatArea($confirmedArea))->redirect('/bookings/' . $id);
+    }
+
+    public function requestAreaCorrection($id) {
+        Auth::requireAuth();
+        $model = new Booking();
+        $booking = $model->find($id);
+        if (!$booking) {
+            $this->with('error', '预约不存在')->redirect('/bookings');
+        }
+        $correctionNote = $_POST['correction_note'] ?? '';
+        $model->update($id, [
+            'area_status' => 'rejected',
+        ]);
+        $this->with('success', '已要求修正面积，等待农户重新提交')->redirect('/bookings/' . $id);
     }
 
     public function cancel($id) {

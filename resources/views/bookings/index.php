@@ -18,7 +18,8 @@
                     <th>地块</th>
                     <th>作业类型</th>
                     <th>预约日期</th>
-                    <th>面积</th>
+                    <th>预约面积</th>
+                    <th>面积确认</th>
                     <th>状态</th>
                     <th>操作</th>
                 </tr>
@@ -31,6 +32,7 @@
                     <td><?php echo e(Booking::operationTypes()[$booking['operation_type']] ?? $booking['operation_type']); ?></td>
                     <td><?php echo formatDate($booking['requested_date']); ?></td>
                     <td><?php echo formatArea($booking['area']); ?></td>
+                    <td><?php echo statusBadge($booking['area_status'] ?? 'pending', Booking::areaStatusLabels()); ?></td>
                     <td><?php echo statusBadge($booking['status'], Booking::statusLabels()); ?></td>
                     <td>
                         <a href="/bookings/<?php echo $booking['id']; ?>" class="btn btn-sm btn-outline">查看</a>

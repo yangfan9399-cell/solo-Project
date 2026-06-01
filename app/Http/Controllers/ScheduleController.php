@@ -48,6 +48,17 @@ class ScheduleController extends Controller {
 
     public function store() {
         Auth::requireAuth();
+
+        $bookingModel = new Booking();
+        $booking = $bookingModel->find($_POST['booking_id']);
+
+        if (!$booking) {
+            $this->with('error', '预约不存在')->redirect('/schedules');
+        }
+
+        if (($booking['area_status'] ?? '') !== 'confirmed') {
+            $this->with('error', '该预约面积尚未确认，请先确认面积后再排班')->redirect('/bookings/' . $booking['id']);
+        }
         
         $data = [
             'booking_id' => $_POST['booking_id'],
@@ -62,7 +73,6 @@ class ScheduleController extends Controller {
         $model = new Schedule();
         $model->create($data);
         
-        $bookingModel = new Booking();
         $bookingModel->update($_POST['booking_id'], ['status' => 'scheduled']);
         
         $this->with('success', '排班成功')->redirect('/schedules');

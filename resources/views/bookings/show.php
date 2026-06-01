@@ -28,8 +28,18 @@
                 <span class="detail-value"><?php echo formatDate($booking['requested_date'] ?? null); ?></span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">作业面积</span>
+                <span class="detail-label">预约面积</span>
                 <span class="detail-value"><?php echo formatArea($booking['area'] ?? 0); ?></span>
+            </div>
+            <?php if (!empty($booking['confirmed_area'])): ?>
+            <div class="detail-row">
+                <span class="detail-label">确认面积</span>
+                <span class="detail-value"><strong><?php echo formatArea($booking['confirmed_area']); ?></strong></span>
+            </div>
+            <?php endif; ?>
+            <div class="detail-row">
+                <span class="detail-label">面积确认状态</span>
+                <span class="detail-value"><?php echo statusBadge($booking['area_status'] ?? 'pending', Booking::areaStatusLabels()); ?></span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">优先级</span>
@@ -55,8 +65,8 @@
                 <span class="detail-value"><?php echo e($field['location'] ?? '-'); ?></span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">地块面积</span>
-                <span class="detail-value"><?php echo formatArea($field['area'] ?? 0); ?></span>
+                <span class="detail-label">地块登记面积</span>
+                <span class="detail-value"><strong><?php echo formatArea($field['area'] ?? 0); ?></strong></span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">作物类型</span>
@@ -69,6 +79,59 @@
             <?php endif; ?>
         </div>
     </div>
+
+    <?php
+    $bookingArea = floatval($booking['area'] ?? 0);
+    $fieldArea = floatval($field['area'] ?? 0);
+    $areaDiff = abs($bookingArea - $fieldArea);
+    $areaStatus = $booking['area_status'] ?? 'pending';
+    $hasMismatch = $areaDiff > 0.01 && $areaStatus !== 'confirmed';
+    ?>
+
+    <?php if ($hasMismatch): ?>
+    <div class="alert alert-warning" style="margin-top:1rem;">
+        <p><strong>⚠️ 面积差异提醒</strong></p>
+        <p>预约面积 <strong><?php echo formatArea($bookingArea); ?></strong> 与地块登记面积 <strong><?php echo formatArea($fieldArea); ?></strong> 不一致，差异为 <strong><?php echo formatArea($areaDiff); ?></strong> 亩。</p>
+        <p class="text-sm text-muted">请核实后选择确认面积，或要求农户修正预约信息。</p>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($areaStatus !== 'confirmed'): ?>
+    <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+            <h3 class="card-title">面积确认操作</h3>
+        </div>
+        <div style="padding:1rem;">
+            <div class="grid grid-2">
+                <div>
+                    <p class="text-sm mb-1">确认面积用于后续排班和作业验收，确认后锁定不可更改。</p>
+                    <form method="POST" action="/bookings/<?php echo $booking['id']; ?>/confirm-area">
+                        <div class="form-group">
+                            <label class="form-label">确认面积（亩）</label>
+                            <input type="number" step="0.01" name="confirmed_area" class="form-control" value="<?php echo e((string)($booking['confirmed_area'] ?? $booking['area'] ?? '')); ?>" required>
+                            <p class="text-sm text-muted">默认为预约面积 <?php echo formatArea($bookingArea); ?>，可根据实际情况调整</p>
+                        </div>
+                        <button type="submit" class="btn btn-success">确认面积</button>
+                    </form>
+                </div>
+                <div>
+                    <p class="text-sm mb-1">如面积有误，可要求农户重新提交预约信息。</p>
+                    <form method="POST" action="/bookings/<?php echo $booking['id']; ?>/request-area-correction">
+                        <div class="form-group">
+                            <label class="form-label">修正说明</label>
+                            <textarea name="correction_note" class="form-control" rows="3" placeholder="请说明需要修正的原因..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger">要求修正</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php else: ?>
+    <div class="alert alert-success" style="margin-top:1rem;">
+        <p><strong>✅ 面积已确认</strong> — 锁定面积：<strong><?php echo formatArea($booking['confirmed_area'] ?? $booking['area']); ?></strong> 亩，将用于排班和作业验收。</p>
+    </div>
+    <?php endif; ?>
     
     <?php if (!empty($booking['notes'])): ?>
     <div class="detail-row">

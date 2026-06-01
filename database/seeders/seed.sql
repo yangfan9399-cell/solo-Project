@@ -18,11 +18,11 @@ INSERT OR IGNORE INTO machines (id, name, type, model, plate_number, operator_id
 (3, '收割机1号', '收割机', '久保田PRO100', '农01-003', 4, 12.0, 'available', '收割专用'),
 (4, '播种机1号', '播种机', '约翰迪尔', '农01-004', NULL, 5.0, 'available', '免耕播种');
 
-INSERT OR IGNORE INTO bookings (id, booking_no, farmer_id, field_id, operation_type, requested_date, area, status, priority, notes) VALUES
-(1, 'BK20240601001', 2, 1, 'plowing', '2024-06-10', 50.5, 'confirmed', 'high', '需要深耕'),
-(2, 'BK20240601002', 2, 2, 'planting', '2024-06-15', 30.0, 'pending', 'normal', '播种玉米'),
-(3, 'BK20240601003', 3, 3, 'harvesting', '2024-06-20', 45.0, 'scheduled', 'normal', '水稻收割'),
-(4, 'BK20240601004', 3, 4, 'plowing', '2024-06-25', 60.0, 'completed', 'low', '棉田翻耕');
+INSERT OR IGNORE INTO bookings (id, booking_no, farmer_id, field_id, operation_type, requested_date, area, area_status, confirmed_area, status, priority, notes) VALUES
+(1, 'BK20240601001', 2, 1, 'plowing', '2024-06-10', 50.5, 'confirmed', 50.5, 'confirmed', 'high', '需要深耕'),
+(2, 'BK20240601002', 2, 2, 'planting', '2024-06-15', 30.0, 'pending', NULL, 'pending', 'normal', '播种玉米'),
+(3, 'BK20240601003', 3, 3, 'harvesting', '2024-06-20', 45.0, 'confirmed', 45.0, 'scheduled', 'normal', '水稻收割'),
+(4, 'BK20240601004', 3, 4, 'plowing', '2024-06-25', 55.0, 'mismatch', 60.0, 'completed', 'low', '棉田翻耕');
 
 INSERT OR IGNORE INTO schedules (id, booking_id, machine_id, operator_id, scheduled_date, start_time, end_time, status, notes) VALUES
 (1, 1, 1, 4, '2024-06-10', '08:00', '12:00', 'completed', '上午作业'),

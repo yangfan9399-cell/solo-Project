@@ -70,6 +70,8 @@ post('/bookings', 'BookingController@store');
 get('/bookings/{id}', 'BookingController@show');
 post('/bookings/{id}/confirm', 'BookingController@confirm');
 post('/bookings/{id}/cancel', 'BookingController@cancel');
+post('/bookings/{id}/confirm-area', 'BookingController@confirmArea');
+post('/bookings/{id}/request-area-correction', 'BookingController@requestAreaCorrection');
 
 get('/fields', 'FieldController@index');
 get('/fields/create', 'FieldController@create');

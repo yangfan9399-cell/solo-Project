@@ -4,7 +4,7 @@ require_once ROOT_PATH . '/core/Model.php';
 
 class Booking extends Model {
     protected $table = 'bookings';
-    protected $fillable = ['booking_no', 'farmer_id', 'field_id', 'operation_type', 'requested_date', 'area', 'status', 'priority', 'notes'];
+    protected $fillable = ['booking_no', 'farmer_id', 'field_id', 'operation_type', 'requested_date', 'area', 'area_status', 'confirmed_area', 'status', 'priority', 'notes'];
 
     public function farmer() {
         return $this->db->fetchOne("SELECT * FROM users WHERE id = ?", [$this->farmer_id]);
@@ -50,6 +50,15 @@ class Booking extends Model {
             'normal' => '普通',
             'high' => '高',
             'urgent' => '紧急',
+        ];
+    }
+
+    public static function areaStatusLabels() {
+        return [
+            'pending' => '待确认',
+            'confirmed' => '已确认',
+            'mismatch' => '面积差异',
+            'rejected' => '待修正',
         ];
     }
 }
