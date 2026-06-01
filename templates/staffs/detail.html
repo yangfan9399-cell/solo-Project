@@ -67,9 +67,9 @@
                         <tr>
                             <th>会议预订</th>
                             <th>职务</th>
-                            <th>开始时间</th>
-                            <th>结束时间</th>
+                            <th>时间</th>
                             <th>状态</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,9 +77,26 @@
                         <tr>
                             <td><a href="/bookings/{{ a.booking_id }}">{{ a.booking.title }}</a></td>
                             <td>{{ a.role }}</td>
-                            <td>{{ a.shift_start.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td>{{ a.shift_end.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ a.shift_start.strftime('%m/%d %H:%M') }}-{{ a.shift_end.strftime('%H:%M') }}</td>
                             <td>{{ status_badge(a.status) }}</td>
+                            <td>
+                                {% if a.status == 'assigned' %}
+                                <form method="post" action="{{ url_for('staffs.checkin_assignment', id=a.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn--sm">签到</button>
+                                </form>
+                                <form method="post" action="{{ url_for('staffs.mark_absent', id=a.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn--sm btn--danger">缺席</button>
+                                </form>
+                                {% elif a.status == 'checked_in' %}
+                                <form method="post" action="{{ url_for('staffs.complete_assignment', id=a.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn--sm btn--primary">完成</button>
+                                </form>
+                                {% elif a.status == 'absent' %}
+                                <span class="badge badge--red">已缺席</span>
+                                {% elif a.status == 'completed' %}
+                                <span class="badge badge--green">已完成</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

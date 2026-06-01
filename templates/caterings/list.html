@@ -55,6 +55,19 @@
                 <td>{{ status_badge(catering.status) }}</td>
                 <td>
                     <a href="{{ url_for('caterings.detail', id=catering.id) }}" class="btn btn--sm btn--ghost">查看</a>
+                    {% if catering.status == 'pending' %}
+                    <form method="post" action="{{ url_for('caterings.confirm_catering', id=catering.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn--sm btn--primary">确认</button>
+                    </form>
+                    {% elif catering.status == 'confirmed' %}
+                    <form method="post" action="{{ url_for('caterings.start_catering', id=catering.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn--sm btn--primary">开始服务</button>
+                    </form>
+                    {% elif catering.status == 'serving' %}
+                    <form method="post" action="{{ url_for('caterings.complete_catering', id=catering.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn--sm btn--primary">完成</button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

@@ -35,8 +35,27 @@
                     <div class="calendar__day">{{ day.name }} {{ day.date.strftime('%m/%d') }}</div>
                     {% for a in day.assignments %}
                     <div class="calendar__event calendar__event--confirmed">
-                        <div>{{ a.staff.name }} · {{ a.role }}</div>
+                        <div style="font-weight: 500;">{{ a.staff.name }} · {{ a.role }}</div>
                         <div style="font-size: 11px; color: var(--text-light);">{{ a.booking.title }}</div>
+                        <div style="font-size: 11px;">{{ a.shift_start.strftime('%H:%M') }}-{{ a.shift_end.strftime('%H:%M') }}</div>
+                        <div style="margin-top: 4px;">
+                            {% if a.status == 'assigned' %}
+                            <form method="post" action="{{ url_for('staffs.checkin_assignment', id=a.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn--sm" style="padding: 2px 8px; font-size: 11px;">签到</button>
+                            </form>
+                            <form method="post" action="{{ url_for('staffs.mark_absent', id=a.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn--sm btn--danger" style="padding: 2px 8px; font-size: 11px;">缺席</button>
+                            </form>
+                            {% elif a.status == 'checked_in' %}
+                            <form method="post" action="{{ url_for('staffs.complete_assignment', id=a.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn--sm btn--primary" style="padding: 2px 8px; font-size: 11px;">完成</button>
+                            </form>
+                            {% elif a.status == 'completed' %}
+                            <span class="badge badge--green" style="font-size: 11px;">已完成</span>
+                            {% elif a.status == 'absent' %}
+                            <span class="badge badge--red" style="font-size: 11px;">缺席</span>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endfor %}
                 </div>

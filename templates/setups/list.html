@@ -57,6 +57,14 @@
                     <form method="post" action="{{ url_for('setups.confirm_setup', id=setup.id) }}" style="display:inline;">
                         <button type="submit" class="btn btn--sm btn--primary">确认</button>
                     </form>
+                    {% elif setup.status == 'confirmed' %}
+                    <form method="post" action="{{ url_for('setups.start_setup', id=setup.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn--sm btn--primary">开始布置</button>
+                    </form>
+                    {% elif setup.status == 'in_progress' %}
+                    <form method="post" action="{{ url_for('setups.complete_setup', id=setup.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn--sm btn--primary">完成</button>
+                    </form>
                     {% endif %}
                 </td>
             </tr>

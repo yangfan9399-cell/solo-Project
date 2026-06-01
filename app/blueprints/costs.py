@@ -5,6 +5,15 @@ from datetime import datetime
 
 costs_bp = Blueprint("costs", __name__)
 
+
+def update_booking_total_cost(booking_id):
+    booking = Booking.query.get(booking_id)
+    if booking:
+        total = sum(ci.amount for ci in booking.cost_items if ci.status == "approved")
+        booking.total_cost = total
+        db.session.commit()
+
+
 @costs_bp.route("/")
 def list_costs():
     status_filter = request.args.get("status", "")
@@ -14,10 +23,12 @@ def list_costs():
     costs = query.order_by(CostItem.id.desc()).all()
     return render_template("costs/list.html", costs=costs, status_filter=status_filter)
 
+
 @costs_bp.route("/<int:id>")
 def detail(id):
     cost = CostItem.query.get_or_404(id)
     return render_template("costs/detail.html", cost=cost)
+
 
 @costs_bp.route("/<int:id>/approve", methods=["POST"])
 def approve_cost(id):
@@ -40,9 +51,11 @@ def approve_cost(id):
         else:
             flash("无效的操作", "error")
         db.session.commit()
+        update_booking_total_cost(cost.booking_id)
     else:
         flash("仅待审批状态可操作", "error")
     return redirect(url_for("costs.detail", id=cost.id))
+
 
 @costs_bp.route("/<int:id>/adjust", methods=["POST"])
 def adjust_cost(id):
@@ -58,6 +71,7 @@ def adjust_cost(id):
         cost.approved_by = ""
         cost.approved_at = None
         db.session.commit()
+        update_booking_total_cost(cost.booking_id)
         flash("费用已调整", "success")
     else:
         flash("已审批的费用不可调整", "error")

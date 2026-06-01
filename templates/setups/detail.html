@@ -16,6 +16,14 @@
         <form method="post" action="{{ url_for('setups.confirm_setup', id=setup.id) }}">
             <button type="submit" class="btn btn--primary">确认布场方案</button>
         </form>
+        {% elif setup.status == 'confirmed' %}
+        <form method="post" action="{{ url_for('setups.start_setup', id=setup.id) }}">
+            <button type="submit" class="btn btn--primary">开始布置</button>
+        </form>
+        {% elif setup.status == 'in_progress' %}
+        <form method="post" action="{{ url_for('setups.complete_setup', id=setup.id) }}">
+            <button type="submit" class="btn btn--primary">完成布置</button>
+        </form>
         {% endif %}
         <a href="{{ url_for('setups.list_setups') }}" class="btn btn--outline">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -82,6 +90,33 @@
                 <form method="post" action="{{ url_for('setups.confirm_setup', id=setup.id) }}">
                     <button type="submit" class="btn btn--primary btn--block">确认布场方案</button>
                 </form>
+            </div>
+        </div>
+        {% elif setup.status == 'confirmed' %}
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">操作</h3>
+                <p class="text-muted">布场方案已确认，可以开始布置。</p>
+                <form method="post" action="{{ url_for('setups.start_setup', id=setup.id) }}">
+                    <button type="submit" class="btn btn--primary btn--block">开始布置</button>
+                </form>
+            </div>
+        </div>
+        {% elif setup.status == 'in_progress' %}
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">操作</h3>
+                <p class="text-muted">布场正在进行中，完成后请标记完成。</p>
+                <form method="post" action="{{ url_for('setups.complete_setup', id=setup.id) }}">
+                    <button type="submit" class="btn btn--primary btn--block">完成布置</button>
+                </form>
+            </div>
+        </div>
+        {% elif setup.status == 'completed' %}
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">已完成</h3>
+                <p class="text-muted">布场工作已完成。</p>
             </div>
         </div>
         {% endif %}
