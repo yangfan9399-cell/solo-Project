@@ -1,0 +1,134 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Repair, RepairItem, RepairStatus } from '../../database/entities';
+
+export interface CreateRepairDto {
+  accidentId: string;
+  estimatedCost?: number;
+  estimatedEndTime?: string;
+  notes?: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
+export interface UpdateRepairDto {
+  actualCost?: number;
+  startTime?: string;
+  actualEndTime?: string;
+  status?: RepairStatus;
+  notes?: string;
+  items?: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
+@Injectable()
+export class RepairsService {
+  constructor(
+    @InjectRepository(Repair)
+    private repairRepository: Repository<Repair>,
+    @InjectRepository(RepairItem)
+    private repairItemRepository: Repository<RepairItem>,
+  ) {}
+
+  async create(createRepairDto: CreateRepairDto, repairManagerId: string): Promise<Repair> {
+    const items = createRepairDto.items.map(item => ({
+      ...item,
+      subtotal: item.quantity * item.unitPrice,
+    }));
+
+    const estimatedCost = items.reduce((sum, item) => sum + item.subtotal, 0);
+
+    const repair = this.repairRepository.create({
+      accidentId: createRepairDto.accidentId,
+      repairManagerId,
+      estimatedCost,
+      estimatedEndTime: createRepairDto.estimatedEndTime ? new Date(createRepairDto.estimatedEndTime) : null,
+      notes: createRepairDto.notes,
+      status: 'pending',
+      items,
+    });
+
+    return this.repairRepository.save(repair);
+  }
+
+  async findByAccident(accidentId: string): Promise<Repair[]> {
+    return this.repairRepository
+      .createQueryBuilder('repair')
+      .leftJoinAndSelect('repair.items', 'items')
+      .leftJoinAndSelect('repair.repairManager', 'repairManager')
+      .where('repair.accidentId = :accidentId', { accidentId })
+      .orderBy('repair.createdAt', 'DESC')
+      .getMany();
+  }
+
+  async findOne(id: string): Promise<Repair> {
+    const repair = await this.repairRepository
+      .createQueryBuilder('repair')
+      .leftJoinAndSelect('repair.items', 'items')
+      .leftJoinAndSelect('repair.repairManager', 'repairManager')
+      .where('repair.id = :id', { id })
+      .getOne();
+
+    if (!repair) {
+      throw new NotFoundException('维修记录不存在');
+    }
+
+    return repair;
+  }
+
+  async update(id: string, updateRepairDto: UpdateRepairDto): Promise<Repair> {
+    const repair = await this.repairRepository.findOne({ where: { id } });
+    if (!repair) {
+      throw new NotFoundException('维修记录不存在');
+    }
+
+    if (updateRepairDto.startTime) {
+      repair.startTime = new Date(updateRepairDto.startTime);
+    }
+    if (updateRepairDto.actualEndTime) {
+      repair.actualEndTime = new Date(updateRepairDto.actualEndTime);
+    }
+    if (updateRepairDto.actualCost !== undefined) {
+      repair.actualCost = updateRepairDto.actualCost;
+    }
+    if (updateRepairDto.status) {
+      repair.status = updateRepairDto.status;
+    }
+    if (updateRepairDto.notes !== undefined) {
+      repair.notes = updateRepairDto.notes;
+    }
+
+    return this.repairRepository.save(repair);
+  }
+
+  async findAll(page = 1, limit = 10, status?: RepairStatus) {
+    const query = this.repairRepository
+      .createQueryBuilder('repair')
+      .leftJoinAndSelect('repair.items', 'items')
+      .leftJoinAndSelect('repair.repairManager', 'repairManager')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('repair.createdAt', 'DESC');
+
+    if (status) {
+      query.andWhere('repair.status = :status', { status });
+    }
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+}
