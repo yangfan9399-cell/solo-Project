@@ -1,6 +1,6 @@
 import { renderers } from './renderers.mjs';
-import { c as createExports, s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_CMwlbwMA.mjs';
-import { manifest } from './manifest_BgySrYtX.mjs';
+import { c as createExports, s as serverEntrypointModule } from './chunks/_@astrojs-ssr-adapter_CTFcgEcc.mjs';
+import { manifest } from './manifest_BwE-841t.mjs';
 
 const serverIslandMap = new Map();;
 
@@ -19,7 +19,8 @@ const _page11 = () => import('./pages/appointments/_id_.astro.mjs');
 const _page12 = () => import('./pages/appointments.astro.mjs');
 const _page13 = () => import('./pages/blacklist.astro.mjs');
 const _page14 = () => import('./pages/gate.astro.mjs');
-const _page15 = () => import('./pages/index.astro.mjs');
+const _page15 = () => import('./pages/notifications.astro.mjs');
+const _page16 = () => import('./pages/index.astro.mjs');
 const pageMap = new Map([
     ["node_modules/astro/dist/assets/endpoint/node.js", _page0],
     ["src/pages/api/appointments/approve.ts", _page1],
@@ -36,7 +37,8 @@ const pageMap = new Map([
     ["src/pages/appointments/index.astro", _page12],
     ["src/pages/blacklist.astro", _page13],
     ["src/pages/gate.astro", _page14],
-    ["src/pages/index.astro", _page15]
+    ["src/pages/notifications.astro", _page15],
+    ["src/pages/index.astro", _page16]
 ]);
 
 const _manifest = Object.assign(manifest, {

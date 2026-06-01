@@ -1,7 +1,7 @@
 /* empty css                                   */
-import { e as createComponent, k as renderComponent, r as renderTemplate, h as createAstro, m as maybeRenderHead } from '../../chunks/astro/server_DWnod6f9.mjs';
+import { e as createComponent, k as renderComponent, r as renderTemplate, h as createAstro, m as maybeRenderHead } from '../../chunks/astro/server_D2NMvV5T.mjs';
 import 'piccolore';
-import { $ as $$BaseLayout } from '../../chunks/BaseLayout_EcGP2ujl.mjs';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DpfIgqQ0.mjs';
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import { useState, useEffect } from 'react';
 import { L as LoadingSpinner } from '../../chunks/LoadingSpinner_BsJ3zWzQ.mjs';
