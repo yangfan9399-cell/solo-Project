@@ -182,6 +182,12 @@ export default function LoanDetail() {
           异常记录 ({exceptions.length})
         </button>
         <button
+          className={`tab ${activeTab === "damages" ? "active" : ""}`}
+          onClick={() => setActiveTab("damages")}
+        >
+          损伤记录 ({damages.length})
+        </button>
+        <button
           className={`tab ${activeTab === "timeline" ? "active" : ""}`}
           onClick={() => setActiveTab("timeline")}
         >
@@ -862,6 +868,173 @@ export default function LoanDetail() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "damages" && (
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">损伤记录</div>
+            <Link
+              to={`/damages/new?loanId=${loan.id}&exhibitId=${loan.exhibit_id}`}
+              className="btn btn-sm btn-primary"
+            >
+              ➕ 记录损伤
+            </Link>
+          </div>
+          {damages.length === 0 ? (
+            <div className="empty-state" style={{ padding: "32px" }}>
+              <div className="empty-state-icon">✅</div>
+              <div className="empty-state-title">暂无损伤记录</div>
+              <p>展品状态良好，无损伤报告</p>
+            </div>
+          ) : (
+            <div>
+              {damages.map((damage) => (
+                <div
+                  key={damage.id}
+                  style={{
+                    padding: "16px",
+                    border: damage.damage_severity === "critical" || damage.damage_severity === "high"
+                      ? "2px solid var(--danger-color)"
+                      : "1px solid var(--border)",
+                    borderRadius: "8px",
+                    marginBottom: "12px",
+                    background: damage.status === "resolved"
+                      ? "#f9fdf9"
+                      : damage.damage_severity === "critical" || damage.damage_severity === "high"
+                      ? "#fff8f6"
+                      : "transparent",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span className="badge badge-info">
+                        D-{String(damage.id).padStart(4, "0")}
+                      </span>
+                      <span
+                        className={`badge ${
+                          damage.damage_severity === "critical"
+                            ? "badge-danger"
+                            : damage.damage_severity === "high"
+                            ? "badge-warning"
+                            : "badge-primary"
+                        }`}
+                      >
+                        {damage.damage_severity === "critical"
+                          ? "严重"
+                          : damage.damage_severity === "high"
+                          ? "高"
+                          : damage.damage_severity === "medium"
+                          ? "中"
+                          : "低"}
+                      </span>
+                      <span
+                        className={`badge ${
+                          damage.status === "resolved"
+                            ? "badge-success"
+                            : damage.status === "repairing"
+                            ? "badge-warning"
+                            : damage.status === "investigating"
+                            ? "badge-info"
+                            : "badge-danger"
+                        }`}
+                      >
+                        {damage.status === "reported"
+                          ? "已报告"
+                          : damage.status === "investigating"
+                          ? "调查中"
+                          : damage.status === "repairing"
+                          ? "修复中"
+                          : "已解决"}
+                      </span>
+                      <span style={{ color: "var(--text-secondary)", fontSize: "13px" }}>
+                        发现于 {damage.discovery_date.slice(0, 10)}
+                      </span>
+                    </div>
+                    <Link
+                      to={`/damages/${damage.id}`}
+                      className="btn btn-sm btn-secondary"
+                    >
+                      查看详情
+                    </Link>
+                  </div>
+
+                  <div className="detail-grid" style={{ marginBottom: "8px" }}>
+                    <div className="detail-item">
+                      <div className="detail-label">损伤类型</div>
+                      <div className="detail-value">{damage.damage_type || "-"}</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">损伤部位</div>
+                      <div className="detail-value">{damage.damage_location || "-"}</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">报告人</div>
+                      <div className="detail-value">{damage.reporter_name}</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">修复状态</div>
+                      <div className="detail-value">{damage.repair_status || "未开始"}</div>
+                    </div>
+                  </div>
+
+                  <div className="detail-item">
+                    <div className="detail-label">损伤描述</div>
+                    <p style={{
+                      margin: 0,
+                      padding: "8px 12px",
+                      background: "#f9f9f9",
+                      borderRadius: "6px",
+                      lineHeight: 1.6,
+                      whiteSpace: "pre-wrap",
+                    }}>
+                      {damage.description}
+                    </p>
+                  </div>
+
+                  {(damage.status !== "resolved") && (
+                    <div style={{
+                      marginTop: "12px",
+                      padding: "8px 12px",
+                      background: damage.damage_severity === "critical" || damage.damage_severity === "high"
+                        ? "#fff3e0"
+                        : "#f5f5f5",
+                      borderRadius: "6px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "13px",
+                    }}>
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        处理进度：
+                      </span>
+                      <span style={{
+                        display: "inline-block",
+                        height: "6px",
+                        flex: 1,
+                        background: "var(--border)",
+                        borderRadius: "3px",
+                        overflow: "hidden",
+                      }}>
+                        <span style={{
+                          display: "block",
+                          height: "100%",
+                          width: damage.status === "investigating" ? "33%" : damage.status === "repairing" ? "66%" : "10%",
+                          background: damage.status === "repairing" ? "var(--warning-color)" : "var(--accent-color)",
+                          borderRadius: "3px",
+                          transition: "width 0.3s ease",
+                        }} />
+                      </span>
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        {damage.status === "reported" ? "已报告，待调查" : damage.status === "investigating" ? "调查中" : "修复中"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
