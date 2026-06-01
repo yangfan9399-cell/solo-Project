@@ -1,0 +1,36 @@
+{
+  "name": "museum-exhibit-loan-system",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
+    "start": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc",
+    "db:init": "node --import tsx app/db/init.ts",
+    "db:seed": "node --import tsx app/db/seed.ts"
+  },
+  "dependencies": {
+    "@remix-run/node": "^2.10.0",
+    "@remix-run/react": "^2.10.0",
+    "@remix-run/serve": "^2.10.0",
+    "better-sqlite3": "^11.0.0",
+    "date-fns": "^3.6.0",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.10.0",
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "tsx": "^4.15.0",
+    "typescript": "^5.1.6",
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
