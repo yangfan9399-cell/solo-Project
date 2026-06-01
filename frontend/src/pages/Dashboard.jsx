@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { dashboardAPI, ticketsAPI } from '../api/index.js'
+import { dashboardAPI, ticketsAPI, categoriesAPI, usersAPI } from '../api/index.js'
 import dayjs from 'dayjs'
+import TicketForm from '../components/TicketForm.jsx'
 
 function Loading() {
   return (
@@ -14,6 +16,8 @@ function Loading() {
 
 function Dashboard({ currentUser }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboardStats'],
@@ -24,6 +28,23 @@ function Dashboard({ currentUser }) {
     queryKey: ['recentTickets'],
     queryFn: () => ticketsAPI.getAll({}),
   })
+
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll(),
+  })
+
+  const { data: technicians } = useQuery({
+    queryKey: ['technicians'],
+    queryFn: () => usersAPI.getTechnicians(),
+  })
+
+  const handleCreateSuccess = () => {
+    setShowCreateModal(false)
+    queryClient.invalidateQueries(['recentTickets'])
+    queryClient.invalidateQueries(['dashboardStats'])
+    queryClient.invalidateQueries(['tickets'])
+  }
 
   if (statsLoading || ticketsLoading) {
     return <Loading />
@@ -47,7 +68,7 @@ function Dashboard({ currentUser }) {
         <h1 className="page-title">工作台</h1>
         <button
           className="btn btn-primary"
-          onClick={() => navigate('/tickets/new')}
+          onClick={() => setShowCreateModal(true)}
         >
           ➕ 新建报修
         </button>
@@ -153,6 +174,16 @@ function Dashboard({ currentUser }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showCreateModal && (
+        <TicketForm
+          categories={categories?.data || []}
+          technicians={technicians?.data || []}
+          currentUser={currentUser}
+          onSuccess={handleCreateSuccess}
+          onCancel={() => setShowCreateModal(false)}
+        />
       )}
     </div>
   )
