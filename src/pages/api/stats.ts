@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../db';
+import { checkAndProcessTimeouts } from '../../db/timeoutChecker';
 
 export const GET: APIRoute = async () => {
+  checkAndProcessTimeouts();
   const db = getDb();
 
   const totalAppointments = (db.prepare('SELECT COUNT(*) as c FROM appointments').get() as { c: number }).c;

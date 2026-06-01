@@ -1,7 +1,9 @@
 import { g as getDb } from '../../chunks/index_s38z4wuU.mjs';
+import { c as checkAndProcessTimeouts } from '../../chunks/timeoutChecker_Bgdvx8P0.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const GET = async ({ url }) => {
+  checkAndProcessTimeouts();
   const db = getDb();
   const status = url.searchParams.get("status");
   const visitee_id = url.searchParams.get("visitee_id");

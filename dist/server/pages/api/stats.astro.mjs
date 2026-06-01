@@ -1,7 +1,9 @@
 import { g as getDb } from '../../chunks/index_s38z4wuU.mjs';
+import { c as checkAndProcessTimeouts } from '../../chunks/timeoutChecker_Bgdvx8P0.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const GET = async () => {
+  checkAndProcessTimeouts();
   const db = getDb();
   const totalAppointments = db.prepare("SELECT COUNT(*) as c FROM appointments").get().c;
   const pendingCount = db.prepare("SELECT COUNT(*) as c FROM appointments WHERE status = 'pending'").get().c;

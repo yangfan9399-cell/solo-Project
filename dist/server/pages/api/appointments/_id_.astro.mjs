@@ -1,7 +1,9 @@
 import { g as getDb } from '../../../chunks/index_s38z4wuU.mjs';
+import { c as checkAndProcessTimeouts } from '../../../chunks/timeoutChecker_Bgdvx8P0.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const GET = async ({ params }) => {
+  checkAndProcessTimeouts();
   const db = getDb();
   const id = params.id;
   const appointment = db.prepare(`

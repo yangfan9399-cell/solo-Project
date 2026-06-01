@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../../db';
+import { checkAndProcessTimeouts } from '../../../db/timeoutChecker';
 
 export const GET: APIRoute = async ({ params }) => {
+  checkAndProcessTimeouts();
   const db = getDb();
   const id = params.id;
 
