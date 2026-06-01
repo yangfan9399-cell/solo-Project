@@ -91,4 +91,45 @@
     <?php endif; ?>
 </div>
 
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">结算状态</h3>
+    </div>
+    <?php if (!$settlement): ?>
+        <div class="detail-row">
+            <span class="detail-label">结算单</span>
+            <span class="detail-value">
+                <span class="badge bg-orange-100 text-orange-800" style="background:#fff3cd;color:#856404;padding:0.25rem 0.5rem;border-radius:9999px;font-size:0.75rem;font-weight:600;">待生成</span>
+            </span>
+        </div>
+        <div class="mt-2">
+            <form method="POST" action="/subsidies/<?php echo $subsidy['id']; ?>/settle" onsubmit="return confirm('确认根据此油补记录生成结算单？');">
+                <button type="submit" class="btn btn-primary">生成结算单</button>
+            </form>
+        </div>
+    <?php else: ?>
+        <div class="detail-row">
+            <span class="detail-label">结算单号</span>
+            <span class="detail-value"><strong><a href="/settlements/<?php echo $settlement['id']; ?>"><?php echo e($settlement['settlement_no'] ?? '-'); ?></a></strong></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">实付金额</span>
+            <span class="detail-value"><strong style="color:#4a7c23;"><?php echo formatMoney($settlement['total_amount'] ?? 0); ?></strong></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">结算状态</span>
+            <span class="detail-value"><?php echo statusBadge($settlement['status'] ?? 'unknown', Settlement::statusLabels()); ?></span>
+        </div>
+        <?php if (($settlement['status'] ?? '') == 'paid'): ?>
+        <div class="detail-row">
+            <span class="detail-label">支付时间</span>
+            <span class="detail-value"><?php echo formatDateTime($settlement['paid_at'] ?? null); ?></span>
+        </div>
+        <?php endif; ?>
+        <div class="mt-1">
+            <a href="/settlements/<?php echo $settlement['id']; ?>" class="btn btn-outline">查看结算详情</a>
+        </div>
+    <?php endif; ?>
+</div>
+
 <?php endif; ?>

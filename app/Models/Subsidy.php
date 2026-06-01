@@ -25,10 +25,24 @@ class Subsidy extends Model {
     public static function calculate($jobRecordId, $fuelRate = 10, $operationRate = 20) {
         $db = Database::getInstance();
         $jobRecord = $db->fetchOne("SELECT * FROM job_records WHERE id = ?", [$jobRecordId]);
+        
+        if (!$jobRecord) {
+            return [
+                'area' => 0,
+                'fuel_used' => 0,
+                'fuel_subsidy_rate' => $fuelRate,
+                'fuel_subsidy_amount' => 0,
+                'operation_subsidy_rate' => $operationRate,
+                'operation_subsidy_amount' => 0,
+                'total_subsidy' => 0,
+                'operation_type' => null,
+            ];
+        }
+        
         $schedule = $db->fetchOne("SELECT * FROM schedules WHERE id = ?", [$jobRecord['schedule_id']]);
-        $booking = $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$schedule['booking_id']]);
+        $booking = $schedule ? $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$schedule['booking_id']]) : null;
 
-        $area = $jobRecord['actual_area'] ?? $booking['area'];
+        $area = $jobRecord['actual_area'] ?? ($booking['area'] ?? 0);
         $fuelUsed = $jobRecord['fuel_used'] ?? 0;
 
         $fuelSubsidy = $fuelUsed * $fuelRate;
@@ -43,7 +57,7 @@ class Subsidy extends Model {
             'operation_subsidy_rate' => $operationRate,
             'operation_subsidy_amount' => $operationSubsidy,
             'total_subsidy' => $total,
-            'operation_type' => $booking['operation_type'],
+            'operation_type' => $booking['operation_type'] ?? null,
         ];
     }
 

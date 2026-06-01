@@ -5,6 +5,7 @@ require_once ROOT_PATH . '/app/Models/Subsidy.php';
 require_once ROOT_PATH . '/app/Models/JobRecord.php';
 require_once ROOT_PATH . '/app/Models/Schedule.php';
 require_once ROOT_PATH . '/app/Models/Booking.php';
+require_once ROOT_PATH . '/app/Models/Settlement.php';
 require_once ROOT_PATH . '/app/Models/User.php';
 
 class SubsidyController extends Controller {
@@ -13,8 +14,15 @@ class SubsidyController extends Controller {
         $model = new Subsidy();
         $subsidies = $model->all();
         
+        $settlementModel = new Settlement();
+        $settlementsBySubsidy = [];
+        foreach ($settlementModel->all() as $s) {
+            $settlementsBySubsidy[$s['subsidy_id']] = $s;
+        }
+        
         $this->view('subsidies/index', [
             'subsidies' => $subsidies,
+            'settlementsBySubsidy' => $settlementsBySubsidy,
         ]);
     }
 
@@ -42,9 +50,20 @@ class SubsidyController extends Controller {
         ]);
         
         $model = new Subsidy();
-        $model->create($data);
+        $subsidyId = $model->create($data);
         
-        $this->with('success', '油补核算成功')->redirect('/subsidies');
+        $settlementCalculated = Settlement::calculate($subsidyId);
+        $settlementData = array_merge($settlementCalculated, [
+            'settlement_no' => Settlement::generateSettlementNo(),
+            'subsidy_id' => $subsidyId,
+            'status' => 'unpaid',
+            'notes' => '由油补核算自动生成',
+        ]);
+        
+        $settlementModel = new Settlement();
+        $settlementId = $settlementModel->create($settlementData);
+        
+        $this->with('success', '油补核算成功，结算单已自动生成')->redirect('/subsidies/' . $subsidyId);
     }
 
     public function show($id) {
@@ -59,9 +78,13 @@ class SubsidyController extends Controller {
         $jobModel = new JobRecord();
         $job = $jobModel->find($subsidy['job_record_id']) ?: [];
         
+        $settlementModel = new Settlement();
+        $settlement = $settlementModel->findOneWhere('subsidy_id', $id) ?: null;
+        
         $this->view('subsidies/show', [
             'subsidy' => $subsidy,
             'job' => $job,
+            'settlement' => $settlement,
         ]);
     }
 

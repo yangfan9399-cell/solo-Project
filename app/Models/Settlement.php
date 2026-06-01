@@ -21,20 +21,31 @@ class Settlement extends Model {
     public static function calculate($subsidyId, $operationFeeRate = 30, $fuelCostRate = 8) {
         $db = Database::getInstance();
         $subsidy = $db->fetchOne("SELECT * FROM subsidies WHERE id = ?", [$subsidyId]);
+        
+        if (!$subsidy) {
+            return [
+                'farmer_id' => null,
+                'operation_fee' => 0,
+                'fuel_cost' => 0,
+                'subsidy_amount' => 0,
+                'total_amount' => 0,
+            ];
+        }
+        
         $jobRecord = $db->fetchOne("SELECT * FROM job_records WHERE id = ?", [$subsidy['job_record_id']]);
-        $schedule = $db->fetchOne("SELECT * FROM schedules WHERE id = ?", [$jobRecord['schedule_id']]);
-        $booking = $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$schedule['booking_id']]);
+        $schedule = $jobRecord ? $db->fetchOne("SELECT * FROM schedules WHERE id = ?", [$jobRecord['schedule_id']]) : null;
+        $booking = $schedule ? $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$schedule['booking_id']]) : null;
 
-        $area = $subsidy['area'];
+        $area = $subsidy['area'] ?? 0;
         $fuelUsed = $jobRecord['fuel_used'] ?? 0;
 
         $operationFee = $area * $operationFeeRate;
         $fuelCost = $fuelUsed * $fuelCostRate;
-        $subsidyAmount = $subsidy['total_subsidy'];
+        $subsidyAmount = $subsidy['total_subsidy'] ?? 0;
         $total = $operationFee + $fuelCost - $subsidyAmount;
 
         return [
-            'farmer_id' => $booking['farmer_id'],
+            'farmer_id' => $booking['farmer_id'] ?? null,
             'operation_fee' => $operationFee,
             'fuel_cost' => $fuelCost,
             'subsidy_amount' => $subsidyAmount,

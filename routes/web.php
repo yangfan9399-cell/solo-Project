@@ -98,6 +98,7 @@ get('/subsidies/create', 'SubsidyController@create');
 post('/subsidies', 'SubsidyController@store');
 get('/subsidies/{id}', 'SubsidyController@show');
 post('/subsidies/{id}/calculate', 'SubsidyController@calculate');
+post('/subsidies/{id}/settle', 'SettlementController@generateSettlement');
 
 get('/settlements', 'SettlementController@index');
 get('/settlements/{id}', 'SettlementController@show');
