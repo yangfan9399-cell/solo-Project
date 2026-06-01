@@ -19,7 +19,7 @@ const navigation = [
   { name: '水质检测', href: '/water-quality', icon: Droplets, roles: ['admin', 'chemist'] },
   { name: '报修管理', href: '/repair-reports', icon: FileText, roles: ['admin', 'hotline', 'repair_crew'] },
   { name: '工单调度', href: '/work-orders', icon: ClipboardList, roles: ['admin', 'repair_crew'] },
-  { name: '停水公告', href: '/water-stop', icon: Megaphone, roles: ['admin', 'hotline'] },
+  { name: '停水公告', href: '/water-stop-notices', icon: Megaphone, roles: ['admin', 'hotline'] },
   { name: '通知中心', href: '/notifications', icon: Bell, roles: ['admin', 'chemist', 'repair_crew', 'hotline'] },
   { name: '地点管理', href: '/locations', icon: MapPin, roles: ['admin'] },
   { name: '人员管理', href: '/users', icon: Users, roles: ['admin'] },
@@ -53,7 +53,7 @@ export function Layout() {
               to={item.href}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                location.pathname === item.href
+                location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href))
                   ? 'bg-primary-50 text-primary-700'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}

@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
+import { Layout } from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import WaterQuality from './pages/WaterQuality';
 import WaterQualityDetail from './pages/WaterQualityDetail';
@@ -14,8 +14,8 @@ import Users from './pages/Users';
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
+    <Routes>
+      <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/water-quality" element={<WaterQuality />} />
         <Route path="/water-quality/:id" element={<WaterQualityDetail />} />
@@ -27,7 +27,7 @@ export default function App() {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/locations" element={<Locations />} />
         <Route path="/users" element={<Users />} />
-      </Routes>
-    </Layout>
+      </Route>
+    </Routes>
   );
 }

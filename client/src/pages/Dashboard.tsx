@@ -75,7 +75,7 @@ export function Dashboard() {
       busy: data.stats.teams.busy,
       icon: Users,
       color: 'bg-green-500',
-      link: '/repair-teams',
+      link: '/work-orders',
     },
   ];
 
