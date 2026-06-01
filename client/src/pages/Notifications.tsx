@@ -4,6 +4,7 @@ import { notificationsApi } from '../services/api';
 import { LoadingCard, ErrorState, EmptyState } from '../components/Loading';
 import { Button } from '../components/Modal';
 import { formatRelativeTime } from '../utils/format';
+import { useRole } from '../context/RoleContext';
 import type { Notification } from '../types';
 
 const typeIcons: Record<string, string> = {
@@ -24,15 +25,16 @@ export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentRole } = useRole();
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [currentRole]);
 
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await notificationsApi.getAll();
+      const response = await notificationsApi.getAll(currentRole);
       setNotifications(response.data);
     } catch (err) {
       setError('加载数据失败，请稍后重试');

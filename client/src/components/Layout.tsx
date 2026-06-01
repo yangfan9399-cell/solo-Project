@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -11,8 +11,15 @@ import {
   X,
   Users,
   MapPin,
+  ChevronDown,
+  Shield,
+  FlaskConical,
+  Wrench,
+  PhoneCall,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { useRole } from '../context/RoleContext';
+import type { UserRole } from '../types';
 
 const navigation = [
   { name: '调度看板', href: '/', icon: LayoutDashboard, roles: ['admin', 'chemist', 'repair_crew', 'hotline'] },
@@ -25,12 +32,31 @@ const navigation = [
   { name: '人员管理', href: '/users', icon: Users, roles: ['admin'] },
 ];
 
+const roleOptions: Array<{ role: UserRole; icon: React.ComponentType<{ className?: string }> }> = [
+  { role: 'admin', icon: Shield },
+  { role: 'chemist', icon: FlaskConical },
+  { role: 'repair_crew', icon: Wrench },
+  { role: 'hotline', icon: PhoneCall },
+];
+
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const location = useLocation();
-  const [currentRole] = useState('admin');
+  const roleMenuRef = useRef<HTMLDivElement>(null);
+  const { currentRole, setCurrentRole, roleLabels, roleAvatars } = useRole();
 
   const filteredNav = navigation.filter((item) => item.roles.includes(currentRole));
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target as Node)) {
+        setRoleMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,11 +100,51 @@ export function Layout() {
             </button>
             <div className="flex-1" />
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
-                当前角色：<span className="font-medium text-gray-900">管理员</span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
-                管
+              <div className="relative" ref={roleMenuRef}>
+                <button
+                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                  onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                >
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-gray-900">{roleLabels[currentRole]}</div>
+                    <div className="text-xs text-gray-500">切换角色</div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-sm font-medium">
+                    {roleAvatars[currentRole]}
+                  </div>
+                  <ChevronDown className={cn('w-4 h-4 text-gray-500 transition-transform', roleMenuOpen && 'rotate-180')} />
+                </button>
+
+                {roleMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">选择工作角色</div>
+                    </div>
+                    {roleOptions.map((option) => (
+                      <button
+                        key={option.role}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors',
+                          currentRole === option.role
+                            ? 'bg-primary-50 text-primary-700'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        )}
+                        onClick={() => {
+                          setCurrentRole(option.role);
+                          setRoleMenuOpen(false);
+                        }}
+                      >
+                        <option.icon className="w-5 h-5" />
+                        <span className="font-medium">{roleLabels[option.role]}</span>
+                        {currentRole === option.role && (
+                          <span className="ml-auto text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
+                            当前
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

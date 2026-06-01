@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search, Filter, Megaphone, MapPin, Clock } from 'lucide-react';
 import { waterStopNoticesApi, usersApi } from '../services/api';
 import { LoadingCard, ErrorState, EmptyState } from '../components/Loading';
 import { StatusBadge } from '../components/StatusBadge';
 import { Button, Modal, Input, Select, TextArea } from '../components/Modal';
 import { formatDate } from '../utils/format';
+import { useRole } from '../context/RoleContext';
 import type { WaterStopNotice, User } from '../types';
 
 export function WaterStopNotices() {
@@ -15,6 +16,7 @@ export function WaterStopNotices() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { currentRole } = useRole();
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -24,6 +26,13 @@ export function WaterStopNotices() {
     end_time: '',
     reason: '',
   });
+
+  const defaultCreator = useMemo(() => {
+    const roleUsers = users.filter((u) => u.role === currentRole);
+    if (roleUsers.length > 0) return roleUsers[0];
+    const adminUsers = users.filter((u) => u.role === 'admin');
+    return adminUsers[0] || users[0];
+  }, [users, currentRole]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,12 +54,12 @@ export function WaterStopNotices() {
   }, []);
 
   const handleSubmit = async () => {
+    if (!defaultCreator) return;
     try {
-      const currentUser = users.find((u) => u.role === 'admin') || users[0];
       await waterStopNoticesApi.create({
         ...formData,
         affected_population: formData.affected_population ? parseInt(formData.affected_population) : undefined,
-        created_by: currentUser?.id || 'user_006',
+        created_by: defaultCreator.id,
       });
       const response = await waterStopNoticesApi.getAll();
       setNotices(response.data);

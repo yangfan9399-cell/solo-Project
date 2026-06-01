@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';
 import { waterQualityApi, locationsApi, usersApi } from '../services/api';
@@ -6,6 +6,7 @@ import { LoadingCard, ErrorState, EmptyState } from '../components/Loading';
 import { StatusBadge } from '../components/StatusBadge';
 import { Button, Modal, Input, Select, TextArea } from '../components/Modal';
 import { formatDate } from '../utils/format';
+import { useRole } from '../context/RoleContext';
 import type { WaterQualityTest, Location, User } from '../types';
 
 export function WaterQuality() {
@@ -17,6 +18,7 @@ export function WaterQuality() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { currentRole } = useRole();
   const [formData, setFormData] = useState({
     location_id: '',
     ph: '',
@@ -25,6 +27,13 @@ export function WaterQuality() {
     coliform: '',
     remark: '',
   });
+
+  const defaultTester = useMemo(() => {
+    const roleUsers = users.filter((u) => u.role === currentRole);
+    if (roleUsers.length > 0) return roleUsers[0];
+    const chemistUsers = users.filter((u) => u.role === 'chemist');
+    return chemistUsers[0] || users[0];
+  }, [users, currentRole]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +46,7 @@ export function WaterQuality() {
         ]);
         setTests(testsRes.data);
         setLocations(locationsRes.data);
-        setUsers(usersRes.data.filter((u) => u.role === 'chemist'));
+        setUsers(usersRes.data);
       } catch (err) {
         setError('加载数据失败，请稍后重试');
       } finally {
@@ -48,6 +57,7 @@ export function WaterQuality() {
   }, [statusFilter]);
 
   const handleSubmit = async () => {
+    if (!defaultTester) return;
     try {
       const location = locations.find((l) => l.id === formData.location_id);
       await waterQualityApi.create({
@@ -58,8 +68,8 @@ export function WaterQuality() {
         turbidity: parseFloat(formData.turbidity),
         residual_chlorine: parseFloat(formData.residual_chlorine),
         coliform: parseInt(formData.coliform),
-        tested_by: users[0]?.id || 'user_001',
-        tester_name: users[0]?.name || '张工',
+        tested_by: defaultTester.id,
+        tester_name: defaultTester.name,
       });
       const response = await waterQualityApi.getAll(statusFilter || undefined);
       setTests(response.data);

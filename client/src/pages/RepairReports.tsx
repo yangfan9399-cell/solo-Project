@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, User, Phone } from 'lucide-react';
-import { repairReportsApi, repairTeamsApi } from '../services/api';
+import { repairReportsApi, repairTeamsApi, usersApi } from '../services/api';
 import { LoadingCard, ErrorState, EmptyState } from '../components/Loading';
 import { StatusBadge, UrgencyBadge } from '../components/StatusBadge';
 import { Button, Modal, Input, Select, TextArea } from '../components/Modal';
 import { formatDate, reportTypeLabels } from '../utils/format';
-import type { RepairReport, RepairTeam } from '../types';
+import { useRole } from '../context/RoleContext';
+import type { RepairReport, RepairTeam, User } from '../types';
 
 export function RepairReports() {
   const [reports, setReports] = useState<RepairReport[]>([]);
   const [teams, setTeams] = useState<RepairTeam[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -20,6 +22,7 @@ export function RepairReports() {
   const [selectedReport, setSelectedReport] = useState<RepairReport | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState('');
+  const { currentRole, roleLabels } = useRole();
   const [formData, setFormData] = useState({
     type: 'pipe_leak',
     title: '',
@@ -34,16 +37,25 @@ export function RepairReports() {
     water_stop_needed: false,
   });
 
+  const defaultReporter = useMemo(() => {
+    const roleUsers = users.filter((u) => u.role === currentRole);
+    if (roleUsers.length > 0) return roleUsers[0];
+    const hotlineUsers = users.filter((u) => u.role === 'hotline');
+    return hotlineUsers[0] || users[0];
+  }, [users, currentRole]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [reportsRes, teamsRes] = await Promise.all([
+        const [reportsRes, teamsRes, usersRes] = await Promise.all([
           repairReportsApi.getAll(statusFilter || undefined, urgencyFilter || undefined),
           repairTeamsApi.getAll(),
+          usersApi.getAll(),
         ]);
         setReports(reportsRes.data);
         setTeams(teamsRes.data);
+        setUsers(usersRes.data);
       } catch (err) {
         setError('加载数据失败，请稍后重试');
       } finally {
@@ -54,12 +66,14 @@ export function RepairReports() {
   }, [statusFilter, urgencyFilter]);
 
   const handleSubmit = async () => {
+    if (!defaultReporter) return;
     try {
       await repairReportsApi.create({
         ...formData,
         affected_population: formData.affected_population ? parseInt(formData.affected_population) : undefined,
-        reporter_name: '陈客服',
-        reporter_role: 'hotline',
+        reporter_name: defaultReporter.name,
+        reporter_role: currentRole,
+        reported_by: defaultReporter.id,
       });
       const response = await repairReportsApi.getAll(statusFilter || undefined, urgencyFilter || undefined);
       setReports(response.data);
