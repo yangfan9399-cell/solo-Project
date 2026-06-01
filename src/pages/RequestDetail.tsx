@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   CheckCircle, XCircle, Truck, ArrowRight, BookCheck, RotateCcw,
-  Package, CalendarClock, X, Loader2
+  Package, CalendarClock, X, Loader2, UserCircle, Clock
 } from 'lucide-react'
 import { useApi, useApiPost, useApiPut } from '@/hooks/useApi'
 import StatusBadge, { statusConfig } from '@/components/StatusBadge'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ErrorState from '@/components/ErrorState'
+import { useAppStore, roleLabels, type UserRole } from '@/stores/appStore'
 import type { InterlibraryRequest, StatusTransition, RequestStatus } from '@/types'
 
 function formatDateTime(dateStr: string | null) {
@@ -32,6 +33,86 @@ interface RenewalForm {
   reason: string
 }
 
+interface ActionDef {
+  label: string
+  color: string
+  icon: React.ReactNode
+  onClick: () => void
+}
+
+const nextStepHints: Record<RequestStatus, Record<UserRole, string | null>> = {
+  pending: {
+    librarian: '等待流通部主管审批',
+    partner: '等待流通部主管审批',
+    supervisor: null,
+  },
+  approved: {
+    librarian: '等待合作馆联系人登记物流',
+    partner: null,
+    supervisor: '等待合作馆联系人登记物流',
+  },
+  shipping_out: {
+    librarian: '等待合作馆确认发出',
+    partner: null,
+    supervisor: '等待合作馆确认发出',
+  },
+  in_transit: {
+    librarian: null,
+    partner: '等待读者服务馆员确认到馆',
+    supervisor: '等待读者服务馆员确认到馆',
+  },
+  arrived: {
+    librarian: null,
+    partner: '等待读者取书',
+    supervisor: '等待读者取书',
+  },
+  reading: {
+    librarian: null,
+    partner: '读者借阅中，等待归还或续借',
+    supervisor: '读者借阅中',
+  },
+  renewal_pending: {
+    librarian: '等待流通部主管审批续借',
+    partner: '等待流通部主管审批续借',
+    supervisor: null,
+  },
+  renewal_approved: {
+    librarian: null,
+    partner: '续借已批准，等待归还',
+    supervisor: '续借已批准，等待归还',
+  },
+  renewal_rejected: {
+    librarian: null,
+    partner: '续借已拒绝，等待归还',
+    supervisor: '续借已拒绝，等待归还',
+  },
+  returning: {
+    librarian: null,
+    partner: '等待读者服务馆员验收完成',
+    supervisor: '等待读者服务馆员验收完成',
+  },
+  completed: {
+    librarian: null,
+    partner: null,
+    supervisor: null,
+  },
+  overdue: {
+    librarian: null,
+    partner: '图书已逾期，需尽快处理',
+    supervisor: null,
+  },
+  exception: {
+    librarian: null,
+    partner: '存在异常，需尽快处理',
+    supervisor: null,
+  },
+  rejected: {
+    librarian: null,
+    partner: null,
+    supervisor: null,
+  },
+}
+
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>()
   const { data, loading, error, refetch } = useApi<InterlibraryRequest>(`/api/requests/${id}`)
@@ -42,6 +123,8 @@ export default function RequestDetail() {
   const { put: putArrive } = useApiPut<void>('')
   const { put: putReturn } = useApiPut<void>('')
   const { put: putComplete } = useApiPut<void>('')
+
+  const { currentRole, setCurrentRole } = useAppStore()
 
   const [shippingModal, setShippingModal] = useState(false)
   const [renewalModal, setRenewalModal] = useState(false)
@@ -109,61 +192,55 @@ export default function RequestDetail() {
     setActionLoading(false)
   }
 
-  const renderActions = (status: RequestStatus) => {
-    const btn = (label: string, color: string, icon: React.ReactNode, onClick: () => void) => (
-      <button
-        key={label}
-        onClick={onClick}
-        disabled={actionLoading}
-        className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${color}`}
-      >
-        {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : icon}
-        {label}
-      </button>
-    )
+  const getRoleActions = (status: RequestStatus, role: UserRole): ActionDef[] => {
+    const btn = (label: string, color: string, icon: React.ReactNode, onClick: () => void): ActionDef => ({
+      label, color, icon, onClick,
+    })
 
-    switch (status) {
-      case 'pending':
-        return [
-          btn('批准', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleApprove),
-          btn('拒绝', 'bg-red-600 text-white hover:bg-red-700', <XCircle className="w-3.5 h-3.5" />, handleReject),
-        ]
-      case 'approved':
-        return [btn('登记物流', 'bg-amber-600 text-white hover:bg-amber-700', <Truck className="w-3.5 h-3.5" />, () => setShippingModal(true))]
-      case 'shipping_out':
-        return [btn('标记运输中', 'bg-amber-600 text-white hover:bg-amber-700', <ArrowRight className="w-3.5 h-3.5" />, handleMarkTransit)]
-      case 'in_transit':
-        return [btn('确认到馆', 'bg-teal-600 text-white hover:bg-teal-700', <Package className="w-3.5 h-3.5" />, handleArrive)]
-      case 'arrived':
-        return [btn('读者取书', 'bg-green-600 text-white hover:bg-green-700', <BookCheck className="w-3.5 h-3.5" />, handleReading)]
-      case 'reading':
-        return [
+    const roleActions: Record<UserRole, Partial<Record<RequestStatus, ActionDef[]>>> = {
+      librarian: {
+        in_transit: [btn('确认到馆', 'bg-teal-600 text-white hover:bg-teal-700', <Package className="w-3.5 h-3.5" />, handleArrive)],
+        arrived: [btn('读者取书', 'bg-green-600 text-white hover:bg-green-700', <BookCheck className="w-3.5 h-3.5" />, handleReading)],
+        reading: [
           btn('申请续借', 'bg-purple-600 text-white hover:bg-purple-700', <CalendarClock className="w-3.5 h-3.5" />, () => setRenewalModal(true)),
           btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook),
-        ]
-      case 'renewal_pending':
-        return [
+        ],
+        renewal_approved: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+        renewal_rejected: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+        returning: [btn('确认完成', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleComplete)],
+        overdue: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+        exception: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+      },
+      partner: {
+        approved: [btn('登记物流', 'bg-amber-600 text-white hover:bg-amber-700', <Truck className="w-3.5 h-3.5" />, () => setShippingModal(true))],
+        shipping_out: [btn('标记运输中', 'bg-amber-600 text-white hover:bg-amber-700', <ArrowRight className="w-3.5 h-3.5" />, handleMarkTransit)],
+      },
+      supervisor: {
+        pending: [
+          btn('批准', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleApprove),
+          btn('拒绝', 'bg-red-600 text-white hover:bg-red-700', <XCircle className="w-3.5 h-3.5" />, handleReject),
+        ],
+        renewal_pending: [
           btn('批准续借', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleApproveRenewal),
           btn('拒绝续借', 'bg-red-600 text-white hover:bg-red-700', <XCircle className="w-3.5 h-3.5" />, handleRejectRenewal),
-        ]
-      case 'renewal_approved':
-      case 'renewal_rejected':
-        return [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)]
-      case 'returning':
-        return [btn('确认完成', 'bg-green-600 text-white hover:bg-green-700', <CheckCircle className="w-3.5 h-3.5" />, handleComplete)]
-      case 'overdue':
-      case 'exception':
-        return [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)]
-      default:
-        return null
+        ],
+        overdue: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+        exception: [btn('归还', 'bg-indigo-600 text-white hover:bg-indigo-700', <RotateCcw className="w-3.5 h-3.5" />, handleReturnBook)],
+      },
     }
+
+    return roleActions[role][status] || []
   }
 
   if (loading) return <LoadingSpinner text="加载申请详情..." />
   if (error) return <ErrorState message={error} onRetry={refetch} />
   if (!data) return <ErrorState message="未找到该申请" />
 
-  const actions = renderActions(data.status)
+  const actions = getRoleActions(data.status, currentRole)
+  const hint = nextStepHints[data.status]?.[currentRole]
+  const isTerminal = data.status === 'completed' || data.status === 'rejected'
+
+  const roles: UserRole[] = ['librarian', 'partner', 'supervisor']
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -172,7 +249,59 @@ export default function RequestDetail() {
           <h1 className="text-2xl font-semibold text-slate-800">{data.request_no}</h1>
           <StatusBadge status={data.status} />
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <UserCircle className="w-4 h-4 text-slate-400" />
+            <span className="text-sm text-slate-500 mr-2">当前视角：</span>
+            <div className="flex items-center gap-1">
+              {roles.map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setCurrentRole(role)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    currentRole === role
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {roleLabels[role]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {actions.length > 0 && (
+            <div className="flex items-center gap-2">
+              {actions.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={action.onClick}
+                  disabled={actionLoading}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${action.color}`}
+                >
+                  {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : action.icon}
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {actions.length === 0 && hint && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+            <Clock className="w-4 h-4 text-amber-500" />
+            <span className="text-sm text-amber-700">{hint}</span>
+          </div>
+        )}
+        {actions.length === 0 && !hint && isTerminal && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span className="text-sm text-green-700">
+              {data.status === 'completed' ? '该申请已完成，流程已结束' : '该申请已被拒绝，流程已结束'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-6">
