@@ -43,6 +43,15 @@ DEFECT_LABELS = {
 }
 
 
+def _parse_optional_int(value: Optional[str]) -> Optional[int]:
+    if value is None or value.strip() == "":
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
 def _render_rework_detail(request, db, rework_id, error=None):
     rework = get_rework_order(db, rework_id)
     if not rework:
@@ -181,13 +190,16 @@ async def assign_rework(
     request: Request,
     rework_id: int,
     assignee_id: int = Form(...),
-    process_guide_id: Optional[int] = Form(None),
+    process_guide_id: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
 
     try:
         validate_status_transition(rework.status, ReworkStatus.ASSIGNED)
@@ -198,9 +210,15 @@ async def assign_rework(
     if not assignee:
         return _render_rework_detail(request, db, rework_id, error="指派人员不存在，请选择有效用户")
 
+    parsed_guide_id = _parse_optional_int(process_guide_id)
+    if parsed_guide_id is not None:
+        guide = get_process_guide(db, parsed_guide_id)
+        if not guide:
+            return _render_rework_detail(request, db, rework_id, error="选择的工艺指导不存在，请选择有效文档")
+
     update_rework_order(db, rework_id, ReworkOrderUpdate(
         assignee_id=assignee_id,
-        process_guide_id=process_guide_id
+        process_guide_id=parsed_guide_id
     ))
     update_rework_status(db, rework_id, ReworkStatus.ASSIGNED, operator_id=current_user.id, remarks="派工完成")
     return RedirectResponse(f"/reworks/{rework_id}", status_code=303)
@@ -212,6 +230,8 @@ async def start_rework(request: Request, rework_id: int, db: Session = Depends(g
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
     try:
         validate_status_transition(rework.status, ReworkStatus.IN_PROGRESS)
     except BusinessError as e:
@@ -232,6 +252,8 @@ async def submit_for_inspection(request: Request, rework_id: int, db: Session = 
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
     try:
         validate_status_transition(rework.status, ReworkStatus.REINSPECTION)
     except BusinessError as e:
@@ -254,6 +276,9 @@ async def inspect_rework(
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
 
     if rework.status != ReworkStatus.REINSPECTION:
         return _render_rework_detail(request, db, rework_id, error=f"当前状态 [{rework.status.value}] 不允许复检操作，只有待复检状态才能进行复检判定")
@@ -292,6 +317,8 @@ async def scrap_request(request: Request, rework_id: int, db: Session = Depends(
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
     try:
         validate_status_transition(rework.status, ReworkStatus.SCRAP)
     except BusinessError as e:
@@ -306,6 +333,8 @@ async def scrap_approve(request: Request, rework_id: int, db: Session = Depends(
     rework = get_rework_order(db, rework_id)
     if not rework:
         return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+    if not current_user:
+        return _render_rework_detail(request, db, rework_id, error="无法获取当前用户，请检查系统用户配置")
     try:
         validate_status_transition(rework.status, ReworkStatus.SCRAP_APPROVED)
     except BusinessError as e:
@@ -435,7 +464,7 @@ async def create_exception(
     title: str = Form(...),
     description: str = Form(...),
     priority: str = Form("normal"),
-    rework_order_id: Optional[int] = Form(None),
+    rework_order_id: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     current_user = get_current_user(db)
@@ -451,8 +480,9 @@ async def create_exception(
     if priority not in ("low", "normal", "high"):
         return RedirectResponse("/exceptions/new?error=优先级无效", status_code=303)
 
-    if rework_order_id is not None:
-        rework = get_rework_order(db, rework_order_id)
+    parsed_rework_id = _parse_optional_int(rework_order_id)
+    if parsed_rework_id is not None:
+        rework = get_rework_order(db, parsed_rework_id)
         if not rework:
             return RedirectResponse("/exceptions/new?error=关联的返工单不存在", status_code=303)
 
@@ -460,7 +490,7 @@ async def create_exception(
         title=title.strip(),
         description=description.strip(),
         priority=priority,
-        rework_order_id=rework_order_id
+        rework_order_id=parsed_rework_id
     )
     create_exception_feedback(db, feedback_data, reporter_id=current_user.id)
     return RedirectResponse("/exceptions", status_code=303)
