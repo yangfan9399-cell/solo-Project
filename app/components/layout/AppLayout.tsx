@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import type { UserRole } from "~/utils/types";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
 interface AppLayoutProps {
-  user: { id: string; name: string; role: string; username: string };
+  user: { id: string; name: string; role: UserRole; username: string };
   children: ReactNode;
 }
 

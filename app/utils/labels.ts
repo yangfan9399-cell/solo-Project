@@ -1,4 +1,6 @@
-type UserRole = "ADMIN" | "SOCIAL_WORKER" | "MANAGER";
+import type { UserRole, DonationStatus, ApplicationStatus, DistributionStatus, ExceptionStatus, ExceptionType } from "./types";
+
+export type { UserRole };
 
 export function getRoleName(role: UserRole): string {
   const roleMap: Record<UserRole, string> = {
@@ -9,7 +11,7 @@ export function getRoleName(role: UserRole): string {
   return roleMap[role];
 }
 
-export const donationStatusLabels: Record<string, string> = {
+export const donationStatusLabels: Record<DonationStatus, string> = {
   PENDING: "待接收",
   INSPECTING: "质检中",
   APPROVED: "已质检",
@@ -17,7 +19,7 @@ export const donationStatusLabels: Record<string, string> = {
   STORED: "已入库",
 };
 
-export const applicationStatusLabels: Record<string, string> = {
+export const applicationStatusLabels: Record<ApplicationStatus, string> = {
   PENDING: "待审批",
   APPROVED: "已批准",
   REJECTED: "已拒绝",
@@ -25,7 +27,7 @@ export const applicationStatusLabels: Record<string, string> = {
   CANCELLED: "已取消",
 };
 
-export const distributionStatusLabels: Record<string, string> = {
+export const distributionStatusLabels: Record<DistributionStatus, string> = {
   PREPARING: "准备中",
   SHIPPED: "已出库",
   DELIVERED: "已送达",
@@ -33,14 +35,14 @@ export const distributionStatusLabels: Record<string, string> = {
   CANCELLED: "已取消",
 };
 
-export const exceptionStatusLabels: Record<string, string> = {
+export const exceptionStatusLabels: Record<ExceptionStatus, string> = {
   OPEN: "待处理",
   PROCESSING: "处理中",
   RESOLVED: "已解决",
   CLOSED: "已关闭",
 };
 
-export const exceptionTypeLabels: Record<string, string> = {
+export const exceptionTypeLabels: Record<ExceptionType, string> = {
   QUALITY_ISSUE: "质量问题",
   QUANTITY_MISMATCH: "数量不符",
   DAMAGE: "损坏",

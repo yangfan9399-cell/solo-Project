@@ -10,9 +10,8 @@ import { StatusBadge } from "~/components/ui/StatusBadge";
 import { Button } from "~/components/ui/Button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { exceptionTypeLabels, exceptionStatusLabels } from "~/utils/labels";
-
-type ExceptionStatus = "OPEN" | "PROCESSING" | "RESOLVED" | "CLOSED";
+import type { ExceptionStatus } from "~/utils/types";
+import { exceptionTypeLabels } from "~/utils/labels";
 
 const processSchema = z.object({
   status: z.enum(["PROCESSING", "RESOLVED", "CLOSED"]),
@@ -29,7 +28,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   await prisma.exceptionRecord.update({
@@ -92,7 +91,7 @@ export default function ExceptionDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <InfoItem label="异常编号" value={exception.exceptionNo} />
                 <InfoItem label="状态" value={<StatusBadge status={exception.status} type="exception" />} />
-                <InfoItem label="异常类型" value={exceptionTypeLabels[exception.type] || exception.type} />
+                <InfoItem label="异常类型" value={exceptionTypeLabels[exception.type as keyof typeof exceptionTypeLabels] || exception.type} />
                 <InfoItem label="报告人" value={exception.reporter.name} />
                 <InfoItem
                   label="报告时间"

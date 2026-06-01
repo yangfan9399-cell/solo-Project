@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   await prisma.recipient.create({

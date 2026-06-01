@@ -9,8 +9,7 @@ import { AppLayout } from "~/components/layout/AppLayout";
 import { Card } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
 import { StatusBadge } from "~/components/ui/StatusBadge";
-
-type InspectionResult = "PASSED" | "FAILED" | "PARTIAL";
+import type { InspectionResult } from "~/utils/types";
 
 const inspectionSchema = z.object({
   result: z.enum(["PASSED", "FAILED", "PARTIAL"]),
@@ -37,7 +36,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   await prisma.$transaction(async (tx) => {

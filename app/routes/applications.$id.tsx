@@ -26,7 +26,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   await prisma.$transaction(async (tx) => {

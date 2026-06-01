@@ -43,7 +43,7 @@ export default function Donations() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">
             {data.statusFilter
-              ? donationStatusLabels[data.statusFilter] || "捐赠批次管理"
+              ? donationStatusLabels[data.statusFilter as keyof typeof donationStatusLabels] || "捐赠批次管理"
               : "捐赠批次管理"}
           </h1>
           <div className="flex gap-3">

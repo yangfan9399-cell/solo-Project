@@ -34,7 +34,7 @@ export async function action({ request }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   const appNo = `APP-${new Date().getFullYear()}-${String(await prisma.application.count() + 1).padStart(4, '0')}`;

@@ -24,7 +24,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   const entryNo = `IN-${new Date().getFullYear()}-${String(await prisma.stockEntry.count() + 1).padStart(4, '0')}`;

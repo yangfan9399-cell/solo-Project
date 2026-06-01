@@ -1,8 +1,9 @@
 import { createCookieSessionStorage, redirect } from "@remix-run/node";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db.server";
+import type { UserRole } from "../app/utils/types";
 
-type UserRole = "ADMIN" | "SOCIAL_WORKER" | "MANAGER";
+export type { UserRole };
 
 const sessionSecret = process.env.SESSION_SECRET || "default-secret-change-in-production";
 
@@ -76,7 +77,7 @@ export async function requireUser(request: Request) {
     where: { id: userId },
   });
   if (!user) throw await logout(request);
-  return user;
+  return { ...user, role: user.role as UserRole };
 }
 
 export async function requireRole(request: Request, roles: UserRole[]) {

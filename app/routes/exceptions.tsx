@@ -71,7 +71,7 @@ export default function Exceptions() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                          {exceptionTypeLabels[exc.type] || exc.type}
+                          {exceptionTypeLabels[exc.type as keyof typeof exceptionTypeLabels] || exc.type}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{exc.title}</td>

@@ -40,7 +40,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (!result.success) {
     return json({
-      errors: result.error.flatten(),
+      errors: result.error.flatten().fieldErrors,
       success: false,
     }, { status: 400 });
   }
@@ -155,8 +155,8 @@ export default function NewDonation() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="请输入捐赠方名称"
                   />
-                  {actionData?.errors?.fieldErrors.donorName && (
-                    <p className="mt-1 text-sm text-red-600">{actionData.errors.fieldErrors.donorName[0]}</p>
+                  {actionData?.errors?.donorName && (
+                    <p className="mt-1 text-sm text-red-600">{actionData.errors.donorName[0]}</p>
                   )}
                 </div>
                 <div>

@@ -1,8 +1,9 @@
 import { Form } from "@remix-run/react";
+import type { UserRole } from "~/utils/types";
 import { getRoleName } from "~/utils/labels";
 
 interface HeaderProps {
-  user: Pick<{ name: string; role: string }, "name" | "role">;
+  user: Pick<{ name: string; role: UserRole }, "name" | "role">;
 }
 
 export function Header({ user }: HeaderProps) {

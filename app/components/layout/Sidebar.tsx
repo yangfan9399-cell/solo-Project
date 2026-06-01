@@ -1,6 +1,5 @@
 import { NavLink } from "@remix-run/react";
-
-type UserRole = "ADMIN" | "SOCIAL_WORKER" | "MANAGER";
+import type { UserRole } from "~/utils/types";
 
 interface SidebarProps {
   userRole: UserRole;

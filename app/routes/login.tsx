@@ -28,17 +28,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const result = loginSchema.safeParse({ username, password });
   if (!result.success) {
-    return json({ 
-      errors: result.error.flatten().fieldErrors,
-      success: false 
+    return json({
+      errors: result.error.flatten().fieldErrors as Record<string, string[] | undefined>,
+      success: false
     }, { status: 400 });
   }
 
   const user = await verifyLogin(result.data.username, result.data.password);
   if (!user) {
-    return json({ 
-      errors: { password: ["用户名或密码错误"] },
-      success: false 
+    return json({
+      errors: { username: undefined, password: ["用户名或密码错误"] } as Record<string, string[] | undefined>,
+      success: false
     }, { status: 400 });
   }
 

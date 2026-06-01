@@ -10,8 +10,8 @@ import { StatusBadge } from "~/components/ui/StatusBadge";
 import { Button } from "~/components/ui/Button";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
-
-type DistributionStatus = "PREPARING" | "SHIPPED" | "DELIVERED" | "SIGNED" | "CANCELLED";
+import type { DistributionStatus } from "~/utils/types";
+import { distributionStatusLabels } from "~/utils/labels";
 
 const statusSchema = z.object({
   status: z.enum(["SHIPPED", "DELIVERED", "SIGNED"]),
@@ -30,7 +30,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   });
 
   if (!result.success) {
-    return json({ errors: result.error.flatten(), success: false }, { status: 400 });
+    return json({ errors: result.error.flatten().fieldErrors, success: false }, { status: 400 });
   }
 
   await prisma.$transaction(async (tx) => {
@@ -263,7 +263,7 @@ export default function DistributionDetail() {
   );
 }
 
-function getNextStatus(status: DistributionStatus): DistributionStatus | null {
+function getNextStatus(status: string): DistributionStatus | null {
   const flow: Record<DistributionStatus, DistributionStatus | null> = {
     PREPARING: "SHIPPED",
     SHIPPED: "DELIVERED",
@@ -271,18 +271,11 @@ function getNextStatus(status: DistributionStatus): DistributionStatus | null {
     SIGNED: null,
     CANCELLED: null,
   };
-  return flow[status];
+  return flow[status as DistributionStatus] ?? null;
 }
 
 function getStatusLabel(status: DistributionStatus): string {
-  const labels: Record<DistributionStatus, string> = {
-    PREPARING: "准备中",
-    SHIPPED: "出库",
-    DELIVERED: "送达",
-    SIGNED: "签收",
-    CANCELLED: "取消",
-  };
-  return labels[status];
+  return distributionStatusLabels[status];
 }
 
 function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
