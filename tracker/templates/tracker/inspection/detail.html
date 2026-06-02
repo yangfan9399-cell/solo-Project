@@ -1,4 +1,5 @@
 {% extends "tracker/base.html" %}
+{% load tracker_tags %}
 
 {% block content %}
 <div class="space-y-6">
@@ -14,12 +15,7 @@
         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">合格</span>
         {% else %}
         <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">不合格</span>
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-          {% if record.handling_status == 'pending' %}bg-red-100 text-red-800
-          {% elif record.handling_status == 'in_progress' %}bg-yellow-100 text-yellow-800
-          {% else %}bg-green-100 text-green-800{% endif %}">
-          {{ record.get_handling_status_display }}
-        </span>
+        {% include "tracker/components/handling_status_badge.html" with inspection=record %}
         {% endif %}
       </div>
     </div>
@@ -38,7 +34,7 @@
         {% if record.instrument_package %}
         <a href="{% url 'tracker:instrument_detail' record.instrument_package.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ record.instrument_package.code }} - {{ record.instrument_package.name }}</a>
         {% else %}
-        <p class="text-sm text-gray-400">未关联</p>
+        <p class="text-sm text-gray-400">-</p>
         {% endif %}
       </div>
       <div>
@@ -46,54 +42,42 @@
         {% if record.batch %}
         <a href="{% url 'tracker:batch_detail' record.batch.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ record.batch.batch_number }}</a>
         {% else %}
-        <p class="text-sm text-gray-400">未关联</p>
+        <p class="text-sm text-gray-400">-</p>
         {% endif %}
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-500">抽查时间</label>
         <p class="text-sm text-gray-900">{{ record.inspected_at|date:"Y-m-d H:i" }}</p>
       </div>
-      {% if record.handled_by %}
       <div>
         <label class="block text-sm font-medium text-gray-500">整改人</label>
-        <p class="text-sm text-gray-900">{{ record.handled_by }}</p>
+        <p class="text-sm text-gray-900">{{ record.handled_by|empty_dash }}</p>
       </div>
-      {% endif %}
-      {% if record.handled_at %}
       <div>
         <label class="block text-sm font-medium text-gray-500">整改完成时间</label>
-        <p class="text-sm text-gray-900">{{ record.handled_at|date:"Y-m-d H:i" }}</p>
+        <p class="text-sm text-gray-900">{{ record.handled_at|format_datetime }}</p>
       </div>
-      {% endif %}
     </div>
 
-    {% if record.findings %}
     <div class="px-6 py-4 border-t border-gray-200">
       <label class="block text-sm font-medium text-gray-500">发现问题</label>
-      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.findings }}</p>
+      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.findings|empty_dash }}</p>
     </div>
-    {% endif %}
 
-    {% if record.corrective_action %}
     <div class="px-6 py-4 border-t border-gray-200">
       <label class="block text-sm font-medium text-gray-500">纠正措施</label>
-      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.corrective_action }}</p>
+      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.corrective_action|empty_dash }}</p>
     </div>
-    {% endif %}
 
-    {% if record.follow_up_notes %}
     <div class="px-6 py-4 border-t border-gray-200">
       <label class="block text-sm font-medium text-gray-500">整改跟进记录</label>
-      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.follow_up_notes }}</p>
+      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.follow_up_notes|empty_dash }}</p>
     </div>
-    {% endif %}
 
-    {% if record.notes %}
     <div class="px-6 py-4 border-t border-gray-200">
       <label class="block text-sm font-medium text-gray-500">备注</label>
-      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.notes }}</p>
+      <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.notes|empty_dash }}</p>
     </div>
-    {% endif %}
   </div>
 
   {% if record.result == 'unqualified' and form %}

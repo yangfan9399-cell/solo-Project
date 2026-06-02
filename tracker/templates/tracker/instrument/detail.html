@@ -1,4 +1,5 @@
 {% extends "tracker/base.html" %}
+{% load tracker_tags %}
 
 {% block content %}
 <div class="space-y-6">
@@ -13,10 +14,8 @@
         <div class="mt-1 text-sm text-red-700">
           {% for insp in pending_inspections %}
           <div class="flex items-center gap-2">
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if insp.handling_status == 'pending' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-              {{ insp.get_handling_status_display }}
-            </span>
-            <a href="{% url 'tracker:inspection_detail' insp.pk %}" class="hover:underline">{{ insp.inspected_at|date:"m-d H:i" }} - {{ insp.findings|truncatechars:40 }}</a>
+            {% include "tracker/components/handling_status_badge.html" with inspection=insp %}
+            <a href="{% url 'tracker:inspection_detail' insp.pk %}" class="hover:underline">{{ insp.inspected_at|date:"m-d H:i" }} - {{ insp.findings|truncate_middle:40 }}</a>
           </div>
           {% endfor %}
         </div>
@@ -333,16 +332,11 @@
               </span>
             </td>
             <td class="px-4 py-3 text-sm">
-              <span class="px-2 py-1 rounded-full text-xs font-medium
-                {% if inspection.handling_status == 'pending' %}bg-red-100 text-red-800
-                {% elif inspection.handling_status == 'in_progress' %}bg-yellow-100 text-yellow-800
-                {% else %}bg-green-100 text-green-800{% endif %}">
-                {{ inspection.get_handling_status_display }}
-              </span>
+              {% include "tracker/components/handling_status_badge.html" with inspection=inspection %}
             </td>
-            <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.handled_by|default:"-" }}</td>
-            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.handled_at|date:"m-d H:i"|default:"-" }}</td>
-            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.follow_up_notes|truncatechars:20|default:"-" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.handled_by|empty_dash }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.handled_at|format_datetime }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.follow_up_notes|truncate_middle:20 }}</td>
           </tr>
           {% endfor %}
         </tbody>

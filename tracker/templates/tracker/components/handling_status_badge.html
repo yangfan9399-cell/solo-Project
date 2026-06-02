@@ -1,0 +1,8 @@
+{% with handling_status=inspection.handling_status %}
+<span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+  {% if handling_status == 'pending' %}bg-red-100 text-red-800
+  {% elif handling_status == 'in_progress' %}bg-yellow-100 text-yellow-800
+  {% else %}bg-green-100 text-green-800{% endif %}">
+  {{ inspection.get_handling_status_display }}
+</span>
+{% endwith %}
