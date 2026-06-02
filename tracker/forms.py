@@ -73,14 +73,40 @@ class ReleaseAuditForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, batch=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['instrument_package'].queryset = InstrumentPackage.objects.filter(
-            status='pending_release'
-        )
-        self.fields['batch'].queryset = SterilizationBatch.objects.filter(
-            result='qualified'
-        )
+        if batch:
+            self.fields['batch'].queryset = SterilizationBatch.objects.filter(pk=batch.pk)
+            self.fields['batch'].initial = batch.pk
+            self.fields['instrument_package'].queryset = batch.instrument_packages.filter(
+                status='pending_release'
+            )
+        else:
+            self.fields['instrument_package'].queryset = InstrumentPackage.objects.filter(
+                status='pending_release'
+            )
+            self.fields['batch'].queryset = SterilizationBatch.objects.filter(
+                result='qualified'
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        instrument = cleaned_data.get('instrument_package')
+        batch = cleaned_data.get('batch')
+        if instrument and batch:
+            if not batch.instrument_packages.filter(pk=instrument.pk).exists():
+                raise forms.ValidationError(
+                    f'器械包 {instrument.code} 不属于批次 {batch.batch_number}，无法审核'
+                )
+            if instrument.status != 'pending_release':
+                raise forms.ValidationError(
+                    f'器械包 {instrument.code} 当前状态为「{instrument.get_status_display()}」，不是待放行状态，无法审核'
+                )
+            if batch.result != 'qualified':
+                raise forms.ValidationError(
+                    f'批次 {batch.batch_number} 综合结果为「{batch.get_result_display()}」，只有合格批次才能审核放行'
+                )
+        return cleaned_data
 
 
 class ClinicalUsageForm(forms.ModelForm):

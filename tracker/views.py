@@ -25,7 +25,8 @@ from tracker.models import (
     SterilizationBatch,
 )
 
-def sync_batch_result(batch):
+def sync_batch_result(batch, previous_result=None):
+    previous_result = previous_result or batch.result
     tests = [batch.physical_test, batch.chemical_test, batch.biological_test]
     if 'unqualified' in tests:
         batch.result = 'unqualified'
@@ -38,10 +39,11 @@ def sync_batch_result(batch):
         batch.completed_at = timezone.now()
     batch.save()
 
-    if batch.result == 'qualified':
-        batch.instrument_packages.update(status='pending_release')
-    elif batch.result == 'unqualified':
-        batch.instrument_packages.update(status='cleaning')
+    if previous_result != batch.result:
+        if batch.result == 'qualified':
+            batch.instrument_packages.filter(status='sterilizing').update(status='pending_release')
+        elif batch.result == 'unqualified':
+            batch.instrument_packages.filter(status__in=['sterilizing', 'pending_release']).update(status='cleaning')
 
 
 def home(request):
@@ -240,15 +242,21 @@ def batch_create(request):
 def batch_update_tests(request, pk):
     batch = get_object_or_404(SterilizationBatch, pk=pk)
     if request.method == 'POST':
-        batch.physical_test = request.POST.get('physical_test', batch.physical_test)
-        batch.chemical_test = request.POST.get('chemical_test', batch.chemical_test)
-        batch.biological_test = request.POST.get('biological_test', batch.biological_test)
-        sync_batch_result(batch)
+        previous_result = batch.result
+
+        if 'physical_test' in request.POST:
+            batch.physical_test = request.POST['physical_test']
+        if 'chemical_test' in request.POST:
+            batch.chemical_test = request.POST['chemical_test']
+        if 'biological_test' in request.POST:
+            batch.biological_test = request.POST['biological_test']
+
+        sync_batch_result(batch, previous_result)
 
         messages.success(request, f'批次 {batch.batch_number} 监测结果已更新')
 
         if request.htmx:
-            return render(request, 'tracker/batch/detail.html', {
+            return render(request, 'tracker/batch/_detail_fragment.html', {
                 'batch': batch,
                 'audits': batch.release_audits.all(),
                 'inspections': batch.inspections.all(),
@@ -278,6 +286,11 @@ def audit_detail(request, pk):
 
 
 def audit_create(request):
+    batch_id = request.GET.get('batch')
+    batch = None
+    if batch_id:
+        batch = get_object_or_404(SterilizationBatch, pk=batch_id)
+
     if request.method == 'POST':
         form = ReleaseAuditForm(request.POST)
         if form.is_valid():
@@ -295,8 +308,12 @@ def audit_create(request):
             messages.success(request, '放行审核完成')
             return redirect('tracker:audit_list')
     else:
-        form = ReleaseAuditForm()
-    return render(request, 'tracker/audit/form.html', {'form': form, 'title': '放行审核'})
+        form = ReleaseAuditForm(batch=batch)
+
+    return render(request, 'tracker/audit/form.html', {
+        'form': form, 'title': '放行审核',
+        'batch': batch,
+    })
 
 
 def usage_list(request):

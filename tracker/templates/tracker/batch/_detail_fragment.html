@@ -1,0 +1,130 @@
+<div id="batch-tests-and-result">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+
+    <form method="post"
+          hx-post="{% url 'tracker:batch_update_tests' batch.pk %}"
+          hx-target="#batch-tests-and-result"
+          hx-swap="outerHTML"
+          class="rounded-lg border border-gray-200 bg-white shadow">
+      <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700">物理监测</h3>
+        {% if batch.physical_test == 'qualified' %}
+        <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">合格</span>
+        {% elif batch.physical_test == 'unqualified' %}
+        <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">不合格</span>
+        {% else %}
+        <span class="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">待检测</span>
+        {% endif %}
+      </div>
+      <div class="px-4 py-3">
+        {% csrf_token %}
+        <input type="hidden" name="physical_test" value="{{ batch.physical_test }}">
+        <select name="physical_test"
+                onchange="this.previousElementSibling.value=this.value; this.closest('form').requestSubmit()"
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          <option value="pending" {% if batch.physical_test == 'pending' %}selected{% endif %}>待检测</option>
+          <option value="qualified" {% if batch.physical_test == 'qualified' %}selected{% endif %}>合格</option>
+          <option value="unqualified" {% if batch.physical_test == 'unqualified' %}selected{% endif %}>不合格</option>
+        </select>
+      </div>
+    </form>
+
+    <form method="post"
+          hx-post="{% url 'tracker:batch_update_tests' batch.pk %}"
+          hx-target="#batch-tests-and-result"
+          hx-swap="outerHTML"
+          class="rounded-lg border border-gray-200 bg-white shadow">
+      <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700">化学监测</h3>
+        {% if batch.chemical_test == 'qualified' %}
+        <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">合格</span>
+        {% elif batch.chemical_test == 'unqualified' %}
+        <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">不合格</span>
+        {% else %}
+        <span class="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">待检测</span>
+        {% endif %}
+      </div>
+      <div class="px-4 py-3">
+        {% csrf_token %}
+        <input type="hidden" name="chemical_test" value="{{ batch.chemical_test }}">
+        <select name="chemical_test"
+                onchange="this.previousElementSibling.value=this.value; this.closest('form').requestSubmit()"
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          <option value="pending" {% if batch.chemical_test == 'pending' %}selected{% endif %}>待检测</option>
+          <option value="qualified" {% if batch.chemical_test == 'qualified' %}selected{% endif %}>合格</option>
+          <option value="unqualified" {% if batch.chemical_test == 'unqualified' %}selected{% endif %}>不合格</option>
+        </select>
+      </div>
+    </form>
+
+    <form method="post"
+          hx-post="{% url 'tracker:batch_update_tests' batch.pk %}"
+          hx-target="#batch-tests-and-result"
+          hx-swap="outerHTML"
+          class="rounded-lg border border-gray-200 bg-white shadow">
+      <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-700">生物监测</h3>
+        {% if batch.biological_test == 'qualified' %}
+        <span class="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">合格</span>
+        {% elif batch.biological_test == 'unqualified' %}
+        <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">不合格</span>
+        {% else %}
+        <span class="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800">待检测</span>
+        {% endif %}
+      </div>
+      <div class="px-4 py-3">
+        {% csrf_token %}
+        <input type="hidden" name="biological_test" value="{{ batch.biological_test }}">
+        <select name="biological_test"
+                onchange="this.previousElementSibling.value=this.value; this.closest('form').requestSubmit()"
+                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          <option value="pending" {% if batch.biological_test == 'pending' %}selected{% endif %}>待检测</option>
+          <option value="qualified" {% if batch.biological_test == 'qualified' %}selected{% endif %}>合格</option>
+          <option value="unqualified" {% if batch.biological_test == 'unqualified' %}selected{% endif %}>不合格</option>
+        </select>
+      </div>
+    </form>
+
+  </div>
+
+  <div class="mt-4 rounded-lg border border-gray-200 bg-white shadow">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">综合结果</h2>
+      <div class="flex items-center gap-2 text-sm text-gray-500">
+        三项监测全部合格自动判定为合格，任一不合格则判定为不合格
+      </div>
+    </div>
+    <div class="px-6 py-4 flex items-center gap-4">
+      {% if batch.result == 'qualified' %}
+      <span class="inline-flex rounded-full bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-800">✓ 合格</span>
+      <span class="text-sm text-green-700">所有器械包已自动流转至「待放行」状态</span>
+      {% elif batch.result == 'unqualified' %}
+      <span class="inline-flex rounded-full bg-red-100 px-4 py-1.5 text-sm font-semibold text-red-800">✗ 不合格</span>
+      <span class="text-sm text-red-700">关联器械包已自动退回「清洗中」状态</span>
+      {% else %}
+      <span class="inline-flex rounded-full bg-gray-100 px-4 py-1.5 text-sm font-semibold text-gray-800">○ 待检测</span>
+      <span class="text-sm text-gray-500">请逐项录入三项监测结果，系统将自动判定综合结果</span>
+      {% endif %}
+    </div>
+    <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 grid grid-cols-3 gap-4 text-xs text-gray-600">
+      <div class="flex items-center gap-1.5">
+        物理:
+        {% if batch.physical_test == 'qualified' %}<span class="text-green-600 font-medium">合格</span>
+        {% elif batch.physical_test == 'unqualified' %}<span class="text-red-600 font-medium">不合格</span>
+        {% else %}<span class="text-gray-400">待检测</span>{% endif %}
+      </div>
+      <div class="flex items-center gap-1.5">
+        化学:
+        {% if batch.chemical_test == 'qualified' %}<span class="text-green-600 font-medium">合格</span>
+        {% elif batch.chemical_test == 'unqualified' %}<span class="text-red-600 font-medium">不合格</span>
+        {% else %}<span class="text-gray-400">待检测</span>{% endif %}
+      </div>
+      <div class="flex items-center gap-1.5">
+        生物:
+        {% if batch.biological_test == 'qualified' %}<span class="text-green-600 font-medium">合格</span>
+        {% elif batch.biological_test == 'unqualified' %}<span class="text-red-600 font-medium">不合格</span>
+        {% else %}<span class="text-gray-400">待检测</span>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>

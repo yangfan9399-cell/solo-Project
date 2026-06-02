@@ -1,7 +1,5 @@
 {% extends "tracker/base.html" %}
 
-{% block title %}{{ title }} - 器械消毒追溯系统{% endblock %}
-
 {% block content %}
 <div class="mb-6">
   <a href="{% url 'tracker:audit_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; 返回审核列表</a>
@@ -12,8 +10,25 @@
     <h2 class="text-lg font-semibold text-gray-900">{{ title }}</h2>
   </div>
 
+  {% if batch %}
+  <div class="px-6 py-3 bg-blue-50 border-b border-blue-200 text-sm">
+    <span class="font-medium text-blue-800">当前批次：</span>
+    <span class="text-blue-700">{{ batch.batch_number }} - {{ batch.get_method_display }} - {{ batch.operator }}</span>
+    <span class="ml-3 text-blue-600">仅显示本批次下待放行的器械包</span>
+  </div>
+  {% endif %}
+
   <form method="post" class="px-6 py-4">
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
+      {% for error in form.non_field_errors %}
+      <p class="text-sm text-red-700">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       {% for field in form %}
       <div {% if field.field.widget.attrs.rows %}class="sm:col-span-2"{% endif %}>
@@ -21,7 +36,14 @@
           {{ field.label }}
           {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
         </label>
+        {% if field.name == 'batch' and batch %}
+        <select name="batch" id="id_batch" class="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm shadow-sm cursor-not-allowed" disabled>
+          <option value="{{ batch.pk }}" selected>{{ batch.batch_number }}</option>
+        </select>
+        <input type="hidden" name="batch" value="{{ batch.pk }}">
+        {% else %}
         {{ field }}
+        {% endif %}
         {% if field.errors %}
         <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
         {% endif %}
