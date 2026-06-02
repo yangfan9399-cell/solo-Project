@@ -1,8 +1,9 @@
 <script lang="ts">
+	import type { PageData, ActionData } from './$types';
 	import { CATEGORY_LABELS } from '$lib/types';
 
-	export let data;
-	export let form;
+	export let data: PageData;
+	export let form: ActionData | undefined;
 
 	let selectedHall = '';
 	let selectedShowtime = '';

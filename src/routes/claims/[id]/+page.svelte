@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { CLAIM_STATUS_LABELS, STATUS_LABELS } from '$lib/types';
+	import type { PageData, ActionData } from './$types';
+	import { CLAIM_STATUS_LABELS, STATUS_LABELS, type ClaimWithJoined, type ActivityLogWithJoined, type ItemWithJoined } from '$lib/types';
 
-	export let data;
-	export let form;
+	export let data: PageData;
+	export let form: ActionData | undefined;
 
 	let showRejectModal = false;
 	let rejectReason = '';
@@ -94,11 +95,11 @@
 				<div class="grid grid-cols-2 gap-4">
 					<div>
 						<p class="text-sm text-gray-500">姓名</p>
-						<p class="font-medium">{(data.claim as any).claimant_name}</p>
+						<p class="font-medium">{(data.claim as ClaimWithJoined).claimant_name}</p>
 					</div>
 					<div>
 						<p class="text-sm text-gray-500">联系电话</p>
-						<p>{(data.claim as any).claimant_phone}</p>
+						<p>{(data.claim as ClaimWithJoined).claimant_phone}</p>
 					</div>
 				</div>
 			</div>
@@ -114,7 +115,7 @@
 								<div class="w-2 h-2 mt-2 rounded-full bg-indigo-500 flex-shrink-0"></div>
 								<div class="ml-3">
 									<p class="text-sm">
-										<span class="font-medium">{(log as any).user_name || '系统'}</span>
+										<span class="font-medium">{(log as ActivityLogWithJoined).user_name || '系统'}</span>
 										<span class="text-gray-600"> · {log.action}</span>
 									</p>
 									{#if log.details}
@@ -146,10 +147,10 @@
 							<span class="w-16 text-sm text-gray-500">状态</span>
 							<span class="badge bg-gray-100 text-gray-700">{STATUS_LABELS[data.item.status]}</span>
 						</div>
-						{#if (data.item as any).locker_code}
+						{#if (data.item as ItemWithJoined).locker_code}
 							<div class="flex items-center">
 								<span class="w-16 text-sm text-gray-500">保管柜</span>
-								<span>{(data.item as any).locker_code}</span>
+								<span>{(data.item as ItemWithJoined).locker_code}</span>
 							</div>
 						{/if}
 					</div>

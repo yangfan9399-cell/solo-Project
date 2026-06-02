@@ -1,8 +1,9 @@
+import type { PageServerLoad, Actions } from './$types';
 import { getItems, getHalls, storeItem } from '$lib/server/services';
 import type { ItemCategory, ItemStatus } from '$lib/types';
 import { fail, redirect } from '@sveltejs/kit';
 
-export function load({ url }) {
+export const load: PageServerLoad = function ({ url }) {
 	const status = url.searchParams.get('status') as ItemStatus | undefined;
 	const category = url.searchParams.get('category') as ItemCategory | undefined;
 	const search = url.searchParams.get('search') || undefined;
@@ -13,9 +14,9 @@ export function load({ url }) {
 		halls: getHalls(),
 		filters: { status, category, search, page }
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	store: async ({ request }) => {
 		const form = await request.formData();
 		const itemId = parseInt(form.get('itemId') as string);

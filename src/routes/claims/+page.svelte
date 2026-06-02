@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { CLAIM_STATUS_LABELS } from '$lib/types';
+	import type { PageData } from './$types';
+	import { CLAIM_STATUS_LABELS, type ClaimWithJoined } from '$lib/types';
 
-	export let data;
+	export let data: PageData;
 
 	let selectedStatus = data.filters.status || '';
 
@@ -67,12 +68,12 @@
 								<td class="py-3 px-4 font-mono text-sm text-indigo-600">#{claim.id}</td>
 								<td class="py-3 px-4">
 									<div>
-										<p class="font-medium">{(claim as any).item_name}</p>
-										<p class="text-xs text-gray-500">{(claim as any).item_code}</p>
+										<p class="font-medium">{(claim as ClaimWithJoined).item_name}</p>
+										<p class="text-xs text-gray-500">{(claim as ClaimWithJoined).item_code}</p>
 									</div>
 								</td>
-								<td class="py-3 px-4">{(claim as any).claimant_name}</td>
-								<td class="py-3 px-4 text-gray-600">{(claim as any).claimant_phone}</td>
+								<td class="py-3 px-4">{(claim as ClaimWithJoined).claimant_name}</td>
+								<td class="py-3 px-4 text-gray-600">{(claim as ClaimWithJoined).claimant_phone}</td>
 								<td class="py-3 px-4">
 									<span class="badge {getStatusColor(claim.status)}">
 										{CLAIM_STATUS_LABELS[claim.status]}

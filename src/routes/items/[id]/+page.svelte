@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { CATEGORY_LABELS, STATUS_LABELS } from '$lib/types';
+	import type { PageData, ActionData } from './$types';
+	import { CATEGORY_LABELS, STATUS_LABELS, type ActivityLogWithJoined, type ItemWithJoined } from '$lib/types';
 
-	export let data;
-	export let form;
+	export let data: PageData;
+	export let form: ActionData | undefined;
 
 	let showStoreModal = false;
 	let showExceptionModal = false;
@@ -116,7 +117,7 @@
 					<div class="grid grid-cols-2 gap-4">
 						<div>
 							<p class="text-sm text-gray-500">保管柜</p>
-							<p class="font-semibold">{(data.item as any).locker_code} ({(data.item as any).locker_area})</p>
+							<p class="font-semibold">{(data.item as ItemWithJoined).locker_code} ({(data.item as ItemWithJoined).locker_area})</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500">入库时间</p>
@@ -124,7 +125,7 @@
 						</div>
 						<div>
 							<p class="text-sm text-gray-500">入库人</p>
-							<p>{(data.item as any).stored_by_name || '-'}</p>
+							<p>{(data.item as ItemWithJoined).stored_by_name || '-'}</p>
 						</div>
 						<div>
 							<p class="text-sm text-gray-500">保管到期</p>
@@ -147,7 +148,7 @@
 								<div class="w-2 h-2 mt-2 rounded-full bg-indigo-500 flex-shrink-0"></div>
 								<div class="ml-3">
 									<p class="text-sm">
-										<span class="font-medium">{(log as any).user_name || '系统'}</span>
+										<span class="font-medium">{(log as ActivityLogWithJoined).user_name || '系统'}</span>
 										<span class="text-gray-600"> · {log.action}</span>
 									</p>
 									{#if log.details}

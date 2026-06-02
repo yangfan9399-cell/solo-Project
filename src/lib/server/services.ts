@@ -11,8 +11,39 @@ import type {
 	PaginatedResult,
 	ActivityLog,
 	User,
-	Hall
+	Hall,
+	ItemWithJoined,
+	ClaimWithJoined,
+	ActivityLogWithJoined,
+	IdType
 } from '$lib/types';
+
+interface ItemRow extends Item {
+	hall_name?: string;
+	movie_name?: string;
+	showtime_start?: string;
+	finder_name?: string;
+	locker_code?: string;
+	locker_area?: string;
+	stored_by_name?: string;
+}
+
+interface ClaimRow extends Claim {
+	item_name?: string;
+	item_code?: string;
+	claimant_name?: string;
+	claimant_phone?: string;
+	verified_by_name?: string;
+	returned_by_name?: string;
+}
+
+interface ActivityLogRow extends ActivityLog {
+	user_name?: string;
+}
+
+interface ShowtimeRow extends Showtime {
+	hall_name?: string;
+}
 
 export function generateItemCode(): string {
 	const date = new Date();
@@ -29,7 +60,7 @@ export function logActivity(
 	userId: number | null,
 	action: string,
 	details?: string
-) {
+): void {
 	db.prepare(
 		'INSERT INTO activity_logs (item_id, claim_id, user_id, action, details) VALUES (?, ?, ?, ?, ?)'
 	).run(itemId, claimId, userId, action, details || null);
@@ -63,7 +94,7 @@ export function getShowtimes(date?: string): Showtime[] {
 	}
 
 	query += 'ORDER BY s.start_time DESC';
-	return db.prepare(query).all(...params) as Showtime[];
+	return db.prepare(query).all(...params) as ShowtimeRow[];
 }
 
 export function createShowtime(
@@ -142,10 +173,10 @@ export function createItem(data: {
 	const itemId = Number(result.lastInsertRowid);
 	logActivity(itemId, null, data.finder_id, 'item_registered', `物品登记: ${data.name}`);
 
-	return getItemById(itemId)!;
+	return getItemById(itemId) as Item;
 }
 
-export function getItemById(id: number): Item | undefined {
+export function getItemById(id: number): ItemWithJoined | undefined {
 	const item = db
 		.prepare(
 			`
@@ -164,27 +195,32 @@ export function getItemById(id: number): Item | undefined {
 		WHERE i.id = ?
 	`
 		)
-		.get(id) as Item | undefined;
+		.get(id) as ItemRow | undefined;
 
 	if (item) {
-		(item as any).hall = item.hall_id ? { id: item.hall_id, name: (item as any).hall_name } : null;
-		(item as any).showtime = item.showtime_id
+		const itemWithJoined = item as ItemWithJoined;
+		itemWithJoined.hall = item.hall_id ? { id: item.hall_id, name: item.hall_name || '' } : undefined;
+		itemWithJoined.showtime = item.showtime_id
 			? {
 					id: item.showtime_id,
-					movie_name: (item as any).movie_name,
-					start_time: (item as any).showtime_start
+					hall_id: item.hall_id || 0,
+					movie_name: item.movie_name || '',
+					start_time: item.showtime_start || '',
+					end_time: '',
+					created_at: ''
 				}
-			: null;
-		(item as any).finder = { id: item.finder_id, name: (item as any).finder_name };
-		(item as any).locker = item.locker_id
-			? { id: item.locker_id, code: (item as any).locker_code, area: (item as any).locker_area }
-			: null;
-		(item as any).stored_by_user = item.stored_by
-			? { id: item.stored_by, name: (item as any).stored_by_name }
-			: null;
+			: undefined;
+		itemWithJoined.finder = { id: item.finder_id, name: item.finder_name || '' } as User;
+		itemWithJoined.locker = item.locker_id
+			? { id: item.locker_id, code: item.locker_code || '', area: item.locker_area || '', capacity: 'medium', status: 'occupied', created_at: '' }
+			: undefined;
+		itemWithJoined.stored_by_user = item.stored_by
+			? { id: item.stored_by, name: item.stored_by_name || '' } as User
+			: undefined;
+		return itemWithJoined;
 	}
 
-	return item;
+	return undefined;
 }
 
 export function getItems(params: {
@@ -194,7 +230,7 @@ export function getItems(params: {
 	search?: string;
 	page?: number;
 	pageSize?: number;
-}): PaginatedResult<Item> {
+}): PaginatedResult<ItemWithJoined> {
 	const page = params.page || 1;
 	const pageSize = params.pageSize || 20;
 	const offset = (page - 1) * pageSize;
@@ -243,7 +279,7 @@ export function getItems(params: {
 		LIMIT ? OFFSET ?
 	`
 		)
-		.all(...queryParams, pageSize, offset) as Item[];
+		.all(...queryParams, pageSize, offset) as ItemWithJoined[];
 
 	return {
 		data: items,
@@ -261,7 +297,7 @@ export function storeItem(itemId: number, lockerId: number, storedBy: number): v
 		
 		UPDATE lockers SET status = 'occupied' WHERE id = ${lockerId};
 	`);
-	logActivity(itemId, null, storedBy, 'item_stored', `存入保管柜`);
+	logActivity(itemId, null, storedBy, 'item_stored', '存入保管柜');
 }
 
 export function updateItemStatus(itemId: number, status: ItemStatus, userId: number, note?: string): void {
@@ -280,7 +316,7 @@ export function updateItemStatus(itemId: number, status: ItemStatus, userId: num
 export function findOrCreateClaimant(data: {
 	name: string;
 	phone: string;
-	id_type?: string;
+	id_type?: IdType;
 	id_number?: string;
 }): Claimant {
 	let claimant = db
@@ -300,8 +336,9 @@ export function findOrCreateClaimant(data: {
 			);
 		claimant = {
 			id: Number(result.lastInsertRowid),
-			...data,
-			id_type: (data.id_type as any) || null,
+			name: data.name,
+			phone: data.phone,
+			id_type: data.id_type || null,
 			id_number: data.id_number || null,
 			created_at: new Date().toISOString()
 		};
@@ -314,9 +351,9 @@ export function createClaim(data: {
 	item_id: number;
 	claimant_name: string;
 	claimant_phone: string;
-	claimant_id_type?: string;
+	claimant_id_type?: IdType;
 	claimant_id_number?: string;
-}): Claim {
+}): ClaimWithJoined {
 	const claimant = findOrCreateClaimant({
 		name: data.claimant_name,
 		phone: data.claimant_phone,
@@ -334,10 +371,10 @@ export function createClaim(data: {
 	db.prepare("UPDATE items SET status = 'claimed' WHERE id = ?").run(data.item_id);
 	logActivity(data.item_id, claimId, null, 'claim_created', `失主: ${claimant.name}`);
 
-	return getClaimById(claimId)!;
+	return getClaimById(claimId) as ClaimWithJoined;
 }
 
-export function getClaimById(id: number): Claim | undefined {
+export function getClaimById(id: number): ClaimWithJoined | undefined {
 	return db
 		.prepare(
 			`
@@ -354,7 +391,7 @@ export function getClaimById(id: number): Claim | undefined {
 		WHERE c.id = ?
 	`
 		)
-		.get(id) as Claim | undefined;
+		.get(id) as ClaimWithJoined | undefined;
 }
 
 export function getClaims(params: {
@@ -362,7 +399,7 @@ export function getClaims(params: {
 	item_id?: number;
 	page?: number;
 	pageSize?: number;
-}): PaginatedResult<Claim> {
+}): PaginatedResult<ClaimWithJoined> {
 	const page = params.page || 1;
 	const pageSize = params.pageSize || 20;
 	const offset = (page - 1) * pageSize;
@@ -398,7 +435,7 @@ export function getClaims(params: {
 		LIMIT ? OFFSET ?
 	`
 		)
-		.all(...queryParams, pageSize, offset) as Claim[];
+		.all(...queryParams, pageSize, offset) as ClaimWithJoined[];
 
 	return {
 		data: claims,
@@ -415,13 +452,16 @@ export function verifyClaim(
 	notes?: string,
 	rejectionReason?: string
 ): void {
+	const notesValue = notes ? `'${notes.replace(/'/g, "''")}'` : 'NULL';
+	const rejectionValue = rejectionReason ? `'${rejectionReason.replace(/'/g, "''")}'` : 'NULL';
+
 	db.exec(`
 		UPDATE claims 
 		SET status = '${status}', 
 		    verification_time = CURRENT_TIMESTAMP, 
 		    verified_by = ${verifiedBy},
-		    verification_notes = ${notes ? `'${notes}'` : 'NULL'},
-		    rejection_reason = ${rejectionReason ? `'${rejectionReason}'` : 'NULL'},
+		    verification_notes = ${notesValue},
+		    rejection_reason = ${rejectionValue},
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = ${claimId};
 	`);
@@ -440,12 +480,14 @@ export function completeClaim(claimId: number, returnedBy: number, signature?: s
 	const claim = getClaimById(claimId);
 	if (!claim) return;
 
+	const signatureValue = signature ? `'${signature.replace(/'/g, "''")}'` : 'NULL';
+
 	db.exec(`
 		UPDATE claims 
 		SET status = 'completed', 
 		    return_time = CURRENT_TIMESTAMP, 
 		    returned_by = ${returnedBy},
-		    signature_image = ${signature ? `'${signature}'` : 'NULL'},
+		    signature_image = ${signatureValue},
 		    updated_at = CURRENT_TIMESTAMP
 		WHERE id = ${claimId};
 		
@@ -482,7 +524,7 @@ export function disposeItem(itemId: number, disposedBy: number, reason: string):
 	logActivity(itemId, null, disposedBy, 'item_disposed', reason);
 }
 
-export function getOverdueItems(): Item[] {
+export function getOverdueItems(): ItemWithJoined[] {
 	return db
 		.prepare(
 			`
@@ -495,10 +537,10 @@ export function getOverdueItems(): Item[] {
 		ORDER BY i.disposal_due_date ASC
 	`
 		)
-		.all() as Item[];
+		.all() as ItemWithJoined[];
 }
 
-export function getActivityLogs(itemId?: number, limit: number = 50): ActivityLog[] {
+export function getActivityLogs(itemId?: number, limit: number = 50): ActivityLogWithJoined[] {
 	let query = `
 		SELECT a.*, u.name as user_name
 		FROM activity_logs a
@@ -514,5 +556,5 @@ export function getActivityLogs(itemId?: number, limit: number = 50): ActivityLo
 	query += 'ORDER BY a.created_at DESC LIMIT ?';
 	params.push(limit);
 
-	return db.prepare(query).all(...params) as ActivityLog[];
+	return db.prepare(query).all(...params) as ActivityLogWithJoined[];
 }

@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { CATEGORY_LABELS, STATUS_LABELS } from '$lib/types';
+	import type { PageData } from './$types';
+	import { CATEGORY_LABELS, STATUS_LABELS, type ItemWithJoined, type ClaimWithJoined } from '$lib/types';
 
-	export let data;
+	export let data: PageData;
 </script>
 
 <div class="space-y-6">
@@ -88,7 +89,7 @@
 								</div>
 								<div class="ml-3">
 									<p class="font-medium text-gray-900">{item.name}</p>
-									<p class="text-sm text-gray-500">{(item as any).hall_name || '未知位置'} · {new Date(item.found_time).toLocaleDateString()}</p>
+									<p class="text-sm text-gray-500">{(item as ItemWithJoined).hall_name || '未知位置'} · {new Date(item.found_time).toLocaleDateString()}</p>
 								</div>
 							</div>
 							<span class="badge bg-blue-100 text-blue-700">{STATUS_LABELS[item.status]}</span>
@@ -115,8 +116,8 @@
 					{#each data.pendingClaims as claim}
 						<div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
 							<div>
-								<p class="font-medium text-gray-900">{(claim as any).claimant_name} 申领</p>
-								<p class="text-sm text-gray-500">{(claim as any).item_name} · {(claim as any).claimant_phone}</p>
+								<p class="font-medium text-gray-900">{(claim as ClaimWithJoined).claimant_name} 申领</p>
+								<p class="text-sm text-gray-500">{(claim as ClaimWithJoined).item_name} · {(claim as ClaimWithJoined).claimant_phone}</p>
 							</div>
 							<a href="/claims/{claim.id}" class="btn btn-primary text-sm">审核</a>
 						</div>

@@ -1,7 +1,8 @@
+import type { PageServerLoad, Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { getClaimById, verifyClaim, completeClaim, getItemById, getActivityLogs } from '$lib/server/services';
 
-export function load({ params }) {
+export const load: PageServerLoad = function ({ params }) {
 	const claim = getClaimById(parseInt(params.id));
 	if (!claim) {
 		throw error(404, '申领记录不存在');
@@ -15,9 +16,9 @@ export function load({ params }) {
 		item,
 		activityLogs: logs
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	approve: async ({ params }) => {
 		try {
 			verifyClaim(parseInt(params.id), 1, 'approved', '身份核验通过');

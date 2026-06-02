@@ -1,15 +1,16 @@
+import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { createItem, getHalls, getShowtimes } from '$lib/server/services';
 import type { ItemCategory } from '$lib/types';
 
-export function load() {
+export const load: PageServerLoad = function () {
 	return {
 		halls: getHalls(),
 		showtimes: getShowtimes(new Date().toISOString().split('T')[0])
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	default: async ({ request }) => {
 		const form = await request.formData();
 

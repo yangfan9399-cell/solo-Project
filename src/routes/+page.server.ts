@@ -1,14 +1,16 @@
+import type { PageServerLoad } from './$types';
 import { getItems, getClaims, getLockers, getOverdueItems } from '$lib/server/services';
 
-export function load() {
+export const load: PageServerLoad = function () {
 	const storingItems = getItems({ status: 'storing', pageSize: 100 });
+	const foundItems = getItems({ status: 'found', pageSize: 1 });
 	const pendingClaims = getClaims({ status: 'pending', pageSize: 100 });
 	const lockers = getLockers();
 	const overdueItems = getOverdueItems();
 
 	return {
 		stats: {
-			totalItems: storingItems.total + getItems({ status: 'found', pageSize: 1 }).total,
+			totalItems: storingItems.total + foundItems.total,
 			storingCount: storingItems.total,
 			pendingClaims: pendingClaims.total,
 			overdueCount: overdueItems.length,
@@ -19,4 +21,4 @@ export function load() {
 		pendingClaims: pendingClaims.data.slice(0, 5),
 		overdueItems: overdueItems.slice(0, 5)
 	};
-}
+};

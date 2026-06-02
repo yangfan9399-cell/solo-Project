@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { CATEGORY_LABELS } from '$lib/types';
+	import type { PageData, ActionData } from './$types';
+	import { CATEGORY_LABELS, type ItemWithJoined } from '$lib/types';
 
-	export let data;
-	export let form;
+	export let data: PageData;
+	export let form: ActionData | undefined;
 
 	let showDisposeModal = false;
 	let selectedItemId: number | null = null;
@@ -58,7 +59,7 @@
 									<span class="ml-2 text-xs text-gray-500 font-mono">{item.item_code}</span>
 								</div>
 								<p class="text-sm text-gray-600">
-									{CATEGORY_LABELS[item.category]} · {(item as any).hall_name || '未知位置'}
+									{CATEGORY_LABELS[item.category]} · {(item as ItemWithJoined).hall_name || '未知位置'}
 								</p>
 								<p class="text-sm text-red-600">
 									超期 {Math.floor((new Date().getTime() - new Date(item.disposal_due_date!).getTime()) / (1000 * 60 * 60 * 24))} 天

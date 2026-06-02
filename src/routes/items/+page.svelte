@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { CATEGORY_LABELS, STATUS_LABELS } from '$lib/types';
+	import type { PageData } from './$types';
+	import { CATEGORY_LABELS, STATUS_LABELS, type ItemWithJoined } from '$lib/types';
 
-	export let data;
+	export let data: PageData;
 
 	let searchTerm = data.filters.search || '';
 	let selectedStatus = data.filters.status || '';
@@ -88,7 +89,7 @@
 									<span class="text-sm text-gray-600">{CATEGORY_LABELS[item.category]}</span>
 								</td>
 								<td class="py-3 px-4 text-sm text-gray-600">
-									{(item as any).hall_name || item.found_location || '未知'}
+									{(item as ItemWithJoined).hall_name || item.found_location || '未知'}
 								</td>
 								<td class="py-3 px-4">
 									<span

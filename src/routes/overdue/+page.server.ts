@@ -1,13 +1,14 @@
+import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { getOverdueItems, disposeItem } from '$lib/server/services';
 
-export function load() {
+export const load: PageServerLoad = function () {
 	return {
 		items: getOverdueItems()
 	};
-}
+};
 
-export const actions = {
+export const actions: Actions = {
 	dispose: async ({ request }) => {
 		const form = await request.formData();
 		const itemId = parseInt(form.get('itemId') as string);

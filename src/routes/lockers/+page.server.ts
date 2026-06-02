@@ -1,6 +1,7 @@
+import type { PageServerLoad } from './$types';
 import { getLockers, getItems } from '$lib/server/services';
 
-export function load() {
+export const load: PageServerLoad = function () {
 	const lockers = getLockers();
 	const items = getItems({ status: 'storing', pageSize: 100 });
 
@@ -18,4 +19,4 @@ export function load() {
 			maintenance: lockers.filter((l) => l.status === 'maintenance').length
 		}
 	};
-}
+};

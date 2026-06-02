@@ -180,3 +180,34 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 	cleaner: '保洁员',
 	reception: '客服前台'
 };
+
+export interface ItemWithJoined extends Item {
+	hall_name?: string;
+	showtime_movie_name?: string;
+	showtime_start?: string;
+	finder_name?: string;
+	locker_code?: string;
+	locker_area?: string;
+	stored_by_name?: string;
+}
+
+export interface ClaimWithJoined extends Claim {
+	item_name?: string;
+	item_code?: string;
+	claimant_name?: string;
+	claimant_phone?: string;
+	verified_by_name?: string;
+	returned_by_name?: string;
+}
+
+export interface ActivityLogWithJoined extends ActivityLog {
+	user_name?: string;
+}
+
+export interface LockerWithItem extends Locker {
+	item?: Item;
+}
+
+export interface PageFormData {
+	error?: string;
+}

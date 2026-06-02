@@ -1,5 +1,8 @@
 <script lang="ts">
-	export let data;
+	import type { PageData } from './$types';
+	import type { ItemWithJoined, LockerWithItem } from '$lib/types';
+
+	export let data: PageData;
 
 	let selectedArea = 'A区';
 
@@ -45,7 +48,7 @@
 
 	<div class="card">
 		<div class="grid grid-cols-5 md:grid-cols-10 gap-3">
-			{#each data.lockers.filter((l: any) => l.area === selectedArea) as locker}
+			{#each data.lockers.filter((l: LockerWithItem) => l.area === selectedArea) as locker}
 				<div
 					class="relative p-3 rounded-lg border-2 text-center cursor-pointer transition-all hover:shadow-md"
 					class:border-green-300={locker.status === 'available'}
@@ -54,7 +57,7 @@
 					class:bg-yellow-50={locker.status === 'occupied'}
 					class:border-gray-300={locker.status === 'maintenance'}
 					class:bg-gray-100={locker.status === 'maintenance'}
-					title={locker.status === 'occupied' && locker.item ? (locker.item as any).name : locker.status}
+					title={locker.status === 'occupied' && locker.item ? (locker.item as ItemWithJoined).name : locker.status}
 				>
 					<div class="text-lg font-mono font-bold
 						{locker.status === 'available' ? 'text-green-700' : ''}
@@ -71,7 +74,7 @@
 						{locker.status === 'available' ? '空' : locker.status === 'occupied' ? '有' : '维'}
 					</div>
 					{#if locker.status === 'occupied' && locker.item}
-						<a href="/items/{(locker.item as any).id}" class="absolute inset-0"></a>
+						<a href="/items/{(locker.item as ItemWithJoined).id}" class="absolute inset-0"></a>
 					{/if}
 				</div>
 			{/each}
@@ -93,18 +96,18 @@
 		</div>
 	</div>
 
-	{#if data.lockers.filter((l: any) => l.area === selectedArea && l.status === 'occupied').length > 0}
+	{#if data.lockers.filter((l: LockerWithItem) => l.area === selectedArea && l.status === 'occupied').length > 0}
 		<div class="card">
 			<h2 class="text-lg font-semibold mb-4">存放物品列表</h2>
 			<div class="space-y-2">
-				{#each data.lockers.filter((l: any) => l.area === selectedArea && l.status === 'occupied' && l.item) as locker}
+				{#each data.lockers.filter((l: LockerWithItem) => l.area === selectedArea && l.status === 'occupied' && l.item) as locker}
 					<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
 						<div class="flex items-center">
 							<span class="font-mono font-bold text-indigo-600 w-16">{locker.code}</span>
-							<span class="font-medium">{(locker.item as any).name}</span>
-							<span class="text-sm text-gray-500 ml-2">{(locker.item as any).item_code}</span>
+							<span class="font-medium">{(locker.item as ItemWithJoined).name}</span>
+							<span class="text-sm text-gray-500 ml-2">{(locker.item as ItemWithJoined).item_code}</span>
 						</div>
-						<a href="/items/{(locker.item as any).id}" class="text-indigo-600 hover:text-indigo-800 text-sm">查看详情</a>
+						<a href="/items/{(locker.item as ItemWithJoined).id}" class="text-indigo-600 hover:text-indigo-800 text-sm">查看详情</a>
 					</div>
 				{/each}
 			</div>
