@@ -1,5 +1,52 @@
-node_modules/
-target/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask / Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-runs/
+Thumbs.db
+
+# Logs
+logs/
+*.log

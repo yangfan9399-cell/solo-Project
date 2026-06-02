@@ -1,13 +1,22 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from config import Config
 from models import db, VenueActivity, InjuryEvent, OnSiteTreatment, Evidence, InsuranceReport, ReviewRectification, CompensationPayment, ExceptionFeedback
+from werkzeug.utils import secure_filename
 import os
+import uuid
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp4', 'avi', 'mov', 'doc', 'docx', 'xls', 'xlsx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
+    csrf = CSRFProtect(app)
     db.init_app(app)
     
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -336,6 +345,54 @@ def create_app():
         db.session.commit()
         flash('反馈已处理！', 'success')
         return redirect(request.referrer or url_for('dashboard'))
+    
+    @app.route('/events/<int:event_id>/evidence', methods=['POST'])
+    def add_evidence(event_id):
+        try:
+            event = InjuryEvent.query.get_or_404(event_id)
+            
+            if 'file' not in request.files:
+                flash('未选择文件！', 'error')
+                return redirect(url_for('event_detail', event_id=event_id))
+            
+            file = request.files['file']
+            if file.filename == '':
+                flash('未选择文件！', 'error')
+                return redirect(url_for('event_detail', event_id=event_id))
+            
+            if not allowed_file(file.filename):
+                flash(f'不支持的文件格式！支持格式：{", ".join(ALLOWED_EXTENSIONS)}', 'error')
+                return redirect(url_for('event_detail', event_id=event_id))
+            
+            if file:
+                original_filename = secure_filename(file.filename)
+                file_ext = original_filename.rsplit('.', 1)[1].lower()
+                unique_filename = f"{uuid.uuid4().hex}_{original_filename}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
+                
+                evidence_type = request.form.get('evidence_type', '其他')
+                description = request.form.get('description', '')
+                uploader = request.form.get('uploader', '未知')
+                
+                evidence = Evidence(
+                    event_id=event_id,
+                    evidence_type=evidence_type,
+                    file_name=original_filename,
+                    file_path=file_path,
+                    description=description,
+                    uploader=uploader
+                )
+                
+                db.session.add(evidence)
+                db.session.commit()
+                
+                flash('证据材料上传成功！', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'上传失败：{str(e)}', 'error')
+        
+        return redirect(url_for('event_detail', event_id=event_id))
     
     @app.route('/api/stats')
     def api_stats():

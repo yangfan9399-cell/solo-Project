@@ -80,6 +80,7 @@
         <div class="flex items-center space-x-2">
             {% for status in status_list %}
             <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="status" value="{{ status }}">
                 <button type="submit" class="px-3 py-1 text-sm rounded-md {% if event.status == status %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                     {{ status }}
@@ -124,6 +125,7 @@
 
         <div id="treatment-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
             <form method="POST" action="{{ url_for('add_treatment', event_id=event.id) }}" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                     <label class="block text-sm font-medium text-gray-700">处置人员</label>
@@ -193,29 +195,84 @@
     <div id="content-evidence" class="tab-content hidden p-6">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-900">证据材料</h3>
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+            <button onclick="toggleForm('evidence-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
                 + 上传证据
             </button>
         </div>
+
+        <div id="evidence-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+            <form method="POST" action="{{ url_for('add_evidence', event_id=event.id) }}" enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">证据类型 *</label>
+                        <select name="evidence_type" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                            <option value="现场照片">现场照片</option>
+                            <option value="视频记录">视频记录</option>
+                            <option value="医疗记录">医疗记录</option>
+                            <option value="费用单据">费用单据</option>
+                            <option value="诊断证明">诊断证明</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">上传人 *</label>
+                        <input type="text" name="uploader" required placeholder="请输入上传人姓名" class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择文件 *</label>
+                    <input type="file" name="file" required class="mt-1 block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-medium
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100">
+                    <p class="mt-1 text-xs text-gray-500">支持格式：图片(jpg/png/gif)、PDF、视频(mp4/avi/mov)、Office文档，最大16MB</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述说明</label>
+                    <textarea name="description" rows="2" placeholder="请简要描述该证据材料的内容..." class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">上传</button>
+                    <button type="button" onclick="toggleForm('evidence-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+                </div>
+            </form>
+        </div>
+
         {% if event.evidences %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {% for e in event.evidences %}
-            <div class="border rounded-lg p-4 flex items-center space-x-4">
-                <div class="text-3xl">
-                    {% if e.evidence_type == '现场照片' %}📷{% elif e.evidence_type == '视频记录' %}🎬{% elif e.evidence_type == '医疗记录' %}📄{% else %}📎{% endif %}
+            <div class="border rounded-lg p-4 flex items-center space-x-4 hover:shadow-md transition-shadow">
+                <div class="text-3xl flex-shrink-0">
+                    {% if e.evidence_type == '现场照片' %}📷
+                    {% elif e.evidence_type == '视频记录' %}🎬
+                    {% elif e.evidence_type == '医疗记录' %}📄
+                    {% elif e.evidence_type == '费用单据' %}🧾
+                    {% elif e.evidence_type == '诊断证明' %}🏥
+                    {% else %}📎{% endif %}
                 </div>
-                <div class="flex-1">
-                    <div class="font-medium text-gray-900">{{ e.file_name }}</div>
-                    <div class="text-sm text-gray-500">{{ e.evidence_type }} · {{ e.uploader }} · {{ e.uploaded_at.strftime('%m-%d %H:%M') }}</div>
-                    {% if e.description %}<div class="text-sm text-gray-600">{{ e.description }}</div>{% endif %}
+                <div class="flex-1 min-w-0">
+                    <div class="font-medium text-gray-900 truncate" title="{{ e.file_name }}">{{ e.file_name }}</div>
+                    <div class="text-sm text-gray-500">
+                        <span class="px-2 py-0.5 bg-gray-100 rounded text-xs mr-2">{{ e.evidence_type }}</span>
+                        {{ e.uploader }} · {{ e.uploaded_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                    {% if e.description %}<div class="text-sm text-gray-600 mt-1">{{ e.description }}</div>{% endif %}
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
         <div class="text-center py-8 text-gray-500">
-            <span class="text-3xl">📎</span>
-            <p class="mt-2">暂无证据材料</p>
+            <span class="text-4xl">📎</span>
+            <h3 class="mt-3 text-lg font-medium text-gray-900">暂无证据材料</h3>
+            <p class="mt-1 text-sm">点击上方"上传证据"按钮添加相关材料</p>
         </div>
         {% endif %}
     </div>
@@ -230,6 +287,7 @@
 
         <div id="insurance-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
             <form method="POST" action="{{ url_for('add_insurance_report', event_id=event.id) }}" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                     <label class="block text-sm font-medium text-gray-700">报案人</label>
@@ -322,6 +380,7 @@
 
     <div id="review-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
         <form method="POST" action="{{ url_for('add_review', event_id=event.id) }}" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                 <label class="block text-sm font-medium text-gray-700">复盘人</label>
@@ -410,6 +469,7 @@
 
     <div id="payment-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
         <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                 <label class="block text-sm font-medium text-gray-700">赔付编号</label>
@@ -493,6 +553,7 @@
 
     <div id="feedback-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
         <form method="POST" action="{{ url_for('add_feedback', event_id=event.id) }}" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                 <label class="block text-sm font-medium text-gray-700">反馈类型</label>
@@ -544,6 +605,7 @@
             {% endif %}
             {% if not feedback.handled %}
             <form method="POST" action="{{ url_for('handle_feedback', feedback_id=feedback.id) }}" class="mt-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="text" name="handle_note" placeholder="输入处理说明" class="border rounded-md px-3 py-1 text-sm w-full">
                 <button type="submit" class="mt-1 px-3 py-1 bg-green-600 text-white rounded text-xs">标记已处理</button>
             </form>
