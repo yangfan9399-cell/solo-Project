@@ -115,6 +115,7 @@ class ReviewRectification(db.Model):
     deadline = db.Column(db.DateTime)
     completed = db.Column(db.Boolean, default=False)
     completion_note = db.Column(db.Text)
+    completed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class CompensationPayment(db.Model):

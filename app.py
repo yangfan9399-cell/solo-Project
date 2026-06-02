@@ -52,6 +52,12 @@ def create_app():
     def dashboard():
         events = InjuryEvent.query.order_by(InjuryEvent.created_at.desc()).all()
         activities = VenueActivity.query.filter_by(is_active=True).order_by(VenueActivity.start_time.desc()).all()
+        all_reviews = ReviewRectification.query.all()
+        
+        now = datetime.utcnow()
+        pending_reviews = [r for r in all_reviews if not r.completed and (r.deadline is None or r.deadline >= now)]
+        overdue_reviews = [r for r in all_reviews if not r.completed and r.deadline is not None and r.deadline < now]
+        completed_reviews = [r for r in all_reviews if r.completed]
         
         stats = {
             'total': len(events),
@@ -59,7 +65,10 @@ def create_app():
             'processing': len([e for e in events if e.status in ['现场处置中', '已报案', '跟进中']]),
             'completed': len([e for e in events if e.status in ['已结案', '已归档']]),
             'high_risk': len([e for e in events if e.risk_level == 'high']),
-            'active_activities': len(activities)
+            'active_activities': len(activities),
+            'pending_reviews': len(pending_reviews),
+            'overdue_reviews': len(overdue_reviews),
+            'completed_reviews': len(completed_reviews)
         }
         
         recent_events = events[:5]
@@ -70,7 +79,9 @@ def create_app():
                              activities=activities, 
                              stats=stats,
                              recent_events=recent_events,
-                             pending_feedback=pending_feedback)
+                             pending_feedback=pending_feedback,
+                             pending_reviews=pending_reviews,
+                             overdue_reviews=overdue_reviews)
     
     @app.route('/events')
     def event_list():
@@ -96,7 +107,7 @@ def create_app():
     @app.route('/events/<int:event_id>')
     def event_detail(event_id):
         event = InjuryEvent.query.get_or_404(event_id)
-        return render_template('event_detail.html', event=event)
+        return render_template('event_detail.html', event=event, now=datetime.utcnow())
     
     @app.route('/events/new', methods=['GET', 'POST'])
     def event_create():
@@ -288,6 +299,24 @@ def create_app():
             flash(f'添加失败：{str(e)}', 'error')
         
         return redirect(url_for('event_detail', event_id=event_id))
+    
+    @app.route('/review/<int:review_id>/complete', methods=['POST'])
+    def complete_review(review_id):
+        try:
+            review = ReviewRectification.query.get_or_404(review_id)
+            review.completed = True
+            review.completion_note = request.form.get('completion_note', '')
+            
+            if hasattr(review, 'completed_at'):
+                review.completed_at = datetime.utcnow()
+            
+            db.session.commit()
+            flash('整改已完成！', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'操作失败：{str(e)}', 'error')
+        
+        return redirect(request.referrer or url_for('event_detail', event_id=review.event_id))
     
     @app.route('/events/<int:event_id>/payment', methods=['POST'])
     def add_payment(event_id):

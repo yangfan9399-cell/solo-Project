@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8 gap-4">
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -107,6 +107,38 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-yellow-400">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">⏳</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">待整改</dt>
+                            <dd class="text-lg font-semibold text-yellow-600">{{ stats.pending_reviews }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg border-l-4 border-red-500">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">🔥</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">逾期整改</dt>
+                            <dd class="text-lg font-semibold text-red-600">{{ stats.overdue_reviews }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -167,6 +199,66 @@
                 </div>
                 <div class="px-4 py-3 bg-gray-50 border-t rounded-b-lg">
                     <a href="{{ url_for('activity_create') }}" class="text-sm text-blue-600 hover:text-blue-700">+ 新增活动</a>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">整改跟踪</h2>
+                    <div class="flex space-x-2">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">待整改 {{ stats.pending_reviews }}</span>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">逾期 {{ stats.overdue_reviews }}</span>
+                    </div>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    {% if overdue_reviews or pending_reviews %}
+                        {% if overdue_reviews %}
+                            {% for review in overdue_reviews %}
+                            <div class="p-4 bg-red-50 hover:bg-red-100 cursor-pointer" onclick="window.location='{{ url_for('event_detail', event_id=review.event_id) }}#content-review'">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800 font-medium">已逾期</span>
+                                            <span class="text-xs text-gray-500">{{ review.event.event_no }}</span>
+                                        </div>
+                                        <p class="mt-1 text-sm text-gray-700 font-medium truncate">{{ review.improvement_measures[:50] }}...</p>
+                                        <div class="mt-1 flex items-center text-xs text-gray-500 space-x-2">
+                                            <span>👤 {{ review.responsible_person or '未指定' }}</span>
+                                            <span>📅 到期：{{ review.deadline.strftime('%m-%d') }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-red-400">→</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if pending_reviews %}
+                            {% for review in pending_reviews %}
+                            <div class="p-4 bg-yellow-50 hover:bg-yellow-100 cursor-pointer" onclick="window.location='{{ url_for('event_detail', event_id=review.event_id) }}#content-review'">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-800 font-medium">待整改</span>
+                                            <span class="text-xs text-gray-500">{{ review.event.event_no }}</span>
+                                        </div>
+                                        <p class="mt-1 text-sm text-gray-700 font-medium truncate">{{ review.improvement_measures[:50] }}...</p>
+                                        <div class="mt-1 flex items-center text-xs text-gray-500 space-x-2">
+                                            <span>👤 {{ review.responsible_person or '未指定' }}</span>
+                                            <span>📅 期限：{{ review.deadline.strftime('%m-%d') if review.deadline else '未设置' }}</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-yellow-400">→</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <span class="text-2xl">✅</span>
+                            <p class="mt-1 text-sm">暂无待整改项</p>
+                            <p class="text-xs text-gray-400 mt-1">所有整改计划均已完成</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
