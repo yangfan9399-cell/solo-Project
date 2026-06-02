@@ -41,9 +41,14 @@ export default function SurveysPage() {
   useEffect(() => {
     async function loadData() {
       try {
+        let repairFilters: any = {}
+        if (user?.role === 'STUDENT') {
+          repairFilters.creatorId = user.id
+        }
+
         const [surveysResult, repairsResult] = await Promise.all([
           getSatisfactionSurveys(),
-          getRepairOrders(),
+          getRepairOrders(repairFilters),
         ])
 
         if (surveysResult.success) setSurveys(surveysResult.data as any[])
@@ -54,8 +59,8 @@ export default function SurveysPage() {
         setLoading(false)
       }
     }
-    loadData()
-  }, [])
+    if (user) loadData()
+  }, [user])
 
   const completedRepairsWithoutSurvey = repairs.filter(
     (r) =>

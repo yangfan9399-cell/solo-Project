@@ -164,6 +164,7 @@ export async function getRepairOrders(filters?: {
   roomId?: string
   buildingId?: string
   assignedWorkerId?: string
+  creatorId?: string
 }) {
   try {
     const where: any = {}
@@ -171,6 +172,7 @@ export async function getRepairOrders(filters?: {
     if (filters?.roomId) where.roomId = filters.roomId
     if (filters?.buildingId) where.room = { buildingId: filters.buildingId }
     if (filters?.assignedWorkerId) where.assignedWorkerId = filters.assignedWorkerId
+    if (filters?.creatorId) where.creatorId = filters.creatorId
 
     const orders = await prisma.repairOrder.findMany({
       where,

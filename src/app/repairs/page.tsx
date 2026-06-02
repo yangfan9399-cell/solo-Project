@@ -39,8 +39,15 @@ export default function RepairsPage() {
   useEffect(() => {
     async function loadData() {
       try {
+        let repairFilters: any = {}
+        if (user?.role === 'STUDENT') {
+          repairFilters.creatorId = user.id
+        } else if (user?.role === 'MAINTENANCE_WORKER') {
+          repairFilters.assignedWorkerId = user.id
+        }
+
         const [repairsResult, roomsResult, categoriesResult, workersResult] = await Promise.all([
-          getRepairOrders(),
+          getRepairOrders(repairFilters),
           getRooms(),
           getFacilityCategories(),
           getMaintenanceWorkers(),
@@ -56,8 +63,8 @@ export default function RepairsPage() {
         setLoading(false)
       }
     }
-    loadData()
-  }, [])
+    if (user) loadData()
+  }, [user])
 
   const filteredRepairs = repairs.filter((repair) => {
     const matchesSearch =
@@ -93,12 +100,34 @@ export default function RepairsPage() {
   if (loading) return <LoadingPage />
   if (error) return <ErrorState title={error} />
 
+  const getPageTitle = () => {
+    switch (user?.role) {
+      case 'STUDENT':
+        return '我的报修'
+      case 'MAINTENANCE_WORKER':
+        return '我的任务'
+      default:
+        return '报修管理'
+    }
+  }
+
+  const getPageSubtitle = () => {
+    switch (user?.role) {
+      case 'STUDENT':
+        return `共 ${filteredRepairs.length} 条我的报修记录`
+      case 'MAINTENANCE_WORKER':
+        return `共 ${filteredRepairs.length} 条分配给我的任务`
+      default:
+        return `共 ${filteredRepairs.length} 条报修记录`
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">报修管理</h1>
-          <p className="text-gray-500 mt-1">共 {filteredRepairs.length} 条报修记录</p>
+          <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
+          <p className="text-gray-500 mt-1">{getPageSubtitle()}</p>
         </div>
         {user?.role === 'STUDENT' || user?.role === 'DORM_MANAGER' ? (
           <button
@@ -143,8 +172,22 @@ export default function RepairsPage() {
 
       {filteredRepairs.length === 0 ? (
         <EmptyState
-          title="暂无报修记录"
-          description={searchTerm || statusFilter !== 'ALL' ? '没有找到符合条件的报修单' : '还没有任何报修记录'}
+          title={
+            user?.role === 'STUDENT'
+              ? '暂无报修记录'
+              : user?.role === 'MAINTENANCE_WORKER'
+              ? '暂无任务'
+              : '暂无报修记录'
+          }
+          description={
+            searchTerm || statusFilter !== 'ALL'
+              ? '没有找到符合条件的记录'
+              : user?.role === 'STUDENT'
+              ? '您还没有提交任何报修单，点击右上角提交报修'
+              : user?.role === 'MAINTENANCE_WORKER'
+              ? '目前没有分配给您的维修任务'
+              : '还没有任何报修记录'
+          }
         />
       ) : (
         <div className="table-container">
