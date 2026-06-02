@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}新建伤情上报 - 体育场馆伤情事件管理系统{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center space-x-4">
+        <a href="{{ url_for('event_list') }}" class="text-gray-400 hover:text-gray-600">← 返回列表</a>
+        <h1 class="text-2xl font-bold text-gray-900">新建伤情事件上报</h1>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="POST" action="{{ url_for('event_create') }}" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b pb-2">基本信息</h3>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">所属活动 *</label>
+                        <select name="activity_id" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                            <option value="">请选择活动</option>
+                            {% for activity in activities %}
+                            <option value="{{ activity.id }}">{{ activity.activity_name }} - {{ activity.venue }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not activities %}
+                        <p class="mt-1 text-sm text-red-500">暂无进行中的活动，请先<a href="{{ url_for('activity_create') }}" class="text-blue-600 underline">创建活动</a></p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">上报人姓名 *</label>
+                        <input type="text" name="reporter_name" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">上报人角色 *</label>
+                        <select name="reporter_role" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                            {% for role in role_list %}
+                            <option value="{{ role }}">{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">受伤时间 *</label>
+                        <input type="datetime-local" name="injury_time" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">受伤地点 *</label>
+                        <input type="text" name="injury_location" required placeholder="如：主体育馆A区篮球场" class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900 border-b pb-2">伤者信息</h3>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">伤者姓名 *</label>
+                        <input type="text" name="injured_name" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">性别</label>
+                            <select name="injured_gender" class="mt-1 block w-full border rounded-md px-3 py-2">
+                                <option value="">请选择</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">年龄</label>
+                            <input type="number" name="injured_age" min="1" max="120" class="mt-1 block w-full border rounded-md px-3 py-2">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">伤情类型 *</label>
+                        <select name="injury_type" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                            <option value="">请选择</option>
+                            <option value="扭伤">扭伤</option>
+                            <option value="拉伤">拉伤</option>
+                            <option value="擦伤">擦伤</option>
+                            <option value="磕碰伤">磕碰伤</option>
+                            <option value="骨折">骨折</option>
+                            <option value="脱臼">脱臼</option>
+                            <option value="韧带损伤">韧带损伤</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">受伤部位</label>
+                        <input type="text" name="injury_part" placeholder="如：左脚踝、右膝盖等" class="mt-1 block w-full border rounded-md px-3 py-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">严重程度 *</label>
+                        <select name="severity" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                            {% for s in severity_list %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t pt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">伤情描述 *</label>
+                <textarea name="description" rows="4" required placeholder="请详细描述受伤经过、现场情况等..." class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('event_list') }}" class="px-6 py-2 border rounded-md text-gray-700 hover:bg-gray-50">取消</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">提交上报</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

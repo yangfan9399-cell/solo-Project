@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}首页看板 - 体育场馆伤情事件管理系统{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">事件风险看板</h1>
+        <a href="{{ url_for('event_create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+            ➕ 新建伤情上报
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">📋</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">事件总数</dt>
+                            <dd class="text-lg font-semibold text-gray-900">{{ stats.total }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">⏳</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">待处理</dt>
+                            <dd class="text-lg font-semibold text-yellow-600">{{ stats.pending }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">🔄</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">处理中</dt>
+                            <dd class="text-lg font-semibold text-blue-600">{{ stats.processing }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">✅</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">已完成</dt>
+                            <dd class="text-lg font-semibold text-green-600">{{ stats.completed }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">⚠️</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">高风险</dt>
+                            <dd class="text-lg font-semibold text-red-600">{{ stats.high_risk }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-3xl">🏟️</span>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">进行中活动</dt>
+                            <dd class="text-lg font-semibold text-purple-600">{{ stats.active_activities }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:px-6 border-b">
+                <h2 class="text-lg font-medium text-gray-900">最近事件</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% if recent_events %}
+                    {% for event in recent_events %}
+                    <div class="p-4 hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('event_detail', event_id=event.id) }}'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-medium text-gray-900">{{ event.event_no }}</span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ status_colors[event.status] }}">{{ event.status }}</span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ severity_colors[event.severity] }}">{{ event.severity }}</span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-600">{{ event.injured_name }} - {{ event.injury_type }}</p>
+                                <p class="text-xs text-gray-400">{{ event.activity.activity_name }} | {{ event.injury_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-8 text-center text-gray-500">
+                        <span class="text-4xl">📭</span>
+                        <p class="mt-2">暂无事件记录</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t rounded-b-lg">
+                <a href="{{ url_for('event_list') }}" class="text-sm text-blue-600 hover:text-blue-700">查看全部事件 →</a>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b">
+                    <h2 class="text-lg font-medium text-gray-900">进行中的活动</h2>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    {% if activities %}
+                        {% for activity in activities %}
+                        <div class="p-4">
+                            <div class="font-medium text-gray-900">{{ activity.activity_name }}</div>
+                            <p class="text-sm text-gray-500">{{ activity.venue }}</p>
+                            <p class="text-xs text-gray-400">{{ activity.start_time.strftime('%m-%d') }} ~ {{ activity.end_time.strftime('%m-%d') if activity.end_time else '进行中' }}</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <span class="text-2xl">🏟️</span>
+                            <p class="mt-1 text-sm">暂无进行中活动</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="px-4 py-3 bg-gray-50 border-t rounded-b-lg">
+                    <a href="{{ url_for('activity_create') }}" class="text-sm text-blue-600 hover:text-blue-700">+ 新增活动</a>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:px-6 border-b flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900">待处理异常反馈</h2>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">{{ pending_feedback|length }}</span>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    {% if pending_feedback %}
+                        {% for feedback in pending_feedback %}
+                        <div class="p-4">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <span class="px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800">{{ feedback.feedback_type }}</span>
+                                    <p class="mt-1 text-sm text-gray-600">{{ feedback.content }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ feedback.feedback_by }} · {{ feedback.feedback_time.strftime('%m-%d %H:%M') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-6 text-center text-gray-500">
+                            <span class="text-2xl">🎉</span>
+                            <p class="mt-1 text-sm">暂无待处理反馈</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

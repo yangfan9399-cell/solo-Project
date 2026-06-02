@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}新增活动 - 体育场馆伤情事件管理系统{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center space-x-4">
+        <a href="{{ url_for('activity_list') }}" class="text-gray-400 hover:text-gray-600">← 返回列表</a>
+        <h1 class="text-2xl font-bold text-gray-900">新增活动</h1>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="POST" action="{{ url_for('activity_create') }}" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">活动名称 *</label>
+                    <input type="text" name="activity_name" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">场馆地点 *</label>
+                    <input type="text" name="venue" required placeholder="如：主体育馆A区" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">活动类型</label>
+                    <select name="activity_type" class="mt-1 block w-full border rounded-md px-3 py-2">
+                        <option value="">请选择</option>
+                        <option value="竞技比赛">竞技比赛</option>
+                        <option value="培训教学">培训教学</option>
+                        <option value="团建活动">团建活动</option>
+                        <option value="公开课程">公开课程</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">参与人数</label>
+                    <input type="number" name="participant_count" min="0" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">开始时间 *</label>
+                    <input type="datetime-local" name="start_time" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">结束时间</label>
+                    <input type="datetime-local" name="end_time" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">主办方</label>
+                    <input type="text" name="organizer" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">联系电话</label>
+                    <input type="tel" name="contact_phone" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">备注</label>
+                <textarea name="remarks" rows="3" class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('activity_list') }}" class="px-6 py-2 border rounded-md text-gray-700 hover:bg-gray-50">取消</a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">创建活动</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

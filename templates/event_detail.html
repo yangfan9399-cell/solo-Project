@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.event_no }} - 事件详情{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <a href="{{ url_for('event_list') }}" class="text-gray-400 hover:text-gray-600">← 返回列表</a>
+            <h1 class="text-2xl font-bold text-gray-900">事件详情</h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="px-3 py-1 text-sm font-medium rounded-full {{ status_colors[event.status] }}">{{ event.status }}</span>
+            <span class="px-3 py-1 text-sm font-medium rounded-full {{ severity_colors[event.severity] }}">{{ event.severity }}</span>
+            <span class="px-3 py-1 text-sm font-medium rounded-full {{ risk_colors[event.risk_level] }}">
+                {% if event.risk_level == 'low' %}低风险{% elif event.risk_level == 'medium' %}中风险{% else %}高风险{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+            <h2 class="text-lg font-medium text-gray-900 mb-4">基本信息</h2>
+            <dl class="space-y-3">
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">事件编号：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.event_no }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">所属活动：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.activity.activity_name }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">发生地点：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injury_location }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">发生时间：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injury_time.strftime('%Y-%m-%d %H:%M') }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">上报人：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.reporter_name }} ({{ event.reporter_role }})</dd>
+                </div>
+            </dl>
+        </div>
+        <div>
+            <h2 class="text-lg font-medium text-gray-900 mb-4">伤者信息</h2>
+            <dl class="space-y-3">
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">姓名：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injured_name }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">性别：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injured_gender or '未填写' }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">年龄：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injured_age or '未填写' }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">伤情类型：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injury_type }}</dd>
+                </div>
+                <div class="flex">
+                    <dt class="w-24 text-sm text-gray-500">受伤部位：</dt>
+                    <dd class="text-sm font-medium text-gray-900">{{ event.injury_part or '未填写' }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+    <div class="mt-6">
+        <h3 class="text-sm font-medium text-gray-500 mb-2">伤情描述：</h3>
+        <p class="text-sm text-gray-900 bg-gray-50 p-4 rounded-md">{{ event.description }}</p>
+    </div>
+    <div class="mt-4 pt-4 border-t">
+        <h3 class="text-sm font-medium text-gray-500 mb-2">状态流转：</h3>
+        <div class="flex items-center space-x-2">
+            {% for status in status_list %}
+            <form method="POST" action="{{ url_for('update_event_status', event_id=event.id) }}" class="inline">
+                <input type="hidden" name="status" value="{{ status }}">
+                <button type="submit" class="px-3 py-1 text-sm rounded-md {% if event.status == status %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    {{ status }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="bg-white shadow rounded-lg">
+    <div class="border-b">
+        <nav class="flex -mb-px">
+            <button onclick="showTab('treatment')" id="tab-treatment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+                🏥 现场处置 ({{ event.treatments|length }})
+            </button>
+            <button onclick="showTab('evidence')" id="tab-evidence" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                📎 证据材料 ({{ event.evidences|length }})
+            </button>
+            <button onclick="showTab('insurance')" id="tab-insurance" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                📋 保险报案 ({{ event.insurance_reports|length }})
+            </button>
+            <button onclick="showTab('review')" id="tab-review" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                🔍 复盘整改 ({{ event.reviews|length }})
+            </button>
+            <button onclick="showTab('payment')" id="tab-payment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                💰 赔付进度 ({{ event.payments|length }})
+            </button>
+            <button onclick="showTab('feedback')" id="tab-feedback" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                💬 异常反馈 ({{ event.feedbacks|length }})
+            </button>
+        </nav>
+    </div>
+
+    <div id="content-treatment" class="tab-content p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">现场处置记录</h3>
+            <button onclick="toggleForm('treatment-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                + 添加处置记录
+            </button>
+        </div>
+
+        <div id="treatment-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+            <form method="POST" action="{{ url_for('add_treatment', event_id=event.id) }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-sm font-medium text-gray-700">处置人员</label>
+                    <input type="text" name="handler_name" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">处置时间</label>
+                    <input type="datetime-local" name="treatment_time" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">处置措施</label>
+                <textarea name="measures" rows="3" required class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">生命体征</label>
+                    <input type="text" name="vital_signs" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">用药情况</label>
+                    <input type="text" name="medication" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="referred" class="rounded">
+                    <span class="ml-2 text-sm text-gray-700">是否转院</span>
+                </label>
+                <input type="text" name="referral_hospital" placeholder="转院医院" class="border rounded-md px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">后续安排</label>
+                <textarea name="next_steps" rows="2" class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">提交</button>
+                <button type="button" onclick="toggleForm('treatment-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+            </div>
+        </form>
+    </div>
+
+    {% if event.treatments %}
+        <div class="space-y-4">
+            {% for t in event.treatments %}
+            <div class="border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-medium text-gray-900">{{ t.handler_name }}</span>
+                    <span class="text-sm text-gray-500">{{ t.treatment_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <p class="text-sm text-gray-700">{{ t.measures }}</p>
+                {% if t.vital_signs %}<p class="mt-2 text-sm text-gray-500">生命体征：{{ t.vital_signs }}</p>{% endif %}
+                {% if t.medication %}<p class="text-sm text-gray-500">用药：{{ t.medication }}</p>{% endif %}
+                {% if t.referred %}<p class="text-sm text-red-600">已转院至：{{ t.referral_hospital }}</p>{% endif %}
+                {% if t.next_steps %}<p class="mt-2 text-sm text-gray-600 bg-blue-50 p-2 rounded">后续：{{ t.next_steps }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <span class="text-3xl">🏥</span>
+            <p class="mt-2">暂无处置记录</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="content-evidence" class="tab-content hidden p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">证据材料</h3>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                + 上传证据
+            </button>
+        </div>
+        {% if event.evidences %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for e in event.evidences %}
+            <div class="border rounded-lg p-4 flex items-center space-x-4">
+                <div class="text-3xl">
+                    {% if e.evidence_type == '现场照片' %}📷{% elif e.evidence_type == '视频记录' %}🎬{% elif e.evidence_type == '医疗记录' %}📄{% else %}📎{% endif %}
+                </div>
+                <div class="flex-1">
+                    <div class="font-medium text-gray-900">{{ e.file_name }}</div>
+                    <div class="text-sm text-gray-500">{{ e.evidence_type }} · {{ e.uploader }} · {{ e.uploaded_at.strftime('%m-%d %H:%M') }}</div>
+                    {% if e.description %}<div class="text-sm text-gray-600">{{ e.description }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <span class="text-3xl">📎</span>
+            <p class="mt-2">暂无证据材料</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="content-insurance" class="tab-content hidden p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">保险报案信息</h3>
+            <button onclick="toggleForm('insurance-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                + 保险报案
+            </button>
+        </div>
+
+        <div id="insurance-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+            <form method="POST" action="{{ url_for('add_insurance_report', event_id=event.id) }}" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                    <label class="block text-sm font-medium text-gray-700">报案人</label>
+                    <input type="text" name="reporter" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">报案时间</label>
+                    <input type="datetime-local" name="report_time" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">报案编号</label>
+                    <input type="text" name="report_no" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">保险公司</label>
+                    <input type="text" name="insurance_company" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">保单号</label>
+                    <input type="text" name="policy_no" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">预估金额</label>
+                    <input type="number" step="0.01" name="estimated_amount" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">索赔人</label>
+                    <input type="text" name="claimant_name" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">联系电话</label>
+                    <input type="text" name="claimant_contact" class="mt-1 block w-full border rounded-md px-3 py-2">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">备注</label>
+                <textarea name="remarks" rows="2" class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">提交报案</button>
+                <button type="button" onclick="toggleForm('insurance-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+            </div>
+        </form>
+    </div>
+
+    {% if event.insurance_reports %}
+        <div class="space-y-4">
+            {% for report in event.insurance_reports %}
+            <div class="border rounded-lg p-4">
+                <div class="flex justify-between items-start mb-2">
+                <div>
+                    <span class="font-medium text-gray-900">{{ report.report_no or '未编号' }}</span>
+                    <span class="ml-2 px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-800">{{ report.status }}</span>
+                </div>
+                <span class="text-sm text-gray-500">{{ report.report_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>报案人：{{ report.reporter }}</div>
+                <div>保险公司：{{ report.insurance_company or '-' }}</div>
+                <div>保单号：{{ report.policy_no or '-' }}</div>
+                <div>预估金额：¥{{ report.estimated_amount }}</div>
+                <div>索赔人：{{ report.claimant_name or '-' }}</div>
+                <div>联系电话：{{ report.claimant_contact or '-' }}</div>
+            </div>
+            {% if report.remarks %}<p class="mt-2 text-sm text-gray-600">备注：{{ report.remarks }}</p>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <span class="text-3xl">📋</span>
+        <p class="mt-2">暂无保险报案</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="content-review" class="tab-content hidden p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">复盘整改</h3>
+        <button onclick="toggleForm('review-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+            + 添加复盘
+        </button>
+    </div>
+
+    <div id="review-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+        <form method="POST" action="{{ url_for('add_review', event_id=event.id) }}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                <label class="block text-sm font-medium text-gray-700">复盘人</label>
+                <input type="text" name="reviewer" required class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">复盘时间</label>
+                <input type="datetime-local" name="review_time" required class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">根本原因</label>
+            <textarea name="root_cause" rows="3" required class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">改进措施</label>
+            <textarea name="improvement_measures" rows="3" required class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">责任人</label>
+                <input type="text" name="responsible_person" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">完成期限</label>
+                <input type="datetime-local" name="deadline" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">提交</button>
+            <button type="button" onclick="toggleForm('review-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+        </div>
+    </form>
+</div>
+
+{% if event.reviews %}
+    <div class="space-y-4">
+        {% for review in event.reviews %}
+        <div class="border rounded-lg p-4 {% if review.completed %}bg-green-50{% endif %}">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="font-medium text-gray-900">{{ review.reviewer }}</span>
+                    {% if review.completed %}
+                    <span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">已完成</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-800">进行中</span>
+                    {% endif %}
+                </div>
+                <span class="text-sm text-gray-500">{{ review.review_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="mt-2">
+                <p class="text-sm font-medium text-gray-700">根本原因：</p>
+                <p class="text-sm text-gray-600">{{ review.root_cause }}</p>
+            </div>
+            <div class="mt-2">
+                <p class="text-sm font-medium text-gray-700">改进措施：</p>
+                <p class="text-sm text-gray-600">{{ review.improvement_measures }}</p>
+            </div>
+            <div class="mt-2 flex text-sm text-gray-500 space-x-4">
+                <span>责任人：{{ review.responsible_person or '-' }}</span>
+                <span>期限：{{ review.deadline.strftime('%Y-%m-%d') if review.deadline else '-' }}</span>
+            </div>
+            {% if review.completion_note %}
+            <div class="mt-2 p-2 bg-green-100 rounded text-sm text-green-800">
+                完成说明：{{ review.completion_note }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <span class="text-3xl">🔍</span>
+        <p class="mt-2">暂无复盘记录</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="content-payment" class="tab-content hidden p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">赔付进度</h3>
+        <button onclick="toggleForm('payment-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+            + 添加赔付记录
+        </button>
+    </div>
+
+    <div id="payment-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+        <form method="POST" action="{{ url_for('add_payment', event_id=event.id) }}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                <label class="block text-sm font-medium text-gray-700">赔付编号</label>
+                <input type="text" name="payment_no" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">赔付金额</label>
+                <input type="number" step="0.01" name="amount" required class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">赔付时间</label>
+                <input type="datetime-local" name="payment_time" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">支付方式</label>
+                <input type="text" name="payment_method" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">收款人</label>
+                <input type="text" name="payee" class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">状态</label>
+                <select name="status" class="mt-1 block w-full border rounded-md px-3 py-2">
+                    <option value="处理中">处理中</option>
+                    <option value="已到账">已到账</option>
+                    <option value="已驳回">已驳回</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">备注</label>
+            <textarea name="remarks" rows="2" class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+        </div>
+        <div class="flex space-x-2">
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">提交</button>
+            <button type="button" onclick="toggleForm('payment-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+        </div>
+    </form>
+</div>
+
+{% if event.payments %}
+    <div class="space-y-4">
+        {% for payment in event.payments %}
+        <div class="border rounded-lg p-4">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="font-medium text-gray-900">{{ payment.payment_no or '未编号' }}</span>
+                    <span class="px-2 py-0.5 text-xs rounded {% if payment.status == '已到账' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">{{ payment.status }}</span>
+                </div>
+                <span class="text-lg font-bold text-green-600">¥{{ payment.amount }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>支付方式：{{ payment.payment_method or '-' }}</div>
+                <div>收款人：{{ payment.payee or '-' }}</div>
+                <div>赔付时间：{{ payment.payment_time.strftime('%Y-%m-%d %H:%M') if payment.payment_time else '-' }}</div>
+            </div>
+            {% if payment.remarks %}<p class="mt-2 text-sm text-gray-600">备注：{{ payment.remarks }}</p>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <span class="text-3xl">💰</span>
+        <p class="mt-2">暂无赔付记录</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="content-feedback" class="tab-content hidden p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">异常反馈</h3>
+        <button onclick="toggleForm('feedback-form')" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+            + 提交反馈
+        </button>
+    </div>
+
+    <div id="feedback-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+        <form method="POST" action="{{ url_for('add_feedback', event_id=event.id) }}" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                <label class="block text-sm font-medium text-gray-700">反馈类型</label>
+                <select name="feedback_type" required class="mt-1 block w-full border rounded-md px-3 py-2">
+                    <option value="流程问题">流程问题</option>
+                    <option value="设备问题">设备问题</option>
+                    <option value="建议">建议</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">反馈人</label>
+                <input type="text" name="feedback_by" required class="mt-1 block w-full border rounded-md px-3 py-2">
+            </div>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">反馈内容</label>
+            <textarea name="content" rows="3" required class="mt-1 block w-full border rounded-md px-3 py-2"></textarea>
+        </div>
+        <div class="flex space-x-2">
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm">提交反馈</button>
+            <button type="button" onclick="toggleForm('feedback-form')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md text-sm">取消</button>
+        </div>
+    </form>
+</div>
+
+{% if event.feedbacks %}
+    <div class="space-y-4">
+        {% for feedback in event.feedbacks %}
+        <div class="border rounded-lg p-4 {% if feedback.handled %}bg-gray-50{% endif %}">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 text-xs rounded bg-orange-100 text-orange-800">{{ feedback.feedback_type }}</span>
+                    {% if feedback.handled %}
+                    <span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">已处理</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800">待处理</span>
+                    {% endif %}
+                </div>
+                <span class="text-sm text-gray-500">{{ feedback.feedback_time.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <p class="text-sm text-gray-700">{{ feedback.content }}</p>
+            <p class="mt-1 text-xs text-gray-500">反馈人：{{ feedback.feedback_by }}</p>
+            {% if feedback.handled and feedback.handle_note %}
+            <div class="mt-2 p-2 bg-green-50 rounded text-sm text-green-800">
+                处理说明：{{ feedback.handle_note }}
+                <span class="text-xs text-gray-500 block">（{{ feedback.handled_at.strftime('%Y-%m-%d %H:%M') }}）</span>
+            </div>
+            {% endif %}
+            {% if not feedback.handled %}
+            <form method="POST" action="{{ url_for('handle_feedback', feedback_id=feedback.id) }}" class="mt-2">
+                <input type="text" name="handle_note" placeholder="输入处理说明" class="border rounded-md px-3 py-1 text-sm w-full">
+                <button type="submit" class="mt-1 px-3 py-1 bg-green-600 text-white rounded text-xs">标记已处理</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-500">
+        <span class="text-3xl">💬</span>
+        <p class="mt-2">暂无异常反馈</p>
+    </div>
+    {% endif %}
+</div>
+</div>
+</div>
+
+<script>
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('border-blue-500', 'text-blue-600');
+        el.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    document.getElementById('content-' + tabName).classList.remove('hidden');
+    document.getElementById('tab-' + tabName).classList.remove('border-transparent', 'text-gray-500');
+    document.getElementById('tab-' + tabName).classList.add('border-blue-500', 'text-blue-600');
+}
+
+function toggleForm(formId) {
+    const form = document.getElementById(formId);
+    form.classList.toggle('hidden');
+}
+</script>
+{% endblock %}
