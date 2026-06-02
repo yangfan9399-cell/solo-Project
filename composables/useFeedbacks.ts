@@ -5,12 +5,13 @@ export function useFeedbacks() {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchFeedbacks(params?: { status?: string }) {
+  async function fetchFeedbacks(params?: { status?: string; toolId?: number }) {
     loading.value = true
     error.value = null
     try {
       const queryParams: Record<string, string> = {}
       if (params?.status) queryParams.status = params.status
+      if (params?.toolId) queryParams.toolId = params.toolId.toString()
 
       const { data } = await useFetch<{ records: Feedback[] }>('/api/feedbacks', {
         query: queryParams
@@ -93,10 +94,10 @@ export function getFeedbackStatusLabel(status: FeedbackStatus): string {
 
 export function getFeedbackStatusColor(status: FeedbackStatus): string {
   const colors: Record<FeedbackStatus, string> = {
-    open: 'bg-red-100 text-red-800',
-    processing: 'bg-yellow-100 text-yellow-800',
-    resolved: 'bg-green-100 text-green-800',
-    closed: 'bg-gray-100 text-gray-800'
+    open: 'badge-red',
+    processing: 'badge-yellow',
+    resolved: 'badge-green',
+    closed: 'badge-gray'
   }
-  return colors[status] || 'bg-gray-100 text-gray-800'
+  return colors[status] || 'badge-gray'
 }

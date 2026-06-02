@@ -4,6 +4,7 @@ import type { Feedback } from '../../../types'
 export default defineEventHandler((event) => {
   const queryParams = getQuery(event)
   const status = queryParams.status as string
+  const toolId = queryParams.toolId as string
 
   let sql = `
     SELECT 
@@ -30,6 +31,11 @@ export default defineEventHandler((event) => {
   if (status && status !== 'all') {
     sql += ' AND status = ?'
     params.push(status)
+  }
+
+  if (toolId) {
+    sql += ' AND tool_id = ?'
+    params.push(toolId)
   }
 
   sql += ' ORDER BY id DESC'
