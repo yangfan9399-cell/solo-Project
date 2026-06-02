@@ -8,6 +8,7 @@ import Pagination from './Pagination';
 
 export default function NotificationList() {
   const [data, setData] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
@@ -21,10 +22,14 @@ export default function NotificationList() {
     try {
       setLoading(true);
       setError(null);
-      const res = await apiRequest(
-        `/notifications?page=${page}&pageSize=20${statusFilter ? '&status=' + statusFilter : ''}${typeFilter ? '&type=' + typeFilter : ''}`
-      );
-      setData(res);
+      const [listRes, statsRes] = await Promise.all([
+        apiRequest(
+          `/notifications?page=${page}&pageSize=20${statusFilter ? '&status=' + statusFilter : ''}${typeFilter ? '&type=' + typeFilter : ''}`
+        ),
+        apiRequest('/notifications/stats')
+      ]);
+      setData(listRes);
+      setStats(statsRes);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,30 +202,58 @@ export default function NotificationList() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="card p-4">
-          <p className="text-sm text-gray-500">通知总数</p>
-          <p className="text-2xl font-bold text-gray-900">{data?.pagination?.total || 0}</p>
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500">待发送通知</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.toSend}</div>
+              </div>
+              <div className="text-3xl">📬</div>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              到货通知 {stats.toSendArrival} 条 · 取书提醒 {stats.toSendReminder} 条
+            </div>
+          </div>
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500">已通知</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.notified}</div>
+              </div>
+              <div className="text-3xl">✉️</div>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              已发送到货通知和取书提醒的订单
+            </div>
+          </div>
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500">已释放</div>
+                <div className="text-2xl font-bold text-gray-600">{stats.released}</div>
+              </div>
+              <div className="text-3xl">🔄</div>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              已逾期、退款或取消的订单
+            </div>
+          </div>
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500">未读通知</div>
+                <div className="text-2xl font-bold text-red-600">{unreadCount}</div>
+              </div>
+              <div className="text-3xl">🔔</div>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              点击通知可标记为已读
+            </div>
+          </div>
         </div>
-        <div className="card p-4">
-          <p className="text-sm text-gray-500">已发送</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {data?.stats?.find(s => s.status === 'sent')?.count || 0}
-          </p>
-        </div>
-        <div className="card p-4">
-          <p className="text-sm text-gray-500">已读</p>
-          <p className="text-2xl font-bold text-green-600">
-            {data?.stats?.find(s => s.status === 'read')?.count || 0}
-          </p>
-        </div>
-        <div className="card p-4">
-          <p className="text-sm text-gray-500">发送失败</p>
-          <p className="text-2xl font-bold text-red-600">
-            {data?.stats?.find(s => s.status === 'failed')?.count || 0}
-          </p>
-        </div>
-      </div>
+      )}
 
       <div className="card">
         <div className="p-4 border-b flex items-center space-x-4">

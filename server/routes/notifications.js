@@ -7,6 +7,53 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+router.get('/stats', (req, res) => {
+  try {
+    const toSendArrival = db.prepare(`
+      SELECT COUNT(*) as count FROM preorders p
+      WHERE p.status = 'arrived'
+      AND NOT EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.preorder_id = p.id AND n.type = 'arrival'
+      )
+    `).get();
+
+    const toSendReminder = db.prepare(`
+      SELECT COUNT(*) as count FROM preorders p
+      WHERE p.status = 'reserved'
+      AND p.picked_at IS NULL
+      AND p.actual_arrival_date IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.preorder_id = p.id AND n.type = 'reminder'
+      )
+    `).get();
+
+    const notified = db.prepare(`
+      SELECT COUNT(*) as count FROM preorders p
+      WHERE EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.preorder_id = p.id AND n.type IN ('arrival', 'reminder')
+      )
+    `).get();
+
+    const released = db.prepare(`
+      SELECT COUNT(*) as count FROM preorders p
+      WHERE p.status IN ('expired', 'refunded', 'cancelled')
+    `).get();
+
+    res.json({
+      toSend: toSendArrival.count + toSendReminder.count,
+      toSendArrival: toSendArrival.count,
+      toSendReminder: toSendReminder.count,
+      notified: notified.count,
+      released: released.count,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/', (req, res) => {
   try {
     const { page = 1, pageSize = 20, status, type, member_id } = req.query;
@@ -125,15 +172,26 @@ router.post('/batch-arrival', (req, res) => {
   try {
     const { status = 'arrived' } = req.body;
 
+    const totalCount = db.prepare(`
+      SELECT COUNT(*) as count FROM preorders p WHERE p.status = ?
+    `).get(status);
+
     const preorders = db.prepare(`
       SELECT p.*, m.name as member_name, b.title
       FROM preorders p
       JOIN members m ON p.member_id = m.id
       JOIN books b ON p.book_id = b.id
       WHERE p.status = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.preorder_id = p.id AND n.type = 'arrival'
+      )
     `).all(status);
 
     const notifications = [];
+    const skipped = totalCount.count - preorders.length;
+
+    db.prepare('BEGIN TRANSACTION').run();
 
     for (const preorder of preorders) {
       const notificationNo = generateNo('N');
@@ -145,15 +203,27 @@ router.post('/batch-arrival', (req, res) => {
         VALUES (?, ?, ?, 'arrival', ?, ?, 'sms', 'sent', CURRENT_TIMESTAMP)
       `).run(notificationNo, preorder.member_id, preorder.id, title, content);
 
+      db.prepare(`
+        UPDATE preorders SET notified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(preorder.id);
+
       notifications.push(notificationNo);
     }
 
+    db.prepare('COMMIT').run();
+
     res.json({
       count: notifications.length,
+      skipped,
+      total: totalCount.count,
       notifications,
-      message: `成功发送 ${notifications.length} 条到货通知`,
+      message: skipped > 0
+        ? `成功发送 ${notifications.length} 条到货通知，跳过 ${skipped} 条已通知订单`
+        : `成功发送 ${notifications.length} 条到货通知`,
     });
   } catch (error) {
+    db.prepare('ROLLBACK').run();
     res.status(500).json({ error: error.message });
   }
 });
@@ -198,6 +268,14 @@ router.post('/reminder', (req, res) => {
 
 router.post('/batch-reminder', (req, res) => {
   try {
+    const totalCount = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM preorders p
+      WHERE p.status = 'reserved'
+      AND p.picked_at IS NULL
+      AND p.actual_arrival_date IS NOT NULL
+    `).get();
+
     const preorders = db.prepare(`
       SELECT p.*, m.name as member_name, b.title
       FROM preorders p
@@ -214,6 +292,7 @@ router.post('/batch-reminder', (req, res) => {
     `).all();
 
     const notifications = [];
+    const skipped = totalCount.count - preorders.length;
 
     for (const preorder of preorders) {
       const notificationNo = generateNo('N');
@@ -230,8 +309,12 @@ router.post('/batch-reminder', (req, res) => {
 
     res.json({
       count: notifications.length,
+      skipped,
+      total: totalCount.count,
       notifications,
-      message: `成功发送 ${notifications.length} 条取书提醒`,
+      message: skipped > 0
+        ? `成功发送 ${notifications.length} 条取书提醒，跳过 ${skipped} 条已提醒订单`
+        : `成功发送 ${notifications.length} 条取书提醒`,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -242,16 +325,27 @@ router.post('/overdue-check', (req, res) => {
   try {
     const overdueDays = parseInt(process.env.OVERDUE_DAYS) || 14;
 
+    const totalExpired = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM preorders p
+      WHERE p.status = 'reserved'
+      AND DATE(p.actual_arrival_date, '+' || ? || ' days') <= DATE('now')
+    `).get(overdueDays);
+
     const expiredPreorders = db.prepare(`
-      SELECT p.*, m.name as member_name, b.title
+      SELECT p.*, m.name as member_name, b.title,
+             COALESCE(s.quantity_reserved, 0) as quantity_reserved
       FROM preorders p
       JOIN members m ON p.member_id = m.id
       JOIN books b ON p.book_id = b.id
+      LEFT JOIN stock s ON p.book_id = s.book_id
       WHERE p.status = 'reserved'
       AND DATE(p.actual_arrival_date, '+' || ? || ' days') <= DATE('now')
+      AND COALESCE(s.quantity_reserved, 0) >= p.quantity
     `).all(overdueDays);
 
     const results = [];
+    const skipped = totalExpired.count - expiredPreorders.length;
 
     for (const preorder of expiredPreorders) {
       db.prepare('BEGIN TRANSACTION').run();
@@ -275,8 +369,8 @@ router.post('/overdue-check', (req, res) => {
 
       db.prepare(`
         UPDATE stock SET quantity_reserved = quantity_reserved - ?, updated_at = CURRENT_TIMESTAMP
-        WHERE book_id = ?
-      `).run(preorder.quantity, preorder.book_id);
+        WHERE book_id = ? AND quantity_reserved >= ?
+      `).run(preorder.quantity, preorder.book_id, preorder.quantity);
 
       const notificationNo = generateNo('N');
       db.prepare(`
@@ -291,7 +385,11 @@ router.post('/overdue-check', (req, res) => {
 
     res.json({
       processed: results.length,
-      message: `已处理 ${results.length} 个逾期订单`,
+      skipped,
+      total: totalExpired.count,
+      message: skipped > 0
+        ? `已处理 ${results.length} 个逾期订单，跳过 ${skipped} 个无预留库存订单`
+        : `已处理 ${results.length} 个逾期订单`,
     });
   } catch (error) {
     db.prepare('ROLLBACK').run();
