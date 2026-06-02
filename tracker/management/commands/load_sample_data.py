@@ -227,6 +227,7 @@ class Command(BaseCommand):
             inspector='赵院长',
             inspected_at=now - timedelta(days=3),
             result='qualified',
+            handling_status='resolved',
         )
         InfectionInspection.objects.create(
             batch=batch1,
@@ -234,6 +235,7 @@ class Command(BaseCommand):
             inspector='赵院长',
             inspected_at=now - timedelta(days=3),
             result='qualified',
+            handling_status='resolved',
         )
         InfectionInspection.objects.create(
             inspection_type='environment',
@@ -242,6 +244,27 @@ class Command(BaseCommand):
             result='unqualified',
             findings='消毒供应中心空气菌落数超标',
             corrective_action='加强通风换气，增加紫外线消毒频次，3天后复测',
+            handling_status='pending',
+        )
+        InfectionInspection.objects.create(
+            instrument_package=instruments[1],
+            inspection_type='instrument',
+            inspector='赵院长',
+            inspected_at=now - timedelta(hours=6),
+            result='unqualified',
+            findings='器械包包装破损，密封完整性不达标',
+            handling_status='pending',
+        )
+        InfectionInspection.objects.create(
+            batch=batch2,
+            inspection_type='batch',
+            inspector='赵院长',
+            inspected_at=now - timedelta(hours=12),
+            result='unqualified',
+            findings='批次标签打印模糊，部分信息无法识别',
+            handling_status='in_progress',
+            handled_by='李护士',
+            follow_up_notes='已重新打印标签，正在进行复检',
         )
 
         self.stdout.write(self.style.SUCCESS('示例数据加载完成！'))

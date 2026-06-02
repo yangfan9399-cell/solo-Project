@@ -253,6 +253,12 @@ class InfectionInspection(models.Model):
         ('unqualified', '不合格'),
     ]
 
+    STATUS_CHOICES = [
+        ('pending', '待处理'),
+        ('in_progress', '处理中'),
+        ('resolved', '已完成'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instrument_package = models.ForeignKey(
         InstrumentPackage, on_delete=models.SET_NULL,
@@ -266,8 +272,12 @@ class InfectionInspection(models.Model):
     inspector = models.CharField('抽查人', max_length=100)
     inspected_at = models.DateTimeField('抽查时间', default=timezone.now)
     result = models.CharField('抽查结果', max_length=20, choices=RESULT_CHOICES, default='qualified')
+    handling_status = models.CharField('处理状态', max_length=20, choices=STATUS_CHOICES, default='pending')
+    handled_by = models.CharField('整改人', max_length=100, blank=True, default='')
+    handled_at = models.DateTimeField('整改完成时间', null=True, blank=True)
     findings = models.TextField('发现问题', blank=True, default='')
     corrective_action = models.TextField('纠正措施', blank=True, default='')
+    follow_up_notes = models.TextField('整改跟进记录', blank=True, default='')
     notes = models.TextField('备注', blank=True, default='')
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
 
@@ -278,3 +288,16 @@ class InfectionInspection(models.Model):
 
     def __str__(self):
         return f'院感抽查 - {self.get_inspection_type_display()} - {self.inspector}'
+
+    @property
+    def is_pending_handling(self):
+        return self.result == 'unqualified' and self.handling_status != 'resolved'
+
+    @property
+    def handling_status_color(self):
+        color_map = {
+            'pending': 'red',
+            'in_progress': 'yellow',
+            'resolved': 'green',
+        }
+        return color_map.get(self.handling_status, 'gray')

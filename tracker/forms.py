@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 
 from tracker.models import (
     CleaningRecord,
@@ -155,6 +156,26 @@ class InfectionInspectionForm(forms.ModelForm):
             'corrective_action': forms.Textarea(attrs={'rows': 3}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+class InspectionHandlingForm(forms.ModelForm):
+    class Meta:
+        model = InfectionInspection
+        fields = [
+            'handling_status', 'handled_by', 'corrective_action', 'follow_up_notes',
+        ]
+        widgets = {
+            'corrective_action': forms.Textarea(attrs={'rows': 3}),
+            'follow_up_notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.handling_status == 'resolved' and instance.handled_at is None:
+            instance.handled_at = timezone.now()
+        if commit:
+            instance.save()
+        return instance
 
 
 class InstrumentStatusForm(forms.Form):

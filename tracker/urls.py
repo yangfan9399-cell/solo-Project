@@ -39,4 +39,5 @@ urlpatterns = [
     path('inspections/', views.inspection_list, name='inspection_list'),
     path('inspections/create/', views.inspection_create, name='inspection_create'),
     path('inspections/<uuid:pk>/', views.inspection_detail, name='inspection_detail'),
+    path('inspections/<uuid:pk>/handle/', views.inspection_handle, name='inspection_handle'),
 ]

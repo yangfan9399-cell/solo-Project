@@ -10,6 +10,7 @@ from tracker.forms import (
     ClinicalUsageForm,
     ExpiryRecallForm,
     InfectionInspectionForm,
+    InspectionHandlingForm,
     InstrumentPackageForm,
     InstrumentStatusForm,
     ReleaseAuditForm,
@@ -104,6 +105,9 @@ def instrument_detail(request, pk):
     clinical_usages = instrument.clinical_usages.all()
     recalls = instrument.recalls.all()
     inspections = instrument.inspections.all()
+    pending_inspections = instrument.inspections.filter(
+        result='unqualified', handling_status__in=['pending', 'in_progress']
+    ).order_by('-inspected_at')
     status_form = InstrumentStatusForm(current_status=instrument.status)
 
     context = {
@@ -114,6 +118,7 @@ def instrument_detail(request, pk):
         'clinical_usages': clinical_usages,
         'recalls': recalls,
         'inspections': inspections,
+        'pending_inspections': pending_inspections,
         'status_form': status_form,
     }
     return render(request, 'tracker/instrument/detail.html', context)
@@ -218,10 +223,14 @@ def batch_detail(request, pk):
     batch = get_object_or_404(SterilizationBatch, pk=pk)
     audits = batch.release_audits.all()
     inspections = batch.inspections.all()
+    pending_inspections = batch.inspections.filter(
+        result='unqualified', handling_status__in=['pending', 'in_progress']
+    ).order_by('-inspected_at')
     context = {
         'batch': batch,
         'audits': audits,
         'inspections': inspections,
+        'pending_inspections': pending_inspections,
     }
     return render(request, 'tracker/batch/detail.html', context)
 
@@ -425,37 +434,62 @@ def recall_handle(request, pk):
 def inspection_list(request):
     type_filter = request.GET.get('type', '')
     result_filter = request.GET.get('result', '')
+    status_filter = request.GET.get('status', '')
     qs = InfectionInspection.objects.select_related('instrument_package', 'batch').all()
     if type_filter:
         qs = qs.filter(inspection_type=type_filter)
     if result_filter:
         qs = qs.filter(result=result_filter)
+    if status_filter:
+        qs = qs.filter(handling_status=status_filter)
     qs = qs.order_by('-inspected_at')
+    pending_count = InfectionInspection.objects.filter(result='unqualified', handling_status='pending').count()
     context = {
         'records': qs,
         'type_filter': type_filter,
         'result_filter': result_filter,
+        'status_filter': status_filter,
         'type_choices': InfectionInspection.TYPE_CHOICES,
         'result_choices': InfectionInspection.RESULT_CHOICES,
+        'status_choices': InfectionInspection.STATUS_CHOICES,
+        'pending_count': pending_count,
     }
     return render(request, 'tracker/inspection/list.html', context)
 
 
 def inspection_detail(request, pk):
     record = get_object_or_404(InfectionInspection, pk=pk)
-    return render(request, 'tracker/inspection/detail.html', {'record': record})
+    form = InspectionHandlingForm(instance=record) if record.result == 'unqualified' else None
+    return render(request, 'tracker/inspection/detail.html', {'record': record, 'form': form})
 
 
 def inspection_create(request):
     if request.method == 'POST':
         form = InfectionInspectionForm(request.POST)
         if form.is_valid():
-            form.save()
+            record = form.save()
+            if record.result == 'qualified':
+                record.handling_status = 'resolved'
+                record.save()
             messages.success(request, '院感抽查记录创建成功')
             return redirect('tracker:inspection_list')
     else:
         form = InfectionInspectionForm()
     return render(request, 'tracker/inspection/form.html', {'form': form, 'title': '新建院感抽查'})
+
+
+def inspection_handle(request, pk):
+    record = get_object_or_404(InfectionInspection, pk=pk)
+    if request.method == 'POST' and record.result == 'unqualified':
+        form = InspectionHandlingForm(request.POST, instance=record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'整改处理已更新：{record.get_handling_status_display()}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    return redirect('tracker:inspection_detail', pk=pk)
 
 
 def check_expiry(request):

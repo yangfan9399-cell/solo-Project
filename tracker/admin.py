@@ -60,7 +60,8 @@ class ExpiryRecallAdmin(admin.ModelAdmin):
 
 @admin.register(InfectionInspection)
 class InfectionInspectionAdmin(admin.ModelAdmin):
-    list_display = ['inspection_type', 'inspector', 'result', 'inspected_at']
-    list_filter = ['inspection_type', 'result']
-    search_fields = ['inspector']
+    list_display = ['inspection_type', 'inspector', 'result', 'handling_status', 'handled_by', 'inspected_at', 'handled_at']
+    list_filter = ['inspection_type', 'result', 'handling_status']
+    search_fields = ['inspector', 'handled_by', 'findings']
     raw_id_fields = ['instrument_package', 'batch']
+    readonly_fields = ['id', 'created_at']
