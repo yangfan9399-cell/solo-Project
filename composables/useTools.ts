@@ -43,6 +43,24 @@ export function getBorrowDisableReason(tool: Tool): string {
   return ''
 }
 
+export function canCalibrateTool(tool: Tool, activeCalibrationCount: number = 0): boolean {
+  if (tool.status === 'scrapped') return false
+  if (tool.status === 'borrowed') return false
+  if (tool.hasPendingBorrow) return false
+  if (tool.isBorrowedActive) return false
+  if (activeCalibrationCount > 0) return false
+  return true
+}
+
+export function getCalibrationDisableReason(tool: Tool, activeCalibrationCount: number = 0): string {
+  if (tool.status === 'scrapped') return '量具已报废，无法校准'
+  if (tool.status === 'borrowed') return '量具已被借出，请先归还'
+  if (tool.hasPendingBorrow) return '有待审批的借用申请，请先处理'
+  if (tool.isBorrowedActive) return '量具已被借出，请先归还'
+  if (activeCalibrationCount > 0) return '已有进行中的校准计划'
+  return ''
+}
+
 export function useTools() {
   const tools = ref<Tool[]>([])
   const tool = ref<Tool | null>(null)
@@ -149,6 +167,8 @@ export function useTools() {
     getToolStatusLabel,
     getToolStatusColor,
     canBorrowTool,
-    getBorrowDisableReason
+    getBorrowDisableReason,
+    canCalibrateTool,
+    getCalibrationDisableReason
   }
 }
