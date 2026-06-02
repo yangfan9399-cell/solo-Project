@@ -34,11 +34,11 @@ export default function TransactionList() {
         apiRequest(
           `/transactions?page=${page}&pageSize=20${typeFilter ? '&type=' + typeFilter : ''}${statusFilter ? '&status=' + statusFilter : ''}${memberFilter ? '&member_id=' + memberFilter : ''}`
         ),
-        apiRequest('/preorders?status=confirmed,arrived,reserved&pageSize=100'),
+        apiRequest('/preorders?status=confirmed,arrived,reserved&pageSize=200'),
         apiRequest('/members?pageSize=100')
       ]);
       setData(txRes);
-      setPreorders(preordersRes.data);
+      setPreorders(preordersRes.data || []);
       setMembers(membersRes.data);
     } catch (err) {
       setError(err.message);
@@ -269,7 +269,7 @@ export default function TransactionList() {
               <option value="">选择订单</option>
               {preorders.map(p => (
                 <option key={p.id} value={p.id}>
-                  {p.preorder_no} - {p.book_title} ({p.member_name})
+                  {p.preorder_no} - {p.title} ({p.member_name})
                 </option>
               ))}
             </select>

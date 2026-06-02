@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'astro/client';
-import { getUser, removeToken, formatMoney } from '../utils/api';
+import { getUser, removeToken } from '../utils/api';
+
+const allMenus = [
+  { id: 'dashboard', label: '工作台', icon: '📊', href: '/dashboard', roles: ['admin', 'purchaser', 'manager', 'clerk'] },
+  { id: 'preorders', label: '预售订单', icon: '📦', href: '/preorders', roles: ['admin', 'manager', 'clerk'] },
+  { id: 'books', label: '图书管理', icon: '📚', href: '/books', roles: ['admin', 'manager', 'clerk'] },
+  { id: 'members', label: '会员管理', icon: '👥', href: '/members', roles: ['admin', 'manager', 'clerk'] },
+  { id: 'purchase', label: '采购管理', icon: '🛒', href: '/purchase', roles: ['admin', 'purchaser'] },
+  { id: 'sorting', label: '分拣看板', icon: '📋', href: '/sorting', roles: ['admin', 'clerk'] },
+  { id: 'notifications', label: '通知中心', icon: '🔔', href: '/notifications', roles: ['admin', 'manager', 'clerk'] },
+  { id: 'exceptions', label: '异常处理', icon: '⚠️', href: '/exceptions', roles: ['admin', 'manager', 'clerk'] },
+  { id: 'transactions', label: '交易记录', icon: '💰', href: '/transactions', roles: ['admin', 'manager', 'clerk'] },
+];
 
 export default function Layout({ children, activeMenu }) {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const currentUser = getUser();
@@ -17,26 +27,7 @@ export default function Layout({ children, activeMenu }) {
     window.location.href = '/login';
   };
 
-  const menuItems = [
-    { id: 'dashboard', label: '工作台', icon: '📊', href: '/dashboard' },
-    { id: 'preorders', label: '预售订单', icon: '📦', href: '/preorders' },
-    { id: 'books', label: '图书管理', icon: '📚', href: '/books' },
-    { id: 'members', label: '会员管理', icon: '👥', href: '/members' },
-    { id: 'purchase', label: '采购管理', icon: '🛒', href: '/purchase' },
-    { id: 'sorting', label: '分拣看板', icon: '📋', href: '/sorting' },
-    { id: 'notifications', label: '通知中心', icon: '🔔', href: '/notifications' },
-    { id: 'exceptions', label: '异常处理', icon: '⚠️', href: '/exceptions' },
-    { id: 'transactions', label: '交易记录', icon: '💰', href: '/transactions' },
-  ];
-
-  if (user) {
-    if (user.role === 'purchaser') {
-      menuItems.splice(2, 4);
-      menuItems.splice(3, 2);
-    } else if (user.role === 'clerk') {
-      menuItems.splice(4, 1);
-    }
-  }
+  const menuItems = allMenus.filter(item => !user || item.roles.includes(user.role));
 
   return (
     <div className="min-h-screen bg-gray-100">

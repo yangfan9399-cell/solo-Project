@@ -16,8 +16,15 @@ router.get('/', (req, res) => {
     const params = [];
 
     if (status) {
-      whereClause += ' AND p.status = ?';
-      params.push(status);
+      const statuses = status.split(',').map(s => s.trim()).filter(Boolean);
+      if (statuses.length === 1) {
+        whereClause += ' AND p.status = ?';
+        params.push(statuses[0]);
+      } else if (statuses.length > 1) {
+        const placeholders = statuses.map(() => '?').join(',');
+        whereClause += ` AND p.status IN (${placeholders})`;
+        params.push(...statuses);
+      }
     }
     if (member_id) {
       whereClause += ' AND p.member_id = ?';

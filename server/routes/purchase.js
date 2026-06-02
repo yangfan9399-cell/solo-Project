@@ -182,6 +182,7 @@ router.post('/:id/receive', requireRole('purchaser', 'manager', 'admin'), (req, 
     db.prepare('BEGIN TRANSACTION').run();
 
     let allReceived = true;
+    const generatedTaskCount = { value: 0 };
 
     for (const item of items) {
       const poItem = db.prepare('SELECT * FROM purchase_items WHERE id = ? AND po_id = ?').get(item.item_id, poId);
@@ -230,15 +231,27 @@ router.post('/:id/receive', requireRole('purchaser', 'manager', 'admin'), (req, 
               WHERE id = ?
             `).run(preorder.id);
             remainingQty -= preorder.quantity;
+
+            const existingTask = db.prepare(`
+              SELECT id FROM sorting_tasks
+              WHERE preorder_id = ? AND status NOT IN ('delivered', 'cancelled')
+            `).get(preorder.id);
+            if (!existingTask) {
+              const taskNo = generateNo('ST');
+              db.prepare(`
+                INSERT INTO sorting_tasks (task_no, po_item_id, preorder_id, book_id, member_id, quantity)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `).run(taskNo, poItem.id, preorder.id, poItem.book_id, preorder.member_id, preorder.quantity);
+              generatedTaskCount.value++;
+            }
           }
         }
       }
     }
 
     const poStatus = allReceived ? 'received' : 'partial';
-    const receivedDate = allReceived ? 'CURRENT_TIMESTAMP' : null;
 
-    if (receivedDate) {
+    if (allReceived) {
       db.prepare(`
         UPDATE purchase_orders SET status = ?, received_date = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
@@ -252,7 +265,10 @@ router.post('/:id/receive', requireRole('purchaser', 'manager', 'admin'), (req, 
 
     db.prepare('COMMIT').run();
 
-    res.json({ message: '到货确认成功' });
+    res.json({
+      message: '到货确认成功',
+      generatedTasks: generatedTaskCount.value,
+    });
   } catch (error) {
     db.prepare('ROLLBACK').run();
     res.status(500).json({ error: error.message });

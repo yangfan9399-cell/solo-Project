@@ -1,11 +1,13 @@
-export default function Pagination({ page, pageSize, total, onPageChange }) {
+export default function Pagination({ page, current, pageSize, total, onPageChange, onChange }) {
+  const activePage = page || current || 1;
+  const handlePageChange = onPageChange || onChange;
   const totalPages = Math.ceil(total / pageSize);
 
   if (totalPages <= 1) return null;
 
   const pages = [];
   const maxVisible = 5;
-  let start = Math.max(1, page - Math.floor(maxVisible / 2));
+  let start = Math.max(1, activePage - Math.floor(maxVisible / 2));
   let end = Math.min(totalPages, start + maxVisible - 1);
 
   if (end - start + 1 < maxVisible) {
@@ -19,19 +21,19 @@ export default function Pagination({ page, pageSize, total, onPageChange }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t">
       <div className="text-sm text-gray-500">
-        共 {total} 条，第 {page} / {totalPages} 页
+        共 {total} 条，第 {activePage} / {totalPages} 页
       </div>
       <div className="flex space-x-1">
         <button
-          onClick={() => onPageChange(1)}
-          disabled={page === 1}
+          onClick={() => handlePageChange(1)}
+          disabled={activePage === 1}
           className="px-3 py-1 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           首页
         </button>
         <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page === 1}
+          onClick={() => handlePageChange(activePage - 1)}
+          disabled={activePage === 1}
           className="px-3 py-1 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           上一页
@@ -39,9 +41,9 @@ export default function Pagination({ page, pageSize, total, onPageChange }) {
         {pages.map((p) => (
           <button
             key={p}
-            onClick={() => onPageChange(p)}
+            onClick={() => handlePageChange(p)}
             className={`px-3 py-1 rounded border text-sm ${
-              p === page
+              p === activePage
                 ? 'bg-primary-600 text-white border-primary-600'
                 : 'hover:bg-gray-50'
             }`}
@@ -50,15 +52,15 @@ export default function Pagination({ page, pageSize, total, onPageChange }) {
           </button>
         ))}
         <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page === totalPages}
+          onClick={() => handlePageChange(activePage + 1)}
+          disabled={activePage === totalPages}
           className="px-3 py-1 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           下一页
         </button>
         <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={page === totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          disabled={activePage === totalPages}
           className="px-3 py-1 rounded border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           末页

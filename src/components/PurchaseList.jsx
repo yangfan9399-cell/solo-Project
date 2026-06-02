@@ -122,12 +122,14 @@ export default function PurchaseList() {
         alert('请输入到货数量');
         return;
       }
-      await apiRequest(`/purchase/${selectedPO.id}/receive`, {
+      const res = await apiRequest(`/purchase/${selectedPO.id}/receive`, {
         method: 'POST',
         body: JSON.stringify({ items })
       });
       setReceiveModal(false);
       setReceiveItems([]);
+      const taskInfo = res.generatedTasks > 0 ? `\n已自动生成 ${res.generatedTasks} 个分拣任务，可前往分拣看板处理。` : '';
+      alert(res.message + taskInfo);
       loadData();
     } catch (err) {
       alert(err.message);
