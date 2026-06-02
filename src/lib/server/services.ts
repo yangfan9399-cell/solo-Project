@@ -476,31 +476,67 @@ export function verifyClaim(
 	logActivity(null, claimId, verifiedBy, `claim_${status}`, notes || '');
 }
 
-export function completeClaim(claimId: number, returnedBy: number, signature?: string): void {
+export function completeClaim(
+	claimId: number,
+	returnedBy: number,
+	signData?: {
+		receiver: string;
+		idLast4: string;
+		voucher: string;
+		notes: string;
+	}
+): void {
 	const claim = getClaimById(claimId);
 	if (!claim) return;
+	if (claim.status !== 'approved') return;
 
-	const signatureValue = signature ? `'${signature.replace(/'/g, "''")}'` : 'NULL';
+	const signReceiver = signData?.receiver
+		? `'${signData.receiver.replace(/'/g, "''")}'`
+		: 'NULL';
+	const signIdLast4 = signData?.idLast4
+		? `'${signData.idLast4.replace(/'/g, "''")}'`
+		: 'NULL';
+	const signVoucher = signData?.voucher
+		? `'${signData.voucher.replace(/'/g, "''")}'`
+		: 'NULL';
+	const signNotes = signData?.notes
+		? `'${signData.notes.replace(/'/g, "''")}'`
+		: 'NULL';
 
-	db.exec(`
-		UPDATE claims 
-		SET status = 'completed', 
-		    return_time = CURRENT_TIMESTAMP, 
-		    returned_by = ${returnedBy},
-		    signature_image = ${signatureValue},
-		    updated_at = CURRENT_TIMESTAMP
-		WHERE id = ${claimId};
-		
-		UPDATE items 
-		SET status = 'returned', updated_at = CURRENT_TIMESTAMP 
-		WHERE id = ${claim.item_id};
-		
-		UPDATE lockers 
-		SET status = 'available' 
-		WHERE id = (SELECT locker_id FROM items WHERE id = ${claim.item_id});
-	`);
+	db.prepare(
+		`UPDATE claims 
+		 SET status = 'completed', 
+		     return_time = CURRENT_TIMESTAMP, 
+		     returned_by = ?,
+		     sign_receiver = ?,
+		     sign_id_last4 = ?,
+		     sign_voucher = ?,
+		     sign_notes = ?,
+		     updated_at = CURRENT_TIMESTAMP
+		 WHERE id = ?`
+	).run(
+		returnedBy,
+		signData?.receiver || null,
+		signData?.idLast4 || null,
+		signData?.voucher || null,
+		signData?.notes || null,
+		claimId
+	);
 
-	logActivity(claim.item_id, claimId, returnedBy, 'item_returned', '物品已归还');
+	db.prepare("UPDATE items SET status = 'returned', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(
+		claim.item_id
+	);
+
+	db.prepare(
+		"UPDATE lockers SET status = 'available' WHERE id = (SELECT locker_id FROM items WHERE id = ?)"
+	).run(claim.item_id);
+
+	const detailParts: string[] = ['物品已归还'];
+	if (signData?.receiver) detailParts.push(`签收人: ${signData.receiver}`);
+	if (signData?.idLast4) detailParts.push(`证件后四位: ${signData.idLast4}`);
+	if (signData?.voucher) detailParts.push(`签收凭据: ${signData.voucher}`);
+	if (signData?.notes) detailParts.push(`备注: ${signData.notes}`);
+	logActivity(claim.item_id, claimId, returnedBy, 'item_signed_out', detailParts.join(' | '));
 }
 
 export function disposeItem(itemId: number, disposedBy: number, reason: string): void {

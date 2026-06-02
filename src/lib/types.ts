@@ -118,6 +118,10 @@ export interface Claim {
 	returned_by: number | null;
 	signature_image: string | null;
 	rejection_reason: string | null;
+	sign_receiver: string | null;
+	sign_id_last4: string | null;
+	sign_voucher: string | null;
+	sign_notes: string | null;
 	created_at: string;
 	updated_at: string;
 	item?: Item;

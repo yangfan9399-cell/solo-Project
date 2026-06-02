@@ -44,12 +44,27 @@ export const actions: Actions = {
 		}
 	},
 
-	complete: async ({ params }) => {
+	complete: async ({ request, params }) => {
+		const form = await request.formData();
+		const receiver = form.get('receiver') as string;
+		const idLast4 = form.get('idLast4') as string;
+		const voucher = form.get('voucher') as string;
+		const notes = form.get('notes') as string;
+
+		if (!receiver || receiver.trim() === '') {
+			return fail(400, { error: '签收人姓名为必填项' });
+		}
+
 		try {
-			completeClaim(parseInt(params.id), 1);
+			completeClaim(parseInt(params.id), 1, {
+				receiver: receiver.trim(),
+				idLast4: idLast4?.trim() || '',
+				voucher: voucher?.trim() || '',
+				notes: notes?.trim() || ''
+			});
 			return redirect(303, `/claims/${params.id}`);
 		} catch (e) {
-			return fail(500, { error: '领取确认失败' });
+			return fail(500, { error: '领取签收失败' });
 		}
 	}
 };
