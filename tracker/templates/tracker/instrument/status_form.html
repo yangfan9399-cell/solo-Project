@@ -1,0 +1,59 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-6">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'tracker:instrument_detail' instrument.pk %}" class="text-gray-400 hover:text-gray-600">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900">状态变更</h1>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6 space-y-6">
+    <div class="flex items-center gap-4">
+      <div>
+        <div class="text-sm text-gray-500">器械包</div>
+        <div class="text-base font-semibold text-gray-900">{{ instrument.code }} - {{ instrument.name }}</div>
+      </div>
+      <div class="text-sm text-gray-400">→</div>
+      <div>
+        <div class="text-sm text-gray-500">当前状态</div>
+        <span id="status-badge" class="px-3 py-1 rounded-full text-sm font-medium {{ instrument.status_class|default:"bg-gray-100 text-gray-800" }}">
+          {{ instrument.get_status_display }}
+        </span>
+      </div>
+    </div>
+
+    <form hx-post="{% url 'tracker:instrument_status_update' instrument.pk %}"
+          hx-target="#status-badge"
+          hx-swap="innerHTML"
+          class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="{{ form.new_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+          新状态 <span class="text-red-500">*</span>
+        </label>
+        {{ form.new_status }}
+      </div>
+      <div>
+        <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+          备注
+        </label>
+        {{ form.notes }}
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="submit"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+          提交变更
+        </button>
+        <a href="{% url 'tracker:instrument_detail' instrument.pk %}"
+           class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+          取消
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

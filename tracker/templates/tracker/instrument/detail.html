@@ -1,0 +1,334 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'tracker:instrument_list' %}" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <h1 class="text-2xl font-bold text-gray-900">器械包详情</h1>
+    </div>
+    <span id="status-badge" class="px-3 py-1 rounded-full text-sm font-medium
+      {% if instrument.status == 'registered' %}bg-green-100 text-green-800
+      {% elif instrument.status == 'in_use' %}bg-blue-100 text-blue-800
+      {% elif instrument.status == 'cleaning' %}bg-yellow-100 text-yellow-800
+      {% elif instrument.status == 'sterilizing' %}bg-orange-100 text-orange-800
+      {% elif instrument.status == 'pending_release' %}bg-purple-100 text-purple-800
+      {% elif instrument.status == 'expired' %}bg-red-100 text-red-800
+      {% elif instrument.status == 'recalled' %}bg-red-100 text-red-800
+      {% else %}bg-gray-100 text-gray-800{% endif %}">
+      {{ instrument.get_status_display }}
+    </span>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <div class="text-sm text-gray-500">编号</div>
+        <div class="text-base font-mono font-semibold text-gray-900 mt-1">{{ instrument.code }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">名称</div>
+        <div class="text-base font-semibold text-gray-900 mt-1">{{ instrument.name }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">分类</div>
+        <div class="text-base text-gray-900 mt-1">{{ instrument.get_category_display }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">诊室</div>
+        <div class="text-base text-gray-900 mt-1">{{ instrument.clinic|default:"-" }}</div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-sm text-gray-500">内容物</div>
+        <div class="text-base text-gray-900 mt-1 whitespace-pre-line">{{ instrument.contents|default:"-" }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">最近灭菌时间</div>
+        <div class="text-base text-gray-900 mt-1">{{ instrument.last_sterilized_at|date:"Y-m-d H:i"|default:"-" }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">过期时间</div>
+        <div class="text-base text-gray-900 mt-1">{{ instrument.expire_at|date:"Y-m-d H:i"|default:"-" }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% include "tracker/components/status_flow.html" %}
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">状态变更</h2>
+    {% if status_form.fields.new_status.choices %}
+    <form method="post" action="{% url 'tracker:instrument_status_update' instrument.pk %}">
+      {% csrf_token %}
+      <div class="flex flex-col sm:flex-row gap-3 items-start">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ status_form.new_status.label }}</label>
+          {{ status_form.new_status }}
+        </div>
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ status_form.notes.label }}</label>
+          {{ status_form.notes }}
+        </div>
+        <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium whitespace-nowrap mt-6">
+          提交变更
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <p class="text-sm text-gray-500">当前状态无可用的流转操作</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="border-b border-gray-200">
+      <nav class="flex overflow-x-auto" id="detail-tabs">
+        <button onclick="switchTab('cleaning')" data-tab="cleaning"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">
+          清洗记录
+        </button>
+        <button onclick="switchTab('sterilization')" data-tab="sterilization"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
+          灭菌批次
+        </button>
+        <button onclick="switchTab('release')" data-tab="release"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
+          放行审核
+        </button>
+        <button onclick="switchTab('usage')" data-tab="usage"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
+          诊疗使用
+        </button>
+        <button onclick="switchTab('recall')" data-tab="recall"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
+          召回记录
+        </button>
+        <button onclick="switchTab('inspection')" data-tab="inspection"
+                class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
+          院感抽查
+        </button>
+      </nav>
+    </div>
+
+    <div id="tab-cleaning" class="tab-panel p-6">
+      {% if cleaning_records %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">清洗时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">清洗人员</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">清洗方式</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">结果</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for record in cleaning_records %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ record.started_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ record.cleaner }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ record.get_method_display }}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium {% if record.result == 'qualified' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ record.get_result_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无清洗记录" %}
+      {% endif %}
+    </div>
+
+    <div id="tab-sterilization" class="tab-panel p-6 hidden">
+      {% if sterilization_batches %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">批次号</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">灭菌时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">灭菌方式</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作人员</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">结果</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for batch in sterilization_batches %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm font-mono text-blue-600">
+              <a href="{% url 'tracker:batch_detail' batch.pk %}">{{ batch.batch_number }}</a>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-900">{{ batch.started_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ batch.get_method_display }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ batch.operator }}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium
+                {% if batch.result == 'qualified' %}bg-green-100 text-green-800
+                {% elif batch.result == 'unqualified' %}bg-red-100 text-red-800
+                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {{ batch.get_result_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无灭菌批次记录" %}
+      {% endif %}
+    </div>
+
+    <div id="tab-release" class="tab-panel p-6 hidden">
+      {% if release_audits %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">审核时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">审核人</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">审核结果</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">备注</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for audit in release_audits %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ audit.audited_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ audit.auditor }}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium {% if audit.audit_result == 'approved' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ audit.get_audit_result_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ audit.notes|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无放行审核记录" %}
+      {% endif %}
+    </div>
+
+    <div id="tab-usage" class="tab-panel p-6 hidden">
+      {% if clinical_usages %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">使用时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">患者姓名</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">医生</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">诊室</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for usage in clinical_usages %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ usage.used_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ usage.patient_name }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ usage.doctor }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ usage.clinic }}</td>
+            <td class="px-4 py-3 text-sm">
+              {% if usage.returned_at %}
+              <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">已归还</span>
+              {% else %}
+              <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">使用中</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无诊疗使用记录" %}
+      {% endif %}
+    </div>
+
+    <div id="tab-recall" class="tab-panel p-6 hidden">
+      {% if recalls %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">发起时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">召回原因</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理状态</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理人</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for recall in recalls %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ recall.initiated_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ recall.get_reason_display }}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium
+                {% if recall.status == 'pending' %}bg-yellow-100 text-yellow-800
+                {% elif recall.status == 'recalled' %}bg-red-100 text-red-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ recall.get_status_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ recall.handler|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无召回记录" %}
+      {% endif %}
+    </div>
+
+    <div id="tab-inspection" class="tab-panel p-6 hidden">
+      {% if inspections %}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">抽查时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">抽查人</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">抽查类型</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">结果</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for inspection in inspections %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm text-gray-900">{{ inspection.inspected_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.inspector }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.get_inspection_type_display }}</td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium {% if inspection.result == 'qualified' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ inspection.get_result_display }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      {% include "tracker/components/empty_state.html" with message="暂无院感抽查记录" %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-panel').forEach(function(panel) {
+    panel.classList.add('hidden');
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.classList.remove('border-blue-600', 'text-blue-600');
+    btn.classList.add('border-transparent', 'text-gray-500');
+  });
+  document.getElementById('tab-' + tabName).classList.remove('hidden');
+  var activeBtn = document.querySelector('[data-tab="' + tabName + '"]');
+  activeBtn.classList.remove('border-transparent', 'text-gray-500');
+  activeBtn.classList.add('border-blue-600', 'text-blue-600');
+}
+</script>
+{% endblock %}

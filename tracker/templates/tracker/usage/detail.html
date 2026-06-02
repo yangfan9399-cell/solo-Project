@@ -1,0 +1,78 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}诊疗使用详情 - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'tracker:usage_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; 返回使用记录列表</a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">诊疗使用详情</h2>
+    {% if record.returned_at %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">已归还</span>
+    {% else %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">使用中</span>
+    {% endif %}
+  </div>
+
+  <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-500">器械包</label>
+      <a href="{% url 'tracker:instrument_detail' record.instrument_package.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ record.instrument_package.code }} - {{ record.instrument_package.name }}</a>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">患者编号</label>
+      <p class="text-sm text-gray-900">{{ record.patient_id }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">患者姓名</label>
+      <p class="text-sm text-gray-900">{{ record.patient_name }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">使用医生</label>
+      <p class="text-sm text-gray-900">{{ record.doctor }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">使用诊室</label>
+      <p class="text-sm text-gray-900">{{ record.clinic }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">诊疗项目</label>
+      <p class="text-sm text-gray-900">{{ record.procedure }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">使用时间</label>
+      <p class="text-sm text-gray-900">{{ record.used_at|date:"Y-m-d H:i" }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">归还时间</label>
+      {% if record.returned_at %}
+      <p class="text-sm text-gray-900">{{ record.returned_at|date:"Y-m-d H:i" }}</p>
+      {% else %}
+      <p class="text-sm text-gray-400">未归还</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if record.notes %}
+  <div class="px-6 py-4 border-t border-gray-200">
+    <label class="block text-sm font-medium text-gray-500">备注</label>
+    <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.notes }}</p>
+  </div>
+  {% endif %}
+
+  {% if not record.returned_at %}
+  <div class="px-6 py-4 border-t border-gray-200">
+    <form method="post" action="{% url 'tracker:usage_return' record.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"/></svg>
+        归还登记
+      </button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

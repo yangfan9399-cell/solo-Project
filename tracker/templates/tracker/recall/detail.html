@@ -1,0 +1,85 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}召回详情 - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'tracker:recall_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; 返回召回列表</a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">召回详情</h2>
+    {% if record.status == 'pending' %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">待处理</span>
+    {% elif record.status == 'recalled' %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">已召回</span>
+    {% elif record.status == 'destroyed' %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">已销毁</span>
+    {% endif %}
+  </div>
+
+  <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-500">器械包</label>
+      <a href="{% url 'tracker:instrument_detail' record.instrument_package.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ record.instrument_package.code }} - {{ record.instrument_package.name }}</a>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">召回原因</label>
+      <p class="text-sm text-gray-900">{{ record.get_reason_display }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">发起人</label>
+      <p class="text-sm text-gray-900">{{ record.initiator }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">发起时间</label>
+      <p class="text-sm text-gray-900">{{ record.initiated_at|date:"Y-m-d H:i" }}</p>
+    </div>
+    {% if record.handler %}
+    <div>
+      <label class="block text-sm font-medium text-gray-500">处理人</label>
+      <p class="text-sm text-gray-900">{{ record.handler }}</p>
+    </div>
+    {% endif %}
+    {% if record.handled_at %}
+    <div>
+      <label class="block text-sm font-medium text-gray-500">处理时间</label>
+      <p class="text-sm text-gray-900">{{ record.handled_at|date:"Y-m-d H:i" }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if record.notes %}
+  <div class="px-6 py-4 border-t border-gray-200">
+    <label class="block text-sm font-medium text-gray-500">备注</label>
+    <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ record.notes }}</p>
+  </div>
+  {% endif %}
+
+  {% if record.status == 'pending' %}
+  <div class="px-6 py-4 border-t border-gray-200">
+    <form method="post" action="{% url 'tracker:recall_handle' record.pk %}">
+      {% csrf_token %}
+      <div class="flex flex-wrap items-end gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">处理方式 <span class="text-red-500">*</span></label>
+          <select name="action" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <option value="recalled">已召回</option>
+            <option value="destroyed">已销毁</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">处理人 <span class="text-red-500">*</span></label>
+          <input type="text" name="handler" required class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
+        <button type="submit" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          提交处理
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

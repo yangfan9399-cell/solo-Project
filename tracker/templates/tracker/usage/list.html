@@ -1,0 +1,88 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}诊疗使用记录 - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">诊疗使用记录</h1>
+  <a href="{% url 'tracker:usage_create' %}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">
+    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    登记使用
+  </a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+  <form method="get" class="flex flex-wrap items-center gap-3">
+    <div class="flex items-center gap-2">
+      <input type="text" name="q" value="{{ search }}" placeholder="搜索患者编号/姓名/医生..." class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 w-64">
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-sm font-medium text-gray-700">诊室：</label>
+      <select name="clinic" onchange="this.form.submit()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+        <option value="">全部</option>
+        {% for clinic in clinics %}
+        <option value="{{ clinic }}" {% if clinic_filter == clinic %}selected{% endif %}>{{ clinic }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition">搜索</button>
+    {% if search or clinic_filter %}
+    <a href="{% url 'tracker:usage_list' %}" class="text-sm text-blue-600 hover:text-blue-800">清除筛选</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if records %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">器械包</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">患者编号</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">患者姓名</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">医生</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">诊室</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">诊疗项目</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">使用时间</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">归还时间</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for record in records %}
+        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'tracker:usage_detail' record.pk %}'">
+          <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ record.instrument_package.code }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ record.patient_id }}</td>
+          <td class="px-4 py-3 text-sm text-gray-900">{{ record.patient_name }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ record.doctor }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ record.clinic }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ record.procedure }}</td>
+          <td class="px-4 py-3 text-sm text-gray-500">{{ record.used_at|date:"Y-m-d H:i" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-500">
+            {% if record.returned_at %}{{ record.returned_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm">
+            {% if record.returned_at %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">已归还</span>
+            {% else %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">使用中</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  <h3 class="mt-2 text-sm font-medium text-gray-900">暂无诊疗使用记录</h3>
+  <p class="mt-1 text-sm text-gray-500">点击"登记使用"开始创建第一条使用记录</p>
+  <div class="mt-6">
+    <a href="{% url 'tracker:usage_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">登记使用</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

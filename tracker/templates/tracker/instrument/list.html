@@ -1,0 +1,100 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-900">器械包列表</h1>
+    <a href="{% url 'tracker:instrument_create' %}"
+       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      新建器械包
+    </a>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-4 space-y-4">
+    <form method="get" class="flex gap-3">
+      <div class="flex-1">
+        <input type="text" name="q" value="{{ search|default:'' }}"
+               placeholder="搜索编号或名称..."
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+      </div>
+      <button type="submit"
+              class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+        搜索
+      </button>
+    </form>
+
+    <div class="flex flex-wrap gap-2">
+      <span class="text-sm text-gray-500 py-1">状态：</span>
+      <a href="{% url 'tracker:instrument_list' %}?q={{ search|default:'' }}&category={{ category_filter|default:'' }}"
+         class="px-3 py-1 rounded-full text-xs font-medium {% if not status_filter %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        全部
+      </a>
+      {% for value, label in status_choices %}
+      <a href="{% url 'tracker:instrument_list' %}?status={{ value }}&q={{ search|default:'' }}&category={{ category_filter|default:'' }}"
+         class="px-3 py-1 rounded-full text-xs font-medium {% if status_filter == value %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <span class="text-sm text-gray-500 py-1">分类：</span>
+      <a href="{% url 'tracker:instrument_list' %}?q={{ search|default:'' }}&status={{ status_filter|default:'' }}"
+         class="px-3 py-1 rounded-full text-xs font-medium {% if not category_filter %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        全部
+      </a>
+      {% for value, label in category_choices %}
+      <a href="{% url 'tracker:instrument_list' %}?category={{ value }}&q={{ search|default:'' }}&status={{ status_filter|default:'' }}"
+         class="px-3 py-1 rounded-full text-xs font-medium {% if category_filter == value %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if instruments %}
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">编号</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">诊室</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">过期时间</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for instrument in instruments %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 text-sm font-mono text-gray-900">{{ instrument.code }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ instrument.name }}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ instrument.get_category_display }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-1 rounded-full text-xs font-medium {{ instrument.status_class|default:"bg-gray-100 text-gray-800" }}">
+                {{ instrument.get_status_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ instrument.clinic|default:"-" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ instrument.expire_at|date:"Y-m-d"|default:"-" }}</td>
+            <td class="px-4 py-3">
+              <a href="{% url 'tracker:instrument_detail' instrument.pk %}"
+                 class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  {% include "tracker/components/empty_state.html" with message="暂无器械包记录" %}
+  {% endif %}
+</div>
+{% endblock %}

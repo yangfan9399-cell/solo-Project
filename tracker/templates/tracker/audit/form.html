@@ -1,0 +1,41 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}{{ title }} - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'tracker:audit_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; 返回审核列表</a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h2 class="text-lg font-semibold text-gray-900">{{ title }}</h2>
+  </div>
+
+  <form method="post" class="px-6 py-4">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {% for field in form %}
+      <div {% if field.field.widget.attrs.rows %}class="sm:col-span-2"{% endif %}>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+          {{ field.label }}
+          {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.errors %}
+        <p class="mt-1 text-sm text-red-600">{{ field.errors.0 }}</p>
+        {% endif %}
+        {% if field.help_text %}
+        <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-6 flex items-center gap-3">
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">提交</button>
+      <a href="{% url 'tracker:audit_list' %}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

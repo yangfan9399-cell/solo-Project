@@ -1,0 +1,114 @@
+{% extends "tracker/base.html" %}
+{% load tracker_tags %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+      <div class="text-sm text-gray-500">器械包总数</div>
+      <div class="text-3xl font-bold text-gray-900 mt-1">{{ total_instruments }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+      <div class="text-sm text-gray-500">待处理灭菌批次</div>
+      <div class="text-3xl font-bold text-gray-900 mt-1">{{ pending_batches }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+      <div class="text-sm text-gray-500">待处理召回</div>
+      <div class="text-3xl font-bold text-gray-900 mt-1">{{ pending_recalls }}</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+      <div class="text-sm text-gray-500">过期预警</div>
+      <div class="text-3xl font-bold text-gray-900 mt-1">{{ upcoming_expiry|length }}</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">最近使用记录</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">器械包编号</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">患者姓名</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">医生</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">诊室</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">使用时间</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for usage in recent_usages %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm text-blue-600 hover:underline">
+                <a href="{% url 'tracker:instrument_detail' usage.instrument_package.pk %}">{{ usage.instrument_package.code }}</a>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ usage.patient_name }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ usage.doctor }}</td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ usage.clinic }}</td>
+              <td class="px-4 py-3 text-sm text-gray-500">{{ usage.used_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-400">暂无使用记录</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">即将过期器械</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">编号</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">过期时间</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for item in upcoming_expiry %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-sm text-blue-600 hover:underline">
+                <a href="{% url 'tracker:instrument_detail' item.pk %}">{{ item.code }}</a>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">{{ item.name }}</td>
+              <td class="px-4 py-3 text-sm text-orange-600 font-semibold">{{ item.expire_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-400">暂无过期预警</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">状态分布</h2>
+    <div class="flex flex-wrap gap-3">
+      {% for status_key, status_label in status_display.items %}
+      <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+        {% if status_key == 'registered' %}bg-green-100 text-green-800
+        {% elif status_key == 'in_use' %}bg-blue-100 text-blue-800
+        {% elif status_key == 'cleaning' %}bg-yellow-100 text-yellow-800
+        {% elif status_key == 'sterilizing' %}bg-orange-100 text-orange-800
+        {% elif status_key == 'pending_release' %}bg-purple-100 text-purple-800
+        {% elif status_key == 'expired' %}bg-red-100 text-red-800
+        {% elif status_key == 'recalled' %}bg-red-100 text-red-800
+        {% else %}bg-gray-100 text-gray-800{% endif %}">
+        {{ status_label }}: {{ status_counts|dict_get:status_key|default:0 }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

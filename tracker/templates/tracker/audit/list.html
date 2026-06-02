@@ -1,0 +1,88 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}放行审核列表 - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">放行审核</h1>
+  <a href="{% url 'tracker:audit_create' %}" class="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">
+    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    新建审核
+  </a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+  <form method="get" class="flex flex-wrap items-center gap-3">
+    <label class="text-sm font-medium text-gray-700">审核结果：</label>
+    <select name="result" onchange="this.form.submit()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+      <option value="">全部</option>
+      {% for value, label in result_choices %}
+      <option value="{{ value }}" {% if result_filter == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if result_filter %}
+    <a href="{% url 'tracker:audit_list' %}" class="text-sm text-blue-600 hover:text-blue-800">清除筛选</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if audits %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">器械包编号</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">灭菌批次</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核人</th>
+          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">包装完好</th>
+          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">指示卡变色</th>
+          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">标识清晰</th>
+          <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">封口完好</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核结果</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">审核时间</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for audit in audits %}
+        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'tracker:audit_detail' audit.pk %}'">
+          <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ audit.instrument_package.code }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ audit.batch.batch_number }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ audit.auditor }}</td>
+          <td class="px-4 py-3 text-sm text-center">
+            {% if audit.packaging_intact %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-center">
+            {% if audit.indicator_changed %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-center">
+            {% if audit.label_clear %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-center">
+            {% if audit.seal_intact %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm">
+            {% if audit.audit_result == 'approved' %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">通过</span>
+            {% else %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">不通过</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-500">{{ audit.audited_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  <h3 class="mt-2 text-sm font-medium text-gray-900">暂无放行审核记录</h3>
+  <p class="mt-1 text-sm text-gray-500">点击"新建审核"开始创建第一条审核记录</p>
+  <div class="mt-6">
+    <a href="{% url 'tracker:audit_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">新建审核</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "tracker/base.html" %}
+
+{% block title %}放行审核详情 - 器械消毒追溯系统{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'tracker:audit_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; 返回审核列表</a>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">放行审核详情</h2>
+    {% if audit.audit_result == 'approved' %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">通过</span>
+    {% else %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">不通过</span>
+    {% endif %}
+  </div>
+
+  <div class="px-6 py-4 grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div>
+      <label class="block text-sm font-medium text-gray-500">器械包</label>
+      <a href="{% url 'tracker:instrument_detail' audit.instrument_package.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ audit.instrument_package.code }} - {{ audit.instrument_package.name }}</a>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">灭菌批次</label>
+      <a href="{% url 'tracker:batch_detail' audit.batch.pk %}" class="text-sm text-blue-600 hover:text-blue-800">{{ audit.batch.batch_number }}</a>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">审核人</label>
+      <p class="text-sm text-gray-900">{{ audit.auditor }}</p>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-500">审核时间</label>
+      <p class="text-sm text-gray-900">{{ audit.audited_at|date:"Y-m-d H:i" }}</p>
+    </div>
+  </div>
+
+  <div class="px-6 py-4 border-t border-gray-200">
+    <label class="block text-sm font-medium text-gray-500 mb-3">检查项目</label>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="flex items-center gap-2 px-3 py-2 rounded-md {% if audit.packaging_intact %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+        {% if audit.packaging_intact %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+        <span class="text-sm {% if audit.packaging_intact %}text-green-800{% else %}text-red-800{% endif %}">包装完好</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-md {% if audit.indicator_changed %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+        {% if audit.indicator_changed %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+        <span class="text-sm {% if audit.indicator_changed %}text-green-800{% else %}text-red-800{% endif %}">指示卡变色</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-md {% if audit.label_clear %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+        {% if audit.label_clear %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+        <span class="text-sm {% if audit.label_clear %}text-green-800{% else %}text-red-800{% endif %}">标识清晰</span>
+      </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-md {% if audit.seal_intact %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+        {% if audit.seal_intact %}<span class="text-green-600 font-bold">✓</span>{% else %}<span class="text-red-600 font-bold">✗</span>{% endif %}
+        <span class="text-sm {% if audit.seal_intact %}text-green-800{% else %}text-red-800{% endif %}">封口完好</span>
+      </div>
+    </div>
+  </div>
+
+  {% if audit.notes %}
+  <div class="px-6 py-4 border-t border-gray-200">
+    <label class="block text-sm font-medium text-gray-500">备注</label>
+    <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ audit.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

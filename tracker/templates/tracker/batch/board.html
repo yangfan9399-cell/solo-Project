@@ -1,0 +1,71 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-900">灭菌批次看板</h1>
+    <a href="{% url 'tracker:batch_create' %}"
+       class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+      <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      新建灭菌批次
+    </a>
+  </div>
+
+  <p class="text-sm text-gray-500">共 {{ total_batches }} 个批次</p>
+
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div>
+      <div class="mb-3 flex items-center gap-2">
+        <span class="inline-block h-3 w-3 rounded-full bg-yellow-400"></span>
+        <h2 class="text-sm font-semibold text-gray-700">待检测</h2>
+        <span class="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
+          {{ batches_by_status.pending|length }}
+        </span>
+      </div>
+      <div class="space-y-3 min-h-[200px] rounded-lg border-2 border-dashed border-yellow-200 bg-yellow-50/50 p-3">
+        {% for batch in batches_by_status.pending %}
+        {% include "tracker/batch/_card.html" with status_color="yellow" %}
+        {% empty %}
+        <p class="py-8 text-center text-xs text-gray-400">暂无待检测批次</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <div class="mb-3 flex items-center gap-2">
+        <span class="inline-block h-3 w-3 rounded-full bg-green-500"></span>
+        <h2 class="text-sm font-semibold text-gray-700">合格</h2>
+        <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+          {{ batches_by_status.qualified|length }}
+        </span>
+      </div>
+      <div class="space-y-3 min-h-[200px] rounded-lg border-2 border-dashed border-green-200 bg-green-50/50 p-3">
+        {% for batch in batches_by_status.qualified %}
+        {% include "tracker/batch/_card.html" with status_color="green" %}
+        {% empty %}
+        <p class="py-8 text-center text-xs text-gray-400">暂无合格批次</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <div class="mb-3 flex items-center gap-2">
+        <span class="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+        <h2 class="text-sm font-semibold text-gray-700">不合格</h2>
+        <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+          {{ batches_by_status.unqualified|length }}
+        </span>
+      </div>
+      <div class="space-y-3 min-h-[200px] rounded-lg border-2 border-dashed border-red-200 bg-red-50/50 p-3">
+        {% for batch in batches_by_status.unqualified %}
+        {% include "tracker/batch/_card.html" with status_color="red" %}
+        {% empty %}
+        <p class="py-8 text-center text-xs text-gray-400">暂无不合格批次</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

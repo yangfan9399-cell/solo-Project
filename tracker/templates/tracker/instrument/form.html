@@ -1,0 +1,58 @@
+{% extends "tracker/base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'tracker:instrument_list' %}" class="text-gray-400 hover:text-gray-600">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    {% if form.errors %}
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+      <h3 class="text-sm font-medium text-red-800">表单提交失败，请检查以下错误：</h3>
+      <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+        {% for field in form %}
+        {% for error in field.errors %}
+        <li>{{ field.label }}: {{ error }}</li>
+        {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+          {{ field.label }}
+          {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+        <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex gap-3 pt-4">
+        <button type="submit"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+          提交
+        </button>
+        <a href="{% url 'tracker:instrument_list' %}"
+           class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+          取消
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
