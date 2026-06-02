@@ -55,8 +55,21 @@ export const actions: Actions = {
 			return fail(400, { error: '签收人姓名为必填项' });
 		}
 
+		const claimId = parseInt(params.id);
+		if (isNaN(claimId)) {
+			return fail(400, { error: '无效的申领编号' });
+		}
+
+		const claim = getClaimById(claimId);
+		if (!claim) {
+			return fail(404, { error: '申领记录不存在' });
+		}
+		if (claim.status !== 'approved') {
+			return fail(400, { error: `当前状态「${claim.status}」不允许签收，仅核验通过的申领可领取` });
+		}
+
 		try {
-			completeClaim(parseInt(params.id), 1, {
+			completeClaim(claimId, 1, {
 				receiver: receiver.trim(),
 				idLast4: idLast4?.trim() || '',
 				voucher: voucher?.trim() || '',
@@ -64,7 +77,8 @@ export const actions: Actions = {
 			});
 			return redirect(303, `/claims/${params.id}`);
 		} catch (e) {
-			return fail(500, { error: '领取签收失败' });
+			const message = e instanceof Error ? e.message : '领取签收失败';
+			return fail(500, { error: message });
 		}
 	}
 };

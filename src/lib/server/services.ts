@@ -487,21 +487,12 @@ export function completeClaim(
 	}
 ): void {
 	const claim = getClaimById(claimId);
-	if (!claim) return;
-	if (claim.status !== 'approved') return;
-
-	const signReceiver = signData?.receiver
-		? `'${signData.receiver.replace(/'/g, "''")}'`
-		: 'NULL';
-	const signIdLast4 = signData?.idLast4
-		? `'${signData.idLast4.replace(/'/g, "''")}'`
-		: 'NULL';
-	const signVoucher = signData?.voucher
-		? `'${signData.voucher.replace(/'/g, "''")}'`
-		: 'NULL';
-	const signNotes = signData?.notes
-		? `'${signData.notes.replace(/'/g, "''")}'`
-		: 'NULL';
+	if (!claim) {
+		throw new Error('申领记录不存在');
+	}
+	if (claim.status !== 'approved') {
+		throw new Error(`当前状态「${claim.status}」不允许签收，仅核验通过的申领可领取`);
+	}
 
 	db.prepare(
 		`UPDATE claims 

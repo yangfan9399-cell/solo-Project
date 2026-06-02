@@ -171,4 +171,20 @@ export function initDatabase() {
 			}
 		}
 	}
+
+	const claimsColumns = db.prepare("PRAGMA table_info(claims)").all() as { name: string }[];
+	const claimsColumnNames = claimsColumns.map(c => c.name);
+
+	const signColumns = [
+		{ name: 'sign_receiver', def: 'TEXT' },
+		{ name: 'sign_id_last4', def: 'TEXT' },
+		{ name: 'sign_voucher', def: 'TEXT' },
+		{ name: 'sign_notes', def: 'TEXT' }
+	];
+
+	for (const col of signColumns) {
+		if (!claimsColumnNames.includes(col.name)) {
+			db.exec(`ALTER TABLE claims ADD COLUMN ${col.name} ${col.def}`);
+		}
+	}
 }
