@@ -22,22 +22,55 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if ((tool as any).status !== 'available') {
+  if ((tool as any).status === 'scrapped') {
     throw createError({
       statusCode: 400,
-      message: '量具当前状态不可借用'
+      message: '该量具已报废，无法借用'
+    })
+  }
+
+  if ((tool as any).status === 'calibrating') {
+    throw createError({
+      statusCode: 400,
+      message: '该量具正在校准中，暂时无法借用'
+    })
+  }
+
+  if ((tool as any).status === 'maintenance') {
+    throw createError({
+      statusCode: 400,
+      message: '该量具正在维护中，暂时无法借用'
+    })
+  }
+
+  if ((tool as any).status === 'borrowed') {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已被借用，请选择其他量具'
+    })
+  }
+
+  const pendingBorrow = queryOne(`
+    SELECT id FROM borrow_records 
+    WHERE tool_id = ? AND status = 'pending'
+  `, [body.toolId])
+  
+  if (pendingBorrow) {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已有待审批的借用申请，请等待审批结果'
     })
   }
 
   const activeBorrow = queryOne(`
     SELECT id FROM borrow_records 
-    WHERE tool_id = ? AND status IN ('pending', 'approved', 'borrowed')
+    WHERE tool_id = ? AND status IN ('approved', 'borrowed', 'overdue')
   `, [body.toolId])
   
   if (activeBorrow) {
     throw createError({
       statusCode: 400,
-      message: '该量具已有待处理或进行中的借用记录'
+      message: '该量具已被借出或正在交接中'
     })
   }
 

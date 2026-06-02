@@ -127,3 +127,24 @@ export function getToolStatusColor(status: ToolStatus): string {
   }
   return colors[status] || 'bg-gray-100 text-gray-800'
 }
+
+export function canBorrowTool(tool: Tool): boolean {
+  if (tool.status === 'scrapped') return false
+  if (tool.status === 'borrowed') return false
+  if (tool.status === 'calibrating') return false
+  if (tool.status === 'maintenance') return false
+  if (tool.hasPendingBorrow) return false
+  if (tool.isBorrowedActive) return false
+  return tool.status === 'available'
+}
+
+export function getBorrowDisableReason(tool: Tool): string {
+  if (tool.status === 'scrapped') return '该量具已报废，无法借用'
+  if (tool.status === 'borrowed') return '该量具已被借用'
+  if (tool.status === 'calibrating') return '该量具正在校准中'
+  if (tool.status === 'maintenance') return '该量具正在维护中'
+  if (tool.hasPendingBorrow) return '该量具已有待审批的借用申请'
+  if (tool.isBorrowedActive) return '该量具已被借出'
+  if (tool.status !== 'available') return '该量具当前状态不可借用'
+  return ''
+}

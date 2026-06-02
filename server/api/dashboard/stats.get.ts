@@ -1,9 +1,16 @@
-import { queryOne } from '../../utils/database'
+import { execute, queryOne } from '../../utils/database'
 import type { DashboardStats } from '../../../types'
 
 export default defineEventHandler(() => {
   const today = new Date().toISOString().split('T')[0]
   const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+  execute(`
+    UPDATE borrow_records 
+    SET status = 'overdue', updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'borrowed' 
+    AND expected_return_date < ?
+  `, [today])
 
   const totalTools = queryOne<{ count: number }>('SELECT COUNT(*) as count FROM tools WHERE status != ?', ['scrapped'])
   const availableTools = queryOne<{ count: number }>('SELECT COUNT(*) as count FROM tools WHERE status = ?', ['available'])
@@ -13,8 +20,8 @@ export default defineEventHandler(() => {
   const pendingBorrows = queryOne<{ count: number }>('SELECT COUNT(*) as count FROM borrow_records WHERE status = ?', ['pending'])
   const overdueBorrows = queryOne<{ count: number }>(`
     SELECT COUNT(*) as count FROM borrow_records 
-    WHERE status IN ('borrowed', 'overdue') AND expected_return_date < ?
-  `, [today])
+    WHERE status = 'overdue'
+  `)
   
   const calibrationDueSoon = queryOne<{ count: number }>(`
     SELECT COUNT(*) as count FROM tools 

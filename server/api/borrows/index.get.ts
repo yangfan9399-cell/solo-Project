@@ -1,4 +1,4 @@
-import { query } from '../../utils/database'
+import { query, execute } from '../../utils/database'
 import type { BorrowRecord } from '../../../types'
 
 export default defineEventHandler((event) => {
@@ -6,6 +6,13 @@ export default defineEventHandler((event) => {
   const status = queryParams.status as string
   const toolId = queryParams.toolId as string
   const applicantId = queryParams.applicantId as string
+
+  execute(`
+    UPDATE borrow_records 
+    SET status = 'overdue', updated_at = CURRENT_TIMESTAMP
+    WHERE status = 'borrowed' 
+    AND expected_return_date < DATE('now')
+  `)
 
   let sql = `
     SELECT 
@@ -18,7 +25,10 @@ export default defineEventHandler((event) => {
       applicant_department as applicantDepartment,
       purpose,
       expected_return_date as expectedReturnDate,
-      status,
+      CASE 
+        WHEN status = 'borrowed' AND expected_return_date < DATE('now') THEN 'overdue'
+        ELSE status
+      END as status,
       approver_id as approverId,
       approver_name as approverName,
       approval_remark as approvalRemark,
@@ -39,8 +49,12 @@ export default defineEventHandler((event) => {
   const params: string[] = []
 
   if (status && status !== 'all') {
-    sql += ' AND status = ?'
-    params.push(status)
+    if (status === 'overdue') {
+      sql += ` AND (status = 'overdue' OR (status = 'borrowed' AND expected_return_date < DATE('now')))`
+    } else {
+      sql += ' AND status = ?'
+      params.push(status)
+    }
   }
 
   if (toolId) {
@@ -53,7 +67,7 @@ export default defineEventHandler((event) => {
     params.push(applicantId)
   }
 
-  sql += ' ORDER BY id DESC'
+  sql += ' ORDER BY CASE status WHEN \'overdue\' THEN 1 WHEN \'pending\' THEN 2 ELSE 3 END, id DESC'
 
   const records = query<BorrowRecord>(sql, params)
   return { records }

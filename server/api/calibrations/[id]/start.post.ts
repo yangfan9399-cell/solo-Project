@@ -3,11 +3,32 @@ import { execute, queryOne, transaction } from '../../../utils/database'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
-  const record = queryOne('SELECT status, tool_id FROM calibration_records WHERE id = ?', [id])
+  const record = queryOne('SELECT status, tool_id, tool_code FROM calibration_records WHERE id = ?', [id])
   if (!record) {
     throw createError({
       statusCode: 404,
       message: '校准记录不存在'
+    })
+  }
+
+  if ((record as any).status === 'in_progress') {
+    throw createError({
+      statusCode: 400,
+      message: '该校准正在进行中，无需重复开始'
+    })
+  }
+
+  if ((record as any).status === 'passed') {
+    throw createError({
+      statusCode: 400,
+      message: '该校准已完成，无法重新开始'
+    })
+  }
+
+  if ((record as any).status === 'failed') {
+    throw createError({
+      statusCode: 400,
+      message: '该校准已标记为不合格，无法重新开始'
     })
   }
 

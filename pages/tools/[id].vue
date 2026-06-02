@@ -93,14 +93,30 @@
         </div>
       </div>
 
-      <div class="flex space-x-4">
-        <button v-if="tool.status === 'available' && currentUser" @click="showBorrowModal = true" class="btn btn-primary">
-          申请借用
-        </button>
+      <div class="flex flex-wrap gap-4">
+        <template v-if="currentUser">
+          <button 
+            v-if="canBorrowTool(tool)" 
+            @click="showBorrowModal = true" 
+            class="btn btn-primary"
+          >
+            申请借用
+          </button>
+          <div 
+            v-else 
+            class="px-4 py-2 bg-gray-100 text-gray-600 rounded-md flex items-center"
+            :title="borrowDisabledReason"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {{ borrowDisabledReason }}
+          </div>
+        </template>
         <button v-if="hasRole(['admin', 'quality'])" @click="showCalibrationModal = true" class="btn btn-secondary">
           安排校准
         </button>
-        <button v-if="hasRole(['admin'])" @click="navigateTo('/tools')" class="btn btn-secondary">
+        <button @click="navigateTo('/tools')" class="btn btn-secondary">
           返回列表
         </button>
       </div>
@@ -154,10 +170,15 @@
 import type { Tool } from '../../types'
 
 const route = useRoute()
-const { tool, loading, error, fetchTool } = useTools()
+const { tool, loading, error, fetchTool, canBorrowTool, getBorrowDisableReason } = useTools()
 const { createBorrow } = useBorrows()
 const { createCalibration } = useCalibrations()
 const { currentUser, hasRole } = useAuth()
+
+const borrowDisabledReason = computed(() => {
+  if (!tool.value) return ''
+  return getBorrowDisableReason(tool.value)
+})
 
 const showBorrowModal = ref(false)
 const showCalibrationModal = ref(false)

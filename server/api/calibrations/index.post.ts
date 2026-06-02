@@ -14,11 +14,30 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const tool = queryOne('SELECT code, name FROM tools WHERE id = ?', [body.toolId])
+  const tool = queryOne('SELECT code, name, status FROM tools WHERE id = ?', [body.toolId])
   if (!tool) {
     throw createError({
       statusCode: 404,
       message: '量具不存在'
+    })
+  }
+
+  if ((tool as any).status === 'scrapped') {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已报废，无法安排校准'
+    })
+  }
+
+  const activeCalibration = queryOne(`
+    SELECT id FROM calibration_records 
+    WHERE tool_id = ? AND status IN ('scheduled', 'in_progress')
+  `, [body.toolId])
+
+  if (activeCalibration) {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已有待执行或进行中的校准计划'
     })
   }
 

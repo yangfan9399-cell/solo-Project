@@ -82,9 +82,14 @@
               {{ tool.department || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span class="badge" :class="getToolStatusColor(tool.status)">
-                {{ getToolStatusLabel(tool.status) }}
-              </span>
+              <div class="flex items-center space-x-2">
+                <span class="badge" :class="getToolStatusColor(tool.status)">
+                  {{ getToolStatusLabel(tool.status) }}
+                </span>
+                <span v-if="tool.hasPendingBorrow" class="badge badge-yellow">
+                  待审批
+                </span>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
               <span v-if="tool.nextCalibrationDate" :class="isCalibrationOverdue(tool.nextCalibrationDate) ? 'text-red-600 font-medium' : 'text-gray-500'">

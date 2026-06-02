@@ -32,6 +32,8 @@ export interface Tool {
   remark: string
   createdAt: string
   updatedAt: string
+  hasPendingBorrow?: boolean
+  isBorrowedActive?: boolean
 }
 
 export type BorrowStatus = 'pending' | 'approved' | 'rejected' | 'borrowed' | 'returned' | 'overdue'
