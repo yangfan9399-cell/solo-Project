@@ -1,5 +1,32 @@
-node_modules/
-target/
-.env
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
 .DS_Store
-runs/
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Database
+data/*.db
+data/*.db-wal
+data/*.db-shm
