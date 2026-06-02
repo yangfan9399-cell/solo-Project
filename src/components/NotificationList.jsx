@@ -17,6 +17,8 @@ export default function NotificationList() {
   const [detailModal, setDetailModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [isProcessing, setIsProcessing] = useState(null);
+  const [overdueResult, setOverdueResult] = useState(null);
+  const [overdueResultModal, setOverdueResultModal] = useState(false);
 
   const loadData = async () => {
     try {
@@ -103,7 +105,8 @@ export default function NotificationList() {
       const res = await apiRequest('/notifications/overdue-check', {
         method: 'POST'
       });
-      alert(res.message);
+      setOverdueResult(res);
+      setOverdueResultModal(true);
       loadData();
     } catch (err) {
       alert(err.message);
@@ -405,6 +408,105 @@ export default function NotificationList() {
                 删除
               </button>
               <button onClick={() => setDetailModal(false)} className="btn btn-primary">
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={overdueResultModal}
+        onClose={() => setOverdueResultModal(false)}
+        title="逾期检查处理结果"
+        size="xl"
+      >
+        {overdueResult && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 bg-green-50 rounded-lg text-center">
+                <div className="text-3xl font-bold text-green-600">{overdueResult.processed}</div>
+                <div className="text-sm text-gray-600">已处理（已退款）</div>
+              </div>
+              <div className="p-4 bg-yellow-50 rounded-lg text-center">
+                <div className="text-3xl font-bold text-yellow-600">{overdueResult.insufficient_stock}</div>
+                <div className="text-sm text-gray-600">库存不足跳过</div>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg text-center">
+                <div className="text-3xl font-bold text-gray-600">{overdueResult.already_released}</div>
+                <div className="text-sm text-gray-600">此前已释放</div>
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500 text-center">
+              符合条件订单总数：{overdueResult.total_eligible} · 累计已释放：{overdueResult.total_released}
+            </div>
+
+            {overdueResult.processed_details && overdueResult.processed_details.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-green-700">✅ 已处理订单</h3>
+                <div className="max-h-48 overflow-y-auto border rounded">
+                  <table className="w-full text-sm">
+                    <thead className="bg-green-50 sticky top-0">
+                      <tr>
+                        <th className="text-left p-2 font-medium">订单号</th>
+                        <th className="text-left p-2 font-medium">图书</th>
+                        <th className="text-left p-2 font-medium">会员</th>
+                        <th className="text-right p-2 font-medium">退款金额</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {overdueResult.processed_details.map((item) => (
+                        <tr key={item.preorder_id}>
+                          <td className="p-2 font-mono text-xs">{item.preorder_no}</td>
+                          <td className="p-2">{item.book_title}</td>
+                          <td className="p-2">{item.member_name}</td>
+                          <td className="p-2 text-right text-green-600 font-medium">¥{item.amount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {overdueResult.insufficient_details && overdueResult.insufficient_details.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3 text-yellow-700">⚠️ 库存不足跳过</h3>
+                <div className="max-h-48 overflow-y-auto border rounded">
+                  <table className="w-full text-sm">
+                    <thead className="bg-yellow-50 sticky top-0">
+                      <tr>
+                        <th className="text-left p-2 font-medium">订单号</th>
+                        <th className="text-left p-2 font-medium">图书</th>
+                        <th className="text-left p-2 font-medium">会员</th>
+                        <th className="text-center p-2 font-medium">需要</th>
+                        <th className="text-center p-2 font-medium">剩余预留</th>
+                        <th className="text-left p-2 font-medium">原因</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {overdueResult.insufficient_details.map((item) => (
+                        <tr key={item.preorder_id} className="text-yellow-800">
+                          <td className="p-2 font-mono text-xs">{item.preorder_no}</td>
+                          <td className="p-2">{item.book_title}</td>
+                          <td className="p-2">{item.member_name}</td>
+                          <td className="p-2 text-center">{item.quantity}</td>
+                          <td className="p-2 text-center text-red-600 font-medium">{item.remaining_reserved}</td>
+                          <td className="p-2 text-xs text-gray-500">{item.reason || '预留库存不足'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  提示：同一本书按会员等级和下单时间优先处理。可先为高等级会员采购补货后再次执行。
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
+              <button onClick={() => setOverdueResultModal(false)} className="btn btn-primary">
                 关闭
               </button>
             </div>

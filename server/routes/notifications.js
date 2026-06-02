@@ -332,64 +332,142 @@ router.post('/overdue-check', (req, res) => {
       AND DATE(p.actual_arrival_date, '+' || ? || ' days') <= DATE('now')
     `).get(overdueDays);
 
+    const alreadyReleased = db.prepare(`
+      SELECT COUNT(*) as count
+      FROM preorders p
+      WHERE p.status IN ('expired', 'refunded', 'cancelled')
+      AND DATE(p.actual_arrival_date, '+' || ? || ' days') <= DATE('now')
+    `).get(overdueDays);
+
     const expiredPreorders = db.prepare(`
-      SELECT p.*, m.name as member_name, b.title,
-             COALESCE(s.quantity_reserved, 0) as quantity_reserved
+      SELECT p.*, m.name as member_name, m.level as member_level, b.title
       FROM preorders p
       JOIN members m ON p.member_id = m.id
       JOIN books b ON p.book_id = b.id
-      LEFT JOIN stock s ON p.book_id = s.book_id
       WHERE p.status = 'reserved'
       AND DATE(p.actual_arrival_date, '+' || ? || ' days') <= DATE('now')
-      AND COALESCE(s.quantity_reserved, 0) >= p.quantity
+      ORDER BY p.book_id ASC,
+               CASE m.level
+                 WHEN 'platinum' THEN 1
+                 WHEN 'gold' THEN 2
+                 WHEN 'silver' THEN 3
+                 ELSE 4
+               END ASC,
+               p.created_at ASC
     `).all(overdueDays);
 
-    const results = [];
-    const skipped = totalExpired.count - expiredPreorders.length;
+    const bookStock = {};
+    const stockStmt = db.prepare(`
+      SELECT COALESCE(quantity_reserved, 0) as quantity_reserved
+      FROM stock WHERE book_id = ?
+    `);
+    for (const preorder of expiredPreorders) {
+      if (!bookStock[preorder.book_id]) {
+        const stock = stockStmt.get(preorder.book_id);
+        bookStock[preorder.book_id] = stock ? stock.quantity_reserved : 0;
+      }
+    }
+
+    const processed = [];
+    const insufficientStock = [];
+    const updateStockStmt = db.prepare(`
+      UPDATE stock SET quantity_reserved = quantity_reserved - ?, updated_at = CURRENT_TIMESTAMP
+      WHERE book_id = ? AND quantity_reserved >= ?
+    `);
 
     for (const preorder of expiredPreorders) {
-      db.prepare('BEGIN TRANSACTION').run();
+      const remainingReserved = bookStock[preorder.book_id] || 0;
 
-      db.prepare(`
-        UPDATE preorders
-        SET status = 'expired', updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(preorder.id);
+      if (preorder.quantity > remainingReserved) {
+        insufficientStock.push({
+          preorder_id: preorder.id,
+          preorder_no: preorder.preorder_no,
+          book_title: preorder.title,
+          member_name: preorder.member_name,
+          quantity: preorder.quantity,
+          remaining_reserved: remainingReserved,
+        });
+        continue;
+      }
 
-      const txNo = generateNo('TX');
-      db.prepare(`
-        INSERT INTO transactions (tx_no, member_id, type, amount, status, preorder_id, payment_method, note)
-        VALUES (?, ?, 'refund', ?, 'completed', ?, 'balance', '逾期取书，订金自动退还')
-      `).run(txNo, preorder.member_id, preorder.deposit_amount, preorder.id);
+      try {
+        db.prepare('BEGIN TRANSACTION').run();
 
-      db.prepare(`
-        UPDATE members SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(preorder.deposit_amount, preorder.member_id);
+        db.prepare(`
+          UPDATE preorders
+          SET status = 'expired', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(preorder.id);
 
-      db.prepare(`
-        UPDATE stock SET quantity_reserved = quantity_reserved - ?, updated_at = CURRENT_TIMESTAMP
-        WHERE book_id = ? AND quantity_reserved >= ?
-      `).run(preorder.quantity, preorder.book_id, preorder.quantity);
+        const txNo = generateNo('TX');
+        db.prepare(`
+          INSERT INTO transactions (tx_no, member_id, type, amount, status, preorder_id, payment_method, note)
+          VALUES (?, ?, 'refund', ?, 'completed', ?, 'balance', '逾期取书，订金自动退还')
+        `).run(txNo, preorder.member_id, preorder.deposit_amount, preorder.id);
 
-      const notificationNo = generateNo('N');
-      db.prepare(`
-        INSERT INTO notifications (notification_no, member_id, preorder_id, type, title, content, channel, status, sent_at)
-        VALUES (?, ?, ?, 'overdue', ?, ?, 'sms', 'sent', CURRENT_TIMESTAMP)
-      `).run(notificationNo, preorder.member_id, preorder.id, '取书逾期通知', `尊敬的${preorder.member_name}会员，您预订的《${preorder.title}》已逾期未取，订单已自动取消，订金已退还至您的账户。`);
+        db.prepare(`
+          UPDATE members SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(preorder.deposit_amount, preorder.member_id);
 
-      db.prepare('COMMIT').run();
+        const stockResult = updateStockStmt.run(preorder.quantity, preorder.book_id, preorder.quantity);
+        if (stockResult.changes === 0) {
+          throw new Error('库存扣减失败，预留库存不足');
+        }
 
-      results.push(preorder.id);
+        bookStock[preorder.book_id] = remainingReserved - preorder.quantity;
+
+        const notificationNo = generateNo('N');
+        db.prepare(`
+          INSERT INTO notifications (notification_no, member_id, preorder_id, type, title, content, channel, status, sent_at)
+          VALUES (?, ?, ?, 'overdue', ?, ?, 'sms', 'sent', CURRENT_TIMESTAMP)
+        `).run(notificationNo, preorder.member_id, preorder.id, '取书逾期通知', `尊敬的${preorder.member_name}会员，您预订的《${preorder.title}》已逾期未取，订单已自动取消，订金已退还至您的账户。`);
+
+        db.prepare('COMMIT').run();
+
+        processed.push({
+          preorder_id: preorder.id,
+          preorder_no: preorder.preorder_no,
+          book_title: preorder.title,
+          member_name: preorder.member_name,
+          amount: preorder.deposit_amount,
+        });
+      } catch (err) {
+        db.prepare('ROLLBACK').run();
+        insufficientStock.push({
+          preorder_id: preorder.id,
+          preorder_no: preorder.preorder_no,
+          book_title: preorder.title,
+          member_name: preorder.member_name,
+          quantity: preorder.quantity,
+          remaining_reserved: remainingReserved,
+          reason: err.message,
+        });
+      }
+    }
+
+    const totalReleased = alreadyReleased.count + processed.length;
+
+    const messageParts = [];
+    if (processed.length > 0) {
+      messageParts.push(`已处理 ${processed.length} 个逾期订单`);
+    }
+    if (insufficientStock.length > 0) {
+      messageParts.push(`${insufficientStock.length} 个因库存不足跳过`);
+    }
+    if (alreadyReleased.count > 0) {
+      messageParts.push(`${alreadyReleased.count} 个此前已释放`);
     }
 
     res.json({
-      processed: results.length,
-      skipped,
-      total: totalExpired.count,
-      message: skipped > 0
-        ? `已处理 ${results.length} 个逾期订单，跳过 ${skipped} 个无预留库存订单`
-        : `已处理 ${results.length} 个逾期订单`,
+      processed: processed.length,
+      insufficient_stock: insufficientStock.length,
+      already_released: alreadyReleased.count,
+      total_eligible: totalExpired.count,
+      total_released: totalReleased,
+      processed_details: processed,
+      insufficient_details: insufficientStock,
+      message: messageParts.length > 0 ? messageParts.join('，') : '没有需要处理的逾期订单',
     });
   } catch (error) {
     db.prepare('ROLLBACK').run();
