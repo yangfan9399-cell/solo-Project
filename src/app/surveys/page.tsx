@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getSatisfactionSurveys, createSatisfactionSurvey, getRepairOrders } from '../actions/energyActions'
+import { getSatisfactionSurveys, createSatisfactionSurvey } from '../actions/energyActions'
+import { getRepairOrders } from '../actions/repairActions'
 import Loading, { LoadingPage } from '@/components/Loading'
 import EmptyState from '@/components/EmptyState'
 import { ErrorState } from '@/components/EmptyState'
@@ -42,7 +43,7 @@ export default function SurveysPage() {
       try {
         const [surveysResult, repairsResult] = await Promise.all([
           getSatisfactionSurveys(),
-          getRepairs(),
+          getRepairOrders(),
         ])
 
         if (surveysResult.success) setSurveys(surveysResult.data as any[])
@@ -70,12 +71,13 @@ export default function SurveysPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedRepair) return
+    if (!selectedRepair || !user) return
 
     setSubmitting(true)
     try {
       const result = await createSatisfactionSurvey({
         repairOrderId: selectedRepair.id,
+        submitterId: user.id,
         ...formData,
       })
       if (result.success) {

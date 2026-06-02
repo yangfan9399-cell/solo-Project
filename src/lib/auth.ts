@@ -14,60 +14,58 @@ export interface AuthUser {
 
 interface AuthContextType {
   user: AuthUser | null
-  login: (role: UserRole) => void
+  login: (role: UserRole) => Promise<void>
   logout: () => void
   isLoading: boolean
 }
 
-const mockUsers: Record<UserRole, AuthUser> = {
-  [UserRole.DORM_MANAGER]: {
-    id: 'dorm-manager-1',
-    email: 'admin@dorm.com',
-    name: '张管理员',
-    phone: '13800138001',
-    role: UserRole.DORM_MANAGER,
-  },
-  [UserRole.MAINTENANCE_WORKER]: {
-    id: 'worker-1',
-    email: 'worker1@dorm.com',
-    name: '李师傅',
-    phone: '13800138002',
-    role: UserRole.MAINTENANCE_WORKER,
-  },
-  [UserRole.ENERGY_ADMIN]: {
-    id: 'energy-1',
-    email: 'energy@dorm.com',
-    name: '刘能源',
-    phone: '13800138004',
-    role: UserRole.ENERGY_ADMIN,
-  },
-  [UserRole.STUDENT]: {
-    id: 'student-1',
-    email: 'student1@dorm.com',
-    name: '学生小明',
-    phone: '13800138005',
-    role: UserRole.STUDENT,
-  },
+const roleEmailMap: Record<UserRole, string> = {
+  [UserRole.DORM_MANAGER]: 'admin@dorm.com',
+  [UserRole.MAINTENANCE_WORKER]: 'worker1@dorm.com',
+  [UserRole.ENERGY_ADMIN]: 'energy@dorm.com',
+  [UserRole.STUDENT]: 'student1@dorm.com',
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+async function fetchUserByRole(role: UserRole): Promise<AuthUser | null> {
+  const email = roleEmailMap[role]
+  try {
+    const response = await fetch(`/api/user?email=${encodeURIComponent(email)}`)
+    if (response.ok) {
+      const data = await response.json()
+      return data.user || null
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+  return null
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('authRole') as UserRole | null
-    if (savedRole && mockUsers[savedRole]) {
-      setUser(mockUsers[savedRole])
+    const initAuth = async () => {
+      const savedRole = localStorage.getItem('authRole') as UserRole | null
+      if (savedRole && Object.values(UserRole).includes(savedRole)) {
+        const fetchedUser = await fetchUserByRole(savedRole)
+        if (fetchedUser) {
+          setUser(fetchedUser)
+        }
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    initAuth()
   }, [])
 
-  const login = (role: UserRole) => {
-    const selectedUser = mockUsers[role]
-    setUser(selectedUser)
-    localStorage.setItem('authRole', role)
+  const login = async (role: UserRole) => {
+    const fetchedUser = await fetchUserByRole(role)
+    if (fetchedUser) {
+      setUser(fetchedUser)
+      localStorage.setItem('authRole', role)
+    }
   }
 
   const logout = () => {

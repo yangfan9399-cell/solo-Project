@@ -41,7 +41,7 @@ export default function HomePage() {
       try {
         const [statsResult, repairsResult, abnormalsResult] = await Promise.all([
           getDashboardStats(),
-          getRepairs(),
+          getRepairOrders(),
           getEnergyAbnormals(),
         ])
 

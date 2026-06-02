@@ -40,7 +40,7 @@ export default function RepairsPage() {
     async function loadData() {
       try {
         const [repairsResult, roomsResult, categoriesResult, workersResult] = await Promise.all([
-          getRepairs(),
+          getRepairOrders(),
           getRooms(),
           getFacilityCategories(),
           getMaintenanceWorkers(),

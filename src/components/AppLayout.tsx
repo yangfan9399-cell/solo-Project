@@ -32,6 +32,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, login, logout, isLoading } = useAuth()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   if (isLoading) {
     return (
@@ -64,8 +65,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             ].map(({ role, label, desc }) => (
               <button
                 key={role}
-                onClick={() => login(role)}
-                className="w-full p-4 border border-gray-200 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all text-left group"
+                onClick={async () => {
+                  setIsLoggingIn(true)
+                  await login(role)
+                  setIsLoggingIn(false)
+                }}
+                disabled={isLoggingIn}
+                className="w-full p-4 border border-gray-200 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors">

@@ -151,6 +151,7 @@ export async function dismissEnergyAbnormal(
 
 export async function createSatisfactionSurvey(data: {
   repairOrderId: string
+  submitterId: string
   satisfaction: SatisfactionLevel
   responseTime?: number
   serviceQuality?: number
