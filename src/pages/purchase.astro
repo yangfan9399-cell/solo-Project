@@ -1,0 +1,18 @@
+---
+import Layout from '../components/Layout.jsx';
+import PurchaseList from '../components/PurchaseList.jsx';
+import '../styles/global.css';
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>采购管理 - 书店预售管理系统</title>
+  </head>
+  <body>
+    <Layout activeMenu="purchase">
+      <PurchaseList client:load />
+    </Layout>
+  </body>
+</html>

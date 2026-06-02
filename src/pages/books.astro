@@ -1,0 +1,18 @@
+---
+import Layout from '../components/Layout.jsx';
+import BookList from '../components/BookList.jsx';
+import '../styles/global.css';
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图书管理 - 书店预售管理系统</title>
+  </head>
+  <body>
+    <Layout activeMenu="books">
+      <BookList client:load />
+    </Layout>
+  </body>
+</html>

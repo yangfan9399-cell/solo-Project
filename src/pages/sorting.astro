@@ -1,0 +1,18 @@
+---
+import Layout from '../components/Layout.jsx';
+import SortingBoard from '../components/SortingBoard.jsx';
+import '../styles/global.css';
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>分拣看板 - 书店预售管理系统</title>
+  </head>
+  <body>
+    <Layout activeMenu="sorting">
+      <SortingBoard client:load />
+    </Layout>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "name": "bookstore-preorder-system",
+  "version": "1.0.0",
+  "description": "独立书店预售书到货与取书通知系统",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "nodemon server/index.js",
+    "dev:client": "astro dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "astro build",
+    "build:server": "echo \"Server is runtime-only\"",
+    "start": "NODE_ENV=production node server/index.js",
+    "init:db": "node server/scripts/initDB.js",
+    "seed:db": "node server/scripts/seedDB.js",
+    "reset:db": "npm run init:db && npm run seed:db"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "better-sqlite3": "^11.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "dayjs": "^1.11.10",
+    "nodemailer": "^6.9.7",
+    "nanoid": "^5.0.4"
+  },
+  "devDependencies": {
+    "astro": "^4.0.0",
+    "@astrojs/react": "^3.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2",
+    "tailwindcss": "^3.3.5",
+    "@tailwindcss/typography": "^0.5.10",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,29 @@
+---
+import LoginForm from '../components/LoginForm.jsx';
+import '../styles/global.css';
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>登录 - 书店预售管理系统</title>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-primary-700 mb-2">📚 书店预售管理系统</h1>
+        <p class="text-gray-600">独立书店预售书到货与取书通知系统</p>
+      </div>
+      <div class="card p-8">
+        <LoginForm client:load />
+      </div>
+      <div class="mt-6 text-center text-sm text-gray-500">
+        <p>测试账号：</p>
+        <p>管理员: admin / admin123</p>
+        <p>采购负责人: purchaser / purchaser123</p>
+        <p>店员: clerk / clerk123</p>
+      </div>
+    </div>
+  </body>
+</html>
