@@ -481,9 +481,16 @@ def inspection_create(request):
 def inspection_handle(request, pk):
     record = get_object_or_404(InfectionInspection, pk=pk)
     if request.method == 'POST' and record.result == 'unqualified':
+        old_status = record.handling_status
         form = InspectionHandlingForm(request.POST, instance=record)
         if form.is_valid():
-            form.save()
+            record = form.save(commit=False)
+            new_status = record.handling_status
+            if new_status == 'resolved' and old_status != 'resolved':
+                record.handled_at = timezone.now()
+            elif new_status != 'resolved' and old_status == 'resolved':
+                record.handled_at = None
+            record.save()
             messages.success(request, f'整改处理已更新：{record.get_handling_status_display()}')
         else:
             for field, errors in form.errors.items():

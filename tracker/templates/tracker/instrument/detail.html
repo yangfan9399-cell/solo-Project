@@ -315,12 +315,16 @@
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">抽查人</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">抽查类型</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">结果</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理状态</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">整改人</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">整改完成</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">跟进摘要</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
           {% for inspection in inspections %}
           <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 text-sm text-gray-900">{{ inspection.inspected_at|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-900"><a href="{% url 'tracker:inspection_detail' inspection.pk %}" class="text-blue-600 hover:text-blue-800">{{ inspection.inspected_at|date:"Y-m-d H:i" }}</a></td>
             <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.inspector }}</td>
             <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.get_inspection_type_display }}</td>
             <td class="px-4 py-3 text-sm">
@@ -328,6 +332,17 @@
                 {{ inspection.get_result_display }}
               </span>
             </td>
+            <td class="px-4 py-3 text-sm">
+              <span class="px-2 py-1 rounded-full text-xs font-medium
+                {% if inspection.handling_status == 'pending' %}bg-red-100 text-red-800
+                {% elif inspection.handling_status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-green-100 text-green-800{% endif %}">
+                {{ inspection.get_handling_status_display }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">{{ inspection.handled_by|default:"-" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.handled_at|date:"m-d H:i"|default:"-" }}</td>
+            <td class="px-4 py-3 text-sm text-gray-500">{{ inspection.follow_up_notes|truncatechars:20|default:"-" }}</td>
           </tr>
           {% endfor %}
         </tbody>
