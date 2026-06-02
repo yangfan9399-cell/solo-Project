@@ -108,6 +108,7 @@ export const getStatusText = (status) => {
     sent: '已发送',
     failed: '发送失败',
     read: '已读',
+    completed: '已完成',
   };
   return statusMap[status] || status;
 };

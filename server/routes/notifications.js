@@ -78,20 +78,45 @@ router.post('/arrival', (req, res) => {
       return res.status(404).json({ error: '预售订单不存在' });
     }
 
+    if (!['arrived', 'reserved'].includes(preorder.status)) {
+      return res.status(400).json({ error: '订单状态不支持发送到货通知' });
+    }
+
+    const existingNotification = db.prepare(`
+      SELECT id FROM notifications
+      WHERE preorder_id = ? AND type = 'arrival'
+    `).get(preorder_id);
+
+    if (existingNotification) {
+      return res.status(400).json({ error: '已发送过到货通知' });
+    }
+
+    db.prepare('BEGIN TRANSACTION').run();
+
     const notificationNo = generateNo('N');
     const title = `您预订的《${preorder.title}》已到货`;
     const content = `尊敬的${preorder.member_name}会员，您预订的《${preorder.title}》已到货，请于14天内前来取书。`;
 
     db.prepare(`
-      INSERT INTO notifications (notification_no, member_id, preorder_id, type, title, content, channel, status)
-      VALUES (?, ?, ?, 'arrival', ?, ?, 'sms', 'sent')
+      INSERT INTO notifications (notification_no, member_id, preorder_id, type, title, content, channel, status, sent_at)
+      VALUES (?, ?, ?, 'arrival', ?, ?, 'sms', 'sent', CURRENT_TIMESTAMP)
     `).run(notificationNo, preorder.member_id, preorder_id, title, content);
+
+    if (preorder.status === 'arrived') {
+      db.prepare(`
+        UPDATE preorders SET notified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(preorder_id);
+    }
+
+    db.prepare('COMMIT').run();
 
     res.json({
       notification_no: notificationNo,
       message: '到货通知已发送',
     });
   } catch (error) {
+    db.prepare('ROLLBACK').run();
     res.status(500).json({ error: error.message });
   }
 });
@@ -149,6 +174,10 @@ router.post('/reminder', (req, res) => {
       return res.status(404).json({ error: '预售订单不存在' });
     }
 
+    if (!['arrived', 'reserved'].includes(preorder.status)) {
+      return res.status(400).json({ error: '订单状态不支持发送提醒' });
+    }
+
     const notificationNo = generateNo('N');
     const title = '取书提醒';
     const content = `尊敬的${preorder.member_name}会员，温馨提醒：您预订的《${preorder.title}》已到货，请尽快前来取书。`;
@@ -161,6 +190,48 @@ router.post('/reminder', (req, res) => {
     res.json({
       notification_no: notificationNo,
       message: '提醒通知已发送',
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/batch-reminder', (req, res) => {
+  try {
+    const preorders = db.prepare(`
+      SELECT p.*, m.name as member_name, b.title
+      FROM preorders p
+      JOIN members m ON p.member_id = m.id
+      JOIN books b ON p.book_id = b.id
+      WHERE p.status = 'reserved'
+      AND p.picked_at IS NULL
+      AND p.actual_arrival_date IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM notifications n
+        WHERE n.preorder_id = p.id AND n.type = 'reminder'
+      )
+      ORDER BY p.actual_arrival_date ASC
+    `).all();
+
+    const notifications = [];
+
+    for (const preorder of preorders) {
+      const notificationNo = generateNo('N');
+      const title = '取书提醒';
+      const content = `尊敬的${preorder.member_name}会员，温馨提醒：您预订的《${preorder.title}》已到货，请尽快前来取书。`;
+
+      db.prepare(`
+        INSERT INTO notifications (notification_no, member_id, preorder_id, type, title, content, channel, status, sent_at)
+        VALUES (?, ?, ?, 'reminder', ?, ?, 'sms', 'sent', CURRENT_TIMESTAMP)
+      `).run(notificationNo, preorder.member_id, preorder.id, title, content);
+
+      notifications.push(notificationNo);
+    }
+
+    res.json({
+      count: notifications.length,
+      notifications,
+      message: `成功发送 ${notifications.length} 条取书提醒`,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

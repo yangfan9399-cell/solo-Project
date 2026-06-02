@@ -15,6 +15,7 @@ export default function NotificationList() {
   const [typeFilter, setTypeFilter] = useState('');
   const [detailModal, setDetailModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(null);
 
   const loadData = async () => {
     try {
@@ -61,6 +62,7 @@ export default function NotificationList() {
   const handleBatchSend = async () => {
     if (!confirm('确定要批量发送所有已到货订单的通知吗？')) return;
     try {
+      setIsProcessing('batch');
       const res = await apiRequest('/notifications/batch-arrival', {
         method: 'POST'
       });
@@ -68,12 +70,31 @@ export default function NotificationList() {
       loadData();
     } catch (err) {
       alert(err.message);
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  const handleBatchReminder = async () => {
+    if (!confirm('确定要为所有已预留但未取书的订单批量发送提醒吗？')) return;
+    try {
+      setIsProcessing('reminder');
+      const res = await apiRequest('/notifications/batch-reminder', {
+        method: 'POST'
+      });
+      alert(res.message);
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsProcessing(null);
     }
   };
 
   const handleOverdueCheck = async () => {
     if (!confirm('确定要执行逾期检查吗？这将自动处理逾期未取的订单并退还订金。')) return;
     try {
+      setIsProcessing('overdue');
       const res = await apiRequest('/notifications/overdue-check', {
         method: 'POST'
       });
@@ -81,6 +102,8 @@ export default function NotificationList() {
       loadData();
     } catch (err) {
       alert(err.message);
+    } finally {
+      setIsProcessing(null);
     }
   };
 
@@ -129,11 +152,47 @@ export default function NotificationList() {
           )}
         </div>
         <div className="flex space-x-3">
-          <button onClick={handleOverdueCheck} className="btn btn-secondary">
-            🔍 逾期检查
+          <button
+            onClick={handleOverdueCheck}
+            disabled={isProcessing !== null}
+            className="btn btn-secondary"
+          >
+            {isProcessing === 'overdue' ? (
+              <>
+                <span className="inline-block animate-spin mr-2">⏳</span>
+                处理中...
+              </>
+            ) : (
+              '🔍 逾期检查'
+            )}
           </button>
-          <button onClick={handleBatchSend} className="btn btn-primary">
-            📤 批量发送到货通知
+          <button
+            onClick={handleBatchReminder}
+            disabled={isProcessing !== null}
+            className="btn btn-secondary"
+          >
+            {isProcessing === 'reminder' ? (
+              <>
+                <span className="inline-block animate-spin mr-2">⏳</span>
+                发送中...
+              </>
+            ) : (
+              '⏰ 批量提醒'
+            )}
+          </button>
+          <button
+            onClick={handleBatchSend}
+            disabled={isProcessing !== null}
+            className="btn btn-primary"
+          >
+            {isProcessing === 'batch' ? (
+              <>
+                <span className="inline-block animate-spin mr-2">⏳</span>
+                发送中...
+              </>
+            ) : (
+              '📤 批量发送到货通知'
+            )}
           </button>
         </div>
       </div>
@@ -188,7 +247,15 @@ export default function NotificationList() {
         </div>
 
         {data.data.length === 0 ? (
-          <EmptyState icon="🔔" title="暂无通知" description="通知列表为空" />
+          <EmptyState
+            icon="🔔"
+            title="暂无通知"
+            description={
+              statusFilter || typeFilter
+                ? '当前筛选条件下没有通知，试试调整筛选条件'
+                : '还没有发送过任何通知，有到货或逾期时会自动生成通知'
+            }
+          />
         ) : (
           <>
             <div className="divide-y">

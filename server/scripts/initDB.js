@@ -72,6 +72,7 @@ const initTables = () => {
       status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'confirmed', 'arrived', 'reserved', 'picked', 'cancelled', 'refunded', 'expired')),
       expected_arrival DATE,
       actual_arrival_date DATETIME,
+      notified_at DATETIME,
       pickup_deadline DATE,
       picked_at DATETIME,
       cancelled_at DATETIME,

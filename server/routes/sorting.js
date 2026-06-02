@@ -69,7 +69,8 @@ router.get('/board', (req, res) => {
     const pending = db.prepare(`
       SELECT st.*, b.title, b.author, b.cover_image,
              m.name as member_name, m.phone as member_phone,
-             m.level as member_level
+             m.level as member_level,
+             EXISTS(SELECT 1 FROM notifications n WHERE n.preorder_id = st.preorder_id AND n.type = 'arrival') as notification_sent
       FROM sorting_tasks st
       JOIN books b ON st.book_id = b.id
       JOIN members m ON st.member_id = m.id
@@ -80,7 +81,8 @@ router.get('/board', (req, res) => {
     const sorting = db.prepare(`
       SELECT st.*, b.title, b.author, b.cover_image,
              m.name as member_name, m.phone as member_phone,
-             u.name as sorted_by_name
+             u.name as sorted_by_name,
+             EXISTS(SELECT 1 FROM notifications n WHERE n.preorder_id = st.preorder_id AND n.type = 'arrival') as notification_sent
       FROM sorting_tasks st
       JOIN books b ON st.book_id = b.id
       JOIN members m ON st.member_id = m.id
@@ -92,7 +94,8 @@ router.get('/board', (req, res) => {
     const sorted = db.prepare(`
       SELECT st.*, b.title, b.author, b.cover_image,
              m.name as member_name, m.phone as member_phone,
-             u.name as sorted_by_name
+             u.name as sorted_by_name,
+             EXISTS(SELECT 1 FROM notifications n WHERE n.preorder_id = st.preorder_id AND n.type = 'arrival') as notification_sent
       FROM sorting_tasks st
       JOIN books b ON st.book_id = b.id
       JOIN members m ON st.member_id = m.id
