@@ -132,6 +132,26 @@ export function updateLockerStatus(id: number, status: Locker['status']): void {
 	db.prepare('UPDATE lockers SET status = ? WHERE id = ?').run(status, id);
 }
 
+export function setLockerStatus(lockerId: number, status: 'available' | 'maintenance', userId: number, reason?: string): void {
+	const locker = getLockerById(lockerId);
+	if (!locker) {
+		throw new Error('保管柜不存在');
+	}
+	if (status === 'maintenance' && locker.status !== 'available') {
+		throw new Error(`仅空柜可标记维护，当前状态为「${locker.status}」`);
+	}
+	if (status === 'available' && locker.status !== 'maintenance') {
+		throw new Error(`仅维护中柜位可恢复可用，当前状态为「${locker.status}」`);
+	}
+
+	db.prepare('UPDATE lockers SET status = ? WHERE id = ?').run(status, lockerId);
+
+	const detail = status === 'maintenance'
+		? `保管柜 ${locker.code} 标记为维护中${reason ? `：${reason}` : ''}`
+		: `保管柜 ${locker.code} 恢复为可用${reason ? `：${reason}` : ''}`;
+	logActivity(null, null, userId, `locker_${status}`, detail);
+}
+
 export function createItem(data: {
 	name: string;
 	description?: string;
