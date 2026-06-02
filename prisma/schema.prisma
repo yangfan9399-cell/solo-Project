@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  DORM_MANAGER
+  MAINTENANCE_WORKER
+  ENERGY_ADMIN
+  STUDENT
+}
+
+enum RepairStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EnergyAbnormalStatus {
+  DETECTED
+  CONFIRMED
+  RESOLVED
+  DISMISSED
+}
+
+enum FacilityStatus {
+  NORMAL
+  NEEDS_REPAIR
+  BROKEN
+  MAINTENANCE
+}
+
+enum SatisfactionLevel {
+  VERY_DISSATISFIED
+  DISSATISFIED
+  NEUTRAL
+  SATISFIED
+  VERY_SATISFIED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  role      UserRole
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repairOrdersAssigned RepairOrder[] @relation("assignedWorker")
+  repairOrdersCreated  RepairOrder[] @relation("creator")
+  energyAudits         EnergyAudit[]
+  satisfactionSurveys  SatisfactionSurvey[]
+}
+
+model Building {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  floorCount  Int      @default(6)
+  totalRooms  Int      @default(24)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms          Room[]
+  energyRecords  EnergyRecord[]
+  energyAbnormals EnergyAbnormal[]
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  roomNumber String
+  buildingId String
+  floor      Int
+  capacity   Int      @default(4)
+  studentIds String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  building      Building         @relation(fields: [buildingId], references: [id])
+  facilities    Facility[]
+  repairOrders  RepairOrder[]
+  energyRecords EnergyRecord[]
+  energyAbnormals EnergyAbnormal[]
+}
+
+model FacilityCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facilities Facility[]
+}
+
+model Facility {
+  id          String         @id @default(cuid())
+  name        String
+  categoryId  String
+  roomId      String?
+  status      FacilityStatus @default(NORMAL)
+  brand       String?
+  model       String?
+  installDate DateTime?
+  lastCheck   DateTime?
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  category    FacilityCategory @relation(fields: [categoryId], references: [id])
+  room        Room?            @relation(fields: [roomId], references: [id])
+  repairItems RepairItem[]
+}
+
+model RepairOrder {
+  id              String       @id @default(cuid())
+  title           String
+  description     String
+  roomId          String
+  categoryId      String
+  creatorId       String
+  assignedWorkerId String?
+  status          RepairStatus @default(PENDING)
+  priority        Int          @default(1)
+  images          String[]
+  estimatedCost   Decimal?     @db.Decimal(10, 2)
+  actualCost      Decimal?     @db.Decimal(10, 2)
+  startTime       DateTime?
+  completedTime   DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  room        Room                 @relation(fields: [roomId], references: [id])
+  category    FacilityCategory     @relation(fields: [categoryId], references: [id])
+  creator     User                 @relation("creator", fields: [creatorId], references: [id])
+  assignedWorker User?             @relation("assignedWorker", fields: [assignedWorkerId], references: [id])
+  repairItems RepairItem[]
+  satisfactionSurvey SatisfactionSurvey?
+  statusLogs  RepairStatusLog[]
+}
+
+model RepairItem {
+  id            String   @id @default(cuid())
+  repairOrderId String
+  facilityId    String?
+  description   String
+  quantity      Int      @default(1)
+  cost          Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repairOrder RepairOrder @relation(fields: [repairOrderId], references: [id])
+  facility    Facility?   @relation(fields: [facilityId], references: [id])
+}
+
+model RepairStatusLog {
+  id            String       @id @default(cuid())
+  repairOrderId String
+  status        RepairStatus
+  remark        String?
+  operatorId    String
+  createdAt     DateTime     @default(now())
+
+  repairOrder RepairOrder @relation(fields: [repairOrderId], references: [id])
+  operator    User        @relation(fields: [operatorId], references: [id])
+}
+
+model EnergyRecord {
+  id         String   @id @default(cuid())
+  buildingId String
+  roomId     String?
+  recordDate DateTime
+  electricityUsage Decimal @db.Decimal(10, 2)
+  waterUsage       Decimal @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  building Building  @relation(fields: [buildingId], references: [id])
+  room     Room?     @relation(fields: [roomId], references: [id])
+}
+
+model EnergyAbnormal {
+  id              String              @id @default(cuid())
+  buildingId      String
+  roomId          String?
+  type            String
+  abnormalValue   Decimal             @db.Decimal(10, 2)
+  threshold       Decimal             @db.Decimal(10, 2)
+  status          EnergyAbnormalStatus @default(DETECTED)
+  detectedDate    DateTime
+  confirmedDate   DateTime?
+  resolvedDate    DateTime?
+  deductionAmount Decimal?            @db.Decimal(10, 2)
+  remark          String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  building Building @relation(fields: [buildingId], references: [id])
+  room     Room?    @relation(fields: [roomId], references: [id])
+  audits   EnergyAudit[]
+}
+
+model EnergyAudit {
+  id               String   @id @default(cuid())
+  abnormalId       String
+  auditorId        String
+  auditResult      String
+  deductionApplied Boolean  @default(false)
+  deductionAmount  Decimal? @db.Decimal(10, 2)
+  auditDate        DateTime @default(now())
+  remark           String?
+  createdAt        DateTime @default(now())
+
+  abnormal EnergyAbnormal @relation(fields: [abnormalId], references: [id])
+  auditor  User           @relation(fields: [auditorId], references: [id])
+}
+
+model SatisfactionSurvey {
+  id             String            @id @default(cuid())
+  repairOrderId  String            @unique
+  satisfaction   SatisfactionLevel
+  responseTime   Int?
+  serviceQuality Int?
+  repairQuality  Int?
+  comment        String?
+  submittedAt    DateTime          @default(now())
+
+  repairOrder RepairOrder @relation(fields: [repairOrderId], references: [id])
+}
