@@ -29,6 +29,37 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  if ((tool as any).status === 'borrowed') {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已被借出，请先收回再安排校准'
+    })
+  }
+
+  const pendingBorrow = queryOne(`
+    SELECT id FROM borrow_records 
+    WHERE tool_id = ? AND status = 'pending'
+  `, [body.toolId])
+
+  if (pendingBorrow) {
+    throw createError({
+      statusCode: 400,
+      message: '该量具有待审批的借用申请，请先处理后再安排校准'
+    })
+  }
+
+  const activeBorrow = queryOne(`
+    SELECT id FROM borrow_records 
+    WHERE tool_id = ? AND status IN ('approved', 'borrowed', 'overdue')
+  `, [body.toolId])
+
+  if (activeBorrow) {
+    throw createError({
+      statusCode: 400,
+      message: '该量具已被借出或正在交接中，请先收回再安排校准'
+    })
+  }
+
   const activeCalibration = queryOne(`
     SELECT id FROM calibration_records 
     WHERE tool_id = ? AND status IN ('scheduled', 'in_progress')

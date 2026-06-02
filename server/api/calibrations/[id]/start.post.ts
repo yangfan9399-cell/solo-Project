@@ -39,6 +39,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const tool = queryOne('SELECT status FROM tools WHERE id = ?', [(record as any).tool_id])
+  if (tool) {
+    if ((tool as any).status === 'borrowed') {
+      throw createError({
+        statusCode: 400,
+        message: '该量具已被借出，请先收回再开始校准'
+      })
+    }
+
+    const activeBorrow = queryOne(`
+      SELECT id FROM borrow_records 
+      WHERE tool_id = ? AND status IN ('pending', 'approved', 'borrowed', 'overdue')
+    `, [(record as any).tool_id])
+
+    if (activeBorrow) {
+      throw createError({
+        statusCode: 400,
+        message: '该量具有待处理或进行中的借用记录，请先处理后再开始校准'
+      })
+    }
+  }
+
   transaction(() => {
     execute(`
       UPDATE calibration_records SET
@@ -51,7 +73,7 @@ export default defineEventHandler(async (event) => {
       UPDATE tools SET
         status = 'calibrating',
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND status = 'available'
+      WHERE id = ? AND status NOT IN ('borrowed', 'scrapped')
     `, [(record as any).tool_id])
   })
 

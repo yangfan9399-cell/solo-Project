@@ -214,6 +214,7 @@
 
 <script setup lang="ts">
 import type { Tool } from '../types'
+import { getToolStatusLabel, getToolStatusColor, canBorrowTool } from '../composables/useTools'
 
 const { tools, loading, error, fetchTools, createTool, updateTool, scrapTool: scrapToolApi } = useTools()
 const { hasRole } = useAuth()

@@ -168,9 +168,10 @@
 
 <script setup lang="ts">
 import type { Tool } from '../../types'
+import { canBorrowTool, getBorrowDisableReason, getToolStatusLabel, getToolStatusColor } from '../../composables/useTools'
 
 const route = useRoute()
-const { tool, loading, error, fetchTool, canBorrowTool, getBorrowDisableReason } = useTools()
+const { tool, loading, error, fetchTool } = useTools()
 const { createBorrow } = useBorrows()
 const { createCalibration } = useCalibrations()
 const { currentUser, hasRole } = useAuth()
@@ -224,6 +225,9 @@ async function handleBorrow() {
     })
     showBorrowModal.value = false
     alert('借用申请已提交，请等待审批')
+    if (tool.value) {
+      await fetchTool(tool.value.id)
+    }
   } catch (e: any) {
     alert(e.message || '申请失败')
   } finally {
@@ -243,6 +247,9 @@ async function handleCalibration() {
     })
     showCalibrationModal.value = false
     alert('校准计划已安排')
+    if (tool.value) {
+      await fetchTool(tool.value.id)
+    }
   } catch (e: any) {
     alert(e.message || '操作失败')
   } finally {
