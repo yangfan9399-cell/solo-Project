@@ -186,6 +186,30 @@ export async function createSatisfactionSurvey(data: {
   comment?: string
 }) {
   try {
+    const repairOrder = await prisma.repairOrder.findUnique({
+      where: { id: data.repairOrderId },
+    })
+
+    if (!repairOrder) {
+      return { success: false, error: '报修单不存在' }
+    }
+
+    if (repairOrder.creatorId !== data.submitterId) {
+      return { success: false, error: '只能评价自己提交的报修单' }
+    }
+
+    if (repairOrder.status !== 'COMPLETED') {
+      return { success: false, error: '只能评价已完成的报修单' }
+    }
+
+    const existingSurvey = await prisma.satisfactionSurvey.findUnique({
+      where: { repairOrderId: data.repairOrderId },
+    })
+
+    if (existingSurvey) {
+      return { success: false, error: '该报修单已评价' }
+    }
+
     const survey = await prisma.satisfactionSurvey.create({
       data,
       include: {

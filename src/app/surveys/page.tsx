@@ -58,7 +58,10 @@ export default function SurveysPage() {
   }, [])
 
   const completedRepairsWithoutSurvey = repairs.filter(
-    (r) => r.status === RepairStatus.COMPLETED && !r.satisfactionSurvey
+    (r) =>
+      r.status === RepairStatus.COMPLETED &&
+      !r.satisfactionSurvey &&
+      (user?.role === 'STUDENT' ? r.creatorId === user?.id : true)
   )
 
   const filteredSurveys = surveys.filter((survey) => {
@@ -82,6 +85,13 @@ export default function SurveysPage() {
       })
       if (result.success) {
         setSurveys([result.data as any, ...surveys])
+        setRepairs(
+          repairs.map((r) =>
+            r.id === selectedRepair.id
+              ? { ...r, satisfactionSurvey: result.data }
+              : r
+          )
+        )
         setShowSubmitModal(false)
         setSelectedRepair(null)
         setFormData({
@@ -91,6 +101,8 @@ export default function SurveysPage() {
           repairQuality: 3,
           comment: '',
         })
+      } else {
+        alert(result.error || '提交失败，请重试')
       }
     } catch (err) {
       alert('提交失败，请重试')
@@ -158,6 +170,38 @@ export default function SurveysPage() {
           <p className="text-2xl font-bold text-purple-600 mt-1">{avgScores.repairQuality}</p>
         </div>
       </div>
+
+      {user?.role === 'STUDENT' && completedRepairsWithoutSurvey.length > 0 && (
+        <div className="card p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center gap-3">
+            <ClipboardList className="w-5 h-5 text-blue-600" />
+            <div>
+              <p className="font-medium text-blue-900">
+                您有 {completedRepairsWithoutSurvey.length} 条已完成的报修单等待评价
+              </p>
+              <p className="text-sm text-blue-700 mt-1">
+                点击右上角"填写评价"按钮完成满意度调查
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {user?.role === 'STUDENT' && completedRepairsWithoutSurvey.length === 0 && (
+        <div className="card p-4 bg-gray-50 border-gray-200">
+          <div className="flex items-center gap-3">
+            <ClipboardList className="w-5 h-5 text-gray-500" />
+            <div>
+              <p className="font-medium text-gray-700">
+                暂无可评价的报修单
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                您所有已完成的报修单都已提交评价，感谢您的反馈！
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {satisfactionStats.length > 0 && (
         <div className="card p-6">
@@ -289,140 +333,160 @@ export default function SurveysPage() {
               <h2 className="text-xl font-semibold">提交满意度评价</h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div>
-                <label className="label">选择报修单</label>
-                <select
-                  value={selectedRepair?.id || ''}
-                  onChange={(e) =>
-                    setSelectedRepair(completedRepairsWithoutSurvey.find((r) => r.id === e.target.value))
-                  }
-                  className="input"
-                  required
-                >
-                  <option value="">请选择要评价的报修单</option>
-                  {completedRepairsWithoutSurvey.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.title} - {r.room?.building?.name} {r.room?.roomNumber}室
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="label">整体满意度</label>
-                <div className="flex gap-2">
-                  {[
-                    { value: SatisfactionLevel.VERY_DISSATISFIED, label: '非常不满意', emoji: '😞' },
-                    { value: SatisfactionLevel.DISSATISFIED, label: '不满意', emoji: '😕' },
-                    { value: SatisfactionLevel.NEUTRAL, label: '一般', emoji: '😐' },
-                    { value: SatisfactionLevel.SATISFIED, label: '满意', emoji: '😊' },
-                    { value: SatisfactionLevel.VERY_SATISFIED, label: '非常满意', emoji: '😄' },
-                  ].map((item) => (
+              {completedRepairsWithoutSurvey.length === 0 ? (
+                <div className="space-y-6">
+                  <EmptyState
+                    title="暂无可评价的报修单"
+                    description="您目前没有已完成但尚未评价的报修单"
+                  />
+                  <div className="flex gap-3">
                     <button
-                      key={item.value}
                       type="button"
-                      onClick={() => setFormData({ ...formData, satisfaction: item.value })}
-                      className={`flex-1 p-3 rounded-xl border-2 transition-all text-center ${
-                        formData.satisfaction === item.value
-                          ? 'border-primary-500 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      onClick={() => setShowSubmitModal(false)}
+                      className="btn btn-secondary flex-1"
                     >
-                      <span className="text-2xl">{item.emoji}</span>
-                      <p className="text-xs mt-1 text-gray-600">{item.label}</p>
+                      关闭
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="label">选择报修单</label>
+                    <select
+                      value={selectedRepair?.id || ''}
+                      onChange={(e) =>
+                        setSelectedRepair(completedRepairsWithoutSurvey.find((r) => r.id === e.target.value))
+                      }
+                      className="input"
+                      required
+                    >
+                      <option value="">请选择要评价的报修单</option>
+                      {completedRepairsWithoutSurvey.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.title} - {r.room?.building?.name} {r.room?.roomNumber}室
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="label">响应速度</label>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
+                  <div>
+                    <label className="label">整体满意度</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: SatisfactionLevel.VERY_DISSATISFIED, label: '非常不满意', emoji: '😞' },
+                        { value: SatisfactionLevel.DISSATISFIED, label: '不满意', emoji: '😕' },
+                        { value: SatisfactionLevel.NEUTRAL, label: '一般', emoji: '😐' },
+                        { value: SatisfactionLevel.SATISFIED, label: '满意', emoji: '😊' },
+                        { value: SatisfactionLevel.VERY_SATISFIED, label: '非常满意', emoji: '😄' },
+                      ].map((item) => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, satisfaction: item.value })}
+                          className={`flex-1 p-3 rounded-xl border-2 transition-all text-center ${
+                            formData.satisfaction === item.value
+                              ? 'border-primary-500 bg-primary-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className="text-2xl">{item.emoji}</span>
+                          <p className="text-xs mt-1 text-gray-600">{item.label}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">响应速度</label>
+                    <div className="flex justify-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, responseTime: star })}
+                          className="p-1"
+                        >
+                          <Star
+                            className={`w-8 h-8 transition-colors ${
+                              star <= formData.responseTime
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-gray-200 hover:text-yellow-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">服务质量</label>
+                    <div className="flex justify-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, serviceQuality: star })}
+                          className="p-1"
+                        >
+                          <Star
+                            className={`w-8 h-8 transition-colors ${
+                              star <= formData.serviceQuality
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-gray-200 hover:text-yellow-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">维修质量</label>
+                    <div className="flex justify-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, repairQuality: star })}
+                          className="p-1"
+                        >
+                          <Star
+                            className={`w-8 h-8 transition-colors ${
+                              star <= formData.repairQuality
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-gray-200 hover:text-yellow-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">评价建议</label>
+                    <textarea
+                      value={formData.comment}
+                      onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                      className="input min-h-[100px]"
+                      placeholder="请输入您的评价或建议..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
                     <button
-                      key={star}
                       type="button"
-                      onClick={() => setFormData({ ...formData, responseTime: star })}
-                      className="p-1"
+                      onClick={() => setShowSubmitModal(false)}
+                      className="btn btn-secondary flex-1"
                     >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          star <= formData.responseTime
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-200 hover:text-yellow-300'
-                        }`}
-                      />
+                      取消
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="label">服务质量</label>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, serviceQuality: star })}
-                      className="p-1"
-                    >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          star <= formData.serviceQuality
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-200 hover:text-yellow-300'
-                        }`}
-                      />
+                    <button type="submit" className="btn btn-primary flex-1" disabled={submitting || !selectedRepair}>
+                      {submitting ? <Loading size="sm" /> : '提交评价'}
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="label">维修质量</label>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, repairQuality: star })}
-                      className="p-1"
-                    >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          star <= formData.repairQuality
-                            ? 'text-yellow-400 fill-yellow-400'
-                            : 'text-gray-200 hover:text-yellow-300'
-                        }`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="label">评价建议</label>
-                <textarea
-                  value={formData.comment}
-                  onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-                  className="input min-h-[100px]"
-                  placeholder="请输入您的评价或建议..."
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowSubmitModal(false)}
-                  className="btn btn-secondary flex-1"
-                >
-                  取消
-                </button>
-                <button type="submit" className="btn btn-primary flex-1" disabled={submitting || !selectedRepair}>
-                  {submitting ? <Loading size="sm" /> : '提交评价'}
-                </button>
-              </div>
+                  </div>
+                </>
+              )}
             </form>
           </div>
         </div>
