@@ -211,7 +211,7 @@ export default function SurveysPage() {
                   </h3>
                   <p className="text-sm text-gray-500">
                     {survey.repairOrder?.room?.building?.name}{' '}
-                    {survey.repairOrder?.room?.roomNumber}室 · {survey.repairOrder?.assignedWorker?.name} ·{' '}
+                    {survey.repairOrder?.room?.roomNumber}室 · 评价人：{survey.submitter?.name} · 维修：{survey.repairOrder?.assignedWorker?.name} ·{' '}
                     {formatDate(survey.submittedAt)}
                   </p>
                 </div>

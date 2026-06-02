@@ -55,7 +55,7 @@ export async function confirmEnergyAbnormal(
   remark?: string
 ) {
   try {
-    const abnormal = await prisma.energyAbnormal.update({
+    await prisma.energyAbnormal.update({
       where: { id: abnormalId },
       data: {
         status: EnergyAbnormalStatus.CONFIRMED,
@@ -70,6 +70,15 @@ export async function confirmEnergyAbnormal(
         auditorId,
         auditResult: '确认异常',
         remark: remark || '已确认异常',
+      },
+    })
+
+    const abnormal = await prisma.energyAbnormal.findUnique({
+      where: { id: abnormalId },
+      include: {
+        building: true,
+        room: true,
+        audits: { include: { auditor: true } },
       },
     })
 
@@ -88,7 +97,7 @@ export async function resolveEnergyAbnormal(
   remark?: string
 ) {
   try {
-    const abnormal = await prisma.energyAbnormal.update({
+    await prisma.energyAbnormal.update({
       where: { id: abnormalId },
       data: {
         status: EnergyAbnormalStatus.RESOLVED,
@@ -109,6 +118,15 @@ export async function resolveEnergyAbnormal(
       },
     })
 
+    const abnormal = await prisma.energyAbnormal.findUnique({
+      where: { id: abnormalId },
+      include: {
+        building: true,
+        room: true,
+        audits: { include: { auditor: true } },
+      },
+    })
+
     revalidatePath('/energy')
     return { success: true, data: abnormal }
   } catch (error) {
@@ -123,7 +141,7 @@ export async function dismissEnergyAbnormal(
   remark?: string
 ) {
   try {
-    const abnormal = await prisma.energyAbnormal.update({
+    await prisma.energyAbnormal.update({
       where: { id: abnormalId },
       data: {
         status: EnergyAbnormalStatus.DISMISSED,
@@ -138,6 +156,15 @@ export async function dismissEnergyAbnormal(
         auditResult: '误报，已排除',
         deductionApplied: false,
         remark: remark || '经核实为误报',
+      },
+    })
+
+    const abnormal = await prisma.energyAbnormal.findUnique({
+      where: { id: abnormalId },
+      include: {
+        building: true,
+        room: true,
+        audits: { include: { auditor: true } },
       },
     })
 
@@ -162,7 +189,14 @@ export async function createSatisfactionSurvey(data: {
     const survey = await prisma.satisfactionSurvey.create({
       data,
       include: {
-        repairOrder: true,
+        repairOrder: {
+          include: {
+            room: { include: { building: true } },
+            creator: true,
+            assignedWorker: true,
+          },
+        },
+        submitter: true,
       },
     })
     revalidatePath('/surveys')
@@ -184,6 +218,7 @@ export async function getSatisfactionSurveys() {
             assignedWorker: true,
           },
         },
+        submitter: true,
       },
       orderBy: { submittedAt: 'desc' },
     })

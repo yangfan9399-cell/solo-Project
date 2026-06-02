@@ -157,6 +157,7 @@ async function main() {
     await prisma.satisfactionSurvey.create({
       data: {
         repairOrderId: order.id,
+        submitterId: order.creatorId,
         satisfaction: Object.values(SatisfactionLevel)[Math.floor(Math.random() * 5)],
         responseTime: Math.floor(Math.random() * 5) + 1,
         serviceQuality: Math.floor(Math.random() * 5) + 1,

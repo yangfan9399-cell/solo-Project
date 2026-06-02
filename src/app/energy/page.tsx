@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getEnergyAbnormals, getBuildings, confirmEnergyAbnormal, resolveEnergyAbnormal, dismissEnergyAbnormal } from '../actions/energyActions'
+import { getEnergyAbnormals, confirmEnergyAbnormal, resolveEnergyAbnormal, dismissEnergyAbnormal } from '../actions/energyActions'
+import { getBuildings } from '../actions/facilityActions'
 import Loading, { LoadingPage } from '@/components/Loading'
 import EmptyState from '@/components/EmptyState'
 import { ErrorState } from '@/components/EmptyState'

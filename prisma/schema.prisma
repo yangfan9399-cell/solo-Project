@@ -227,6 +227,7 @@ model EnergyAudit {
 model SatisfactionSurvey {
   id             String            @id @default(cuid())
   repairOrderId  String            @unique
+  submitterId    String
   satisfaction   SatisfactionLevel
   responseTime   Int?
   serviceQuality Int?
@@ -235,4 +236,5 @@ model SatisfactionSurvey {
   submittedAt    DateTime          @default(now())
 
   repairOrder RepairOrder @relation(fields: [repairOrderId], references: [id])
+  submitter   User        @relation(fields: [submitterId], references: [id])
 }
