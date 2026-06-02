@@ -107,7 +107,26 @@ def create_app():
     @app.route('/events/<int:event_id>')
     def event_detail(event_id):
         event = InjuryEvent.query.get_or_404(event_id)
-        return render_template('event_detail.html', event=event, now=datetime.utcnow())
+        now = datetime.utcnow()
+        
+        review_stats = {
+            'pending': 0,
+            'overdue': 0,
+            'completed': 0
+        }
+        
+        for review in event.reviews:
+            if review.completed:
+                review_stats['completed'] += 1
+            elif review.deadline and review.deadline < now:
+                review_stats['overdue'] += 1
+            else:
+                review_stats['pending'] += 1
+        
+        return render_template('event_detail.html', 
+                             event=event, 
+                             now=now,
+                             review_stats=review_stats)
     
     @app.route('/events/new', methods=['GET', 'POST'])
     def event_create():

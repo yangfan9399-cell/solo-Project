@@ -93,23 +93,35 @@
 
 <div class="bg-white shadow rounded-lg">
     <div class="border-b">
-        <nav class="flex -mb-px">
-            <button onclick="showTab('treatment')" id="tab-treatment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+        <nav class="flex -mb-px overflow-x-auto">
+            <button onclick="showTab('treatment', true)" id="tab-treatment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-blue-500 text-blue-600 whitespace-nowrap">
                 🏥 现场处置 ({{ event.treatments|length }})
             </button>
-            <button onclick="showTab('evidence')" id="tab-evidence" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+            <button onclick="showTab('evidence', true)" id="tab-evidence" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
                 📎 证据材料 ({{ event.evidences|length }})
             </button>
-            <button onclick="showTab('insurance')" id="tab-insurance" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+            <button onclick="showTab('insurance', true)" id="tab-insurance" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
                 📋 保险报案 ({{ event.insurance_reports|length }})
             </button>
-            <button onclick="showTab('review')" id="tab-review" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                🔍 复盘整改 ({{ event.reviews|length }})
+            <button onclick="showTab('review', true)" id="tab-review" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 relative">
+                🔍 复盘整改
+                <span class="ml-1 text-xs">
+                    ({{ event.reviews|length }})
+                    {% if review_stats.overdue > 0 %}
+                    <span class="ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-medium">{{ review_stats.overdue }}逾期</span>
+                    {% endif %}
+                    {% if review_stats.pending > 0 %}
+                    <span class="ml-1 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded font-medium">{{ review_stats.pending }}待改</span>
+                    {% endif %}
+                    {% if review_stats.completed > 0 %}
+                    <span class="ml-1 px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">{{ review_stats.completed }}已完</span>
+                    {% endif %}
+                </span>
             </button>
-            <button onclick="showTab('payment')" id="tab-payment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+            <button onclick="showTab('payment', true)" id="tab-payment" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
                 💰 赔付进度 ({{ event.payments|length }})
             </button>
-            <button onclick="showTab('feedback')" id="tab-feedback" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+            <button onclick="showTab('feedback', true)" id="tab-feedback" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">
                 💬 异常反馈 ({{ event.feedbacks|length }})
             </button>
         </nav>
@@ -731,7 +743,7 @@
 </div>
 
 <script>
-function showTab(tabName) {
+function showTab(tabName, updateHash) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(el => {
         el.classList.remove('border-blue-500', 'text-blue-600');
@@ -741,11 +753,48 @@ function showTab(tabName) {
     document.getElementById('content-' + tabName).classList.remove('hidden');
     document.getElementById('tab-' + tabName).classList.remove('border-transparent', 'text-gray-500');
     document.getElementById('tab-' + tabName).classList.add('border-blue-500', 'text-blue-600');
+    
+    if (updateHash) {
+        if (history.replaceState) {
+            history.replaceState(null, null, '#content-' + tabName);
+        } else {
+            location.hash = '#content-' + tabName;
+        }
+    }
 }
 
 function toggleForm(formId) {
     const form = document.getElementById(formId);
     form.classList.toggle('hidden');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = location.hash;
+    if (hash && hash.startsWith('#content-')) {
+        const tabName = hash.replace('#content-', '');
+        const validTabs = ['treatment', 'evidence', 'insurance', 'review', 'payment', 'feedback'];
+        if (validTabs.includes(tabName)) {
+            showTab(tabName, false);
+            
+            setTimeout(function() {
+                const tabContent = document.getElementById('content-' + tabName);
+                if (tabContent) {
+                    tabContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+    }
+});
+
+window.addEventListener('hashchange', function() {
+    const hash = location.hash;
+    if (hash && hash.startsWith('#content-')) {
+        const tabName = hash.replace('#content-', '');
+        const validTabs = ['treatment', 'evidence', 'insurance', 'review', 'payment', 'feedback'];
+        if (validTabs.includes(tabName)) {
+            showTab(tabName, false);
+        }
+    }
+});
 </script>
 {% endblock %}
