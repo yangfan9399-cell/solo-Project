@@ -1,0 +1,29 @@
+{
+  "name": "media-equipment-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "seed": "tsx src/seed.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.2",
+    "bcryptjs": "^2.4.3",
+    "hono": "^4.6.10",
+    "jsonwebtoken": "^9.0.2",
+    "sql.js": "^1.10.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.8.6",
+    "@types/sql.js": "^1.4.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
