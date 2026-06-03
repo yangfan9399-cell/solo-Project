@@ -1,17 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import StatusBadge from '../../components/common/StatusBadge';
 import Loading from '../../components/common/Loading';
 import ErrorState from '../../components/common/ErrorState';
+import EmptyState from '../../components/common/EmptyState';
 import MediaCardForm from '../../components/mediaCards/MediaCardForm';
 import MediaCardBorrowForm from '../../components/mediaCards/MediaCardBorrowForm';
 import MediaCardReturnForm from '../../components/mediaCards/MediaCardReturnForm';
 import { mediaCardApi } from '../../api/mediaCards';
 import { useNotificationStore } from '../../store/notificationStore';
 import { usePermission } from '../../hooks/usePermission';
-import type { MediaCard } from '../../types';
+import { MEDIA_CARD_RECORD_COLORS, MEDIA_CARD_RECORD_LABELS, MEDIA_CARD_RETURN_STATUS_LABELS } from '../../utils/constants';
+import type { MediaCard, MediaCardRecord } from '../../types';
 import { formatDateTime } from '../../utils/format';
+
+const RecordItem: React.FC<{ record: MediaCardRecord }> = ({ record }) => {
+  const recordColor = MEDIA_CARD_RECORD_COLORS[record.action_type] || 'bg-gray-100 text-gray-800 border-gray-200';
+  const recordLabel = MEDIA_CARD_RECORD_LABELS[record.action_type] || record.action_type;
+
+  return (
+    <div className="relative pl-12">
+      <div className={`absolute left-3 w-5 h-5 rounded-full border-2 ${recordColor} flex items-center justify-center`}>
+        <div className="w-2 h-2 rounded-full bg-current" />
+      </div>
+      <div className={`rounded-lg border p-4 ${recordColor.split(' ')[2]}`}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${recordColor.split(' ').slice(0, 2).join(' ')}`}>
+                {recordLabel}
+              </span>
+              <span className="text-sm text-gray-500">
+                {formatDateTime(record.created_at)}
+              </span>
+            </div>
+            <div className="space-y-1 text-sm">
+              <p>
+                <span className="text-gray-500">借用人：</span>
+                <span className="text-gray-900 font-medium">{record.user_name}</span>
+              </p>
+              {record.handler_name && (
+                <p>
+                  <span className="text-gray-500">经办人：</span>
+                  <span className="text-gray-900">{record.handler_name}</span>
+                </p>
+              )}
+              {record.borrow_time && (
+                <p>
+                  <span className="text-gray-500">借出时间：</span>
+                  <span className="text-gray-900">{formatDateTime(record.borrow_time)}</span>
+                </p>
+              )}
+              {record.expected_return_time && (
+                <p>
+                  <span className="text-gray-500">预计归还：</span>
+                  <span className="text-gray-900">{formatDateTime(record.expected_return_time)}</span>
+                </p>
+              )}
+              {record.actual_return_time && (
+                <p>
+                  <span className="text-gray-500">实际归还：</span>
+                  <span className="text-gray-900">{formatDateTime(record.actual_return_time)}</span>
+                </p>
+              )}
+              {record.return_status && (
+                <p>
+                  <span className="text-gray-500">归还状态：</span>
+                  <span className={`font-medium ${
+                    record.return_status === 'normal' ? 'text-green-600' : 'text-orange-600'
+                  }`}>
+                    {MEDIA_CARD_RETURN_STATUS_LABELS[record.return_status]}
+                  </span>
+                </p>
+              )}
+              {record.reservation_no && (
+                <p>
+                  <span className="text-gray-500">关联预约：</span>
+                  <Link
+                    to={`/reservations/${record.reservation_id}`}
+                    className="text-primary-600 hover:text-primary-700 hover:underline"
+                  >
+                    {record.reservation_no}
+                  </Link>
+                </p>
+              )}
+              {record.remark && (
+                <p>
+                  <span className="text-gray-500">备注：</span>
+                  <span className="text-gray-900">{record.remark}</span>
+                </p>
+              )}
+            </div>
+          </div>
+          {record.damage_report_id && (
+            <Link
+              to={`/damage-reports/${record.damage_report_id}`}
+              className="shrink-0 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+            >
+              查看损坏报告
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MediaCardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -166,27 +260,17 @@ const MediaCardDetailPage: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold mb-4">操作记录</h2>
-              {mediaCard.status === 'in_use' ? (
-                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
-                    <div>
-                      <p className="font-medium text-blue-900">当前借出中</p>
-                      <p className="text-sm text-blue-700">
-                        借用人：{mediaCard.current_user_name}，借出时间：{mediaCard.borrow_time ? formatDateTime(mediaCard.borrow_time) : '-'}
-                      </p>
-                      {mediaCard.expected_return_time && (
-                        <p className="text-sm text-blue-700">
-                          预计归还：{formatDateTime(mediaCard.expected_return_time)}
-                        </p>
-                      )}
-                    </div>
+              {mediaCard.history && mediaCard.history.length > 0 ? (
+                <div className="relative">
+                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200" />
+                  <div className="space-y-6">
+                    {mediaCard.history.map((record) => (
+                      <RecordItem key={record.id} record={record} />
+                    ))}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>暂无操作记录</p>
-                </div>
+                <EmptyState message="暂无操作记录" icon="history" />
               )}
             </div>
           </div>

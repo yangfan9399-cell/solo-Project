@@ -177,6 +177,29 @@ export async function initDatabase(): Promise<void> {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS media_card_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      media_card_id INTEGER NOT NULL,
+      media_card_code TEXT NOT NULL,
+      action_type TEXT NOT NULL CHECK(action_type IN ('borrow', 'return', 'damage_return', 'loss', 'repair', 'scrap')),
+      user_id INTEGER NOT NULL,
+      user_name TEXT NOT NULL,
+      handler_id INTEGER,
+      handler_name TEXT,
+      reservation_id INTEGER,
+      reservation_no TEXT,
+      borrow_time TEXT,
+      expected_return_time TEXT,
+      actual_return_time TEXT,
+      return_status TEXT CHECK(return_status IN ('normal', 'damaged', 'lost')),
+      damage_report_id INTEGER,
+      remark TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (media_card_id) REFERENCES media_cards(id),
+      FOREIGN KEY (reservation_id) REFERENCES reservations(id),
+      FOREIGN KEY (damage_report_id) REFERENCES damage_reports(id)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_reservations_equipment ON reservations(equipment_id);
     CREATE INDEX IF NOT EXISTS idx_reservations_requester ON reservations(requester_id);
     CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
@@ -186,6 +209,9 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_damage_reports_status ON damage_reports(status);
     CREATE INDEX IF NOT EXISTS idx_overdue_reminders_status ON overdue_reminders(status);
     CREATE INDEX IF NOT EXISTS idx_media_cards_status ON media_cards(status);
+    CREATE INDEX IF NOT EXISTS idx_media_card_records_card_id ON media_card_records(media_card_id);
+    CREATE INDEX IF NOT EXISTS idx_media_card_records_user_id ON media_card_records(user_id);
+    CREATE INDEX IF NOT EXISTS idx_media_card_records_reservation_id ON media_card_records(reservation_id);
   `);
 
   saveDatabase();

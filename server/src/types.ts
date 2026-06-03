@@ -133,6 +133,29 @@ export interface OverdueReminder {
   created_at: string;
 }
 
+export type MediaCardRecordAction = 'borrow' | 'return' | 'damage_return' | 'loss' | 'repair' | 'scrap';
+export type MediaCardReturnStatus = 'normal' | 'damaged' | 'lost';
+
+export interface MediaCardRecord {
+  id: number;
+  media_card_id: number;
+  media_card_code: string;
+  action_type: MediaCardRecordAction;
+  user_id: number;
+  user_name: string;
+  handler_id: number | null;
+  handler_name: string | null;
+  reservation_id: number | null;
+  reservation_no: string | null;
+  borrow_time: string | null;
+  expected_return_time: string | null;
+  actual_return_time: string | null;
+  return_status: MediaCardReturnStatus | null;
+  damage_report_id: number | null;
+  remark: string | null;
+  created_at: string;
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

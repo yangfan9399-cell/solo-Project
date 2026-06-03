@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { run, get, all } from '../db.js';
 import { authMiddleware, roleMiddleware, type AuthContext } from '../middleware/auth.js';
 import { generateNo } from '../utils.js';
-import type { MediaCard } from '../types.js';
+import type { MediaCard, MediaCardRecord } from '../types.js';
 
 const mediaCardRoutes = new Hono<{ Variables: AuthContext }>();
 
@@ -56,12 +56,10 @@ mediaCardRoutes.get('/:id', async (c) => {
     return c.json({ success: false, error: '素材卡不存在' }, 404);
   }
 
-  const history = await all(`
-    SELECT * FROM (
-      SELECT id, 'borrow' as action, borrow_time as action_time, current_user_name as user_name, '借出' as action_name
-      FROM media_cards WHERE id = ? AND borrow_time IS NOT NULL
-    )
-    ORDER BY action_time DESC
+  const history = await all<MediaCardRecord>(`
+    SELECT * FROM media_card_records
+    WHERE media_card_id = ?
+    ORDER BY created_at DESC
   `, [id]);
 
   return c.json({
@@ -175,7 +173,7 @@ mediaCardRoutes.post('/:id/borrow', roleMiddleware(['admin']), async (c) => {
     const user = c.get('user');
     const id = parseInt(c.req.param('id'), 10);
     const body = await c.req.json();
-    const { user_id, user_name, expected_return_time } = body;
+    const { user_id, user_name, expected_return_time, reservation_id, remark } = body;
 
     const existing = await get<MediaCard>('SELECT * FROM media_cards WHERE id = ?', [id]);
     if (!existing) {
@@ -194,12 +192,42 @@ mediaCardRoutes.post('/:id/borrow', roleMiddleware(['admin']), async (c) => {
       return c.json({ success: false, error: '请指定预计归还时间' }, 400);
     }
 
+    let reservationNo: string | null = null;
+    if (reservation_id) {
+      const reservation = await get<{ reservation_no: string }>('SELECT reservation_no FROM reservations WHERE id = ?', [reservation_id]);
+      if (!reservation) {
+        return c.json({ success: false, error: '关联预约不存在' }, 400);
+      }
+      reservationNo = reservation.reservation_no;
+    }
+
     const now = new Date().toISOString();
     await run(`
       UPDATE media_cards
-      SET status = 'in_use', current_user_id = ?, current_user_name = ?, borrow_time = ?, expected_return_time = ?
+      SET status = 'in_use', current_user_id = ?, current_user_name = ?, borrow_time = ?, expected_return_time = ?, remark = COALESCE(?, remark)
       WHERE id = ?
-    `, [user_id, user_name, now, expected_return_time, id]);
+    `, [user_id, user_name, now, expected_return_time, remark || null, id]);
+
+    await run(`
+      INSERT INTO media_card_records (
+        media_card_id, media_card_code, action_type,
+        user_id, user_name, handler_id, handler_name,
+        reservation_id, reservation_no, borrow_time, expected_return_time, remark
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      id,
+      existing.code,
+      'borrow',
+      user_id,
+      user_name,
+      user.id,
+      user.name,
+      reservation_id || null,
+      reservationNo,
+      now,
+      expected_return_time,
+      remark || null
+    ]);
 
     const updated = await get<MediaCard>('SELECT * FROM media_cards WHERE id = ?', [id]);
     return c.json({ success: true, data: updated, message: '素材卡借出成功' });
@@ -213,7 +241,7 @@ mediaCardRoutes.post('/:id/return', roleMiddleware(['admin']), async (c) => {
     const user = c.get('user');
     const id = parseInt(c.req.param('id'), 10);
     const body = await c.req.json();
-    const { return_remark, return_status, damage_description } = body;
+    const { return_remark, return_status, damage_description, actual_return_time } = body;
 
     const existing = await get<MediaCard>('SELECT * FROM media_cards WHERE id = ?', [id]);
     if (!existing) {
@@ -224,8 +252,9 @@ mediaCardRoutes.post('/:id/return', roleMiddleware(['admin']), async (c) => {
       return c.json({ success: false, error: '该素材卡未被借出' }, 400);
     }
 
-    const now = new Date().toISOString();
+    const now = actual_return_time || new Date().toISOString();
     const status = return_status === 'damaged' ? 'damaged' : 'available';
+    const actionType = return_status === 'damaged' ? 'damage_return' : 'return';
 
     await run(`
       UPDATE media_cards
@@ -263,6 +292,26 @@ mediaCardRoutes.post('/:id/return', roleMiddleware(['admin']), async (c) => {
       ]);
       damageReportId = result.lastID;
     }
+
+    await run(`
+      INSERT INTO media_card_records (
+        media_card_id, media_card_code, action_type,
+        user_id, user_name, handler_id, handler_name,
+        actual_return_time, return_status, damage_report_id, remark
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      id,
+      existing.code,
+      actionType,
+      existing.current_user_id || 0,
+      existing.current_user_name || '',
+      user.id,
+      user.name,
+      now,
+      return_status || 'normal',
+      damageReportId,
+      return_remark || null
+    ]);
 
     const updated = await get<MediaCard>('SELECT * FROM media_cards WHERE id = ?', [id]);
     return c.json({

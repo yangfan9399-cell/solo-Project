@@ -75,6 +75,7 @@ export const MediaCardReturnForm: React.FC<MediaCardReturnFormProps> = ({
         return_remark: formData.remark,
         return_status: formData.return_status,
         damage_description: formData.return_status === 'damaged' ? formData.damage_description : undefined,
+        actual_return_time: formData.actual_return_time,
       });
 
       if (response.success) {

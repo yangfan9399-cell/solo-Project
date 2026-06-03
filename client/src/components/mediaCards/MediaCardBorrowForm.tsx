@@ -74,10 +74,14 @@ export const MediaCardBorrowForm: React.FC<MediaCardBorrowFormProps> = ({
 
     setIsLoading(true);
     try {
+      const reservationId = formData.reservation_id ? parseInt(formData.reservation_id, 10) : undefined;
+
       const response = await mediaCardApi.borrow(mediaCard.id, {
         user_id: parseInt(formData.user_id, 10),
         user_name: formData.user_name,
         expected_return_time: formData.expected_return_time,
+        reservation_id: reservationId,
+        remark: formData.remark || undefined,
       });
 
       if (response.success) {

@@ -1,5 +1,5 @@
 import { request } from './index';
-import type { MediaCard } from '../types';
+import type { MediaCard, MediaCardRecord } from '../types';
 
 export interface MediaCardQuery {
   status?: string;
@@ -16,7 +16,7 @@ export const mediaCardApi = {
     }),
 
   getDetail: (id: number) =>
-    request<MediaCard>({
+    request<MediaCard & { history: MediaCardRecord[] }>({
       url: `/media-cards/${id}`,
       method: 'GET',
     }),
@@ -41,14 +41,25 @@ export const mediaCardApi = {
       method: 'DELETE',
     }),
 
-  borrow: (id: number, data: { user_id: number; user_name: string; expected_return_time: string }) =>
+  borrow: (id: number, data: {
+    user_id: number;
+    user_name: string;
+    expected_return_time: string;
+    reservation_id?: number;
+    remark?: string;
+  }) =>
     request<MediaCard>({
       url: `/media-cards/${id}/borrow`,
       method: 'POST',
       data,
     }),
 
-  return: (id: number, data?: { return_remark?: string; return_status?: 'normal' | 'damaged'; damage_description?: string }) =>
+  return: (id: number, data?: {
+    return_remark?: string;
+    return_status?: 'normal' | 'damaged';
+    damage_description?: string;
+    actual_return_time?: string;
+  }) =>
     request<MediaCard & { damage_report_id?: number }>({
       url: `/media-cards/${id}/return`,
       method: 'POST',

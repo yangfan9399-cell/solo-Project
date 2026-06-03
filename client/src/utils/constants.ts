@@ -1,4 +1,4 @@
-import type { EquipmentStatus, TaskStatus, ReservationStatus, MediaCardStatus, DamageType, DamageStatus, ReminderType, ReminderStatus, UserRole } from '../types';
+import type { EquipmentStatus, TaskStatus, ReservationStatus, MediaCardStatus, MediaCardRecordAction, MediaCardReturnStatus, DamageType, DamageStatus, ReminderType, ReminderStatus, UserRole } from '../types';
 
 export const STATUS_COLORS: Record<string, string> = {
   available: 'bg-green-100 text-green-800',
@@ -185,3 +185,27 @@ export const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
   { value: 'high', label: '高' },
   { value: 'urgent', label: '紧急' },
 ];
+
+export const MEDIA_CARD_RECORD_COLORS: Record<MediaCardRecordAction, string> = {
+  borrow: 'bg-blue-100 text-blue-800 border-blue-200',
+  return: 'bg-green-100 text-green-800 border-green-200',
+  damage_return: 'bg-orange-100 text-orange-800 border-orange-200',
+  loss: 'bg-red-100 text-red-800 border-red-200',
+  repair: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  scrap: 'bg-gray-100 text-gray-800 border-gray-200',
+};
+
+export const MEDIA_CARD_RECORD_LABELS: Record<MediaCardRecordAction, string> = {
+  borrow: '借出',
+  return: '归还',
+  damage_return: '损坏归还',
+  loss: '丢失',
+  repair: '维修',
+  scrap: '报废',
+};
+
+export const MEDIA_CARD_RETURN_STATUS_LABELS: Record<MediaCardReturnStatus, string> = {
+  normal: '正常',
+  damaged: '损坏',
+  lost: '丢失',
+};
