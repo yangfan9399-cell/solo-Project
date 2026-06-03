@@ -5,6 +5,7 @@ export interface MediaCardQuery {
   status?: string;
   type?: string;
   keyword?: string;
+  equipment_id?: number;
 }
 
 export const mediaCardApi = {

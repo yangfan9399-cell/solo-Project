@@ -10,6 +10,8 @@ interface MediaCardBorrowFormProps {
   isOpen: boolean;
   onClose: () => void;
   mediaCard: MediaCard | null;
+  reservationId?: number;
+  reservationNo?: string;
   onSuccess?: () => void;
 }
 
@@ -30,13 +32,15 @@ export const MediaCardBorrowForm: React.FC<MediaCardBorrowFormProps> = ({
   isOpen,
   onClose,
   mediaCard,
+  reservationId,
+  reservationNo,
   onSuccess,
 }) => {
   const { success, error } = useNotificationStore();
   const { user } = usePermission();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    reservation_id: '',
+    reservation_id: reservationId ? String(reservationId) : '',
     user_id: user?.id ? String(user.id) : '',
     user_name: user?.name || '',
     expected_return_time: '',
@@ -47,7 +51,7 @@ export const MediaCardBorrowForm: React.FC<MediaCardBorrowFormProps> = ({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        reservation_id: '',
+        reservation_id: reservationId ? String(reservationId) : '',
         user_id: user?.id ? String(user.id) : '',
         user_name: user?.name || '',
         expected_return_time: '',
@@ -55,7 +59,7 @@ export const MediaCardBorrowForm: React.FC<MediaCardBorrowFormProps> = ({
       });
       setErrors({});
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, reservationId]);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -139,18 +143,45 @@ export const MediaCardBorrowForm: React.FC<MediaCardBorrowFormProps> = ({
             <p className="text-sm text-gray-600 mt-1">
               当前状态：<span className="text-green-600 font-medium">可用</span>
             </p>
+            {mediaCard.equipment_name && (
+              <p className="text-sm text-gray-600">
+                关联设备：{mediaCard.equipment_name}
+              </p>
+            )}
           </div>
 
-          <div className="space-y-1">
-            <label className="form-label">关联预约</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.reservation_id}
-              onChange={(e) => handleChange('reservation_id', e.target.value)}
-              placeholder="可选，输入预约ID"
-            />
-          </div>
+          {reservationNo && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-blue-900">
+                    关联预约：{reservationNo}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    借出后将自动记录关联信息，可在素材卡履历中查看
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!reservationNo && (
+            <div className="space-y-1">
+              <label className="form-label">关联预约</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData.reservation_id}
+                onChange={(e) => handleChange('reservation_id', e.target.value)}
+                placeholder="可选，输入预约ID"
+              />
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="form-label required">借用人</label>

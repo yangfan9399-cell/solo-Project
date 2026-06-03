@@ -21,7 +21,7 @@ const mediaCardSchema = z.object({
 });
 
 mediaCardRoutes.get('/', async (c) => {
-  const { status, type, keyword } = c.req.query();
+  const { status, type, keyword, equipment_id } = c.req.query();
 
   let query = 'SELECT * FROM media_cards WHERE 1=1';
   const params: (string | number)[] = [];
@@ -34,6 +34,11 @@ mediaCardRoutes.get('/', async (c) => {
   if (type) {
     query += ' AND type = ?';
     params.push(type);
+  }
+
+  if (equipment_id) {
+    query += ' AND equipment_id = ?';
+    params.push(parseInt(equipment_id, 10));
   }
 
   if (keyword) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import DataTable from '../../components/common/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -10,9 +10,10 @@ import MediaCardForm from '../../components/mediaCards/MediaCardForm';
 import MediaCardBorrowForm from '../../components/mediaCards/MediaCardBorrowForm';
 import MediaCardReturnForm from '../../components/mediaCards/MediaCardReturnForm';
 import { mediaCardApi } from '../../api/mediaCards';
+import { reservationApi } from '../../api/reservations';
 import { useNotificationStore } from '../../store/notificationStore';
 import { usePermission } from '../../hooks/usePermission';
-import type { MediaCard } from '../../types';
+import type { MediaCard, Reservation } from '../../types';
 import { MEDIA_CARD_TYPES, MEDIA_CARD_STATUS_OPTIONS } from '../../utils/constants';
 import { formatDateTime } from '../../utils/format';
 
@@ -20,6 +21,8 @@ type TabType = 'all' | 'available' | 'in_use' | 'damaged';
 
 const MediaCardListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { success, error } = useNotificationStore();
   const { canManageMediaCards, canBorrowMediaCards } = usePermission();
   const [mediaCards, setMediaCards] = useState<MediaCard[]>([]);
@@ -28,7 +31,7 @@ const MediaCardListPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [activeTab, setActiveTab] = useState<TabType>('available');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBorrowFormOpen, setIsBorrowFormOpen] = useState(false);
   const [isReturnFormOpen, setIsReturnFormOpen] = useState(false);
@@ -40,6 +43,12 @@ const MediaCardListPage: React.FC = () => {
     mediaCard: null,
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [linkedReservation, setLinkedReservation] = useState<Reservation | null>(null);
+
+  const urlEquipmentId = searchParams.get('equipment_id');
+  const urlReservationId = searchParams.get('reservation_id');
+  const equipmentId = urlEquipmentId ? parseInt(urlEquipmentId, 10) : undefined;
+  const reservationId = urlReservationId ? parseInt(urlReservationId, 10) : undefined;
 
   const fetchMediaCards = async () => {
     setLoading(true);
@@ -50,6 +59,7 @@ const MediaCardListPage: React.FC = () => {
         keyword: keyword || undefined,
         type: typeFilter || undefined,
         status: status || undefined,
+        equipment_id: equipmentId,
       });
       if (response.success && response.data) {
         setMediaCards(response.data);
@@ -63,9 +73,25 @@ const MediaCardListPage: React.FC = () => {
     }
   };
 
+  const fetchLinkedReservation = async () => {
+    if (!reservationId) return;
+    try {
+      const response = await reservationApi.getDetail(reservationId);
+      if (response.success && response.data) {
+        setLinkedReservation(response.data);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     fetchMediaCards();
-  }, [keyword, typeFilter, statusFilter, activeTab]);
+  }, [keyword, typeFilter, statusFilter, activeTab, equipmentId]);
+
+  useEffect(() => {
+    fetchLinkedReservation();
+  }, [reservationId]);
 
   const handleAdd = () => {
     setEditingMediaCard(null);
@@ -80,6 +106,10 @@ const MediaCardListPage: React.FC = () => {
   const handleBorrow = (item: MediaCard) => {
     setBorrowingMediaCard(item);
     setIsBorrowFormOpen(true);
+  };
+
+  const handleClearLink = () => {
+    navigate('/media-cards', { replace: true });
   };
 
   const handleReturn = (item: MediaCard) => {
@@ -267,6 +297,37 @@ const MediaCardListPage: React.FC = () => {
       />
 
       <div className="p-6">
+        {linkedReservation && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900">
+                    正在为预约 <span className="font-semibold">{linkedReservation.reservation_no}</span> 借用素材卡
+                  </p>
+                  <p className="text-sm text-blue-700 mt-0.5">
+                    设备：{linkedReservation.equipment_name} · 申请人：{linkedReservation.requester_name}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    以下筛选出该设备关联的可用素材卡，点击"借用"即可完成素材卡借出，系统将自动记录关联的预约信息。
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClearLink}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex-shrink-0"
+              >
+                取消关联
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px">
@@ -395,6 +456,8 @@ const MediaCardListPage: React.FC = () => {
           setBorrowingMediaCard(null);
         }}
         mediaCard={borrowingMediaCard}
+        reservationId={reservationId}
+        reservationNo={linkedReservation?.reservation_no}
         onSuccess={fetchMediaCards}
       />
 
