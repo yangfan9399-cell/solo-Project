@@ -215,7 +215,7 @@ const CalendarPage: React.FC = () => {
           {item.task_title || item.purpose || '设备预约'}
         </div>
         <div className="text-xs text-gray-600 mt-0.5">
-          {formatTime(displayStart)} - {formatTime(displayEnd)}
+          {formatTime(displayStart.toDate())} - {formatTime(displayEnd.toDate())}
         </div>
         <div className="text-xs text-gray-500 truncate">{item.requester_name}</div>
       </div>

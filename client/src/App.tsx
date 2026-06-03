@@ -15,6 +15,7 @@ const ReservationListPage = lazy(() => import('./pages/reservations/ReservationL
 const ReservationDetailPage = lazy(() => import('./pages/reservations/ReservationDetailPage'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const MediaCardListPage = lazy(() => import('./pages/mediaCards/MediaCardListPage'));
+const MediaCardDetailPage = lazy(() => import('./pages/mediaCards/MediaCardDetailPage'));
 const DamageReportListPage = lazy(() => import('./pages/damageReports/DamageReportListPage'));
 const DamageReportDetailPage = lazy(() => import('./pages/damageReports/DamageReportDetailPage'));
 const OverdueReminderListPage = lazy(() => import('./pages/OverdueReminderListPage'));
@@ -69,6 +70,7 @@ const App: React.FC = () => {
             <Route path="reservations/:id" element={<ReservationDetailPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="media-cards" element={<MediaCardListPage />} />
+            <Route path="media-cards/:id" element={<MediaCardDetailPage />} />
             <Route path="damage-reports" element={<DamageReportListPage />} />
             <Route path="damage-reports/:id" element={<DamageReportDetailPage />} />
             <Route path="overdue-reminders" element={<OverdueReminderListPage />} />

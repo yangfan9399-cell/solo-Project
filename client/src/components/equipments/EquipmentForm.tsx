@@ -75,11 +75,11 @@ export const EquipmentForm: React.FC<EquipmentFormProps> = ({
         specification: equipment.specification,
         serial_number: equipment.serial_number,
         purchase_date: equipment.purchase_date ? formatDate(equipment.purchase_date) : '',
-        purchase_price: '',
-        stock_quantity: '1',
+        purchase_price: equipment.purchase_price != null ? String(equipment.purchase_price) : '',
+        stock_quantity: equipment.stock_quantity != null ? String(equipment.stock_quantity) : '1',
         location: equipment.location,
         status: equipment.status,
-        description: equipment.specification,
+        description: equipment.description || '',
         remark: equipment.remark,
       });
     } else {
@@ -129,12 +129,15 @@ export const EquipmentForm: React.FC<EquipmentFormProps> = ({
         category: formData.category,
         brand: formData.brand,
         model: formData.model,
-        specification: formData.specification || formData.description,
+        specification: formData.specification,
         serial_number: formData.serial_number,
         purchase_date: formData.purchase_date,
+        purchase_price: formData.purchase_price ? parseFloat(formData.purchase_price) : 0,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity, 10) : 1,
         status: formData.status,
         location: formData.location,
-        accessories: formData.description,
+        description: formData.description,
+        accessories: '',
         remark: formData.remark,
       };
 

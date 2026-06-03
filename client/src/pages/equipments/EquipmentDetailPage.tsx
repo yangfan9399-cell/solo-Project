@@ -201,20 +201,28 @@ const EquipmentDetailPage: React.FC = () => {
                 <InfoItem label="规格" value={equipment.specification} />
                 <InfoItem label="序列号" value={equipment.serial_number} />
                 <InfoItem label="购买日期" value={formatDate(equipment.purchase_date)} />
+                <InfoItem label="购买价格" value={equipment.purchase_price ? `¥${equipment.purchase_price.toLocaleString()}` : '-'} />
                 <InfoItem label="存放位置" value={equipment.location} />
-                <InfoItem label="库存数量" value="1" />
+                <InfoItem label="库存数量" value={String(equipment.stock_quantity ?? 1)} />
                 <InfoItem
                   label="可用数量"
                   value={
                     <span
                       className={equipment.status === 'available' ? 'text-green-600 font-medium' : 'text-gray-500'}
                     >
-                      {equipment.status === 'available' ? '1' : '0'}
+                      {equipment.status === 'available' ? String(equipment.stock_quantity ?? 1) : '0'}
                     </span>
                   }
                 />
                 <InfoItem label="创建时间" value={formatDateTime(equipment.created_at)} />
               </div>
+
+              {equipment.description && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">描述</h3>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{equipment.description}</p>
+                </div>
+              )}
 
               {equipment.remark && (
                 <div className="mt-6 pt-6 border-t border-gray-200">

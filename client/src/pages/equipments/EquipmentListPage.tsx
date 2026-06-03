@@ -126,7 +126,7 @@ const EquipmentListPage: React.FC = () => {
         key: 'stock_quantity',
         title: '库存数',
         className: 'w-20 text-center',
-        render: () => '1',
+        render: (item: Equipment) => item.stock_quantity ?? 1,
       },
       {
         key: 'available',
@@ -134,7 +134,7 @@ const EquipmentListPage: React.FC = () => {
         className: 'w-20 text-center',
         render: (item: Equipment) => (
           <span className={item.status === 'available' ? 'text-green-600 font-medium' : 'text-gray-500'}>
-            {item.status === 'available' ? '1' : '0'}
+            {item.status === 'available' ? (item.stock_quantity ?? 1) : 0}
           </span>
         ),
       },

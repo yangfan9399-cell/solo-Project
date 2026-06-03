@@ -97,8 +97,8 @@ equipmentRoutes.post('/', roleMiddleware(['admin']), async (c) => {
     }
 
     const sql = `
-      INSERT INTO equipments (name, code, category, brand, model, serial_number, purchase_date, status, location, specification, accessories, remark)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO equipments (name, code, category, brand, model, serial_number, purchase_date, purchase_price, stock_quantity, status, location, specification, description, accessories, remark)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const result = await run(sql, [
@@ -109,9 +109,12 @@ equipmentRoutes.post('/', roleMiddleware(['admin']), async (c) => {
       validated.model || '',
       validated.serial_number || '',
       validated.purchase_date || '',
+      validated.purchase_price,
+      validated.stock_quantity,
       validated.status,
       validated.location || '',
       validated.specification || '',
+      validated.description || '',
       validated.accessories || '',
       validated.remark || ''
     ]);

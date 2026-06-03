@@ -276,6 +276,74 @@ reservationRoutes.post('/:id/return', roleMiddleware(['admin']), async (c) => {
   }
 });
 
+reservationRoutes.put('/:id', roleMiddleware(['reporter', 'admin']), async (c) => {
+  try {
+    const user = c.get('user');
+    const id = parseInt(c.req.param('id'), 10);
+    const body = await c.req.json();
+    const validated = reservationSchema.parse(body);
+
+    const existing = await get<Reservation>('SELECT * FROM reservations WHERE id = ?', [id]);
+    if (!existing) {
+      return c.json({ success: false, error: '预约不存在' }, 404);
+    }
+
+    if (existing.status !== 'pending') {
+      return c.json({ success: false, error: '只有待审批状态的预约可以编辑' }, 400);
+    }
+
+    if (user.role === 'reporter' && existing.requester_id !== user.id) {
+      return c.json({ success: false, error: '只能编辑自己的预约' }, 403);
+    }
+
+    if (new Date(validated.expected_return_time) <= new Date(validated.expected_pickup_time)) {
+      return c.json({ success: false, error: '归还时间必须晚于领用时间' }, 400);
+    }
+
+    const equipment = await get<Equipment>('SELECT * FROM equipments WHERE id = ?', [validated.equipment_id]);
+    if (!equipment) {
+      return c.json({ success: false, error: '设备不存在' }, 404);
+    }
+
+    const isAvailable = await checkEquipmentAvailability(validated.equipment_id, validated.expected_pickup_time, validated.expected_return_time, id);
+    if (!isAvailable) {
+      return c.json({ success: false, error: '该设备在此时间段内已被预约' }, 400);
+    }
+
+    if (validated.task_id) {
+      const task = await get('SELECT * FROM shooting_tasks WHERE id = ?', [validated.task_id]);
+      if (!task) {
+        return c.json({ success: false, error: '关联任务不存在' }, 404);
+      }
+    }
+
+    await run(`
+      UPDATE reservations
+      SET task_id = ?, equipment_id = ?, equipment_name = ?,
+          expected_pickup_time = ?, expected_return_time = ?,
+          purpose = ?, remark = ?
+      WHERE id = ?
+    `, [
+      validated.task_id || null,
+      validated.equipment_id,
+      equipment.name,
+      validated.expected_pickup_time,
+      validated.expected_return_time,
+      validated.purpose || '',
+      validated.remark || '',
+      id
+    ]);
+
+    const updated = await get<Reservation>('SELECT * FROM reservations WHERE id = ?', [id]);
+    return c.json({ success: true, data: updated, message: '预约更新成功' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({ success: false, error: error.errors[0].message }, 400);
+    }
+    return c.json({ success: false, error: '更新预约失败' }, 500);
+  }
+});
+
 reservationRoutes.post('/:id/cancel', async (c) => {
   const user = c.get('user');
   const id = parseInt(c.req.param('id'), 10);

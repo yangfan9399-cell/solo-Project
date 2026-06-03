@@ -100,11 +100,11 @@ const DashboardPage: React.FC = () => {
   }
 
   const equipmentStatusData: { status: EquipmentStatus; count: number; label: string }[] = [
-    { status: 'available', count: stats.equipment.available, label: STATUS_LABELS.available },
-    { status: 'in_use', count: stats.equipment.in_use, label: STATUS_LABELS.in_use },
-    { status: 'maintenance', count: stats.equipment.maintenance, label: STATUS_LABELS.maintenance },
-    { status: 'damaged', count: stats.equipment.damaged, label: STATUS_LABELS.damaged },
-    { status: 'scrapped', count: stats.equipment.scrapped, label: STATUS_LABELS.scrapped },
+    { status: 'available' as EquipmentStatus, count: stats.equipment.available, label: STATUS_LABELS.available },
+    { status: 'in_use' as EquipmentStatus, count: stats.equipment.in_use, label: STATUS_LABELS.in_use },
+    { status: 'maintenance' as EquipmentStatus, count: stats.equipment.maintenance, label: STATUS_LABELS.maintenance },
+    { status: 'damaged' as EquipmentStatus, count: stats.equipment.damaged, label: STATUS_LABELS.damaged },
+    { status: 'scrapped' as EquipmentStatus, count: stats.equipment.scrapped, label: STATUS_LABELS.scrapped },
   ].filter(item => item.count > 0);
 
   const activities: ActivityItem[] = [
