@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PrescriptionSource {
+  HOSPITAL
+  CLINIC
+  ONLINE
+  EXTERNAL
+}
+
+enum PrescriptionStatus {
+  RECEIVED
+  REVIEWING
+  APPROVED
+  REJECTED
+  DOSAGE_ISSUE
+  PATIENT_MISMATCH
+  READY_FOR_PICKUP
+  PICKED_UP
+  TIMEOUT
+  ARCHIVED
+  DISPUTED
+}
+
+enum Role {
+  PHARMACIST
+  CLERK
+  REVIEWER
+}
+
+enum ReviewResult {
+  APPROVED
+  DOSAGE_ISSUE
+  PATIENT_MISMATCH
+  NEEDS_ADJUSTMENT
+  RETURN_TO_DOCTOR
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews     Review[]
+  pickups     Pickup[]
+  archives    Archive[]
+}
+
+model Patient {
+  id          String   @id @default(cuid())
+  name        String
+  idCard      String   @unique
+  phone       String?
+  birthDate   DateTime?
+  gender      String?
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id              String              @id @default(cuid())
+  prescriptionNo  String              @unique
+  source          PrescriptionSource
+  sourceHospital  String?
+  doctorName      String?
+  department      String?
+  diagnosis       String?
+  patientId       String
+  patient         Patient             @relation(fields: [patientId], references: [id])
+  status          PrescriptionStatus  @default(RECEIVED)
+  currentHandler  String?
+  expireAt        DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  medicines   Medicine[]
+  reviews     Review[]
+  pickups     Pickup[]
+  histories   History[]
+  archives    Archive[]
+}
+
+model Medicine {
+  id              String   @id @default(cuid())
+  prescriptionId  String
+  name            String
+  specification   String
+  dosage          String
+  frequency       String
+  quantity        Float
+  unit            String
+  price           Float?
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id              String   @id @default(cuid())
+  prescriptionId  String
+  pharmacistId    String
+  result          ReviewResult
+  dosageSuggestion String?
+  comments        String?
+  reviewedAt      DateTime @default(now())
+
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  pharmacist      User         @relation(fields: [pharmacistId], references: [id])
+}
+
+model Pickup {
+  id              String   @id @default(cuid())
+  prescriptionId  String
+  clerkId         String
+  pickupTime      DateTime?
+  verifierName    String?
+  verifierIdCard  String?
+  relation        String?
+  supplementaryInfo String?
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  clerk           User         @relation(fields: [clerkId], references: [id])
+}
+
+model History {
+  id              String   @id @default(cuid())
+  prescriptionId  String
+  action          String
+  operatorId      String?
+  operatorName    String?
+  details         String?
+  timestamp       DateTime @default(now())
+
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+}
+
+model Archive {
+  id              String   @id @default(cuid())
+  prescriptionId  String
+  reviewerId      String?
+  reason          String
+  resolution      String?
+  disputed        Boolean  @default(false)
+  disputeComments String?
+  archivedAt      DateTime @default(now())
+  resolvedAt      DateTime?
+
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  reviewer        User?        @relation(fields: [reviewerId], references: [id])
+}
