@@ -31,22 +31,23 @@ export async function loader({ params }: { params: { id: string } }) {
       reopenRecords: { orderBy: { reopenedAt: "desc" } },
     },
   });
-  const handlers = await prisma.user.findMany({ where: { role: "HANDLER" } });
-  const reviewers = await prisma.user.findMany({ where: { role: "REVIEWER" } });
-  return { application, handlers, reviewers };
+  return { application };
 }
 
 export async function action({ params, request }: { params: { id: string }; request: Request }) {
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
   const applicationId = params.id;
-  const userId = formData.get("userId") as string;
 
   const app = await prisma.application.findUnique({
     where: { id: applicationId },
     include: { archiveRecords: { orderBy: { archivedAt: "desc" } } },
   });
   if (!app) return new Response("Not found", { status: 404 });
+
+  const appUserId = app.status === "PENDING_REVIEW" || app.status === "APPROVED"
+    ? app.currentReviewerId!
+    : app.currentHandlerId!;
 
   switch (intent) {
     case "upload_document": {
@@ -58,7 +59,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.UPLOAD_DOCUMENT,
           description: "补充材料已上传",
         },
@@ -74,7 +75,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.UPLOAD_DOCUMENT,
           description: "材料已核实",
         },
@@ -87,7 +88,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.ADD_NOTE,
           description: noteText,
         },
@@ -109,7 +110,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.ADJUST_SUBSIDY_LEVEL,
           description: adjustReason,
           oldValue: getSubsidyLevelName(oldLevel as SubsidyLevel),
@@ -119,16 +120,20 @@ export async function action({ params, request }: { params: { id: string }; requ
       break;
     }
     case "submit_for_review": {
+      const defaultReviewer = await prisma.user.findFirst({ where: { role: "REVIEWER" } });
       await prisma.application.update({
         where: { id: applicationId },
-        data: { status: ApplicationStatus.PENDING_REVIEW },
+        data: {
+          status: ApplicationStatus.PENDING_REVIEW,
+          currentReviewerId: defaultReviewer?.id || app.currentReviewerId,
+        },
       });
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.ADD_NOTE,
-          description: "材料已齐全，提交复核",
+          description: `材料已齐全，提交复核，指定复核人：${defaultReviewer?.name || "待分配"}`,
         },
       });
       break;
@@ -141,7 +146,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.APPROVE,
           description: `同意发放${getSubsidyLevelName(app.subsidyLevel as SubsidyLevel)}补助 ¥${getSubsidyAmount(app.subsidyLevel as SubsidyLevel)}`,
         },
@@ -149,22 +154,25 @@ export async function action({ params, request }: { params: { id: string }; requ
       break;
     }
     case "reject": {
+      const rejectReason = formData.get("rejectReason") as string;
+      if (!rejectReason?.trim()) break;
       await prisma.application.update({
         where: { id: applicationId },
-        data: { status: ApplicationStatus.REJECTED },
+        data: { status: ApplicationStatus.PENDING_HANDLER },
       });
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.REJECT,
-          description: "申请不符合条件，予以驳回",
+          description: `退回经办人处理：${rejectReason}`,
         },
       });
       break;
     }
     case "archive": {
       const amount = getSubsidyAmount(app.subsidyLevel as SubsidyLevel);
+      const archiver = await prisma.user.findUnique({ where: { id: appUserId } });
       await prisma.application.update({
         where: { id: applicationId },
         data: {
@@ -179,13 +187,13 @@ export async function action({ params, request }: { params: { id: string }; requ
           applicationId,
           conclusion: `补助已发放，金额 ¥${amount}`,
           finalAmount: amount,
-          archivedBy: (await prisma.user.findUnique({ where: { id: userId } }))?.name || "复核人",
+          archivedBy: archiver?.name || "复核人",
         },
       });
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.ARCHIVE,
           description: "补助已发放，归档保存",
         },
@@ -196,12 +204,13 @@ export async function action({ params, request }: { params: { id: string }; requ
       const reopenReason = formData.get("reopenReason") as string;
       if (!reopenReason?.trim()) break;
       const lastArchive = app.archiveRecords[0];
+      const reopener = await prisma.user.findUnique({ where: { id: appUserId } });
       if (lastArchive) {
         await prisma.reopenRecord.create({
           data: {
             applicationId,
             reopenReason,
-            reopenedBy: (await prisma.user.findUnique({ where: { id: userId } }))?.name || "经办人",
+            reopenedBy: reopener?.name || "经办人",
             originalConclusion: lastArchive.conclusion,
             originalAmount: lastArchive.finalAmount,
           },
@@ -219,7 +228,7 @@ export async function action({ params, request }: { params: { id: string }; requ
       await prisma.approvalLog.create({
         data: {
           applicationId,
-          userId,
+          userId: appUserId,
           actionType: ActionType.REOPEN,
           description: reopenReason,
         },
@@ -233,7 +242,7 @@ export async function action({ params, request }: { params: { id: string }; requ
 
 export default function ApplicationDetail() {
   const { id } = useParams<{ id: string }>();
-  const { application, handlers, reviewers } = useLoaderData<typeof loader>();
+  const { application } = useLoaderData<typeof loader>();
   const submit = useSubmit();
 
   const [activeTab, setActiveTab] = useState<"basic" | "documents" | "logs">("basic");
@@ -259,9 +268,12 @@ export default function ApplicationDetail() {
   }
 
   const isArchived = application.isArchived;
-  const currentHandlerId = handlers[0]?.id || "";
-  const currentReviewerId = reviewers[0]?.id || "";
-  const actingUserId = application.status === "PENDING_REVIEW" || application.status === "APPROVED" ? currentReviewerId : currentHandlerId;
+  const actingUserId = application.status === "PENDING_REVIEW" || application.status === "APPROVED"
+    ? application.currentReviewerId!
+    : application.currentHandlerId!;
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const calculation = calculateSubsidy(
     application.familyMembers.map((m) => ({ monthlyIncome: Number(m.monthlyIncome) })),
@@ -324,7 +336,6 @@ export default function ApplicationDetail() {
                         onClick={() => {
                           const fd = new FormData();
                           fd.set("intent", "submit_for_review");
-                          fd.set("userId", actingUserId);
                           submit(fd, { method: "post" });
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -336,12 +347,7 @@ export default function ApplicationDetail() {
                   {application.status === "PENDING_REVIEW" && (
                     <>
                       <button
-                        onClick={() => {
-                          const fd = new FormData();
-                          fd.set("intent", "reject");
-                          fd.set("userId", actingUserId);
-                          submit(fd, { method: "post" });
-                        }}
+                        onClick={() => setShowRejectModal(true)}
                         className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
                       >
                         退回
@@ -350,7 +356,6 @@ export default function ApplicationDetail() {
                         onClick={() => {
                           const fd = new FormData();
                           fd.set("intent", "approve");
-                          fd.set("userId", actingUserId);
                           submit(fd, { method: "post" });
                         }}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
@@ -364,7 +369,6 @@ export default function ApplicationDetail() {
                       onClick={() => {
                         const fd = new FormData();
                         fd.set("intent", "archive");
-                        fd.set("userId", actingUserId);
                         submit(fd, { method: "post" });
                       }}
                       className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
@@ -602,8 +606,7 @@ export default function ApplicationDetail() {
                                 const fd = new FormData();
                                 fd.set("intent", "upload_document");
                                 fd.set("documentId", doc.id);
-                                fd.set("userId", actingUserId);
-                                submit(fd, { method: "post" });
+                                      submit(fd, { method: "post" });
                               }}
                               className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                             >
@@ -616,8 +619,7 @@ export default function ApplicationDetail() {
                                 const fd = new FormData();
                                 fd.set("intent", "verify_document");
                                 fd.set("documentId", doc.id);
-                                fd.set("userId", actingUserId);
-                                submit(fd, { method: "post" });
+                                      submit(fd, { method: "post" });
                               }}
                               className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                             >
@@ -727,6 +729,42 @@ export default function ApplicationDetail() {
         </div>
       </main>
 
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">退回申请</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">退回原因</label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="请输入退回原因，经办人将根据此原因补充材料或修改申请..."
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  const fd = new FormData();
+                  fd.set("intent", "reject");
+                  fd.set("rejectReason", rejectReason);
+                  submit(fd, { method: "post" });
+                  setRejectReason("");
+                  setShowRejectModal(false);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                确认退回
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showReopenModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -757,7 +795,6 @@ export default function ApplicationDetail() {
                   const fd = new FormData();
                   fd.set("intent", "reopen");
                   fd.set("reopenReason", reopenReason);
-                  fd.set("userId", actingUserId);
                   submit(fd, { method: "post" });
                   setReopenReason("");
                   setShowReopenModal(false);
@@ -793,7 +830,6 @@ export default function ApplicationDetail() {
                   const fd = new FormData();
                   fd.set("intent", "add_note");
                   fd.set("noteText", noteText);
-                  fd.set("userId", actingUserId);
                   submit(fd, { method: "post" });
                   setNoteText("");
                   setShowNoteModal(false);
@@ -845,7 +881,6 @@ export default function ApplicationDetail() {
                   fd.set("intent", "adjust_level");
                   fd.set("newLevel", newSubsidyLevel);
                   fd.set("adjustReason", adjustReason);
-                  fd.set("userId", actingUserId);
                   submit(fd, { method: "post" });
                   setAdjustReason("");
                   setShowAdjustModal(false);
