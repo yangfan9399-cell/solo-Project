@@ -2,13 +2,13 @@ import prisma from "./prisma";
 import type {
   Inspection,
   InspectionStatus,
-  Rectification,
-  Evidence,
   HistoryNode,
   Notification,
 } from "@prisma/client";
 import { canTransition } from "./utils";
 import type { HistoryActionType, NotificationType } from "./types";
+
+type PrismaTransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 export interface StateTransitionContext {
   inspectionId: string;
@@ -23,12 +23,12 @@ export interface StateTransitionContext {
 }
 
 export async function validateAndTransitionState(
-  ctx: StateTransitionContext
+  ctx: StateTransitionContext,
+  tx?: PrismaTransactionClient
 ): Promise<{
   success: boolean;
-  inspection?: Inspection & {
-    lastChange: HistoryNode | null;
-  };
+  inspection?: Inspection & { lastChange: HistoryNode | null };
+  historyNode?: HistoryNode;
   error?: string;
 }> {
   const { inspectionId, fromStatus, toStatus, operatorId, actionType, description, metadata, rectificationId, reviewActionId } = ctx;
@@ -40,8 +40,8 @@ export async function validateAndTransitionState(
     };
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const inspection = await tx.inspection.findUnique({
+  const execute = async (db: PrismaTransactionClient) => {
+    const inspection = await db.inspection.findUnique({
       where: { id: inspectionId },
       select: { status: true, updatedAt: true },
     });
@@ -54,7 +54,7 @@ export async function validateAndTransitionState(
       throw new Error(`状态不一致：当前状态为 ${inspection.status}，预期为 ${fromStatus}`);
     }
 
-    const historyNode = await tx.historyNode.create({
+    const historyNode = await db.historyNode.create({
       data: {
         inspectionId,
         actionType,
@@ -62,13 +62,13 @@ export async function validateAndTransitionState(
         toStatus,
         description,
         operatorId,
-        metadata,
+        metadata: metadata || undefined,
         rectificationId,
         reviewActionId,
       },
     });
 
-    const updatedInspection = await tx.inspection.update({
+    const updatedInspection = await db.inspection.update({
       where: { id: inspectionId },
       data: {
         status: toStatus,
@@ -81,22 +81,40 @@ export async function validateAndTransitionState(
     });
 
     return { inspection: updatedInspection, historyNode };
+  };
+
+  if (tx) {
+    const result = await execute(tx);
+    return { success: true, inspection: result.inspection, historyNode: result.historyNode };
+  }
+
+  const result = await prisma.$transaction(async (innerTx) => {
+    return execute(innerTx);
   });
 
-  return {
-    success: true,
-    inspection: result.inspection,
-  };
+  return { success: true, inspection: result.inspection, historyNode: result.historyNode };
 }
 
 export async function createConsistentNotification(
-  data: Omit<Notification, "id" | "createdAt" | "isRead" | "readAt"> & {
+  data: {
     type: NotificationType;
-  }
+    title: string;
+    content: string;
+    inspectionId: string;
+    userId: string;
+    sentById: string;
+  },
+  tx?: PrismaTransactionClient
 ): Promise<Notification> {
-  return prisma.notification.create({
+  const db = tx || prisma;
+  return db.notification.create({
     data: {
-      ...data,
+      type: data.type,
+      title: data.title,
+      content: data.content,
+      inspectionId: data.inspectionId,
+      userId: data.userId,
+      sentById: data.sentById,
       isRead: false,
     },
   });
@@ -150,7 +168,7 @@ export async function getConsistentInspectionDetail(inspectionId: string) {
       return null;
     }
 
-    const notificationStatus = await tx.notification.findFirst({
+    const latestNotification = await tx.notification.findFirst({
       where: { inspectionId },
       orderBy: { createdAt: "desc" },
       select: {
@@ -162,13 +180,15 @@ export async function getConsistentInspectionDetail(inspectionId: string) {
 
     const statusFromHistory = inspection.historyNodes[inspection.historyNodes.length - 1]?.toStatus;
     const statusFromInspection = inspection.status;
-    const statusFromNotification = notificationStatus?.inspection.status;
+    const statusFromNotification = latestNotification?.inspection.status;
 
     const allStatuses = [statusFromInspection, statusFromHistory, statusFromNotification].filter(Boolean);
     const uniqueStatuses = new Set(allStatuses);
 
-    if (uniqueStatuses.size > 1) {
-      console.warn(`状态不一致警告: 巡查记录 ${inspectionId} 存在状态差异`, {
+    const consistent = uniqueStatuses.size <= 1;
+
+    if (!consistent) {
+      console.warn(`状态不一致警告: 巡查记录 ${inspectionId}`, {
         fromInspection: statusFromInspection,
         fromHistory: statusFromHistory,
         fromNotification: statusFromNotification,
@@ -189,13 +209,22 @@ export async function getConsistentInspectionDetail(inspectionId: string) {
       console.warn(`证据不一致警告: 巡查记录 ${inspectionId} 存在证据引用差异`);
     }
 
-    return inspection;
+    return {
+      ...inspection,
+      _consistency: {
+        statusConsistent: consistent,
+        evidenceConsistent: !hasEvidenceInconsistency,
+        statusFromInspection,
+        statusFromHistory,
+        statusFromNotification,
+      },
+    };
   });
 }
 
 export async function validateEvidenceConsistency(
   inspectionId: string,
-  rectificationId: string,
+  _rectificationId: string,
   evidenceIds: string[]
 ): Promise<{ valid: boolean; errors: string[] }> {
   const errors: string[] = [];
@@ -207,21 +236,6 @@ export async function validateEvidenceConsistency(
 
   if (!inspection) {
     errors.push("巡查记录不存在");
-    return { valid: false, errors };
-  }
-
-  const rectification = await prisma.rectification.findUnique({
-    where: { id: rectificationId },
-    include: { evidences: true },
-  });
-
-  if (!rectification) {
-    errors.push("整改记录不存在");
-    return { valid: false, errors };
-  }
-
-  if (rectification.inspectionId !== inspectionId) {
-    errors.push("整改记录不属于该巡查记录");
     return { valid: false, errors };
   }
 

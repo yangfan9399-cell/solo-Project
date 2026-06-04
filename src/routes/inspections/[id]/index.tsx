@@ -174,15 +174,18 @@ export const useSubmitRectification = routeAction$(
         },
       });
 
-      const transitionResult = await validateAndTransitionState({
-        inspectionId,
-        fromStatus: inspection.status,
-        toStatus: "PENDING_REVIEW",
-        operatorId: currentUser.id,
-        actionType: "SUBMIT_RECTIFICATION",
-        description: `${currentUser.name} 提交整改申请，${evidenceValidation.isValid ? "证据完整" : `缺少证据：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`}`,
-        rectificationId: rectification.id,
-      });
+      const transitionResult = await validateAndTransitionState(
+        {
+          inspectionId,
+          fromStatus: inspection.status,
+          toStatus: "PENDING_REVIEW",
+          operatorId: currentUser.id,
+          actionType: "SUBMIT_RECTIFICATION",
+          description: `${currentUser.name} 提交整改申请，${evidenceValidation.isValid ? "证据完整" : `缺少证据：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`}`,
+          rectificationId: rectification.id,
+        },
+        tx
+      );
 
       if (!transitionResult.success) {
         throw new Error(transitionResult.error);
@@ -193,14 +196,17 @@ export const useSubmitRectification = routeAction$(
       });
 
       for (const reviewer of reviewers) {
-        await createConsistentNotification({
-          type: "REVIEW_REQUIRED",
-          title: "待复核提醒",
-          content: `${currentUser.name} 提交了整改申请（${inspection.inspectionNo}），请及时复核。`,
-          inspectionId,
-          userId: reviewer.id,
-          sentById: currentUser.id,
-        });
+        await createConsistentNotification(
+          {
+            type: "REVIEW_REQUIRED",
+            title: "待复核提醒",
+            content: `${currentUser.name} 提交了整改申请（${inspection.inspectionNo}），请及时复核。`,
+            inspectionId,
+            userId: reviewer.id,
+            sentById: currentUser.id,
+          },
+          tx
+        );
       }
 
       return {
@@ -289,21 +295,24 @@ export const useReviewAction = routeAction$(
         },
       });
 
-      const transitionResult = await validateAndTransitionState({
-        inspectionId,
-        fromStatus: inspection.status,
-        toStatus: toStatus as any,
-        operatorId: currentUser.id,
-        actionType: actionType === "APPROVE" ? "REVIEW_APPROVE" : actionType === "RETURN" ? "RETURN" : "ARCHIVE",
-        description: `${currentUser.name} ${
-          actionType === "APPROVE"
-            ? "复核通过，完成销项"
-            : actionType === "RETURN"
-            ? "退回整改"
-            : "归档记录"
-        }${comment ? `，备注：${comment}` : ""}`,
-        reviewActionId: reviewAction.id,
-      });
+      const transitionResult = await validateAndTransitionState(
+        {
+          inspectionId,
+          fromStatus: inspection.status,
+          toStatus: toStatus as any,
+          operatorId: currentUser.id,
+          actionType: actionType === "APPROVE" ? "REVIEW_APPROVE" : actionType === "RETURN" ? "RETURN" : "ARCHIVE",
+          description: `${currentUser.name} ${
+            actionType === "APPROVE"
+              ? "复核通过，完成销项"
+              : actionType === "RETURN"
+              ? "退回整改"
+              : "归档记录"
+          }${comment ? `，备注：${comment}` : ""}`,
+          reviewActionId: reviewAction.id,
+        },
+        tx
+      );
 
       if (!transitionResult.success) {
         throw new Error(transitionResult.error);
@@ -331,19 +340,22 @@ export const useReviewAction = routeAction$(
       const notificationContent = actionType === "APPROVE"
         ? `您提交的整改申请（${inspection.inspectionNo}）已通过复核，完成销项。`
         : actionType === "RETURN"
-        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，原因：${comment || "请重新整改后再次提交。"}`
+        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，原因：${comment || "请重新整改后再次提交"}。`
         : `巡查记录（${inspection.inspectionNo}）已归档。`;
 
       const notifyUsers = [inspection.createdById, inspection.assignedToId].filter(Boolean) as string[];
-      for (const userId of notifyUsers) {
-        await createConsistentNotification({
-          type: notificationType as any,
-          title: notificationTitle,
-          content: notificationContent,
-          inspectionId,
-          userId,
-          sentById: currentUser.id,
-        });
+      for (const notifyUserId of notifyUsers) {
+        await createConsistentNotification(
+          {
+            type: notificationType as any,
+            title: notificationTitle,
+            content: notificationContent,
+            inspectionId,
+            userId: notifyUserId,
+            sentById: currentUser.id,
+          },
+          tx
+        );
       }
     });
 

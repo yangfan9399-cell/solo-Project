@@ -1,4 +1,4 @@
-import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, Slot, $, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$, Link, useLocation } from "@builder.io/qwik-city";
 import prisma from "~/lib/prisma";
 import { userCookie, getCurrentUser } from "~/lib/auth";
@@ -70,17 +70,21 @@ export default component$(() => {
   const auth = useAuthLoader();
   const loc = useLocation();
 
-  const handleSwitchUser = async (userId: string) => {
-    const formData = new FormData();
-    formData.append("userId", userId);
-
-    await fetch("/api/auth/switch-user", {
-      method: "POST",
-      body: formData,
-    });
-
-    window.location.reload();
-  };
+  const handleSwitchUser = $(async (userId: string) => {
+    try {
+      const formData = new FormData();
+      formData.append("userId", userId);
+      const res = await fetch("/api/auth/switch-user", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("切换用户失败", e);
+    }
+  });
 
   const activePath = loc.url.pathname;
 

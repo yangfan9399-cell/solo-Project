@@ -1,37 +1,38 @@
-import { routeAction$, routeLoader$, z, zod$, type RequestEventLoader, type RequestEventAction } from "@builder.io/qwik-city";
+import { routeLoader$, type RequestEventLoader, type RequestEventCommon } from "@builder.io/qwik-city";
 import prisma from "~/lib/prisma";
 import { userCookie } from "~/lib/auth";
 import type { UserInfo } from "~/lib/types";
 
-export const useSwitchUser = routeAction$(
-  async (form, requestEvent: RequestEventAction) => {
-    const { userId } = form;
+export const onPost = async (requestEvent: RequestEventCommon) => {
+  const formData = await requestEvent.parseBody();
+  let userId: string | undefined;
 
-    if (!userId) {
-      return requestEvent.json(400, { error: "用户ID不能为空" });
-    }
+  if (formData && typeof formData === "object" && "userId" in formData) {
+    userId = String(formData.userId);
+  }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        role: true,
-      },
-    });
+  if (!userId) {
+    return requestEvent.json(400, { error: "用户ID不能为空" });
+  }
 
-    if (!user) {
-      return requestEvent.json(404, { error: "用户不存在" });
-    }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      role: true,
+    },
+  });
 
-    userCookie.set(requestEvent, JSON.stringify(user.id));
-    return requestEvent.json(200, { user });
-  },
-  zod$({
-    userId: z.string().min(1, "用户ID不能为空"),
-  })
-);
+  if (!user) {
+    return requestEvent.json(404, { error: "用户不存在" });
+  }
+
+  userCookie.set(requestEvent, JSON.stringify(user.id));
+
+  return requestEvent.json(200, { user });
+};
 
 export const onGet = async (requestEvent: RequestEventLoader) => {
   const users = await prisma.user.findMany({

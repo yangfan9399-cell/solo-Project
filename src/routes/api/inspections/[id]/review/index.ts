@@ -3,7 +3,7 @@ import prisma from "~/lib/prisma";
 import { userCookie, getCurrentUser } from "~/lib/auth";
 import { validateAndTransitionState, createConsistentNotification } from "~/lib/consistency";
 import { validateEvidences, getMissingEvidenceLabels, getRemediationPath } from "~/lib/utils";
-import type { ReviewActionType, EvidenceType } from "@prisma/client";
+import type { ReviewActionType } from "@prisma/client";
 
 export const useReviewAction = routeAction$(
   async (form, requestEvent: RequestEventAction) => {
@@ -88,25 +88,28 @@ export const useReviewAction = routeAction$(
         },
       });
 
-      const transitionResult = await validateAndTransitionState({
-        inspectionId,
-        fromStatus: inspection.status,
-        toStatus: toStatus as any,
-        operatorId: currentUser.id,
-        actionType: actionType === "APPROVE" ? "REVIEW_APPROVE" : actionType === "RETURN" ? "RETURN" : "ARCHIVE",
-        description: `${currentUser.name} ${
-          actionType === "APPROVE"
-            ? "复核通过，完成销项"
-            : actionType === "RETURN"
-            ? "退回整改"
-            : "归档记录"
-        }${comment ? `，备注：${comment}` : ""}`,
-        reviewActionId: reviewAction.id,
-        metadata: {
-          evidenceComplete: evidenceValidation.isValid,
-          missingTypes: evidenceValidation.missingTypes,
+      const transitionResult = await validateAndTransitionState(
+        {
+          inspectionId,
+          fromStatus: inspection.status,
+          toStatus: toStatus as any,
+          operatorId: currentUser.id,
+          actionType: actionType === "APPROVE" ? "REVIEW_APPROVE" : actionType === "RETURN" ? "RETURN" : "ARCHIVE",
+          description: `${currentUser.name} ${
+            actionType === "APPROVE"
+              ? "复核通过，完成销项"
+              : actionType === "RETURN"
+              ? "退回整改"
+              : "归档记录"
+          }${comment ? `，备注：${comment}` : ""}`,
+          reviewActionId: reviewAction.id,
+          metadata: {
+            evidenceComplete: evidenceValidation.isValid,
+            missingTypes: evidenceValidation.missingTypes,
+          },
         },
-      });
+        tx
+      );
 
       if (!transitionResult.success) {
         throw new Error(transitionResult.error);
@@ -138,15 +141,18 @@ export const useReviewAction = routeAction$(
         : `巡查记录（${inspection.inspectionNo}）已归档。`;
 
       const notifyUsers = [inspection.createdById, inspection.assignedToId].filter(Boolean) as string[];
-      for (const userId of notifyUsers) {
-        await createConsistentNotification({
-          type: notificationType as any,
-          title: notificationTitle,
-          content: notificationContent,
-          inspectionId,
-          userId,
-          sentById: currentUser.id,
-        });
+      for (const notifyUserId of notifyUsers) {
+        await createConsistentNotification(
+          {
+            type: notificationType as any,
+            title: notificationTitle,
+            content: notificationContent,
+            inspectionId,
+            userId: notifyUserId,
+            sentById: currentUser.id,
+          },
+          tx
+        );
       }
 
       return {

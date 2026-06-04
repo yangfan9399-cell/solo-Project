@@ -3,7 +3,6 @@ import prisma from "~/lib/prisma";
 import { userCookie, getCurrentUser } from "~/lib/auth";
 import { validateAndTransitionState, createConsistentNotification, validateEvidenceConsistency } from "~/lib/consistency";
 import { validateEvidences, getMissingEvidenceLabels, getRemediationPath, isOverdue, validateBuildingMatch } from "~/lib/utils";
-import { NOTIFICATION_TYPE_LABELS } from "~/lib/types";
 import type { EvidenceType } from "@prisma/client";
 
 export const useSubmitRectification = routeAction$(
@@ -87,19 +86,22 @@ export const useSubmitRectification = routeAction$(
         },
       });
 
-      const transitionResult = await validateAndTransitionState({
-        inspectionId,
-        fromStatus: inspection.status,
-        toStatus: "PENDING_REVIEW",
-        operatorId: currentUser.id,
-        actionType: "SUBMIT_RECTIFICATION",
-        description: `${currentUser.name} 提交整改申请，${evidenceValidation.isValid ? "证据完整" : `缺少证据：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`}`,
-        rectificationId: rectification.id,
-        metadata: {
-          evidenceCount: createdEvidences.length,
-          evidenceTypes: createdEvidences.map(e => e.type),
+      const transitionResult = await validateAndTransitionState(
+        {
+          inspectionId,
+          fromStatus: inspection.status,
+          toStatus: "PENDING_REVIEW",
+          operatorId: currentUser.id,
+          actionType: "SUBMIT_RECTIFICATION",
+          description: `${currentUser.name} 提交整改申请，${evidenceValidation.isValid ? "证据完整" : `缺少证据：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`}`,
+          rectificationId: rectification.id,
+          metadata: {
+            evidenceCount: createdEvidences.length,
+            evidenceTypes: createdEvidences.map(e => e.type),
+          },
         },
-      });
+        tx
+      );
 
       if (!transitionResult.success) {
         throw new Error(transitionResult.error);
@@ -110,14 +112,17 @@ export const useSubmitRectification = routeAction$(
       });
 
       for (const reviewer of reviewers) {
-        await createConsistentNotification({
-          type: "REVIEW_REQUIRED",
-          title: "待复核提醒",
-          content: `${currentUser.name} 提交了整改申请（${inspection.inspectionNo}），请及时复核。`,
-          inspectionId,
-          userId: reviewer.id,
-          sentById: currentUser.id,
-        });
+        await createConsistentNotification(
+          {
+            type: "REVIEW_REQUIRED",
+            title: "待复核提醒",
+            content: `${currentUser.name} 提交了整改申请（${inspection.inspectionNo}），请及时复核。`,
+            inspectionId,
+            userId: reviewer.id,
+            sentById: currentUser.id,
+          },
+          tx
+        );
       }
 
       return {
