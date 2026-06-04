@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VisitStatus {
+  PENDING
+  CHECKED_IN
+  CHECKED_OUT
+  ARCHIVED
+  CANCELLED
+}
+
+enum AnomalyType {
+  NONE
+  PLATE_MISMATCH
+  SPOT_OCCUPIED
+  OVERSTAY
+  OTHER
+}
+
+enum SourceType {
+  WECHAT
+  APP
+  PHONE
+  ONSITE
+}
+
+enum Role {
+  GATE_GUARD
+  PROPERTY
+  ADMIN
+}
+
+model ParkingSpot {
+  id          String   @id @default(uuid())
+  spotNumber  String   @unique
+  floor       String
+  zone        String
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  visits      Visit[]
+}
+
+model Visit {
+  id              String        @id @default(uuid())
+  visitorName     String
+  visitorPhone    String
+  visitorCompany  String?
+  licensePlate    String
+  originalPlate   String
+  parkingSpotId   String?
+  originalSpotId  String?
+  visitDate       DateTime
+  startTime       DateTime
+  endTime         DateTime
+  actualCheckIn   DateTime?
+  actualCheckOut  DateTime?
+  status          VisitStatus   @default(PENDING)
+  source          SourceType    @default(WECHAT)
+  hostName        String
+  hostPhone       String
+  hostDepartment  String?
+  purpose         String
+  anomalyType     AnomalyType   @default(NONE)
+  anomalyNote     String?
+  isArchived      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  parkingSpot     ParkingSpot?  @relation(fields: [parkingSpotId], references: [id])
+  originalSpot    ParkingSpot?  @relation(fields: [originalSpotId], references: [id])
+  changeLogs      ChangeLog[]
+  evidences       ReleaseEvidence[]
+}
+
+model ChangeLog {
+  id          String   @id @default(uuid())
+  visitId     String
+  fieldName   String
+  oldValue    String?
+  newValue    String?
+  changedBy   String
+  changedAt   DateTime @default(now())
+  note        String?
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+}
+
+model ReleaseEvidence {
+  id          String   @id @default(uuid())
+  visitId     String
+  type        String
+  imageUrl    String?
+  description String?
+  capturedAt  DateTime @default(now())
+  capturedBy  String
+  visit       Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  name     String
+  role     Role   @default(GATE_GUARD)
+  password String
+}
