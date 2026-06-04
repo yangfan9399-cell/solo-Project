@@ -72,19 +72,27 @@ export const useReviewAction = routeAction$(
 
     const isEvidenceMissing = !evidenceValidation.isValid;
 
-    const returnReason = isBuildingMismatch
+    const autoReturnReason = isBuildingMismatch
       ? "责任楼栋不匹配"
       : isEvidenceMissing
       ? `证据缺失：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`
       : null;
-    const remediationPath = isBuildingMismatch
+    const autoRemediationPath = isBuildingMismatch
       ? getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code)
       : isEvidenceMissing
       ? getRemediationPath(evidenceValidation.missingTypes)
       : null;
-    const fullReturnContent = returnReason
-      ? `${returnReason}。${remediationPath}`
+    const hasAutoReturnContent = actionType === "RETURN" && autoReturnReason !== null;
+    const autoReturnContent = hasAutoReturnContent
+      ? `${autoReturnReason}。补救路径：${autoRemediationPath}`
       : null;
+
+    const userComment = comment?.trim();
+    const finalReturnComment = hasAutoReturnContent
+      ? userComment
+        ? `${autoReturnContent}。复核员备注：${userComment}`
+        : autoReturnContent
+      : userComment || null;
 
     const result = await prisma.$transaction(async (tx) => {
       const toStatus = actionType === "APPROVE"
@@ -93,25 +101,22 @@ export const useReviewAction = routeAction$(
         ? "RETURNED"
         : "ARCHIVED";
 
-      const hasAutoComment = (actionType === "RETURN" && returnReason !== null);
-      const finalComment = comment || (hasAutoComment ? returnReason : null);
-
       const reviewAction = await tx.reviewAction.create({
         data: {
           inspectionId,
           rectificationId,
           actionType: actionType as ReviewActionType,
-          comment: finalComment,
+          comment: finalReturnComment,
           reviewedById: currentUser.id,
           missingTypes: evidenceValidation.missingTypes,
-          remediationPath,
+          remediationPath: autoRemediationPath,
         },
       });
 
       const historyDescription = actionType === "APPROVE"
         ? `${currentUser.name} 复核通过，完成销项`
         : actionType === "RETURN"
-        ? `${currentUser.name} 退回整改，原因：${finalComment || "请重新整改后再次提交"}`
+        ? `${currentUser.name} 退回整改，${finalReturnComment || "请重新整改后再次提交"}`
         : `${currentUser.name} 归档记录`;
 
       const transitionResult = await validateAndTransitionState(
@@ -157,7 +162,7 @@ export const useReviewAction = routeAction$(
       const notificationContent = actionType === "APPROVE"
         ? `您提交的整改申请（${inspection.inspectionNo}）已通过复核，完成销项。`
         : actionType === "RETURN"
-        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，原因：${finalComment || "请重新整改后再次提交"}。${remediationPath ? `补救路径：${remediationPath}` : ""}`
+        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，${finalReturnComment || "请重新整改后再次提交"}。`
         : `巡查记录（${inspection.inspectionNo}）已归档。`;
 
       const notifyUsers = [inspection.createdById, inspection.assignedToId].filter(Boolean) as string[];
