@@ -46,7 +46,9 @@
                     {% endif %}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                    {% if apt.report_status == 'pending' %}
+                    {% if apt.is_identity_blocked %}
+                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配已阻断</span>
+                    {% elif apt.report_status == 'pending' %}
                     <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">待出报告</span>
                     {% elif apt.report_status == 'ready' %}
                     <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
@@ -62,14 +64,14 @@
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                     {% with category=apt.get_record_category %}
-                    {% if category == '按时检查' %}
+                    {% if category == '身份不匹配' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">{{ category }}</span>
+                    {% elif category == '按时检查' %}
                     <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">{{ category }}</span>
                     {% elif category == '患者改期' %}
                     <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">{{ category }}</span>
                     {% elif category == '报告滞留' %}
                     <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">{{ category }}</span>
-                    {% elif apt.abnormal_records.all and apt.abnormal_records.first.abnormal_type == 'identity_mismatch' %}
-                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配</span>
                     {% else %}
                     <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ category }}</span>
                     {% endif %}
@@ -78,7 +80,10 @@
                 <td class="px-4 py-3 whitespace-nowrap space-x-2">
                     <a href="{% url 'workstation:appointment_detail' apt.id %}?source=list" 
                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</a>
-                    {% if apt.report_status == 'ready' or apt.report_status == 'stalled' %}
+                    {% if apt.is_identity_blocked %}
+                    <a href="{% url 'workstation:appointment_detail' apt.id %}?source=list#correction-path" 
+                       class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">查看补正路径</a>
+                    {% elif apt.report_status == 'ready' or apt.report_status == 'stalled' %}
                     <button onclick="openModal('{% url 'workstation:claim_report' apt.id %}')"
                             class="text-green-600 hover:text-green-800 text-sm font-medium">领取报告</button>
                     {% endif %}

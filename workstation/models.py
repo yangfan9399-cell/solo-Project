@@ -82,7 +82,12 @@ class Appointment(models.Model):
     def is_rescheduled(self):
         return self.original_appointment_time != self.current_appointment_time
 
+    def is_identity_blocked(self):
+        return self.claims.filter(is_blocked=True).exists()
+
     def get_record_category(self):
+        if self.abnormal_records.filter(abnormal_type='identity_mismatch').exists():
+            return '身份不匹配'
         if self.report_status == ReportStatus.STALLED:
             return '报告滞留'
         if self.is_rescheduled():

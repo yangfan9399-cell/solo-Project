@@ -13,13 +13,15 @@ from .models import (
 
 
 def get_record_category_display(appointment):
+    if appointment.abnormal_records.filter(abnormal_type='identity_mismatch').exists():
+        return 'identity_mismatch'
     if appointment.report_status == ReportStatus.STALLED:
         return 'report_stalled'
     if appointment.is_rescheduled():
         return 'patient_rescheduled'
     if appointment.status == AppointmentStatus.COMPLETED:
         return 'on_time'
-    return 'identity_mismatch' if appointment.abnormal_records.filter(abnormal_type='identity_mismatch').exists() else 'other'
+    return 'other'
 
 
 @login_required
@@ -40,13 +42,19 @@ def workstation(request):
     if category_filter == 'on_time':
         appointments = appointments.filter(
             status=AppointmentStatus.COMPLETED
-        ).exclude(current_appointment_time__gt=F('original_appointment_time'))
+        ).exclude(current_appointment_time__gt=F('original_appointment_time')).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
+        )
     elif category_filter == 'patient_rescheduled':
         appointments = appointments.filter(
             reschedules__isnull=False
+        ).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
         ).distinct()
     elif category_filter == 'report_stalled':
-        appointments = appointments.filter(report_status=ReportStatus.STALLED)
+        appointments = appointments.filter(report_status=ReportStatus.STALLED).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
+        )
     elif category_filter == 'identity_mismatch':
         appointments = appointments.filter(
             abnormal_records__abnormal_type='identity_mismatch'
@@ -362,11 +370,17 @@ def appointment_list_partial(request):
         )
     
     if category_filter == 'on_time':
-        appointments = appointments.filter(status=AppointmentStatus.COMPLETED)
+        appointments = appointments.filter(status=AppointmentStatus.COMPLETED).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
+        )
     elif category_filter == 'patient_rescheduled':
-        appointments = appointments.filter(reschedules__isnull=False).distinct()
+        appointments = appointments.filter(reschedules__isnull=False).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
+        ).distinct()
     elif category_filter == 'report_stalled':
-        appointments = appointments.filter(report_status=ReportStatus.STALLED)
+        appointments = appointments.filter(report_status=ReportStatus.STALLED).exclude(
+            abnormal_records__abnormal_type='identity_mismatch'
+        )
     elif category_filter == 'identity_mismatch':
         appointments = appointments.filter(abnormal_records__abnormal_type='identity_mismatch').distinct()
     

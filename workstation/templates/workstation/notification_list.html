@@ -92,10 +92,14 @@
                             {% for apt in appointments %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    {% if apt.report_status == 'ready' %}
-                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
+                                    {% if apt.is_identity_blocked %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配已阻断</span>
+                                    {% elif apt.abnormal_records.all and apt.abnormal_records.first.abnormal_type == 'identity_mismatch' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配</span>
                                     {% elif apt.report_status == 'stalled' %}
                                     <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
+                                    {% elif apt.report_status == 'ready' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
                                     {% elif apt.claims.all and apt.claims.last.review_status == 'pending' %}
                                     <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">待复核</span>
                                     {% elif apt.abnormal_records.all and apt.abnormal_records.last.status in 'open,in_progress' %}
@@ -126,7 +130,9 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    {% if apt.report_status == 'ready' %}
+                                    {% if apt.is_identity_blocked %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配已阻断</span>
+                                    {% elif apt.report_status == 'ready' %}
                                     <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
                                     {% elif apt.report_status == 'stalled' %}
                                     <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
@@ -139,11 +145,14 @@
                                 <td class="px-4 py-3 whitespace-nowrap space-x-2">
                                     <a href="{% url 'workstation:appointment_detail' apt.id %}?source=notification" 
                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">查看详情</a>
-                                    {% if apt.report_status == 'ready' or apt.report_status == 'stalled' %}
+                                    {% if apt.is_identity_blocked %}
+                                    <a href="{% url 'workstation:appointment_detail' apt.id %}?source=notification#correction-path" 
+                                       class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">查看补正路径</a>
+                                    {% elif apt.report_status == 'ready' or apt.report_status == 'stalled' %}
                                     <button onclick="openModal('{% url 'workstation:claim_report' apt.id %}')"
                                             class="text-green-600 hover:text-green-800 text-sm font-medium">领取</button>
                                     {% endif %}
-                                    {% if apt.claims.all and apt.claims.last.review_status == 'pending' %}
+                                    {% if apt.claims.all and apt.claims.last.review_status == 'pending' and not apt.is_identity_blocked %}
                                     <button onclick="openModal('{% url 'workstation:review_claim' apt.claims.last.id %}')"
                                             class="text-purple-600 hover:text-purple-800 text-sm font-medium">复核</button>
                                     {% endif %}
