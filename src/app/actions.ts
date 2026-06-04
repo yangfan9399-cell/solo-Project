@@ -54,6 +54,12 @@ export async function getInspectors() {
   })
 }
 
+export async function getSubmitters() {
+  return prisma.user.findMany({
+    where: { role: 'SUBMITTER' },
+  })
+}
+
 export async function assignTechnician(orderId: string, technicianId: string) {
   await prisma.repairOrder.update({
     where: { id: orderId },

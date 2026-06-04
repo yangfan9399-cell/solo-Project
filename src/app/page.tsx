@@ -1,11 +1,13 @@
 import Link from 'next/link'
-import { getRepairOrders } from './actions'
+import { getRepairOrders, getSubmitters } from './actions'
 import { STATUS_LABELS, STATUS_COLORS, DEVICE_TYPE_LABELS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import { MapPin, User, Clock, Eye, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react'
+import RepairForm from './components/RepairForm'
 
 export default async function Home() {
   const orders = await getRepairOrders()
+  const submitters = await getSubmitters()
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -28,13 +30,16 @@ export default async function Home() {
           <h2 className="text-2xl font-bold text-gray-900">报修单列表</h2>
           <p className="text-gray-500 mt-1">共 {orders.length} 条报修记录</p>
         </div>
-        <div className="flex gap-2">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
-            <AlertTriangle className="h-4 w-4" /> 配件缺货样本
-          </span>
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-red-100 text-red-700">
-            <RefreshCw className="h-4 w-4" /> 验收不通过样本
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-orange-100 text-orange-700">
+              <AlertTriangle className="h-4 w-4" /> 配件缺货样本
+            </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-red-100 text-red-700">
+              <RefreshCw className="h-4 w-4" /> 验收不通过样本
+            </span>
+          </div>
+          <RepairForm submitters={submitters} />
         </div>
       </div>
 
