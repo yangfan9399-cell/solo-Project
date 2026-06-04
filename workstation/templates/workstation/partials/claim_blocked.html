@@ -1,0 +1,60 @@
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">报告领取已被阻止</h2>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-red-600 mb-2">无法登记领取</h3>
+        {% if reason == 'has_blocked' %}
+        <p class="text-gray-600">该预约已有<span class="font-medium text-red-600">身份不匹配被阻断</span>的领取记录</p>
+        {% elif blocked_time %}
+        <p class="text-gray-600">阻断时间：{{ blocked_time|date:"Y-m-d H:i" }}</p>
+        {% endif %}
+        {% if reason == 'has_abnormal' %}
+        <p class="text-gray-600">该预约存在<span class="font-medium text-red-600">待处理的身份不匹配异常</span></p>
+        {% endif %}
+    </div>
+
+    <div class="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+        <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <span class="text-red-800 font-bold">重要提示</span>
+        </div>
+        <p class="text-red-700 text-sm">
+            身份不匹配记录需先完成补正流程后方可重新申请领取。请按照下方补正路径办理身份核验手续。
+        </p>
+    </div>
+
+    <div class="p-4 bg-amber-50 border-2 border-amber-300 rounded-lg">
+        <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-amber-800 font-bold">补正路径</span>
+        </div>
+        <pre class="text-amber-700 whitespace-pre-wrap text-sm leading-relaxed">{{ correction_path }}</pre>
+    </div>
+
+    <div class="flex justify-center gap-3 mt-6">
+        <button onclick="closeModal()"
+                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+            关闭
+        </button>
+        <button onclick="closeModal(); location.href='{% url 'workstation:appointment_detail' appointment.id %}?source=list#correction-path'"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            查看详情
+        </button>
+    </div>
+</div>

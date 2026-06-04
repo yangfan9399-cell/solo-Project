@@ -249,12 +249,22 @@
                         <span class="ml-2">{{ record.review_notes }}</span>
                     </div>
                     {% endif %}
-                    {% if record.review_status == 'pending' %}
+                    {% if record.review_status == 'pending' and not record.is_blocked %}
                     <div class="mt-3">
                         <button onclick="openModal('{% url 'workstation:review_claim' record.id %}')"
                                 class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
                             复核处理
                         </button>
+                    </div>
+                    {% endif %}
+                    {% if record.review_status == 'pending' and record.is_blocked %}
+                    <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                        <div class="flex items-center gap-2 text-sm text-red-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                            </svg>
+                            <span class="font-medium">身份不匹配已阻断 — 此记录不支持常规复核，仅可退回或转异常处理</span>
+                        </div>
                     </div>
                     {% endif %}
                 </div>

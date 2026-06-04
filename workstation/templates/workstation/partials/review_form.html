@@ -8,12 +8,29 @@
         </button>
     </div>
 
+    {% if claim_record.is_blocked %}
+    <div class="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+        <div class="flex items-center gap-2 mb-2">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+            </svg>
+            <span class="text-red-800 font-bold">身份不匹配已阻断</span>
+        </div>
+        <p class="text-red-700 text-sm">
+            此领取记录因身份验证失败已被系统阻断。<strong>不支持复核通过</strong>，仅可选择退回或转异常处理流程。
+        </p>
+    </div>
+    {% endif %}
+
     <div class="mb-4 p-4 bg-gray-50 rounded-lg">
         <div class="text-sm text-gray-600">
             <span class="font-medium">预约编号:</span> {{ claim_record.appointment.appointment_no }}
         </div>
         <div class="text-sm text-gray-600 mt-1">
-            <span class="font-medium">领取人:</span> {{ claim_record.claimant_name }}
+            <span class="font-medium">患者:</span> {{ claim_record.appointment.patient.name }} ({{ claim_record.appointment.patient.id_card }})
+        </div>
+        <div class="text-sm text-gray-600 mt-1">
+            <span class="font-medium">领取人:</span> {{ claim_record.claimant_name }} ({{ claim_record.claimant_id_card }})
         </div>
         <div class="text-sm text-gray-600 mt-1">
             <span class="font-medium">领取方式:</span> {{ claim_record.get_claim_type_display }}
@@ -35,17 +52,39 @@
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">复核操作 *</label>
-                <div class="flex gap-4">
-                    <label class="flex items-center">
+                <div class="flex flex-col gap-3">
+                    {% if not claim_record.is_blocked %}
+                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-green-50 cursor-pointer">
                         <input type="radio" name="action" value="approve" required
-                               class="mr-2 text-green-600">
-                        <span class="text-green-700">确认通过</span>
+                               class="mr-3 text-green-600">
+                        <div>
+                            <span class="text-green-700 font-medium">确认通过</span>
+                            <p class="text-xs text-gray-500 mt-1">复核通过，报告状态更新为「已复核」</p>
+                        </div>
                     </label>
-                    <label class="flex items-center">
+                    {% endif %}
+                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-red-50 cursor-pointer">
                         <input type="radio" name="action" value="reject" required
-                               class="mr-2 text-red-600">
-                        <span class="text-red-700">退回</span>
+                               class="mr-3 text-red-600">
+                        <div>
+                            <span class="text-red-700 font-medium">退回</span>
+                            <p class="text-xs text-gray-500 mt-1">
+                                退回领取申请，报告状态更新为「已退回」，同时创建异常记录
+                            </p>
+                        </div>
                     </label>
+                    {% if claim_record.is_blocked %}
+                    <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-orange-50 cursor-pointer">
+                        <input type="radio" name="action" value="transfer_to_abnormal" required
+                               class="mr-3 text-orange-600">
+                        <div>
+                            <span class="text-orange-700 font-medium">转异常处理</span>
+                            <p class="text-xs text-gray-500 mt-1">
+                                转入异常处理流程，异常记录状态更新为「处理中」
+                            </p>
+                        </div>
+                    </label>
+                    {% endif %}
                 </div>
             </div>
 
@@ -55,6 +94,15 @@
                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="请输入复核意见..."></textarea>
             </div>
+
+            {% if claim_record.is_blocked %}
+            <div id="abnormal-notes-section" style="display:none">
+                <label class="block text-sm font-medium text-gray-700 mb-1">异常处理说明</label>
+                <textarea name="abnormal_notes" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="请输入转入异常处理的详细说明，如：建议患者携带身份证原件至服务台核验身份..."></textarea>
+            </div>
+            {% endif %}
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">佐证材料</label>
@@ -76,3 +124,25 @@
         </div>
     </form>
 </div>
+
+{% if claim_record.is_blocked %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="action"]');
+    const abnormalSection = document.getElementById('abnormal-notes-section');
+    
+    function updateAbnormalSection() {
+        const selected = document.querySelector('input[name="action"]:checked');
+        if (selected && selected.value === 'transfer_to_abnormal') {
+            abnormalSection.style.display = 'block';
+        } else {
+            abnormalSection.style.display = 'none';
+        }
+    }
+    
+    radios.forEach(radio => {
+        radio.addEventListener('change', updateAbnormalSection);
+    });
+});
+</script>
+{% endif %}

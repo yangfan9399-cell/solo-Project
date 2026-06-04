@@ -179,7 +179,34 @@ def reschedule_appointment(request, appointment_id):
 @require_http_methods(["GET", "POST"])
 def claim_report(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
-    
+
+    has_blocked = appointment.claims.filter(is_blocked=True).exists()
+    has_identity_abnormal = appointment.abnormal_records.filter(abnormal_type='identity_mismatch', status__in=['open', 'in_progress']).exists()
+
+    if has_blocked or has_identity_abnormal:
+        existing_blocked = appointment.claims.filter(is_blocked=True).order_by('-created_at').first()
+        correction_path = existing_blocked.correction_path if existing_blocked else generate_correction_path(appointment.patient)
+        blocked_time = existing_blocked.created_at if existing_blocked else None
+
+        if request.method == 'POST':
+            if request.headers.get('HX-Request'):
+                return render(request, 'workstation/partials/claim_blocked.html', {
+                    'appointment': appointment,
+                    'correction_path': correction_path,
+                    'blocked_time': blocked_time,
+                    'reason': 'has_blocked' if has_blocked else 'has_abnormal',
+                })
+            return redirect('appointment_detail', appointment_id=appointment.id)
+
+        if request.headers.get('HX-Request'):
+            return render(request, 'workstation/partials/claim_blocked.html', {
+                'appointment': appointment,
+                'correction_path': correction_path,
+                'blocked_time': blocked_time,
+                'reason': 'has_blocked' if has_blocked else 'has_abnormal',
+            })
+        return redirect('appointment_detail', appointment_id=appointment.id)
+
     if request.method == 'POST':
         claim_type = request.POST.get('claim_type')
         claimant_name = request.POST.get('claimant_name')
@@ -273,25 +300,61 @@ def generate_correction_path(patient):
 @require_http_methods(["GET", "POST"])
 def review_claim(request, claim_id):
     claim_record = get_object_or_404(ReportClaimRecord, id=claim_id)
-    
+
     if request.method == 'POST':
         action = request.POST.get('action')
         review_notes = request.POST.get('review_notes', '')
         evidence = request.POST.get('evidence', '')
-        
-        if action == 'approve':
-            claim_record.review_status = 'approved'
-            claim_record.appointment.report_status = ReportStatus.VERIFIED
-            claim_record.appointment.save()
-        elif action == 'reject':
-            claim_record.review_status = 'rejected'
-            claim_record.appointment.report_status = ReportStatus.RETURNED
-            claim_record.appointment.save()
-        
+        abnormal_notes = request.POST.get('abnormal_notes', '')
+
+        if claim_record.is_blocked:
+            if action == 'approve':
+                if request.headers.get('HX-Request'):
+                    return HttpResponse('{"success": false, "error": "身份不匹配已阻断记录不允许复核通过"}', status=400, content_type='application/json')
+                return JsonResponse({'success': False, 'error': '身份不匹配已阻断记录不允许复核通过'}, status=400)
+
+            if action == 'reject':
+                claim_record.review_status = 'rejected'
+                claim_record.appointment.report_status = ReportStatus.RETURNED
+                claim_record.appointment.save()
+
+                AbnormalRecord.objects.update_or_create(
+                    appointment=claim_record.appointment,
+                    abnormal_type='identity_mismatch',
+                    defaults={
+                        'description': f'复核退回：{review_notes}',
+                        'status': 'open',
+                    }
+                )
+
+            elif action == 'transfer_to_abnormal':
+                claim_record.review_status = 'rejected'
+                claim_record.appointment.report_status = ReportStatus.RETURNED
+                claim_record.appointment.save()
+
+                AbnormalRecord.objects.update_or_create(
+                    appointment=claim_record.appointment,
+                    abnormal_type='identity_mismatch',
+                    defaults={
+                        'description': abnormal_notes or f'复核转异常处理：身份不匹配领取记录',
+                        'status': 'in_progress',
+                    }
+                )
+
+        else:
+            if action == 'approve':
+                claim_record.review_status = 'approved'
+                claim_record.appointment.report_status = ReportStatus.VERIFIED
+                claim_record.appointment.save()
+            elif action == 'reject':
+                claim_record.review_status = 'rejected'
+                claim_record.appointment.report_status = ReportStatus.RETURNED
+                claim_record.appointment.save()
+
         claim_record.reviewer = request.user
         claim_record.review_notes = review_notes
         claim_record.save()
-        
+
         OperationLog.objects.create(
             appointment=claim_record.appointment,
             operation_type='review',
@@ -299,16 +362,16 @@ def review_claim(request, claim_id):
             details=f"复核{claim_record.get_review_status_display()}: {review_notes}",
             evidence=evidence
         )
-        
+
         if request.headers.get('HX-Request'):
             return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
-        
+
         return redirect('appointment_detail', appointment_id=claim_record.appointment.id)
-    
+
     context = {
         'claim_record': claim_record,
     }
-    
+
     return render(request, 'workstation/partials/review_form.html', context)
 
 
