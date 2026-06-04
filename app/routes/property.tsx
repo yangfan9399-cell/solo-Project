@@ -5,27 +5,34 @@ import { redirect } from "react-router";
 import { AnomalyType, VisitStatus } from "@prisma/client";
 
 export async function loader() {
-  const checkedInVisits = await db.visit.findMany({
-    where: {
-      status: VisitStatus.CHECKED_IN,
-      isArchived: false,
-    },
-    include: {
-      parkingSpot: true,
-      originalSpot: true,
-      changeLogs: {
-        orderBy: { changedAt: "desc" },
-        take: 1,
+  const [checkedInVisits, availableSpots] = await Promise.all([
+    db.visit.findMany({
+      where: {
+        status: VisitStatus.CHECKED_IN,
+        isArchived: false,
       },
-    },
-    orderBy: { actualCheckIn: "desc" },
-  });
+      include: {
+        parkingSpot: true,
+        originalSpot: true,
+        changeLogs: {
+          orderBy: { changedAt: "desc" },
+          take: 1,
+        },
+      },
+      orderBy: { actualCheckIn: "desc" },
+    }),
+    db.parkingSpot.findMany({
+      where: { isAvailable: true },
+      orderBy: { spotNumber: "asc" },
+    }),
+  ]);
 
   const anomalyVisits = checkedInVisits.filter(v => v.anomalyType !== AnomalyType.NONE);
   const overstayVisits = checkedInVisits.filter(v => v.anomalyType === AnomalyType.OVERSTAY);
 
   return {
     checkedInVisits,
+    availableSpots,
     anomalyVisits,
     overstayVisits,
     stats: {
@@ -47,7 +54,11 @@ export async function action({ request }: Route.ActionArgs) {
   });
 
   if (!visit) {
-    return { error: "访问记录不存在" };
+    return { error: "访问记录不存在", visitId };
+  }
+
+  if (visit.isArchived) {
+    return { error: "已归档记录，无法修改", visitId };
   }
 
   if (action === "checkOut") {
@@ -84,9 +95,25 @@ export async function action({ request }: Route.ActionArgs) {
     const newSpotId = formData.get("newSpotId") as string;
     const changeNote = formData.get("changeNote") as string;
 
+    if (!newSpotId) {
+      return { error: "请选择新车位", visitId };
+    }
+
     const newSpot = await db.parkingSpot.findUnique({
       where: { id: newSpotId },
     });
+
+    if (!newSpot) {
+      return { error: "车位不存在", visitId };
+    }
+
+    if (!newSpot.isAvailable) {
+      return { error: "该车位已被占用，请选择其他车位", visitId };
+    }
+
+    const oldSpotNumber = visit.parkingSpot?.spotNumber || "未分配";
+
+    const changeLogs = [];
 
     if (visit.parkingSpotId) {
       await db.parkingSpot.update({
@@ -100,29 +127,32 @@ export async function action({ request }: Route.ActionArgs) {
       data: { isAvailable: false },
     });
 
+    changeLogs.push({
+      fieldName: "parkingSpotId",
+      oldValue: oldSpotNumber,
+      newValue: newSpot.spotNumber,
+      changedBy: "李物业",
+      note: changeNote || "车位被占用，协调更换车位",
+    });
+
+    if (visit.anomalyType !== AnomalyType.SPOT_OCCUPIED) {
+      changeLogs.push({
+        fieldName: "anomalyType",
+        oldValue: visit.anomalyType,
+        newValue: "SPOT_OCCUPIED",
+        changedBy: "李物业",
+        note: "记录车位被占用异常",
+      });
+    }
+
     await db.visit.update({
       where: { id: visitId },
       data: {
         parkingSpotId: newSpotId,
         anomalyType: AnomalyType.SPOT_OCCUPIED,
-        anomalyNote: changeNote,
+        anomalyNote: changeNote || `原车位${oldSpotNumber}被占用，已更换为${newSpot.spotNumber}`,
         changeLogs: {
-          create: [
-            {
-              fieldName: "parkingSpotId",
-              oldValue: visit.parkingSpot?.spotNumber,
-              newValue: newSpot?.spotNumber,
-              changedBy: "李物业",
-              note: changeNote || "车位被占用，协调更换车位",
-            },
-            {
-              fieldName: "anomalyType",
-              oldValue: visit.anomalyType,
-              newValue: "SPOT_OCCUPIED",
-              changedBy: "李物业",
-              note: "记录车位被占用异常",
-            },
-          ],
+          create: changeLogs,
         },
       },
     });
@@ -133,48 +163,35 @@ export async function action({ request }: Route.ActionArgs) {
   if (action === "markOverstay") {
     const overstayNote = formData.get("overstayNote") as string;
 
+    const changeLogs = [];
+
+    if (visit.anomalyType !== AnomalyType.OVERSTAY) {
+      changeLogs.push({
+        fieldName: "anomalyType",
+        oldValue: visit.anomalyType,
+        newValue: "OVERSTAY",
+        changedBy: "李物业",
+        note: overstayNote || "超时未离场，发起追踪",
+      });
+    }
+
     await db.visit.update({
       where: { id: visitId },
       data: {
         anomalyType: AnomalyType.OVERSTAY,
-        anomalyNote: overstayNote,
-        changeLogs: {
-          create: {
-            fieldName: "anomalyType",
-            oldValue: visit.anomalyType,
-            newValue: "OVERSTAY",
-            changedBy: "李物业",
-            note: overstayNote || "超时未离场，发起追踪",
+        anomalyNote: overstayNote || "超时未离场，需要追踪确认",
+        ...(changeLogs.length > 0 ? {
+          changeLogs: {
+            create: changeLogs,
           },
-        },
+        } : {}),
       },
     });
 
     return redirect("/property");
   }
 
-  if (action === "archive") {
-    await db.visit.update({
-      where: { id: visitId },
-      data: {
-        isArchived: true,
-        status: VisitStatus.ARCHIVED,
-        changeLogs: {
-          create: {
-            fieldName: "status",
-            oldValue: visit.status,
-            newValue: "ARCHIVED",
-            changedBy: "李物业",
-            note: "归档记录，只读",
-          },
-        },
-      },
-    });
-
-    return redirect("/property");
-  }
-
-  return { error: "未知操作" };
+  return { error: "未知操作", visitId };
 }
 
 export function meta(): Route.MetaDescriptions {
@@ -182,7 +199,7 @@ export function meta(): Route.MetaDescriptions {
 }
 
 export default function Property() {
-  const { checkedInVisits, stats } = useLoaderData<typeof loader>();
+  const { checkedInVisits, availableSpots, stats } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
@@ -252,6 +269,11 @@ export default function Property() {
           </div>
         </div>
 
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+          <span className="font-medium">💡 提示：</span>
+          当前可用车位 {availableSpots.length} 个
+        </div>
+
         <div className="card">
           <div className="card-header">
             <h2 className="text-lg font-semibold text-gray-900">在场车辆列表</h2>
@@ -281,7 +303,7 @@ export default function Property() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap justify-end">
                         {visit.anomalyType === "PLATE_MISMATCH" && (
                           <span className="badge bg-orange-100 text-orange-800">车牌不一致</span>
                         )}
@@ -356,19 +378,35 @@ export default function Property() {
                           <input type="hidden" name="visitId" value={visit.id} />
                           <input type="hidden" name="action" value="changeSpot" />
                           <div className="space-y-2">
-                            <input
-                              type="text"
-                              name="newSpotId"
-                              placeholder="输入新村位ID"
-                              className="input text-sm"
-                            />
-                            <textarea
-                              name="changeNote"
-                              placeholder="更换原因"
-                              className="input text-sm"
-                              rows={2}
-                            />
-                            <button type="submit" className="btn btn-primary btn-sm text-xs w-full">
+                            <div>
+                              <label className="label text-xs">选择新车位</label>
+                              <select name="newSpotId" className="input text-sm" required>
+                                <option value="">请选择可用车位</option>
+                                {availableSpots.map((spot) => (
+                                  <option key={spot.id} value={spot.id}>
+                                    {spot.spotNumber} - {spot.floor} {spot.zone}
+                                  </option>
+                                ))}
+                              </select>
+                              {availableSpots.length === 0 && (
+                                <p className="text-xs text-orange-600 mt-1">⚠️ 暂无可用车位</p>
+                              )}
+                            </div>
+                            <div>
+                              <label className="label text-xs">更换原因（必填）</label>
+                              <textarea
+                                name="changeNote"
+                                placeholder="请说明更换车位的原因"
+                                className="input text-sm"
+                                rows={2}
+                                required
+                              />
+                            </div>
+                            <button 
+                              type="submit" 
+                              className="btn btn-primary btn-sm text-xs w-full"
+                              disabled={availableSpots.length === 0}
+                            >
                               确认更换
                             </button>
                           </div>
@@ -383,8 +421,12 @@ export default function Property() {
                           name="overstayNote"
                           value="超时未离场，需要追踪确认"
                         />
-                        <button type="submit" className="btn btn-warning btn-sm text-xs">
-                          标记超时
+                        <button 
+                          type="submit" 
+                          className="btn btn-warning btn-sm text-xs"
+                          disabled={visit.anomalyType === "OVERSTAY"}
+                        >
+                          {visit.anomalyType === "OVERSTAY" ? "已标记超时" : "标记超时"}
                         </button>
                       </Form>
 

@@ -5,23 +5,29 @@ import { redirect } from "react-router";
 import { AnomalyType, VisitStatus } from "@prisma/client";
 
 export async function loader({ params }: Route.LoaderArgs) {
-  const visit = await db.visit.findUnique({
-    where: { id: params.id },
-    include: {
-      parkingSpot: true,
-      originalSpot: true,
-      changeLogs: {
-        orderBy: { changedAt: "desc" },
+  const [visit, availableSpots] = await Promise.all([
+    db.visit.findUnique({
+      where: { id: params.id },
+      include: {
+        parkingSpot: true,
+        originalSpot: true,
+        changeLogs: {
+          orderBy: { changedAt: "desc" },
+        },
+        evidences: true,
       },
-      evidences: true,
-    },
-  });
+    }),
+    db.parkingSpot.findMany({
+      where: { isAvailable: true },
+      orderBy: { spotNumber: "asc" },
+    }),
+  ]);
 
   if (!visit) {
     throw new Response("访问记录不存在", { status: 404 });
   }
 
-  return { visit };
+  return { visit, availableSpots };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -47,18 +53,49 @@ export async function action({ request, params }: Route.ActionArgs) {
     const reprocessNote = formData.get("reprocessNote") as string;
 
     const changeLogs = [];
+    const updateData: Record<string, any> = {};
 
-    if (newPlate && newPlate !== visit.licensePlate) {
+    const plateChanged = newPlate && newPlate.trim() && newPlate !== visit.licensePlate;
+    const spotChanged = newSpotId && newSpotId !== visit.parkingSpotId;
+
+    if (plateChanged) {
+      const trimmedPlate = newPlate.trim();
+      updateData.licensePlate = trimmedPlate;
+      
       changeLogs.push({
         fieldName: "licensePlate",
         oldValue: visit.licensePlate,
-        newValue: newPlate,
+        newValue: trimmedPlate,
         changedBy: "李物业",
         note: reprocessNote || "重新处理：修改车牌",
       });
+
+      if (visit.anomalyType !== AnomalyType.PLATE_MISMATCH) {
+        changeLogs.push({
+          fieldName: "anomalyType",
+          oldValue: visit.anomalyType,
+          newValue: "PLATE_MISMATCH",
+          changedBy: "李物业",
+          note: reprocessNote || "记录车牌变更异常",
+        });
+        updateData.anomalyType = AnomalyType.PLATE_MISMATCH;
+        updateData.anomalyNote = reprocessNote || `车牌由${visit.licensePlate}变更为${trimmedPlate}`;
+      }
     }
 
-    if (newSpotId && newSpotId !== visit.parkingSpotId) {
+    if (spotChanged) {
+      const newSpot = await db.parkingSpot.findUnique({
+        where: { id: newSpotId },
+      });
+
+      if (!newSpot) {
+        return { error: "选择的车位不存在" };
+      }
+
+      if (!newSpot.isAvailable) {
+        return { error: "该车位已被占用，请选择其他车位" };
+      }
+
       if (visit.parkingSpotId) {
         await db.parkingSpot.update({
           where: { id: visit.parkingSpotId },
@@ -71,30 +108,40 @@ export async function action({ request, params }: Route.ActionArgs) {
         data: { isAvailable: false },
       });
 
-      const newSpot = await db.parkingSpot.findUnique({
-        where: { id: newSpotId },
-      });
-
+      updateData.parkingSpotId = newSpotId;
+      
       changeLogs.push({
         fieldName: "parkingSpotId",
-        oldValue: visit.parkingSpot?.spotNumber,
-        newValue: newSpot?.spotNumber,
+        oldValue: visit.parkingSpot?.spotNumber || "未分配",
+        newValue: newSpot.spotNumber,
         changedBy: "李物业",
         note: reprocessNote || "重新处理：更换车位",
       });
+
+      if (visit.anomalyType !== AnomalyType.SPOT_OCCUPIED && visit.anomalyType === AnomalyType.NONE) {
+        changeLogs.push({
+          fieldName: "anomalyType",
+          oldValue: visit.anomalyType,
+          newValue: "SPOT_OCCUPIED",
+          changedBy: "李物业",
+          note: reprocessNote || "记录车位变更异常",
+        });
+        updateData.anomalyType = AnomalyType.SPOT_OCCUPIED;
+        updateData.anomalyNote = reprocessNote || `车位由${visit.parkingSpot?.spotNumber || "未分配"}变更为${newSpot.spotNumber}`;
+      }
     }
 
     if (changeLogs.length > 0) {
+      updateData.changeLogs = {
+        create: changeLogs,
+      };
+
       await db.visit.update({
         where: { id: params.id },
-        data: {
-          licensePlate: newPlate || visit.licensePlate,
-          parkingSpotId: newSpotId || visit.parkingSpotId,
-          changeLogs: {
-            create: changeLogs,
-          },
-        },
+        data: updateData,
       });
+    } else {
+      return { error: "未检测到任何变更" };
     }
 
     return redirect(`/visits/${params.id}`);
@@ -129,7 +176,7 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 export default function VisitDetail() {
-  const { visit } = useLoaderData<typeof loader>();
+  const { visit, availableSpots } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const getStatusColor = (status: string) => {
@@ -428,29 +475,42 @@ export default function VisitDetail() {
                       <Form method="post" className="mt-3 space-y-3">
                         <input type="hidden" name="action" value="reprocess" />
                         <div>
-                          <label className="label text-xs">新车牌</label>
+                          <label className="label text-xs">新车牌（留空则不修改）</label>
                           <input
                             type="text"
                             name="newPlate"
                             defaultValue={visit.licensePlate}
                             className="input text-sm"
+                            placeholder="输入新车牌号"
                           />
                         </div>
                         <div>
-                          <label className="label text-xs">新车位ID</label>
-                          <input
-                            type="text"
-                            name="newSpotId"
-                            defaultValue={visit.parkingSpotId || ""}
-                            className="input text-sm"
-                          />
+                          <label className="label text-xs">新车位（请选择）</label>
+                          <select name="newSpotId" className="input text-sm">
+                            <option value={visit.parkingSpotId || ""}>
+                              {visit.parkingSpot 
+                                ? `${visit.parkingSpot.spotNumber} - ${visit.parkingSpot.floor} ${visit.parkingSpot.zone}（当前）`
+                                : "不修改车位"}
+                            </option>
+                            <option disabled>--- 可用车位 ---</option>
+                            {availableSpots.map((spot) => (
+                              <option key={spot.id} value={spot.id}>
+                                {spot.spotNumber} - {spot.floor} {spot.zone}
+                              </option>
+                            ))}
+                          </select>
+                          {availableSpots.length === 0 && (
+                            <p className="text-xs text-orange-600 mt-1">⚠️ 暂无其他可用车位</p>
+                          )}
                         </div>
                         <div>
-                          <label className="label text-xs">处理备注</label>
+                          <label className="label text-xs">处理备注（必填）</label>
                           <textarea
                             name="reprocessNote"
                             className="input text-sm"
                             rows={2}
+                            placeholder="请说明重新处理的原因"
+                            required
                           />
                         </div>
                         <button type="submit" className="btn btn-primary w-full text-sm">
