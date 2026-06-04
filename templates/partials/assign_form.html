@@ -9,8 +9,8 @@
                 {% csrf_token %}
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">备注（可选）</label>
-                        {% render_field form.remark %}
+                        <label for="id_remark" class="block text-sm font-medium text-gray-700 mb-1">备注（可选）</label>
+                        {{ form.remark }}
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">

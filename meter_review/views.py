@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, Avg
+from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils import timezone
 from decimal import Decimal
@@ -312,6 +313,14 @@ def return_reading(request, pk):
 
     if request.method == 'POST':
         return_reason = request.POST.get('return_reason', '')
+        FeeAdjustment.objects.create(
+            reading=reading,
+            reviewer=request.user,
+            action='return',
+            old_fee=reading.original_fee,
+            new_fee=reading.adjusted_fee or reading.original_fee,
+            adjustment_reason=f'退回。{return_reason}'
+        )
         log_history(
             reading=reading,
             operator=request.user,
@@ -333,6 +342,10 @@ def archive_reading(request, pk):
 
     if request.user.role != 'reviewer':
         messages.error(request, '只有复核员可以归档')
+        return redirect('meter_review:reading_detail', pk=pk)
+
+    if reading.status != 'reviewing':
+        messages.error(request, '只有复核中的记录可以归档')
         return redirect('meter_review:reading_detail', pk=pk)
 
     if request.method == 'POST':
@@ -381,8 +394,8 @@ def review_dashboard(request):
         'anomaly_type__code', 'anomaly_type__name'
     ).annotate(
         count=Count('id'),
-        total_adjustment=Sum('adjusted_fee') - Sum('original_fee'),
-        avg_rework=Count('rework_count') / Count('id')
+        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
     ).order_by('-count')
 
     by_district = readings.values(
@@ -390,15 +403,15 @@ def review_dashboard(request):
     ).annotate(
         count=Count('id'),
         anomaly_count=Count('anomaly_type'),
-        total_adjustment=Sum('adjusted_fee') - Sum('original_fee'),
-        avg_rework=Count('rework_count') / Count('id')
+        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
     ).order_by('-count')
 
     by_amount_range = [
-        {'range': '0-50元', 'count': readings.filter(Q(adjusted_fee__isnull=True) | (Q(adjusted_fee__gte=0) & Q(adjusted_fee__lte=50))).count()},
-        {'range': '50-200元', 'count': readings.filter(adjusted_fee__gt=50, adjusted_fee__lte=200).count()},
-        {'range': '200-500元', 'count': readings.filter(adjusted_fee__gt=200, adjusted_fee__lte=500).count()},
-        {'range': '500元以上', 'count': readings.filter(adjusted_fee__gt=500).count()},
+        {'range': '0-50元', 'count': readings.filter(Q(adjusted_fee__lte=50) | Q(adjusted_fee__isnull=True, original_fee__lte=50)).count()},
+        {'range': '50-200元', 'count': readings.filter(Q(adjusted_fee__gt=50, adjusted_fee__lte=200) | Q(adjusted_fee__isnull=True, original_fee__gt=50, original_fee__lte=200)).count()},
+        {'range': '200-500元', 'count': readings.filter(Q(adjusted_fee__gt=200, adjusted_fee__lte=500) | Q(adjusted_fee__isnull=True, original_fee__gt=200, original_fee__lte=500)).count()},
+        {'range': '500元以上', 'count': readings.filter(Q(adjusted_fee__gt=500) | Q(adjusted_fee__isnull=True, original_fee__gt=500)).count()},
     ]
 
     by_rework = [
@@ -408,16 +421,19 @@ def review_dashboard(request):
         {'rework': '3次及以上', 'count': readings.filter(rework_count__gte=3).count()},
     ]
 
+    agg = readings.aggregate(
+        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
+    )
+
     total_stats = {
         'total': readings.count(),
         'anomaly_count': readings.filter(anomaly_type__isnull=False).count(),
         'adjusted_count': readings.filter(status='adjusted').count(),
         'archived_count': readings.filter(status='archived').count(),
         'returned_count': readings.filter(status='returned').count(),
-        'total_adjustment': readings.aggregate(
-            diff=Sum('adjusted_fee') - Sum('original_fee')
-        )['diff'] or Decimal('0'),
-        'avg_rework': readings.aggregate(avg=Count('rework_count') / Count('id'))['avg'] or 0,
+        'total_adjustment': agg['total_adjustment'],
+        'avg_rework': agg['avg_rework'],
     }
 
     context = {
