@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "社区垃圾分类巡查与整改销项系统",
+  "short_name": "垃圾分类巡查系统",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#10b981",
+  "description": "社区垃圾分类巡查与整改销项系统 - 巡查员和复核员协同处理平台"
+}

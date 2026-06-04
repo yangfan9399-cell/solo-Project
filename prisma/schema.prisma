@@ -1,0 +1,264 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  name      String
+  role      Role     @default(INSPECTOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关系
+  createdInspections     Inspection[]     @relation("createdBy")
+  assignedInspections    Inspection[]     @relation("assignedTo")
+  rectifications         Rectification[]
+  reviewActions          ReviewAction[]
+  notifications          Notification[]   @relation("notifiedUser")
+  sentNotifications      Notification[]   @relation("sentByUser")
+  historyNodes           HistoryNode[]
+  uploadedEvidences      Evidence[]
+}
+
+// 楼栋表
+model Building {
+  id           String       @id @default(uuid())
+  name         String       @unique
+  code         String       @unique
+  address      String?
+  responsible  String?
+  phone        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  inspections  Inspection[]
+}
+
+// 巡查记录表
+model Inspection {
+  id              String              @id @default(uuid())
+  inspectionNo    String              @unique
+  source          InspectionSource    @default(PATROL)
+  buildingId      String
+  building        Building            @relation(fields: [buildingId], references: [id])
+  issueType       IssueType
+  description     String
+  severity        Severity            @default(MEDIUM)
+  status          InspectionStatus    @default(PENDING_RECTIFICATION)
+  deadline        DateTime
+  rectificationDeadline DateTime?
+  isOverdue       Boolean             @default(false)
+
+  // 责任人
+  assignedToId    String?
+  assignedTo      User?               @relation("assignedTo", fields: [assignedToId], references: [id])
+
+  // 创建人（巡查员）
+  createdById     String
+  createdBy       User                @relation("createdBy", fields: [createdById], references: [id])
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // 关系
+  evidences       Evidence[]
+  rectifications  Rectification[]
+  reviewActions   ReviewAction[]
+  historyNodes    HistoryNode[]       @relation("InspectionHistory")
+  notifications   Notification[]
+
+  // 最后修改记录
+  lastChangeId    String?             @unique
+  lastChange      HistoryNode?        @relation("InspectionLastChange", fields: [lastChangeId], references: [id])
+}
+
+// 证据表（照片）
+model Evidence {
+  id            String          @id @default(uuid())
+  type          EvidenceType
+  url           String
+  thumbnailUrl  String?
+  description   String?
+  uploadedById  String
+  uploadedBy    User            @relation(fields: [uploadedById], references: [id])
+  inspectionId  String
+  inspection    Inspection      @relation(fields: [inspectionId], references: [id])
+  createdAt     DateTime        @default(now())
+
+  // 关联整改记录
+  rectificationId String?
+  rectification   Rectification? @relation(fields: [rectificationId], references: [id])
+}
+
+// 整改记录表
+model Rectification {
+  id             String         @id @default(uuid())
+  inspectionId   String
+  inspection     Inspection     @relation(fields: [inspectionId], references: [id])
+  description    String
+  submittedById  String
+  submittedBy    User           @relation(fields: [submittedById], references: [id])
+  submittedAt    DateTime       @default(now())
+  isPhotoMissing Boolean        @default(false)
+  missingTypes   String[]
+  buildingMatch  Boolean        @default(true)
+  isOverdue      Boolean        @default(false)
+  isQualified    Boolean?
+
+  // 关系
+  evidences      Evidence[]
+  reviewAction   ReviewAction?
+}
+
+// 复核动作表
+model ReviewAction {
+  id              String              @id @default(uuid())
+  inspectionId    String
+  inspection      Inspection          @relation(fields: [inspectionId], references: [id])
+  rectificationId String?             @unique
+  rectification   Rectification?      @relation(fields: [rectificationId], references: [id])
+  actionType      ReviewActionType
+  comment         String?
+  reviewedById    String
+  reviewedBy      User                @relation(fields: [reviewedById], references: [id])
+  reviewedAt      DateTime            @default(now())
+
+  // 销项相关
+  missingTypes    String[]
+  remediationPath String?
+}
+
+// 历史节点表（用于追踪状态流转）
+model HistoryNode {
+  id               String           @id @default(uuid())
+  inspectionId     String
+  inspection       Inspection       @relation("InspectionHistory", fields: [inspectionId], references: [id], onDelete: Cascade)
+  actionType       HistoryActionType
+  fromStatus       InspectionStatus?
+  toStatus         InspectionStatus
+  description      String
+  operatorId       String
+  operator         User             @relation(fields: [operatorId], references: [id])
+  timestamp        DateTime         @default(now())
+  metadata         Json?
+
+  // 关联的整改或复核
+  rectificationId  String?
+  reviewActionId   String?
+
+  // 反向关系 - 作为最后修改记录
+  lastChangeFor    Inspection?      @relation("InspectionLastChange")
+}
+
+// 通知表
+model Notification {
+  id             String           @id @default(uuid())
+  type           NotificationType
+  title          String
+  content        String
+  inspectionId   String
+  inspection     Inspection       @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation("notifiedUser", fields: [userId], references: [id])
+  sentById       String?
+  sentBy         User?            @relation("sentByUser", fields: [sentById], references: [id])
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  readAt         DateTime?
+}
+
+// 枚举定义
+enum Role {
+  INSPECTOR
+  REVIEWER
+  ADMIN
+}
+
+enum InspectionSource {
+  PATROL
+  COMPLAINT
+  MONITORING
+  ASSIGNMENT
+  OTHER
+}
+
+enum IssueType {
+  WASTE_SORTING
+  OVERFLOW
+  CONTAMINATION
+  MISSING_BIN
+  ODOR
+  CLEANLINESS
+  OTHER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InspectionStatus {
+  PENDING_RECTIFICATION
+  RECTIFICATION_SUBMITTED
+  PENDING_REVIEW
+  VERIFIED
+  RETURNED
+  ARCHIVED
+  CLOSED
+}
+
+enum EvidenceType {
+  BEFORE_PHOTO
+  AFTER_PHOTO
+  LOCATION_PHOTO
+  PROCESS_PHOTO
+  DOCUMENT
+}
+
+enum ReviewActionType {
+  APPROVE
+  REJECT
+  ARCHIVE
+  RETURN
+  CLOSE
+}
+
+enum HistoryActionType {
+  CREATE
+  ASSIGN
+  SUBMIT_RECTIFICATION
+  REVIEW_APPROVE
+  REVIEW_REJECT
+  ARCHIVE
+  RETURN
+  CLOSE
+  UPDATE
+  OVERDUE
+  PHOTO_MISSING
+  BUILDING_MISMATCH
+}
+
+enum NotificationType {
+  NEW_INSPECTION
+  RECTIFICATION_DUE
+  RECTIFICATION_OVERDUE
+  REVIEW_REQUIRED
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  ARCHIVED
+  CLOSED
+  PHOTO_MISSING
+  BUILDING_MISMATCH
+}
