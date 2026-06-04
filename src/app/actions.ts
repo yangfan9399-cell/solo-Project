@@ -261,49 +261,92 @@ export async function getReviewStats() {
     },
   })
 
-  const byDeviceType: Record<string, { total: number; completed: number; avgTime: number }> = {}
-  const byResult: Record<string, number> = {}
-  let totalRework = 0
-  let totalProcessingTime = 0
-  let completedCount = 0
+  type DeviceStats = {
+    total: number
+    completed: number
+    totalProcessingHours: number
+    completedWithTime: number
+    avgTime: number
+    reworkCount: number
+    results: {
+      accepted: number
+      rejected: number
+      inProgress: number
+      submitted: number
+    }
+    orderIds: string[]
+  }
+
+  const byDeviceType: Record<string, DeviceStats> = {}
+  let globalRework = 0
+  let globalProcessingHours = 0
+  let globalCompletedWithTime = 0
+
+  const isCompleted = (status: RepairStatus) =>
+    status === RepairStatus.ACCEPTED || status === RepairStatus.ARCHIVED
+  const isInProgress = (status: RepairStatus) =>
+    [RepairStatus.ASSIGNED, RepairStatus.IN_PROGRESS, RepairStatus.PARTS_SHORTAGE, RepairStatus.PENDING_ACCEPTANCE].includes(status)
 
   for (const order of orders) {
     const type = order.deviceType
-    
-    if (!byDeviceType[type]) {
-      byDeviceType[type] = { total: 0, completed: 0, avgTime: 0 }
-    }
-    byDeviceType[type].total++
 
-    if (order.status === RepairStatus.ACCEPTED || order.status === RepairStatus.ARCHIVED) {
-      byDeviceType[type].completed++
-      
-      if (order.completedAt && order.submittedAt) {
-        const time = (order.completedAt.getTime() - order.submittedAt.getTime()) / (1000 * 60 * 60)
-        totalProcessingTime += time
-        completedCount++
+    if (!byDeviceType[type]) {
+      byDeviceType[type] = {
+        total: 0,
+        completed: 0,
+        totalProcessingHours: 0,
+        completedWithTime: 0,
+        avgTime: 0,
+        reworkCount: 0,
+        results: { accepted: 0, rejected: 0, inProgress: 0, submitted: 0 },
+        orderIds: [],
       }
     }
 
-    totalRework += order.reworkCount || 0
+    const ds = byDeviceType[type]
+    ds.total++
+    ds.orderIds.push(order.id)
+
+    if (isCompleted(order.status)) {
+      ds.completed++
+      ds.results.accepted++
+
+      if (order.completedAt && order.submittedAt) {
+        const hours = (order.completedAt.getTime() - order.submittedAt.getTime()) / (1000 * 60 * 60)
+        ds.totalProcessingHours += hours
+        ds.completedWithTime++
+        globalProcessingHours += hours
+        globalCompletedWithTime++
+      }
+    } else if (order.status === RepairStatus.REJECTED) {
+      ds.results.rejected++
+    } else if (isInProgress(order.status)) {
+      ds.results.inProgress++
+    } else if (order.status === RepairStatus.SUBMITTED) {
+      ds.results.submitted++
+    }
+
+    ds.reworkCount += order.reworkCount || 0
+    globalRework += order.reworkCount || 0
   }
 
   for (const key of Object.keys(byDeviceType)) {
-    byDeviceType[key].avgTime = completedCount > 0 ? totalProcessingTime / completedCount : 0
+    const ds = byDeviceType[key]
+    ds.avgTime = ds.completedWithTime > 0 ? ds.totalProcessingHours / ds.completedWithTime : 0
   }
 
-  byResult['已验收'] = orders.filter(o => o.status === RepairStatus.ACCEPTED || o.status === RepairStatus.ARCHIVED).length
-  byResult['验收不通过'] = orders.filter(o => o.status === RepairStatus.REJECTED).length
-  byResult['处理中'] = orders.filter(o => 
-    [RepairStatus.ASSIGNED, RepairStatus.IN_PROGRESS, RepairStatus.PARTS_SHORTAGE, RepairStatus.PENDING_ACCEPTANCE].includes(o.status)
-  ).length
-  byResult['待派工'] = orders.filter(o => o.status === RepairStatus.SUBMITTED).length
+  const byResult = {
+    accepted: orders.filter(o => isCompleted(o.status)).length,
+    rejected: orders.filter(o => o.status === RepairStatus.REJECTED).length,
+    inProgress: orders.filter(o => isInProgress(o.status)).length,
+    submitted: orders.filter(o => o.status === RepairStatus.SUBMITTED).length,
+  }
 
   return {
     byDeviceType,
     byResult,
-    totalRework,
-    avgProcessingTime: completedCount > 0 ? totalProcessingTime / completedCount : 0,
+    totalRework: globalRework,
+    avgProcessingTime: globalCompletedWithTime > 0 ? globalProcessingHours / globalCompletedWithTime : 0,
     totalOrders: orders.length,
   }
 }
