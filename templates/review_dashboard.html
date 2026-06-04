@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}复盘统计 - 水务抄表复核平台{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">复盘统计</h1>
+        <form method="get" class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <label class="text-sm text-gray-600">日期范围:</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span class="text-gray-400">至</span>
+                <input type="date" name="date_to" value="{{ date_to }}" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                查询
+            </button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+            <div class="text-2xl font-bold text-gray-900">{{ total_stats.total }}</div>
+            <div class="text-sm text-gray-500">总记录数</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500">
+            <div class="text-2xl font-bold text-orange-600">{{ total_stats.anomaly_count }}</div>
+            <div class="text-sm text-gray-500">异常记录</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
+            <div class="text-2xl font-bold text-green-600">{{ total_stats.adjusted_count }}</div>
+            <div class="text-sm text-gray-500">已调整</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-gray-500">
+            <div class="text-2xl font-bold text-gray-600">{{ total_stats.archived_count }}</div>
+            <div class="text-sm text-gray-500">已归档</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500">
+            <div class="text-2xl font-bold text-orange-600">{{ total_stats.returned_count }}</div>
+            <div class="text-sm text-gray-500">已退回</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 {% if total_stats.total_adjustment < 0 %}border-green-500{% else %}border-red-500{% endif %}">
+            <div class="text-2xl font-bold {% if total_stats.total_adjustment < 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if total_stats.total_adjustment > 0 %}+{% endif %}{{ total_stats.total_adjustment|floatformat:2 }}
+            </div>
+            <div class="text-sm text-gray-500">调整总金额(元)</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">按异常原因统计</h3>
+            </div>
+            <div class="p-6">
+                {% if by_anomaly %}
+                <div class="space-y-3">
+                    {% for item in by_anomaly %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-900">{{ item.anomaly_type__name }}</span>
+                                <span class="text-sm text-gray-500">{{ item.count }} 条</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-orange-500 h-2 rounded-full" style="width: {% widthratio item.count total_stats.anomaly_count 100 %}%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1 text-xs text-gray-500">
+                                <span>调整金额: {% if item.total_adjustment %}{% if item.total_adjustment > 0 %}+{% endif %}{{ item.total_adjustment|floatformat:2 }}{% else %}0{% endif %} 元</span>
+                                <span>平均返工: {{ item.avg_rework|floatformat:1 }} 次</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    暂无异常数据
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">按片区统计</h3>
+            </div>
+            <div class="p-6">
+                {% if by_district %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-xs font-medium text-gray-500 uppercase">
+                                <th class="pb-2">片区</th>
+                                <th class="pb-2 text-center">总数</th>
+                                <th class="pb-2 text-center">异常数</th>
+                                <th class="pb-2 text-right">调整金额</th>
+                                <th class="pb-2 text-center">平均返工</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for item in by_district %}
+                            <tr>
+                                <td class="py-2 text-sm font-medium text-gray-900">{{ item.customer__district__name }}</td>
+                                <td class="py-2 text-sm text-gray-600 text-center">{{ item.count }}</td>
+                                <td class="py-2 text-sm text-orange-600 text-center">{{ item.anomaly_count }}</td>
+                                <td class="py-2 text-sm {% if item.total_adjustment and item.total_adjustment < 0 %}text-green-600{% else %}text-red-600{% endif %} text-right">
+                                    {% if item.total_adjustment %}{% if item.total_adjustment > 0 %}+{% endif %}{{ item.total_adjustment|floatformat:2 }}{% else %}0{% endif %}
+                                </td>
+                                <td class="py-2 text-sm text-gray-600 text-center">{{ item.avg_rework|floatformat:1 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    暂无片区数据
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">按调整金额区间统计</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for item in by_amount_range %}
+                    <div class="flex items-center">
+                        <div class="w-24 text-sm font-medium text-gray-700">{{ item.range }}</div>
+                        <div class="flex-1 mx-4">
+                            <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                                <div class="bg-blue-500 h-full flex items-center justify-end pr-2 transition-all" style="width: {% if total_stats.total > 0 %}{% widthratio item.count total_stats.total 100 %}{% else %}0{% endif %}%">
+                                    {% if item.count > 0 and total_stats.total > 0 and item.count|divisibleby:total_stats.total %}
+                                    <span class="text-xs text-white font-medium">{% widthratio item.count total_stats.total 100 %}%</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-16 text-right text-sm font-medium text-gray-900">{{ item.count }} 条</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">按返工次数统计</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    {% for item in by_rework %}
+                    <div class="flex items-center">
+                        <div class="w-24 text-sm font-medium {% if item.rework != '0次' %}text-red-600{% else %}text-gray-700{% endif %}">{{ item.rework }}</div>
+                        <div class="flex-1 mx-4">
+                            <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                                <div class="h-full flex items-center justify-end pr-2 transition-all {% if item.rework == '0次' %}bg-green-500{% elif item.rework == '1次' %}bg-yellow-500{% elif item.rework == '2次' %}bg-orange-500{% else %}bg-red-500{% endif %}" style="width: {% if total_stats.total > 0 %}{% widthratio item.count total_stats.total 100 %}{% else %}0{% endif %}%">
+                                    {% if item.count > 0 and total_stats.total > 0 %}
+                                    <span class="text-xs text-white font-medium">{% widthratio item.count total_stats.total 100 %}%</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-16 text-right text-sm font-medium text-gray-900">{{ item.count }} 条</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">平均返工次数</span>
+                        <span class="text-lg font-bold {% if total_stats.avg_rework > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                            {{ total_stats.avg_rework|floatformat:2 }} 次
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
