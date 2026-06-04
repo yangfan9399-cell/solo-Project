@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Count, Sum, Q, Avg
+from django.db.models import Count, Sum, Q, Avg, F, Case, When, Value
 from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -390,11 +390,20 @@ def review_dashboard(request):
         created_at__date__lte=date_to_dt
     ).select_related('customer', 'customer__district', 'anomaly_type')
 
+    adjustment_diff = Coalesce(
+        Sum(Case(
+            When(adjusted_fee__isnull=False, then=F('adjusted_fee') - F('original_fee')),
+            default=Value(Decimal('0')),
+            output_field=models.DecimalField()
+        )),
+        Decimal('0')
+    )
+
     by_anomaly = readings.filter(anomaly_type__isnull=False).values(
         'anomaly_type__code', 'anomaly_type__name'
     ).annotate(
         count=Count('id'),
-        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        total_adjustment=adjustment_diff,
         avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
     ).order_by('-count')
 
@@ -403,7 +412,7 @@ def review_dashboard(request):
     ).annotate(
         count=Count('id'),
         anomaly_count=Count('anomaly_type'),
-        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        total_adjustment=adjustment_diff,
         avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
     ).order_by('-count')
 
@@ -422,7 +431,14 @@ def review_dashboard(request):
     ]
 
     agg = readings.aggregate(
-        total_adjustment=Coalesce(Sum('adjusted_fee'), Decimal('0')) - Coalesce(Sum('original_fee'), Decimal('0')),
+        total_adjustment=Coalesce(
+            Sum(Case(
+                When(adjusted_fee__isnull=False, then=F('adjusted_fee') - F('original_fee')),
+                default=Value(Decimal('0')),
+                output_field=models.DecimalField()
+            )),
+            Decimal('0')
+        ),
         avg_rework=Coalesce(Avg('rework_count'), Decimal('0'))
     )
 
