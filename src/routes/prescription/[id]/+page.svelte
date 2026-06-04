@@ -8,10 +8,13 @@
 
 	let prescription: PrescriptionDetail | null = null;
 	let loading = true;
+	let reloading = false;
 	let showReviewModal = false;
 	let showPickupModal = false;
+	let showSupplementaryModal = false;
 	let showArchiveModal = false;
 	let error = '';
+	let successMessage = '';
 
 	let reviewResult: ReviewResult = 'APPROVED';
 	let reviewComments = '';
@@ -20,7 +23,9 @@
 	let verifierName = '';
 	let verifierIdCard = '';
 	let relation = '';
-	let supplementaryInfo = '';
+	let supplementaryInfoForPickup = '';
+
+	let supplementaryInfoEdit = '';
 
 	let archiveReason = '';
 	let archiveResolution = '';
@@ -29,9 +34,13 @@
 	let disputeResolution = '';
 	let disputeComments = '';
 
-	onMount(async () => {
+	async function loadPrescriptionDetail() {
 		const res = await fetch(`/api/prescriptions/${$page.params.id}`);
 		prescription = await res.json();
+	}
+
+	onMount(async () => {
+		await loadPrescriptionDetail();
 		loading = false;
 	});
 
@@ -46,6 +55,10 @@
 
 	function canPickup(status: PrescriptionStatus) {
 		return ['APPROVED', 'READY_FOR_PICKUP'].includes(status);
+	}
+
+	function isPickedUp(status: PrescriptionStatus) {
+		return status === 'PICKED_UP';
 	}
 
 	function canArchive(status: PrescriptionStatus) {
@@ -89,6 +102,7 @@
 			return;
 		}
 		error = '';
+		successMessage = '';
 
 		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
 			method: 'POST',
@@ -98,13 +112,21 @@
 				verifierName,
 				verifierIdCard,
 				relation,
-				supplementaryInfo
+				supplementaryInfo: supplementaryInfoForPickup || null
 			})
 		});
 
 		if (res.ok) {
 			showPickupModal = false;
-			location.reload();
+			verifierName = '';
+			verifierIdCard = '';
+			relation = '';
+			supplementaryInfoForPickup = '';
+			successMessage = '取药核销成功！';
+			reloading = true;
+			await loadPrescriptionDetail();
+			reloading = false;
+			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
 			if (data.blocked) {
@@ -120,19 +142,30 @@
 			error = '权限不足：仅店员可补充身份信息';
 			return;
 		}
+		if (!supplementaryInfoEdit.trim()) {
+			error = '请输入补充的身份信息';
+			return;
+		}
 		error = '';
+		successMessage = '';
 
 		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				clerkId: $currentUser.id,
-				supplementaryInfo
+				supplementaryInfo: supplementaryInfoEdit
 			})
 		});
 
 		if (res.ok) {
-			location.reload();
+			showSupplementaryModal = false;
+			supplementaryInfoEdit = '';
+			successMessage = '身份信息补充成功！';
+			reloading = true;
+			await loadPrescriptionDetail();
+			reloading = false;
+			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
 			error = data.error;
@@ -207,6 +240,18 @@
 			<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
 				<span class="mt-0.5">🚫</span>
 				<span>{error}</span>
+			</div>
+		{/if}
+		{#if successMessage}
+			<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start gap-2">
+				<span class="mt-0.5">✅</span>
+				<span>{successMessage}</span>
+			</div>
+		{/if}
+		{#if reloading}
+			<div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-start gap-2">
+				<span class="mt-0.5 animate-pulse">⏳</span>
+				<span>正在刷新数据...</span>
 			</div>
 		{/if}
 
@@ -299,16 +344,16 @@
 						<div class="flex flex-wrap gap-3">
 							{#if isPharmacist && canReview(prescription.status)}
 								<button
-									on:click={() => { error = ''; showReviewModal = true; }}
+									on:click={() => { error = ''; successMessage = ''; showReviewModal = true; }}
 									class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 								>
 									🔍 药师审方
 								</button>
 							{/if}
 
-							{#if isClerk && canPickup(prescription.status)}
+							{#if isClerk && canPickup(prescription.status) && !isPickedUp(prescription.status) && prescription.pickups.length === 0}
 								<button
-									on:click={() => { error = ''; showPickupModal = true; }}
+									on:click={() => { error = ''; successMessage = ''; showPickupModal = true; }}
 									class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
 								>
 									✅ 取药核销
@@ -317,7 +362,12 @@
 
 							{#if isClerk && prescription.pickups.length > 0}
 								<button
-									on:click={() => { error = ''; showPickupModal = true; }}
+									on:click={() => {
+										error = '';
+										successMessage = '';
+										supplementaryInfoEdit = prescription.pickups[0]?.supplementaryInfo || '';
+										showSupplementaryModal = true;
+									}}
 									class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
 								>
 									📝 补充身份信息
@@ -326,7 +376,7 @@
 
 							{#if isReviewer && canArchive(prescription.status)}
 								<button
-									on:click={() => { error = ''; showArchiveModal = true; }}
+									on:click={() => { error = ''; successMessage = ''; showArchiveModal = true; }}
 									class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
 								>
 									📦 异常归档
@@ -335,7 +385,7 @@
 
 							{#if isReviewer && prescription.status === 'DISPUTED'}
 								<button
-									on:click={() => { error = ''; showArchiveModal = true; }}
+									on:click={() => { error = ''; successMessage = ''; showArchiveModal = true; }}
 									class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
 								>
 									⚖️ 处理争议
@@ -355,7 +405,13 @@
 							</div>
 						{/if}
 
-						{#if isClerk && !canPickup(prescription.status) && prescription.pickups.length === 0}
+						{#if isClerk && isPickedUp(prescription.status)}
+							<div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm">
+								✅ 该处方已完成取药，可点击「补充身份信息」完善取药人资料。
+							</div>
+						{/if}
+
+						{#if isClerk && !canPickup(prescription.status) && !isPickedUp(prescription.status) && prescription.pickups.length === 0}
 							<div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
 								ℹ️ 当前处方状态为「{statusLabels[prescription.status]}」，暂不可取药。{#if canReview(prescription.status)}需药师先审方通过。{/if}{#if isBlocked(prescription.status)}该处方已被阻断。{/if}
 							</div>
@@ -625,6 +681,7 @@
 					<h3 class="text-lg font-semibold">取药核销</h3>
 					<span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">{$currentUser.name}</span>
 				</div>
+				<p class="text-sm text-gray-500 mb-4">登记取药人信息并完成取药核销</p>
 				<div class="space-y-4">
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">取药人姓名 *</label>
@@ -662,7 +719,7 @@
 						<textarea
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
 							rows={2}
-							bind:value={supplementaryInfo}
+							bind:value={supplementaryInfoForPickup}
 							placeholder="可选，补充身份验证信息..."
 						></textarea>
 					</div>
@@ -680,6 +737,47 @@
 						disabled={!verifierName}
 					>
 						确认核销
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if showSupplementaryModal && isClerk}
+		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+			<div class="bg-white rounded-lg max-w-md w-full p-6">
+				<div class="flex items-center gap-2 mb-4">
+					<h3 class="text-lg font-semibold">补充身份信息</h3>
+					<span class="px-2 py-0.5 text-xs bg-teal-100 text-teal-700 rounded">{$currentUser.name}</span>
+				</div>
+				<p class="text-sm text-gray-500 mb-4">补充或更新取药人身份验证信息</p>
+				<div class="space-y-4">
+					<div>
+						<label class="block text-sm font-medium text-gray-700 mb-1">补充信息 *</label>
+						<textarea
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+							rows={4}
+							bind:value={supplementaryInfoEdit}
+							placeholder="请输入需补充的身份信息，如：家属关系证明、联系方式补充、授权委托书编号等..."
+						></textarea>
+						<p class="mt-1 text-xs text-gray-500">
+							提交后将更新取药记录并生成历史轨迹
+						</p>
+					</div>
+				</div>
+				<div class="mt-6 flex justify-end gap-3">
+					<button
+						on:click={() => showSupplementaryModal = false}
+						class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+					>
+						取消
+					</button>
+					<button
+						on:click={submitSupplementaryInfo}
+						class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+						disabled={!supplementaryInfoEdit.trim()}
+					>
+						确认补充
 					</button>
 				</div>
 			</div>
