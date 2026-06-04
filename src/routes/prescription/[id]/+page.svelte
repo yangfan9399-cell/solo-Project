@@ -3,11 +3,10 @@
 	import { page } from '$app/stores';
 	import type { PrescriptionDetail } from '$lib/types';
 	import { statusLabels, statusColors, sourceLabels, reviewResultLabels, roleLabels } from '$lib/types';
-	import type { ReviewResult, Role, PrescriptionStatus } from '@prisma/client';
-	import type { UserInfo } from '$lib/types';
+	import type { ReviewResult, PrescriptionStatus } from '@prisma/client';
+	import { currentUser } from '$lib/stores/user';
 
 	let prescription: PrescriptionDetail | null = null;
-	let users: UserInfo[] = [];
 	let loading = true;
 	let showReviewModal = false;
 	let showPickupModal = false;
@@ -31,143 +30,15 @@
 	let disputeComments = '';
 
 	onMount(async () => {
-		const [prescriptionRes, usersRes] = await Promise.all([
-			fetch(`/api/prescriptions/${$page.params.id}`),
-			fetch('/api/users')
-		]);
-		prescription = await prescriptionRes.json();
-		users = await usersRes.json();
+		const res = await fetch(`/api/prescriptions/${$page.params.id}`);
+		prescription = await res.json();
 		loading = false;
 	});
 
-	function getCurrentUser(role: Role) {
-		return users.find(u => u.role === role) || users[0];
-	}
-
-	async function submitReview() {
-		const user = getCurrentUser('PHARMACIST');
-		if (!user) return;
-
-		const res = await fetch(`/api/prescriptions/${$page.params.id}/review`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				pharmacistId: user.id,
-				result: reviewResult,
-				dosageSuggestion: dosageSuggestion || null,
-				comments: reviewComments || null
-			})
-		});
-
-		if (res.ok) {
-			showReviewModal = false;
-			location.reload();
-		} else {
-			const data = await res.json();
-			error = data.error;
-		}
-	}
-
-	async function submitPickup() {
-		const user = getCurrentUser('CLERK');
-		if (!user) return;
-
-		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				clerkId: user.id,
-				verifierName,
-				verifierIdCard,
-				relation,
-				supplementaryInfo
-			})
-		});
-
-		if (res.ok) {
-			showPickupModal = false;
-			location.reload();
-		} else {
-			const data = await res.json();
-			if (data.blocked) {
-				error = `处方状态为"${statusLabels[data.statusCode as PrescriptionStatus]}"，无法核销！请联系药师处理。`;
-			} else {
-				error = data.error;
-			}
-		}
-	}
-
-	async function submitArchive() {
-		const user = getCurrentUser('REVIEWER');
-		if (!user) return;
-
-		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				reviewerId: user.id,
-				reason: archiveReason,
-				resolution: archiveResolution || null,
-				disputed: archiveDisputed
-			})
-		});
-
-		if (res.ok) {
-			showArchiveModal = false;
-			location.reload();
-		} else {
-			const data = await res.json();
-			error = data.error;
-		}
-	}
-
-	async function resolveDispute() {
-		const user = getCurrentUser('REVIEWER');
-		if (!user) return;
-
-		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				reviewerId: user.id,
-				resolution: disputeResolution,
-				disputeComments
-			})
-		});
-
-		if (res.ok) {
-			location.reload();
-		} else {
-			const data = await res.json();
-			error = data.error;
-		}
-	}
-
-	async function addSupplementaryInfo() {
-		const user = getCurrentUser('CLERK');
-		if (!user) return;
-
-		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				clerkId: user.id,
-				supplementaryInfo
-			})
-		});
-
-		if (res.ok) {
-			location.reload();
-		} else {
-			const data = await res.json();
-			error = data.error;
-		}
-	}
-
-	function formatDate(date: Date | string | null | undefined) {
-		if (!date) return '-';
-		return new Date(date).toLocaleString('zh-CN');
-	}
+	$: role = $currentUser?.role ?? null;
+	$: isPharmacist = role === 'PHARMACIST';
+	$: isClerk = role === 'CLERK';
+	$: isReviewer = role === 'REVIEWER';
 
 	function canReview(status: PrescriptionStatus) {
 		return ['RECEIVED', 'REVIEWING'].includes(status);
@@ -184,6 +55,146 @@
 	function isBlocked(status: PrescriptionStatus) {
 		return ['DOSAGE_ISSUE', 'PATIENT_MISMATCH', 'REJECTED', 'TIMEOUT', 'ARCHIVED'].includes(status);
 	}
+
+	async function submitReview() {
+		if (!$currentUser || !isPharmacist) {
+			error = '权限不足：仅药师可执行审方操作';
+			return;
+		}
+		error = '';
+
+		const res = await fetch(`/api/prescriptions/${$page.params.id}/review`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				pharmacistId: $currentUser.id,
+				result: reviewResult,
+				dosageSuggestion: dosageSuggestion || null,
+				comments: reviewComments || null
+			})
+		});
+
+		if (res.ok) {
+			showReviewModal = false;
+			location.reload();
+		} else {
+			const data = await res.json();
+			error = data.error;
+		}
+	}
+
+	async function submitPickup() {
+		if (!$currentUser || !isClerk) {
+			error = '权限不足：仅店员可执行取药核销操作';
+			return;
+		}
+		error = '';
+
+		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				clerkId: $currentUser.id,
+				verifierName,
+				verifierIdCard,
+				relation,
+				supplementaryInfo
+			})
+		});
+
+		if (res.ok) {
+			showPickupModal = false;
+			location.reload();
+		} else {
+			const data = await res.json();
+			if (data.blocked) {
+				error = `处方状态为"${statusLabels[data.statusCode as PrescriptionStatus]}"，无法核销！该处方已被阻断，需药师处理后方可取药。`;
+			} else {
+				error = data.error;
+			}
+		}
+	}
+
+	async function submitSupplementaryInfo() {
+		if (!$currentUser || !isClerk) {
+			error = '权限不足：仅店员可补充身份信息';
+			return;
+		}
+		error = '';
+
+		const res = await fetch(`/api/prescriptions/${$page.params.id}/pickup`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				clerkId: $currentUser.id,
+				supplementaryInfo
+			})
+		});
+
+		if (res.ok) {
+			location.reload();
+		} else {
+			const data = await res.json();
+			error = data.error;
+		}
+	}
+
+	async function submitArchive() {
+		if (!$currentUser || !isReviewer) {
+			error = '权限不足：仅复核人可执行归档操作';
+			return;
+		}
+		error = '';
+
+		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				reviewerId: $currentUser.id,
+				reason: archiveReason,
+				resolution: archiveResolution || null,
+				disputed: archiveDisputed
+			})
+		});
+
+		if (res.ok) {
+			showArchiveModal = false;
+			location.reload();
+		} else {
+			const data = await res.json();
+			error = data.error;
+		}
+	}
+
+	async function resolveDispute() {
+		if (!$currentUser || !isReviewer) {
+			error = '权限不足：仅复核人可解决争议';
+			return;
+		}
+		error = '';
+
+		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				reviewerId: $currentUser.id,
+				resolution: disputeResolution,
+				disputeComments
+			})
+		});
+
+		if (res.ok) {
+			location.reload();
+		} else {
+			const data = await res.json();
+			error = data.error;
+		}
+	}
+
+	function formatDate(date: Date | string | null | undefined) {
+		if (!date) return '-';
+		return new Date(date).toLocaleString('zh-CN');
+	}
 </script>
 
 {#if loading}
@@ -193,8 +204,9 @@
 {:else}
 	<div class="space-y-6">
 		{#if error}
-			<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-				{error}
+			<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-2">
+				<span class="mt-0.5">🚫</span>
+				<span>{error}</span>
 			</div>
 		{/if}
 
@@ -275,57 +287,91 @@
 				</div>
 			</div>
 
-			<div class="mt-6 flex flex-wrap gap-3">
-				{#if canReview(prescription.status)}
-					<button
-						on:click={() => showReviewModal = true}
-						class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-					>
-						🔍 药师审方
-					</button>
-				{/if}
-				{#if canPickup(prescription.status)}
-					<button
-						on:click={() => showPickupModal = true}
-						class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-					>
-						✅ 取药核销
-					</button>
-				{/if}
-				{#if isBlocked(prescription.status) && !['ARCHIVED', 'DISPUTED'].includes(prescription.status)}
-					<div class="flex items-center px-4 py-2 bg-orange-100 text-orange-700 rounded-lg">
-						⚠️ 异常状态 - 已阻断核销
+			<div class="mt-6 pt-4 border-t">
+				<h4 class="text-sm font-semibold text-gray-700 mb-3">操作区域</h4>
+
+				{#if !$currentUser}
+					<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+						⚠️ 请先在顶部选择当前身份后再进行操作
 					</div>
-				{/if}
-				{#if canArchive(prescription.status)}
-					<button
-						on:click={() => showArchiveModal = true}
-						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-					>
-						📦 异常归档
-					</button>
-				{/if}
-				{#if prescription.status === 'DISPUTED'}
-					<div class="flex-1">
-						<input
-							type="text"
-							placeholder="处理结果..."
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-							bind:value={disputeResolution}
-						/>
+				{:else}
+					<div class="space-y-4">
+						<div class="flex flex-wrap gap-3">
+							{#if isPharmacist && canReview(prescription.status)}
+								<button
+									on:click={() => { error = ''; showReviewModal = true; }}
+									class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+								>
+									🔍 药师审方
+								</button>
+							{/if}
+
+							{#if isClerk && canPickup(prescription.status)}
+								<button
+									on:click={() => { error = ''; showPickupModal = true; }}
+									class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+								>
+									✅ 取药核销
+								</button>
+							{/if}
+
+							{#if isClerk && prescription.pickups.length > 0}
+								<button
+									on:click={() => { error = ''; showPickupModal = true; }}
+									class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+								>
+									📝 补充身份信息
+								</button>
+							{/if}
+
+							{#if isReviewer && canArchive(prescription.status)}
+								<button
+									on:click={() => { error = ''; showArchiveModal = true; }}
+									class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+								>
+									📦 异常归档
+								</button>
+							{/if}
+
+							{#if isReviewer && prescription.status === 'DISPUTED'}
+								<button
+									on:click={() => { error = ''; showArchiveModal = true; }}
+									class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+								>
+									⚖️ 处理争议
+								</button>
+							{/if}
+						</div>
+
+						{#if isBlocked(prescription.status) && !['ARCHIVED', 'DISPUTED'].includes(prescription.status)}
+							<div class="p-3 bg-orange-50 border border-orange-200 rounded-lg text-orange-800 text-sm">
+								⚠️ 处方处于异常状态，核销已被阻断。{#if isClerk}请联系药师处理后再取药。{:else}需药师审方或复核人归档后方可继续。{/if}
+							</div>
+						{/if}
+
+						{#if isPharmacist && !canReview(prescription.status) && !canArchive(prescription.status)}
+							<div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
+								ℹ️ 当前处方状态为「{statusLabels[prescription.status]}」，无需药师审方操作。
+							</div>
+						{/if}
+
+						{#if isClerk && !canPickup(prescription.status) && prescription.pickups.length === 0}
+							<div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
+								ℹ️ 当前处方状态为「{statusLabels[prescription.status]}」，暂不可取药。{#if canReview(prescription.status)}需药师先审方通过。{/if}{#if isBlocked(prescription.status)}该处方已被阻断。{/if}
+							</div>
+						{/if}
+
+						{#if isReviewer && !canArchive(prescription.status) && prescription.status !== 'DISPUTED'}
+							<div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm">
+								ℹ️ 当前处方状态为「{statusLabels[prescription.status]}」，无需归档操作。
+							</div>
+						{/if}
+
+						<div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-xs">
+							当前操作身份：{$currentUser.name}（{roleLabels[$currentUser.role]}）
+							· 仅显示当前角色可执行的操作
+						</div>
 					</div>
-					<input
-						type="text"
-						placeholder="争议说明..."
-						class="px-3 py-2 border border-gray-300 rounded-lg"
-						bind:value={disputeComments}
-					/>
-					<button
-						on:click={resolveDispute}
-						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-					>
-						✅ 解决争议
-					</button>
 				{/if}
 			</div>
 		</div>
@@ -373,7 +419,11 @@
 								<span class="text-sm text-gray-500">{formatDate(review.reviewedAt)}</span>
 							</div>
 							<div class="mb-2">
-								<span class="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+								<span class="px-2 py-1 text-xs font-medium rounded {
+									review.result === 'APPROVED' ? 'bg-green-100 text-green-800' :
+									review.result === 'DOSAGE_ISSUE' || review.result === 'NEEDS_ADJUSTMENT' ? 'bg-orange-100 text-orange-800' :
+									'bg-red-100 text-red-800'
+								}">
 									{reviewResultLabels[review.result]}
 								</span>
 							</div>
@@ -508,10 +558,13 @@
 		</div>
 	</div>
 
-	{#if showReviewModal}
+	{#if showReviewModal && isPharmacist}
 		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 			<div class="bg-white rounded-lg max-w-md w-full p-6">
-				<h3 class="text-lg font-semibold mb-4">药师审方</h3>
+				<div class="flex items-center gap-2 mb-4">
+					<h3 class="text-lg font-semibold">药师审方</h3>
+					<span class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">{$currentUser.name}</span>
+				</div>
 				<div class="space-y-4">
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">审核结果</label>
@@ -565,16 +618,19 @@
 		</div>
 	{/if}
 
-	{#if showPickupModal}
+	{#if showPickupModal && isClerk}
 		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 			<div class="bg-white rounded-lg max-w-md w-full p-6">
-				<h3 class="text-lg font-semibold mb-4">取药核销</h3>
+				<div class="flex items-center gap-2 mb-4">
+					<h3 class="text-lg font-semibold">取药核销</h3>
+					<span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">{$currentUser.name}</span>
+				</div>
 				<div class="space-y-4">
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">取药人姓名 *</label>
 						<input
 							type="text"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
 							bind:value={verifierName}
 							placeholder="请输入取药人姓名"
 						/>
@@ -583,7 +639,7 @@
 						<label class="block text-sm font-medium text-gray-700 mb-1">身份证号</label>
 						<input
 							type="text"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
 							bind:value={verifierIdCard}
 							placeholder="可选，身份证号"
 						/>
@@ -591,7 +647,7 @@
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">与患者关系</label>
 						<select
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
 							bind:value={relation}
 						>
 							<option value="">请选择</option>
@@ -604,7 +660,7 @@
 					<div>
 						<label class="block text-sm font-medium text-gray-700 mb-1">补充身份信息</label>
 						<textarea
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
 							rows={2}
 							bind:value={supplementaryInfo}
 							placeholder="可选，补充身份验证信息..."
@@ -630,38 +686,62 @@
 		</div>
 	{/if}
 
-	{#if showArchiveModal}
+	{#if showArchiveModal && isReviewer}
 		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
 			<div class="bg-white rounded-lg max-w-md w-full p-6">
-				<h3 class="text-lg font-semibold mb-4">异常归档</h3>
+				<div class="flex items-center gap-2 mb-4">
+					<h3 class="text-lg font-semibold">{prescription.status === 'DISPUTED' ? '处理争议' : '异常归档'}</h3>
+					<span class="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">{$currentUser.name}</span>
+				</div>
 				<div class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">归档原因 *</label>
-						<textarea
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-							rows={3}
-							bind:value={archiveReason}
-							placeholder="请输入归档原因..."
-						></textarea>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-gray-700 mb-1">处理结果</label>
-						<textarea
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-							rows={2}
-							bind:value={archiveResolution}
-							placeholder="可选，处理结果..."
-						></textarea>
-					</div>
-					<div class="flex items-center">
-						<input
-							type="checkbox"
-							id="disputed"
-							class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-							bind:checked={archiveDisputed}
-						/>
-						<label for="disputed" class="ml-2 block text-sm text-gray-700">存在争议，需复核</label>
-					</div>
+					{#if prescription.status === 'DISPUTED'}
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">处理结果 *</label>
+							<input
+								type="text"
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								bind:value={disputeResolution}
+								placeholder="请输入争议处理结果..."
+							/>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">争议说明</label>
+							<textarea
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								rows={2}
+								bind:value={disputeComments}
+								placeholder="可选，争议处理说明..."
+							></textarea>
+						</div>
+					{:else}
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">归档原因 *</label>
+							<textarea
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								rows={3}
+								bind:value={archiveReason}
+								placeholder="请输入归档原因..."
+							></textarea>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-gray-700 mb-1">处理结果</label>
+							<textarea
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								rows={2}
+								bind:value={archiveResolution}
+								placeholder="可选，处理结果..."
+							></textarea>
+						</div>
+						<div class="flex items-center">
+							<input
+								type="checkbox"
+								id="disputed"
+								class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+								bind:checked={archiveDisputed}
+							/>
+							<label for="disputed" class="ml-2 block text-sm text-gray-700">存在争议，需复核</label>
+						</div>
+					{/if}
 				</div>
 				<div class="mt-6 flex justify-end gap-3">
 					<button
@@ -671,11 +751,11 @@
 						取消
 					</button>
 					<button
-						on:click={submitArchive}
-						class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-						disabled={!archiveReason}
+						on:click={prescription.status === 'DISPUTED' ? resolveDispute : submitArchive}
+						class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+						disabled={prescription.status === 'DISPUTED' ? !disputeResolution : !archiveReason}
 					>
-						确认归档
+						{prescription.status === 'DISPUTED' ? '解决争议' : '确认归档'}
 					</button>
 				</div>
 			</div>
