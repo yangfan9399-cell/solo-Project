@@ -1,0 +1,99 @@
+{% if appointments %}
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">预约编号</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">患者信息</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">检查类型</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">预约时间</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">报告状态</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">记录类别</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            {% for apt in appointments %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="font-medium text-blue-600">{{ apt.appointment_no }}</span>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="font-medium text-gray-900">{{ apt.patient.name }}</div>
+                    <div class="text-sm text-gray-500">{{ apt.patient.id_card }}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="text-gray-900">{{ apt.examination_type.name }}</span>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    {% if apt.is_rescheduled %}
+                    <div class="text-sm text-gray-400 line-through">{{ apt.original_appointment_time|date:"Y-m-d H:i" }}</div>
+                    <div class="text-yellow-600 font-medium">{{ apt.current_appointment_time|date:"Y-m-d H:i" }}</div>
+                    {% else %}
+                    <div class="text-gray-900">{{ apt.current_appointment_time|date:"Y-m-d H:i" }}</div>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    {% if apt.status == 'scheduled' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">待检查</span>
+                    {% elif apt.status == 'completed' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">已完成</span>
+                    {% elif apt.status == 'rescheduled' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">已改期</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ apt.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    {% if apt.report_status == 'pending' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">待出报告</span>
+                    {% elif apt.report_status == 'ready' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
+                    {% elif apt.report_status == 'claimed' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">已领取</span>
+                    {% elif apt.report_status == 'stalled' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
+                    {% elif apt.report_status == 'verified' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">已复核</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ apt.get_report_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    {% with category=apt.get_record_category %}
+                    {% if category == '按时检查' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">{{ category }}</span>
+                    {% elif category == '患者改期' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">{{ category }}</span>
+                    {% elif category == '报告滞留' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">{{ category }}</span>
+                    {% elif apt.abnormal_records.all and apt.abnormal_records.first.abnormal_type == 'identity_mismatch' %}
+                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配</span>
+                    {% else %}
+                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ category }}</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap space-x-2">
+                    <a href="{% url 'workstation:appointment_detail' apt.id %}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</a>
+                    {% if apt.report_status == 'ready' or apt.report_status == 'stalled' %}
+                    <button onclick="openModal('{% url 'workstation:claim_report' apt.id %}')"
+                            class="text-green-600 hover:text-green-800 text-sm font-medium">领取报告</button>
+                    {% endif %}
+                    {% if apt.status == 'scheduled' or apt.status == 'rescheduled' %}
+                    <button onclick="openModal('{% url 'workstation:reschedule_appointment' apt.id %}')"
+                            class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">改期</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-12">
+    <div class="text-gray-500">暂无预约记录</div>
+</div>
+{% endif %}

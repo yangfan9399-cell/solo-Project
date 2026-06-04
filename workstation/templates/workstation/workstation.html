@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>门诊检查预约工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <style>
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline; }
+        .htmx-request.htmx-indicator { display: inline; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">门诊检查预约改期与报告领取追踪系统</h1>
+            <p class="text-gray-600 mt-2">接诊人员连续处理工作台</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div class="text-sm text-gray-500">总记录数</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.total }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="text-sm text-gray-500">按时检查</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.on_time }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+                <div class="text-sm text-gray-500">患者改期</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.rescheduled }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="text-sm text-gray-500">报告滞留</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.stalled }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                <div class="text-sm text-gray-500">身份不匹配</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.identity_mismatch }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex-1 min-w-64">
+                        <input type="text" 
+                               id="search-input"
+                               placeholder="搜索预约编号、患者姓名、身份证号..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               hx-get="{% url 'workstation:appointment_list_partial' %}"
+                               hx-trigger="keyup changed delay:500ms"
+                               hx-target="#appointment-list"
+                               hx-include="#category-filter,#status-filter"
+                               name="search">
+                    </div>
+                    <select id="category-filter" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            hx-get="{% url 'workstation:appointment_list_partial' %}"
+                            hx-trigger="change"
+                            hx-target="#appointment-list"
+                            hx-include="#search-input,#status-filter"
+                            name="category">
+                        <option value="all" {% if category_filter == 'all' %}selected{% endif %}>全部类别</option>
+                        <option value="on_time" {% if category_filter == 'on_time' %}selected{% endif %}>按时检查</option>
+                        <option value="patient_rescheduled" {% if category_filter == 'patient_rescheduled' %}selected{% endif %}>患者改期</option>
+                        <option value="report_stalled" {% if category_filter == 'report_stalled' %}selected{% endif %}>报告滞留</option>
+                        <option value="identity_mismatch" {% if category_filter == 'identity_mismatch' %}selected{% endif %}>身份不匹配</option>
+                    </select>
+                    <select id="status-filter" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            hx-get="{% url 'workstation:appointment_list_partial' %}"
+                            hx-trigger="change"
+                            hx-target="#appointment-list"
+                            hx-include="#search-input,#category-filter"
+                            name="status">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>全部状态</option>
+                        {% for status, label in AppointmentStatus.choices %}
+                        <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div id="appointment-list" class="divide-y divide-gray-200">
+                {% include 'workstation/partials/appointment_list.html' %}
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div id="modal-content" class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:beforeOnLoad', function(evt) {
+            if (evt.detail.xhr.getResponseHeader('HX-Refresh') === 'true') {
+                htmx.trigger('#appointment-list', 'refresh');
+            }
+        });
+
+        function openModal(url) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            htmx.get(url, {}, modalContent);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

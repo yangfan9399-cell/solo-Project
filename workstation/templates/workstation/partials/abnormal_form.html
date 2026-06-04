@@ -1,0 +1,81 @@
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-800">异常处理与复盘</h2>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="mb-4 p-4 bg-red-50 rounded-lg">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                {{ abnormal_record.get_abnormal_type_display }}
+            </span>
+            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                {{ abnormal_record.get_status_display }}
+            </span>
+        </div>
+        <div class="text-sm text-gray-600">
+            <span class="font-medium">预约编号:</span> {{ abnormal_record.appointment.appointment_no }}
+        </div>
+        <div class="text-sm text-gray-600 mt-1">
+            <span class="font-medium">异常描述:</span> {{ abnormal_record.description }}
+        </div>
+        {% if abnormal_record.handler %}
+        <div class="text-sm text-gray-600 mt-1">
+            <span class="font-medium">当前处理人:</span> {{ abnormal_record.handler.username }}
+        </div>
+        {% endif %}
+    </div>
+
+    <form hx-post="{% url 'workstation:handle_abnormal' abnormal_record.id %}" hx-target="this">
+        {% csrf_token %}
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">处理状态 *</label>
+                <select name="status" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="open" {% if abnormal_record.status == 'open' %}selected{% endif %}>待处理</option>
+                    <option value="in_progress" {% if abnormal_record.status == 'in_progress' %}selected{% endif %}>处理中</option>
+                    <option value="resolved" {% if abnormal_record.status == 'resolved' %}selected{% endif %}>已解决</option>
+                    <option value="closed" {% if abnormal_record.status == 'closed' %}selected{% endif %}>已关闭</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">解决方案</label>
+                <textarea name="solution" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="请输入解决方案...">{{ abnormal_record.solution }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">复盘总结</label>
+                <textarea name="review_summary" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="请输入复盘总结...">{{ abnormal_record.review_summary }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">预防措施</label>
+                <textarea name="preventive_measures" rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="请输入预防措施，避免类似问题再次发生...">{{ abnormal_record.preventive_measures }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+            <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                取消
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                保存处理
+            </button>
+        </div>
+    </form>
+</div>

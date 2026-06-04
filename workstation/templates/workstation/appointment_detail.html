@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约详情 - {{ appointment.appointment_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <div class="mb-6">
+            <a href="{% url 'workstation:workstation' %}" class="text-blue-600 hover:text-blue-800">
+                ← 返回工作台
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">预约详情</h1>
+                        <p class="text-gray-600">预约编号: {{ appointment.appointment_no }}</p>
+                    </div>
+                    <div class="space-x-2">
+                        {% if appointment.report_status == 'ready' or appointment.report_status == 'stalled' %}
+                        <button onclick="openModal('{% url 'workstation:claim_report' appointment.id %}')"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                            领取报告
+                        </button>
+                        {% endif %}
+                        {% if appointment.status == 'scheduled' or appointment.status == 'rescheduled' %}
+                        <button onclick="openModal('{% url 'workstation:reschedule_appointment' appointment.id %}')"
+                                class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                            改期处理
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">患者信息</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">姓名</span>
+                            <span class="font-medium">{{ appointment.patient.name }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">身份证号</span>
+                            <span class="font-medium">{{ appointment.patient.id_card }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">性别</span>
+                            <span class="font-medium">{{ appointment.patient.get_gender_display }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">出生日期</span>
+                            <span class="font-medium">{{ appointment.patient.birth_date }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">联系电话</span>
+                            <span class="font-medium">{{ appointment.patient.phone }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">预约信息</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">检查类型</span>
+                            <span class="font-medium">{{ appointment.examination_type.name }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">科室</span>
+                            <span class="font-medium">{{ appointment.examination_type.department }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">原预约时间</span>
+                            <span class="font-medium text-gray-400 line-through">{{ appointment.original_appointment_time|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">新预约时间</span>
+                            <span class="font-medium text-blue-600">{{ appointment.current_appointment_time|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">检查室</span>
+                            <span class="font-medium">{{ appointment.room|default:"-" }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">预约状态</span>
+                            <span class="font-medium">{{ appointment.get_status_display }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">报告状态</span>
+                            <span class="font-medium">{{ appointment.get_report_status_display }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">创建人</span>
+                            <span class="font-medium">{{ appointment.created_by.username }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if reschedules %}
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700">改期记录</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for record in reschedules %}
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">改期</span>
+                            <span class="text-sm text-gray-500 ml-2">{{ record.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <span class="text-sm text-gray-600">经办人: {{ record.operator.username }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">原时间:</span>
+                            <span class="ml-2">{{ record.old_time|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">新时间:</span>
+                            <span class="ml-2 text-yellow-600 font-medium">{{ record.new_time|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">原因:</span>
+                            <span class="ml-2">{{ record.get_reason_display }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">佐证:</span>
+                            <span class="ml-2">{{ record.evidence|default:"-" }}</span>
+                        </div>
+                    </div>
+                    {% if record.reason_detail %}
+                    <div class="mt-2 text-sm">
+                        <span class="text-gray-500">详细原因:</span>
+                        <span class="ml-2">{{ record.reason_detail }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if claims %}
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700">报告领取记录</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for record in claims %}
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2">
+                            {% if record.verification_result == 'match' %}
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">身份匹配</span>
+                            {% else %}
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">身份不匹配</span>
+                            {% endif %}
+                            {% if record.is_blocked %}
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">已阻断</span>
+                            {% endif %}
+                            <span class="text-sm text-gray-500">{{ record.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <span>经办人: {{ record.operator.username }}</span>
+                            {% if record.reviewer %}
+                            <span class="ml-4">复核人: {{ record.reviewer.username }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-sm mb-3">
+                        <div>
+                            <span class="text-gray-500">领取方式:</span>
+                            <span class="ml-2">{{ record.get_claim_type_display }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">领取人:</span>
+                            <span class="ml-2">{{ record.claimant_name }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">身份证号:</span>
+                            <span class="ml-2">{{ record.claimant_id_card }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">联系电话:</span>
+                            <span class="ml-2">{{ record.claimant_phone }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">复核状态:</span>
+                            <span class="ml-2">
+                                {% if record.review_status == 'pending' %}
+                                <span class="text-yellow-600">待复核</span>
+                                {% elif record.review_status == 'approved' %}
+                                <span class="text-green-600">已确认</span>
+                                {% else %}
+                                <span class="text-red-600">已退回</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">佐证:</span>
+                            <span class="ml-2">{{ record.evidence|default:"-" }}</span>
+                        </div>
+                    </div>
+                    {% if record.verification_notes %}
+                    <div class="mb-2 text-sm">
+                        <span class="text-gray-500">验证说明:</span>
+                        <span class="ml-2">{{ record.verification_notes }}</span>
+                    </div>
+                    {% endif %}
+                    {% if record.correction_path %}
+                    <div class="mb-2 p-3 bg-yellow-50 rounded text-sm">
+                        <span class="text-yellow-800 font-medium">补正路径:</span>
+                        <pre class="mt-1 text-yellow-700 whitespace-pre-wrap">{{ record.correction_path }}</pre>
+                    </div>
+                    {% endif %}
+                    {% if record.review_notes %}
+                    <div class="text-sm">
+                        <span class="text-gray-500">复核意见:</span>
+                        <span class="ml-2">{{ record.review_notes }}</span>
+                    </div>
+                    {% endif %}
+                    {% if record.review_status == 'pending' %}
+                    <div class="mt-3">
+                        <button onclick="openModal('{% url 'workstation:review_claim' record.id %}')"
+                                class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                            复核处理
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if abnormal_records %}
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700">异常记录与复盘</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for record in abnormal_records %}
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">{{ record.get_abnormal_type_display }}</span>
+                            <span class="text-xs 
+                                {% if record.status == 'open' %}bg-yellow-100 text-yellow-800
+                                {% elif record.status == 'resolved' %}bg-green-100 text-green-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %} px-2 py-1 rounded">
+                                {{ record.get_status_display }}
+                            </span>
+                            <span class="text-sm text-gray-500">{{ record.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        {% if record.handler %}
+                        <span class="text-sm text-gray-600">处理人: {{ record.handler.username }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3 text-sm">
+                        <span class="text-gray-500">异常描述:</span>
+                        <span class="ml-2">{{ record.description }}</span>
+                    </div>
+                    {% if record.solution %}
+                    <div class="mb-2 text-sm">
+                        <span class="text-gray-500">解决方案:</span>
+                        <span class="ml-2">{{ record.solution }}</span>
+                    </div>
+                    {% endif %}
+                    {% if record.review_summary %}
+                    <div class="mb-2 text-sm">
+                        <span class="text-gray-500">复盘总结:</span>
+                        <span class="ml-2">{{ record.review_summary }}</span>
+                    </div>
+                    {% endif %}
+                    {% if record.preventive_measures %}
+                    <div class="mb-2 text-sm">
+                        <span class="text-gray-500">预防措施:</span>
+                        <span class="ml-2">{{ record.preventive_measures }}</span>
+                    </div>
+                    {% endif %}
+                    {% if record.status != 'closed' %}
+                    <div class="mt-3">
+                        <button onclick="openModal('{% url 'workstation:handle_abnormal' record.id %}')"
+                                class="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700">
+                            处理异常
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if logs %}
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700">操作日志</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for log in logs %}
+                <div class="p-4 flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <span class="text-xs 
+                            {% if log.operation_type == 'create' %}bg-blue-100 text-blue-800
+                            {% elif log.operation_type == 'reschedule' %}bg-yellow-100 text-yellow-800
+                            {% elif log.operation_type == 'claim' %}bg-green-100 text-green-800
+                            {% elif log.operation_type == 'review' %}bg-purple-100 text-purple-800
+                            {% else %}bg-red-100 text-red-800{% endif %} px-2 py-1 rounded">
+                            {{ log.get_operation_type_display }}
+                        </span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm text-gray-900">{{ log.details }}</div>
+                        {% if log.evidence %}
+                        <div class="text-xs text-gray-500 mt-1">佐证: {{ log.evidence }}</div>
+                        {% endif %}
+                        <div class="text-xs text-gray-400 mt-1">
+                            {{ log.operator.username }} - {{ log.created_at|date:"Y-m-d H:i:s" }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div id="modal-content" class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:beforeOnLoad', function(evt) {
+            if (evt.detail.xhr.getResponseHeader('HX-Refresh') === 'true') {
+                window.location.reload();
+            }
+        });
+
+        function openModal(url) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            htmx.get(url, {}, modalContent);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
