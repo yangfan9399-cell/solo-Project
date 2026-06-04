@@ -140,10 +140,10 @@ export const workOrderApi = {
       body: JSON.stringify(data)
     }),
 
-  returnOrder: (id: string, operator: string) =>
+  returnOrder: (id: string, data: { returnReason: string; operator: string }) =>
     request<WorkOrder>(`/orders/${id}/return`, {
       method: 'PUT',
-      body: JSON.stringify({ operator })
+      body: JSON.stringify(data)
     }),
 
   getReviewByFaultType: () => request<any[]>(`/orders/review/by-fault-type`),

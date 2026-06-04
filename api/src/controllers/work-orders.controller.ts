@@ -5,7 +5,8 @@ import {
   AssignWorkOrderDto,
   RepairWorkOrderDto,
   DisputeDto,
-  AdjustFeeDto
+  AdjustFeeDto,
+  ReturnOrderDto
 } from '../dto/work-order.dto.js'
 
 @Controller('orders')
@@ -97,7 +98,7 @@ export class WorkOrdersController {
   }
 
   @Put(':id/return')
-  returnOrder(@Param('id') id: string, @Body() body: { operator: string }) {
-    return this.service.returnOrder(id, body.operator)
+  returnOrder(@Param('id') id: string, @Body() dto: ReturnOrderDto) {
+    return this.service.returnOrder(id, dto)
   }
 }

@@ -231,6 +231,13 @@
             当前工单无配件费用，无法发起争议
           </div>
           <button
+            v-if="order.status === 'pending_settlement'"
+            @click="openReturnModal"
+            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
+          >
+            退回维修中
+          </button>
+          <button
             v-if="order.status === 'pending_settlement' && !hasUnresolvedDispute"
             @click="confirmArchive"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
@@ -347,8 +354,29 @@
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-6">
-          <button @click="showAdjustModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
-          <button @click="handleAdjust" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认调整</button>
+            <button @click="showAdjustModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+            <button @click="handleAdjust" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认调整</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showReturnModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold mb-4">退回维修中</h3>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">退回原因</label>
+          <textarea
+            v-model="returnForm.returnReason"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+            placeholder="请输入退回原因，如：维修信息不完整、需补充配件费用明细等..."
+          ></textarea>
+          <p v-if="returnFormError" class="text-sm text-red-600 mt-2">{{ returnFormError }}</p>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button @click="showReturnModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+          <button @click="handleReturn" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">确认退回</button>
         </div>
       </div>
     </div>
@@ -379,6 +407,7 @@ const showAssignModal = ref(false)
 const showRepairModal = ref(false)
 const showDisputeModal = ref(false)
 const showAdjustModal = ref(false)
+const showReturnModal = ref(false)
 
 const assignForm = ref({ assigneeId: '' })
 const repairForm = ref({ repairType: 'remote_recovery', repairDuration: 30, repairNote: '' })
@@ -386,6 +415,8 @@ const disputeSelected = reactive<Record<string, { disputeReason: string }>>({})
 const disputeFormError = ref('')
 const adjustForm = ref({ adjustedPrice: 0, adjustmentReason: '' })
 const currentAdjustFee = ref<PartsFee | null>(null)
+const returnForm = ref({ returnReason: '' })
+const returnFormError = ref('')
 
 const sortedProcessNodes = computed(() => {
   if (!order.value?.processNodes) return []
@@ -533,9 +564,23 @@ const handleAdjust = async () => {
   }
 }
 
-const returnToSettlement = async () => {
+const openReturnModal = () => {
+  returnForm.value.returnReason = ''
+  returnFormError.value = ''
+  showReturnModal.value = true
+}
+
+const handleReturn = async () => {
+  if (!returnForm.value.returnReason.trim()) {
+    returnFormError.value = '请输入退回原因'
+    return
+  }
   try {
-    await workOrderApi.returnOrder(orderId.value, '财务复核')
+    await workOrderApi.returnOrder(orderId.value, {
+      returnReason: returnForm.value.returnReason.trim(),
+      operator: '财务复核'
+    })
+    showReturnModal.value = false
     loadOrder()
   } catch (error) {
     console.error('退回失败:', error)

@@ -1,16 +1,19 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository, Between, Like, FindOptionsWhere, IsNull } from 'typeorm'
-import { WorkOrder, WorkOrderStatus, FaultType } from '../entities/work-order.entity.js'
+import { WorkOrder, WorkOrderStatus } from '../entities/work-order.entity.js'
 import { PartsFee } from '../entities/parts-fee.entity.js'
 import { LaborFee } from '../entities/labor-fee.entity.js'
 import { ProcessNode } from '../entities/process-node.entity.js'
+import { Evidence } from '../entities/evidence.entity.js'
 import {
   CreateWorkOrderDto,
   AssignWorkOrderDto,
   RepairWorkOrderDto,
   DisputeDto,
-  AdjustFeeDto
+  AdjustFeeDto,
+  CreatePartsFeeDto,
+  ReturnOrderDto
 } from '../dto/work-order.dto.js'
 
 @Injectable()
@@ -282,20 +285,33 @@ export class WorkOrdersService {
     return fee
   }
 
-  async returnOrder(id: string, operator: string) {
+  async returnOrder(id: string, dto: ReturnOrderDto) {
     const order = await this.findOne(id)
-    if (order.status !== WorkOrderStatus.DISPUTED) {
-      throw new BadRequestException('只有争议中工单可以退回')
+    if (order.status !== WorkOrderStatus.DISPUTED && order.status !== WorkOrderStatus.PENDING_SETTLEMENT) {
+      throw new BadRequestException('只有争议中或待结算工单可以退回')
     }
 
-    await this.orderRepo.update(id, { status: WorkOrderStatus.PENDING_SETTLEMENT })
+    const returnReason = dto.returnReason.trim()
+    if (!returnReason) {
+      throw new BadRequestException('退回原因不能为空')
+    }
+
+    const targetStatus = order.status === WorkOrderStatus.PENDING_SETTLEMENT
+      ? WorkOrderStatus.REPAIRING
+      : WorkOrderStatus.PENDING_SETTLEMENT
+
+    const action = order.status === WorkOrderStatus.PENDING_SETTLEMENT
+      ? '退回维修中'
+      : '退回待结算'
+
+    await this.orderRepo.update(id, { status: targetStatus })
 
     await this.processNodeRepo.save({
       orderId: id,
-      action: '退回待结算',
-      operator,
+      action,
+      operator: dto.operator,
       operatorRole: 'finance',
-      note: '争议处理完成，退回待结算'
+      note: returnReason
     })
 
     return this.findOne(id)

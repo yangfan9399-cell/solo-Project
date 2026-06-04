@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, IsNumber, IsBoolean, IsArray, ValidateNested, ArrayMinSize } from 'class-validator'
+import { IsString, IsEnum, IsOptional, IsNumber, IsBoolean, IsArray, ValidateNested, ArrayMinSize, IsNotEmpty } from 'class-validator'
 import { Type } from 'class-transformer'
 import { FaultSource, FaultType } from '../entities/work-order.entity.js'
 
@@ -108,4 +108,13 @@ export class CreatePartsFeeDto {
   @IsString()
   @IsOptional()
   disputeReason?: string
+}
+
+export class ReturnOrderDto {
+  @IsString()
+  @IsNotEmpty()
+  returnReason: string
+
+  @IsString()
+  operator: string
 }
