@@ -230,6 +230,9 @@ async function seed() {
     nodeOrder: 2,
   });
 
+  const rescheduledTime3 = new Date(today);
+  rescheduledTime3.setHours(14, 0, 0, 0);
+
   await db.insert(changeLogs).values([
     {
       serviceRecordId: record3.id,
@@ -248,6 +251,24 @@ async function seed() {
       oldValue: "",
       newValue: "已重新预约今日下午再次上门",
       reason: "联系紧急联系人后，安排二次上门",
+    },
+    {
+      serviceRecordId: record3.id,
+      reviewNodeId: reviewNode3.id,
+      userId: operatorUser.id,
+      fieldName: "scheduledTime",
+      oldValue: scheduledTime3.toISOString(),
+      newValue: rescheduledTime3.toISOString(),
+      reason: "老人未接听，与紧急联系人协商后改约今日下午上门",
+    },
+    {
+      serviceRecordId: record4.id,
+      reviewNodeId: reviewNode4.id,
+      userId: operatorUser.id,
+      fieldName: "staffId",
+      oldValue: staffData[2].id,
+      newValue: staffData[0].id,
+      reason: "家属投诉护工小张服务质量，更换资深护工小王跟进处理",
     },
     {
       serviceRecordId: record5.id,

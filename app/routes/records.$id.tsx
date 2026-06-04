@@ -27,7 +27,7 @@ type ActionData = {
 };
 
 type OperatorExpandedState = false | "supplement";
-type ReviewerExpandedState = false | "approve" | "rework" | "reject";
+type ReviewerExpandedState = false | "approve" | "rework";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const id = params.id;
@@ -222,43 +222,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
           reason: approveReason,
         });
       }
-
-      return json<ActionData>({ success: true });
-    }
-
-    if (actionType === "reject") {
-      const reviewNotes = formData.get("reviewNotes") as string;
-      const rejectReason = formData.get("rejectReason") as string;
-      if (!rejectReason) return json<ActionData>({ error: "请填写采用依据" });
-
-      const existing = await db
-        .select()
-        .from(reviewNodes)
-        .where(eq(reviewNodes.id, reviewNodeId))
-        .limit(1);
-      if (existing.length === 0) return json<ActionData>({ error: "回访节点不存在" });
-
-      const oldStatus = existing[0].reviewStatus;
-
-      await db
-        .update(reviewNodes)
-        .set({
-          reviewStatus: "rejected",
-          reviewNotes: reviewNotes || existing[0].reviewNotes,
-          reviewerId: currentUserId,
-          reviewedAt: new Date(),
-        })
-        .where(eq(reviewNodes.id, reviewNodeId));
-
-      await db.insert(changeLogs).values({
-        serviceRecordId: id,
-        reviewNodeId,
-        userId: currentUserId,
-        fieldName: "reviewStatus",
-        oldValue: oldStatus,
-        newValue: "rejected",
-        reason: rejectReason,
-      });
 
       return json<ActionData>({ success: true });
     }
@@ -595,9 +558,6 @@ function ReviewNodeTimeline({
                 <button onClick={() => setReviewerExpanded("rework")} className="btn btn-warning text-sm">
                   退回补证
                 </button>
-                <button onClick={() => setReviewerExpanded("reject")} className="btn btn-danger text-sm">
-                  驳回
-                </button>
               </div>
             )}
 
@@ -643,26 +603,6 @@ function ReviewNodeTimeline({
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" className="btn btn-warning text-sm">确认退回</button>
-                  <button type="button" onClick={() => setReviewerExpanded(false)} className="btn btn-secondary text-sm">取消</button>
-                </div>
-              </Form>
-            )}
-
-            {reviewerExpanded === "reject" && (
-              <Form method="post" className="space-y-3">
-                <input type="hidden" name="actionType" value="reject" />
-                <input type="hidden" name="reviewNodeId" value={node.id} />
-                <input type="hidden" name="currentUserId" value={currentUserId} />
-                <div>
-                  <label className="label">驳回意见</label>
-                  <textarea name="reviewNotes" className="input" rows={2} placeholder="请说明驳回原因..." />
-                </div>
-                <div>
-                  <label className="label">采用依据</label>
-                  <input name="rejectReason" className="input" placeholder="请填写驳回依据（必填）" required />
-                </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="btn btn-danger text-sm">确认驳回</button>
                   <button type="button" onClick={() => setReviewerExpanded(false)} className="btn btn-secondary text-sm">取消</button>
                 </div>
               </Form>
