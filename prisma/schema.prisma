@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStatus {
+  PENDING_HANDLER
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum DocumentType {
+  ID_CARD
+  HOUSEHOLD_REGISTER
+  INCOME_PROOF
+  MEDICAL_CERTIFICATE
+  DIFFICULTY_PROOF
+  OTHER
+}
+
+enum DocumentStatus {
+  MISSING
+  PROVIDED
+  VERIFIED
+}
+
+enum SubsidyLevel {
+  LEVEL_1
+  LEVEL_2
+  LEVEL_3
+  LEVEL_4
+  LEVEL_5
+}
+
+enum ActionType {
+  SUBMIT_APPLICATION
+  UPLOAD_DOCUMENT
+  ADJUST_SUBSIDY_LEVEL
+  ADD_NOTE
+  APPROVE
+  REJECT
+  ARCHIVE
+  REOPEN
+}
+
+enum UserRole {
+  HANDLER
+  REVIEWER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  handledApplications  Application[]  @relation("Handler")
+  reviewedApplications Application[]  @relation("Reviewer")
+  approvalLogs         ApprovalLog[]
+}
+
+model Application {
+  id              String              @id @default(cuid())
+  applicantName   String
+  applicantIdCard String
+  phone           String
+  address         String
+  source          String
+  status          ApplicationStatus   @default(PENDING_HANDLER)
+  subsidyLevel    SubsidyLevel        @default(LEVEL_3)
+  originalLevel   SubsidyLevel?
+  exceedsStandard Boolean             @default(false)
+  approvalPath    String?
+  currentHandlerId String?
+  currentReviewerId String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  isArchived      Boolean             @default(false)
+  archiveReason   String?
+  archivedAt      DateTime?
+
+  familyMembers FamilyMember[]
+  documents     Document[]
+  approvalLogs  ApprovalLog[]
+  archiveRecords ArchiveRecord[]
+  reopenRecords ReopenRecord[]
+
+  currentHandler  User?     @relation("Handler", fields: [currentHandlerId], references: [id])
+  currentReviewer User?     @relation("Reviewer", fields: [currentReviewerId], references: [id])
+}
+
+model FamilyMember {
+  id             String   @id @default(cuid())
+  applicationId  String
+  name           String
+  relation       String
+  age            Int
+  occupation     String
+  monthlyIncome  Decimal  @default(0)
+  healthStatus   String
+  createdAt      DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id             String         @id @default(cuid())
+  applicationId  String
+  type           DocumentType
+  name           String
+  status         DocumentStatus
+  uploadDate     DateTime?
+  createdAt      DateTime       @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model SubsidyStandard {
+  id          String       @id @default(cuid())
+  level       SubsidyLevel @unique
+  name        String
+  minIncome   Decimal
+  maxIncome   Decimal
+  amount      Decimal
+  description String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ApprovalLog {
+  id             String     @id @default(cuid())
+  applicationId  String
+  userId         String
+  actionType     ActionType
+  description    String
+  oldValue       String?
+  newValue       String?
+  createdAt      DateTime   @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+}
+
+model ArchiveRecord {
+  id             String   @id @default(cuid())
+  applicationId  String
+  conclusion     String
+  finalAmount    Decimal
+  archivedBy     String
+  archivedAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model ReopenRecord {
+  id             String   @id @default(cuid())
+  applicationId  String
+  reopenReason   String
+  reopenedBy     String
+  originalConclusion String
+  originalAmount   Decimal
+  reopenedAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
