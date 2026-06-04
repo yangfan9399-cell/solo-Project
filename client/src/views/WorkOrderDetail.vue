@@ -20,7 +20,6 @@ import { ProcessStatus, QualityDecision, ReworkConclusion } from '@/types';
 import dayjs from 'dayjs';
 
 const route = useRoute();
-const router = useRouter();
 const userStore = useUserStore();
 const { currentUser, isOperator, isQualityInspector } = storeToRefs(userStore);
 
@@ -32,6 +31,10 @@ const showHandoverModal = ref(false);
 const showQualityModal = ref(false);
 const showReworkModal = ref(false);
 const showReworkCompleteModal = ref(false);
+
+const submittingHandover = ref(false);
+const submittingQuality = ref(false);
+const submittingRework = ref(false);
 
 const selectedProcess = ref<WorkOrderProcess | null>(null);
 const selectedHandover = ref<HandoverRecord | null>(null);
@@ -66,6 +69,8 @@ const reworkCompleteForm = ref<ReworkCompleteRequest>({
   reworkConclusion: 'REPAIRED',
   reworkNote: ''
 });
+
+const submittingReworkComplete = ref(false);
 
 const alertMessage = ref('');
 const alertType = ref<'success' | 'error' | 'warning'>('error');
@@ -150,13 +155,17 @@ async function submitHandoverForm() {
     showAlertMessage('请填写交接说明', 'warning');
     return;
   }
+  if (submittingHandover.value) return;
+  submittingHandover.value = true;
   try {
     await submitHandover(handoverForm.value);
     showAlertMessage('交接提交成功，等待质检', 'success');
     showHandoverModal.value = false;
     await loadData();
   } catch (e: any) {
-    showAlertMessage(e.message, 'error');
+    showAlertMessage(`交接提交失败: ${e.message}`, 'error');
+  } finally {
+    submittingHandover.value = false;
   }
 }
 
@@ -182,6 +191,8 @@ async function submitQualityForm() {
     showAlertMessage('归档时必须填写质检证据', 'warning');
     return;
   }
+  if (submittingQuality.value) return;
+  submittingQuality.value = true;
   try {
     await submitQuality(qualityForm.value);
     const decisionText = {
@@ -193,7 +204,9 @@ async function submitQualityForm() {
     showQualityModal.value = false;
     await loadData();
   } catch (e: any) {
-    showAlertMessage(e.message, 'error');
+    showAlertMessage(`质检操作失败: ${e.message}`, 'error');
+  } finally {
+    submittingQuality.value = false;
   }
 }
 
@@ -216,13 +229,17 @@ async function submitReworkForm() {
     showAlertMessage('请填写返修原因和返修材料', 'warning');
     return;
   }
+  if (submittingRework.value) return;
+  submittingRework.value = true;
   try {
     await submitRework(reworkForm.value);
     showAlertMessage('返修记录提交成功', 'success');
     showReworkModal.value = false;
     await loadData();
   } catch (e: any) {
-    showAlertMessage(e.message, 'error');
+    showAlertMessage(`返修提交失败: ${e.message}`, 'error');
+  } finally {
+    submittingRework.value = false;
   }
 }
 
@@ -237,13 +254,43 @@ function openReworkCompleteModal(rework: ReworkRecord) {
 
 async function submitReworkCompleteForm() {
   if (!selectedRework.value) return;
+
+  if (!reworkCompleteForm.value.reworkConclusion) {
+    showAlertMessage('请选择返修结论', 'warning');
+    return;
+  }
+
+  if (reworkCompleteForm.value.reworkConclusion === 'CONCESSION' && !reworkCompleteForm.value.reworkNote?.trim()) {
+    showAlertMessage('让步接收必须填写特批依据和评审意见', 'warning');
+    return;
+  }
+
+  if (reworkCompleteForm.value.reworkConclusion === 'SCRAPPED' && !reworkCompleteForm.value.reworkNote?.trim()) {
+    showAlertMessage('报废必须填写报废原因和补投计划', 'warning');
+    return;
+  }
+
+  if (submittingReworkComplete.value) return;
+  submittingReworkComplete.value = true;
+
   try {
+    const conclusionText = {
+      REPAIRED: '已修复',
+      SCRAPPED: '报废',
+      CONCESSION: '让步接收'
+    }[reworkCompleteForm.value.reworkConclusion];
+
     await completeRework(selectedRework.value.id, reworkCompleteForm.value);
-    showAlertMessage('返修完成提交成功', 'success');
+    showAlertMessage(`返修结论「${conclusionText}」已提交成功，数据已持久化到数据库`, 'success');
     showReworkCompleteModal.value = false;
     await loadData();
   } catch (e: any) {
-    showAlertMessage(e.message, 'error');
+    showAlertMessage(
+      `返修结论提交失败: ${e.message}。请检查网络连接后重试。`,
+      'error'
+    );
+  } finally {
+    submittingReworkComplete.value = false;
   }
 }
 
@@ -419,6 +466,7 @@ onMounted(loadData);
                   <span v-if="rework.reworkConclusion" class="status-badge" :class="rework.reworkConclusion">
                     {{ conclusionText[rework.reworkConclusion] }}
                   </span>
+                  <span v-else class="status-badge REWORKING">待填写结论</span>
                 </div>
                 <div class="record-content">
                   <p><strong>返修原因:</strong> {{ rework.reworkReason }}</p>
@@ -431,8 +479,16 @@ onMounted(loadData);
                     </span>
                   </p>
                 </div>
-                <div class="alert alert-info" style="margin-top: 8px; font-size: 12px;">
-                  <strong>返修结论:</strong> 本记录的返修结论"{{ rework.reworkConclusion ? conclusionText[rework.reworkConclusion] : '待确定' }}"是根据实际返修结果动态录入的，不是静态写死的值。
+                <div class="alert" :class="rework.reworkConclusion ? 'alert-success' : 'alert-warning'" style="margin-top: 8px; font-size: 12px;">
+                  <template v-if="rework.reworkConclusion">
+                    <strong>返修结论: {{ conclusionText[rework.reworkConclusion] }}</strong>
+                    <span v-if="rework.reworkConclusion === 'REPAIRED'"> — 返修后质量合格，已持久化到数据库 <code>rework_conclusion</code> 字段</span>
+                    <span v-else-if="rework.reworkConclusion === 'SCRAPPED'"> — 无法修复予以报废，结论已持久化，复盘页按此字段聚合统计</span>
+                    <span v-else-if="rework.reworkConclusion === 'CONCESSION'"> — 偏差可接受经特批放行，结论已持久化，证明结论不是静态写死</span>
+                  </template>
+                  <template v-else>
+                    <strong>返修进行中</strong> — 结论待操作员根据实际返修结果填写，系统不预设固定值
+                  </template>
                 </div>
                 <button
                   v-if="isOperator && !rework.reworkConclusion"
@@ -501,8 +557,10 @@ onMounted(loadData);
           <textarea v-model="handoverForm.handoverNote" placeholder="请详细描述本工序完成情况、质量状态、注意事项等"></textarea>
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showHandoverModal = false">取消</button>
-          <button class="btn btn-primary" @click="submitHandoverForm">提交交接</button>
+          <button class="btn" @click="showHandoverModal = false" :disabled="submittingHandover">取消</button>
+          <button class="btn btn-primary" @click="submitHandoverForm" :disabled="submittingHandover">
+            {{ submittingHandover ? '提交中...' : '提交交接' }}
+          </button>
         </div>
       </div>
     </div>
@@ -535,7 +593,7 @@ onMounted(loadData);
           <textarea v-model="qualityForm.evidence" placeholder="检测报告编号、三坐标数据、照片编号等"></textarea>
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showQualityModal = false">取消</button>
+          <button class="btn" @click="showQualityModal = false" :disabled="submittingQuality">取消</button>
           <button 
             class="btn" 
             :class="{
@@ -544,8 +602,9 @@ onMounted(loadData);
               'btn-primary': qualityForm.decision === 'ARCHIVE'
             }"
             @click="submitQualityForm"
+            :disabled="submittingQuality"
           >
-            确认提交
+            {{ submittingQuality ? '提交中...' : '确认提交' }}
           </button>
         </div>
       </div>
@@ -582,8 +641,10 @@ onMounted(loadData);
           <strong>返修结论说明:</strong> 返修结论根据实际返修结果动态录入，不是静态写死的值。相同的返修原因可能因为返修工艺、材料、操作人员的不同而产生不同的结论。
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showReworkModal = false">取消</button>
-          <button class="btn btn-warning" @click="submitReworkForm">提交返修</button>
+          <button class="btn" @click="showReworkModal = false" :disabled="submittingRework">取消</button>
+          <button class="btn btn-warning" @click="submitReworkForm" :disabled="submittingRework">
+            {{ submittingRework ? '提交中...' : '提交返修' }}
+          </button>
         </div>
       </div>
     </div>
@@ -592,30 +653,51 @@ onMounted(loadData);
       <div class="modal">
         <div class="modal-header">
           <h3>填写返修结论</h3>
-          <button class="modal-close" @click="showReworkCompleteModal = false">×</button>
+          <button class="modal-close" @click="showReworkCompleteModal = false" :disabled="submittingReworkComplete">×</button>
         </div>
         <div v-if="selectedRework" style="margin-bottom: 16px;">
           <div class="info-row"><span class="label">返修原因:</span><span class="value">{{ selectedRework.reworkReason }}</span></div>
+          <div class="info-row"><span class="label">返修材料:</span><span class="value">{{ selectedRework.reworkMaterials }}</span></div>
           <div class="info-row"><span class="label">已耗时:</span><span class="value">{{ getReworkDuration(selectedRework) }}</span></div>
         </div>
         <div class="form-group">
           <label>返修结论 <span style="color: var(--error-color);">*</span></label>
-          <select v-model="reworkCompleteForm.reworkConclusion">
-            <option value="REPAIRED">已修复 - 返修后合格</option>
-            <option value="SCRAPPED">报废 - 无法修复</option>
-            <option value="CONCESSION">让步接收 - 需特批</option>
+          <select v-model="reworkCompleteForm.reworkConclusion" :disabled="submittingReworkComplete">
+            <option value="REPAIRED">已修复 - 返修后质量合格，可继续流转</option>
+            <option value="SCRAPPED">报废 - 无法修复或修复成本过高，予以报废</option>
+            <option value="CONCESSION">让步接收 - 偏差可接受，经特批后放行</option>
           </select>
         </div>
         <div class="form-group">
-          <label>返修备注</label>
-          <textarea v-model="reworkCompleteForm.reworkNote" placeholder="返修效果验证、后续注意事项等"></textarea>
+          <label>返修备注 <span v-if="reworkCompleteForm.reworkConclusion === 'CONCESSION'" style="color: var(--error-color);">*</span></label>
+          <textarea 
+            v-model="reworkCompleteForm.reworkNote" 
+            :placeholder="reworkCompleteForm.reworkConclusion === 'CONCESSION' 
+              ? '让步接收必须说明特批依据、评审意见、后续跟踪措施' 
+              : reworkCompleteForm.reworkConclusion === 'SCRAPPED' 
+                ? '请说明报废原因、补投计划、影响分析' 
+                : '返修效果验证、后续注意事项等'"
+            :disabled="submittingReworkComplete"
+          ></textarea>
+        </div>
+        <div v-if="reworkCompleteForm.reworkConclusion === 'CONCESSION' && !reworkCompleteForm.reworkNote?.trim()" class="alert alert-warning" style="margin-top: 8px;">
+          让步接收需要填写特批依据和评审意见
+        </div>
+        <div v-if="reworkCompleteForm.reworkConclusion === 'SCRAPPED' && !reworkCompleteForm.reworkNote?.trim()" class="alert alert-warning" style="margin-top: 8px;">
+          报废需要说明报废原因和补投计划
         </div>
         <div class="alert alert-info" style="margin-top: 16px;">
-          <strong>动态结论证明:</strong> 此处选择的返修结论将持久化到数据库，后续可在复盘页按结论类型聚合分析。这证明返修结论是业务数据的一部分，而非静态写死的代码逻辑。
+          <strong>动态结论证明:</strong> 此处选择的返修结论「{{ { REPAIRED: '已修复', SCRAPPED: '报废', CONCESSION: '让步接收' }[reworkCompleteForm.reworkConclusion] }}」将持久化到数据库的 <code>rework_conclusion</code> 字段，复盘页按此字段动态聚合统计。这证明返修结论是业务数据的一部分，而非静态写死的代码逻辑。
         </div>
         <div class="modal-actions">
-          <button class="btn" @click="showReworkCompleteModal = false">取消</button>
-          <button class="btn btn-primary" @click="submitReworkCompleteForm">确认提交</button>
+          <button class="btn" @click="showReworkCompleteModal = false" :disabled="submittingReworkComplete">取消</button>
+          <button 
+            class="btn btn-primary" 
+            @click="submitReworkCompleteForm" 
+            :disabled="submittingReworkComplete || (reworkCompleteForm.reworkConclusion === 'CONCESSION' && !reworkCompleteForm.reworkNote?.trim())"
+          >
+            {{ submittingReworkComplete ? '提交中...' : '确认提交' }}
+          </button>
         </div>
       </div>
     </div>

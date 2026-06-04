@@ -418,6 +418,13 @@ app.put('/api/rework/:id/complete', async (request, reply) => {
       include: { operator: true }
     });
 
+    if (body.reworkConclusion === 'REPAIRED') {
+      await prisma.workOrderProcess.update({
+        where: { id: rework.processId },
+        data: { status: ProcessStatus.IN_PROGRESS }
+      });
+    }
+
     return updated;
   } catch (e) {
     if (e instanceof z.ZodError) {

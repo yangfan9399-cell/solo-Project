@@ -59,6 +59,7 @@ async function main() {
   await createRejectReworkOrder(steps, op1, op2, qi1, qi2, template, hoursAgo);
   await createSkipStepOrder(steps, op1, op3, template, hoursAgo);
   await createMultipleReworkOrder(steps, op2, op3, op4, qi1, qi2, template, hoursAgo);
+  await createMixedConclusionOrder(steps, op1, op2, op3, qi1, qi2, template, hoursAgo);
 
   console.log('Seed data created successfully!');
 }
@@ -327,6 +328,112 @@ async function createMultipleReworkOrder(steps: any[], op2: any, op3: any, op4: 
           decision: i === steps.length - 1 ? QualityDecision.ARCHIVE : QualityDecision.PASS,
           evidence: `检测合格，报告编号：QC-20260601-0${10 + i}`,
           inspectedAt: hoursAgo(96 - i * 16 - 6)
+        }
+      });
+    }
+  }
+}
+
+async function createMixedConclusionOrder(steps: any[], op1: any, op2: any, op3: any, qi1: any, qi2: any, template: any, hoursAgo: (h: number) => Date) {
+  const order = await prisma.workOrder.create({
+    data: {
+      orderNo: 'WO-2026-0601-005',
+      productName: '变速箱壳体',
+      quantity: 25,
+      templateId: template.id,
+      status: ProcessStatus.PASSED
+    }
+  });
+
+  for (let i = 0; i < 4; i++) {
+    const step = steps[i];
+    const isScrapStep = i === 2;
+    const isConcessionStep = i === 3;
+    const process = await prisma.workOrderProcess.create({
+      data: {
+        workOrderId: order.id,
+        stepId: step.id,
+        stepNumber: step.stepNumber,
+        status: ProcessStatus.PASSED,
+        startedAt: hoursAgo(60 - i * 12),
+        completedAt: hoursAgo(60 - i * 12 - 6)
+      }
+    });
+
+    const operator = i === 0 ? op1 : i === 1 ? op2 : op3;
+    const handover = await prisma.handoverRecord.create({
+      data: {
+        workOrderId: order.id,
+        processId: process.id,
+        operatorId: operator.id,
+        handoverNote: isScrapStep
+          ? `工序3-精密钻孔完成，2件孔位严重偏移无法返修，已报废`
+          : isConcessionStep
+            ? `工序4-热处理完成，3件硬度偏下限HB118，申请让步接收`
+            : `工序${step.stepNumber}-${step.name}完成，共${order.quantity}件`,
+        quantity: isScrapStep ? order.quantity - 2 : isConcessionStep ? order.quantity - 3 : order.quantity,
+        handedOverAt: hoursAgo(60 - i * 12 - 5)
+      }
+    });
+
+    if (isScrapStep) {
+      await prisma.qualityInspection.create({
+        data: {
+          handoverId: handover.id,
+          inspectorId: qi1.id,
+          processId: process.id,
+          decision: QualityDecision.REJECT,
+          rejectReason: '2件孔位偏移超过0.2mm，超出返修能力范围\n零件编号：P003、P009',
+          evidence: '三坐标检测报告：QC-20260603-SCR\n偏移量分别为0.23mm和0.25mm',
+          inspectedAt: hoursAgo(60 - i * 12 - 4)
+        }
+      });
+
+      await prisma.reworkRecord.create({
+        data: {
+          processId: process.id,
+          operatorId: op2.id,
+          reworkReason: '2件孔位偏移超差0.2mm以上，尝试返修',
+          reworkMaterials: '备用铸锭2件、专用钻模1套',
+          reworkConclusion: ReworkConclusion.SCRAPPED,
+          reworkNote: '尝试重新钻孔，但基准面已损伤无法修复，判定报废并补投2件毛坯重新加工',
+          startTime: hoursAgo(40),
+          endTime: hoursAgo(36)
+        }
+      });
+    } else if (isConcessionStep) {
+      await prisma.qualityInspection.create({
+        data: {
+          handoverId: handover.id,
+          inspectorId: qi2.id,
+          processId: process.id,
+          decision: QualityDecision.PASS,
+          evidence: '3件硬度HB118，低于标准下限HB120但仅差2个单位\n技术评审意见：不影响使用安全',
+          inspectedAt: hoursAgo(60 - i * 12 - 4)
+        }
+      });
+
+      await prisma.reworkRecord.create({
+        data: {
+          processId: process.id,
+          operatorId: op3.id,
+          reworkReason: '3件T6时效后硬度偏下限HB118（标准HB120-140）',
+          reworkMaterials: '回火炉工时2小时、硬度计检测3次',
+          reworkConclusion: ReworkConclusion.CONCESSION,
+          reworkNote: '经技术评审，HB118虽低于标准2个单位，但不影响装配强度和使用安全，经总工批准让步接收',
+          startTime: hoursAgo(30),
+          endTime: hoursAgo(28)
+        }
+      });
+    } else {
+      await prisma.qualityInspection.create({
+        data: {
+          handoverId: handover.id,
+          inspectorId: qi1.id,
+          processId: process.id,
+          decision: QualityDecision.PASS,
+          evidence: `抽检合格，报告编号：QC-20260603-0${i + 1}`,
+          inspectedAt: hoursAgo(60 - i * 12 - 4)
         }
       });
     }
