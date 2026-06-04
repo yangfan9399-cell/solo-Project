@@ -198,7 +198,18 @@ function canHandover(process: WorkOrderProcess, order: WorkOrder) {
   const lastHandover = prevProcess.handoverRecords[0];
   if (!lastHandover?.qualityInspection) return false;
   
-  return lastHandover.qualityInspection.decision !== QualityDecision.REJECT;
+  if (lastHandover.qualityInspection.decision === QualityDecision.REJECT) {
+    const hasCompletedRework = prevProcess.reworkRecords && prevProcess.reworkRecords.length > 0;
+    const lastRework = hasCompletedRework ? prevProcess.reworkRecords[0] : null;
+    const isPrevProcessPassed = prevProcess.status === ProcessStatus.PASSED || prevProcess.status === ProcessStatus.ARCHIVED;
+    
+    if (hasCompletedRework && isPrevProcessPassed && lastRework?.reworkConclusion) {
+      return true;
+    }
+    return false;
+  }
+  
+  return true;
 }
 
 function getLastHandover(process: WorkOrderProcess) {

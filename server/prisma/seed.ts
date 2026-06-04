@@ -407,8 +407,9 @@ async function createMixedConclusionOrder(steps: any[], op1: any, op2: any, op3:
           handoverId: handover.id,
           inspectorId: qi2.id,
           processId: process.id,
-          decision: QualityDecision.PASS,
-          evidence: '3件硬度HB118，低于标准下限HB120但仅差2个单位\n技术评审意见：不影响使用安全',
+          decision: QualityDecision.REJECT,
+          rejectReason: '3件硬度HB118，低于标准下限HB120\n不符合T6时效处理工艺要求',
+          evidence: '硬度检测报告：QC-20260603-CON\n3件硬度分别为HB117、HB118、HB118',
           inspectedAt: hoursAgo(60 - i * 12 - 4)
         }
       });

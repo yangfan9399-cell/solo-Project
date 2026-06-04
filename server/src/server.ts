@@ -421,6 +421,36 @@ app.post('/api/rework', async (request, reply) => {
         where: { id: body.processId },
         data: { status: ProcessStatus.REWORKING }
       });
+    } else {
+      let newProcessStatus: ProcessStatus;
+      switch (body.reworkConclusion) {
+        case 'REPAIRED':
+          newProcessStatus = ProcessStatus.IN_PROGRESS;
+          break;
+        case 'SCRAPPED':
+          newProcessStatus = ProcessStatus.PASSED;
+          break;
+        case 'CONCESSION':
+          newProcessStatus = ProcessStatus.PASSED;
+          break;
+        default:
+          newProcessStatus = ProcessStatus.IN_PROGRESS;
+      }
+
+      await prisma.workOrderProcess.update({
+        where: { id: body.processId },
+        data: { status: newProcessStatus }
+      });
+
+      const process = await prisma.workOrderProcess.findUnique({
+        where: { id: body.processId }
+      });
+      if (process) {
+        await prisma.workOrder.update({
+          where: { id: process.workOrderId },
+          data: { status: ProcessStatus.IN_PROGRESS }
+        });
+      }
     }
 
     return rework;
