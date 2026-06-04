@@ -129,10 +129,16 @@
 			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
-			if (data.blocked) {
-				error = `处方状态为"${statusLabels[data.statusCode as PrescriptionStatus]}"，无法核销！该处方已被阻断，需药师处理后方可取药。`;
-			} else {
+			if (data.alreadyPickedUp) {
+				showPickupModal = false;
 				error = data.error;
+				reloading = true;
+				await loadPrescriptionDetail();
+				reloading = false;
+			} else if (data.blocked) {
+				error = data.error;
+			} else {
+				error = data.error || '核销失败，请重试';
 			}
 		}
 	}

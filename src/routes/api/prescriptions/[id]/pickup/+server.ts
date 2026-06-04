@@ -3,12 +3,9 @@ import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
 import { PrescriptionStatus } from '@prisma/client';
 
-const BLOCKED_STATUSES = [
-  PrescriptionStatus.DOSAGE_ISSUE,
-  PrescriptionStatus.PATIENT_MISMATCH,
-  PrescriptionStatus.REJECTED,
-  PrescriptionStatus.TIMEOUT,
-  PrescriptionStatus.ARCHIVED
+const ALLOWED_PICKUP_STATUSES = [
+  PrescriptionStatus.APPROVED,
+  PrescriptionStatus.READY_FOR_PICKUP
 ];
 
 export const POST: RequestHandler = async ({ params, request }) => {
@@ -21,16 +18,38 @@ export const POST: RequestHandler = async ({ params, request }) => {
   }
 
   const prescription = await prisma.prescription.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
+    include: {
+      pickups: {
+        where: { status: 'COMPLETED' },
+        take: 1
+      }
+    }
   });
 
   if (!prescription) {
     return json({ error: '处方不存在' }, { status: 404 });
   }
 
-  if (BLOCKED_STATUSES.includes(prescription.status)) {
+  if (prescription.status === PrescriptionStatus.PICKED_UP) {
     return json({
-      error: '处方状态异常，无法核销',
+      error: '该处方已完成取药，请勿重复核销',
+      statusCode: prescription.status,
+      alreadyPickedUp: true
+    }, { status: 400 });
+  }
+
+  if (prescription.pickups.length > 0) {
+    return json({
+      error: '该处方已有已完成的取药记录，请勿重复核销',
+      statusCode: prescription.status,
+      alreadyPickedUp: true
+    }, { status: 400 });
+  }
+
+  if (!ALLOWED_PICKUP_STATUSES.includes(prescription.status)) {
+    return json({
+      error: `处方状态为「${prescription.status}」，不允许取药核销。仅「审核通过」或「待取药」状态可核销`,
       statusCode: prescription.status,
       blocked: true
     }, { status: 400 });
