@@ -121,6 +121,20 @@ def reading_detail(request, pk):
     is_blocked = reading.anomaly_type and reading.anomaly_type.block_adjustment
     check_fields = reading.anomaly_type.check_fields.split(',') if reading.anomaly_type and reading.anomaly_type.check_fields else []
 
+    status_steps = [
+        {'status': 'pending', 'label': '待处理'},
+        {'status': 'reading', 'label': '抄表员处理中'},
+        {'status': 'reviewing', 'label': '复核员处理中'},
+        {'status': 'adjusted', 'label': '已调整'},
+        {'status': 'archived', 'label': '已归档'},
+    ]
+
+    current_step_index = None
+    for i, step in enumerate(status_steps):
+        if step['status'] == reading.status:
+            current_step_index = i
+            break
+
     context = {
         'reading': reading,
         'field_note_form': field_note_form,
@@ -133,6 +147,8 @@ def reading_detail(request, pk):
         'is_blocked': is_blocked,
         'check_fields': check_fields,
         'fee_diff': (reading.adjusted_fee or reading.original_fee) - reading.original_fee,
+        'status_steps': status_steps,
+        'current_step_index': current_step_index,
     }
     return render(request, 'reading_detail.html', context)
 

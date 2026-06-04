@@ -5,7 +5,6 @@ app_name = 'meter_review'
 
 urlpatterns = [
     path('', views.queue_list, name='queue_list'),
-    path('queue/', views.queue_list, name='queue_list'),
     path('queue/load-more/', views.queue_load_more, name='queue_load_more'),
     path('reading/<int:pk>/', views.reading_detail, name='reading_detail'),
     path('reading/<int:pk>/assign/', views.assign_reading, name='assign_reading'),

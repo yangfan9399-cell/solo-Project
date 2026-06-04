@@ -134,7 +134,7 @@
                         <div class="flex-1 mx-4">
                             <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
                                 <div class="bg-blue-500 h-full flex items-center justify-end pr-2 transition-all" style="width: {% if total_stats.total > 0 %}{% widthratio item.count total_stats.total 100 %}{% else %}0{% endif %}%">
-                                    {% if item.count > 0 and total_stats.total > 0 and item.count|divisibleby:total_stats.total %}
+                                    {% if item.count > 0 and total_stats.total > 0 %}
                                     <span class="text-xs text-white font-medium">{% widthratio item.count total_stats.total 100 %}%</span>
                                     {% endif %}
                                 </div>

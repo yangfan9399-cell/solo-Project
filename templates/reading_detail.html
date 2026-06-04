@@ -4,7 +4,7 @@
 {% block title %}抄表详情 - 水务抄表复核平台{% endblock %}
 
 {% block content %}
-<div class="space-y-6" x-data="{ activeTab: 'info', adjustModal: false, returnModal: false, archiveModal: false }">
+<div class="space-y-6" x-data="{ activeTab: 'info' }">
     <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
             <a href="{% url 'meter_review:queue_list' %}" class="text-gray-400 hover:text-gray-600 transition">
@@ -52,7 +52,8 @@
             {% if can_review %}
                 {% if not is_blocked %}
                 <button 
-                    @click="adjustModal = true"
+                    hx-get="{% url 'meter_review:adjust_fee' reading.pk %}"
+                    hx-target="#modal-container"
                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                 >
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +70,8 @@
                 </div>
                 {% endif %}
                 <button 
-                    @click="returnModal = true"
+                    hx-get="{% url 'meter_review:return_reading' reading.pk %}"
+                    hx-target="#modal-container"
                     class="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
                 >
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +80,8 @@
                     退回
                 </button>
                 <button 
-                    @click="archiveModal = true"
+                    hx-get="{% url 'meter_review:archive_reading' reading.pk %}"
+                    hx-target="#modal-container"
                     class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
                 >
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,18 +360,14 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">处理进度</h3>
                 <div class="space-y-4">
-                    {% with steps="待处理,抄表员处理中,复核员处理中,已调整,已归档" %}
-                    {% for step in steps.split %}
-                    {% with forloop.counter0 as idx %}
-                    {% with status_list="pending,reading,reviewing,adjusted,archived" %}
-                    {% with status=status_list.split|slice:":1"|first %}
+                    {% for step in status_steps %}
                     <div class="flex items-center">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center 
-                            {% if reading.status == status_list.split|slice:idx:1|first %}bg-blue-600 text-white
-                            {% elif forloop.counter0 < status_list.split|dictsort:0|length and reading.status != 'returned' %}bg-green-500 text-white
+                            {% if reading.status == step.status %}bg-blue-600 text-white
+                            {% elif current_step_index and forloop.counter0 < current_step_index and reading.status != 'returned' %}bg-green-500 text-white
                             {% else %}bg-gray-200 text-gray-500
                             {% endif %}">
-                            {% if forloop.counter0 < status_list.split|dictsort:0|length and reading.status != 'returned' %}
+                            {% if current_step_index and forloop.counter0 < current_step_index and reading.status != 'returned' %}
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
@@ -377,17 +376,13 @@
                             {% endif %}
                         </div>
                         <div class="ml-3 flex-1">
-                            <p class="text-sm {% if reading.status == status_list.split|slice:idx:1|first %}text-blue-600 font-medium{% else %}text-gray-600{% endif %}">{{ step }}</p>
+                            <p class="text-sm {% if reading.status == step.status %}text-blue-600 font-medium{% else %}text-gray-600{% endif %}">{{ step.label }}</p>
                         </div>
                     </div>
                     {% if not forloop.last %}
-                    <div class="ml-4 h-6 w-0.5 {% if reading.status != 'returned' and forloop.counter0 < status_list.split|dictsort:0|length %}bg-green-500{% else %}bg-gray-200{% endif %}"></div>
+                    <div class="ml-4 h-6 w-0.5 {% if reading.status != 'returned' and current_step_index and forloop.counter0 < current_step_index %}bg-green-500{% else %}bg-gray-200{% endif %}"></div>
                     {% endif %}
-                    {% endwith %}
-                    {% endwith %}
-                    {% endwith %}
                     {% endfor %}
-                    {% endwith %}
                 </div>
                 {% if reading.status == 'returned' %}
                 <div class="mt-4 p-3 bg-orange-50 rounded-lg">
@@ -467,114 +462,5 @@
     </div>
 
     <div id="modal-container"></div>
-
-    <div x-show="adjustModal" x-transition class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="adjustModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">调整费用</h3>
-                </div>
-                <form 
-                    hx-post="{% url 'meter_review:adjust_fee' reading.pk %}"
-                    class="p-6"
-                >
-                    {% csrf_token %}
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">当前读数</label>
-                            <p class="text-lg font-bold text-gray-900">{{ reading.current_reading }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">调整后读数</label>
-                            {% render_field adjustment_form.new_reading %}
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">调整原因</label>
-                            {% render_field adjustment_form.adjustment_reason %}
-                        </div>
-                    </div>
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" @click="adjustModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                            取消
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                            确认调整
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="returnModal" x-transition class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="returnModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">退回抄表员</h3>
-                </div>
-                <form 
-                    hx-post="{% url 'meter_review:return_reading' reading.pk %}"
-                    class="p-6"
-                >
-                    {% csrf_token %}
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">退回原因</label>
-                            <textarea name="return_reason" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="请详细说明退回原因..."></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" @click="returnModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                            取消
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
-                            确认退回
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="archiveModal" x-transition class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="archiveModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">归档记录</h3>
-                </div>
-                <form 
-                    hx-post="{% url 'meter_review:archive_reading' reading.pk %}"
-                    class="p-6"
-                >
-                    {% csrf_token %}
-                    <div class="space-y-4">
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <p class="text-sm text-yellow-700">
-                                <svg class="inline h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                </svg>
-                                归档后记录将无法修改，请确认信息无误。
-                            </p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">归档说明</label>
-                            <textarea name="archive_reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="请输入归档说明..."></textarea>
-                        </div>
-                    </div>
-                    <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" @click="archiveModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                            取消
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-                            确认归档
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
