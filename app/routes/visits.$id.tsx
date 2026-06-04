@@ -188,19 +188,37 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (action === "archive") {
+    if (visit.status !== VisitStatus.CHECKED_OUT) {
+      const statusLabels: Record<string, string> = {
+        PENDING: "待入场",
+        CHECKED_IN: "已入场",
+      };
+      const currentStatus = statusLabels[visit.status] || visit.status;
+      return { error: `只有已离场记录可以归档，当前状态为「${currentStatus}」，无法归档` };
+    }
+
     await db.visit.update({
       where: { id: params.id },
       data: {
         isArchived: true,
         status: VisitStatus.ARCHIVED,
         changeLogs: {
-          create: {
-            fieldName: "status",
-            oldValue: visit.status,
-            newValue: "ARCHIVED",
-            changedBy: "李物业",
-            note: "归档记录，只读",
-          },
+          create: [
+            {
+              fieldName: "isArchived",
+              oldValue: "false",
+              newValue: "true",
+              changedBy: "李物业",
+              note: "记录已归档",
+            },
+            {
+              fieldName: "status",
+              oldValue: "CHECKED_OUT",
+              newValue: "ARCHIVED",
+              changedBy: "李物业",
+              note: "状态从已离场变更为已归档",
+            },
+          ],
         },
       },
     });
@@ -510,74 +528,85 @@ export default function VisitDetail() {
                 <h2 className="text-lg font-semibold text-gray-900">⚡ 快捷操作</h2>
               </div>
               <div className="card-body space-y-3">
-                {!visit.isArchived ? (
-                  <>
-                    <details className="w-full">
-                      <summary className="cursor-pointer p-3 bg-gray-50 rounded text-sm font-medium hover:bg-gray-100">
-                        重新处理（修改车牌/车位）
-                      </summary>
-                      <Form method="post" className="mt-3 space-y-3">
-                        <input type="hidden" name="action" value="reprocess" />
-                        <div>
-                          <label className="label text-xs">新车牌（留空则不修改）</label>
-                          <input
-                            type="text"
-                            name="newPlate"
-                            defaultValue={visit.licensePlate}
-                            className="input text-sm"
-                            placeholder="输入新车牌号"
-                          />
-                        </div>
-                        <div>
-                          <label className="label text-xs">新车位（请选择）</label>
-                          <select name="newSpotId" className="input text-sm">
-                            <option value={visit.parkingSpotId || ""}>
-                              {visit.parkingSpot 
-                                ? `${visit.parkingSpot.spotNumber} - ${visit.parkingSpot.floor} ${visit.parkingSpot.zone}（当前）`
-                                : "不修改车位"}
-                            </option>
-                            <option disabled>--- 可用车位 ---</option>
-                            {availableSpots.map((spot) => (
-                              <option key={spot.id} value={spot.id}>
-                                {spot.spotNumber} - {spot.floor} {spot.zone}
-                              </option>
-                            ))}
-                          </select>
-                          {availableSpots.length === 0 && (
-                            <p className="text-xs text-orange-600 mt-1">⚠️ 暂无其他可用车位</p>
-                          )}
-                        </div>
-                        <div>
-                          <label className="label text-xs">处理备注（必填）</label>
-                          <textarea
-                            name="reprocessNote"
-                            className="input text-sm"
-                            rows={2}
-                            placeholder="请说明重新处理的原因"
-                            required
-                          />
-                        </div>
-                        <button type="submit" className="btn btn-primary w-full text-sm">
-                          确认修改
-                        </button>
-                      </Form>
-                    </details>
-
-                    <Form method="post">
-                      <input type="hidden" name="action" value="archive" />
-                      <button
-                        type="submit"
-                        className="btn btn-secondary w-full text-sm"
-                      >
-                        📦 归档记录
-                      </button>
-                    </Form>
-                  </>
-                ) : (
+                {visit.isArchived ? (
                   <div className="text-center py-4">
-                    <p className="text-gray-500 text-sm">已归档，只读</p>
+                    <p className="text-gray-500 text-sm">已归档，不能继续修改</p>
                     <p className="text-xs text-gray-400 mt-1">如需修改请先取消归档</p>
                   </div>
+                ) : (
+                  <>
+                    {visit.status !== VisitStatus.ARCHIVED && (
+                      <details className="w-full">
+                        <summary className="cursor-pointer p-3 bg-gray-50 rounded text-sm font-medium hover:bg-gray-100">
+                          重新处理（修改车牌/车位）
+                        </summary>
+                        <Form method="post" className="mt-3 space-y-3">
+                          <input type="hidden" name="action" value="reprocess" />
+                          <div>
+                            <label className="label text-xs">新车牌（留空则不修改）</label>
+                            <input
+                              type="text"
+                              name="newPlate"
+                              defaultValue={visit.licensePlate}
+                              className="input text-sm"
+                              placeholder="输入新车牌号"
+                            />
+                          </div>
+                          <div>
+                            <label className="label text-xs">新车位（请选择）</label>
+                            <select name="newSpotId" className="input text-sm">
+                              <option value={visit.parkingSpotId || ""}>
+                                {visit.parkingSpot 
+                                  ? `${visit.parkingSpot.spotNumber} - ${visit.parkingSpot.floor} ${visit.parkingSpot.zone}（当前）`
+                                  : "不修改车位"}
+                              </option>
+                              <option disabled>--- 可用车位 ---</option>
+                              {availableSpots.map((spot) => (
+                                <option key={spot.id} value={spot.id}>
+                                  {spot.spotNumber} - {spot.floor} {spot.zone}
+                                </option>
+                              ))}
+                            </select>
+                            {availableSpots.length === 0 && (
+                              <p className="text-xs text-orange-600 mt-1">⚠️ 暂无其他可用车位</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="label text-xs">处理备注（必填）</label>
+                            <textarea
+                              name="reprocessNote"
+                              className="input text-sm"
+                              rows={2}
+                              placeholder="请说明重新处理的原因"
+                              required
+                            />
+                          </div>
+                          <button type="submit" className="btn btn-primary w-full text-sm">
+                            确认修改
+                          </button>
+                        </Form>
+                      </details>
+                    )}
+
+                    {visit.status === VisitStatus.CHECKED_OUT && (
+                      <Form method="post">
+                        <input type="hidden" name="action" value="archive" />
+                        <button
+                          type="submit"
+                          className="btn btn-secondary w-full text-sm"
+                        >
+                          📦 归档记录
+                        </button>
+                      </Form>
+                    )}
+
+                    {visit.status !== VisitStatus.CHECKED_OUT && (
+                      <div className="p-3 bg-gray-50 rounded text-xs text-gray-500">
+                        <span className="font-medium text-gray-700">💡 提示：</span>
+                        只有已离场记录可以归档
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
