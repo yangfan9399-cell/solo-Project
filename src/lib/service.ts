@@ -525,10 +525,15 @@ export async function traceFromCertificate(certId: string) {
 
   if (!cert) return null;
 
-  const materialList = await db
+  const reg = await db
     .select()
-    .from(materials)
-    .where(eq(materials.registrationId, cert.registrationId));
+    .from(registrations)
+    .where(eq(registrations.id, cert.registrationId))
+    .then((r) => r[0]);
+
+  const course = reg
+    ? await db.select().from(courses).where(eq(courses.id, reg.courseId)).then((r) => r[0])
+    : null;
 
   const logList = await db
     .select()
@@ -536,9 +541,15 @@ export async function traceFromCertificate(certId: string) {
     .where(eq(auditLogs.registrationId, cert.registrationId))
     .orderBy(desc(auditLogs.createdAt));
 
+  const snapshotEntries = cert.materialSnapshot
+    ? Object.values(cert.materialSnapshot) as Array<{ name: string; type: string; status: string; reviewNote?: string }>
+    : [];
+
   return {
     certificate: cert,
-    materials: materialList,
+    registration: reg ? { regNo: reg.regNo, applicantName: reg.applicantName, applicantIdNo: reg.applicantIdNo, source: reg.source } : null,
+    course: course ? { name: course.name, code: course.code, passingScore: course.passingScore } : null,
+    materialSnapshot: snapshotEntries,
     auditLogs: logList,
   };
 }

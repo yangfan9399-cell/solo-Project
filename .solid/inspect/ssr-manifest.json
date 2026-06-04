@@ -18,15 +18,15 @@
   "src/entry-client.tsx": [],
   "src/root.tsx": [],
   "src/routes/certificates.tsx": [
-    "/assets/certificates-535db662.js"
+    "/assets/certificates-06c31bad.js"
   ],
   "src/routes/disputes.tsx": [
-    "/assets/disputes-26006a23.js"
+    "/assets/disputes-bcaed1a8.js"
   ],
   "src/routes/index.tsx": [
-    "/assets/index-33b50b18.js"
+    "/assets/index-adb3a906.js"
   ],
   "src/routes/registrations/[id].tsx": [
-    "/assets/_id_-aa001af8.js"
+    "/assets/_id_-16903dbf.js"
   ]
 }

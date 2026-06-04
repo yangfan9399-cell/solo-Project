@@ -39859,16 +39859,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/certificates-535db662.js"
+		href: "/assets/certificates-06c31bad.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/certificates-535db662.js"
+			href: "/assets/certificates-06c31bad.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-ad851c09.js"
+			href: "/assets/entry-client-c41a01b1.js"
 		}
 	]
 },
@@ -39876,16 +39876,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/disputes-26006a23.js"
+		href: "/assets/disputes-bcaed1a8.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/disputes-26006a23.js"
+			href: "/assets/disputes-bcaed1a8.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-ad851c09.js"
+			href: "/assets/entry-client-c41a01b1.js"
 		}
 	]
 },
@@ -39893,16 +39893,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/index-33b50b18.js"
+		href: "/assets/index-adb3a906.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/index-33b50b18.js"
+			href: "/assets/index-adb3a906.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-ad851c09.js"
+			href: "/assets/entry-client-c41a01b1.js"
 		}
 	]
 },
@@ -39910,16 +39910,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/_id_-aa001af8.js"
+		href: "/assets/_id_-16903dbf.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/_id_-aa001af8.js"
+			href: "/assets/_id_-16903dbf.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-ad851c09.js"
+			href: "/assets/entry-client-c41a01b1.js"
 		}
 	]
 },
@@ -39927,12 +39927,12 @@ var manifest = {
 	type: "entry",
 	script: {
 		type: "script",
-		href: "/assets/entry-client-ad851c09.js"
+		href: "/assets/entry-client-c41a01b1.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/entry-client-ad851c09.js"
+			href: "/assets/entry-client-c41a01b1.js"
 		}
 	]
 },
@@ -79633,10 +79633,23 @@ function Body(props) {
   }
 }
 
-var _tmpl$$4 = ["<h1", ' class="text-2xl font-bold text-gray-900 mb-6">证书管理</h1>'], _tmpl$2$4 = ["<div", ' class="mt-2 text-sm"><span class="text-gray-500">审核意见：</span><!--$-->', "<!--/--></div>"], _tmpl$3$4 = ["<div", ' class="mb-4"><h3 class="font-semibold text-gray-700 mb-2">证书信息</h3><div class="grid grid-cols-2 gap-2 text-sm"><div><span class="text-gray-500">证书编号：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">持证人：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">发证人：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">发证日期：</span><!--$-->', "<!--/--></div></div><!--$-->", "<!--/--></div>"], _tmpl$4$4 = ["<div", ' class="mb-4"><h3 class="font-semibold text-gray-700 mb-2">采用的报名材料</h3><!--$-->', "<!--/--></div>"], _tmpl$5$4 = ["<div", '><h3 class="font-semibold text-gray-700 mb-2">审核流程</h3><!--$-->', "<!--/--></div>"], _tmpl$6$2 = ["<div", ' class="mt-4 border-t pt-4">', "</div>"], _tmpl$7$2 = ["<div", ' class="bg-white rounded-lg shadow p-6 mb-6"><h2 class="text-lg font-semibold text-gray-800 mb-3">证书溯源查询</h2><p class="text-sm text-gray-500 mb-3">输入证书ID，回查采用的报名材料和审核意见</p><div class="flex gap-3"><input type="text" class="border rounded px-3 py-2 text-sm flex-1" placeholder="输入证书ID..."', '><button class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">查询</button></div><!--$-->', "<!--/--></div>"], _tmpl$8$2 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><h2 class="text-lg font-semibold text-gray-800 p-6 pb-3">证书列表</h2><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left font-semibold text-gray-600">证书编号</th><th class="px-4 py-3 text-left font-semibold text-gray-600">持证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证日期</th><th class="px-4 py-3 text-left font-semibold text-gray-600">状态</th><th class="px-4 py-3 text-left font-semibold text-gray-600">审核意见</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$9$2 = ["<div", ' class="text-red-500 text-sm">未找到证书</div>'], _tmpl$0$1 = ["<div", ' class="text-gray-400 text-sm">无材料记录</div>'], _tmpl$1$1 = ["<div", ' class="flex items-center justify-between py-1 border-b last:border-0 text-sm"><span><!--$-->', "<!--/--> (<!--$-->", "<!--/-->)</span><span", ">", "</span></div>"], _tmpl$10$1 = ["<div", ' class="text-gray-400 text-sm">无审核记录</div>'], _tmpl$11$1 = ["<div", ' class="text-gray-500 text-xs">', "</div>"], _tmpl$12$1 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3 mb-2"><div class="font-medium"><!--$-->', "<!--/--> — <!--$-->", "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", '<!--/--><div class="text-xs text-gray-400">', "</div></div>"], _tmpl$13$1 = ["<div", ' class="text-center py-6 text-gray-400">暂无证书</div>'], _tmpl$14$1 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3 text-xs">', '</td><td class="px-4 py-3"><span class="', '">', '</span></td><td class="px-4 py-3 text-xs text-gray-500 max-w-48 truncate">', "</td></tr>"];
+var _tmpl$$4 = ["<h1", ' class="text-2xl font-bold text-gray-900 mb-6">证书管理</h1>'], _tmpl$2$4 = ["<div", ' class="mt-4 text-red-600 text-sm">', "</div>"], _tmpl$3$4 = ["<div", ' class="mt-4 border-t pt-4">', "</div>"], _tmpl$4$4 = ["<div", ' class="bg-white rounded-lg shadow p-6 mb-6"><h2 class="text-lg font-semibold text-gray-800 mb-3">证书溯源查询</h2><p class="text-sm text-gray-500 mb-3">输入证书ID或点击证书列表中的"溯源"按钮，回查发证时采用的报名材料和审核意见</p><div class="flex gap-3"><input type="text" class="border rounded px-3 py-2 text-sm flex-1" placeholder="输入证书ID..."', '><button class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">查询</button></div><!--$-->', "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$5$4 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><h2 class="text-lg font-semibold text-gray-800 p-6 pb-3">证书列表</h2><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left font-semibold text-gray-600">证书编号</th><th class="px-4 py-3 text-left font-semibold text-gray-600">持证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证日期</th><th class="px-4 py-3 text-left font-semibold text-gray-600">状态</th><th class="px-4 py-3 text-left font-semibold text-gray-600">审核意见</th><th class="px-4 py-3 text-left font-semibold text-gray-600">操作</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$6$2 = ["<div", ' class="text-red-500 text-sm">未找到证书</div>'], _tmpl$7$2 = ["<div", '><span class="text-gray-500">报名编号：</span><span class="font-mono">', "</span></div>"], _tmpl$8$2 = ["<div", '><span class="text-gray-500">报名来源：</span><!--$-->', "<!--/--></div>"], _tmpl$9$2 = ["<div", '><span class="text-gray-500">课程：</span><!--$-->', "<!--/-->（<!--$-->", "<!--/-->）</div>"], _tmpl$0$1 = ["<div", '><span class="text-gray-500">及格线：</span><!--$-->', "<!--/--> 分</div>"], _tmpl$1$1 = ["<div", ' class="mt-3 text-sm bg-white rounded p-2 border border-indigo-100"><span class="text-gray-500">发证审核意见：</span><span class="text-gray-800">', "</span></div>"], _tmpl$10$1 = ["<div", ' class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4"><h3 class="font-semibold text-indigo-800 mb-3">证书信息</h3><div class="grid grid-cols-2 gap-y-2 gap-x-6 text-sm"><div><span class="text-gray-500">证书编号：</span><span class="font-mono font-semibold text-indigo-700">', '</span></div><div><span class="text-gray-500">持证人：</span><span class="font-medium">', '</span></div><div><span class="text-gray-500">发证人：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">发证日期：</span><!--$-->', "<!--/--></div><!--$-->", "<!--/--><!--$-->", "<!--/--></div><!--$-->", "<!--/--></div>"], _tmpl$11$1 = ["<div", ' class="border rounded overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-gray-600 font-medium">材料名称</th><th class="px-3 py-2 text-left text-gray-600 font-medium">类型</th><th class="px-3 py-2 text-left text-gray-600 font-medium">发证时状态</th><th class="px-3 py-2 text-left text-gray-600 font-medium">审核备注</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$12$1 = ["<div", ' class="mb-4"><h3 class="font-semibold text-gray-700 mb-2">发证时采用的报名材料<span class="text-xs text-gray-400 font-normal ml-2">（发证时快照，不受后续材料变更影响）</span></h3><!--$-->', "<!--/--></div>"], _tmpl$13$1 = ["<div", '><h3 class="font-semibold text-gray-700 mb-2">审核流程</h3><!--$-->', "<!--/--></div>"], _tmpl$14$1 = ["<div", ' class="text-gray-400 text-sm">无发证时材料快照</div>'], _tmpl$15$1 = ["<tr", ' class="border-t"><td class="px-3 py-2">', '</td><td class="px-3 py-2 text-gray-500">', '</td><td class="px-3 py-2"><span', ">", '</span></td><td class="px-3 py-2 text-gray-400 text-xs">', "</td></tr>"], _tmpl$16$1 = ["<div", ' class="text-gray-400 text-sm">无审核记录</div>'], _tmpl$17$1 = ["<div", ' class="text-gray-500 text-xs">', "</div>"], _tmpl$18$1 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3 mb-2"><div class="font-medium"><!--$-->', "<!--/--> — <!--$-->", "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", '<!--/--><div class="text-xs text-gray-400">', "</div></div>"], _tmpl$19$1 = ["<div", ' class="text-center py-6 text-gray-400">暂无证书</div>'], _tmpl$20$1 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-700">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3 text-xs">', '</td><td class="px-4 py-3"><span class="', '">', '</span></td><td class="px-4 py-3 text-xs text-gray-500 max-w-48 truncate">', '</td><td class="px-4 py-3"><button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium hover:underline">溯源</button></td></tr>'];
+const STATUS_LABEL = {
+  verified: "已核实",
+  submitted: "已提交",
+  rejected: "已驳回",
+  pending: "待提交"
+};
+const STATUS_COLOR = {
+  verified: "text-green-600",
+  submitted: "text-blue-600",
+  rejected: "text-red-600",
+  pending: "text-yellow-600"
+};
 function Certificates() {
   const [traceCertId, setTraceCertId] = createSignal("");
   const [traceData, setTraceData] = createSignal(null);
+  const [traceError, setTraceError] = createSignal("");
   const fetchCerts = async () => {
     const res = await fetch("/api/certificates");
     return res.json();
@@ -79644,61 +79657,93 @@ function Certificates() {
   const [certs] = createResource(fetchCerts);
   return [createComponent(Title, {
     children: "证书管理 - 资格审核平台"
-  }), ssr(_tmpl$$4, ssrHydrationKey()), ssr(_tmpl$7$2, ssrHydrationKey(), ssrAttribute("value", escape(traceCertId(), true), false), escape(createComponent(Show, {
+  }), ssr(_tmpl$$4, ssrHydrationKey()), ssr(_tmpl$4$4, ssrHydrationKey(), ssrAttribute("value", escape(traceCertId(), true), false), escape(createComponent(Show, {
+    get when() {
+      return traceError();
+    },
+    get children() {
+      return ssr(_tmpl$2$4, ssrHydrationKey(), escape(traceError()));
+    }
+  })), escape(createComponent(Show, {
     get when() {
       return traceData();
     },
     get children() {
-      return ssr(_tmpl$6$2, ssrHydrationKey(), escape(createComponent(Show, {
+      return ssr(_tmpl$3$4, ssrHydrationKey(), escape(createComponent(Show, {
         get when() {
           return traceData().certificate;
         },
         get fallback() {
-          return ssr(_tmpl$9$2, ssrHydrationKey());
+          return ssr(_tmpl$6$2, ssrHydrationKey());
         },
         get children() {
-          return [ssr(_tmpl$3$4, ssrHydrationKey(), escape(traceData().certificate.certNo), escape(traceData().certificate.applicantName), escape(traceData().certificate.issuedBy), escape(new Date(traceData().certificate.issuedAt).toLocaleDateString("zh-CN")), escape(createComponent(Show, {
-            get when() {
-              return traceData().certificate.reviewOpinion;
-            },
-            get children() {
-              return ssr(_tmpl$2$4, ssrHydrationKey(), escape(traceData().certificate.reviewOpinion));
-            }
-          }))), ssr(_tmpl$4$4, ssrHydrationKey(), escape(createComponent(For, {
-            get each() {
-              return traceData().materials ?? [];
-            },
-            get fallback() {
-              return ssr(_tmpl$0$1, ssrHydrationKey());
-            },
-            children: (mat) => ssr(_tmpl$1$1, ssrHydrationKey(), escape(mat.name), escape(mat.type), ssrAttribute("class", mat.status === "verified" ? "text-green-600" : "text-gray-400", false), mat.status === "verified" ? "已核实" : escape(mat.status))
-          }))), ssr(_tmpl$5$4, ssrHydrationKey(), escape(createComponent(For, {
-            get each() {
-              return traceData().auditLogs ?? [];
-            },
-            get fallback() {
-              return ssr(_tmpl$10$1, ssrHydrationKey());
-            },
-            children: (log) => ssr(_tmpl$12$1, ssrHydrationKey(), escape(log.action), escape(log.operator), log.operatorRole === "handler" ? "经办人" : "复核人", escape(createComponent(Show, {
+          return (() => {
+            const td = traceData();
+            const cert = td.certificate;
+            return [ssr(_tmpl$10$1, ssrHydrationKey(), escape(cert.certNo), escape(cert.applicantName), escape(cert.issuedBy), escape(new Date(cert.issuedAt).toLocaleDateString("zh-CN")), escape(createComponent(Show, {
               get when() {
-                return log.detail;
+                return td.registration;
               },
               get children() {
-                return ssr(_tmpl$11$1, ssrHydrationKey(), escape(log.detail));
+                return [ssr(_tmpl$7$2, ssrHydrationKey(), escape(td.registration.regNo)), ssr(_tmpl$8$2, ssrHydrationKey(), escape(td.registration.source))];
               }
-            })), escape(new Date(log.createdAt).toLocaleString("zh-CN")))
-          })))];
+            })), escape(createComponent(Show, {
+              get when() {
+                return td.course;
+              },
+              get children() {
+                return [ssr(_tmpl$9$2, ssrHydrationKey(), escape(td.course.name), escape(td.course.code)), ssr(_tmpl$0$1, ssrHydrationKey(), escape(td.course.passingScore))];
+              }
+            })), escape(createComponent(Show, {
+              get when() {
+                return cert.reviewOpinion;
+              },
+              get children() {
+                return ssr(_tmpl$1$1, ssrHydrationKey(), escape(cert.reviewOpinion));
+              }
+            }))), ssr(_tmpl$12$1, ssrHydrationKey(), escape(createComponent(Show, {
+              get when() {
+                return (td.materialSnapshot ?? []).length > 0;
+              },
+              get fallback() {
+                return ssr(_tmpl$14$1, ssrHydrationKey());
+              },
+              get children() {
+                return ssr(_tmpl$11$1, ssrHydrationKey(), escape(createComponent(For, {
+                  get each() {
+                    return td.materialSnapshot ?? [];
+                  },
+                  children: (mat) => ssr(_tmpl$15$1, ssrHydrationKey(), escape(mat.name), escape(mat.type), ssrAttribute("class", escape(STATUS_COLOR[mat.status] || "text-gray-400", true), false), escape(STATUS_LABEL[mat.status] || mat.status), escape(mat.reviewNote || "-"))
+                })));
+              }
+            }))), ssr(_tmpl$13$1, ssrHydrationKey(), escape(createComponent(For, {
+              get each() {
+                return td.auditLogs ?? [];
+              },
+              get fallback() {
+                return ssr(_tmpl$16$1, ssrHydrationKey());
+              },
+              children: (log) => ssr(_tmpl$18$1, ssrHydrationKey(), escape(log.action), escape(log.operator), log.operatorRole === "handler" ? "经办人" : "复核人", escape(createComponent(Show, {
+                get when() {
+                  return log.detail;
+                },
+                get children() {
+                  return ssr(_tmpl$17$1, ssrHydrationKey(), escape(log.detail));
+                }
+              })), escape(new Date(log.createdAt).toLocaleString("zh-CN")))
+            })))];
+          })();
         }
       })));
     }
-  }))), ssr(_tmpl$8$2, ssrHydrationKey(), escape(createComponent(For, {
+  }))), ssr(_tmpl$5$4, ssrHydrationKey(), escape(createComponent(For, {
     get each() {
       return certs() ?? [];
     },
     get fallback() {
-      return ssr(_tmpl$13$1, ssrHydrationKey());
+      return ssr(_tmpl$19$1, ssrHydrationKey());
     },
-    children: (cert) => ssr(_tmpl$14$1, ssrHydrationKey(), escape(cert.certNo), escape(cert.applicantName), escape(cert.issuedBy), escape(new Date(cert.issuedAt).toLocaleDateString("zh-CN")), `px-2 py-1 rounded text-xs font-medium ${cert.status === "active" ? "bg-green-100 text-green-700" : cert.status === "archived" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"}`, cert.status === "active" ? "有效" : cert.status === "archived" ? "已归档" : "已撤销", escape(cert.reviewOpinion || "-"))
+    children: (cert) => ssr(_tmpl$20$1, ssrHydrationKey(), escape(cert.certNo), escape(cert.applicantName), escape(cert.issuedBy), escape(new Date(cert.issuedAt).toLocaleDateString("zh-CN")), `px-2 py-1 rounded text-xs font-medium ${cert.status === "active" ? "bg-green-100 text-green-700" : cert.status === "archived" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"}`, cert.status === "active" ? "有效" : cert.status === "archived" ? "已归档" : "已撤销", escape(cert.reviewOpinion || "-"))
   })))];
 }
 
@@ -80707,11 +80752,15 @@ async function traceFromCertificate(certId) {
   const cert = await db.select().from(certificates).where(eq(certificates.id, certId)).then((r) => r[0]);
   if (!cert)
     return null;
-  const materialList = await db.select().from(materials).where(eq(materials.registrationId, cert.registrationId));
+  const reg = await db.select().from(registrations).where(eq(registrations.id, cert.registrationId)).then((r) => r[0]);
+  const course = reg ? await db.select().from(courses).where(eq(courses.id, reg.courseId)).then((r) => r[0]) : null;
   const logList = await db.select().from(auditLogs).where(eq(auditLogs.registrationId, cert.registrationId)).orderBy(desc(auditLogs.createdAt));
+  const snapshotEntries = cert.materialSnapshot ? Object.values(cert.materialSnapshot) : [];
   return {
     certificate: cert,
-    materials: materialList,
+    registration: reg ? { regNo: reg.regNo, applicantName: reg.applicantName, applicantIdNo: reg.applicantIdNo, source: reg.source } : null,
+    course: course ? { name: course.name, code: course.code, passingScore: course.passingScore } : null,
+    materialSnapshot: snapshotEntries,
     auditLogs: logList
   };
 }
