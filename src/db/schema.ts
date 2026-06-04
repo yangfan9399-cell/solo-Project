@@ -134,6 +134,7 @@ export const disputes = mysqlTable(
   {
     id: varchar("id", { length: 36 }).primaryKey(),
     registrationId: varchar("registration_id", { length: 36 }).notNull(),
+    conflictRegNo: varchar("conflict_reg_no", { length: 20 }),
     reason: text("reason").notNull(),
     status: mysqlEnum("status", ["open", "under_review", "resolved", "rejected"])
       .notNull()

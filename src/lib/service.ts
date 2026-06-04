@@ -559,10 +559,19 @@ export async function createDispute(data: {
   reason: string;
   submittedBy: string;
 }) {
+  const reg = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, data.registrationId))
+    .then((r) => r[0]);
+
+  if (!reg) throw new Error("报名记录不存在");
+
   const id = randomUUID();
   await db.insert(disputes).values({
     id,
     registrationId: data.registrationId,
+    conflictRegNo: reg.conflictRegNo,
     reason: data.reason,
     submittedBy: data.submittedBy,
   });
@@ -573,10 +582,12 @@ export async function createDispute(data: {
     action: "create_dispute",
     operator: data.submittedBy,
     operatorRole: "handler",
-    detail: `提交资格争议：${data.reason}`,
+    detail: reg.conflictRegNo
+      ? `提交资格争议（重复报名，冲突编号：${reg.conflictRegNo}）：${data.reason}`
+      : `提交资格争议：${data.reason}`,
   });
 
-  return { id };
+  return { id, conflictRegNo: reg.conflictRegNo };
 }
 
 export async function resolveDispute(disputeId: string, data: {
@@ -592,6 +603,14 @@ export async function resolveDispute(disputeId: string, data: {
 
   if (!dispute) throw new Error("争议记录不存在");
 
+  const reg = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, dispute.registrationId))
+    .then((r) => r[0]);
+
+  if (!reg) throw new Error("报名记录不存在");
+
   await db
     .update(disputes)
     .set({
@@ -605,18 +624,47 @@ export async function resolveDispute(disputeId: string, data: {
   if (data.status === "resolved") {
     await db
       .update(registrations)
-      .set({ status: "under_review", updatedAt: new Date() })
+      .set({
+        status: "under_review",
+        currentRole: "reviewer",
+        currentAssignee: "复核人",
+        updatedAt: new Date(),
+      })
       .where(eq(registrations.id, dispute.registrationId));
-  }
 
-  await db.insert(auditLogs).values({
-    id: randomUUID(),
-    registrationId: dispute.registrationId,
-    action: "resolve_dispute",
-    operator: data.resolvedBy,
-    operatorRole: "reviewer",
-    detail: `争议${data.status === "resolved" ? "解决" : "驳回"}：${data.resolution}`,
-  });
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: dispute.registrationId,
+      action: "resolve_dispute",
+      operator: data.resolvedBy,
+      operatorRole: "reviewer",
+      detail: dispute.conflictRegNo
+        ? `争议解决：${data.resolution}（此前为重复报名，冲突编号：${dispute.conflictRegNo}，保留冲突信息供审核参考）`
+        : `争议解决：${data.resolution}`,
+    });
+  } else {
+    if (reg.status === "duplicate") {
+      await db
+        .update(registrations)
+        .set({
+          currentRole: "handler",
+          currentAssignee: "经办人",
+          updatedAt: new Date(),
+        })
+        .where(eq(registrations.id, dispute.registrationId));
+    }
+
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: dispute.registrationId,
+      action: "resolve_dispute",
+      operator: data.resolvedBy,
+      operatorRole: "reviewer",
+      detail: dispute.conflictRegNo
+        ? `争议驳回：${data.resolution}（保持重复报名状态，证书阻断继续生效，冲突编号：${dispute.conflictRegNo}）`
+        : `争议驳回：${data.resolution}`,
+    });
+  }
 }
 
 export async function getDisputes(regId?: string) {

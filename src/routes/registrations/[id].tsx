@@ -143,7 +143,7 @@ export default function RegistrationDetail() {
   const handleSubmitDispute = async () => {
     const reason = prompt("请输入争议原因：");
     if (!reason) return;
-    await fetch("/api/disputes", {
+    const res = await fetch("/api/disputes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -153,7 +153,14 @@ export default function RegistrationDetail() {
         submittedBy: "经办人王明",
       }),
     });
-    setActionMsg("争议已提交");
+    const data = await res.json();
+    if (data.error) {
+      setActionMsg(data.error);
+    } else if (data.conflictRegNo) {
+      setActionMsg(`资格争议已提交（重复报名，冲突编号：${data.conflictRegNo}）`);
+    } else {
+      setActionMsg("资格争议已提交");
+    }
     refetch();
   };
 
@@ -186,12 +193,22 @@ export default function RegistrationDetail() {
 
                 <Show when={reg.status === "duplicate"}>
                   <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-center gap-2 text-red-700 font-semibold">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                      重复报名 — 冲突报名编号：
-                      <span class="font-mono text-lg">{reg.conflictRegNo}</span>
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 text-red-700 font-semibold">
+                          <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                          重复报名 — 冲突报名编号：
+                          <span class="font-mono text-lg">{reg.conflictRegNo}</span>
+                        </div>
+                        <p class="text-red-600 text-sm mt-1">该报名与已有报名冲突，证书发放已被阻断。</p>
+                      </div>
+                      <button
+                        class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 flex-shrink-0"
+                        onClick={handleSubmitDispute}
+                      >
+                        提交资格争议
+                      </button>
                     </div>
-                    <p class="text-red-600 text-sm mt-1">该报名与已有报名冲突，证书发放已被阻断。如需处理请提交资格争议。</p>
                   </div>
                 </Show>
 
@@ -306,19 +323,52 @@ export default function RegistrationDetail() {
                           {(dis: any) => (
                             <div class="py-3 border-b last:border-0">
                               <div class="flex items-center justify-between text-sm mb-1">
-                                <span class={`px-2 py-0.5 rounded text-xs ${
-                                  dis.status === "open" ? "bg-yellow-100 text-yellow-700" :
-                                  dis.status === "under_review" ? "bg-blue-100 text-blue-700" :
-                                  dis.status === "resolved" ? "bg-green-100 text-green-700" :
-                                  "bg-red-100 text-red-700"
-                                }`}>
-                                  {dis.status === "open" ? "待处理" : dis.status === "under_review" ? "处理中" : dis.status === "resolved" ? "已解决" : "已驳回"}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                  <span class={`px-2 py-0.5 rounded text-xs ${
+                                    dis.status === "open" ? "bg-yellow-100 text-yellow-700" :
+                                    dis.status === "under_review" ? "bg-blue-100 text-blue-700" :
+                                    dis.status === "resolved" ? "bg-green-100 text-green-700" :
+                                    "bg-red-100 text-red-700"
+                                  }`}>
+                                    {dis.status === "open" ? "待处理" : dis.status === "under_review" ? "处理中" : dis.status === "resolved" ? "已解决" : "已驳回"}
+                                  </span>
+                                  <Show when={dis.conflictRegNo}>
+                                    <span class="text-xs text-gray-400 font-mono">
+                                      冲突：{dis.conflictRegNo}
+                                    </span>
+                                  </Show>
+                                </div>
                                 <span class="text-xs text-gray-400">{new Date(dis.createdAt).toLocaleString("zh-CN")}</span>
                               </div>
-                              <div class="text-sm text-gray-700">{dis.reason}</div>
-                              <Show when={dis.resolution}>
-                                <div class="text-sm text-gray-500 mt-1">处理结果：{dis.resolution}</div>
+                              <div class="text-sm text-gray-700">
+                                <span class="text-xs text-gray-400">{dis.submittedBy}：</span>
+                                {dis.reason}
+                              </div>
+                              <Show when={dis.status === "resolved"}>
+                                <div class="mt-1 p-2 bg-green-50 border border-green-100 rounded text-sm">
+                                  <div class="text-green-700">
+                                    <span class="font-medium">已解决：</span>
+                                    {dis.resolution}
+                                  </div>
+                                  <Show when={dis.conflictRegNo}>
+                                    <div class="text-green-600 text-xs mt-0.5">
+                                      此为重复报名争议，冲突编号「{dis.conflictRegNo}」已保留供审核参考，报名已转入复核人待审
+                                    </div>
+                                  </Show>
+                                </div>
+                              </Show>
+                              <Show when={dis.status === "rejected"}>
+                                <div class="mt-1 p-2 bg-red-50 border border-red-100 rounded text-sm">
+                                  <div class="text-red-700">
+                                    <span class="font-medium">已驳回：</span>
+                                    {dis.resolution}
+                                  </div>
+                                  <Show when={dis.conflictRegNo}>
+                                    <div class="text-red-600 text-xs mt-0.5">
+                                      保持重复报名状态，证书阻断继续生效（冲突编号：{dis.conflictRegNo}），当前责任已退回经办人
+                                    </div>
+                                  </Show>
+                                </div>
                               </Show>
                               <Show when={dis.status === "open"}>
                                 <div class="mt-2 flex gap-2">
