@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RepairStatus {
+  SUBMITTED
+  ASSIGNED
+  IN_PROGRESS
+  PARTS_SHORTAGE
+  PENDING_ACCEPTANCE
+  ACCEPTED
+  REJECTED
+  ARCHIVED
+}
+
+enum DeviceType {
+  PROJECTOR
+  COMPUTER
+  AIR_CONDITIONER
+  LIGHTING
+  OTHER
+}
+
+enum UserRole {
+  SUBMITTER
+  TECHNICIAN
+  INSPECTOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      UserRole
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  submittedRepairs   RepairOrder[] @relation("submitter")
+  assignedRepairs    RepairOrder[] @relation("technician")
+  inspectionRepairs  RepairOrder[] @relation("inspector")
+  repairLogs         RepairLog[]
+  inspectionRecords  InspectionRecord[]
+}
+
+model RepairOrder {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  title           String
+  description     String
+  deviceType      DeviceType
+  deviceLocation  String
+  source          String
+  images          String[]
+  status          RepairStatus  @default(SUBMITTED)
+  reworkCount     Int           @default(0)
+  
+  submitterId     String
+  submitter       User          @relation("submitter", fields: [submitterId], references: [id])
+  
+  technicianId    String?
+  technician      User?         @relation("technician", fields: [technicianId], references: [id])
+  
+  inspectorId     String?
+  inspector       User?         @relation("inspector", fields: [inspectorId], references: [id])
+  
+  blockingReason  String?
+  partsNeeded     String?
+  estimatedDelay  Int?
+  
+  submittedAt     DateTime      @default(now())
+  assignedAt      DateTime?
+  completedAt     DateTime?
+  inspectedAt     DateTime?
+  archivedAt      DateTime?
+  
+  logs            RepairLog[]
+  inspections     InspectionRecord[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
+
+  @@index([status])
+  @@index([deviceType])
+  @@index([submitterId])
+  @@index([technicianId])
+}
+
+model RepairLog {
+  id             String        @id @default(cuid())
+  repairOrderId  String
+  repairOrder    RepairOrder   @relation(fields: [repairOrderId], references: [id])
+  technicianId   String
+  technician     User          @relation(fields: [technicianId], references: [id])
+  action         String
+  description    String
+  partsUsed      String?
+  timeSpentMinutes Int?
+  createdAt      DateTime      @default(now())
+}
+
+model InspectionRecord {
+  id             String        @id @default(cuid())
+  repairOrderId  String
+  repairOrder    RepairOrder   @relation(fields: [repairOrderId], references: [id])
+  inspectorId    String
+  inspector      User          @relation(fields: [inspectorId], references: [id])
+  result         Boolean
+  comments       String
+  createdAt      DateTime      @default(now())
+}
