@@ -108,15 +108,18 @@ export const useSubmitRectification = routeAction$(
     }> = [];
 
     const afterPhotoUrl = form.afterPhotoUrl;
+    const afterPhotoDescription = form.afterPhotoDescription;
     const processPhotoUrl = form.processPhotoUrl;
+    const processPhotoDescription = form.processPhotoDescription;
     const locationPhotoUrl = form.locationPhotoUrl;
+    const locationPhotoDescription = form.locationPhotoDescription;
 
     if (afterPhotoUrl) {
       evidenceData.push({
         type: "AFTER_PHOTO",
         url: afterPhotoUrl,
         thumbnailUrl: afterPhotoUrl,
-        description: `整改后照片：${inspection.building.name}`,
+        description: afterPhotoDescription || "整改后照片",
       });
     }
 
@@ -125,7 +128,7 @@ export const useSubmitRectification = routeAction$(
         type: "PROCESS_PHOTO",
         url: processPhotoUrl,
         thumbnailUrl: processPhotoUrl,
-        description: "整改过程照片",
+        description: processPhotoDescription || "整改过程照片",
       });
     }
 
@@ -134,7 +137,7 @@ export const useSubmitRectification = routeAction$(
         type: "LOCATION_PHOTO",
         url: locationPhotoUrl,
         thumbnailUrl: locationPhotoUrl,
-        description: `位置确认照片：${inspection.building.name}`,
+        description: locationPhotoDescription || "位置确认照片",
       });
     }
 
@@ -167,12 +170,12 @@ export const useSubmitRectification = routeAction$(
       const allEvidences = [...inspection.evidences, ...createdEvidences];
       const evidenceValidation = validateEvidences(allEvidences);
 
-      const photoDescriptions = allEvidences
+      const submittedPhotoDescriptions = evidenceData
         .map(e => e.description)
         .filter(Boolean)
         .join(" ");
       const buildingMatchResult = validateBuildingMatch(
-        photoDescriptions,
+        submittedPhotoDescriptions,
         inspection.building.name,
         inspection.building.code
       );
@@ -234,8 +237,11 @@ export const useSubmitRectification = routeAction$(
   zod$({
     description: z.string().min(1, "整改说明不能为空"),
     afterPhotoUrl: z.string().optional(),
+    afterPhotoDescription: z.string().optional(),
     processPhotoUrl: z.string().optional(),
+    processPhotoDescription: z.string().optional(),
     locationPhotoUrl: z.string().optional(),
+    locationPhotoDescription: z.string().optional(),
   })
 );
 
@@ -291,6 +297,20 @@ export const useReviewAction = routeAction$(
 
     const isEvidenceMissing = !evidenceValidation.isValid;
 
+    const returnReason = isBuildingMismatch
+      ? "责任楼栋不匹配"
+      : isEvidenceMissing
+      ? `证据缺失：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`
+      : null;
+    const remediationPath = isBuildingMismatch
+      ? getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code)
+      : isEvidenceMissing
+      ? getRemediationPath(evidenceValidation.missingTypes)
+      : null;
+    const fullReturnContent = returnReason
+      ? `${returnReason}。${remediationPath}`
+      : null;
+
     await prisma.$transaction(async (tx) => {
       const toStatus = actionType === "APPROVE"
         ? "CLOSED"
@@ -298,28 +318,26 @@ export const useReviewAction = routeAction$(
         ? "RETURNED"
         : "ARCHIVED";
 
-      const hasAutoComment = (actionType === "RETURN" && (isEvidenceMissing || isBuildingMismatch));
-      const autoComment = isBuildingMismatch
-        ? "责任楼栋不匹配"
-        : isEvidenceMissing
-        ? `证据缺失：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`
-        : null;
+      const hasAutoComment = (actionType === "RETURN" && returnReason !== null);
+      const finalComment = comment || (hasAutoComment ? returnReason : null);
 
       const reviewAction = await tx.reviewAction.create({
         data: {
           inspectionId,
           rectificationId,
           actionType: actionType as ReviewActionType,
-          comment: comment || (hasAutoComment ? autoComment : null),
+          comment: finalComment,
           reviewedById: currentUser.id,
           missingTypes: evidenceValidation.missingTypes,
-          remediationPath: isBuildingMismatch
-            ? getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code)
-            : isEvidenceMissing
-            ? getRemediationPath(evidenceValidation.missingTypes)
-            : null,
+          remediationPath,
         },
       });
+
+      const historyDescription = actionType === "APPROVE"
+        ? `${currentUser.name} 复核通过，完成销项`
+        : actionType === "RETURN"
+        ? `${currentUser.name} 退回整改，原因：${finalComment || "请重新整改后再次提交"}`
+        : `${currentUser.name} 归档记录`;
 
       const transitionResult = await validateAndTransitionState(
         {
@@ -328,13 +346,7 @@ export const useReviewAction = routeAction$(
           toStatus: toStatus as any,
           operatorId: currentUser.id,
           actionType: actionType === "APPROVE" ? "REVIEW_APPROVE" : actionType === "RETURN" ? "RETURN" : "ARCHIVE",
-          description: `${currentUser.name} ${
-            actionType === "APPROVE"
-              ? "复核通过，完成销项"
-              : actionType === "RETURN"
-              ? "退回整改"
-              : "归档记录"
-          }${comment ? `，备注：${comment}` : ""}`,
+          description: historyDescription,
           reviewActionId: reviewAction.id,
         },
         tx
@@ -366,7 +378,7 @@ export const useReviewAction = routeAction$(
       const notificationContent = actionType === "APPROVE"
         ? `您提交的整改申请（${inspection.inspectionNo}）已通过复核，完成销项。`
         : actionType === "RETURN"
-        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，原因：${comment || "请重新整改后再次提交"}。`
+        ? `您提交的整改申请（${inspection.inspectionNo}）被退回，原因：${finalComment || "请重新整改后再次提交"}。${remediationPath ? `补救路径：${remediationPath}` : ""}`
         : `巡查记录（${inspection.inspectionNo}）已归档。`;
 
       const notifyUsers = [inspection.createdById, inspection.assignedToId].filter(Boolean) as string[];
@@ -415,9 +427,9 @@ export default component$(() => {
   const canReview = (currentUser?.role === "REVIEWER") && inspection.status === "PENDING_REVIEW";
 
   const sampleImages = [
-    { type: "AFTER_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/after-demo/600/400", label: "整改后照片" },
-    { type: "PROCESS_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/process-demo/600/400", label: "过程照片" },
-    { type: "LOCATION_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/location-demo/600/400", label: "位置照片" },
+    { type: "AFTER_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/after-demo/600/400", label: "整改后照片", description: `${inspection.building.name}西侧垃圾桶旁整改后` },
+    { type: "PROCESS_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/process-demo/600/400", label: "过程照片", description: `${inspection.building.name}清运作业中` },
+    { type: "LOCATION_PHOTO" as EvidenceType, url: "https://picsum.photos/seed/location-demo/600/400", label: "位置照片", description: `${inspection.building.name}单元门口位置确认` },
   ];
 
   useVisibleTask$(() => {
@@ -790,13 +802,20 @@ export default component$(() => {
                           key={idx}
                           class="cursor-pointer group"
                           onClick$={() => {
-                            const inputId = img.type === "AFTER_PHOTO"
+                            const urlInputId = img.type === "AFTER_PHOTO"
                               ? "afterPhotoUrl"
                               : img.type === "PROCESS_PHOTO"
                               ? "processPhotoUrl"
                               : "locationPhotoUrl";
-                            const input = document.getElementById(inputId) as HTMLInputElement;
-                            if (input) input.value = img.url;
+                            const descInputId = img.type === "AFTER_PHOTO"
+                              ? "afterPhotoDescription"
+                              : img.type === "PROCESS_PHOTO"
+                              ? "processPhotoDescription"
+                              : "locationPhotoDescription";
+                            const urlInput = document.getElementById(urlInputId) as HTMLInputElement;
+                            const descInput = document.getElementsByName(descInputId)[0] as HTMLInputElement;
+                            if (urlInput) urlInput.value = img.url;
+                            if (descInput && img.description) descInput.value = img.description;
                           }}
                         >
                           <img
@@ -825,6 +844,17 @@ export default component$(() => {
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="https://..."
                       />
+                      <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          照片说明 <span class="text-gray-400 text-xs">（建议包含楼栋名称，如"2号楼"）</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="afterPhotoDescription"
+                          class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                          placeholder="例：2号楼西侧垃圾桶旁整改后"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -840,6 +870,17 @@ export default component$(() => {
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="https://..."
                       />
+                      <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          照片说明
+                        </label>
+                        <input
+                          type="text"
+                          name="processPhotoDescription"
+                          class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                          placeholder="例：5号楼清运作业中"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -855,6 +896,17 @@ export default component$(() => {
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="https://..."
                       />
+                      <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                          照片说明
+                        </label>
+                        <input
+                          type="text"
+                          name="locationPhotoDescription"
+                          class="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                          placeholder="例：3号楼单元门口位置确认"
+                        />
+                      </div>
                     </div>
                   </div>
 

@@ -44,11 +44,6 @@ export const useSubmitRectification = routeAction$(
       const createdEvidences = [];
       for (const ev of evidenceData) {
         const evData = typeof ev === "string" ? JSON.parse(ev) : ev;
-        const buildingCheck = validateBuildingMatch(
-          evData.description || "",
-          inspection.building.name,
-          inspection.building.code
-        );
 
         const evidence = await tx.evidence.create({
           data: {
@@ -67,22 +62,25 @@ export const useSubmitRectification = routeAction$(
       const allEvidences = [...inspection.evidences, ...createdEvidences];
       const evidenceValidation = validateEvidences(allEvidences);
 
-      const buildingMatches = createdEvidences.every((ev) => {
-        if (!ev.description) return true;
-        const check = validateBuildingMatch(
-          ev.description,
-          inspection.building.name,
-          inspection.building.code
-        );
-        return check.isMatch;
-      });
+      const submittedPhotoDescriptions = evidenceData
+        .map(ev => {
+          const evData = typeof ev === "string" ? JSON.parse(ev) : ev;
+          return evData.description;
+        })
+        .filter(Boolean)
+        .join(" ");
+      const buildingMatchResult = validateBuildingMatch(
+        submittedPhotoDescriptions,
+        inspection.building.name,
+        inspection.building.code
+      );
 
       await tx.rectification.update({
         where: { id: rectification.id },
         data: {
           isPhotoMissing: !evidenceValidation.isValid,
           missingTypes: evidenceValidation.missingTypes,
-          buildingMatch: buildingMatches,
+          buildingMatch: buildingMatchResult.isMatch,
         },
       });
 
@@ -130,7 +128,7 @@ export const useSubmitRectification = routeAction$(
         evidences: createdEvidences,
         evidenceValidation,
         inspection: transitionResult.inspection,
-        buildingMatch: buildingMatches,
+        buildingMatch: buildingMatchResult.isMatch,
       };
     });
 
