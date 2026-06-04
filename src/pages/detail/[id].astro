@@ -1,0 +1,10 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ExceptionDetail from '../../components/ExceptionDetail';
+
+const { id } = Astro.params;
+---
+
+<Layout title="异常详情" currentPath="/">
+  <ExceptionDetail client:load id={id!} />
+</Layout>

@@ -1,0 +1,54 @@
+---
+interface Props {
+  title: string;
+  currentPath?: string;
+}
+
+const { title, currentPath = '/' } = Astro.props;
+
+const navItems = [
+  { href: '/', label: '异常核对', icon: 'clipboard-check' },
+  { href: '/review', label: '复盘统计', icon: 'bar-chart-3' },
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} - 餐卡充值异常核对系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+    <nav class="fixed top-0 left-0 bottom-0 w-60 bg-slate-900 text-white flex flex-col z-50">
+      <div class="px-6 py-5 border-b border-slate-700">
+        <h1 class="text-base font-bold tracking-tight">餐卡充值异常</h1>
+        <p class="text-xs text-slate-400 mt-0.5">退款核对系统</p>
+      </div>
+      <div class="flex-1 py-4">
+        {navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              'flex items-center gap-3 px-6 py-3 text-sm transition-colors',
+              currentPath === item.href
+                ? 'bg-amber-500/15 text-amber-400 border-r-2 border-amber-400'
+                : 'text-slate-300 hover:bg-slate-800 hover:text-white',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))}
+      </div>
+      <div class="px-6 py-4 border-t border-slate-700">
+        <p class="text-xs text-slate-500">园区财务管理平台</p>
+      </div>
+    </nav>
+    <main class="ml-60 min-h-screen">
+      <slot />
+    </main>
+  </body>
+</html>
