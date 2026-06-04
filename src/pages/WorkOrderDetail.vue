@@ -88,24 +88,24 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
-                <tr v-for="fee in order.partsFees" :key="fee.id" :class="{ 'bg-red-50': fee.isDisputed && !fee.adjustedPrice }">
+                <tr v-for="fee in order.partsFees" :key="fee.id" :class="{ 'bg-red-50': fee.isDisputed && fee.adjustedPrice === null }">
                   <td class="px-4 py-3">{{ fee.partName }}</td>
                   <td class="px-4 py-3">{{ fee.quantity }}</td>
                   <td class="px-4 py-3">
-                    <span v-if="fee.isDisputed && fee.adjustedPrice" class="line-through text-gray-400">¥{{ fee.unitPrice }}</span>
+                    <span v-if="fee.isDisputed && fee.adjustedPrice !== null" class="line-through text-gray-400">¥{{ fee.unitPrice }}</span>
                     <span v-else>¥{{ fee.unitPrice }}</span>
-                    <span v-if="fee.isDisputed && fee.adjustedPrice" class="ml-2 text-green-600">¥{{ fee.adjustedPrice }}</span>
+                    <span v-if="fee.isDisputed && fee.adjustedPrice !== null" class="ml-2 text-green-600">¥{{ fee.adjustedPrice }}</span>
                   </td>
                   <td class="px-4 py-3 font-medium">
-                    <span v-if="fee.isDisputed && fee.adjustedPrice" class="line-through text-gray-400">¥{{ fee.subtotal }}</span>
+                    <span v-if="fee.isDisputed && fee.adjustedPrice !== null" class="line-through text-gray-400">¥{{ fee.subtotal }}</span>
                     <span v-else>¥{{ fee.subtotal }}</span>
-                    <span v-if="fee.isDisputed && fee.adjustedPrice" class="ml-2 text-green-600">¥{{ fee.adjustedPrice * fee.quantity }}</span>
+                    <span v-if="fee.isDisputed && fee.adjustedPrice !== null" class="ml-2 text-green-600">¥{{ fee.adjustedPrice * fee.quantity }}</span>
                   </td>
                   <td class="px-4 py-3">
-                    <span v-if="fee.isDisputed && !fee.adjustedPrice" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
+                    <span v-if="fee.isDisputed && fee.adjustedPrice === null" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
                       争议中
                     </span>
-                    <span v-else-if="fee.isDisputed && fee.adjustedPrice" class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
+                    <span v-else-if="fee.isDisputed && fee.adjustedPrice !== null" class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
                       已调整
                     </span>
                     <span v-else class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
@@ -115,7 +115,7 @@
                   </td>
                   <td class="px-4 py-3">
                     <button
-                      v-if="fee.isDisputed && !fee.adjustedPrice"
+                      v-if="fee.isDisputed && fee.adjustedPrice === null"
                       @click="openAdjustModal(fee)"
                       class="text-blue-600 hover:text-blue-800 text-sm"
                     >
@@ -215,12 +215,21 @@
             提交结算
           </button>
           <button
-            v-if="order.status === 'pending_settlement'"
+            v-if="order.status === 'pending_settlement' && order.partsFees?.length > 0"
             @click="openDisputeModal"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
           >
             发起争议
           </button>
+          <div
+            v-if="order.status === 'pending_settlement' && (!order.partsFees || order.partsFees.length === 0)"
+            class="px-4 py-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            当前工单无配件费用，无法发起争议
+          </div>
           <button
             v-if="order.status === 'pending_settlement' && !hasUnresolvedDispute"
             @click="confirmArchive"

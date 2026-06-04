@@ -205,8 +205,12 @@ export class WorkOrdersService {
       throw new BadRequestException('只有待结算工单可以发起争议')
     }
 
-    const disputedFeeIds = dto.disputedParts.map(p => p.feeId)
     const fees = await this.partsFeeRepo.find({ where: { orderId: id } })
+    if (fees.length === 0) {
+      throw new BadRequestException('当前工单无配件费用，无法发起争议')
+    }
+
+    const disputedFeeIds = dto.disputedParts.map(p => p.feeId)
     const feeMap = new Map(fees.map(f => [f.id, f]))
 
     for (const item of dto.disputedParts) {
