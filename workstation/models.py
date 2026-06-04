@@ -83,10 +83,15 @@ class Appointment(models.Model):
         return self.original_appointment_time != self.current_appointment_time
 
     def is_identity_blocked(self):
-        return self.claims.filter(is_blocked=True).exists()
+        has_blocked_claim = self.claims.filter(is_blocked=True).exists()
+        has_pending_abnormal = self.abnormal_records.filter(
+            abnormal_type='identity_mismatch',
+            status__in=['open', 'in_progress']
+        ).exists()
+        return has_blocked_claim or has_pending_abnormal
 
     def get_record_category(self):
-        if self.abnormal_records.filter(abnormal_type='identity_mismatch').exists():
+        if self.is_identity_blocked():
             return '身份不匹配'
         if self.report_status == ReportStatus.STALLED:
             return '报告滞留'

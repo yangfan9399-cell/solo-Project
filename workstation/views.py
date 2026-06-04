@@ -13,7 +13,7 @@ from .models import (
 
 
 def get_record_category_display(appointment):
-    if appointment.abnormal_records.filter(abnormal_type='identity_mismatch').exists():
+    if appointment.is_identity_blocked():
         return 'identity_mismatch'
     if appointment.report_status == ReportStatus.STALLED:
         return 'report_stalled'
@@ -180,13 +180,15 @@ def reschedule_appointment(request, appointment_id):
 def claim_report(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
 
-    has_blocked = appointment.claims.filter(is_blocked=True).exists()
-    has_identity_abnormal = appointment.abnormal_records.filter(abnormal_type='identity_mismatch', status__in=['open', 'in_progress']).exists()
-
-    if has_blocked or has_identity_abnormal:
+    if appointment.is_identity_blocked():
         existing_blocked = appointment.claims.filter(is_blocked=True).order_by('-created_at').first()
         correction_path = existing_blocked.correction_path if existing_blocked else generate_correction_path(appointment.patient)
         blocked_time = existing_blocked.created_at if existing_blocked else None
+        existing_abnormal = appointment.abnormal_records.filter(
+            abnormal_type='identity_mismatch', status__in=['open', 'in_progress']
+        ).order_by('-created_at').first()
+
+        reason = 'has_blocked' if existing_blocked else 'has_abnormal'
 
         if request.method == 'POST':
             if request.headers.get('HX-Request'):
@@ -194,18 +196,18 @@ def claim_report(request, appointment_id):
                     'appointment': appointment,
                     'correction_path': correction_path,
                     'blocked_time': blocked_time,
-                    'reason': 'has_blocked' if has_blocked else 'has_abnormal',
+                    'reason': reason,
                 })
-            return redirect('appointment_detail', appointment_id=appointment.id)
+            return redirect(f"{reverse('workstation:appointment_detail', args=[appointment.id])}?source=list#correction-path")
 
         if request.headers.get('HX-Request'):
             return render(request, 'workstation/partials/claim_blocked.html', {
                 'appointment': appointment,
                 'correction_path': correction_path,
                 'blocked_time': blocked_time,
-                'reason': 'has_blocked' if has_blocked else 'has_abnormal',
+                'reason': reason,
             })
-        return redirect('appointment_detail', appointment_id=appointment.id)
+        return redirect(f"{reverse('workstation:appointment_detail', args=[appointment.id])}?source=list#correction-path")
 
     if request.method == 'POST':
         claim_type = request.POST.get('claim_type')
@@ -266,8 +268,11 @@ def claim_report(request, appointment_id):
                 'claim_record': claim_record,
                 'is_match': is_match,
             })
-        
-        return redirect('appointment_detail', appointment_id=appointment.id)
+
+        if is_match:
+            return redirect(f"{reverse('workstation:appointment_detail', args=[appointment.id])}?source=list")
+        else:
+            return redirect(f"{reverse('workstation:appointment_detail', args=[appointment.id])}?source=list#correction-path")
     
     context = {
         'appointment': appointment,
