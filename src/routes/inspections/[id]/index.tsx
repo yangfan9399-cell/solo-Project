@@ -22,6 +22,8 @@ import {
   validateEvidences,
   getMissingEvidenceLabels,
   getRemediationPath,
+  validateBuildingMatch,
+  getBuildingMismatchRemediationPath,
 } from "~/lib/utils";
 import type { EvidenceType, ReviewActionType } from "@prisma/client";
 import { validateAndTransitionState, createConsistentNotification } from "~/lib/consistency";
@@ -165,12 +167,22 @@ export const useSubmitRectification = routeAction$(
       const allEvidences = [...inspection.evidences, ...createdEvidences];
       const evidenceValidation = validateEvidences(allEvidences);
 
+      const photoDescriptions = allEvidences
+        .map(e => e.description)
+        .filter(Boolean)
+        .join(" ");
+      const buildingMatchResult = validateBuildingMatch(
+        photoDescriptions,
+        inspection.building.name,
+        inspection.building.code
+      );
+
       await tx.rectification.update({
         where: { id: rectification.id },
         data: {
           isPhotoMissing: !evidenceValidation.isValid,
           missingTypes: evidenceValidation.missingTypes,
-          buildingMatch: true,
+          buildingMatch: buildingMatchResult.isMatch,
         },
       });
 
@@ -265,16 +277,19 @@ export const useReviewAction = routeAction$(
     }
 
     const evidenceValidation = validateEvidences(inspection.evidences);
+    const isBuildingMismatch = !latestRectification.buildingMatch;
 
     if (actionType === "APPROVE") {
       if (!evidenceValidation.isValid) {
         throw requestEvent.redirect(302, `/inspections/${inspectionId}?error=evidence_missing`);
       }
 
-      if (!latestRectification.buildingMatch) {
+      if (isBuildingMismatch) {
         throw requestEvent.redirect(302, `/inspections/${inspectionId}?error=building_mismatch`);
       }
     }
+
+    const isEvidenceMissing = !evidenceValidation.isValid;
 
     await prisma.$transaction(async (tx) => {
       const toStatus = actionType === "APPROVE"
@@ -283,15 +298,26 @@ export const useReviewAction = routeAction$(
         ? "RETURNED"
         : "ARCHIVED";
 
+      const hasAutoComment = (actionType === "RETURN" && (isEvidenceMissing || isBuildingMismatch));
+      const autoComment = isBuildingMismatch
+        ? "责任楼栋不匹配"
+        : isEvidenceMissing
+        ? `证据缺失：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`
+        : null;
+
       const reviewAction = await tx.reviewAction.create({
         data: {
           inspectionId,
           rectificationId,
           actionType: actionType as ReviewActionType,
-          comment: comment || null,
+          comment: comment || (hasAutoComment ? autoComment : null),
           reviewedById: currentUser.id,
           missingTypes: evidenceValidation.missingTypes,
-          remediationPath: !evidenceValidation.isValid ? getRemediationPath(evidenceValidation.missingTypes) : null,
+          remediationPath: isBuildingMismatch
+            ? getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code)
+            : isEvidenceMissing
+            ? getRemediationPath(evidenceValidation.missingTypes)
+            : null,
         },
       });
 

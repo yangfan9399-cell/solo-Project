@@ -66,13 +66,17 @@ export function getRemediationPath(missingTypes: EvidenceType[]): string {
   return `请补充上传以下证据：${labels.join("、")}。操作路径：进入整改详情页 → 点击"补充证据" → 上传相应类型的照片 → 重新提交审核。`;
 }
 
+export function getBuildingMismatchRemediationPath(buildingName: string, buildingCode: string): string {
+  return `整改照片描述中未识别到责任楼栋信息（${buildingName} / ${buildingCode}）。请重新上传包含明确楼栋标识的整改照片，在照片描述中注明楼栋名称或编号。操作路径：进入整改详情页 → 点击"重新整改" → 更新照片及描述 → 重新提交审核。`;
+}
+
 export const STATUS_TRANSITIONS: Record<
   InspectionStatus,
   InspectionStatus[]
 > = {
   PENDING_RECTIFICATION: ["RECTIFICATION_SUBMITTED", "PENDING_REVIEW"],
   RECTIFICATION_SUBMITTED: ["PENDING_REVIEW", "PENDING_RECTIFICATION"],
-  PENDING_REVIEW: ["VERIFIED", "RETURNED", "CLOSED", "PENDING_RECTIFICATION"],
+  PENDING_REVIEW: ["VERIFIED", "RETURNED", "CLOSED", "ARCHIVED", "PENDING_RECTIFICATION"],
   VERIFIED: ["CLOSED", "ARCHIVED", "RETURNED"],
   RETURNED: ["PENDING_RECTIFICATION", "PENDING_REVIEW"],
   ARCHIVED: ["PENDING_REVIEW", "CLOSED"],

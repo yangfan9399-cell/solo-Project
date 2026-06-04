@@ -2,7 +2,7 @@ import { routeAction$, zod$, z, type RequestEventAction } from "@builder.io/qwik
 import prisma from "~/lib/prisma";
 import { userCookie, getCurrentUser } from "~/lib/auth";
 import { validateAndTransitionState, createConsistentNotification } from "~/lib/consistency";
-import { validateEvidences, getMissingEvidenceLabels, getRemediationPath } from "~/lib/utils";
+import { validateEvidences, getMissingEvidenceLabels, getRemediationPath, getBuildingMismatchRemediationPath } from "~/lib/utils";
 import type { ReviewActionType } from "@prisma/client";
 
 export const useReviewAction = routeAction$(
@@ -45,6 +45,7 @@ export const useReviewAction = routeAction$(
 
     const allEvidences = inspection.evidences;
     const evidenceValidation = validateEvidences(allEvidences);
+    const isBuildingMismatch = !latestRectification.buildingMatch;
 
     if (actionType === "APPROVE") {
       if (!evidenceValidation.isValid) {
@@ -59,15 +60,17 @@ export const useReviewAction = routeAction$(
         });
       }
 
-      if (!latestRectification.buildingMatch) {
+      if (isBuildingMismatch) {
         return requestEvent.json(400, {
           error: "责任楼栋不匹配，无法销项",
           details: {
-            remediationPath: "请确认整改地点与问题发生楼栋一致后再销项。",
+            remediationPath: getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code),
           },
         });
       }
     }
+
+    const isEvidenceMissing = !evidenceValidation.isValid;
 
     const result = await prisma.$transaction(async (tx) => {
       const toStatus = actionType === "APPROVE"
@@ -76,15 +79,26 @@ export const useReviewAction = routeAction$(
         ? "RETURNED"
         : "ARCHIVED";
 
+      const hasAutoComment = (actionType === "RETURN" && (isEvidenceMissing || isBuildingMismatch));
+      const autoComment = isBuildingMismatch
+        ? "责任楼栋不匹配"
+        : isEvidenceMissing
+        ? `证据缺失：${getMissingEvidenceLabels(evidenceValidation.missingTypes).join("、")}`
+        : null;
+
       const reviewAction = await tx.reviewAction.create({
         data: {
           inspectionId,
           rectificationId,
           actionType: actionType as ReviewActionType,
-          comment: comment || null,
+          comment: comment || (hasAutoComment ? autoComment : null),
           reviewedById: currentUser.id,
           missingTypes: evidenceValidation.missingTypes,
-          remediationPath: !evidenceValidation.isValid ? getRemediationPath(evidenceValidation.missingTypes) : null,
+          remediationPath: isBuildingMismatch
+            ? getBuildingMismatchRemediationPath(inspection.building.name, inspection.building.code)
+            : isEvidenceMissing
+            ? getRemediationPath(evidenceValidation.missingTypes)
+            : null,
         },
       });
 
