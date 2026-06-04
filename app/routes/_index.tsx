@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { db } from "~/db/index.server";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { serviceRecords, elders, staff, reviewNodes } from "~/db/schema.server";
 import type { InferSelectModel } from "drizzle-orm";
 

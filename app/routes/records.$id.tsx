@@ -11,6 +11,7 @@ type ServiceRecordDetail = InferSelectModel<typeof serviceRecords> & {
   staff: InferSelectModel<typeof staff>;
   operator: InferSelectModel<typeof users>;
   allStaff: InferSelectModel<typeof staff>[];
+  allUsers: InferSelectModel<typeof users>[];
   reviewNodes: (InferSelectModel<typeof reviewNodes> & {
     reviewer: InferSelectModel<typeof users> | null;
     operatorUser: InferSelectModel<typeof users> | null;
@@ -24,6 +25,9 @@ type ActionData = {
   success?: boolean;
   error?: string;
 };
+
+type OperatorExpandedState = false | "supplement" | "editTime" | "editStaff";
+type ReviewerExpandedState = false | "approve" | "rework" | "reject";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const id = params.id;
@@ -69,6 +73,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const allStaff = await db.select().from(staff);
 
+  const allUsers = await db.select().from(users);
+
   const changeLogsResult = await db
     .select({
       changeLog: changeLogs,
@@ -85,6 +91,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     staff: recordResult[0].staff!,
     operator: recordResult[0].operator!,
     allStaff,
+    allUsers,
     reviewNodes: reviewNodesEnriched,
     changeLogs: changeLogsResult.map((c) => ({
       ...c.changeLog,
@@ -452,8 +459,8 @@ function ReviewNodeTimeline({
   allStaff: InferSelectModel<typeof staff>[];
 }) {
   const actionData = useActionData<ActionData>();
-  const [operatorExpanded, setOperatorExpanded] = useState(false);
-  const [reviewerExpanded, setReviewerExpanded] = useState(false);
+  const [operatorExpanded, setOperatorExpanded] = useState<OperatorExpandedState>(false);
+  const [reviewerExpanded, setReviewerExpanded] = useState<ReviewerExpandedState>(false);
 
   const borderColor =
     node.reviewStatus === "approved"
@@ -725,8 +732,11 @@ export default function RecordDetail() {
   const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const reviewerUser = record.allUsers.find((u) => u.role === "reviewer");
   const currentRole = searchParams.get("role") || "operator";
-  const currentUserId = searchParams.get("userId") || record.operator.id;
+  const currentUserId =
+    searchParams.get("userId") ||
+    (currentRole === "reviewer" && reviewerUser ? reviewerUser.id : record.operator.id);
 
   const formatDateTime = (date: Date | null) => {
     if (!date) return "-";
@@ -769,9 +779,7 @@ export default function RecordDetail() {
                 </button>
                 <button
                   onClick={() => {
-                    const reviewerNode = record.reviewNodes.find((n) => n.reviewer);
-                    const reviewerId = reviewerNode?.reviewer?.id || "";
-                    setSearchParams({ role: "reviewer", userId: reviewerId });
+                    setSearchParams({ role: "reviewer", userId: reviewerUser?.id || "" });
                   }}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     currentRole === "reviewer"
