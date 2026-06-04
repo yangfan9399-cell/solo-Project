@@ -1,0 +1,18 @@
+{
+  "name": "workshop-tracking-system",
+  "version": "1.0.0",
+  "description": "制造车间工序交接与返修追踪平台",
+  "scripts": {
+    "dev:db": "docker-compose up -d",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm run install:server && npm run install:client",
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "db:setup": "cd server && npm run db:setup",
+    "dev": "npm run dev:db && sleep 3 && npm run db:setup && (npm run dev:server & npm run dev:client)"
+  },
+  "keywords": ["workshop", "manufacturing", "tracking", "rework"],
+  "author": "",
+  "license": "MIT"
+}

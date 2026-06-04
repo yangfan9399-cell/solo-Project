@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OPERATOR
+  QUALITY_INSPECTOR
+}
+
+enum ProcessStatus {
+  PENDING
+  IN_PROGRESS
+  HANDED_OVER
+  REWORKING
+  QUALITY_CHECK
+  PASSED
+  FAILED
+  ARCHIVED
+}
+
+enum QualityDecision {
+  PASS
+  REJECT
+  ARCHIVE
+}
+
+enum ReworkConclusion {
+  REPAIRED
+  SCRAPPED
+  CONCESSION
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  role      UserRole
+  badgeNo   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  handoverRecords  HandoverRecord[]  @relation("handoverOperator")
+  qualityInspections QualityInspection[] @relation("qualityInspector")
+  reworkRecords    ReworkRecord[]    @relation("reworkOperator")
+}
+
+model ProcessTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  productName String
+  version   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  steps     ProcessStep[]
+  workOrders WorkOrder[]
+}
+
+model ProcessStep {
+  id            String   @id @default(uuid())
+  templateId    String
+  stepNumber    Int
+  name          String
+  department    String
+  description   String?
+  createdAt     DateTime @default(now())
+  template      ProcessTemplate @relation(fields: [templateId], references: [id])
+  workOrderProcesses WorkOrderProcess[]
+
+  @@unique([templateId, stepNumber])
+}
+
+model WorkOrder {
+  id          String   @id @default(uuid())
+  orderNo     String   @unique
+  productName String
+  quantity    Int
+  templateId  String
+  status      ProcessStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  template    ProcessTemplate @relation(fields: [templateId], references: [id])
+  processes   WorkOrderProcess[]
+  handoverRecords HandoverRecord[]
+}
+
+model WorkOrderProcess {
+  id            String   @id @default(uuid())
+  workOrderId   String
+  stepId        String
+  stepNumber    Int
+  status        ProcessStatus @default(PENDING)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
+  step          ProcessStep @relation(fields: [stepId], references: [id])
+  handoverRecords HandoverRecord[]
+  reworkRecords ReworkRecord[]
+  qualityInspections QualityInspection[]
+
+  @@unique([workOrderId, stepId])
+}
+
+model HandoverRecord {
+  id            String   @id @default(uuid())
+  workOrderId   String
+  processId     String
+  operatorId    String
+  handoverNote  String
+  quantity      Int
+  handedOverAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  workOrder     WorkOrder @relation(fields: [workOrderId], references: [id])
+  process       WorkOrderProcess @relation(fields: [processId], references: [id])
+  operator      User @relation("handoverOperator", fields: [operatorId], references: [id])
+  qualityInspection QualityInspection?
+}
+
+model QualityInspection {
+  id            String   @id @default(uuid())
+  handoverId    String   @unique
+  inspectorId   String
+  processId     String
+  decision      QualityDecision
+  evidence      String?
+  rejectReason  String?
+  inspectedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  handover      HandoverRecord @relation(fields: [handoverId], references: [id])
+  inspector     User @relation("qualityInspector", fields: [inspectorId], references: [id])
+  process       WorkOrderProcess @relation(fields: [processId], references: [id])
+}
+
+model ReworkRecord {
+  id             String   @id @default(uuid())
+  processId      String
+  operatorId     String
+  reworkReason   String
+  reworkMaterials String
+  reworkConclusion ReworkConclusion?
+  reworkNote     String?
+  startTime      DateTime
+  endTime        DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  process        WorkOrderProcess @relation(fields: [processId], references: [id])
+  operator       User @relation("reworkOperator", fields: [operatorId], references: [id])
+}
