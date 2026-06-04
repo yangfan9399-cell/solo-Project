@@ -192,5 +192,14 @@ export interface ArchiveValidation {
     stepNumber: number;
     name: string;
     department: string;
+    resolvedByRework?: boolean;
+    reworkConclusion?: ReworkConclusion;
+  }>;
+  resolvedByRework?: Array<{
+    stepNumber: number;
+    name: string;
+    department: string;
+    resolvedByRework: boolean;
+    reworkConclusion: ReworkConclusion;
   }>;
 }

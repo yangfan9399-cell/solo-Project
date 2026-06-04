@@ -114,6 +114,10 @@ app.post('/api/work-orders/:id/validate-archive', async (request) => {
           handoverRecords: {
             include: { qualityInspection: true },
             orderBy: { handedOverAt: 'desc' }
+          },
+          reworkRecords: {
+            where: { reworkConclusion: { not: null } },
+            orderBy: { createdAt: 'desc' }
           }
         },
         orderBy: { stepNumber: 'asc' }
@@ -126,7 +130,7 @@ app.post('/api/work-orders/:id/validate-archive', async (request) => {
   }
 
   const templateSteps = order.template.steps;
-  const missingSteps: { stepNumber: number; name: string; department: string }[] = [];
+  const missingSteps: { stepNumber: number; name: string; department: string; resolvedByRework?: boolean; reworkConclusion?: string }[] = [];
 
   for (const step of templateSteps) {
     const process = order.processes.find(p => p.stepId === step.id);
@@ -151,23 +155,43 @@ app.post('/api/work-orders/:id/validate-archive', async (request) => {
 
     const qi = lastHandover.qualityInspection;
     if (qi.decision === QualityDecision.REJECT) {
-      missingSteps.push({
-        stepNumber: step.stepNumber,
-        name: step.name,
-        department: step.department
-      });
+      const hasCompletedRework = process.reworkRecords.length > 0;
+      const lastRework = process.reworkRecords[0];
+      const isProcessPassed = process.status === ProcessStatus.PASSED || process.status === ProcessStatus.ARCHIVED;
+
+      if (hasCompletedRework && isProcessPassed && lastRework.reworkConclusion) {
+        missingSteps.push({
+          stepNumber: step.stepNumber,
+          name: step.name,
+          department: step.department,
+          resolvedByRework: true,
+          reworkConclusion: lastRework.reworkConclusion
+        });
+      } else {
+        missingSteps.push({
+          stepNumber: step.stepNumber,
+          name: step.name,
+          department: step.department
+        });
+      }
     }
   }
 
-  if (missingSteps.length > 0) {
+  const actualMissing = missingSteps.filter(s => !s.resolvedByRework);
+
+  if (actualMissing.length > 0) {
     return {
       valid: false,
       error: '存在缺失的前序签收，无法归档',
-      missingSteps
+      missingSteps: actualMissing,
+      resolvedByRework: missingSteps.filter(s => s.resolvedByRework)
     };
   }
 
-  return { valid: true };
+  return {
+    valid: true,
+    resolvedByRework: missingSteps.filter(s => s.resolvedByRework)
+  };
 });
 
 app.post('/api/handover', async (request, reply) => {
@@ -210,6 +234,11 @@ app.post('/api/handover', async (request, reply) => {
             include: { qualityInspection: true },
             orderBy: { handedOverAt: 'desc' },
             take: 1
+          },
+          reworkRecords: {
+            where: { reworkConclusion: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            take: 1
           }
         }
       });
@@ -238,14 +267,20 @@ app.post('/api/handover', async (request, reply) => {
       }
 
       if (lastHandover.qualityInspection.decision === QualityDecision.REJECT) {
-        return reply.status(400).send({
-          error: '前序工序被质检退回，无法进行后续交接',
-          rejectedStep: {
-            stepNumber: prevStep.stepNumber,
-            name: prevStep.name,
-            department: prevStep.department
-          }
-        });
+        const hasCompletedRework = prevProcess.reworkRecords.length > 0;
+        const lastRework = prevProcess.reworkRecords[0];
+        const isPrevProcessPassed = prevProcess.status === ProcessStatus.PASSED || prevProcess.status === ProcessStatus.ARCHIVED;
+
+        if (!(hasCompletedRework && isPrevProcessPassed && lastRework.reworkConclusion)) {
+          return reply.status(400).send({
+            error: '前序工序被质检退回且未完成返修，无法进行后续交接',
+            rejectedStep: {
+              stepNumber: prevStep.stepNumber,
+              name: prevStep.name,
+              department: prevStep.department
+            }
+          });
+        }
       }
     }
 

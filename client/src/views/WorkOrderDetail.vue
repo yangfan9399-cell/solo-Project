@@ -134,7 +134,18 @@ function canHandover(process: WorkOrderProcess) {
   const lastHandover = prevProcess.handoverRecords[0];
   if (!lastHandover?.qualityInspection) return false;
   
-  return lastHandover.qualityInspection.decision !== QualityDecision.REJECT;
+  if (lastHandover.qualityInspection.decision === QualityDecision.REJECT) {
+    const hasCompletedRework = prevProcess.reworkRecords && prevProcess.reworkRecords.length > 0;
+    const lastRework = hasCompletedRework ? prevProcess.reworkRecords[0] : null;
+    const isPrevProcessPassed = prevProcess.status === ProcessStatus.PASSED || prevProcess.status === ProcessStatus.ARCHIVED;
+    
+    if (hasCompletedRework && isPrevProcessPassed && lastRework?.reworkConclusion) {
+      return true;
+    }
+    return false;
+  }
+  
+  return true;
 }
 
 function openHandoverModal(process: WorkOrderProcess) {
@@ -347,13 +358,25 @@ onMounted(loadData);
       <span>{{ workOrder.orderNo }}</span>
     </div>
 
-    <div v-if="!archiveValidation?.valid && archiveValidation?.missingSteps" class="alert alert-warning" style="margin-bottom: 24px;">
+    <div v-if="!archiveValidation?.valid && archiveValidation?.missingSteps && archiveValidation.missingSteps.length > 0" class="alert alert-error" style="margin-bottom: 24px;">
       <strong>⚠️ 工序跳步检测:</strong> {{ archiveValidation.error }}
       <div style="margin-top: 8px;">
         <strong>缺失的前序签收:</strong>
         <ul style="margin-top: 4px; padding-left: 20px;">
           <li v-for="step in archiveValidation.missingSteps" :key="step.stepNumber">
             工序{{ step.stepNumber }} - {{ step.name }} ({{ step.department }})
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div v-if="archiveValidation?.resolvedByRework && archiveValidation.resolvedByRework.length > 0" class="alert alert-info" style="margin-bottom: 24px;">
+      <strong>ℹ️ 工序返修已处理:</strong> 以下工序质检被退回后，通过返修处理已解决，不影响归档和后续交接。
+      <div style="margin-top: 8px;">
+        <ul style="margin-top: 4px; padding-left: 20px;">
+          <li v-for="step in archiveValidation.resolvedByRework" :key="step.stepNumber">
+            工序{{ step.stepNumber }} - {{ step.name }} ({{ step.department }})
+            → 返修结论: <span class="status-badge" :class="step.reworkConclusion">{{ conclusionText[step.reworkConclusion] }}</span>
           </li>
         </ul>
       </div>
