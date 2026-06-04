@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation'
 import { getRepairOrder, getTechnicians, getInspectors } from '@/app/actions'
-import { STATUS_LABELS, STATUS_COLORS, DEVICE_TYPE_LABELS } from '@/lib/constants'
+import { STATUS_LABELS, STATUS_COLORS, DEVICE_TYPE_LABELS, ROLE_LABELS } from '@/lib/constants'
 import { formatDate, formatDuration } from '@/lib/utils'
+import { RepairStatus } from '@prisma/client'
 import { 
   MapPin, User, Clock, FileText, AlertTriangle, CheckCircle, 
-  XCircle, Package, ArrowRight, History, Wrench, ClipboardCheck,
-  RefreshCw, Calendar, UserCheck, MessageSquare
+  XCircle, Package, History, Wrench, ClipboardCheck,
+  RefreshCw, UserCheck, Archive, UserCog, ArrowRight
 } from 'lucide-react'
 import RepairActions from './components/RepairActions'
 
@@ -18,14 +19,154 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
     notFound()
   }
 
-  const timeline = [
-    { status: 'SUBMITTED', label: '提交报修', date: order.submittedAt, done: true },
-    { status: 'ASSIGNED', label: '派工', date: order.assignedAt, done: !!order.assignedAt },
-    { status: 'IN_PROGRESS', label: '维修中', date: order.logs[0]?.createdAt || null, done: order.logs.length > 0 },
-    { status: 'PENDING_ACCEPTANCE', label: '待验收', date: order.completedAt, done: !!order.completedAt },
-    { status: 'INSPECTED', label: '验收完成', date: order.inspectedAt, done: !!order.inspectedAt },
-    { status: 'ARCHIVED', label: '归档', date: order.archivedAt, done: !!order.archivedAt },
-  ]
+  const getCurrentHandlerInfo = () => {
+    switch (order.status) {
+      case RepairStatus.SUBMITTED:
+        return { role: 'ADMIN', name: '待管理员派工', icon: UserCog }
+      case RepairStatus.ASSIGNED:
+      case RepairStatus.IN_PROGRESS:
+      case RepairStatus.PARTS_SHORTAGE:
+        return { role: 'TECHNICIAN', name: order.technician?.name || '未指派', icon: Wrench }
+      case RepairStatus.PENDING_ACCEPTANCE:
+        return { role: 'INSPECTOR', name: order.inspector?.name || '未指派', icon: ClipboardCheck }
+      case RepairStatus.ACCEPTED:
+      case RepairStatus.REJECTED:
+        return { role: 'ADMIN', name: '待管理员归档', icon: Archive }
+      case RepairStatus.ARCHIVED:
+        return { role: 'ARCHIVED', name: '已归档', icon: CheckCircle }
+      default:
+        return { role: 'UNKNOWN', name: '-', icon: User }
+    }
+  }
+
+  const currentHandler = getCurrentHandlerInfo()
+
+  type HistoryNode = {
+    id: string
+    type: 'submit' | 'assign' | 'repair' | 'shortage' | 'inspection' | 'archive'
+    title: string
+    description?: string
+    handler: { name: string; role: string } | null
+    date: Date
+    result?: 'success' | 'warning' | 'error'
+    icon: typeof Wrench
+    metadata?: {
+      partsUsed?: string
+      timeSpent?: number
+      partsNeeded?: string
+      estimatedDelay?: number
+    }
+  }
+
+  const buildHistoryNodes = (): HistoryNode[] => {
+    const nodes: HistoryNode[] = []
+
+    nodes.push({
+      id: 'submit',
+      type: 'submit',
+      title: '提交报修',
+      description: order.description,
+      handler: { name: order.submitter.name, role: order.submitter.role },
+      date: order.submittedAt,
+      result: 'success',
+      icon: FileText,
+    })
+
+    if (order.assignedAt && order.technician) {
+      nodes.push({
+        id: 'assign',
+        type: 'assign',
+        title: '派工',
+        description: `工单已分配给 ${order.technician.name}`,
+        handler: { name: '系统', role: 'ADMIN' },
+        date: order.assignedAt,
+        result: 'success',
+        icon: UserCheck,
+      })
+    }
+
+    for (const log of order.logs) {
+      nodes.push({
+        id: `repair-${log.id}`,
+        type: 'repair',
+        title: log.action,
+        description: log.description,
+        handler: { name: log.technician.name, role: log.technician.role },
+        date: log.createdAt,
+        result: 'success',
+        icon: Wrench,
+        metadata: {
+          partsUsed: log.partsUsed || undefined,
+          timeSpent: log.timeSpentMinutes || undefined,
+        },
+      })
+    }
+
+    if (order.status === RepairStatus.PARTS_SHORTAGE || order.blockingReason) {
+      const shortageDate = order.logs.find(l => l.action.includes('缺货'))?.createdAt 
+        || order.logs[order.logs.length - 1]?.createdAt 
+        || new Date()
+      nodes.push({
+        id: 'shortage',
+        type: 'shortage',
+        title: '配件缺货',
+        description: order.blockingReason || '',
+        handler: order.technician ? { name: order.technician.name, role: order.technician.role } : null,
+        date: shortageDate,
+        result: 'warning',
+        icon: AlertTriangle,
+        metadata: {
+          partsNeeded: order.partsNeeded || undefined,
+          estimatedDelay: order.estimatedDelay || undefined,
+        },
+      })
+    }
+
+    for (const inspection of order.inspections) {
+      nodes.push({
+        id: `inspection-${inspection.id}`,
+        type: 'inspection',
+        title: inspection.result ? '验收通过' : '验收不通过',
+        description: inspection.comments,
+        handler: { name: inspection.inspector.name, role: inspection.inspector.role },
+        date: inspection.createdAt,
+        result: inspection.result ? 'success' : 'error',
+        icon: inspection.result ? CheckCircle : XCircle,
+      })
+    }
+
+    if (order.archivedAt) {
+      nodes.push({
+        id: 'archive',
+        type: 'archive',
+        title: '工单归档',
+        description: '工单已完成归档',
+        handler: { name: '系统', role: 'ADMIN' },
+        date: order.archivedAt,
+        result: 'success',
+        icon: Archive,
+      })
+    }
+
+    return nodes.sort((a, b) => a.date.getTime() - b.date.getTime())
+  }
+
+  const historyNodes = buildHistoryNodes()
+
+  const getResultStyle = (result?: string) => {
+    switch (result) {
+      case 'success':
+        return 'bg-green-500 text-white'
+      case 'warning':
+        return 'bg-orange-500 text-white'
+      case 'error':
+        return 'bg-red-500 text-white'
+      default:
+        return 'bg-gray-300 text-gray-600'
+    }
+  }
+
+  const HandlerIcon = currentHandler.icon
 
   return (
     <div className="space-y-6">
@@ -118,11 +259,14 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
               </div>
               <div className="space-y-1">
                 <span className="text-sm text-gray-500 flex items-center gap-1">
-                  <User className="h-4 w-4" /> 当前处理人
+                  <HandlerIcon className="h-4 w-4" /> 当前处理人
                 </span>
-                <p className="font-medium text-gray-900">
-                  {order.technician?.name || '未派工'}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-900">{currentHandler.name}</p>
+                  <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                    {currentHandler.role === 'ARCHIVED' ? '已完成' : ROLE_LABELS[currentHandler.role as keyof typeof ROLE_LABELS] || currentHandler.role}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t">
@@ -224,46 +368,69 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
               <History className="h-5 w-5 text-primary-600" />
               流转记录
             </h2>
-            <div className="space-y-4">
-              {timeline.map((item, index) => (
-                <div key={item.status} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        item.done
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-400'
-                      }`}
-                    >
-                      {item.done ? (
-                        <CheckCircle className="h-4 w-4" />
-                      ) : (
-                        <span className="text-xs">{index + 1}</span>
+            {historyNodes.length > 0 ? (
+              <div className="space-y-0">
+                {historyNodes.map((node, index) => {
+                  const NodeIcon = node.icon
+                  const isLast = index === historyNodes.length - 1
+                  return (
+                    <div key={node.id} className="relative pb-5 last:pb-0">
+                      {!isLast && (
+                        <div className="absolute left-3 top-7 w-0.5 h-full bg-gray-200" />
                       )}
+                      <div className="flex gap-3 relative">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${getResultStyle(node.result)}`}>
+                          <NodeIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900 text-sm">{node.title}</span>
+                          </div>
+                          {node.description && (
+                            <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">{node.description}</p>
+                          )}
+                          {node.metadata && (
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {node.metadata.partsUsed && (
+                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Package className="h-3 w-3" /> {node.metadata.partsUsed}
+                                </span>
+                              )}
+                              {node.metadata.timeSpent && (
+                                <span className="text-xs text-gray-500">
+                                  耗时 {formatDuration(node.metadata.timeSpent)}
+                                </span>
+                              )}
+                              {node.metadata.partsNeeded && (
+                                <span className="text-xs text-orange-600 flex items-center gap-1">
+                                  <Package className="h-3 w-3" /> 需采购: {node.metadata.partsNeeded}
+                                </span>
+                              )}
+                              {node.metadata.estimatedDelay && (
+                                <span className="text-xs text-orange-600">
+                                  延期约 {node.metadata.estimatedDelay} 天
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            {node.handler && (
+                              <span className="text-xs text-gray-500">
+                                {node.handler.name}
+                              </span>
+                            )}
+                            <ArrowRight className="h-3 w-3 text-gray-300" />
+                            <span className="text-xs text-gray-400">{formatDate(node.date)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {index < timeline.length - 1 && (
-                      <div
-                        className={`w-0.5 h-8 ${
-                          item.done ? 'bg-green-500' : 'bg-gray-200'
-                        }`}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <span
-                      className={`font-medium ${
-                        item.done ? 'text-gray-900' : 'text-gray-400'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                    {item.date && (
-                      <p className="text-sm text-gray-500">{formatDate(item.date)}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">暂无流转记录</p>
+            )}
           </div>
 
           <RepairActions
