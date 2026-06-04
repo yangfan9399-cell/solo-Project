@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404, redirect, reverse
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
@@ -61,6 +61,8 @@ def workstation(request):
         rescheduled=Count(Case(When(reschedules__isnull=False, then=1), distinct=True)),
         stalled=Count(Case(When(report_status=ReportStatus.STALLED, then=1))),
         identity_mismatch=Count(Case(When(abnormal_records__abnormal_type='identity_mismatch', then=1), distinct=True)),
+        ready_for_claim=Count(Case(When(report_status=ReportStatus.READY, then=1))),
+        pending_review=Count(Case(When(claims__review_status='pending', then=1), distinct=True)),
     )
     
     context = {
@@ -71,6 +73,7 @@ def workstation(request):
         'search_query': search_query,
         'AppointmentStatus': AppointmentStatus,
         'ReportStatus': ReportStatus,
+        'active_tab': 'list',
     }
     
     return render(request, 'workstation/workstation.html', context)
@@ -84,6 +87,19 @@ def appointment_detail(request, appointment_id):
     abnormal_records = appointment.abnormal_records.select_related('handler').all()
     logs = appointment.logs.select_related('operator').all()
     
+    source = request.GET.get('source', 'list')
+    source_label = {
+        'notification': '通知中心',
+        'list': '预约列表',
+        'review': '异常复盘',
+    }.get(source, '预约列表')
+    
+    back_url = {
+        'notification': reverse('workstation:notification_list'),
+        'list': reverse('workstation:workstation'),
+        'review': reverse('workstation:review_list'),
+    }.get(source, reverse('workstation:workstation'))
+    
     context = {
         'appointment': appointment,
         'reschedules': reschedules,
@@ -92,6 +108,9 @@ def appointment_detail(request, appointment_id):
         'logs': logs,
         'AppointmentStatus': AppointmentStatus,
         'ReportStatus': ReportStatus,
+        'source': source,
+        'source_label': source_label,
+        'back_url': back_url,
     }
     
     return render(request, 'workstation/appointment_detail.html', context)
@@ -361,3 +380,95 @@ def appointment_list_partial(request):
     }
     
     return render(request, 'workstation/partials/appointment_list.html', context)
+
+
+@login_required
+def notification_list(request):
+    search_query = request.GET.get('search', '')
+    
+    notifications = Appointment.objects.select_related('patient', 'examination_type').filter(
+        Q(report_status=ReportStatus.READY) |
+        Q(report_status=ReportStatus.STALLED) |
+        Q(abnormal_records__status__in=['open', 'in_progress']) |
+        Q(claims__review_status='pending')
+    ).distinct()
+    
+    if search_query:
+        notifications = notifications.filter(
+            Q(appointment_no__icontains=search_query) |
+            Q(patient__name__icontains=search_query) |
+            Q(patient__id_card__icontains=search_query)
+        )
+    
+    stats = {
+        'ready_for_claim': notifications.filter(report_status=ReportStatus.READY).count(),
+        'stalled': notifications.filter(report_status=ReportStatus.STALLED).count(),
+        'pending_review': notifications.filter(claims__review_status='pending').count(),
+        'abnormal_pending': notifications.filter(abnormal_records__status__in=['open', 'in_progress']).distinct().count(),
+    }
+    
+    context = {
+        'appointments': notifications[:50],
+        'stats': stats,
+        'search_query': search_query,
+        'AppointmentStatus': AppointmentStatus,
+        'ReportStatus': ReportStatus,
+        'active_tab': 'notifications',
+    }
+    
+    return render(request, 'workstation/notification_list.html', context)
+
+
+@login_required
+def review_list(request):
+    search_query = request.GET.get('search', '')
+    abnormal_filter = request.GET.get('type', 'all')
+    
+    review_appointments = Appointment.objects.select_related('patient', 'examination_type').filter(
+        abnormal_records__isnull=False
+    ).distinct()
+    
+    if search_query:
+        review_appointments = review_appointments.filter(
+            Q(appointment_no__icontains=search_query) |
+            Q(patient__name__icontains=search_query) |
+            Q(patient__id_card__icontains=search_query)
+        )
+    
+    if abnormal_filter == 'identity_mismatch':
+        review_appointments = review_appointments.filter(abnormal_records__abnormal_type='identity_mismatch').distinct()
+    elif abnormal_filter == 'report_stalled':
+        review_appointments = review_appointments.filter(report_status=ReportStatus.STALLED).distinct()
+    elif abnormal_filter == 'reschedule_abnormal':
+        review_appointments = review_appointments.filter(abnormal_records__abnormal_type='reschedule_abnormal').distinct()
+    
+    abnormal_records = AbnormalRecord.objects.select_related('appointment', 'appointment__patient', 'handler').all()
+    if abnormal_filter != 'all':
+        abnormal_records = abnormal_records.filter(abnormal_type=abnormal_filter)
+    if search_query:
+        abnormal_records = abnormal_records.filter(
+            Q(appointment__appointment_no__icontains=search_query) |
+            Q(appointment__patient__name__icontains=search_query)
+        )
+    
+    stats = {
+        'total': review_appointments.count(),
+        'identity_mismatch': review_appointments.filter(abnormal_records__abnormal_type='identity_mismatch').distinct().count(),
+        'report_stalled': review_appointments.filter(report_status=ReportStatus.STALLED).distinct().count(),
+        'reschedule_abnormal': review_appointments.filter(abnormal_records__abnormal_type='reschedule_abnormal').distinct().count(),
+        'open': abnormal_records.filter(status='open').count(),
+        'in_progress': abnormal_records.filter(status='in_progress').count(),
+        'resolved': abnormal_records.filter(status='resolved').count(),
+    }
+    
+    context = {
+        'abnormal_records': abnormal_records[:50],
+        'stats': stats,
+        'search_query': search_query,
+        'abnormal_filter': abnormal_filter,
+        'AppointmentStatus': AppointmentStatus,
+        'ReportStatus': ReportStatus,
+        'active_tab': 'review',
+    }
+    
+    return render(request, 'workstation/review_list.html', context)

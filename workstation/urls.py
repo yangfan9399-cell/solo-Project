@@ -5,6 +5,8 @@ app_name = 'workstation'
 
 urlpatterns = [
     path('', views.workstation, name='workstation'),
+    path('notifications/', views.notification_list, name='notification_list'),
+    path('review/', views.review_list, name='review_list'),
     path('appointment/<int:appointment_id>/', views.appointment_detail, name='appointment_detail'),
     path('appointment/<int:appointment_id>/reschedule/', views.reschedule_appointment, name='reschedule_appointment'),
     path('appointment/<int:appointment_id>/claim/', views.claim_report, name='claim_report'),

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知中心 - 门诊检查预约工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">门诊检查预约改期与报告领取追踪系统</h1>
+            <p class="text-gray-600 mt-2">接诊人员连续处理工作台</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <a href="{% url 'workstation:notification_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'notifications' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔔 通知中心
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {{ stats.ready_for_claim|add:stats.stalled|add:stats.pending_review|add:stats.abnormal_pending }}
+                        </span>
+                    </a>
+                    <a href="{% url 'workstation:workstation' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'list' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        📋 预约列表
+                    </a>
+                    <a href="{% url 'workstation:review_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'review' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔍 异常复盘
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="text-sm text-gray-500">待领取报告</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.ready_for_claim }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="text-sm text-gray-500">报告滞留</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.stalled }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                <div class="text-sm text-gray-500">待复核领取</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.pending_review }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                <div class="text-sm text-gray-500">待处理异常</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.abnormal_pending }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex gap-4 items-center">
+                    <div class="flex-1 min-w-64">
+                        <input type="text" 
+                               placeholder="搜索预约编号、患者姓名、身份证号..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               hx-get="{% url 'workstation:notification_list' %}"
+                               hx-trigger="keyup changed delay:500ms"
+                               hx-target="#notification-list"
+                               hx-push-url="true"
+                               name="search"
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="notification-list" class="divide-y divide-gray-200">
+                {% if appointments %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">通知类型</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">预约编号</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">患者信息</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">检查类型</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">预约状态</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">报告状态</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for apt in appointments %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if apt.report_status == 'ready' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
+                                    {% elif apt.report_status == 'stalled' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
+                                    {% elif apt.claims.all and apt.claims.last.review_status == 'pending' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">待复核</span>
+                                    {% elif apt.abnormal_records.all and apt.abnormal_records.last.status in 'open,in_progress' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">异常待处理</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">通知</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="font-medium text-blue-600">{{ apt.appointment_no }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="font-medium text-gray-900">{{ apt.patient.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ apt.patient.id_card }}</div>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="text-gray-900">{{ apt.examination_type.name }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if apt.status == 'scheduled' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">待检查</span>
+                                    {% elif apt.status == 'completed' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">已完成</span>
+                                    {% elif apt.status == 'rescheduled' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">已改期</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ apt.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if apt.report_status == 'ready' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">待领取</span>
+                                    {% elif apt.report_status == 'stalled' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
+                                    {% elif apt.report_status == 'claimed' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">已领取</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ apt.get_report_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap space-x-2">
+                                    <a href="{% url 'workstation:appointment_detail' apt.id %}?source=notification" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">查看详情</a>
+                                    {% if apt.report_status == 'ready' or apt.report_status == 'stalled' %}
+                                    <button onclick="openModal('{% url 'workstation:claim_report' apt.id %}')"
+                                            class="text-green-600 hover:text-green-800 text-sm font-medium">领取</button>
+                                    {% endif %}
+                                    {% if apt.claims.all and apt.claims.last.review_status == 'pending' %}
+                                    <button onclick="openModal('{% url 'workstation:review_claim' apt.claims.last.id %}')"
+                                            class="text-purple-600 hover:text-purple-800 text-sm font-medium">复核</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="text-gray-500">暂无待处理通知</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div id="modal-content" class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:beforeOnLoad', function(evt) {
+            if (evt.detail.xhr.getResponseHeader('HX-Refresh') === 'true') {
+                window.location.reload();
+            }
+        });
+
+        function openModal(url) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            htmx.get(url, {}, modalContent);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

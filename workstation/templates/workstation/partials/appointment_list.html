@@ -76,7 +76,7 @@
                     {% endwith %}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap space-x-2">
-                    <a href="{% url 'workstation:appointment_detail' apt.id %}" 
+                    <a href="{% url 'workstation:appointment_detail' apt.id %}?source=list" 
                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</a>
                     {% if apt.report_status == 'ready' or apt.report_status == 'stalled' %}
                     <button onclick="openModal('{% url 'workstation:claim_report' apt.id %}')"

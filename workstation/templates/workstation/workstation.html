@@ -20,6 +20,31 @@
             <p class="text-gray-600 mt-2">接诊人员连续处理工作台</p>
         </header>
 
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <a href="{% url 'workstation:notification_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'notifications' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔔 通知中心
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {{ stats.ready_for_claim|add:stats.stalled|add:stats.pending_review|add:stats.identity_mismatch }}
+                        </span>
+                    </a>
+                    <a href="{% url 'workstation:workstation' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if not active_tab %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        📋 预约列表
+                    </a>
+                    <a href="{% url 'workstation:review_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'review' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔍 异常复盘
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {{ stats.identity_mismatch|add:stats.stalled }}
+                        </span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
                 <div class="text-sm text-gray-500">总记录数</div>

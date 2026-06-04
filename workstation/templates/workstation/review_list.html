@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异常复盘 - 门诊检查预约工作台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">门诊检查预约改期与报告领取追踪系统</h1>
+            <p class="text-gray-600 mt-2">接诊人员连续处理工作台</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <a href="{% url 'workstation:notification_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'notifications' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔔 通知中心
+                    </a>
+                    <a href="{% url 'workstation:workstation' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'list' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        📋 预约列表
+                    </a>
+                    <a href="{% url 'workstation:review_list' %}" 
+                       class="px-6 py-4 text-sm font-medium border-b-2 {% if active_tab == 'review' %}border-blue-500 text-blue-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                        🔍 异常复盘
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {{ stats.open|add:stats.in_progress }}
+                        </span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-gray-500">
+                <div class="text-sm text-gray-500">异常总数</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.total }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                <div class="text-sm text-gray-500">身份不匹配</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.identity_mismatch }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                <div class="text-sm text-gray-500">报告滞留</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.report_stalled }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+                <div class="text-sm text-gray-500">改期异常</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.reschedule_abnormal }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <div class="text-sm text-gray-500">待处理</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.open }}</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                <div class="text-sm text-gray-500">已解决</div>
+                <div class="text-2xl font-bold text-gray-800">{{ stats.resolved }}</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex flex-wrap gap-4 items-center">
+                    <div class="flex-1 min-w-64">
+                        <input type="text" 
+                               placeholder="搜索预约编号、患者姓名..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               hx-get="{% url 'workstation:review_list' %}"
+                               hx-trigger="keyup changed delay:500ms"
+                               hx-target="#review-list"
+                               hx-push-url="true"
+                               hx-include="#abnormal-type-filter"
+                               name="search"
+                               value="{{ search_query }}">
+                    </div>
+                    <select id="abnormal-type-filter" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            hx-get="{% url 'workstation:review_list' %}"
+                            hx-trigger="change"
+                            hx-target="#review-list"
+                            hx-push-url="true"
+                            hx-include="[name='search']"
+                            name="type">
+                        <option value="all" {% if abnormal_filter == 'all' %}selected{% endif %}>全部异常类型</option>
+                        <option value="identity_mismatch" {% if abnormal_filter == 'identity_mismatch' %}selected{% endif %}>身份信息不匹配</option>
+                        <option value="report_stalled" {% if abnormal_filter == 'report_stalled' %}selected{% endif %}>报告滞留</option>
+                        <option value="reschedule_abnormal" {% if abnormal_filter == 'reschedule_abnormal' %}selected{% endif %}>改期异常</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="review-list" class="divide-y divide-gray-200">
+                {% if abnormal_records %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">异常类型</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">预约编号</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">患者信息</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">异常描述</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理状态</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">处理人</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for record in abnormal_records %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if record.abnormal_type == 'identity_mismatch' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">身份不匹配</span>
+                                    {% elif record.abnormal_type == 'report_stalled' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded">报告滞留</span>
+                                    {% elif record.abnormal_type == 'reschedule_abnormal' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">改期异常</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">{{ record.get_abnormal_type_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="font-medium text-blue-600">{{ record.appointment.appointment_no }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="font-medium text-gray-900">{{ record.appointment.patient.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ record.appointment.patient.id_card }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="text-sm text-gray-900 max-w-xs truncate">{{ record.description }}</div>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if record.status == 'open' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">待处理</span>
+                                    {% elif record.status == 'in_progress' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">处理中</span>
+                                    {% elif record.status == 'resolved' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">已解决</span>
+                                    {% elif record.status == 'closed' %}
+                                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">已关闭</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="text-sm text-gray-900">{{ record.handler.username|default:"-" }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="text-sm text-gray-500">{{ record.created_at|date:"Y-m-d H:i" }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap space-x-2">
+                                    <a href="{% url 'workstation:appointment_detail' record.appointment.id %}?source=review" 
+                                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">查看预约</a>
+                                    {% if record.status != 'closed' %}
+                                    <button onclick="openModal('{% url 'workstation:handle_abnormal' record.id %}')"
+                                            class="text-orange-600 hover:text-orange-800 text-sm font-medium">处理</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="text-gray-500">暂无异常记录</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div id="modal-content" class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        </div>
+    </div>
+
+    <script>
+        document.body.addEventListener('htmx:beforeOnLoad', function(evt) {
+            if (evt.detail.xhr.getResponseHeader('HX-Refresh') === 'true') {
+                window.location.reload();
+            }
+        });
+
+        function openModal(url) {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            htmx.get(url, {}, modalContent);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
