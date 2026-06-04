@@ -75,6 +75,7 @@
 			return;
 		}
 		error = '';
+		successMessage = '';
 
 		const res = await fetch(`/api/prescriptions/${$page.params.id}/review`, {
 			method: 'POST',
@@ -89,10 +90,17 @@
 
 		if (res.ok) {
 			showReviewModal = false;
-			location.reload();
+			reviewResult = 'APPROVED';
+			reviewComments = '';
+			dosageSuggestion = '';
+			successMessage = '审方提交成功！';
+			reloading = true;
+			await loadPrescriptionDetail();
+			reloading = false;
+			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
-			error = data.error;
+			error = data.error || '审方提交失败，请重试';
 		}
 	}
 
@@ -184,6 +192,7 @@
 			return;
 		}
 		error = '';
+		successMessage = '';
 
 		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
 			method: 'POST',
@@ -198,10 +207,25 @@
 
 		if (res.ok) {
 			showArchiveModal = false;
-			location.reload();
+			archiveReason = '';
+			archiveResolution = '';
+			archiveDisputed = false;
+			successMessage = archiveDisputed ? '争议归档成功！' : '异常归档成功！';
+			reloading = true;
+			await loadPrescriptionDetail();
+			reloading = false;
+			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
-			error = data.error;
+			if (data.hasOpenDispute) {
+				showArchiveModal = false;
+				error = data.error;
+				reloading = true;
+				await loadPrescriptionDetail();
+				reloading = false;
+			} else {
+				error = data.error || '归档失败，请重试';
+			}
 		}
 	}
 
@@ -211,6 +235,7 @@
 			return;
 		}
 		error = '';
+		successMessage = '';
 
 		const res = await fetch(`/api/prescriptions/${$page.params.id}/archive`, {
 			method: 'PATCH',
@@ -223,10 +248,25 @@
 		});
 
 		if (res.ok) {
-			location.reload();
+			showArchiveModal = false;
+			disputeResolution = '';
+			disputeComments = '';
+			successMessage = '争议解决成功！';
+			reloading = true;
+			await loadPrescriptionDetail();
+			reloading = false;
+			setTimeout(() => { successMessage = ''; }, 3000);
 		} else {
 			const data = await res.json();
-			error = data.error;
+			if (data.noOpenDispute || data.invalidStatus) {
+				showArchiveModal = false;
+				error = data.error;
+				reloading = true;
+				await loadPrescriptionDetail();
+				reloading = false;
+			} else {
+				error = data.error || '争议解决失败，请重试';
+			}
 		}
 	}
 
