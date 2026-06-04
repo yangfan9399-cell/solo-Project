@@ -26,7 +26,7 @@ type ActionData = {
   error?: string;
 };
 
-type OperatorExpandedState = false | "supplement" | "editTime" | "editStaff";
+type OperatorExpandedState = false | "supplement";
 type ReviewerExpandedState = false | "approve" | "rework" | "reject";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
@@ -114,6 +114,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   try {
     if (actionType === "supplement") {
       const supplementNotes = formData.get("supplementNotes") as string;
+      const supplementAttachmentsRaw = formData.get("supplementAttachments") as string;
       const supplementReason = formData.get("supplementReason") as string;
       if (!supplementNotes) return json<ActionData>({ error: "请输入补充说明" });
       if (!supplementReason) return json<ActionData>({ error: "请填写采用依据" });
@@ -125,22 +126,43 @@ export async function action({ request, params }: ActionFunctionArgs) {
         .limit(1);
       if (existing.length === 0) return json<ActionData>({ error: "回访节点不存在" });
 
-      const oldSupplement = existing[0].supplementNotes || "";
+      const oldSupplementNotes = existing[0].supplementNotes || "";
+      const oldSupplementAttachments = existing[0].supplementAttachments || [];
+      const newSupplementAttachments = supplementAttachmentsRaw
+        ? supplementAttachmentsRaw.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
 
       await db
         .update(reviewNodes)
-        .set({ supplementNotes })
+        .set({
+          supplementNotes,
+          supplementAttachments: [...oldSupplementAttachments, ...newSupplementAttachments],
+        })
         .where(eq(reviewNodes.id, reviewNodeId));
 
-      await db.insert(changeLogs).values({
-        serviceRecordId: id,
-        reviewNodeId,
-        userId: currentUserId,
-        fieldName: "supplementNotes",
-        oldValue: oldSupplement,
-        newValue: supplementNotes,
-        reason: supplementReason,
-      });
+      if (oldSupplementNotes !== supplementNotes) {
+        await db.insert(changeLogs).values({
+          serviceRecordId: id,
+          reviewNodeId,
+          userId: currentUserId,
+          fieldName: "supplementNotes",
+          oldValue: oldSupplementNotes,
+          newValue: supplementNotes,
+          reason: supplementReason,
+        });
+      }
+
+      if (newSupplementAttachments.length > 0) {
+        await db.insert(changeLogs).values({
+          serviceRecordId: id,
+          reviewNodeId,
+          userId: currentUserId,
+          fieldName: "supplementAttachments",
+          oldValue: JSON.stringify(oldSupplementAttachments),
+          newValue: JSON.stringify([...oldSupplementAttachments, ...newSupplementAttachments]),
+          reason: supplementReason,
+        });
+      }
 
       return json<ActionData>({ success: true });
     }
@@ -159,12 +181,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
       if (existing.length === 0) return json<ActionData>({ error: "回访节点不存在" });
 
       const oldStatus = existing[0].reviewStatus;
+      const oldConclusion = existing[0].reviewConclusion || "";
+      const newConclusion = reviewConclusion || existing[0].reviewConclusion || "";
 
       await db
         .update(reviewNodes)
         .set({
           reviewStatus: "approved",
-          reviewConclusion: reviewConclusion || existing[0].reviewConclusion,
+          reviewConclusion: newConclusion,
           reviewNotes: reviewNotes || existing[0].reviewNotes,
           reviewerId: currentUserId,
           isArchived: true,
@@ -186,6 +210,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
         newValue: "approved",
         reason: approveReason,
       });
+
+      if (oldConclusion !== newConclusion) {
+        await db.insert(changeLogs).values({
+          serviceRecordId: id,
+          reviewNodeId,
+          userId: currentUserId,
+          fieldName: "reviewConclusion",
+          oldValue: oldConclusion,
+          newValue: newConclusion,
+          reason: approveReason,
+        });
+      }
 
       return json<ActionData>({ success: true });
     }
@@ -272,72 +308,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
       return json<ActionData>({ success: true });
     }
 
-    if (actionType === "editScheduledTime") {
-      const newTime = formData.get("newScheduledTime") as string;
-      const editReason = formData.get("editReason") as string;
-      if (!newTime) return json<ActionData>({ error: "请选择新预约时间" });
-      if (!editReason) return json<ActionData>({ error: "请填写修改依据" });
-
-      const existing = await db
-        .select()
-        .from(serviceRecords)
-        .where(eq(serviceRecords.id, id))
-        .limit(1);
-      if (existing.length === 0) return json<ActionData>({ error: "服务记录不存在" });
-
-      const oldTime = existing[0].scheduledTime;
-
-      await db
-        .update(serviceRecords)
-        .set({ scheduledTime: new Date(newTime), updatedAt: new Date() })
-        .where(eq(serviceRecords.id, id));
-
-      await db.insert(changeLogs).values({
-        serviceRecordId: id,
-        reviewNodeId: reviewNodeId || null,
-        userId: currentUserId,
-        fieldName: "scheduledTime",
-        oldValue: oldTime.toISOString(),
-        newValue: new Date(newTime).toISOString(),
-        reason: editReason,
-      });
-
-      return json<ActionData>({ success: true });
-    }
-
-    if (actionType === "editStaff") {
-      const newStaffId = formData.get("newStaffId") as string;
-      const editReason = formData.get("editReason") as string;
-      if (!newStaffId) return json<ActionData>({ error: "请选择服务人员" });
-      if (!editReason) return json<ActionData>({ error: "请填写修改依据" });
-
-      const existing = await db
-        .select()
-        .from(serviceRecords)
-        .where(eq(serviceRecords.id, id))
-        .limit(1);
-      if (existing.length === 0) return json<ActionData>({ error: "服务记录不存在" });
-
-      const oldStaffId = existing[0].staffId;
-
-      await db
-        .update(serviceRecords)
-        .set({ staffId: newStaffId, updatedAt: new Date() })
-        .where(eq(serviceRecords.id, id));
-
-      await db.insert(changeLogs).values({
-        serviceRecordId: id,
-        reviewNodeId: reviewNodeId || null,
-        userId: currentUserId,
-        fieldName: "staffId",
-        oldValue: oldStaffId,
-        newValue: newStaffId,
-        reason: editReason,
-      });
-
-      return json<ActionData>({ success: true });
-    }
-
     return json<ActionData>({ success: true });
   } catch (error) {
     console.error("Action error:", error);
@@ -386,6 +356,7 @@ const FIELD_LABELS: Record<string, string> = {
   reviewStatus: "回访状态",
   reviewConclusion: "回访结论",
   supplementNotes: "补充说明",
+  supplementAttachments: "说明材料附件",
 };
 
 function formatChangeValue(field: string, value: any, allStaff?: InferSelectModel<typeof staff>[]) {
@@ -396,6 +367,14 @@ function formatChangeValue(field: string, value: any, allStaff?: InferSelectMode
     return s ? s.name : String(value);
   }
   if (field === "reviewStatus") return REVIEW_STATUS_CONFIG[value as string]?.label || String(value);
+  if (field === "supplementAttachments") {
+    try {
+      const arr = JSON.parse(value as string);
+      return Array.isArray(arr) && arr.length > 0 ? arr.join(", ") : "-";
+    } catch {
+      return String(value);
+    }
+  }
   return String(value);
 }
 
@@ -514,6 +493,22 @@ function ReviewNodeTimeline({
         </div>
       )}
 
+      {node.supplementAttachments && node.supplementAttachments.length > 0 && (
+        <div className="mb-3 ml-2">
+          <div className="text-sm font-medium text-gray-700 mb-1">说明材料附件：</div>
+          <div className="text-sm text-gray-600 p-2 bg-white rounded border">
+            {node.supplementAttachments.map((att, idx) => (
+              <span key={idx} className="inline-flex items-center gap-1 mr-2 mb-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border border-blue-200">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                {att}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isArchived && (
         <div className="mt-3 ml-2 p-3 bg-gray-100 rounded-lg text-sm text-gray-500 flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -549,12 +544,6 @@ function ReviewNodeTimeline({
                 <button onClick={() => setOperatorExpanded("supplement")} className="btn btn-primary text-sm">
                   补充服务记录
                 </button>
-                <button onClick={() => setOperatorExpanded("editTime")} className="btn btn-secondary text-sm">
-                  修改预约时间
-                </button>
-                <button onClick={() => setOperatorExpanded("editStaff")} className="btn btn-secondary text-sm">
-                  变更服务人员
-                </button>
               </div>
             )}
 
@@ -568,6 +557,10 @@ function ReviewNodeTimeline({
                   <textarea name="supplementNotes" className="input" rows={3} placeholder="请输入补充说明..." required />
                 </div>
                 <div>
+                  <label className="label">说明材料附件（多个用逗号分隔）</label>
+                  <input name="supplementAttachments" className="input" placeholder="如：说明函.pdf,照片1.jpg" />
+                </div>
+                <div>
                   <label className="label">采用依据</label>
                   <input name="supplementReason" className="input" placeholder="请填写补充依据（必填）" required />
                 </div>
@@ -576,51 +569,6 @@ function ReviewNodeTimeline({
                   <button type="button" onClick={() => setOperatorExpanded(false)} className="btn btn-secondary text-sm">取消</button>
                 </div>
                 {actionData?.error && <p className="text-red-600 text-sm">{actionData.error}</p>}
-              </Form>
-            )}
-
-            {operatorExpanded === "editTime" && (
-              <Form method="post" className="space-y-3">
-                <input type="hidden" name="actionType" value="editScheduledTime" />
-                <input type="hidden" name="reviewNodeId" value={node.id} />
-                <input type="hidden" name="currentUserId" value={currentUserId} />
-                <div>
-                  <label className="label">新预约时间</label>
-                  <input type="datetime-local" name="newScheduledTime" className="input" required />
-                </div>
-                <div>
-                  <label className="label">修改依据</label>
-                  <input name="editReason" className="input" placeholder="请填写修改依据（必填）" required />
-                </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="btn btn-primary text-sm">确认修改</button>
-                  <button type="button" onClick={() => setOperatorExpanded(false)} className="btn btn-secondary text-sm">取消</button>
-                </div>
-              </Form>
-            )}
-
-            {operatorExpanded === "editStaff" && (
-              <Form method="post" className="space-y-3">
-                <input type="hidden" name="actionType" value="editStaff" />
-                <input type="hidden" name="reviewNodeId" value={node.id} />
-                <input type="hidden" name="currentUserId" value={currentUserId} />
-                <div>
-                  <label className="label">新服务人员</label>
-                  <select name="newStaffId" className="input" required>
-                    <option value="">请选择服务人员</option>
-                    {allStaff.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="label">修改依据</label>
-                  <input name="editReason" className="input" placeholder="请填写变更依据（必填）" required />
-                </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="btn btn-primary text-sm">确认变更</button>
-                  <button type="button" onClick={() => setOperatorExpanded(false)} className="btn btn-secondary text-sm">取消</button>
-                </div>
               </Form>
             )}
           </div>
