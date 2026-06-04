@@ -43,11 +43,17 @@ export async function action({ params, request }: { params: { id: string }; requ
     where: { id: applicationId },
     include: { archiveRecords: { orderBy: { archivedAt: "desc" } } },
   });
-  if (!app) return new Response("Not found", { status: 404 });
+  if (!app) return new Response(JSON.stringify({ error: "申请不存在" }), { status: 404, headers: { "Content-Type": "application/json" } });
 
-  const appUserId = app.status === "PENDING_REVIEW" || app.status === "APPROVED"
-    ? app.currentReviewerId!
-    : app.currentHandlerId!;
+  const isReviewPhase = app.status === "PENDING_REVIEW" || app.status === "APPROVED";
+  const appUserId = isReviewPhase ? app.currentReviewerId : app.currentHandlerId;
+  if (!appUserId) {
+    const roleName = isReviewPhase ? "复核人" : "经办人";
+    return new Response(
+      JSON.stringify({ error: `当前申请${roleName}未分配，请先完成人员分配后再操作` }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
 
   switch (intent) {
     case "upload_document": {
@@ -253,6 +259,9 @@ export default function ApplicationDetail() {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [newSubsidyLevel, setNewSubsidyLevel] = useState<SubsidyLevel>("LEVEL_3");
   const [adjustReason, setAdjustReason] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
 
   if (!application) {
     return (
@@ -268,12 +277,6 @@ export default function ApplicationDetail() {
   }
 
   const isArchived = application.isArchived;
-  const actingUserId = application.status === "PENDING_REVIEW" || application.status === "APPROVED"
-    ? application.currentReviewerId!
-    : application.currentHandlerId!;
-
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
 
   const calculation = calculateSubsidy(
     application.familyMembers.map((m) => ({ monthlyIncome: Number(m.monthlyIncome) })),
@@ -737,23 +740,39 @@ export default function ApplicationDetail() {
               <label className="block text-sm font-medium text-gray-700 mb-2">退回原因</label>
               <textarea
                 value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                onChange={(e) => {
+                  setRejectReason(e.target.value);
+                  if (rejectError) setRejectError("");
+                }}
                 rows={4}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="请输入退回原因，经办人将根据此原因补充材料或修改申请..."
               />
+              {rejectError && <p className="mt-2 text-sm text-red-600">{rejectError}</p>}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowRejectModal(false)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectReason("");
+                  setRejectError("");
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              >
                 取消
               </button>
               <button
                 onClick={() => {
+                  if (!rejectReason.trim()) {
+                    setRejectError("请填写退回原因");
+                    return;
+                  }
                   const fd = new FormData();
                   fd.set("intent", "reject");
                   fd.set("rejectReason", rejectReason);
                   submit(fd, { method: "post" });
                   setRejectReason("");
+                  setRejectError("");
                   setShowRejectModal(false);
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
