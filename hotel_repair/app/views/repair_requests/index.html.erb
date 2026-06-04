@@ -1,0 +1,45 @@
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+  <h2 style="font-size:1.25rem;font-weight:600;">报修工单</h2>
+  <%= link_to "新建报修", new_repair_request_path, class: "btn btn-primary" %>
+</div>
+
+<div class="filter-bar">
+  <%= form_with url: repair_requests_path, method: :get, local: true do |f| %>
+    <%= f.select :status, options_for_select([["全部状态", ""]] + RepairRequest.statuses.map { |k, v| [k.humanize, k] }, params[:status]), {}, onchange: "this.form.submit()" %>
+    <%= f.select :category, options_for_select([["全部类别", ""]] + RepairRequest::REPAIR_CATEGORIES.map { |c| [c.humanize, c] }, params[:category]), {}, onchange: "this.form.submit()" %>
+    <%= f.select :room_type, options_for_select([["全部房型", ""]] + Room.room_types.map { |k, v| [k.humanize, k] }, params[:room_type]), {}, onchange: "this.form.submit()" %>
+  <% end %>
+</div>
+
+<div class="card" style="padding:0;">
+  <table>
+    <thead>
+      <tr>
+        <th>工单号</th>
+        <th>原房间</th>
+        <th>维修类别</th>
+        <th>状态</th>
+        <th>转房</th>
+        <th>补偿</th>
+        <th>经办人</th>
+        <th>创建时间</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @repair_requests.each do |rr| %>
+        <tr>
+          <td style="font-weight:600;">#<%= rr.id %></td>
+          <td><%= rr.original_room.room_number %></td>
+          <td><%= rr.repair_category.humanize %></td>
+          <td><span class="badge badge-<%= rr.status %>"><%= rr.status.humanize %></span></td>
+          <td><%= rr.transfer_status_label %></td>
+          <td><%= rr.compensation_status_label %></td>
+          <td style="font-size:0.8125rem;"><%= rr.reporter.name %></td>
+          <td style="font-size:0.8125rem;color:var(--gray-500);"><%= rr.created_at.strftime("%m-%d %H:%M") %></td>
+          <td><%= link_to "查看", rr, class: "btn btn-outline btn-sm" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

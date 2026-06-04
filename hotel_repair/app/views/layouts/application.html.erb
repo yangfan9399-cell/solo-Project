@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "酒店客房维修转房与补偿审批系统" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Hotel Repair">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <style>
+      :root {
+        --primary: #1e40af;
+        --primary-light: #3b82f6;
+        --success: #059669;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-500: #6b7280;
+        --gray-700: #374151;
+        --gray-900: #111827;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.6; }
+      .navbar { background: var(--primary); color: white; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+      .navbar h1 { font-size: 1.25rem; font-weight: 700; }
+      .navbar a { color: white; text-decoration: none; margin-left: 1rem; font-size: 0.875rem; opacity: 0.9; }
+      .navbar a:hover { opacity: 1; text-decoration: underline; }
+      .navbar .nav-right { display: flex; align-items: center; gap: 1rem; }
+      .navbar .user-badge { background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+      .flash { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; }
+      .flash.notice { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+      .flash.alert { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+      .card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--gray-200); padding: 1.5rem; margin-bottom: 1.5rem; }
+      .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--gray-200); }
+      .card-header h2 { font-size: 1.125rem; font-weight: 600; }
+      .btn { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: all 0.15s; }
+      .btn-primary { background: var(--primary); color: white; }
+      .btn-primary:hover { background: var(--primary-light); }
+      .btn-success { background: var(--success); color: white; }
+      .btn-success:hover { background: #047857; }
+      .btn-warning { background: var(--warning); color: white; }
+      .btn-warning:hover { background: #b45309; }
+      .btn-danger { background: var(--danger); color: white; }
+      .btn-danger:hover { background: #b91c1c; }
+      .btn-outline { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+      .btn-outline:hover { background: var(--gray-100); }
+      .btn-sm { padding: 0.25rem 0.625rem; font-size: 0.75rem; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+      .badge-reported { background: #dbeafe; color: #1e40af; }
+      .badge-transfer_suggested { background: #fef3c7; color: #92400e; }
+      .badge-transfer_confirmed { background: #d1fae5; color: #065f46; }
+      .badge-compensation_pending { background: #ede9fe; color: #5b21b6; }
+      .badge-compensation_approved { background: #d1fae5; color: #065f46; }
+      .badge-compensation_rejected { background: #fee2e2; color: #991b1b; }
+      .badge-compensation_exceeded { background: #fef3c7; color: #92400e; }
+      .badge-archived { background: var(--gray-100); color: var(--gray-500); }
+      .badge-cancelled { background: #fee2e2; color: #991b1b; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+      th { text-align: left; padding: 0.75rem; background: var(--gray-50); border-bottom: 2px solid var(--gray-200); font-weight: 600; color: var(--gray-700); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      td { padding: 0.75rem; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+      tr:hover { background: var(--gray-50); }
+      .form-group { margin-bottom: 1rem; }
+      .form-group label { display: block; font-weight: 500; margin-bottom: 0.375rem; font-size: 0.875rem; color: var(--gray-700); }
+      .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.5rem; font-size: 0.875rem; transition: border-color 0.15s; }
+      .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+      .form-group textarea { min-height: 80px; resize: vertical; }
+      .grid { display: grid; gap: 1rem; }
+      .grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
+      @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+      .timeline { position: relative; padding-left: 2rem; }
+      .timeline::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: var(--gray-200); }
+      .timeline-item { position: relative; padding-bottom: 1.25rem; }
+      .timeline-item::before { content: ''; position: absolute; left: -1.625rem; top: 0.375rem; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--primary-light); border: 2px solid white; box-shadow: 0 0 0 2px var(--gray-200); }
+      .timeline-item .time { font-size: 0.75rem; color: var(--gray-500); }
+      .timeline-item .status-change { font-weight: 500; font-size: 0.875rem; }
+      .timeline-item .note { font-size: 0.8125rem; color: var(--gray-700); margin-top: 0.25rem; }
+      .timeline-item .actor { font-size: 0.75rem; color: var(--primary); }
+      .block-banner { background: #fef2f2; border: 2px solid #fca5a5; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; }
+      .block-banner h3 { color: #991b1b; font-size: 1rem; margin-bottom: 0.5rem; }
+      .block-banner p { color: #7f1d1d; font-size: 0.875rem; }
+      .block-banner .block-reason { background: white; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; font-weight: 500; }
+      .stat-card { text-align: center; padding: 1.25rem; }
+      .stat-card .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+      .stat-card .stat-label { font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem; }
+      .escalation-card { border-left: 4px solid var(--warning); }
+      .actions-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200); }
+      .section-divider { margin: 1.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-200); }
+      .section-divider h3 { font-size: 0.9375rem; font-weight: 600; color: var(--gray-700); }
+      .filter-bar { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+      .filter-bar select { padding: 0.375rem 0.625rem; border: 1px solid var(--gray-300); border-radius: 0.375rem; font-size: 0.8125rem; }
+      .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+      .detail-item label { font-size: 0.75rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; }
+      .detail-item .value { font-size: 0.9375rem; font-weight: 500; margin-top: 0.125rem; }
+      .pagination { display: flex; gap: 0.25rem; justify-content: center; margin-top: 1.5rem; }
+      .pagination a, .pagination span { padding: 0.375rem 0.75rem; border: 1px solid var(--gray-300); border-radius: 0.375rem; font-size: 0.8125rem; text-decoration: none; }
+      .pagination .current { background: var(--primary); color: white; border-color: var(--primary); }
+      .pagination a:hover { background: var(--gray-100); }
+      .sign-in-container { max-width: 400px; margin: 4rem auto; }
+      .sign-in-container h1 { text-align: center; margin-bottom: 1.5rem; color: var(--primary); }
+    </style>
+  </head>
+
+  <body>
+    <% if signed_in? %>
+      <nav class="navbar">
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <h1>🏨 酒店维修审批</h1>
+          <%= link_to "工单列表", repair_requests_path %>
+          <%= link_to "复盘统计", reviews_path %>
+        </div>
+        <div class="nav-right">
+          <span class="user-badge"><%= current_user.name %> · <%= current_user.role == "front_desk" ? "前台经办人" : "值班经理" %></span>
+          <%= button_to "退出", sign_out_path, method: :delete, class: "btn btn-sm", style: "background:rgba(255,255,255,0.2);color:white;border:none;" %>
+        </div>
+      </nav>
+    <% end %>
+
+    <div class="container">
+      <% if notice %><div class="flash notice"><%= notice %></div><% end %>
+      <% if alert %><div class="flash alert"><%= alert %></div><% end %>
+      <%= yield %>
+    </div>
+  </body>
+</html>

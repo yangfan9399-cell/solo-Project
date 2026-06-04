@@ -1,0 +1,331 @@
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+  <div>
+    <h2 style="font-size:1.25rem;font-weight:600;">报修工单 #<%= @repair_request.id %></h2>
+    <span class="badge badge-<%= @repair_request.status %>" style="margin-top:0.25rem;"><%= @repair_request.status.humanize %></span>
+  </div>
+  <%= link_to "返回列表", repair_requests_path, class: "btn btn-outline" %>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>基本信息</h2>
+  </div>
+  <div class="detail-grid">
+    <div class="detail-item">
+      <label>原房间</label>
+      <div class="value"><%= @repair_request.original_room.room_number %> (<%= @repair_request.original_room.room_type.humanize %> / <%= @repair_request.original_room.floor %>F)</div>
+    </div>
+    <div class="detail-item">
+      <label>新房间</label>
+      <div class="value"><%= @repair_request.new_room&.room_number&.then { |n| "#{n} (#{'已转房'})" } || "未转房" %></div>
+    </div>
+    <div class="detail-item">
+      <label>维修类别</label>
+      <div class="value"><%= @repair_request.repair_category.humanize %></div>
+    </div>
+    <div class="detail-item">
+      <label>维修原因</label>
+      <div class="value"><%= @repair_request.repair_reason %></div>
+    </div>
+    <div class="detail-item">
+      <label>登记人</label>
+      <div class="value"><%= @repair_request.reporter.name %> (<%= @repair_request.reporter.role == "front_desk" ? "前台经办人" : "值班经理" %>)</div>
+    </div>
+    <div class="detail-item">
+      <label>处理经理</label>
+      <div class="value"><%= @repair_request.manager&.name || "未指定" %></div>
+    </div>
+    <div class="detail-item">
+      <label>转房状态</label>
+      <div class="value"><%= @repair_request.transfer_status_label %></div>
+    </div>
+    <div class="detail-item">
+      <label>补偿状态</label>
+      <div class="value"><%= @repair_request.compensation_status_label %></div>
+    </div>
+    <div class="detail-item">
+      <label>创建时间</label>
+      <div class="value"><%= @repair_request.created_at.strftime("%Y-%m-%d %H:%M") %></div>
+    </div>
+    <div class="detail-item">
+      <label>处理时长</label>
+      <div class="value"><%= @repair_request.processing_duration_hours ? "#{@repair_request.processing_duration_hours} 小时" : "处理中" %></div>
+    </div>
+  </div>
+
+  <% if @repair_request.transfer_suggestion.present? %>
+    <div style="margin-top:1rem;">
+      <label style="font-size:0.75rem;color:var(--gray-500);">转房建议</label>
+      <div class="value"><%= @repair_request.transfer_suggestion %></div>
+    </div>
+  <% end %>
+
+  <% if @repair_request.hotel_full_reason.present? %>
+    <div style="margin-top:1rem;">
+      <label style="font-size:0.75rem;color:var(--gray-500);">满房说明</label>
+      <div class="value"><%= @repair_request.hotel_full_reason %></div>
+    </div>
+  <% end %>
+
+  <% if @repair_request.customer_feedback.present? %>
+    <div style="margin-top:1rem;">
+      <label style="font-size:0.75rem;color:var(--gray-500);">客户反馈</label>
+      <div class="value"><%= @repair_request.customer_feedback %></div>
+    </div>
+  <% end %>
+</div>
+
+<% if @compensation.present? %>
+  <div class="card">
+    <div class="card-header">
+      <h2>补偿信息</h2>
+      <span class="badge badge-<%= @compensation.status %>"><%= @compensation.status.humanize %></span>
+    </div>
+
+    <% if @compensation.exceeded? || @compensation.block_reason.present? %>
+      <div class="block-banner">
+        <h3>⚠ 补偿金额超限阻断</h3>
+        <p>当前补偿金额 <strong>¥<%= @compensation.amount %></strong> 超出审批限额 <strong>¥<%= @compensation.limit_amount %></strong></p>
+        <div class="block-reason">阻断原因：<%= @compensation.block_reason %></div>
+        <p style="margin-top:0.5rem;font-size:0.8125rem;">可选择：①调整补偿金额至限额以内 ②升级至高级经理审批 ③升级至总经理审批</p>
+      </div>
+    <% end %>
+
+    <div class="detail-grid">
+      <div class="detail-item">
+        <label>补偿金额</label>
+        <div class="value" style="color:<%= @compensation.exceeds_limit? ? 'var(--danger)' : 'var(--success)' %>;">¥<%= @compensation.amount %></div>
+      </div>
+      <div class="detail-item">
+        <label>补偿类型</label>
+        <div class="value"><%= @compensation.compensation_type.humanize %></div>
+      </div>
+      <div class="detail-item">
+        <label>补偿依据</label>
+        <div class="value"><%= @compensation.basis %></div>
+      </div>
+      <div class="detail-item">
+        <label>审批限额</label>
+        <div class="value">¥<%= @compensation.limit_amount %></div>
+      </div>
+      <div class="detail-item">
+        <label>审批人</label>
+        <div class="value"><%= @compensation.approved_by&.name || "待审批" %></div>
+      </div>
+      <div class="detail-item">
+        <label>驳回原因</label>
+        <div class="value"><%= @compensation.rejection_reason || "无" %></div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<% if @escalations.any? %>
+  <div class="card escalation-card">
+    <div class="card-header">
+      <h2>升级审批记录</h2>
+    </div>
+    <% @escalations.each do |esc| %>
+      <div style="padding:0.75rem;border-bottom:1px solid var(--gray-200);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="badge badge-<%= esc.status %>"><%= esc.level == "senior_manager" ? "高级经理审批" : "总经理审批" %> - <%= esc.status.humanize %></span>
+          <span style="font-size:0.75rem;color:var(--gray-500);"><%= esc.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+        </div>
+        <p style="font-size:0.875rem;margin-top:0.375rem;"><strong>原因：</strong><%= esc.reason %></p>
+        <% if esc.suggested_amount.present? %>
+          <p style="font-size:0.8125rem;color:var(--gray-700);">建议金额：¥<%= esc.suggested_amount %></p>
+        <% end %>
+        <% if esc.review_note.present? %>
+          <p style="font-size:0.8125rem;color:var(--gray-700);">审批意见：<%= esc.review_note %></p>
+        <% end %>
+        <% if esc.approved_by.present? %>
+          <p style="font-size:0.75rem;color:var(--primary);">审批人：<%= esc.approved_by.name %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="card">
+  <div class="card-header">
+    <h2>状态变更记录</h2>
+  </div>
+  <div id="status_timeline">
+    <div class="timeline">
+      <% @status_logs.each do |log| %>
+        <div class="timeline-item">
+          <div class="time"><%= log.created_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
+          <div class="status-change">
+            <%= log.from_status&.humanize || "新建" %> → <%= log.to_status.humanize %>
+          </div>
+          <div class="note"><%= log.note %></div>
+          <div class="actor">操作人：<%= log.changed_by.name %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% if @repair_request.status.in?(%w[reported transfer_suggested]) && front_desk? %>
+  <div class="card">
+    <div class="card-header"><h2>前台操作 — 转房建议</h2></div>
+    <%= form_with url: suggest_transfer_repair_request_path(@repair_request), method: :post do |f| %>
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label>建议转入房间</label>
+          <%= f.select :new_room_id, options_from_collection_for_select(Room.available_for_transfer, :id, :display_name), include_blank: "选择可用房间(可留空)" %>
+        </div>
+        <div class="form-group">
+          <label>转房建议说明</label>
+          <%= f.text_field :transfer_suggestion, placeholder: "说明转房原因或建议" %>
+        </div>
+      </div>
+      <%= f.submit "提交转房建议", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @repair_request.status == "transfer_suggested" && duty_manager? %>
+  <div class="card">
+    <div class="card-header"><h2>值班经理操作 — 确认转房</h2></div>
+    <p style="font-size:0.875rem;color:var(--gray-700);margin-bottom:1rem;">
+      原房间：<strong><%= @repair_request.original_room.room_number %></strong>
+      → 新房间：<strong><%= @repair_request.new_room&.room_number || "未指定" %></strong>
+    </p>
+    <%= button_to "确认转房", confirm_transfer_repair_request_path(@repair_request), method: :post, class: "btn btn-success" %>
+  </div>
+<% end %>
+
+<% if !@repair_request.compensation && @repair_request.status.in?(%w[reported transfer_confirmed]) && front_desk? %>
+  <div class="card">
+    <div class="card-header"><h2>前台操作 — 提交补偿申请</h2></div>
+    <%= form_with model: @repair_request, url: submit_compensation_repair_request_path(@repair_request), method: :post do |f| %>
+      <%= f.fields_for :compensation, Compensation.new do |cf| %>
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>补偿金额</label>
+            <%= cf.number_field :amount, step: 0.01, min: 0, placeholder: "超过 ¥#{Compensation::COMPENSATION_LIMIT} 需升级审批" %>
+          </div>
+          <div class="form-group">
+            <label>补偿类型</label>
+            <%= cf.select :compensation_type, Compensation.compensation_types.map { |k, v| [k.humanize, k] } %>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>补偿依据</label>
+          <%= cf.text_area :basis, placeholder: "说明补偿依据和理由", rows: 2 %>
+        </div>
+      <% end %>
+      <%= f.submit "提交补偿申请", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @compensation&.pending? && duty_manager? %>
+  <div class="card">
+    <div class="card-header"><h2>值班经理操作 — 审批补偿</h2></div>
+    <p style="font-size:0.875rem;color:var(--gray-700);margin-bottom:1rem;">
+      补偿金额：<strong>¥<%= @compensation.amount %></strong> |
+      补偿类型：<strong><%= @compensation.compensation_type.humanize %></strong> |
+      补偿依据：<strong><%= @compensation.basis %></strong>
+    </p>
+    <div style="display:flex;gap:0.5rem;">
+      <%= button_to "批准补偿", approve_compensation_repair_request_path(@repair_request), method: :post, class: "btn btn-success" %>
+      <%= form_with url: reject_compensation_repair_request_path(@repair_request), method: :post, local: true, style: "display:flex;gap:0.5rem;align-items:center;" do |f| %>
+        <%= f.text_field :rejection_reason, placeholder: "驳回原因", style: "padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+        <%= f.submit "驳回补偿", class: "btn btn-danger" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @compensation&.exceeded? && duty_manager? %>
+  <div class="card">
+    <div class="card-header"><h2>值班经理操作 — 超限补偿处理</h2></div>
+    <p style="font-size:0.875rem;color:var(--danger);margin-bottom:1rem;">
+      补偿金额 ¥<%= @compensation.amount %> 超出审批限额 ¥<%= @compensation.limit_amount %>，请选择处理方式：
+    </p>
+
+    <div style="margin-bottom:1.5rem;">
+      <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;">方式一：调整金额至限额以内</h4>
+      <%= form_with url: submit_compensation_repair_request_path(@repair_request), method: :post do |f| %>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <%= f.number_field :compensation_amount, value: @compensation.limit_amount, step: 0.01, max: @compensation.limit_amount, style: "width:200px;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <span style="font-size:0.8125rem;color:var(--gray-500);">最高 ¥<%= @compensation.limit_amount %></span>
+        </div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label>调整原因</label>
+          <input type="text" name="compensation[basis]" value="<%= @compensation.basis %>" style="width:100%;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;">
+          <input type="hidden" name="compensation[compensation_type]" value="<%= @compensation.compensation_type %>">
+        </div>
+        <%= f.submit "调整并重新提交", class: "btn btn-warning" %>
+      <% end %>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <h4 style="font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;">方式二：升级审批</h4>
+      <%= form_with url: escalate_repair_request_path(@repair_request), method: :post do |f| %>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <%= f.select :level, [["高级经理审批", "senior_manager"], ["总经理审批", "general_manager"]], {}, style: "padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.text_field :reason, placeholder: "升级审批原因", style: "flex:1;min-width:200px;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.number_field :suggested_amount, value: @compensation.amount, step: 0.01, placeholder: "建议金额", style: "width:150px;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.submit "升级审批", class: "btn btn-danger" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @compensation&.exceeded? && @compensation.approval_escalations.where(status: :pending).exists? && duty_manager? %>
+  <div class="card escalation-card">
+    <div class="card-header"><h2>升级审批操作</h2></div>
+    <% @compensation.approval_escalations.where(status: :pending).each do |esc| %>
+      <div style="padding:0.75rem;border-bottom:1px solid var(--gray-200);">
+        <p style="font-size:0.875rem;margin-bottom:0.5rem;">
+          <strong><%= esc.level == "senior_manager" ? "高级经理" : "总经理" %>审批</strong> —
+          原因：<%= esc.reason %>
+          <% if esc.suggested_amount.present? %> — 建议金额：¥<%= esc.suggested_amount %><% end %>
+        </p>
+        <%= form_with url: approve_escalation_repair_request_path(@repair_request, escalation_id: esc.id), method: :post, style: "display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;" do |f| %>
+          <%= f.text_field :review_note, placeholder: "审批意见", style: "flex:1;min-width:150px;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.number_field :adjusted_amount, placeholder: "调整金额(可选)", step: 0.01, style: "width:150px;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.submit "批准", class: "btn btn-success" %>
+        <% end %>
+        <%= form_with url: reject_escalation_repair_request_path(@repair_request, escalation_id: esc.id), method: :post, style: "display:flex;gap:0.5rem;align-items:center;margin-top:0.5rem;" do |f| %>
+          <%= f.text_field :review_note, placeholder: "驳回原因", style: "flex:1;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+          <%= f.submit "驳回", class: "btn btn-danger" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if front_desk? && @repair_request.status.in?(%w[reported transfer_suggested transfer_confirmed compensation_pending compensation_exceeded]) %>
+  <div class="card">
+    <div class="card-header"><h2>前台操作 — 记录客户反馈</h2></div>
+    <%= form_with url: add_feedback_repair_request_path(@repair_request), method: :post do |f| %>
+      <div class="form-group">
+        <label>客户反馈</label>
+        <%= f.text_area :customer_feedback, value: @repair_request.customer_feedback, placeholder: "记录住客反馈意见", rows: 2 %>
+      </div>
+      <%= f.submit "记录反馈", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @repair_request.status.in?(%w[reported transfer_suggested transfer_confirmed]) %>
+  <div class="card">
+    <div class="card-header"><h2>撤销工单</h2></div>
+    <%= form_with url: cancel_repair_request_path(@repair_request), method: :post, style: "display:flex;gap:0.5rem;align-items:center;" do |f| %>
+      <%= f.text_field :cancel_reason, placeholder: "住客撤销原因", style: "flex:1;padding:0.5rem 0.75rem;border:1px solid var(--gray-300);border-radius:0.5rem;font-size:0.875rem;" %>
+      <%= f.submit "住客撤销", class: "btn btn-danger" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if duty_manager? && @repair_request.status.in?(%w[compensation_approved compensation_rejected]) %>
+  <div class="card">
+    <div class="card-header"><h2>值班经理操作 — 归档</h2></div>
+    <%= button_to "归档工单", archive_repair_request_path(@repair_request), method: :post, class: "btn btn-success" %>
+  </div>
+<% end %>

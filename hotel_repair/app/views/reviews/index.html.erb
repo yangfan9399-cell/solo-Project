@@ -1,0 +1,142 @@
+<h2 style="font-size:1.25rem;font-weight:600;margin-bottom:1.5rem;">复盘统计</h2>
+
+<div class="grid grid-4">
+  <div class="card stat-card">
+    <div class="stat-value"><%= RepairRequest.count %></div>
+    <div class="stat-label">总工单数</div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-value"><%= RepairRequest.active.count %></div>
+    <div class="stat-label">进行中</div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-value"><%= RepairRequest.where(status: :archived).count %></div>
+    <div class="stat-label">已归档</div>
+  </div>
+  <div class="card stat-card">
+    <div class="stat-value"><%= Compensation.where(status: :exceeded).count %></div>
+    <div class="stat-label">超限待审批</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>按房型统计</h2>
+    <%= link_to "查看详情", by_room_type_reviews_path, class: "btn btn-outline btn-sm" %>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>房型</th>
+        <th>工单总数</th>
+        <th>已归档</th>
+        <th>已撤销</th>
+        <th>平均处理时长(小时)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @room_type_data.each do |d| %>
+        <tr>
+          <td><%= d[:room_type]&.humanize %></td>
+          <td><%= d[:total] %></td>
+          <td><%= d[:archived] %></td>
+          <td><%= d[:cancelled] %></td>
+          <td><%= d[:avg_hours] || "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>按维修类别统计</h2>
+    <%= link_to "查看详情", by_category_reviews_path, class: "btn btn-outline btn-sm" %>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>维修类别</th>
+        <th>工单总数</th>
+        <th>已归档</th>
+        <th>平均处理时长(小时)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @category_data.each do |d| %>
+        <tr>
+          <td><%= d[:category]&.humanize %></td>
+          <td><%= d[:total] %></td>
+          <td><%= d[:archived] %></td>
+          <td><%= d[:avg_hours] || "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>按补偿结果统计</h2>
+    <%= link_to "查看详情", by_compensation_reviews_path, class: "btn btn-outline btn-sm" %>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>补偿状态</th>
+        <th>数量</th>
+        <th>平均金额</th>
+        <th>总金额</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @compensation_data.each do |d| %>
+        <tr>
+          <td><span class="badge badge-<%= d[:status] %>"><%= d[:status]&.humanize %></span></td>
+          <td><%= d[:total] %></td>
+          <td>¥<%= d[:avg_amount] || "-" %></td>
+          <td>¥<%= d[:total_amount] || "-" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>处理时长分布</h2>
+    <%= link_to "查看详情", by_duration_reviews_path, class: "btn btn-outline btn-sm" %>
+  </div>
+  <div class="grid grid-4">
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:under_1h] %></div>
+      <div class="stat-label">1小时内</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:between_1h_4h] %></div>
+      <div class="stat-label">1-4小时</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:between_4h_24h] %></div>
+      <div class="stat-label">4-24小时</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:over_24h] %></div>
+      <div class="stat-label">超过24小时</div>
+    </div>
+  </div>
+  <div class="grid grid-3" style="margin-top:1rem;">
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:avg_hours] || "-" %></div>
+      <div class="stat-label">平均处理时长(小时)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:min_hours] || "-" %></div>
+      <div class="stat-label">最短处理时长(小时)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= @duration_data[:max_hours] || "-" %></div>
+      <div class="stat-label">最长处理时长(小时)</div>
+    </div>
+  </div>
+</div>
