@@ -15,12 +15,12 @@ async function main() {
     data: [
       { spotNumber: 'A-001', floor: 'B1', zone: 'A区', isAvailable: true },
       { spotNumber: 'A-002', floor: 'B1', zone: 'A区', isAvailable: false },
-      { spotNumber: 'A-003', floor: 'B1', zone: 'A区', isAvailable: true },
-      { spotNumber: 'B-001', floor: 'B1', zone: 'B区', isAvailable: true },
+      { spotNumber: 'A-003', floor: 'B1', zone: 'A区', isAvailable: false },
+      { spotNumber: 'B-001', floor: 'B1', zone: 'B区', isAvailable: false },
       { spotNumber: 'B-002', floor: 'B1', zone: 'B区', isAvailable: true },
       { spotNumber: 'B-003', floor: 'B1', zone: 'B区', isAvailable: false },
-      { spotNumber: 'C-001', floor: 'B2', zone: 'C区', isAvailable: true },
-      { spotNumber: 'C-002', floor: 'B2', zone: 'C区', isAvailable: true },
+      { spotNumber: 'C-001', floor: 'B2', zone: 'C区', isAvailable: false },
+      { spotNumber: 'C-002', floor: 'B2', zone: 'C区', isAvailable: false },
     ],
   });
 
@@ -261,7 +261,76 @@ async function main() {
       purpose: '项目对接',
       anomalyType: AnomalyType.NONE,
       isArchived: false,
+      changeLogs: {
+        create: [
+          {
+            fieldName: 'status',
+            oldValue: null,
+            newValue: 'PENDING',
+            changedBy: '系统',
+            note: '创建预约，车位已预留',
+          },
+        ],
+      },
     },
+  });
+
+  const bothChangeVisit = await prisma.visit.create({
+    data: {
+      visitorName: '李双变',
+      visitorPhone: '13800138006',
+      visitorCompany: '综合变更测试',
+      licensePlate: '京F66666',
+      originalPlate: '京F55555',
+      parkingSpotId: spotMap.get('B-003')?.id,
+      originalSpotId: spotMap.get('A-002')?.id,
+      visitDate: today,
+      startTime: new Date(today.setHours(11, 0, 0, 0)),
+      endTime: new Date(today.setHours(19, 0, 0, 0)),
+      actualCheckIn: new Date(today.setHours(11, 15, 0, 0)),
+      status: VisitStatus.CHECKED_IN,
+      source: SourceType.WECHAT,
+      hostName: '王测试',
+      hostPhone: '13900139006',
+      hostDepartment: '测试部',
+      purpose: '测试双变更场景',
+      anomalyType: AnomalyType.SPOT_OCCUPIED,
+      anomalyNote: '同时变更：车牌由京F55555→京F66666，车位由A-002→B-003',
+      isArchived: false,
+      changeLogs: {
+        create: [
+          {
+            fieldName: 'licensePlate',
+            oldValue: '京F55555',
+            newValue: '京F66666',
+            changedBy: '张保安',
+            note: '车牌不一致，已核实修改',
+          },
+          {
+            fieldName: 'parkingSpotId',
+            oldValue: 'A-002',
+            newValue: 'B-003',
+            changedBy: '李物业',
+            note: '原车位被占用，协调更换车位',
+          },
+          {
+            fieldName: 'anomalyType',
+            oldValue: 'NONE',
+            newValue: 'SPOT_OCCUPIED',
+            changedBy: '李物业',
+            note: '同时存在车牌和车位变更',
+          },
+          {
+            fieldName: 'status',
+            oldValue: 'PENDING',
+            newValue: 'CHECKED_IN',
+            changedBy: '张保安',
+            note: '双变更后确认入场',
+          },
+        ],
+      },
+    },
+    include: { changeLogs: true },
   });
 
   const archivedVisit = await prisma.visit.create({
@@ -298,7 +367,7 @@ async function main() {
             oldValue: 'CHECKED_IN',
             newValue: 'CHECKED_OUT',
             changedBy: '李物业',
-            note: '离场',
+            note: '离场，车位已释放',
           },
           {
             fieldName: 'status',
@@ -314,12 +383,22 @@ async function main() {
   });
 
   console.log('种子数据创建完成!');
-  console.log('正常访问:', normalVisit.id);
-  console.log('车牌不一致:', plateMismatchVisit.id);
-  console.log('车位被占用:', spotOccupiedVisit.id);
-  console.log('超时未离场:', overstayVisit.id);
-  console.log('待访问:', pendingVisit.id);
+  console.log('正常访问(已离场):', normalVisit.id);
+  console.log('车牌不一致(在场):', plateMismatchVisit.id);
+  console.log('车位被占用(在场):', spotOccupiedVisit.id);
+  console.log('超时未离场(在场):', overstayVisit.id);
+  console.log('待访问(预约中):', pendingVisit.id);
+  console.log('双变更测试(在场):', bothChangeVisit.id);
   console.log('已归档:', archivedVisit.id);
+  console.log('\n车位状态:');
+  console.log('A-001: 可用(王正常已离场)');
+  console.log('A-002: 占用(预置被占)');
+  console.log('A-003: 占用(钱超时在场)');
+  console.log('B-001: 占用(刘车牌在场)');
+  console.log('B-002: 可用(已归档已释放)');
+  console.log('B-003: 占用(李双变在场)');
+  console.log('C-001: 占用(孙车位在场)');
+  console.log('C-002: 占用(冯待访预约中)');
 }
 
 main()

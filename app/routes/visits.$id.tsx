@@ -3,6 +3,13 @@ import type { Route } from "./+types/visits.$id";
 import { db } from "~/lib/db.server";
 import { redirect } from "react-router";
 import { AnomalyType, VisitStatus } from "@prisma/client";
+import {
+  getAvailableSpots,
+  validateSpotAvailable,
+  releaseSpot,
+  occupySpot,
+  buildAnomalyNote,
+} from "~/lib/parkingSpot";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const [visit, availableSpots] = await Promise.all([
@@ -17,10 +24,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         evidences: true,
       },
     }),
-    db.parkingSpot.findMany({
-      where: { isAvailable: true },
-      orderBy: { spotNumber: "asc" },
-    }),
+    getAvailableSpots(),
   ]);
 
   if (!visit) {
@@ -55,80 +59,116 @@ export async function action({ request, params }: Route.ActionArgs) {
     const changeLogs = [];
     const updateData: Record<string, any> = {};
 
-    const plateChanged = newPlate && newPlate.trim() && newPlate !== visit.licensePlate;
+    const plateChanged = newPlate && newPlate.trim() && newPlate.trim() !== visit.licensePlate;
     const spotChanged = newSpotId && newSpotId !== visit.parkingSpotId;
 
-    if (plateChanged) {
-      const trimmedPlate = newPlate.trim();
-      updateData.licensePlate = trimmedPlate;
-      
-      changeLogs.push({
-        fieldName: "licensePlate",
-        oldValue: visit.licensePlate,
-        newValue: trimmedPlate,
-        changedBy: "李物业",
-        note: reprocessNote || "重新处理：修改车牌",
-      });
+    const trimmedPlate = plateChanged ? newPlate.trim() : visit.licensePlate;
+    const oldPlate = visit.licensePlate;
+    const oldSpotNumber = visit.parkingSpot?.spotNumber || "未分配";
 
-      if (visit.anomalyType !== AnomalyType.PLATE_MISMATCH) {
-        changeLogs.push({
-          fieldName: "anomalyType",
-          oldValue: visit.anomalyType,
-          newValue: "PLATE_MISMATCH",
-          changedBy: "李物业",
-          note: reprocessNote || "记录车牌变更异常",
-        });
-        updateData.anomalyType = AnomalyType.PLATE_MISMATCH;
-        updateData.anomalyNote = reprocessNote || `车牌由${visit.licensePlate}变更为${trimmedPlate}`;
-      }
-    }
+    let newSpotNumber = oldSpotNumber;
 
     if (spotChanged) {
-      const newSpot = await db.parkingSpot.findUnique({
-        where: { id: newSpotId },
-      });
-
-      if (!newSpot) {
-        return { error: "选择的车位不存在" };
+      const spotValidation = await validateSpotAvailable(newSpotId, visit.id);
+      if (!spotValidation.valid) {
+        return { error: spotValidation.error };
       }
-
-      if (!newSpot.isAvailable) {
-        return { error: "该车位已被占用，请选择其他车位" };
-      }
+      newSpotNumber = spotValidation.spot.spotNumber;
 
       if (visit.parkingSpotId) {
-        await db.parkingSpot.update({
-          where: { id: visit.parkingSpotId },
-          data: { isAvailable: true },
-        });
+        await releaseSpot(visit.parkingSpotId);
       }
-
-      await db.parkingSpot.update({
-        where: { id: newSpotId },
-        data: { isAvailable: false },
-      });
+      await occupySpot(newSpotId);
 
       updateData.parkingSpotId = newSpotId;
-      
+
       changeLogs.push({
         fieldName: "parkingSpotId",
-        oldValue: visit.parkingSpot?.spotNumber || "未分配",
-        newValue: newSpot.spotNumber,
+        oldValue: oldSpotNumber,
+        newValue: newSpotNumber,
         changedBy: "李物业",
-        note: reprocessNote || "重新处理：更换车位",
+        note: reprocessNote || `重新处理：更换车位 ${oldSpotNumber}→${newSpotNumber}`,
       });
+    }
 
-      if (visit.anomalyType !== AnomalyType.SPOT_OCCUPIED && visit.anomalyType === AnomalyType.NONE) {
+    if (plateChanged) {
+      updateData.licensePlate = trimmedPlate;
+
+      changeLogs.push({
+        fieldName: "licensePlate",
+        oldValue: oldPlate,
+        newValue: trimmedPlate,
+        changedBy: "李物业",
+        note: reprocessNote || `重新处理：修改车牌 ${oldPlate}→${trimmedPlate}`,
+      });
+    }
+
+    if (plateChanged || spotChanged) {
+      let anomalyType = visit.anomalyType;
+      let anomalyNote = visit.anomalyNote;
+
+      if (plateChanged && spotChanged) {
+        anomalyType = AnomalyType.SPOT_OCCUPIED;
+        anomalyNote = buildAnomalyNote(
+          "BOTH",
+          oldPlate,
+          trimmedPlate,
+          oldSpotNumber,
+          newSpotNumber,
+          reprocessNote
+        );
+
         changeLogs.push({
           fieldName: "anomalyType",
           oldValue: visit.anomalyType,
           newValue: "SPOT_OCCUPIED",
           changedBy: "李物业",
-          note: reprocessNote || "记录车位变更异常",
+          note: "同时存在车牌和车位变更，更新异常类型",
         });
-        updateData.anomalyType = AnomalyType.SPOT_OCCUPIED;
-        updateData.anomalyNote = reprocessNote || `车位由${visit.parkingSpot?.spotNumber || "未分配"}变更为${newSpot.spotNumber}`;
+      } else if (plateChanged && visit.anomalyType !== AnomalyType.OVERSTAY) {
+        anomalyType = AnomalyType.PLATE_MISMATCH;
+        anomalyNote = buildAnomalyNote(
+          "PLATE_MISMATCH",
+          oldPlate,
+          trimmedPlate,
+          undefined,
+          undefined,
+          reprocessNote
+        );
+
+        if (visit.anomalyType !== AnomalyType.PLATE_MISMATCH) {
+          changeLogs.push({
+            fieldName: "anomalyType",
+            oldValue: visit.anomalyType,
+            newValue: "PLATE_MISMATCH",
+            changedBy: "李物业",
+            note: "记录车牌变更异常",
+          });
+        }
+      } else if (spotChanged && visit.anomalyType !== AnomalyType.OVERSTAY) {
+        anomalyType = AnomalyType.SPOT_OCCUPIED;
+        anomalyNote = buildAnomalyNote(
+          "SPOT_OCCUPIED",
+          undefined,
+          undefined,
+          oldSpotNumber,
+          newSpotNumber,
+          reprocessNote
+        );
+
+        if (visit.anomalyType !== AnomalyType.SPOT_OCCUPIED) {
+          changeLogs.push({
+            fieldName: "anomalyType",
+            oldValue: visit.anomalyType,
+            newValue: "SPOT_OCCUPIED",
+            changedBy: "李物业",
+            note: "记录车位变更异常",
+          });
+        }
       }
+
+      updateData.anomalyType = anomalyType;
+      updateData.anomalyNote = anomalyNote;
     }
 
     if (changeLogs.length > 0) {
@@ -224,6 +264,7 @@ export default function VisitDetail() {
 
   const hasPlateChanged = visit.licensePlate !== visit.originalPlate;
   const hasSpotChanged = visit.parkingSpot?.id !== visit.originalSpot?.id;
+  const hasBothChange = hasPlateChanged && hasSpotChanged;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -245,6 +286,9 @@ export default function VisitDetail() {
               <span className={`badge ${getStatusColor(visit.status)}`}>
                 {getStatusLabel(visit.status)}
               </span>
+              {hasBothChange && (
+                <span className="badge bg-indigo-100 text-indigo-800">🔄 双变更</span>
+              )}
               {visit.isArchived && (
                 <span className="badge bg-blue-100 text-blue-800">只读</span>
               )}

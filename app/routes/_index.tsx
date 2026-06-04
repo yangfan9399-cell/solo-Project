@@ -4,10 +4,18 @@ import { db } from "~/lib/db.server";
 import { AnomalyType, VisitStatus } from "@prisma/client";
 
 export async function loader() {
-  const [stats, recentVisits] = await Promise.all([
+  const [groupStats, allVisits, recentVisits] = await Promise.all([
     db.visit.groupBy({
       by: ["status", "anomalyType"],
       _count: true,
+    }),
+    db.visit.findMany({
+      select: {
+        licensePlate: true,
+        originalPlate: true,
+        parkingSpotId: true,
+        originalSpotId: true,
+      },
     }),
     db.visit.findMany({
       take: 5,
@@ -16,13 +24,18 @@ export async function loader() {
     }),
   ]);
 
-  const totalVisits = stats.reduce((sum, s) => sum + s._count, 0);
-  const pendingCount = stats.filter(s => s.status === VisitStatus.PENDING).reduce((sum, s) => sum + s._count, 0);
-  const checkedInCount = stats.filter(s => s.status === VisitStatus.CHECKED_IN).reduce((sum, s) => sum + s._count, 0);
-  const anomalyCount = stats.filter(s => s.anomalyType !== AnomalyType.NONE).reduce((sum, s) => sum + s._count, 0);
-  const plateMismatchCount = stats.filter(s => s.anomalyType === AnomalyType.PLATE_MISMATCH).reduce((sum, s) => sum + s._count, 0);
-  const spotOccupiedCount = stats.filter(s => s.anomalyType === AnomalyType.SPOT_OCCUPIED).reduce((sum, s) => sum + s._count, 0);
-  const overstayCount = stats.filter(s => s.anomalyType === AnomalyType.OVERSTAY).reduce((sum, s) => sum + s._count, 0);
+  const totalVisits = groupStats.reduce((sum, s) => sum + s._count, 0);
+  const pendingCount = groupStats.filter(s => s.status === VisitStatus.PENDING).reduce((sum, s) => sum + s._count, 0);
+  const checkedInCount = groupStats.filter(s => s.status === VisitStatus.CHECKED_IN).reduce((sum, s) => sum + s._count, 0);
+  const anomalyCount = groupStats.filter(s => s.anomalyType !== AnomalyType.NONE).reduce((sum, s) => sum + s._count, 0);
+  const plateMismatchCount = groupStats.filter(s => s.anomalyType === AnomalyType.PLATE_MISMATCH).reduce((sum, s) => sum + s._count, 0);
+  const spotOccupiedCount = groupStats.filter(s => s.anomalyType === AnomalyType.SPOT_OCCUPIED).reduce((sum, s) => sum + s._count, 0);
+  const overstayCount = groupStats.filter(s => s.anomalyType === AnomalyType.OVERSTAY).reduce((sum, s) => sum + s._count, 0);
+  const bothChangeCount = allVisits.filter(v => {
+    const plateChanged = v.licensePlate !== v.originalPlate;
+    const spotChanged = v.parkingSpotId !== v.originalSpotId;
+    return plateChanged && spotChanged;
+  }).length;
 
   return {
     stats: {
@@ -33,6 +46,7 @@ export async function loader() {
       plateMismatch: plateMismatchCount,
       spotOccupied: spotOccupiedCount,
       overstay: overstayCount,
+      bothChange: bothChangeCount,
     },
     recentVisits,
   };
@@ -132,7 +146,7 @@ export default function Index() {
             <h2 className="text-lg font-semibold text-gray-900">异常类型统计</h2>
           </div>
           <div className="card-body">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-lg">
                 <span className="text-3xl">🔢</span>
                 <div>
@@ -152,6 +166,13 @@ export default function Index() {
                 <div>
                   <p className="text-sm text-gray-600">超时未离场</p>
                   <p className="text-2xl font-bold text-red-600">{stats.overstay}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-lg">
+                <span className="text-3xl">🔄</span>
+                <div>
+                  <p className="text-sm text-gray-600">双变更</p>
+                  <p className="text-2xl font-bold text-indigo-600">{stats.bothChange}</p>
                 </div>
               </div>
             </div>

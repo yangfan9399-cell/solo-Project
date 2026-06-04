@@ -3,7 +3,8 @@ import type { Route } from "./+types/visits.new";
 import { db } from "~/lib/db.server";
 import { redirect } from "react-router";
 import { z } from "zod";
-import { SourceType } from "@prisma/client";
+import { SourceType, AnomalyType } from "@prisma/client";
+import { getAvailableSpots, occupySpot, validateSpotAvailable } from "~/lib/parkingSpot";
 
 const createVisitSchema = z.object({
   visitorName: z.string().min(2, "访客姓名至少2个字符"),
@@ -22,10 +23,7 @@ const createVisitSchema = z.object({
 });
 
 export async function loader() {
-  const availableSpots = await db.parkingSpot.findMany({
-    where: { isAvailable: true },
-    orderBy: { spotNumber: "asc" },
-  });
+  const availableSpots = await getAvailableSpots();
   return { availableSpots };
 }
 
@@ -38,6 +36,14 @@ export async function action({ request }: Route.ActionArgs) {
   if (!validated.success) {
     return {
       errors: validated.error.flatten().fieldErrors,
+      values: data,
+    };
+  }
+
+  const spotValidation = await validateSpotAvailable(validated.data.parkingSpotId);
+  if (!spotValidation.valid) {
+    return {
+      errors: { parkingSpotId: [spotValidation.error] },
       values: data,
     };
   }
@@ -69,22 +75,29 @@ export async function action({ request }: Route.ActionArgs) {
       hostPhone: validated.data.hostPhone,
       hostDepartment: validated.data.hostDepartment,
       purpose: validated.data.purpose,
+      anomalyType: AnomalyType.NONE,
       changeLogs: {
-        create: {
-          fieldName: "status",
-          oldValue: null,
-          newValue: "PENDING",
-          changedBy: "系统",
-          note: "创建预约",
-        },
+        create: [
+          {
+            fieldName: "status",
+            oldValue: null,
+            newValue: "PENDING",
+            changedBy: "系统",
+            note: "创建预约，车位已预留",
+          },
+          {
+            fieldName: "parkingSpotId",
+            oldValue: null,
+            newValue: spotValidation.spot?.spotNumber,
+            changedBy: "系统",
+            note: "分配访客车位",
+          },
+        ],
       },
     },
   });
 
-  await db.parkingSpot.update({
-    where: { id: validated.data.parkingSpotId },
-    data: { isAvailable: false },
-  });
+  await occupySpot(validated.data.parkingSpotId);
 
   return redirect("/visits");
 }
@@ -118,6 +131,11 @@ export default function NewVisit() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+          <span className="font-medium">💡 提示：</span>
+          当前可用车位 {availableSpots.length} 个
+        </div>
+
         <div className="card">
           <Form method="post" className="card-body space-y-6">
             <div>
@@ -182,7 +200,7 @@ export default function NewVisit() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="label">选择车位 *</label>
-                  <select name="parkingSpotId" className="input">
+                  <select name="parkingSpotId" className="input" required>
                     <option value="">请选择车位</option>
                     {availableSpots.map((spot) => (
                       <option key={spot.id} value={spot.id}>
@@ -190,6 +208,9 @@ export default function NewVisit() {
                       </option>
                     ))}
                   </select>
+                  {availableSpots.length === 0 && (
+                    <p className="text-orange-600 text-sm mt-1">⚠️ 暂无可用车位，请先释放车位</p>
+                  )}
                   {actionData?.errors?.parkingSpotId && (
                     <p className="text-red-500 text-sm mt-1">{actionData.errors.parkingSpotId[0]}</p>
                   )}
@@ -315,7 +336,7 @@ export default function NewVisit() {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={isSubmitting}
+                disabled={isSubmitting || availableSpots.length === 0}
               >
                 {isSubmitting ? "提交中..." : "提交预约"}
               </button>

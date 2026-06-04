@@ -3,6 +3,7 @@ import type { Route } from "./+types/gate";
 import { db } from "~/lib/db.server";
 import { redirect } from "react-router";
 import { AnomalyType, VisitStatus } from "@prisma/client";
+import { buildAnomalyNote } from "~/lib/parkingSpot";
 
 export async function loader() {
   const pendingVisits = await db.visit.findMany({
@@ -51,23 +52,28 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     const plateMismatch = hasAnomaly && actualPlate && actualPlate !== visit.licensePlate;
+    const oldPlate = visit.licensePlate;
+    const newPlate = plateMismatch ? actualPlate : visit.licensePlate;
+    const anomalyNoteFinal = plateMismatch 
+      ? buildAnomalyNote("PLATE_MISMATCH", oldPlate, newPlate, undefined, undefined, anomalyNote)
+      : null;
 
     await db.visit.update({
       where: { id: visitId },
       data: {
-        licensePlate: plateMismatch ? actualPlate : visit.licensePlate,
+        licensePlate: newPlate,
         actualCheckIn: new Date(),
         status: VisitStatus.CHECKED_IN,
         anomalyType: plateMismatch ? AnomalyType.PLATE_MISMATCH : AnomalyType.NONE,
-        anomalyNote: plateMismatch ? anomalyNote : null,
+        anomalyNote: anomalyNoteFinal,
         changeLogs: {
           create: [
             ...(plateMismatch ? [{
               fieldName: "licensePlate",
-              oldValue: visit.licensePlate,
-              newValue: actualPlate,
+              oldValue: oldPlate,
+              newValue: newPlate,
               changedBy: "张保安",
-              note: anomalyNote || "车牌不一致，已核实修改",
+              note: anomalyNoteFinal || "车牌不一致，已核实修改",
             }] : []),
             {
               fieldName: "status",

@@ -22,6 +22,11 @@ export async function loader() {
     plateMismatch: visits.filter((v) => v.anomalyType === AnomalyType.PLATE_MISMATCH).length,
     spotOccupied: visits.filter((v) => v.anomalyType === AnomalyType.SPOT_OCCUPIED).length,
     overstay: visits.filter((v) => v.anomalyType === AnomalyType.OVERSTAY).length,
+    bothChange: visits.filter((v) => {
+      const plateChanged = v.licensePlate !== v.originalPlate;
+      const spotChanged = v.parkingSpotId !== v.originalSpotId;
+      return plateChanged && spotChanged;
+    }).length,
   };
 
   return { visits, stats };
@@ -78,7 +83,7 @@ export default function Visits() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           <div className="card">
             <div className="card-body text-center">
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -121,6 +126,12 @@ export default function Visits() {
               <p className="text-xs text-gray-500">超时</p>
             </div>
           </div>
+          <div className="card">
+            <div className="card-body text-center">
+              <p className="text-2xl font-bold text-indigo-600">{stats.bothChange}</p>
+              <p className="text-xs text-gray-500">双变更</p>
+            </div>
+          </div>
         </div>
 
         <div className="card">
@@ -153,75 +164,92 @@ export default function Visits() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {visits.map((visit) => (
-                    <tr key={visit.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium text-gray-900">{visit.visitorName}</p>
-                          <p className="text-xs text-gray-500">{visit.visitorPhone}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-mono font-medium">
-                            {visit.licensePlate}
-                          </p>
-                          {visit.licensePlate !== visit.originalPlate && (
-                            <p className="text-xs text-orange-600">
-                              原: {visit.originalPlate}
+                  {visits.map((visit) => {
+                    const plateChanged = visit.licensePlate !== visit.originalPlate;
+                    const spotChanged = visit.parkingSpotId !== visit.originalSpotId;
+                    const hasBothChange = plateChanged && spotChanged;
+
+                    return (
+                      <tr key={visit.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-medium text-gray-900">{visit.visitorName}</p>
+                            <p className="text-xs text-gray-500">{visit.visitorPhone}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-mono font-medium">
+                              {visit.licensePlate}
                             </p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium">
-                            {visit.parkingSpot?.spotNumber || "-"}
-                          </p>
-                          {visit.parkingSpot?.id !== visit.originalSpot?.id && (
-                            <p className="text-xs text-purple-600">已变更</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-gray-900">{visit.hostName}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`badge ${getStatusColor(visit.status)}`}>
-                          {getStatusLabel(visit.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {visit.anomalyType !== "NONE" ? (
-                          <span
-                            className={`badge ${
-                              visit.anomalyType === "PLATE_MISMATCH"
-                                ? "bg-orange-100 text-orange-800"
+                            {plateChanged && (
+                              <p className="text-xs text-orange-600">
+                                原: {visit.originalPlate}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-medium">
+                              {visit.parkingSpot?.spotNumber || "-"}
+                            </p>
+                            {spotChanged && (
+                              <p className="text-xs text-purple-600">
+                                原: {visit.originalSpot?.spotNumber || "未分配"}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-gray-900">{visit.hostName}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-1">
+                            <span className={`badge ${getStatusColor(visit.status)}`}>
+                              {getStatusLabel(visit.status)}
+                            </span>
+                            {hasBothChange && (
+                              <span className="badge bg-indigo-100 text-indigo-800 text-xs">
+                                🔄 双变更
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {visit.anomalyType !== "NONE" ? (
+                            <span
+                              className={`badge ${
+                                visit.anomalyType === "PLATE_MISMATCH"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : visit.anomalyType === "SPOT_OCCUPIED"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {visit.anomalyType === "PLATE_MISMATCH"
+                                ? "车牌不符"
                                 : visit.anomalyType === "SPOT_OCCUPIED"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
+                                ? hasBothChange
+                                  ? "双变更"
+                                  : "车位占用"
+                                : "超时"}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Link
+                            to={`/visits/${visit.id}`}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
                           >
-                            {visit.anomalyType === "PLATE_MISMATCH"
-                              ? "车牌不符"
-                              : visit.anomalyType === "SPOT_OCCUPIED"
-                              ? "车位占用"
-                              : "超时"}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link
-                          to={`/visits/${visit.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          查看详情
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                            查看详情
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
