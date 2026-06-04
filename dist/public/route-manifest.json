@@ -3,16 +3,16 @@
     "type": "route",
     "script": {
       "type": "script",
-      "href": "/assets/certificates-cbfa700b.js"
+      "href": "/assets/certificates-535db662.js"
     },
     "assets": [
       {
         "type": "script",
-        "href": "/assets/certificates-cbfa700b.js"
+        "href": "/assets/certificates-535db662.js"
       },
       {
         "type": "script",
-        "href": "/assets/entry-client-1cdb76f4.js"
+        "href": "/assets/entry-client-ad851c09.js"
       }
     ]
   },
@@ -20,16 +20,16 @@
     "type": "route",
     "script": {
       "type": "script",
-      "href": "/assets/disputes-4fd728f9.js"
+      "href": "/assets/disputes-26006a23.js"
     },
     "assets": [
       {
         "type": "script",
-        "href": "/assets/disputes-4fd728f9.js"
+        "href": "/assets/disputes-26006a23.js"
       },
       {
         "type": "script",
-        "href": "/assets/entry-client-1cdb76f4.js"
+        "href": "/assets/entry-client-ad851c09.js"
       }
     ]
   },
@@ -37,16 +37,16 @@
     "type": "route",
     "script": {
       "type": "script",
-      "href": "/assets/index-8b6c9588.js"
+      "href": "/assets/index-33b50b18.js"
     },
     "assets": [
       {
         "type": "script",
-        "href": "/assets/index-8b6c9588.js"
+        "href": "/assets/index-33b50b18.js"
       },
       {
         "type": "script",
-        "href": "/assets/entry-client-1cdb76f4.js"
+        "href": "/assets/entry-client-ad851c09.js"
       }
     ]
   },
@@ -54,16 +54,16 @@
     "type": "route",
     "script": {
       "type": "script",
-      "href": "/assets/_id_-91f7fe8e.js"
+      "href": "/assets/_id_-aa001af8.js"
     },
     "assets": [
       {
         "type": "script",
-        "href": "/assets/_id_-91f7fe8e.js"
+        "href": "/assets/_id_-aa001af8.js"
       },
       {
         "type": "script",
-        "href": "/assets/entry-client-1cdb76f4.js"
+        "href": "/assets/entry-client-ad851c09.js"
       }
     ]
   },
@@ -71,12 +71,12 @@
     "type": "entry",
     "script": {
       "type": "script",
-      "href": "/assets/entry-client-1cdb76f4.js"
+      "href": "/assets/entry-client-ad851c09.js"
     },
     "assets": [
       {
         "type": "script",
-        "href": "/assets/entry-client-1cdb76f4.js"
+        "href": "/assets/entry-client-ad851c09.js"
       }
     ]
   },

@@ -36,15 +36,15 @@
   "src/root.tsx": [
   ],
   "src/routes/certificates.tsx": [
-    "/assets/certificates-cbfa700b.js"
+    "/assets/certificates-535db662.js"
   ],
   "src/routes/disputes.tsx": [
-    "/assets/disputes-4fd728f9.js"
+    "/assets/disputes-26006a23.js"
   ],
   "src/routes/index.tsx": [
-    "/assets/index-8b6c9588.js"
+    "/assets/index-33b50b18.js"
   ],
   "src/routes/registrations/[id].tsx": [
-    "/assets/_id_-91f7fe8e.js"
+    "/assets/_id_-aa001af8.js"
   ]
 }

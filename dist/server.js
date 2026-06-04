@@ -39859,16 +39859,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/certificates-cbfa700b.js"
+		href: "/assets/certificates-535db662.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/certificates-cbfa700b.js"
+			href: "/assets/certificates-535db662.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-1cdb76f4.js"
+			href: "/assets/entry-client-ad851c09.js"
 		}
 	]
 },
@@ -39876,16 +39876,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/disputes-4fd728f9.js"
+		href: "/assets/disputes-26006a23.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/disputes-4fd728f9.js"
+			href: "/assets/disputes-26006a23.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-1cdb76f4.js"
+			href: "/assets/entry-client-ad851c09.js"
 		}
 	]
 },
@@ -39893,16 +39893,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/index-8b6c9588.js"
+		href: "/assets/index-33b50b18.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/index-8b6c9588.js"
+			href: "/assets/index-33b50b18.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-1cdb76f4.js"
+			href: "/assets/entry-client-ad851c09.js"
 		}
 	]
 },
@@ -39910,16 +39910,16 @@ var manifest = {
 	type: "route",
 	script: {
 		type: "script",
-		href: "/assets/_id_-91f7fe8e.js"
+		href: "/assets/_id_-aa001af8.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/_id_-91f7fe8e.js"
+			href: "/assets/_id_-aa001af8.js"
 		},
 		{
 			type: "script",
-			href: "/assets/entry-client-1cdb76f4.js"
+			href: "/assets/entry-client-ad851c09.js"
 		}
 	]
 },
@@ -39927,12 +39927,12 @@ var manifest = {
 	type: "entry",
 	script: {
 		type: "script",
-		href: "/assets/entry-client-1cdb76f4.js"
+		href: "/assets/entry-client-ad851c09.js"
 	},
 	assets: [
 		{
 			type: "script",
-			href: "/assets/entry-client-1cdb76f4.js"
+			href: "/assets/entry-client-ad851c09.js"
 		}
 	]
 },
@@ -79838,7 +79838,7 @@ function RegistrationQueue() {
   })];
 }
 
-var _tmpl$$1 = ["<div", ' class="text-gray-500">加载中...</div>'], _tmpl$2$1 = ["<div", ' class="text-red-500">未找到报名记录</div>'], _tmpl$3$1 = ["<div", ' class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"><div class="flex items-center gap-2 text-red-700 font-semibold"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>重复报名 — 冲突报名编号：<span class="font-mono text-lg">', '</span></div><p class="text-red-600 text-sm mt-1">该报名与已有报名冲突，证书发放已被阻断。如需处理请提交资格争议。</p></div>'], _tmpl$4$1 = ["<div", ' class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-blue-700 text-sm">', "</div>"], _tmpl$5$1 = ["<div", ' class="mt-2 text-xs text-gray-400">及格线：<!--$-->', "<!--/--> 分</div>"], _tmpl$6 = ["<div", ' class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">证书信息</h2><!--$-->', "<!--/--></div>"], _tmpl$7 = ["<div", ' class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">资格争议</h2><!--$-->', "<!--/--></div>"], _tmpl$8 = ["<div", ' class="text-xs text-gray-500 mb-2 font-semibold">经办人操作</div>'], _tmpl$9 = ["<button", ' class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">补交材料</button>'], _tmpl$0 = ["<button", ' class="w-full bg-teal-600 text-white px-4 py-2 rounded text-sm hover:bg-teal-700">录入/更新成绩</button>'], _tmpl$1 = ["<button", ' class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">提交资格争议</button>'], _tmpl$10 = ["<div", ' class="text-xs text-gray-500 mb-2 font-semibold">复核人操作</div>'], _tmpl$11 = ["<button", ' class="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">审核通过</button>'], _tmpl$12 = ["<button", ' class="w-full bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700">审核不通过</button>'], _tmpl$13 = ["<button", ' class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">标记材料缺失</button>'], _tmpl$14 = ["<button", ' class="w-full bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-700">退回经办人</button>'], _tmpl$15 = ["<button", ' class="w-full bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">发放证书</button>'], _tmpl$16 = ["<div", ' class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">重复报名，证书发放已阻断</div>'], _tmpl$17 = ["<div", '><div class="flex items-center justify-between mb-6"><div class="flex items-center gap-3"><button class="text-gray-500 hover:text-gray-700 text-sm">← 返回列表</button><h1 class="text-2xl font-bold text-gray-900">报名详情</h1></div><span class="', '">', "</span></div><!--$-->", "<!--/--><!--$-->", '<!--/--><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6"><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">基本信息</h2><div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">报名编号：</span><span class="font-mono">', '</span></div><div><span class="text-gray-500">姓名：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">证件号：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">报名来源：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">课程：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">当前责任人：</span><!--$-->', "<!--/--> (<!--$-->", '<!--/-->)</div><div><span class="text-gray-500">创建时间：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">最近更新：</span><!--$-->', '<!--/--></div></div></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">材料清单</h2><!--$-->', '<!--/--></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">成绩记录</h2><!--$-->', "<!--/--><!--$-->", "<!--/--></div><!--$-->", "<!--/--><!--$-->", '<!--/--></div><div class="space-y-6"><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">操作</h2><div class="space-y-3"><!--$-->', "<!--/--><!--$-->", '<!--/--></div></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">最近改动</h2><div class="space-y-3 max-h-80 overflow-y-auto">', "</div></div></div></div></div>"], _tmpl$18 = ["<div", ' class="text-gray-400 text-sm">暂无材料</div>'], _tmpl$19 = ["<div", ' class="flex items-center justify-between py-2 border-b last:border-0 text-sm"><div><span class="font-medium">', '</span><span class="text-gray-400 ml-2">(<!--$-->', '<!--/-->)</span></div><span class="', '">', "</span></div>"], _tmpl$20 = ["<div", ' class="text-gray-400 text-sm">暂无成绩</div>'], _tmpl$21 = ["<div", ' class="flex items-center justify-between py-2 border-b last:border-0 text-sm"><div><span class="font-medium"><!--$-->', '<!--/--> 分</span><span class="text-gray-400 ml-2">录入人：<!--$-->', '<!--/--></span></div><span class="', '">', "</span></div>"], _tmpl$22 = ["<div", ' class="text-xs text-gray-500 mt-1">审核意见：<!--$-->', "<!--/--></div>"], _tmpl$23 = ["<button", ' class="mt-2 text-xs text-gray-500 hover:text-gray-700 underline">归档证书</button>'], _tmpl$24 = ["<div", ' class="py-3 border-b last:border-0"><div class="flex items-center justify-between text-sm mb-2"><span class="font-mono font-semibold text-indigo-700">', '</span><span class="', '">', '</span></div><div class="text-xs text-gray-500">发证人：<!--$-->', "<!--/--> | 发证日期：<!--$-->", "<!--/--></div><!--$-->", "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$25 = ["<div", ' class="text-sm text-gray-500 mt-1">处理结果：<!--$-->', "<!--/--></div>"], _tmpl$26 = ["<div", ' class="mt-2 flex gap-2"><button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">解决争议</button><button class="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">驳回争议</button></div>'], _tmpl$27 = ["<div", ' class="py-3 border-b last:border-0"><div class="flex items-center justify-between text-sm mb-1"><span class="', '">', '</span><span class="text-xs text-gray-400">', '</span></div><div class="text-sm text-gray-700">', "</div><!--$-->", "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$28 = ["<div", ' class="text-gray-400 text-sm">暂无操作记录</div>'], _tmpl$29 = ["<div", ' class="text-gray-600 text-xs mt-0.5">', "</div>"], _tmpl$30 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3"><div class="flex items-center justify-between"><span class="font-medium text-gray-700">', '</span><span class="text-xs text-gray-400">', '</span></div><div class="text-gray-500 text-xs mt-0.5"><!--$-->', "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", "<!--/--></div>"];
+var _tmpl$$1 = ["<div", ' class="text-gray-500">加载中...</div>'], _tmpl$2$1 = ["<div", ' class="text-red-500">未找到报名记录</div>'], _tmpl$3$1 = ["<div", ' class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"><div class="flex items-center gap-2 text-red-700 font-semibold"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>重复报名 — 冲突报名编号：<span class="font-mono text-lg">', '</span></div><p class="text-red-600 text-sm mt-1">该报名与已有报名冲突，证书发放已被阻断。如需处理请提交资格争议。</p></div>'], _tmpl$4$1 = ["<div", ' class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6 text-blue-700 text-sm">', "</div>"], _tmpl$5$1 = ["<div", ' class="mt-2 text-xs text-gray-400">及格线：<!--$-->', "<!--/--> 分</div>"], _tmpl$6 = ["<div", ' class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">证书信息</h2><!--$-->', "<!--/--></div>"], _tmpl$7 = ["<div", ' class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">资格争议</h2><!--$-->', "<!--/--></div>"], _tmpl$8 = ["<div", ' class="text-xs text-gray-500 mb-2 font-semibold">经办人操作</div>'], _tmpl$9 = ["<div", ' class="bg-orange-50 border border-orange-200 rounded p-2 text-xs text-orange-700 mb-2">有材料缺失，请补交后流转复核人</div>'], _tmpl$0 = ["<button", ' class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">补交其他材料</button>'], _tmpl$1 = ["<button", ' class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">补交材料</button>'], _tmpl$10 = ["<button", ' class="w-full bg-teal-600 text-white px-4 py-2 rounded text-sm hover:bg-teal-700">录入/更新成绩</button>'], _tmpl$11 = ["<button", ' class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">提交资格争议</button>'], _tmpl$12 = ["<div", ' class="text-xs text-gray-500 mb-2 font-semibold">复核人操作</div>'], _tmpl$13 = ["<div", ' class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 mb-2">重复报名 — 冲突编号：<span class="font-mono font-bold">', "</span><br>证书发放已阻断，如需处理请通过资格争议</div>"], _tmpl$14 = ["<div", ' class="bg-orange-50 border border-orange-200 rounded p-2 text-xs text-orange-700 mb-2">材料缺失中，等待经办人补交材料</div>'], _tmpl$15 = ["<div", ' class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700 mb-2">成绩未达标，等待经办人更新成绩</div>'], _tmpl$16 = ["<button", ' class="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">审核通过</button>'], _tmpl$17 = ["<button", ' class="w-full bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700">审核不通过</button>'], _tmpl$18 = ["<button", ' class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">标记材料缺失</button>'], _tmpl$19 = ["<button", ' class="w-full bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-700">退回经办人</button>'], _tmpl$20 = ["<button", ' class="w-full bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 mt-1">确认发放证书</button>'], _tmpl$21 = ["<div", ' class="bg-green-50 border border-green-200 rounded p-2 text-xs text-green-700 mb-2">证书已发放，可进行归档</div>'], _tmpl$22 = ["<div", ' class="bg-gray-50 border border-gray-200 rounded p-2 text-xs text-gray-600 mb-2">已归档，无需进一步操作</div>'], _tmpl$23 = ["<div", '><div class="flex items-center justify-between mb-6"><div class="flex items-center gap-3"><button class="text-gray-500 hover:text-gray-700 text-sm">← 返回列表</button><h1 class="text-2xl font-bold text-gray-900">报名详情</h1></div><span class="', '">', "</span></div><!--$-->", "<!--/--><!--$-->", '<!--/--><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6"><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">基本信息</h2><div class="grid grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">报名编号：</span><span class="font-mono">', '</span></div><div><span class="text-gray-500">姓名：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">证件号：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">报名来源：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">课程：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">当前责任人：</span><!--$-->', "<!--/--> (<!--$-->", '<!--/-->)</div><div><span class="text-gray-500">创建时间：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">最近更新：</span><!--$-->', '<!--/--></div></div></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">材料清单</h2><!--$-->', '<!--/--></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">成绩记录</h2><!--$-->', "<!--/--><!--$-->", "<!--/--></div><!--$-->", "<!--/--><!--$-->", '<!--/--></div><div class="space-y-6"><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">操作</h2><div class="space-y-3"><!--$-->', "<!--/--><!--$-->", '<!--/--></div></div><div class="bg-white rounded-lg shadow p-6"><h2 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">最近改动</h2><div class="space-y-3 max-h-80 overflow-y-auto">', "</div></div></div></div></div>"], _tmpl$24 = ["<div", ' class="text-gray-400 text-sm">暂无材料</div>'], _tmpl$25 = ["<div", ' class="flex items-center justify-between py-2 border-b last:border-0 text-sm"><div><span class="font-medium">', '</span><span class="text-gray-400 ml-2">(<!--$-->', '<!--/-->)</span></div><span class="', '">', "</span></div>"], _tmpl$26 = ["<div", ' class="text-gray-400 text-sm">暂无成绩</div>'], _tmpl$27 = ["<div", ' class="flex items-center justify-between py-2 border-b last:border-0 text-sm"><div><span class="font-medium"><!--$-->', '<!--/--> 分</span><span class="text-gray-400 ml-2">录入人：<!--$-->', '<!--/--></span></div><span class="', '">', "</span></div>"], _tmpl$28 = ["<div", ' class="text-xs text-gray-500 mt-1">审核意见：<!--$-->', "<!--/--></div>"], _tmpl$29 = ["<button", ' class="mt-2 text-xs text-gray-500 hover:text-gray-700 underline">归档证书</button>'], _tmpl$30 = ["<div", ' class="py-3 border-b last:border-0"><div class="flex items-center justify-between text-sm mb-2"><span class="font-mono font-semibold text-indigo-700">', '</span><span class="', '">', '</span></div><div class="text-xs text-gray-500">发证人：<!--$-->', "<!--/--> | 发证日期：<!--$-->", "<!--/--></div><!--$-->", "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$31 = ["<div", ' class="text-sm text-gray-500 mt-1">处理结果：<!--$-->', "<!--/--></div>"], _tmpl$32 = ["<div", ' class="mt-2 flex gap-2"><button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">解决争议</button><button class="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">驳回争议</button></div>'], _tmpl$33 = ["<div", ' class="py-3 border-b last:border-0"><div class="flex items-center justify-between text-sm mb-1"><span class="', '">', '</span><span class="text-xs text-gray-400">', '</span></div><div class="text-sm text-gray-700">', "</div><!--$-->", "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$34 = ["<button", ' class="w-full bg-orange-500 text-white px-4 py-2 rounded text-sm hover:bg-orange-600 mb-1">补交：<!--$-->', "<!--/-->（<!--$-->", "<!--/-->）</button>"], _tmpl$35 = ["<div", ' class="text-gray-400 text-sm">暂无操作记录</div>'], _tmpl$36 = ["<div", ' class="text-gray-600 text-xs mt-0.5">', "</div>"], _tmpl$37 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3"><div class="flex items-center justify-between"><span class="font-medium text-gray-700">', '</span><span class="text-xs text-gray-400">', '</span></div><div class="text-gray-500 text-xs mt-0.5"><!--$-->', "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", "<!--/--></div>"];
 const STATUS_MAP = {
   pending: {
     label: "待审核",
@@ -79915,7 +79915,7 @@ function RegistrationDetail() {
             if (!d?.registration)
               return ssr(_tmpl$2$1, ssrHydrationKey());
             const reg = d.registration;
-            return ssr(_tmpl$17, ssrHydrationKey(), `px-3 py-1 rounded text-sm font-medium ${escape(STATUS_MAP[reg.status]?.color || "bg-gray-100 text-gray-600", true)}`, escape(STATUS_MAP[reg.status]?.label || reg.status), escape(createComponent(Show, {
+            return ssr(_tmpl$23, ssrHydrationKey(), `px-3 py-1 rounded text-sm font-medium ${escape(STATUS_MAP[reg.status]?.color || "bg-gray-100 text-gray-600", true)}`, escape(STATUS_MAP[reg.status]?.label || reg.status), escape(createComponent(Show, {
               get when() {
                 return reg.status === "duplicate";
               },
@@ -79934,17 +79934,17 @@ function RegistrationDetail() {
                 return d.materials ?? [];
               },
               get fallback() {
-                return ssr(_tmpl$18, ssrHydrationKey());
+                return ssr(_tmpl$24, ssrHydrationKey());
               },
-              children: (mat) => ssr(_tmpl$19, ssrHydrationKey(), escape(mat.name), escape(mat.type), `px-2 py-0.5 rounded text-xs ${mat.status === "verified" ? "bg-green-100 text-green-700" : mat.status === "submitted" ? "bg-blue-100 text-blue-700" : mat.status === "rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`, mat.status === "verified" ? "已核实" : mat.status === "submitted" ? "已提交" : mat.status === "rejected" ? "已驳回" : "待提交")
+              children: (mat) => ssr(_tmpl$25, ssrHydrationKey(), escape(mat.name), escape(mat.type), `px-2 py-0.5 rounded text-xs ${mat.status === "verified" ? "bg-green-100 text-green-700" : mat.status === "submitted" ? "bg-blue-100 text-blue-700" : mat.status === "rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`, mat.status === "verified" ? "已核实" : mat.status === "submitted" ? "已提交" : mat.status === "rejected" ? "已驳回" : "待提交")
             })), escape(createComponent(For, {
               get each() {
                 return d.grades ?? [];
               },
               get fallback() {
-                return ssr(_tmpl$20, ssrHydrationKey());
+                return ssr(_tmpl$26, ssrHydrationKey());
               },
-              children: (g) => ssr(_tmpl$21, ssrHydrationKey(), escape(g.score), escape(g.recordedBy), `px-2 py-0.5 rounded text-xs ${Number(g.passed) ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`, Number(g.passed) ? "达标" : "未达标")
+              children: (g) => ssr(_tmpl$27, ssrHydrationKey(), escape(g.score), escape(g.recordedBy), `px-2 py-0.5 rounded text-xs ${Number(g.passed) ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`, Number(g.passed) ? "达标" : "未达标")
             })), escape(createComponent(Show, {
               get when() {
                 return d.course;
@@ -79961,19 +79961,19 @@ function RegistrationDetail() {
                   get each() {
                     return d.certificates;
                   },
-                  children: (cert) => ssr(_tmpl$24, ssrHydrationKey(), escape(cert.certNo), `px-2 py-0.5 rounded text-xs ${cert.status === "active" ? "bg-green-100 text-green-700" : cert.status === "archived" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"}`, cert.status === "active" ? "有效" : cert.status === "archived" ? "已归档" : "已撤销", escape(cert.issuedBy), escape(new Date(cert.issuedAt).toLocaleDateString("zh-CN")), escape(createComponent(Show, {
+                  children: (cert) => ssr(_tmpl$30, ssrHydrationKey(), escape(cert.certNo), `px-2 py-0.5 rounded text-xs ${cert.status === "active" ? "bg-green-100 text-green-700" : cert.status === "archived" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-700"}`, cert.status === "active" ? "有效" : cert.status === "archived" ? "已归档" : "已撤销", escape(cert.issuedBy), escape(new Date(cert.issuedAt).toLocaleDateString("zh-CN")), escape(createComponent(Show, {
                     get when() {
                       return cert.reviewOpinion;
                     },
                     get children() {
-                      return ssr(_tmpl$22, ssrHydrationKey(), escape(cert.reviewOpinion));
+                      return ssr(_tmpl$28, ssrHydrationKey(), escape(cert.reviewOpinion));
                     }
                   })), escape(createComponent(Show, {
                     get when() {
                       return cert.status === "active";
                     },
                     get children() {
-                      return ssr(_tmpl$23, ssrHydrationKey());
+                      return ssr(_tmpl$29, ssrHydrationKey());
                     }
                   })))
                 })));
@@ -79987,19 +79987,19 @@ function RegistrationDetail() {
                   get each() {
                     return d.disputes;
                   },
-                  children: (dis) => ssr(_tmpl$27, ssrHydrationKey(), `px-2 py-0.5 rounded text-xs ${dis.status === "open" ? "bg-yellow-100 text-yellow-700" : dis.status === "under_review" ? "bg-blue-100 text-blue-700" : dis.status === "resolved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`, dis.status === "open" ? "待处理" : dis.status === "under_review" ? "处理中" : dis.status === "resolved" ? "已解决" : "已驳回", escape(new Date(dis.createdAt).toLocaleString("zh-CN")), escape(dis.reason), escape(createComponent(Show, {
+                  children: (dis) => ssr(_tmpl$33, ssrHydrationKey(), `px-2 py-0.5 rounded text-xs ${dis.status === "open" ? "bg-yellow-100 text-yellow-700" : dis.status === "under_review" ? "bg-blue-100 text-blue-700" : dis.status === "resolved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`, dis.status === "open" ? "待处理" : dis.status === "under_review" ? "处理中" : dis.status === "resolved" ? "已解决" : "已驳回", escape(new Date(dis.createdAt).toLocaleString("zh-CN")), escape(dis.reason), escape(createComponent(Show, {
                     get when() {
                       return dis.resolution;
                     },
                     get children() {
-                      return ssr(_tmpl$25, ssrHydrationKey(), escape(dis.resolution));
+                      return ssr(_tmpl$31, ssrHydrationKey(), escape(dis.resolution));
                     }
                   })), escape(createComponent(Show, {
                     get when() {
                       return dis.status === "open";
                     },
                     get children() {
-                      return ssr(_tmpl$26, ssrHydrationKey());
+                      return ssr(_tmpl$32, ssrHydrationKey());
                     }
                   })))
                 })));
@@ -80009,40 +80009,94 @@ function RegistrationDetail() {
                 return reg.currentRole === "handler";
               },
               get children() {
-                return [ssr(_tmpl$8, ssrHydrationKey()), ssr(_tmpl$9, ssrHydrationKey()), ssr(_tmpl$0, ssrHydrationKey()), ssr(_tmpl$1, ssrHydrationKey())];
+                return [ssr(_tmpl$8, ssrHydrationKey()), createComponent(Show, {
+                  get when() {
+                    return reg.status === "material_missing";
+                  },
+                  get children() {
+                    return [ssr(_tmpl$9, ssrHydrationKey()), createComponent(For, {
+                      get each() {
+                        return (d.materials ?? []).filter((m) => m.status === "pending" || m.status === "rejected");
+                      },
+                      children: (mat) => ssr(_tmpl$34, ssrHydrationKey(), escape(mat.name), mat.status === "pending" ? "待提交" : "已驳回")
+                    }), ssr(_tmpl$0, ssrHydrationKey())];
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status !== "material_missing" && reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "duplicate";
+                  },
+                  get children() {
+                    return ssr(_tmpl$1, ssrHydrationKey());
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "duplicate";
+                  },
+                  get children() {
+                    return ssr(_tmpl$10, ssrHydrationKey());
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status !== "cert_issued" && reg.status !== "archived";
+                  },
+                  get children() {
+                    return ssr(_tmpl$11, ssrHydrationKey());
+                  }
+                })];
               }
             })), escape(createComponent(Show, {
               get when() {
                 return reg.currentRole === "reviewer";
               },
               get children() {
-                return [ssr(_tmpl$10, ssrHydrationKey()), createComponent(Show, {
+                return [ssr(_tmpl$12, ssrHydrationKey()), createComponent(Show, {
                   get when() {
-                    return reg.status !== "duplicate" && reg.status !== "cert_issued" && reg.status !== "archived";
+                    return reg.status === "duplicate";
                   },
                   get children() {
-                    return [ssr(_tmpl$11, ssrHydrationKey()), ssr(_tmpl$12, ssrHydrationKey()), ssr(_tmpl$13, ssrHydrationKey()), ssr(_tmpl$14, ssrHydrationKey())];
+                    return ssr(_tmpl$13, ssrHydrationKey(), escape(reg.conflictRegNo));
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status === "material_missing";
+                  },
+                  get children() {
+                    return ssr(_tmpl$14, ssrHydrationKey());
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status === "grade_not_met";
+                  },
+                  get children() {
+                    return ssr(_tmpl$15, ssrHydrationKey());
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status !== "duplicate" && reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "material_missing" && reg.status !== "grade_not_met";
+                  },
+                  get children() {
+                    return [ssr(_tmpl$16, ssrHydrationKey()), ssr(_tmpl$17, ssrHydrationKey()), ssr(_tmpl$18, ssrHydrationKey()), ssr(_tmpl$19, ssrHydrationKey())];
                   }
                 }), createComponent(Show, {
                   get when() {
                     return reg.status === "course_completed" || reg.status === "qualified";
                   },
                   get children() {
-                    return createComponent(Show, {
-                      get when() {
-                        return reg.status !== "duplicate";
-                      },
-                      get children() {
-                        return ssr(_tmpl$15, ssrHydrationKey());
-                      }
-                    });
+                    return ssr(_tmpl$20, ssrHydrationKey());
                   }
                 }), createComponent(Show, {
                   get when() {
-                    return reg.status === "duplicate";
+                    return reg.status === "cert_issued";
                   },
                   get children() {
-                    return ssr(_tmpl$16, ssrHydrationKey());
+                    return ssr(_tmpl$21, ssrHydrationKey());
+                  }
+                }), createComponent(Show, {
+                  get when() {
+                    return reg.status === "archived";
+                  },
+                  get children() {
+                    return ssr(_tmpl$22, ssrHydrationKey());
                   }
                 })];
               }
@@ -80051,14 +80105,14 @@ function RegistrationDetail() {
                 return (d.auditLogs ?? []).slice(0, 10);
               },
               get fallback() {
-                return ssr(_tmpl$28, ssrHydrationKey());
+                return ssr(_tmpl$35, ssrHydrationKey());
               },
-              children: (log) => ssr(_tmpl$30, ssrHydrationKey(), escape(log.action), escape(new Date(log.createdAt).toLocaleString("zh-CN")), escape(log.operator), log.operatorRole === "handler" ? "经办人" : "复核人", escape(createComponent(Show, {
+              children: (log) => ssr(_tmpl$37, ssrHydrationKey(), escape(log.action), escape(new Date(log.createdAt).toLocaleString("zh-CN")), escape(log.operator), log.operatorRole === "handler" ? "经办人" : "复核人", escape(createComponent(Show, {
                 get when() {
                   return log.detail;
                 },
                 get children() {
-                  return ssr(_tmpl$29, ssrHydrationKey(), escape(log.detail));
+                  return ssr(_tmpl$36, ssrHydrationKey(), escape(log.detail));
                 }
               })))
             })));
@@ -80313,6 +80367,18 @@ const connection = await mysql.createConnection({
 });
 const db = drizzle(connection, { schema, mode: "default" });
 
+const STATUS_LABELS = {
+  pending: "待审核",
+  material_missing: "材料缺失",
+  under_review: "审核中",
+  qualified: "资格通过",
+  unqualified: "资格不通过",
+  grade_not_met: "成绩未达标",
+  duplicate: "重复报名",
+  course_completed: "课程完成",
+  cert_issued: "已发证",
+  archived: "已归档"
+};
 async function checkDuplicate(applicantIdNo, courseId, excludeRegId) {
   const conditions = [eq(registrations.applicantIdNo, applicantIdNo), eq(registrations.courseId, courseId)];
   if (excludeRegId) {
@@ -80403,46 +80469,99 @@ async function getRegistrationDetail(regId) {
   };
 }
 async function supplementMaterial(regId, data) {
-  await db.insert(materials).values({
-    id: randomUUID(),
-    registrationId: regId,
-    name: data.name,
-    type: data.type,
-    fileUrl: data.fileUrl,
-    status: "submitted"
-  });
-  await db.update(registrations).set({ updatedAt: /* @__PURE__ */ new Date() }).where(eq(registrations.id, regId));
-  await db.insert(auditLogs).values({
-    id: randomUUID(),
-    registrationId: regId,
-    action: "supplement_material",
-    operator: data.operator,
-    operatorRole: "handler",
-    detail: `经办人补交材料：${data.name}`
-  });
+  const reg = await db.select().from(registrations).where(eq(registrations.id, regId)).then((r) => r[0]);
+  if (!reg)
+    throw new Error("报名记录不存在");
+  if (data.materialId) {
+    const existing = await db.select().from(materials).where(and(eq(materials.id, data.materialId), eq(materials.registrationId, regId))).then((r) => r[0]);
+    if (!existing)
+      throw new Error("材料记录不存在");
+    await db.update(materials).set({ status: "submitted", fileUrl: data.fileUrl || existing.fileUrl, updatedAt: /* @__PURE__ */ new Date() }).where(eq(materials.id, data.materialId));
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "supplement_material",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: `经办人补交材料：${existing.name}（${existing.status} → submitted）`
+    });
+  } else {
+    await db.insert(materials).values({
+      id: randomUUID(),
+      registrationId: regId,
+      name: data.name,
+      type: data.type,
+      fileUrl: data.fileUrl,
+      status: "submitted"
+    });
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "supplement_material",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: `经办人补交材料：${data.name}`
+    });
+  }
+  if (reg.status === "material_missing") {
+    const allMaterials = await db.select().from(materials).where(eq(materials.registrationId, regId));
+    const hasMissing = allMaterials.some((m) => m.status === "pending" || m.status === "rejected");
+    await db.update(registrations).set({
+      status: hasMissing ? "material_missing" : "under_review",
+      currentRole: "reviewer",
+      currentAssignee: "复核人",
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(registrations.id, regId));
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "route_to_reviewer",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: hasMissing ? "仍有材料缺失，提交复核人审阅" : "材料已补齐，流转复核人审核"
+    });
+  } else {
+    await db.update(registrations).set({ updatedAt: /* @__PURE__ */ new Date() }).where(eq(registrations.id, regId));
+  }
 }
 async function updateGrade(regId, data) {
+  const reg = await db.select().from(registrations).where(eq(registrations.id, regId)).then((r) => r[0]);
+  if (!reg)
+    throw new Error("报名记录不存在");
+  if (reg.status === "duplicate")
+    throw new Error("重复报名，不可更新成绩");
+  if (reg.status === "cert_issued")
+    throw new Error("已发证，不可更新成绩");
+  if (reg.status === "archived")
+    throw new Error("已归档，不可更新成绩");
   const course = await db.select().from(courses).where(eq(courses.id, data.courseId)).then((r) => r[0]);
   const passingScore = Number(course?.passingScore ?? 60);
   const score = Number(data.score);
   const passed = score >= passingScore ? 1 : 0;
-  await db.insert(grades).values({
-    id: randomUUID(),
-    registrationId: regId,
-    courseId: data.courseId,
-    score: data.score,
-    passed,
-    recordedBy: data.operator
-  });
+  const existingGrade = await db.select().from(grades).where(and(eq(grades.registrationId, regId), eq(grades.courseId, data.courseId))).then((r) => r[0]);
+  if (existingGrade) {
+    await db.update(grades).set({ score: data.score, passed, recordedBy: data.operator, recordedAt: /* @__PURE__ */ new Date() }).where(eq(grades.id, existingGrade.id));
+  } else {
+    await db.insert(grades).values({
+      id: randomUUID(),
+      registrationId: regId,
+      courseId: data.courseId,
+      score: data.score,
+      passed,
+      recordedBy: data.operator
+    });
+  }
   const newStatus = passed ? "course_completed" : "grade_not_met";
-  await db.update(registrations).set({ status: newStatus, updatedAt: /* @__PURE__ */ new Date() }).where(eq(registrations.id, regId));
+  const newRole = passed ? "reviewer" : "handler";
+  const newAssignee = passed ? "复核人" : "经办人";
+  await db.update(registrations).set({ status: newStatus, currentRole: newRole, currentAssignee: newAssignee, updatedAt: /* @__PURE__ */ new Date() }).where(eq(registrations.id, regId));
   await db.insert(auditLogs).values({
     id: randomUUID(),
     registrationId: regId,
     action: "record_grade",
     operator: data.operator,
     operatorRole: "handler",
-    detail: `成绩录入：${data.score}分，${passed ? "达标" : `未达标（要求${passingScore}分）`}`
+    detail: `成绩录入：${data.score}分，${passed ? `达标，流转复核人确认发证（要求${passingScore}分）` : `未达标（要求${passingScore}分），当前责任人：经办人`}`
   });
   return { passed, passingScore };
 }
@@ -80451,14 +80570,21 @@ async function reviewQualification(regId, data) {
   if (!reg)
     throw new Error("报名记录不存在");
   if (reg.status === "duplicate") {
-    throw new Error("重复报名，不可审核通过");
+    throw new Error(`重复报名（冲突编号：${reg.conflictRegNo}），不可审核通过。如需处理请提交资格争议`);
+  }
+  if (reg.status === "cert_issued") {
+    throw new Error("已发证，不可再审核资格");
+  }
+  if (reg.status === "archived") {
+    throw new Error("已归档，不可再审核资格");
   }
   const newStatus = data.qualified ? "qualified" : "unqualified";
-  const newRole = data.qualified ? "handler" : "reviewer";
+  const newRole = data.qualified ? "reviewer" : "reviewer";
+  const newAssignee = data.qualified ? "复核人" : data.operator;
   await db.update(registrations).set({
     status: newStatus,
     currentRole: newRole,
-    currentAssignee: data.qualified ? "经办人" : data.operator,
+    currentAssignee: newAssignee,
     updatedAt: /* @__PURE__ */ new Date()
   }).where(eq(registrations.id, regId));
   await db.insert(auditLogs).values({
@@ -80467,7 +80593,7 @@ async function reviewQualification(regId, data) {
     action: data.qualified ? "review_qualified" : "review_unqualified",
     operator: data.operator,
     operatorRole: "reviewer",
-    detail: data.opinion
+    detail: data.qualified ? `${data.opinion}（资格通过，复核人可确认发证）` : `${data.opinion}（资格不通过）`
   });
 }
 async function markMaterialMissing(regId, data) {
@@ -80505,10 +80631,22 @@ async function issueCertificate(regId, data) {
   if (!reg)
     throw new Error("报名记录不存在");
   if (reg.status === "duplicate") {
-    throw new Error("重复报名，禁止发放证书");
+    throw new Error(`重复报名，禁止发放证书（冲突编号：${reg.conflictRegNo}）`);
+  }
+  if (reg.status === "material_missing") {
+    throw new Error("材料缺失，请先由经办人补齐材料后再发证");
+  }
+  if (reg.status === "grade_not_met") {
+    throw new Error("成绩未达标，请先由经办人更新成绩后再发证");
+  }
+  if (reg.status === "unqualified") {
+    throw new Error("资格审核未通过，不可发放证书");
+  }
+  if (reg.status === "pending" || reg.status === "under_review") {
+    throw new Error("资格尚未审核，请先完成资格审核");
   }
   if (reg.status !== "course_completed" && reg.status !== "qualified") {
-    throw new Error("当前状态不可发放证书");
+    throw new Error(`当前状态为"${STATUS_LABELS[reg.status] || reg.status}"，不可发放证书`);
   }
   const materialList = await db.select().from(materials).where(eq(materials.registrationId, regId));
   const materialSnapshot = {};
@@ -80708,14 +80846,22 @@ async function POST$3(event) {
 
 async function POST$2(event) {
   const body = await event.request.json();
-  const result = await updateGrade(body.regId, body);
-  return json(result);
+  try {
+    const result = await updateGrade(body.regId, body);
+    return json(result);
+  } catch (e) {
+    return json({ error: e.message }, { status: 400 });
+  }
 }
 
 async function POST$1(event) {
   const body = await event.request.json();
-  await supplementMaterial(body.regId, body);
-  return json({ success: true });
+  try {
+    await supplementMaterial(body.regId, body);
+    return json({ success: true });
+  } catch (e) {
+    return json({ error: e.message }, { status: 400 });
+  }
 }
 
 async function GET(event) {

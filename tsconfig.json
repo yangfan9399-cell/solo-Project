@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "types": ["solid-start/env"],
+    "types": ["solid-start/env", "node"],
     "noEmit": true,
     "strict": true,
     "isolatedModules": true,

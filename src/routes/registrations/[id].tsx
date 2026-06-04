@@ -78,20 +78,23 @@ export default function RegistrationDetail() {
     refetch();
   };
 
-  const handleSupplementMaterial = async () => {
+  const handleSupplementMaterial = async (materialId?: string) => {
     const name = prompt("材料名称：");
     if (!name) return;
     const type = prompt("材料类型(id_copy/certificate/transcript/photo/other)：") || "other";
-    await fetch("/api/materials/supplement", {
+    const res = await fetch("/api/materials/supplement", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         regId: params.id,
+        materialId,
         name,
         type,
         operator: "经办人王明",
       }),
     });
+    const data = await res.json();
+    setActionMsg(data.error || "材料已补交");
     refetch();
   };
 
@@ -111,7 +114,11 @@ export default function RegistrationDetail() {
       }),
     });
     const data = await res.json();
-    setActionMsg(data.passed ? "成绩达标" : `成绩未达标（要求${data.passingScore}分）`);
+    if (data.error) {
+      setActionMsg(data.error);
+    } else {
+      setActionMsg(data.passed ? `成绩达标（${data.passingScore}分），已流转复核人确认发证` : `成绩未达标（要求${data.passingScore}分）`);
+    }
     refetch();
   };
 
@@ -361,29 +368,81 @@ export default function RegistrationDetail() {
                       <div class="space-y-3">
                         <Show when={reg.currentRole === "handler"}>
                           <div class="text-xs text-gray-500 mb-2 font-semibold">经办人操作</div>
-                          <button
-                            class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-                            onClick={handleSupplementMaterial}
-                          >
-                            补交材料
-                          </button>
-                          <button
-                            class="w-full bg-teal-600 text-white px-4 py-2 rounded text-sm hover:bg-teal-700"
-                            onClick={handleUpdateGrade}
-                          >
-                            录入/更新成绩
-                          </button>
-                          <button
-                            class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700"
-                            onClick={handleSubmitDispute}
-                          >
-                            提交资格争议
-                          </button>
+
+                          <Show when={reg.status === "material_missing"}>
+                            <div class="bg-orange-50 border border-orange-200 rounded p-2 text-xs text-orange-700 mb-2">
+                              有材料缺失，请补交后流转复核人
+                            </div>
+                            <For each={(d.materials ?? []).filter((m: any) => m.status === "pending" || m.status === "rejected")}>
+                              {(mat: any) => (
+                                <button
+                                  class="w-full bg-orange-500 text-white px-4 py-2 rounded text-sm hover:bg-orange-600 mb-1"
+                                  onClick={() => handleSupplementMaterial(mat.id)}
+                                >
+                                  补交：{mat.name}（{mat.status === "pending" ? "待提交" : "已驳回"}）
+                                </button>
+                              )}
+                            </For>
+                            <button
+                              class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
+                              onClick={() => handleSupplementMaterial()}
+                            >
+                              补交其他材料
+                            </button>
+                          </Show>
+
+                          <Show when={reg.status !== "material_missing" && reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "duplicate"}>
+                            <button
+                              class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
+                              onClick={() => handleSupplementMaterial()}
+                            >
+                              补交材料
+                            </button>
+                          </Show>
+
+                          <Show when={reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "duplicate"}>
+                            <button
+                              class="w-full bg-teal-600 text-white px-4 py-2 rounded text-sm hover:bg-teal-700"
+                              onClick={handleUpdateGrade}
+                            >
+                              录入/更新成绩
+                            </button>
+                          </Show>
+
+                          <Show when={reg.status !== "cert_issued" && reg.status !== "archived"}>
+                            <button
+                              class="w-full bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700"
+                              onClick={handleSubmitDispute}
+                            >
+                              提交资格争议
+                            </button>
+                          </Show>
                         </Show>
 
                         <Show when={reg.currentRole === "reviewer"}>
                           <div class="text-xs text-gray-500 mb-2 font-semibold">复核人操作</div>
-                          <Show when={reg.status !== "duplicate" && reg.status !== "cert_issued" && reg.status !== "archived"}>
+
+                          <Show when={reg.status === "duplicate"}>
+                            <div class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 mb-2">
+                              重复报名 — 冲突编号：
+                              <span class="font-mono font-bold">{reg.conflictRegNo}</span>
+                              <br />证书发放已阻断，如需处理请通过资格争议
+                            </div>
+                          </Show>
+
+                          <Show when={reg.status === "material_missing"}>
+                            <div class="bg-orange-50 border border-orange-200 rounded p-2 text-xs text-orange-700 mb-2">
+                              材料缺失中，等待经办人补交材料
+                            </div>
+                          </Show>
+
+                          <Show when={reg.status === "grade_not_met"}>
+                            <div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700 mb-2">
+                              成绩未达标，等待经办人更新成绩
+                            </div>
+                          </Show>
+
+                          <Show when={reg.status !== "duplicate" && reg.status !== "cert_issued" && reg.status !== "archived" && reg.status !== "material_missing" && reg.status !== "grade_not_met"}>
                             <button
                               class="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
                               onClick={() => handleReview(true)}
@@ -411,19 +470,23 @@ export default function RegistrationDetail() {
                           </Show>
 
                           <Show when={reg.status === "course_completed" || reg.status === "qualified"}>
-                            <Show when={reg.status !== "duplicate"}>
-                              <button
-                                class="w-full bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700"
-                                onClick={handleIssueCert}
-                              >
-                                发放证书
-                              </button>
-                            </Show>
+                            <button
+                              class="w-full bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 mt-1"
+                              onClick={handleIssueCert}
+                            >
+                              确认发放证书
+                            </button>
                           </Show>
 
-                          <Show when={reg.status === "duplicate"}>
-                            <div class="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-                              重复报名，证书发放已阻断
+                          <Show when={reg.status === "cert_issued"}>
+                            <div class="bg-green-50 border border-green-200 rounded p-2 text-xs text-green-700 mb-2">
+                              证书已发放，可进行归档
+                            </div>
+                          </Show>
+
+                          <Show when={reg.status === "archived"}>
+                            <div class="bg-gray-50 border border-gray-200 rounded p-2 text-xs text-gray-600 mb-2">
+                              已归档，无需进一步操作
                             </div>
                           </Show>
                         </Show>

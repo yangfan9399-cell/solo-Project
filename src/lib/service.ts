@@ -3,6 +3,19 @@ import { registrations, materials, grades, certificates, auditLogs, disputes, co
 import { eq, and, desc, like, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "待审核",
+  material_missing: "材料缺失",
+  under_review: "审核中",
+  qualified: "资格通过",
+  unqualified: "资格不通过",
+  grade_not_met: "成绩未达标",
+  duplicate: "重复报名",
+  course_completed: "课程完成",
+  cert_issued: "已发证",
+  archived: "已归档",
+};
+
 export async function checkDuplicate(applicantIdNo: string, courseId: string, excludeRegId?: string) {
   const conditions = [eq(registrations.applicantIdNo, applicantIdNo), eq(registrations.courseId, courseId)];
   if (excludeRegId) {
@@ -129,31 +142,92 @@ export async function getRegistrationDetail(regId: string) {
 }
 
 export async function supplementMaterial(regId: string, data: {
+  materialId?: string;
   name: string;
   type: string;
   fileUrl?: string;
   operator: string;
 }) {
-  await db.insert(materials).values({
-    id: randomUUID(),
-    registrationId: regId,
-    name: data.name,
-    type: data.type as any,
-    fileUrl: data.fileUrl,
-    status: "submitted",
-  });
-  await db
-    .update(registrations)
-    .set({ updatedAt: new Date() })
-    .where(eq(registrations.id, regId));
-  await db.insert(auditLogs).values({
-    id: randomUUID(),
-    registrationId: regId,
-    action: "supplement_material",
-    operator: data.operator,
-    operatorRole: "handler",
-    detail: `经办人补交材料：${data.name}`,
-  });
+  const reg = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, regId))
+    .then((r) => r[0]);
+
+  if (!reg) throw new Error("报名记录不存在");
+
+  if (data.materialId) {
+    const existing = await db
+      .select()
+      .from(materials)
+      .where(and(eq(materials.id, data.materialId), eq(materials.registrationId, regId)))
+      .then((r) => r[0]);
+
+    if (!existing) throw new Error("材料记录不存在");
+
+    await db
+      .update(materials)
+      .set({ status: "submitted", fileUrl: data.fileUrl || existing.fileUrl, updatedAt: new Date() })
+      .where(eq(materials.id, data.materialId));
+
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "supplement_material",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: `经办人补交材料：${existing.name}（${existing.status} → submitted）`,
+    });
+  } else {
+    await db.insert(materials).values({
+      id: randomUUID(),
+      registrationId: regId,
+      name: data.name,
+      type: data.type as any,
+      fileUrl: data.fileUrl,
+      status: "submitted",
+    });
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "supplement_material",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: `经办人补交材料：${data.name}`,
+    });
+  }
+
+  if (reg.status === "material_missing") {
+    const allMaterials = await db
+      .select()
+      .from(materials)
+      .where(eq(materials.registrationId, regId));
+    const hasMissing = allMaterials.some((m) => m.status === "pending" || m.status === "rejected");
+
+    await db
+      .update(registrations)
+      .set({
+        status: hasMissing ? "material_missing" : "under_review",
+        currentRole: "reviewer",
+        currentAssignee: "复核人",
+        updatedAt: new Date(),
+      })
+      .where(eq(registrations.id, regId));
+
+    await db.insert(auditLogs).values({
+      id: randomUUID(),
+      registrationId: regId,
+      action: "route_to_reviewer",
+      operator: data.operator,
+      operatorRole: "handler",
+      detail: hasMissing ? "仍有材料缺失，提交复核人审阅" : "材料已补齐，流转复核人审核",
+    });
+  } else {
+    await db
+      .update(registrations)
+      .set({ updatedAt: new Date() })
+      .where(eq(registrations.id, regId));
+  }
 }
 
 export async function updateGrade(regId: string, data: {
@@ -161,6 +235,18 @@ export async function updateGrade(regId: string, data: {
   score: string;
   operator: string;
 }) {
+  const reg = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, regId))
+    .then((r) => r[0]);
+
+  if (!reg) throw new Error("报名记录不存在");
+
+  if (reg.status === "duplicate") throw new Error("重复报名，不可更新成绩");
+  if (reg.status === "cert_issued") throw new Error("已发证，不可更新成绩");
+  if (reg.status === "archived") throw new Error("已归档，不可更新成绩");
+
   const course = await db
     .select()
     .from(courses)
@@ -171,19 +257,35 @@ export async function updateGrade(regId: string, data: {
   const score = Number(data.score);
   const passed = score >= passingScore ? 1 : 0;
 
-  await db.insert(grades).values({
-    id: randomUUID(),
-    registrationId: regId,
-    courseId: data.courseId,
-    score: data.score,
-    passed,
-    recordedBy: data.operator,
-  });
+  const existingGrade = await db
+    .select()
+    .from(grades)
+    .where(and(eq(grades.registrationId, regId), eq(grades.courseId, data.courseId)))
+    .then((r) => r[0]);
+
+  if (existingGrade) {
+    await db
+      .update(grades)
+      .set({ score: data.score, passed, recordedBy: data.operator, recordedAt: new Date() })
+      .where(eq(grades.id, existingGrade.id));
+  } else {
+    await db.insert(grades).values({
+      id: randomUUID(),
+      registrationId: regId,
+      courseId: data.courseId,
+      score: data.score,
+      passed,
+      recordedBy: data.operator,
+    });
+  }
 
   const newStatus = passed ? "course_completed" : "grade_not_met";
+  const newRole: "handler" | "reviewer" = passed ? "reviewer" : "handler";
+  const newAssignee = passed ? "复核人" : "经办人";
+
   await db
     .update(registrations)
-    .set({ status: newStatus, updatedAt: new Date() })
+    .set({ status: newStatus, currentRole: newRole, currentAssignee: newAssignee, updatedAt: new Date() })
     .where(eq(registrations.id, regId));
 
   await db.insert(auditLogs).values({
@@ -192,7 +294,7 @@ export async function updateGrade(regId: string, data: {
     action: "record_grade",
     operator: data.operator,
     operatorRole: "handler",
-    detail: `成绩录入：${data.score}分，${passed ? "达标" : `未达标（要求${passingScore}分）`}`,
+    detail: `成绩录入：${data.score}分，${passed ? `达标，流转复核人确认发证（要求${passingScore}分）` : `未达标（要求${passingScore}分），当前责任人：经办人`}`,
   });
 
   return { passed, passingScore };
@@ -212,18 +314,27 @@ export async function reviewQualification(regId: string, data: {
   if (!reg) throw new Error("报名记录不存在");
 
   if (reg.status === "duplicate") {
-    throw new Error("重复报名，不可审核通过");
+    throw new Error(`重复报名（冲突编号：${reg.conflictRegNo}），不可审核通过。如需处理请提交资格争议`);
+  }
+
+  if (reg.status === "cert_issued") {
+    throw new Error("已发证，不可再审核资格");
+  }
+
+  if (reg.status === "archived") {
+    throw new Error("已归档，不可再审核资格");
   }
 
   const newStatus = data.qualified ? "qualified" : "unqualified";
-  const newRole = data.qualified ? "handler" : "reviewer";
+  const newRole: "handler" | "reviewer" = data.qualified ? "reviewer" : "reviewer";
+  const newAssignee = data.qualified ? "复核人" : data.operator;
 
   await db
     .update(registrations)
     .set({
       status: newStatus,
       currentRole: newRole,
-      currentAssignee: data.qualified ? "经办人" : data.operator,
+      currentAssignee: newAssignee,
       updatedAt: new Date(),
     })
     .where(eq(registrations.id, regId));
@@ -234,7 +345,7 @@ export async function reviewQualification(regId: string, data: {
     action: data.qualified ? "review_qualified" : "review_unqualified",
     operator: data.operator,
     operatorRole: "reviewer",
-    detail: data.opinion,
+    detail: data.qualified ? `${data.opinion}（资格通过，复核人可确认发证）` : `${data.opinion}（资格不通过）`,
   });
 }
 
@@ -297,11 +408,27 @@ export async function issueCertificate(regId: string, data: {
   if (!reg) throw new Error("报名记录不存在");
 
   if (reg.status === "duplicate") {
-    throw new Error("重复报名，禁止发放证书");
+    throw new Error(`重复报名，禁止发放证书（冲突编号：${reg.conflictRegNo}）`);
+  }
+
+  if (reg.status === "material_missing") {
+    throw new Error("材料缺失，请先由经办人补齐材料后再发证");
+  }
+
+  if (reg.status === "grade_not_met") {
+    throw new Error("成绩未达标，请先由经办人更新成绩后再发证");
+  }
+
+  if (reg.status === "unqualified") {
+    throw new Error("资格审核未通过，不可发放证书");
+  }
+
+  if (reg.status === "pending" || reg.status === "under_review") {
+    throw new Error("资格尚未审核，请先完成资格审核");
   }
 
   if (reg.status !== "course_completed" && reg.status !== "qualified") {
-    throw new Error("当前状态不可发放证书");
+    throw new Error(`当前状态为"${STATUS_LABELS[reg.status] || reg.status}"，不可发放证书`);
   }
 
   const materialList = await db
