@@ -11,8 +11,8 @@ import { EvidencesModule } from './modules/evidences.module.js'
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'yangfan',
-      password: '',
+      username: 'postgres',
+      password: 'postgres',
       database: 'charging_pile_platform',
       synchronize: true,
       autoLoadEntities: true
