@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Count, Sum, Q, Avg, F, Case, When, Value
+from django.db.models import Count, Sum, Q, Avg, F, Case, When, Value, DecimalField, ExpressionWrapper
 from django.db.models.functions import Coalesce
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -392,9 +392,12 @@ def review_dashboard(request):
 
     adjustment_diff = Coalesce(
         Sum(Case(
-            When(adjusted_fee__isnull=False, then=F('adjusted_fee') - F('original_fee')),
+            When(adjusted_fee__isnull=False, then=ExpressionWrapper(
+                F('adjusted_fee') - F('original_fee'),
+                output_field=DecimalField()
+            )),
             default=Value(Decimal('0')),
-            output_field=models.DecimalField()
+            output_field=DecimalField()
         )),
         Decimal('0')
     )
@@ -433,9 +436,12 @@ def review_dashboard(request):
     agg = readings.aggregate(
         total_adjustment=Coalesce(
             Sum(Case(
-                When(adjusted_fee__isnull=False, then=F('adjusted_fee') - F('original_fee')),
+                When(adjusted_fee__isnull=False, then=ExpressionWrapper(
+                    F('adjusted_fee') - F('original_fee'),
+                    output_field=DecimalField()
+                )),
                 default=Value(Decimal('0')),
-                output_field=models.DecimalField()
+                output_field=DecimalField()
             )),
             Decimal('0')
         ),
