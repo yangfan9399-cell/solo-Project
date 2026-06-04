@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { db } from "~/db/index.server";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { serviceRecords, elders, staff, reviewNodes } from "~/db/schema.server";
 import type { InferSelectModel } from "drizzle-orm";
 
@@ -75,7 +75,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const abnormalStuck = await getServiceRecordsWithRelations(
     and(
       sql`${serviceRecords.status} IN ('no_answer', 'time_conflict', 'complaint')`,
-      lt(serviceRecords.updatedAt, todayStart),
       gte(serviceRecords.updatedAt, threeDaysAgo)
     )
   );

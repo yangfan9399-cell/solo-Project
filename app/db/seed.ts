@@ -1,6 +1,5 @@
 import { db } from "./index.server";
 import { users, elders, staff, serviceRecords, reviewNodes, changeLogs } from "./schema.server";
-import { eq } from "drizzle-orm";
 
 async function seed() {
   console.log("🌱 Seeding database...");
@@ -15,21 +14,9 @@ async function seed() {
   const [adminUser, operatorUser, reviewerUser] = await db
     .insert(users)
     .values([
-      {
-        name: "系统管理员",
-        role: "admin",
-        phone: "13800000000",
-      },
-      {
-        name: "张经办人",
-        role: "operator",
-        phone: "13800000001",
-      },
-      {
-        name: "李复核人",
-        role: "reviewer",
-        phone: "13800000002",
-      },
+      { name: "系统管理员", role: "admin", phone: "13800000000" },
+      { name: "张经办人", role: "operator", phone: "13800000001" },
+      { name: "李复核人", role: "reviewer", phone: "13800000002" },
     ])
     .returning();
 
@@ -76,6 +63,16 @@ async function seed() {
         emergencyPhone: "13800004444",
         healthNotes: "心脏病，术后恢复中",
       },
+      {
+        name: "孙大爷",
+        phone: "13900000005",
+        address: "阳光社区7号楼1单元203室",
+        gender: "男",
+        age: 80,
+        emergencyContact: "孙丽（女儿）",
+        emergencyPhone: "13800005555",
+        healthNotes: "骨关节炎，行动缓慢",
+      },
     ])
     .returning();
 
@@ -103,8 +100,6 @@ async function seed() {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
   const scheduledTime1 = new Date(today);
   scheduledTime1.setHours(9, 0, 0, 0);
@@ -118,7 +113,10 @@ async function seed() {
   const scheduledTime4 = new Date(today);
   scheduledTime4.setHours(15, 0, 0, 0);
 
-  const [record1, record2, record3, record4] = await db
+  const scheduledTime5 = new Date(today);
+  scheduledTime5.setHours(11, 0, 0, 0);
+
+  const [record1, record2, record3, record4, record5] = await db
     .insert(serviceRecords)
     .values([
       {
@@ -163,10 +161,21 @@ async function seed() {
         actualEndTime: new Date(scheduledTime4.getTime() + 45 * 60 * 1000),
         serviceNotes: "家属投诉服务质量问题",
       },
+      {
+        elderId: elderData[4].id,
+        staffId: staffData[1].id,
+        operatorId: operatorUser.id,
+        serviceType: "康复训练",
+        scheduledTime: scheduledTime5,
+        status: "time_conflict",
+        actualStartTime: scheduledTime5,
+        actualEndTime: new Date(scheduledTime5.getTime() + 20 * 60 * 1000),
+        serviceNotes: "预约时长60分钟，实际仅服务20分钟。护工称老人当日状态不佳，提前结束训练。预约时长与实际服务时长严重不符，需经办人补充说明。",
+      },
     ])
     .returning();
 
-  const [reviewNode1, reviewNode2, reviewNode3, reviewNode4] = await db
+  const [reviewNode1, reviewNode2, reviewNode3, reviewNode4, reviewNode5] = await db
     .insert(reviewNodes)
     .values([
       {
@@ -201,24 +210,25 @@ async function seed() {
         operatorId: operatorUser.id,
         reviewerId: reviewerUser.id,
         reviewStatus: "pending",
-        reviewConclusion: "正在核实投诉内容",
-        reviewNotes: "家属投诉服务人员未按标准流程服务，正在调查中",
         nodeOrder: 1,
-        reviewedAt: new Date(),
+      },
+      {
+        serviceRecordId: record5.id,
+        operatorId: operatorUser.id,
+        reviewStatus: "pending",
+        nodeOrder: 1,
       },
     ])
     .returning();
 
-  await db
-    .insert(reviewNodes)
-    .values({
-      serviceRecordId: record3.id,
-      parentId: reviewNode3.id,
-      operatorId: operatorUser.id,
-      reviewStatus: "pending",
-      supplementNotes: "已重新预约今日下午再次上门",
-      nodeOrder: 2,
-    });
+  await db.insert(reviewNodes).values({
+    serviceRecordId: record3.id,
+    parentId: reviewNode3.id,
+    operatorId: operatorUser.id,
+    reviewStatus: "pending",
+    supplementNotes: "已重新预约今日下午再次上门",
+    nodeOrder: 2,
+  });
 
   await db.insert(changeLogs).values([
     {
@@ -234,18 +244,27 @@ async function seed() {
       serviceRecordId: record3.id,
       reviewNodeId: reviewNode3.id,
       userId: operatorUser.id,
-      fieldName: "scheduledTime",
-      oldValue: scheduledTime3.toISOString(),
-      newValue: new Date(today.setHours(16, 0, 0, 0)).toISOString(),
-      reason: "重新安排上门时间",
+      fieldName: "supplementNotes",
+      oldValue: "",
+      newValue: "已重新预约今日下午再次上门",
+      reason: "联系紧急联系人后，安排二次上门",
+    },
+    {
+      serviceRecordId: record5.id,
+      reviewNodeId: reviewNode5.id,
+      userId: operatorUser.id,
+      fieldName: "supplementNotes",
+      oldValue: "",
+      newValue: "预约时长60分钟，实际仅20分钟，等待护工提交书面说明",
+      reason: "系统检测到服务时长与预约时长差异超过30分钟",
     },
   ]);
 
   console.log("✅ Seeding completed!");
-  console.log("👤 Users created:", adminUser.name, operatorUser.name, reviewerUser.name);
-  console.log("👴 Elders created:", elderData.length);
-  console.log("👩‍⚕️ Staff created:", staffData.length);
-  console.log("📋 Service records created:", 4);
+  console.log("👤 Users:", adminUser.name, operatorUser.name, reviewerUser.name);
+  console.log("👴 Elders:", elderData.length);
+  console.log("👩‍⚕️ Staff:", staffData.length);
+  console.log("📋 Service records: 5 (含服务时长冲突样本)");
   process.exit(0);
 }
 
