@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { 
   assignTechnician, startRepair, addRepairLog, reportPartsShortage,
-  completeRepair, performInspection, archiveRepair, restartRepair
+  completeRepair, performInspection, archiveRepair, restartRepair,
+  resolvePartsShortage, reassignTechnician
 } from '@/app/actions'
 import { RepairStatus } from '@prisma/client'
 import { 
-  UserCog, Wrench, Package, ClipboardCheck, Archive, 
-  RefreshCw, Play, Send, AlertTriangle, Eye
+  UserCog, Wrench, ClipboardCheck, Archive, 
+  RefreshCw, Play, Send, AlertTriangle, Eye, Package, UserCheck
 } from 'lucide-react'
 
 type ViewMode = 'admin' | 'technician' | 'inspector'
@@ -19,12 +20,16 @@ export default function RepairActions({ order, technicians, inspectors }: {
     status: RepairStatus
     technicianId: string | null
     inspectorId: string | null
+    blockingReason: string | null
+    partsNeeded: string | null
+    estimatedDelay: number | null
   }
   technicians: { id: string; name: string }[]
   inspectors: { id: string; name: string }[]
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>('admin')
   const [selectedTechnician, setSelectedTechnician] = useState('')
+  const [reassignTechnicianId, setReassignTechnicianId] = useState('')
   const [selectedInspector, setSelectedInspector] = useState('')
   const [logAction, setLogAction] = useState('')
   const [logDescription, setLogDescription] = useState('')
@@ -76,6 +81,16 @@ export default function RepairActions({ order, technicians, inspectors }: {
     }
   }
 
+  const handleResolveShortage = async () => {
+    await resolvePartsShortage(order.id)
+  }
+
+  const handleReassign = async () => {
+    if (reassignTechnicianId) {
+      await reassignTechnician(order.id, reassignTechnicianId)
+    }
+  }
+
   const handleCompleteRepair = async () => {
     if (selectedInspector) {
       await completeRepair(order.id, selectedInspector)
@@ -83,7 +98,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
   }
 
   const handleInspection = async () => {
-    if (order.inspectorId && inspectionResult !== null) {
+    if (order.inspectorId && inspectionResult !== null && inspectionComments) {
       await performInspection(order.id, order.inspectorId, inspectionResult, inspectionComments)
     }
   }
@@ -99,11 +114,13 @@ export default function RepairActions({ order, technicians, inspectors }: {
   const hasAdminActions = 
     order.status === RepairStatus.SUBMITTED ||
     order.status === RepairStatus.REJECTED ||
-    order.status === RepairStatus.ACCEPTED
+    order.status === RepairStatus.ACCEPTED ||
+    order.status === RepairStatus.PARTS_SHORTAGE
 
   const hasTechnicianActions = 
     (order.technicianId && order.status === RepairStatus.ASSIGNED) ||
-    order.status === RepairStatus.IN_PROGRESS
+    order.status === RepairStatus.IN_PROGRESS ||
+    order.status === RepairStatus.PARTS_SHORTAGE
 
   const hasInspectorActions = 
     order.status === RepairStatus.PENDING_ACCEPTANCE && order.inspectorId
@@ -160,6 +177,53 @@ export default function RepairActions({ order, technicians, inspectors }: {
 
     return (
       <div className="space-y-6">
+        {order.status === RepairStatus.PARTS_SHORTAGE && (
+          <div className="bg-orange-50 rounded-lg border border-orange-200 p-4 space-y-3">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-600" /> 配件缺货 - 改派维修员
+            </h3>
+            {order.blockingReason && (
+              <p className="text-sm text-orange-700">{order.blockingReason}</p>
+            )}
+            {order.partsNeeded && (
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <Package className="h-4 w-4" /> 所需配件: {order.partsNeeded}
+              </p>
+            )}
+            <div className="pt-2 border-t border-orange-200">
+              <p className="text-sm text-gray-600 mb-2">选择新维修员改派：</p>
+              <select
+                value={reassignTechnicianId}
+                onChange={(e) => setReassignTechnicianId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"
+              >
+                <option value="">请选择维修员 *</option>
+                {technicians
+                  .filter(t => t.id !== order.technicianId)
+                  .map((tech) => (
+                    <option key={tech.id} value={tech.id}>
+                      {tech.name}
+                    </option>
+                  ))}
+              </select>
+              {!reassignTechnicianId && (
+                <p className="text-xs text-red-500 mb-2">请选择维修员</p>
+              )}
+              <button
+                onClick={handleReassign}
+                disabled={!reassignTechnicianId}
+                className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <UserCheck className="h-4 w-4" />
+                改派维修员
+              </button>
+              {!reassignTechnicianId && (
+                <p className="text-xs text-gray-400 text-center mt-2">选择维修员后可改派</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {order.status === RepairStatus.SUBMITTED && (
           <div className="space-y-3">
             <h3 className="font-medium text-gray-900 flex items-center gap-2">
@@ -234,6 +298,39 @@ export default function RepairActions({ order, technicians, inspectors }: {
       return <EmptyState message="当前状态无维修员操作" icon={Eye} />
     }
 
+    if (order.status === RepairStatus.PARTS_SHORTAGE) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-orange-50 rounded-lg border border-orange-200 p-4 space-y-3">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-600" /> 配件缺货
+            </h3>
+            {order.blockingReason && (
+              <p className="text-sm text-orange-700">{order.blockingReason}</p>
+            )}
+            {order.partsNeeded && (
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                <Package className="h-4 w-4" /> 所需配件: {order.partsNeeded}
+              </p>
+            )}
+            {order.estimatedDelay && (
+              <p className="text-sm text-gray-600">预计延期: {order.estimatedDelay} 天</p>
+            )}
+            <div className="pt-3 border-t border-orange-200">
+              <p className="text-sm text-gray-600 mb-2">配件已到货？标记继续维修：</p>
+              <button
+                onClick={handleResolveShortage}
+                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Wrench className="h-4 w-4" />
+                标记配件已到货，继续维修
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     if (order.status === RepairStatus.ASSIGNED) {
       return (
         <div className="space-y-3">
@@ -266,7 +363,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
               onChange={(e) => setLogAction(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
-            {!logAction && logAction !== '' && (
+            {!logAction && (
               <p className="text-xs text-red-500">请填写操作名称</p>
             )}
             <textarea
@@ -276,7 +373,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
             />
-            {!logDescription && logDescription !== '' && (
+            {!logDescription && (
               <p className="text-xs text-red-500">请填写详细描述</p>
             )}
             <input
@@ -317,7 +414,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
               onChange={(e) => setBlockingReason(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
-            {!blockingReason && blockingReason !== '' && (
+            {!blockingReason && (
               <p className="text-xs text-red-500">请填写阻断原因</p>
             )}
             <input
@@ -327,7 +424,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
               onChange={(e) => setPartsNeeded(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
-            {!partsNeeded && partsNeeded !== '' && (
+            {!partsNeeded && (
               <p className="text-xs text-red-500">请填写所需配件</p>
             )}
             <input
@@ -390,6 +487,10 @@ export default function RepairActions({ order, technicians, inspectors }: {
   }
 
   const InspectorView = () => {
+    if (order.status === RepairStatus.PARTS_SHORTAGE) {
+      return <EmptyState message="配件缺货状态下无验收操作" icon={Eye} />
+    }
+
     if (!hasInspectorActions) {
       return <EmptyState message="当前状态无验收员操作" icon={Eye} />
     }
@@ -439,7 +540,7 @@ export default function RepairActions({ order, technicians, inspectors }: {
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
           />
-          {!inspectionComments && inspectionComments !== '' && (
+          {!inspectionComments && (
             <p className="text-xs text-red-500">请填写验收意见</p>
           )}
         </div>

@@ -8,7 +8,6 @@ import {
   RefreshCw, Calendar, UserCheck, MessageSquare
 } from 'lucide-react'
 import RepairActions from './components/RepairActions'
-import PartsShortageBanner from './components/PartsShortageBanner'
 
 export default async function RepairDetailPage({ params }: { params: { id: string } }) {
   const order = await getRepairOrder(params.id)
@@ -49,7 +48,34 @@ export default async function RepairDetailPage({ params }: { params: { id: strin
       </div>
 
       {order.status === 'PARTS_SHORTAGE' && (
-        <PartsShortageBanner order={order} technicians={technicians} />
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-800">配件缺货 - 维修进度受阻</h3>
+              <p className="text-orange-700 mt-1">{order.blockingReason}</p>
+              <div className="flex flex-wrap gap-4 mt-3 text-sm">
+                {order.partsNeeded && (
+                  <div className="flex items-center gap-2 text-orange-700">
+                    <Package className="h-4 w-4" />
+                    <span>所需配件: {order.partsNeeded}</span>
+                  </div>
+                )}
+                {order.estimatedDelay && (
+                  <div className="flex items-center gap-2 text-orange-700">
+                    <Clock className="h-4 w-4" />
+                    <span>预计延期: {order.estimatedDelay} 天</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-600 mt-3">
+                请在右侧操作区选择「管理员视角进行改派，或「维修员视角标记配件到货后继续。
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

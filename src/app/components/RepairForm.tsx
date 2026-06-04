@@ -44,6 +44,9 @@ export default function RepairForm({ submitters }: {
   const isFormValid = title && description && deviceType && deviceLocation && source && submitterId
   const disabledReason = !isFormValid ? '请填写所有必填项' : ''
 
+  const showRequiredHint = (value: string) => !value
+  const showDisabledHint = (condition: boolean) => condition
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid) return
@@ -108,10 +111,10 @@ export default function RepairForm({ submitters }: {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="请简要描述故障问题"
             className={`w-full px-3 py-2 border rounded-lg text-sm ${
-              !title && title !== '' ? 'border-red-300' : 'border-gray-300'
+              showRequiredHint(title) ? 'border-red-300' : 'border-gray-300'
             }`}
           />
-          {!title && title !== '' && (
+          {showRequiredHint(title) && (
             <p className="mt-1 text-xs text-red-500">请填写报修标题</p>
           )}
         </div>
@@ -133,7 +136,7 @@ export default function RepairForm({ submitters }: {
                 </option>
               ))}
             </select>
-            {!deviceType && (
+            {showRequiredHint(deviceType) && (
               <p className="mt-1 text-xs text-red-500">请选择设备类型</p>
             )}
           </div>
@@ -152,7 +155,7 @@ export default function RepairForm({ submitters }: {
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {!source && (
+            {showRequiredHint(source) && (
               <p className="mt-1 text-xs text-red-500">请选择报修来源</p>
             )}
           </div>
@@ -194,7 +197,7 @@ export default function RepairForm({ submitters }: {
             placeholder="完整位置（或直接填写）"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mt-2"
           />
-          {!deviceLocation && (
+          {showRequiredHint(deviceLocation) && (
             <p className="mt-1 text-xs text-red-500">请填写设备位置</p>
           )}
         </div>
@@ -210,7 +213,7 @@ export default function RepairForm({ submitters }: {
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
           />
-          {!description && (
+          {showRequiredHint(description) && (
             <p className="mt-1 text-xs text-red-500">请填写问题描述</p>
           )}
         </div>
@@ -231,13 +234,13 @@ export default function RepairForm({ submitters }: {
               </option>
             ))}
           </select>
-          {!submitterId && (
+          {showRequiredHint(submitterId) && (
             <p className="mt-1 text-xs text-red-500">请选择报修人</p>
           )}
         </div>
 
         <div className="flex items-center justify-between pt-2">
-          {disabledReason && (
+          {showDisabledHint(!isFormValid) && (
             <p className="text-sm text-gray-500">{disabledReason}</p>
           )}
           <div className="flex gap-3 ml-auto">
