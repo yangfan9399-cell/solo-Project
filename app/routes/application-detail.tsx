@@ -12,7 +12,7 @@ import {
   subsidyStandards,
 } from "../utils/helpers";
 import { prisma } from "../utils/db.server";
-import { ActionType, ApplicationStatus, DocumentStatus } from "../generated/prisma/client";
+import { ActionType, ApplicationStatus, DocumentStatus } from "../../prisma/generated/client";
 
 export function meta() {
   return [{ title: "申请详情 - 工会困难补助系统" }];

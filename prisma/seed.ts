@@ -1,8 +1,11 @@
-import { PrismaClient, ApplicationStatus, DocumentType, DocumentStatus, SubsidyLevel, ActionType, UserRole } from "../app/generated/prisma/client";
+import { PrismaClient, ApplicationStatus, DocumentType, DocumentStatus, SubsidyLevel, ActionType, UserRole } from "./generated/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+const DEFAULT_DATABASE_URL =
+  "postgresql://postgres:postgres@localhost:5432/subsidy_db?schema=public";
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
 

@@ -6,5 +6,38 @@
 /.react-router/
 /build/
 
-# Prisma generated
-/app/generated/
+# Prisma
+/prisma/generated/client/
+
+# Automation defaults
+vendor/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.Python
+.next/
+.nuxt/
+.output/
+.vinxi/
+.svelte-kit/
+.qwik/
+.astro/
+dist/
+dist-ssr/
+coverage/
+.turbo/
+.cache/
+.parcel-cache/
+tmp/
+log/
+logs/
+*.log
+.env.*
+!.env.example
+!.env.test
+Thumbs.db
+.idea/
+*.sqlite
+*.sqlite3
+db.sqlite3
