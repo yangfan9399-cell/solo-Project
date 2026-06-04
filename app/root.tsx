@@ -8,7 +8,6 @@ import {
 } from "react-router";
 
 import "./app.css";
-import { StoreContext, applicationStore } from "./utils/store";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,11 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return (
-    <StoreContext.Provider value={applicationStore}>
-      <Outlet />
-    </StoreContext.Provider>
-  );
+  return <Outlet />;
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {

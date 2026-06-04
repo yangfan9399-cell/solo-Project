@@ -9,23 +9,31 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@react-router/node": "7.16.0",
     "@react-router/serve": "7.16.0",
     "@rolldown/binding-darwin-arm64": "^1.1.0",
+    "dotenv": "^17.4.2",
     "isbot": "^5.1.36",
+    "pg": "^8.21.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router": "7.16.0"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@react-router/dev": "7.16.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"
   }

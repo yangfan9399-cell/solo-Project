@@ -1,26 +1,30 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router";
-import { useStore } from "../utils/store";
-import type { Application, ApplicationStatus } from "../utils/types";
-import { getStatusText, getSubsidyLevelName, getSubsidyAmount, formatDate } from "../utils/mockData";
+import { useState } from "react";
+import { Link, useLoaderData } from "react-router";
+import type { ApplicationStatus } from "../utils/types";
+import { getStatusText, getSubsidyLevelName, getSubsidyAmount, formatDate } from "../utils/helpers";
+import { prisma } from "../utils/db.server";
 
 export function meta() {
-  return [
-    { title: "困难补助申请列表 - 工会困难补助系统" },
-  ];
+  return [{ title: "困难补助申请列表 - 工会困难补助系统" }];
+}
+
+export async function loader() {
+  const applications = await prisma.application.findMany({
+    include: {
+      currentHandler: true,
+      currentReviewer: true,
+      documents: true,
+      approvalLogs: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return { applications };
 }
 
 export default function Applications() {
-  const store = useStore();
-  const [applications, setApplications] = useState<Application[]>(store.getApplications());
+  const { applications } = useLoaderData<typeof loader>();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    return store.subscribe(() => {
-      setApplications([...store.getApplications()]);
-    });
-  }, [store]);
 
   const filteredApplications = applications.filter((app) => {
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
@@ -31,10 +35,13 @@ export default function Applications() {
     return matchesStatus && matchesSearch;
   });
 
-  const statusCounts = applications.reduce((acc, app) => {
-    acc[app.status] = (acc[app.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const statusCounts = applications.reduce(
+    (acc, app) => {
+      acc[app.status] = (acc[app.status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const getStatusBadgeClass = (status: ApplicationStatus) => {
     const base = "px-2 py-1 text-xs font-medium rounded-full";
@@ -54,11 +61,9 @@ export default function Applications() {
     }
   };
 
-  const getAlertBadge = (app: Application) => {
+  const getAlertBadge = (app: (typeof applications)[0]) => {
     const missingDocs = app.documents.filter((d) => d.status === "MISSING");
-    const isDuplicate = app.approvalLogs.some(
-      (log) => log.description.includes("重复申请")
-    );
+    const isDuplicate = app.approvalLogs.some((log) => log.description.includes("重复申请"));
 
     if (app.exceedsStandard) {
       return (
@@ -88,12 +93,8 @@ export default function Applications() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            工会困难补助申请与发放复核系统
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            共 {applications.length} 条申请记录
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">工会困难补助申请与发放复核系统</h1>
+          <p className="mt-1 text-sm text-gray-500">共 {applications.length} 条申请记录</p>
         </div>
       </header>
 
@@ -104,27 +105,19 @@ export default function Applications() {
             <div className="text-sm text-gray-500">全部申请</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-yellow-600">
-              {statusCounts["PENDING_HANDLER"] || 0}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{statusCounts["PENDING_HANDLER"] || 0}</div>
             <div className="text-sm text-gray-500">待经办人处理</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-blue-600">
-              {statusCounts["PENDING_REVIEW"] || 0}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{statusCounts["PENDING_REVIEW"] || 0}</div>
             <div className="text-sm text-gray-500">待复核</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-green-600">
-              {statusCounts["APPROVED"] || 0}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{statusCounts["APPROVED"] || 0}</div>
             <div className="text-sm text-gray-500">已批准</div>
           </div>
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-gray-600">
-              {statusCounts["ARCHIVED"] || 0}
-            </div>
+            <div className="text-2xl font-bold text-gray-600">{statusCounts["ARCHIVED"] || 0}</div>
             <div className="text-sm text-gray-500">已归档</div>
           </div>
         </div>
@@ -133,46 +126,33 @@ export default function Applications() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    statusFilter === "all"
+                {(["all", "PENDING_HANDLER", "PENDING_REVIEW", "ARCHIVED"] as const).map((s) => {
+                  const label =
+                    s === "all"
+                      ? "全部"
+                      : s === "PENDING_HANDLER"
+                        ? "待经办"
+                        : s === "PENDING_REVIEW"
+                          ? "待复核"
+                          : "已归档";
+                  const activeClass =
+                    s === "all"
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  全部
-                </button>
-                <button
-                  onClick={() => setStatusFilter("PENDING_HANDLER")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    statusFilter === "PENDING_HANDLER"
-                      ? "bg-yellow-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  待经办
-                </button>
-                <button
-                  onClick={() => setStatusFilter("PENDING_REVIEW")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    statusFilter === "PENDING_REVIEW"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  待复核
-                </button>
-                <button
-                  onClick={() => setStatusFilter("ARCHIVED")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    statusFilter === "ARCHIVED"
-                      ? "bg-gray-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  已归档
-                </button>
+                      : s === "PENDING_HANDLER"
+                        ? "bg-yellow-600 text-white"
+                        : s === "PENDING_REVIEW"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-600 text-white";
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${statusFilter === s ? activeClass : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
               <div className="relative">
                 <input
@@ -190,30 +170,14 @@ export default function Applications() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    申请人
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    申请来源
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    补助档位
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    补助金额
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    当前状态
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    当前责任人
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    申请时间
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    操作
-                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请人</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请来源</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">补助档位</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">补助金额</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前状态</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前责任人</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">申请时间</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -221,48 +185,27 @@ export default function Applications() {
                   <tr key={app.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">
-                          {app.applicantName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {app.applicantIdCard}
-                        </div>
+                        <div className="font-medium text-gray-900">{app.applicantName}</div>
+                        <div className="text-sm text-gray-500">{app.applicantIdCard}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      {app.source}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-700">{app.source}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-700">
-                          {getSubsidyLevelName(app.subsidyLevel)}
-                        </span>
+                        <span className="text-sm text-gray-700">{getSubsidyLevelName(app.subsidyLevel)}</span>
                         {getAlertBadge(app)}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      ¥{getSubsidyAmount(app.subsidyLevel)}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-700">¥{getSubsidyAmount(app.subsidyLevel)}</td>
                     <td className="px-4 py-4">
-                      <span className={getStatusBadgeClass(app.status)}>
-                        {getStatusText(app.status)}
-                      </span>
+                      <span className={getStatusBadgeClass(app.status as ApplicationStatus)}>{getStatusText(app.status)}</span>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-700">
-                      {app.status === "PENDING_HANDLER"
-                        ? app.currentHandler?.name
-                        : app.status === "PENDING_REVIEW"
-                        ? app.currentReviewer?.name
-                        : "-"}
+                      {app.status === "PENDING_HANDLER" ? app.currentHandler?.name : app.status === "PENDING_REVIEW" ? app.currentReviewer?.name : "-"}
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-500">
-                      {formatDate(app.createdAt)}
-                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-500">{formatDate(app.createdAt)}</td>
                     <td className="px-4 py-4">
-                      <Link
-                        to={`/applications/${app.id}`}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
+                      <Link to={`/applications/${app.id}`} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         {app.isArchived ? "查看归档" : "查看详情"}
                       </Link>
                     </td>
