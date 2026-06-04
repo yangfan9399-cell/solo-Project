@@ -6,12 +6,12 @@
       "src/routes/index.tsx",
       "src/routes/registrations/[id].tsx"
     ],
-    "file": "assets/entry-client-a9f7b17d.js",
+    "file": "assets/entry-client-28e66635.js",
     "isEntry": true,
     "src": "src/entry-client.tsx"
   },
   "src/routes/certificates.tsx": {
-    "file": "assets/certificates-e94e143e.js",
+    "file": "assets/certificates-2084a98e.js",
     "imports": [
       "src/entry-client.tsx"
     ],
@@ -19,7 +19,7 @@
     "src": "src/routes/certificates.tsx"
   },
   "src/routes/disputes.tsx": {
-    "file": "assets/disputes-06b070d4.js",
+    "file": "assets/disputes-b3f6268c.js",
     "imports": [
       "src/entry-client.tsx"
     ],
@@ -27,7 +27,7 @@
     "src": "src/routes/disputes.tsx"
   },
   "src/routes/index.tsx": {
-    "file": "assets/index-b7796acf.js",
+    "file": "assets/index-f3eb21f0.js",
     "imports": [
       "src/entry-client.tsx"
     ],
@@ -35,7 +35,7 @@
     "src": "src/routes/index.tsx"
   },
   "src/routes/registrations/[id].tsx": {
-    "file": "assets/_id_-62d6ce08.js",
+    "file": "assets/_id_-e605c51a.js",
     "imports": [
       "src/entry-client.tsx"
     ],

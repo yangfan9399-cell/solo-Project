@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { registrations, courses, materials, grades, certificates, auditLogs } from "./schema";
+import { registrations, courses, materials, grades, certificates, auditLogs, disputes } from "./schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -119,6 +119,55 @@ async function seed() {
     { id: randomUUID(), registrationId: regDuplicate2, action: "submit_registration", operator: "系统", operatorRole: "handler", detail: "陈刚提交报名申请（单位集体报名）" },
     { id: randomUUID(), registrationId: regDuplicate1, action: "detect_duplicate", operator: "系统", operatorRole: "reviewer", detail: "检测到重复报名，冲突报名编号：REG-2025-0005" },
     { id: randomUUID(), registrationId: regDuplicate2, action: "detect_duplicate", operator: "系统", operatorRole: "reviewer", detail: "检测到重复报名，冲突报名编号：REG-2025-0004" },
+  ]);
+
+  await db.insert(disputes).values([
+    {
+      id: randomUUID(),
+      registrationId: regDuplicate1,
+      conflictRegNo: "REG-2025-0005",
+      reason: "同一人同一课程重复报名，其中一条是误报，请核实后保留正确报名并解除证书阻断",
+      status: "open",
+      submittedBy: "经办人王明",
+    },
+    {
+      id: randomUUID(),
+      registrationId: regGradeFail,
+      conflictRegNo: null,
+      reason: "成绩录入有误，实际考试成绩应为82分（已达70分及格线），请复核",
+      status: "open",
+      submittedBy: "经办人赵红",
+    },
+    {
+      id: randomUUID(),
+      registrationId: regMissing,
+      conflictRegNo: null,
+      reason: "材料补交后仍被标记缺失，已重新上传学历证书，请重新审核",
+      status: "resolved",
+      submittedBy: "经办人王明",
+      resolvedBy: "复核人李主任",
+      resolution: "已核实补交材料，材料已齐全，状态变更为待审核",
+      resolvedAt: new Date(),
+    },
+  ]);
+
+  await db.insert(auditLogs).values([
+    {
+      id: randomUUID(),
+      registrationId: regDuplicate1,
+      action: "create_dispute",
+      operator: "经办人王明",
+      operatorRole: "handler",
+      detail: "提交资格争议（重复报名，冲突编号：REG-2025-0005）：同一人同一课程重复报名，其中一条是误报，请核实后保留正确报名并解除证书阻断",
+    },
+    {
+      id: randomUUID(),
+      registrationId: regGradeFail,
+      action: "create_dispute",
+      operator: "经办人赵红",
+      operatorRole: "handler",
+      detail: "提交资格争议：成绩录入有误，实际考试成绩应为82分（已达70分及格线），请复核",
+    },
   ]);
 
   console.log("Seed data inserted successfully!");

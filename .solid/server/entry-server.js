@@ -715,14 +715,14 @@ function Body(props) {
   }
 }
 
-var _tmpl$$4 = ["<h1", ' class="text-2xl font-bold text-gray-900 mb-6">证书管理</h1>'], _tmpl$2$4 = ["<div", ' class="mt-4 text-red-600 text-sm">', "</div>"], _tmpl$3$4 = ["<div", ' class="mt-4 border-t pt-4">', "</div>"], _tmpl$4$4 = ["<div", ' class="bg-white rounded-lg shadow p-6 mb-6"><h2 class="text-lg font-semibold text-gray-800 mb-3">证书溯源查询</h2><p class="text-sm text-gray-500 mb-3">输入证书ID或点击证书列表中的"溯源"按钮，回查发证时采用的报名材料和审核意见</p><div class="flex gap-3"><input type="text" class="border rounded px-3 py-2 text-sm flex-1" placeholder="输入证书ID..."', '><button class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">查询</button></div><!--$-->', "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$5$4 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><h2 class="text-lg font-semibold text-gray-800 p-6 pb-3">证书列表</h2><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left font-semibold text-gray-600">证书编号</th><th class="px-4 py-3 text-left font-semibold text-gray-600">持证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证日期</th><th class="px-4 py-3 text-left font-semibold text-gray-600">状态</th><th class="px-4 py-3 text-left font-semibold text-gray-600">审核意见</th><th class="px-4 py-3 text-left font-semibold text-gray-600">操作</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$6$2 = ["<div", ' class="text-red-500 text-sm">未找到证书</div>'], _tmpl$7$2 = ["<div", '><span class="text-gray-500">报名编号：</span><span class="font-mono">', "</span></div>"], _tmpl$8$2 = ["<div", '><span class="text-gray-500">报名来源：</span><!--$-->', "<!--/--></div>"], _tmpl$9$2 = ["<div", '><span class="text-gray-500">课程：</span><!--$-->', "<!--/-->（<!--$-->", "<!--/-->）</div>"], _tmpl$0$1 = ["<div", '><span class="text-gray-500">及格线：</span><!--$-->', "<!--/--> 分</div>"], _tmpl$1$1 = ["<div", ' class="mt-3 text-sm bg-white rounded p-2 border border-indigo-100"><span class="text-gray-500">发证审核意见：</span><span class="text-gray-800">', "</span></div>"], _tmpl$10$1 = ["<div", ' class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4"><h3 class="font-semibold text-indigo-800 mb-3">证书信息</h3><div class="grid grid-cols-2 gap-y-2 gap-x-6 text-sm"><div><span class="text-gray-500">证书编号：</span><span class="font-mono font-semibold text-indigo-700">', '</span></div><div><span class="text-gray-500">持证人：</span><span class="font-medium">', '</span></div><div><span class="text-gray-500">发证人：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">发证日期：</span><!--$-->', "<!--/--></div><!--$-->", "<!--/--><!--$-->", "<!--/--></div><!--$-->", "<!--/--></div>"], _tmpl$11$1 = ["<div", ' class="border rounded overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-gray-600 font-medium">材料名称</th><th class="px-3 py-2 text-left text-gray-600 font-medium">类型</th><th class="px-3 py-2 text-left text-gray-600 font-medium">发证时状态</th><th class="px-3 py-2 text-left text-gray-600 font-medium">审核备注</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$12$1 = ["<div", ' class="mb-4"><h3 class="font-semibold text-gray-700 mb-2">发证时采用的报名材料<span class="text-xs text-gray-400 font-normal ml-2">（发证时快照，不受后续材料变更影响）</span></h3><!--$-->', "<!--/--></div>"], _tmpl$13$1 = ["<div", '><h3 class="font-semibold text-gray-700 mb-2">审核流程</h3><!--$-->', "<!--/--></div>"], _tmpl$14$1 = ["<div", ' class="text-gray-400 text-sm">无发证时材料快照</div>'], _tmpl$15$1 = ["<tr", ' class="border-t"><td class="px-3 py-2">', '</td><td class="px-3 py-2 text-gray-500">', '</td><td class="px-3 py-2"><span', ">", '</span></td><td class="px-3 py-2 text-gray-400 text-xs">', "</td></tr>"], _tmpl$16$1 = ["<div", ' class="text-gray-400 text-sm">无审核记录</div>'], _tmpl$17$1 = ["<div", ' class="text-gray-500 text-xs">', "</div>"], _tmpl$18$1 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3 mb-2"><div class="font-medium"><!--$-->', "<!--/--> — <!--$-->", "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", '<!--/--><div class="text-xs text-gray-400">', "</div></div>"], _tmpl$19$1 = ["<div", ' class="text-center py-6 text-gray-400">暂无证书</div>'], _tmpl$20$1 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-700">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3 text-xs">', '</td><td class="px-4 py-3"><span class="', '">', '</span></td><td class="px-4 py-3 text-xs text-gray-500 max-w-48 truncate">', '</td><td class="px-4 py-3"><button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium hover:underline">溯源</button></td></tr>'];
-const STATUS_LABEL = {
+var _tmpl$$4 = ["<h1", ' class="text-2xl font-bold text-gray-900 mb-6">证书管理</h1>'], _tmpl$2$4 = ["<div", ' class="mt-4 text-red-600 text-sm">', "</div>"], _tmpl$3$4 = ["<div", ' class="mt-4 border-t pt-4">', "</div>"], _tmpl$4$4 = ["<div", ' class="bg-white rounded-lg shadow p-6 mb-6"><h2 class="text-lg font-semibold text-gray-800 mb-3">证书溯源查询</h2><p class="text-sm text-gray-500 mb-3">输入证书ID或点击证书列表中的"溯源"按钮，回查发证时采用的报名材料和审核意见</p><div class="flex gap-3"><input type="text" class="border rounded px-3 py-2 text-sm flex-1" placeholder="输入证书ID..."', '><button class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">查询</button></div><!--$-->', "<!--/--><!--$-->", "<!--/--></div>"], _tmpl$5$4 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><h2 class="text-lg font-semibold text-gray-800 p-6 pb-3">证书列表</h2><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left font-semibold text-gray-600">证书编号</th><th class="px-4 py-3 text-left font-semibold text-gray-600">持证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">发证日期</th><th class="px-4 py-3 text-left font-semibold text-gray-600">状态</th><th class="px-4 py-3 text-left font-semibold text-gray-600">审核意见</th><th class="px-4 py-3 text-left font-semibold text-gray-600">操作</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$6$3 = ["<div", ' class="text-red-500 text-sm">未找到证书</div>'], _tmpl$7$3 = ["<div", '><span class="text-gray-500">报名编号：</span><span class="font-mono">', "</span></div>"], _tmpl$8$3 = ["<div", '><span class="text-gray-500">报名来源：</span><!--$-->', "<!--/--></div>"], _tmpl$9$3 = ["<div", '><span class="text-gray-500">课程：</span><!--$-->', "<!--/-->（<!--$-->", "<!--/-->）</div>"], _tmpl$0$2 = ["<div", '><span class="text-gray-500">及格线：</span><!--$-->', "<!--/--> 分</div>"], _tmpl$1$2 = ["<div", ' class="mt-3 text-sm bg-white rounded p-2 border border-indigo-100"><span class="text-gray-500">发证审核意见：</span><span class="text-gray-800">', "</span></div>"], _tmpl$10$1 = ["<div", ' class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4"><h3 class="font-semibold text-indigo-800 mb-3">证书信息</h3><div class="grid grid-cols-2 gap-y-2 gap-x-6 text-sm"><div><span class="text-gray-500">证书编号：</span><span class="font-mono font-semibold text-indigo-700">', '</span></div><div><span class="text-gray-500">持证人：</span><span class="font-medium">', '</span></div><div><span class="text-gray-500">发证人：</span><!--$-->', '<!--/--></div><div><span class="text-gray-500">发证日期：</span><!--$-->', "<!--/--></div><!--$-->", "<!--/--><!--$-->", "<!--/--></div><!--$-->", "<!--/--></div>"], _tmpl$11$1 = ["<div", ' class="border rounded overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-gray-600 font-medium">材料名称</th><th class="px-3 py-2 text-left text-gray-600 font-medium">类型</th><th class="px-3 py-2 text-left text-gray-600 font-medium">发证时状态</th><th class="px-3 py-2 text-left text-gray-600 font-medium">审核备注</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$12$1 = ["<div", ' class="mb-4"><h3 class="font-semibold text-gray-700 mb-2">发证时采用的报名材料<span class="text-xs text-gray-400 font-normal ml-2">（发证时快照，不受后续材料变更影响）</span></h3><!--$-->', "<!--/--></div>"], _tmpl$13$1 = ["<div", '><h3 class="font-semibold text-gray-700 mb-2">审核流程</h3><!--$-->', "<!--/--></div>"], _tmpl$14$1 = ["<div", ' class="text-gray-400 text-sm">无发证时材料快照</div>'], _tmpl$15$1 = ["<tr", ' class="border-t"><td class="px-3 py-2">', '</td><td class="px-3 py-2 text-gray-500">', '</td><td class="px-3 py-2"><span', ">", '</span></td><td class="px-3 py-2 text-gray-400 text-xs">', "</td></tr>"], _tmpl$16$1 = ["<div", ' class="text-gray-400 text-sm">无审核记录</div>'], _tmpl$17$1 = ["<div", ' class="text-gray-500 text-xs">', "</div>"], _tmpl$18$1 = ["<div", ' class="text-sm border-l-2 border-indigo-300 pl-3 mb-2"><div class="font-medium"><!--$-->', "<!--/--> — <!--$-->", "<!--/--> (<!--$-->", "<!--/-->)</div><!--$-->", '<!--/--><div class="text-xs text-gray-400">', "</div></div>"], _tmpl$19$1 = ["<div", ' class="text-center py-6 text-gray-400">暂无证书</div>'], _tmpl$20$1 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs font-semibold text-indigo-700">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3 text-xs">', '</td><td class="px-4 py-3"><span class="', '">', '</span></td><td class="px-4 py-3 text-xs text-gray-500 max-w-48 truncate">', '</td><td class="px-4 py-3"><button class="text-indigo-600 hover:text-indigo-800 text-xs font-medium hover:underline">溯源</button></td></tr>'];
+const STATUS_LABEL$1 = {
   verified: "已核实",
   submitted: "已提交",
   rejected: "已驳回",
   pending: "待提交"
 };
-const STATUS_COLOR = {
+const STATUS_COLOR$1 = {
   verified: "text-green-600",
   submitted: "text-blue-600",
   rejected: "text-red-600",
@@ -756,7 +756,7 @@ function Certificates() {
           return traceData().certificate;
         },
         get fallback() {
-          return ssr(_tmpl$6$2, ssrHydrationKey());
+          return ssr(_tmpl$6$3, ssrHydrationKey());
         },
         get children() {
           return (() => {
@@ -767,21 +767,21 @@ function Certificates() {
                 return td.registration;
               },
               get children() {
-                return [ssr(_tmpl$7$2, ssrHydrationKey(), escape(td.registration.regNo)), ssr(_tmpl$8$2, ssrHydrationKey(), escape(td.registration.source))];
+                return [ssr(_tmpl$7$3, ssrHydrationKey(), escape(td.registration.regNo)), ssr(_tmpl$8$3, ssrHydrationKey(), escape(td.registration.source))];
               }
             })), escape(createComponent(Show, {
               get when() {
                 return td.course;
               },
               get children() {
-                return [ssr(_tmpl$9$2, ssrHydrationKey(), escape(td.course.name), escape(td.course.code)), ssr(_tmpl$0$1, ssrHydrationKey(), escape(td.course.passingScore))];
+                return [ssr(_tmpl$9$3, ssrHydrationKey(), escape(td.course.name), escape(td.course.code)), ssr(_tmpl$0$2, ssrHydrationKey(), escape(td.course.passingScore))];
               }
             })), escape(createComponent(Show, {
               get when() {
                 return cert.reviewOpinion;
               },
               get children() {
-                return ssr(_tmpl$1$1, ssrHydrationKey(), escape(cert.reviewOpinion));
+                return ssr(_tmpl$1$2, ssrHydrationKey(), escape(cert.reviewOpinion));
               }
             }))), ssr(_tmpl$12$1, ssrHydrationKey(), escape(createComponent(Show, {
               get when() {
@@ -795,7 +795,7 @@ function Certificates() {
                   get each() {
                     return td.materialSnapshot ?? [];
                   },
-                  children: (mat) => ssr(_tmpl$15$1, ssrHydrationKey(), escape(mat.name), escape(mat.type), ssrAttribute("class", escape(STATUS_COLOR[mat.status] || "text-gray-400", true), false), escape(STATUS_LABEL[mat.status] || mat.status), escape(mat.reviewNote || "-"))
+                  children: (mat) => ssr(_tmpl$15$1, ssrHydrationKey(), escape(mat.name), escape(mat.type), ssrAttribute("class", escape(STATUS_COLOR$1[mat.status] || "text-gray-400", true), false), escape(STATUS_LABEL$1[mat.status] || mat.status), escape(mat.reviewNote || "-"))
                 })));
               }
             }))), ssr(_tmpl$13$1, ssrHydrationKey(), escape(createComponent(For, {
@@ -829,7 +829,19 @@ function Certificates() {
   })))];
 }
 
-var _tmpl$$3 = ["<h1", ' class="text-2xl font-bold text-gray-900 mb-6">资格争议处理</h1>'], _tmpl$2$3 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-4 py-3 text-left font-semibold text-gray-600">争议ID</th><th class="px-4 py-3 text-left font-semibold text-gray-600">报名ID</th><th class="px-4 py-3 text-left font-semibold text-gray-600">争议原因</th><th class="px-4 py-3 text-left font-semibold text-gray-600">提交人</th><th class="px-4 py-3 text-left font-semibold text-gray-600">状态</th><th class="px-4 py-3 text-left font-semibold text-gray-600">处理结果</th><th class="px-4 py-3 text-left font-semibold text-gray-600">操作</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$3$3 = ["<div", ' class="text-center py-8 text-gray-400">暂无争议记录</div>'], _tmpl$4$3 = ["<div", ' class="flex gap-2"><button class="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">解决</button><button class="text-xs bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">驳回</button></div>'], _tmpl$5$3 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-4 py-3 font-mono text-xs"><!--$-->', '<!--/-->...</td><td class="px-4 py-3"><a href="', '" class="text-indigo-600 hover:underline text-xs">查看报名</a></td><td class="px-4 py-3 max-w-64 truncate">', '</td><td class="px-4 py-3">', '</td><td class="px-4 py-3"><span class="', '">', '</span></td><td class="px-4 py-3 text-xs text-gray-500 max-w-48 truncate">', '</td><td class="px-4 py-3">', "</td></tr>"];
+var _tmpl$$3 = ["<div", ' class="flex items-center justify-between mb-6"><h1 class="text-2xl font-bold text-gray-900">资格争议处理</h1><div class="text-sm text-gray-500">共 <span class="font-semibold text-gray-700">', "</span> 条争议</div></div>"], _tmpl$2$3 = ["<div", ' class="bg-white rounded-lg shadow overflow-hidden"><table class="w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-3 py-3 text-left font-semibold text-gray-600 w-24">争议ID</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-24">报名链接</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-32">冲突报名编号</th><th class="px-3 py-3 text-left font-semibold text-gray-600">争议原因</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-20">提交人</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-16">状态</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-48">处理结果</th><th class="px-3 py-3 text-left font-semibold text-gray-600 w-28">操作</th></tr></thead><tbody>', "</tbody></table></div>"], _tmpl$3$3 = ["<tr", '><td colspan="8" class="text-center py-8 text-gray-400">暂无争议记录</td></tr>'], _tmpl$4$3 = ["<span", ' class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span><span class="font-mono text-xs text-red-700 font-semibold">', "</span></span>"], _tmpl$5$3 = ["<div", ' class="text-xs text-red-600 font-medium mb-0.5">⚠ 保持证书阻断</div>'], _tmpl$6$2 = ["<div", ' class="text-xs text-green-600 font-medium mb-0.5">✓ 冲突信息保留供审核</div>'], _tmpl$7$2 = ["<div", ' class="max-w-sm"><!--$-->', "<!--/--><!--$-->", '<!--/--><div class="text-xs text-gray-500 truncate"', ">", "</div></div>"], _tmpl$8$2 = ["<div", ' class="flex gap-1.5"><button class="text-xs bg-green-600 text-white px-2.5 py-1 rounded hover:bg-green-700">解决</button><button class="text-xs bg-red-600 text-white px-2.5 py-1 rounded hover:bg-red-700">驳回</button></div>'], _tmpl$9$2 = ["<tr", ' class="border-t hover:bg-gray-50"><td class="px-3 py-3 font-mono text-xs text-gray-500"><!--$-->', '<!--/-->...</td><td class="px-3 py-3"><a href="', '" target="_blank" class="text-indigo-600 hover:underline text-xs font-medium">查看报名 →</a></td><td class="px-3 py-3">', '</td><td class="px-3 py-3 max-w-xs"><div class="truncate"', ">", '</div></td><td class="px-3 py-3 text-xs text-gray-600">', '</td><td class="px-3 py-3"><span class="', '">', '</span></td><td class="px-3 py-3">', '</td><td class="px-3 py-3">', "</td></tr>"], _tmpl$0$1 = ["<span", ' class="text-gray-300">-</span>'], _tmpl$1$1 = ["<span", ' class="text-gray-300 text-xs">-</span>'];
+const STATUS_LABEL = {
+  open: "待处理",
+  under_review: "处理中",
+  resolved: "已解决",
+  rejected: "已驳回"
+};
+const STATUS_COLOR = {
+  open: "bg-yellow-100 text-yellow-700",
+  under_review: "bg-blue-100 text-blue-700",
+  resolved: "bg-green-100 text-green-700",
+  rejected: "bg-red-100 text-red-700"
+};
 function Disputes() {
   const fetchDisputes = async () => {
     const res = await fetch("/api/disputes");
@@ -840,19 +852,53 @@ function Disputes() {
   }] = createResource(fetchDisputes);
   return [createComponent(Title, {
     children: "资格争议 - 资格审核平台"
-  }), ssr(_tmpl$$3, ssrHydrationKey()), ssr(_tmpl$2$3, ssrHydrationKey(), escape(createComponent(For, {
+  }), ssr(_tmpl$$3, ssrHydrationKey(), escape((disputes() ?? []).length)), ssr(_tmpl$2$3, ssrHydrationKey(), escape(createComponent(For, {
     get each() {
       return disputes() ?? [];
     },
     get fallback() {
       return ssr(_tmpl$3$3, ssrHydrationKey());
     },
-    children: (dis) => ssr(_tmpl$5$3, ssrHydrationKey(), escape(dis.id.slice(0, 8)), `/registrations/${escape(dis.registrationId, true)}`, escape(dis.reason), escape(dis.submittedBy), `px-2 py-1 rounded text-xs font-medium ${dis.status === "open" ? "bg-yellow-100 text-yellow-700" : dis.status === "under_review" ? "bg-blue-100 text-blue-700" : dis.status === "resolved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`, dis.status === "open" ? "待处理" : dis.status === "under_review" ? "处理中" : dis.status === "resolved" ? "已解决" : "已驳回", escape(dis.resolution || "-"), escape(createComponent(Show, {
+    children: (dis) => ssr(_tmpl$9$2, ssrHydrationKey(), escape(dis.id.slice(0, 6)), `/registrations/${escape(dis.registrationId, true)}`, escape(createComponent(Show, {
+      get when() {
+        return dis.conflictRegNo;
+      },
+      get fallback() {
+        return ssr(_tmpl$0$1, ssrHydrationKey());
+      },
+      get children() {
+        return ssr(_tmpl$4$3, ssrHydrationKey(), escape(dis.conflictRegNo));
+      }
+    })), ssrAttribute("title", escape(dis.reason, true), false), escape(dis.reason), escape(dis.submittedBy), `px-2 py-1 rounded text-xs font-medium ${escape(STATUS_COLOR[dis.status], true)}`, escape(STATUS_LABEL[dis.status] || dis.status), escape(createComponent(Show, {
+      get when() {
+        return dis.resolution;
+      },
+      get fallback() {
+        return ssr(_tmpl$1$1, ssrHydrationKey());
+      },
+      get children() {
+        return ssr(_tmpl$7$2, ssrHydrationKey(), escape(createComponent(Show, {
+          get when() {
+            return dis.status === "rejected" && dis.conflictRegNo;
+          },
+          get children() {
+            return ssr(_tmpl$5$3, ssrHydrationKey());
+          }
+        })), escape(createComponent(Show, {
+          get when() {
+            return dis.status === "resolved" && dis.conflictRegNo;
+          },
+          get children() {
+            return ssr(_tmpl$6$2, ssrHydrationKey());
+          }
+        })), ssrAttribute("title", escape(dis.resolution, true), false), escape(dis.resolution));
+      }
+    })), escape(createComponent(Show, {
       get when() {
         return dis.status === "open";
       },
       get children() {
-        return ssr(_tmpl$4$3, ssrHydrationKey());
+        return ssr(_tmpl$8$2, ssrHydrationKey());
       }
     })))
   })))];
