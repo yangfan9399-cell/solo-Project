@@ -1,0 +1,29 @@
+{
+  "name": "qualification-review-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "solid-start dev",
+    "build": "solid-start build",
+    "start": "solid-start start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.29.4",
+    "@solidjs/router": "^0.8.4",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.22.4",
+    "solid-js": "^1.9.13",
+    "solid-start": "^0.3.11",
+    "solid-start-node": "^0.3.11",
+    "tsx": "^4.22.4",
+    "vinxi": "^0.5.11"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

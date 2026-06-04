@@ -1,0 +1,45 @@
+{
+  "src/entry-client.tsx": {
+    "dynamicImports": [
+      "src/routes/certificates.tsx",
+      "src/routes/disputes.tsx",
+      "src/routes/index.tsx",
+      "src/routes/registrations/[id].tsx"
+    ],
+    "file": "assets/entry-client-1cdb76f4.js",
+    "isEntry": true,
+    "src": "src/entry-client.tsx"
+  },
+  "src/routes/certificates.tsx": {
+    "file": "assets/certificates-cbfa700b.js",
+    "imports": [
+      "src/entry-client.tsx"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/certificates.tsx"
+  },
+  "src/routes/disputes.tsx": {
+    "file": "assets/disputes-4fd728f9.js",
+    "imports": [
+      "src/entry-client.tsx"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/disputes.tsx"
+  },
+  "src/routes/index.tsx": {
+    "file": "assets/index-8b6c9588.js",
+    "imports": [
+      "src/entry-client.tsx"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/index.tsx"
+  },
+  "src/routes/registrations/[id].tsx": {
+    "file": "assets/_id_-91f7fe8e.js",
+    "imports": [
+      "src/entry-client.tsx"
+    ],
+    "isDynamicEntry": true,
+    "src": "src/routes/registrations/[id].tsx"
+  }
+}
