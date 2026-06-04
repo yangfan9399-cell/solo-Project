@@ -8,13 +8,13 @@ export class Evidence {
   @Column({ name: 'order_id', type: 'uuid' })
   orderId: string
 
-  @Column({ length: 16 })
+  @Column({ type: 'varchar', length: 16 })
   type: 'image' | 'log'
 
-  @Column({ length: 256 })
+  @Column({ type: 'varchar', length: 256 })
   title: string
 
-  @Column({ length: 512 })
+  @Column({ type: 'varchar', length: 512 })
   url: string
 
   @CreateDateColumn({ name: 'created_at' })

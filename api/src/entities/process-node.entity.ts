@@ -8,13 +8,13 @@ export class ProcessNode {
   @Column({ name: 'order_id', type: 'uuid' })
   orderId: string
 
-  @Column({ length: 64 })
+  @Column({ type: 'varchar', length: 64 })
   action: string
 
-  @Column({ length: 64 })
+  @Column({ type: 'varchar', length: 64 })
   operator: string
 
-  @Column({ name: 'operator_role', length: 32 })
+  @Column({ name: 'operator_role', type: 'varchar', length: 32 })
   operatorRole: string
 
   @Column({ type: 'text', nullable: true })

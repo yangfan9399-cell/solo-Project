@@ -8,10 +8,10 @@ export class PartsFee {
   @Column({ name: 'order_id', type: 'uuid' })
   orderId: string
 
-  @Column({ name: 'part_name', length: 128 })
+  @Column({ name: 'part_name', type: 'varchar', length: 128 })
   partName: string
 
-  @Column({ default: 1 })
+  @Column({ type: 'int', default: 1 })
   quantity: number
 
   @Column({ name: 'unit_price', type: 'decimal', precision: 10, scale: 2 })
@@ -20,7 +20,7 @@ export class PartsFee {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: number
 
-  @Column({ name: 'is_disputed', default: false })
+  @Column({ name: 'is_disputed', type: 'boolean', default: false })
   isDisputed: boolean
 
   @Column({ name: 'dispute_reason', type: 'text', nullable: true })

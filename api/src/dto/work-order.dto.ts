@@ -1,4 +1,5 @@
-import { IsString, IsEnum, IsOptional, IsNumber, IsBoolean } from 'class-validator'
+import { IsString, IsEnum, IsOptional, IsNumber, IsBoolean, IsArray, ValidateNested, ArrayMinSize } from 'class-validator'
+import { Type } from 'class-transformer'
 import { FaultSource, FaultType } from '../entities/work-order.entity.js'
 
 export class CreateWorkOrderDto {
@@ -54,9 +55,20 @@ export class RepairWorkOrderDto {
   operator: string
 }
 
-export class DisputeDto {
+export class DisputedPartItemDto {
+  @IsString()
+  feeId: string
+
   @IsString()
   disputeReason: string
+}
+
+export class DisputeDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1)
+  @Type(() => DisputedPartItemDto)
+  disputedParts: DisputedPartItemDto[]
 
   @IsString()
   operator: string

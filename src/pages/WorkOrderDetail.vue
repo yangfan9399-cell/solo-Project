@@ -84,7 +84,7 @@
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">单价</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">小计</th>
                   <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">状态</th>
-                  <th v-if="order.status === 'disputed'" class="px-4 py-2 text-left text-xs font-medium text-gray-500">操作</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500">操作</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
@@ -111,8 +111,9 @@
                     <span v-else class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
                       正常
                     </span>
+                    <p v-if="fee.isDisputed && fee.disputeReason" class="text-xs text-red-600 mt-1">{{ fee.disputeReason }}</p>
                   </td>
-                  <td v-if="order.status === 'disputed'" class="px-4 py-3">
+                  <td class="px-4 py-3">
                     <button
                       v-if="fee.isDisputed && !fee.adjustedPrice"
                       @click="openAdjustModal(fee)"
@@ -229,10 +230,10 @@
           </button>
           <button
             v-if="order.status === 'disputed' && !hasUnresolvedDispute"
-            @click="returnToSettlement"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            @click="confirmArchive"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
-            退回待结算
+            确认归档
           </button>
         </div>
       </div>
@@ -283,11 +284,33 @@
     </div>
 
     <div v-if="showDisputeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <div class="bg-white rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
         <h3 class="text-lg font-semibold mb-4">发起费用争议</h3>
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">争议原因</label>
-          <textarea v-model="disputeForm.disputeReason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="请输入争议原因..."></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-2">选择争议配件 <span class="text-red-500">*</span></label>
+          <p v-if="!order?.partsFees?.length" class="text-sm text-gray-400 mb-2">当前工单无配件费用</p>
+          <div v-for="fee in order?.partsFees" :key="fee.id" class="border rounded-lg p-3 mb-2" :class="{ 'border-red-400 bg-red-50': disputeSelected[fee.id] }">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                :checked="!!disputeSelected[fee.id]"
+                @change="toggleDisputePart(fee.id)"
+                class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+              />
+              <span class="font-medium">{{ fee.partName }}</span>
+              <span class="text-gray-500 text-sm">¥{{ fee.unitPrice }} × {{ fee.quantity }} = ¥{{ fee.subtotal }}</span>
+            </label>
+            <div v-if="disputeSelected[fee.id]" class="mt-2 ml-6">
+              <label class="block text-xs font-medium text-gray-600 mb-1">差异原因</label>
+              <input
+                v-model="disputeSelected[fee.id].disputeReason"
+                type="text"
+                class="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="请输入该配件的差异原因..."
+              />
+            </div>
+          </div>
+          <p v-if="disputeFormError" class="text-sm text-red-600 mt-2">{{ disputeFormError }}</p>
         </div>
         <div class="flex justify-end gap-3">
           <button @click="showDisputeModal = false" class="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
@@ -324,9 +347,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
-import { workOrderApi, type WorkOrder, type PartsFee } from '@/api'
+import { workOrderApi, type WorkOrder, type PartsFee, type DisputedPartItem } from '@/api'
 import {
   WorkOrderStatusLabel,
   WorkOrderStatusColor,
@@ -350,7 +373,8 @@ const showAdjustModal = ref(false)
 
 const assignForm = ref({ assigneeId: '' })
 const repairForm = ref({ repairType: 'remote_recovery', repairDuration: 30, repairNote: '' })
-const disputeForm = ref({ disputeReason: '' })
+const disputeSelected = reactive<Record<string, { disputeReason: string }>>({})
+const disputeFormError = ref('')
 const adjustForm = ref({ adjustedPrice: 0, adjustmentReason: '' })
 const currentAdjustFee = ref<PartsFee | null>(null)
 
@@ -435,16 +459,40 @@ const submitSettlement = async () => {
   }
 }
 
+const toggleDisputePart = (feeId: string) => {
+  if (disputeSelected[feeId]) {
+    delete disputeSelected[feeId]
+  } else {
+    disputeSelected[feeId] = { disputeReason: '' }
+  }
+}
+
 const openDisputeModal = () => {
-  disputeForm.value.disputeReason = ''
+  Object.keys(disputeSelected).forEach(key => delete disputeSelected[key])
+  disputeFormError.value = ''
   showDisputeModal.value = true
 }
 
 const handleDispute = async () => {
-  if (!disputeForm.value.disputeReason) return
+  const selectedKeys = Object.keys(disputeSelected)
+  if (selectedKeys.length === 0) {
+    disputeFormError.value = '请至少选择一项配件'
+    return
+  }
+  const hasEmptyReason = selectedKeys.some(key => !disputeSelected[key].disputeReason.trim())
+  if (hasEmptyReason) {
+    disputeFormError.value = '请为每项争议配件填写差异原因'
+    return
+  }
+
+  const disputedParts: DisputedPartItem[] = selectedKeys.map(feeId => ({
+    feeId,
+    disputeReason: disputeSelected[feeId].disputeReason.trim()
+  }))
+
   try {
     await workOrderApi.dispute(orderId.value, {
-      disputeReason: disputeForm.value.disputeReason,
+      disputedParts,
       operator: '财务复核'
     })
     showDisputeModal.value = false

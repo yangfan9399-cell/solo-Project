@@ -76,6 +76,11 @@ export interface Evidence {
   url: string
 }
 
+export interface DisputedPartItem {
+  feeId: string
+  disputeReason: string
+}
+
 export const workOrderApi = {
   getList: (params?: {
     status?: string
@@ -123,7 +128,7 @@ export const workOrderApi = {
       body: JSON.stringify({ operator })
     }),
 
-  dispute: (id: string, data: { disputeReason: string; operator: string }) =>
+  dispute: (id: string, data: { disputedParts: DisputedPartItem[]; operator: string }) =>
     request<WorkOrder>(`/orders/${id}/dispute`, {
       method: 'PUT',
       body: JSON.stringify(data)

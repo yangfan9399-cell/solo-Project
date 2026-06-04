@@ -34,28 +34,28 @@ export class WorkOrder {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ name: 'order_no', unique: true, length: 32 })
+  @Column({ name: 'order_no', type: 'varchar', unique: true, length: 32 })
   orderNo: string
 
-  @Column({ length: 32, default: WorkOrderStatus.PENDING })
+  @Column({ type: 'varchar', length: 32, default: WorkOrderStatus.PENDING })
   status: WorkOrderStatus
 
-  @Column({ name: 'fault_source', length: 32 })
+  @Column({ name: 'fault_source', type: 'varchar', length: 32 })
   faultSource: FaultSource
 
-  @Column({ name: 'fault_type', length: 32 })
+  @Column({ name: 'fault_type', type: 'varchar', length: 32 })
   faultType: FaultType
 
-  @Column({ name: 'device_id', length: 64 })
+  @Column({ name: 'device_id', type: 'varchar', length: 64 })
   deviceId: string
 
-  @Column({ name: 'device_no', length: 64 })
+  @Column({ name: 'device_no', type: 'varchar', length: 64 })
   deviceNo: string
 
-  @Column({ name: 'station_id', length: 64 })
+  @Column({ name: 'station_id', type: 'varchar', length: 64 })
   stationId: string
 
-  @Column({ name: 'station_name', length: 128 })
+  @Column({ name: 'station_name', type: 'varchar', length: 128 })
   stationName: string
 
   @Column({ name: 'repair_type', type: 'varchar', length: 32, nullable: true })

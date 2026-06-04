@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository, Between, Like, FindOptionsWhere } from 'typeorm'
+import { Repository, Between, Like, FindOptionsWhere, IsNull } from 'typeorm'
 import { WorkOrder, WorkOrderStatus, FaultType } from '../entities/work-order.entity.js'
 import { PartsFee } from '../entities/parts-fee.entity.js'
 import { LaborFee } from '../entities/labor-fee.entity.js'
@@ -113,10 +113,11 @@ export class WorkOrdersService {
       throw new BadRequestException('只有待处理工单可以分配')
     }
 
-    order.status = WorkOrderStatus.ASSIGNED
-    order.assigneeId = dto.assigneeId
-    order.assigneeName = dto.assigneeName
-    await this.orderRepo.save(order)
+    await this.orderRepo.update(id, {
+      status: WorkOrderStatus.ASSIGNED,
+      assigneeId: dto.assigneeId,
+      assigneeName: dto.assigneeName
+    })
 
     await this.processNodeRepo.save({
       orderId: id,
@@ -126,7 +127,7 @@ export class WorkOrdersService {
       note: `分配给: ${dto.assigneeName}`
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async repair(id: string, dto: RepairWorkOrderDto) {
@@ -135,11 +136,12 @@ export class WorkOrdersService {
       throw new BadRequestException('只有已分配工单可以开始维修')
     }
 
-    order.status = WorkOrderStatus.REPAIRING
-    order.repairType = dto.repairType as any
-    order.repairNote = dto.repairNote
-    order.repairDuration = dto.repairDuration
-    await this.orderRepo.save(order)
+    await this.orderRepo.update(id, {
+      status: WorkOrderStatus.REPAIRING,
+      repairType: dto.repairType,
+      repairNote: dto.repairNote,
+      repairDuration: dto.repairDuration
+    })
 
     await this.processNodeRepo.save({
       orderId: id,
@@ -149,7 +151,7 @@ export class WorkOrdersService {
       note: `维修方式: ${dto.repairType}, 维修时长: ${dto.repairDuration}分钟`
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async submitSettlement(id: string, operator: string) {
@@ -158,8 +160,7 @@ export class WorkOrdersService {
       throw new BadRequestException('只有维修中工单可以提交结算')
     }
 
-    order.status = WorkOrderStatus.PENDING_SETTLEMENT
-    await this.orderRepo.save(order)
+    await this.orderRepo.update(id, { status: WorkOrderStatus.PENDING_SETTLEMENT })
 
     await this.processNodeRepo.save({
       orderId: id,
@@ -169,24 +170,23 @@ export class WorkOrdersService {
       note: '维修完成，提交费用结算'
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async confirm(id: string, operator: string) {
     const order = await this.findOne(id)
-    if (order.status !== WorkOrderStatus.PENDING_SETTLEMENT) {
-      throw new BadRequestException('只有待结算工单可以确认归档')
+    if (order.status !== WorkOrderStatus.PENDING_SETTLEMENT && order.status !== WorkOrderStatus.DISPUTED) {
+      throw new BadRequestException('只有待结算或争议中工单可以确认归档')
     }
 
     const disputedFees = await this.partsFeeRepo.find({
-      where: { orderId: id, isDisputed: true, adjustedPrice: null as any }
+      where: { orderId: id, isDisputed: true, adjustedPrice: IsNull() }
     })
     if (disputedFees.length > 0) {
       throw new BadRequestException('存在未处理的争议配件费用，无法归档')
     }
 
-    order.status = WorkOrderStatus.ARCHIVED
-    await this.orderRepo.save(order)
+    await this.orderRepo.update(id, { status: WorkOrderStatus.ARCHIVED })
 
     await this.processNodeRepo.save({
       orderId: id,
@@ -196,7 +196,7 @@ export class WorkOrdersService {
       note: '费用确认无误，工单归档'
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async dispute(id: string, dto: DisputeDto) {
@@ -205,18 +205,38 @@ export class WorkOrdersService {
       throw new BadRequestException('只有待结算工单可以发起争议')
     }
 
-    order.status = WorkOrderStatus.DISPUTED
-    await this.orderRepo.save(order)
+    const disputedFeeIds = dto.disputedParts.map(p => p.feeId)
+    const fees = await this.partsFeeRepo.find({ where: { orderId: id } })
+    const feeMap = new Map(fees.map(f => [f.id, f]))
+
+    for (const item of dto.disputedParts) {
+      const fee = feeMap.get(item.feeId)
+      if (!fee) {
+        throw new NotFoundException(`配件费用 ${item.feeId} 不存在`)
+      }
+      fee.isDisputed = true
+      fee.disputeReason = item.disputeReason
+      await this.partsFeeRepo.save(fee)
+    }
+
+    await this.orderRepo.update(id, { status: WorkOrderStatus.DISPUTED })
+
+    const partNames = dto.disputedParts
+      .map(p => {
+        const fee = feeMap.get(p.feeId)
+        return fee ? `${fee.partName}: ${p.disputeReason}` : p.feeId
+      })
+      .join('; ')
 
     await this.processNodeRepo.save({
       orderId: id,
       action: '发起争议',
       operator: dto.operator,
       operatorRole: 'finance',
-      note: dto.disputeReason
+      note: `争议配件: ${partNames}`
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async adjustFee(id: string, dto: AdjustFeeDto) {
@@ -241,11 +261,10 @@ export class WorkOrdersService {
     })
 
     const unresolvedFees = await this.partsFeeRepo.find({
-      where: { orderId: id, isDisputed: true, adjustedPrice: null as any }
+      where: { orderId: id, isDisputed: true, adjustedPrice: IsNull() }
     })
     if (unresolvedFees.length === 0) {
-      order.status = WorkOrderStatus.PENDING_SETTLEMENT
-      await this.orderRepo.save(order)
+      await this.orderRepo.update(id, { status: WorkOrderStatus.PENDING_SETTLEMENT })
 
       await this.processNodeRepo.save({
         orderId: id,
@@ -265,8 +284,7 @@ export class WorkOrdersService {
       throw new BadRequestException('只有争议中工单可以退回')
     }
 
-    order.status = WorkOrderStatus.PENDING_SETTLEMENT
-    await this.orderRepo.save(order)
+    await this.orderRepo.update(id, { status: WorkOrderStatus.PENDING_SETTLEMENT })
 
     await this.processNodeRepo.save({
       orderId: id,
@@ -276,7 +294,7 @@ export class WorkOrdersService {
       note: '争议处理完成，退回待结算'
     })
 
-    return order
+    return this.findOne(id)
   }
 
   async getStats() {

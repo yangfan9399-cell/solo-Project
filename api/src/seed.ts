@@ -10,8 +10,8 @@ const AppDataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',
   port: 5432,
-  username: 'postgres',
-  password: 'postgres',
+  username: 'yangfan',
+  password: '',
   database: 'charging_pile_platform',
   synchronize: true,
   entities: [WorkOrder, PartsFee, LaborFee, ProcessNode, Evidence]
@@ -27,11 +27,7 @@ async function seed() {
   const processNodeRepo = AppDataSource.getRepository(ProcessNode)
   const evidenceRepo = AppDataSource.getRepository(Evidence)
 
-  await evidenceRepo.delete({})
-  await processNodeRepo.delete({})
-  await partsFeeRepo.delete({})
-  await laborFeeRepo.delete({})
-  await orderRepo.delete({})
+  await AppDataSource.query('TRUNCATE TABLE evidences, process_nodes, parts_fees, labor_fees, work_orders CASCADE')
   console.log('已清理旧数据')
 
   const now = new Date()
