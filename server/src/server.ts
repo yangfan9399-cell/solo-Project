@@ -37,7 +37,6 @@ const reworkSubmitSchema = z.object({
 });
 
 const reworkCompleteSchema = z.object({
-  reworkId: z.string(),
   reworkConclusion: z.enum(['REPAIRED', 'SCRAPPED', 'CONCESSION']),
   reworkNote: z.string().optional()
 });
@@ -418,14 +417,45 @@ app.put('/api/rework/:id/complete', async (request, reply) => {
       include: { operator: true }
     });
 
-    if (body.reworkConclusion === 'REPAIRED') {
-      await prisma.workOrderProcess.update({
-        where: { id: rework.processId },
+    let newProcessStatus: ProcessStatus;
+    switch (body.reworkConclusion) {
+      case 'REPAIRED':
+        newProcessStatus = ProcessStatus.IN_PROGRESS;
+        break;
+      case 'SCRAPPED':
+        newProcessStatus = ProcessStatus.PASSED;
+        break;
+      case 'CONCESSION':
+        newProcessStatus = ProcessStatus.PASSED;
+        break;
+      default:
+        newProcessStatus = ProcessStatus.IN_PROGRESS;
+    }
+
+    await prisma.workOrderProcess.update({
+      where: { id: rework.processId },
+      data: { status: newProcessStatus }
+    });
+
+    const process = await prisma.workOrderProcess.findUnique({
+      where: { id: rework.processId }
+    });
+    if (process) {
+      await prisma.workOrder.update({
+        where: { id: process.workOrderId },
         data: { status: ProcessStatus.IN_PROGRESS }
       });
     }
 
-    return updated;
+    return {
+      ...updated,
+      processStatus: newProcessStatus,
+      conclusionSummary: {
+        REPAIRED: '返修合格，工序恢复进行中，可重新提交交接',
+        SCRAPPED: '报废处理，零件已剔除并补投，工序视为完成',
+        CONCESSION: '让步接收，偏差经特批认可，工序视为通过'
+      }[body.reworkConclusion]
+    };
   } catch (e) {
     if (e instanceof z.ZodError) {
       return reply.status(400).send({ error: '参数验证失败', details: e.errors });

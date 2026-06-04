@@ -274,14 +274,24 @@ async function submitReworkCompleteForm() {
   submittingReworkComplete.value = true;
 
   try {
+    const conclusion = reworkCompleteForm.value.reworkConclusion;
     const conclusionText = {
       REPAIRED: '已修复',
       SCRAPPED: '报废',
       CONCESSION: '让步接收'
-    }[reworkCompleteForm.value.reworkConclusion];
+    }[conclusion];
+
+    const conclusionSummary = {
+      REPAIRED: '工序恢复进行中，可重新提交交接',
+      SCRAPPED: '零件已剔除并补投，工序视为完成',
+      CONCESSION: '偏差经特批认可，工序视为通过'
+    }[conclusion];
 
     await completeRework(selectedRework.value.id, reworkCompleteForm.value);
-    showAlertMessage(`返修结论「${conclusionText}」已提交成功，数据已持久化到数据库`, 'success');
+    showAlertMessage(
+      `返修结论「${conclusionText}」已落库持久化 — ${conclusionSummary}`,
+      'success'
+    );
     showReworkCompleteModal.value = false;
     await loadData();
   } catch (e: any) {
@@ -482,12 +492,12 @@ onMounted(loadData);
                 <div class="alert" :class="rework.reworkConclusion ? 'alert-success' : 'alert-warning'" style="margin-top: 8px; font-size: 12px;">
                   <template v-if="rework.reworkConclusion">
                     <strong>返修结论: {{ conclusionText[rework.reworkConclusion] }}</strong>
-                    <span v-if="rework.reworkConclusion === 'REPAIRED'"> — 返修后质量合格，已持久化到数据库 <code>rework_conclusion</code> 字段</span>
-                    <span v-else-if="rework.reworkConclusion === 'SCRAPPED'"> — 无法修复予以报废，结论已持久化，复盘页按此字段聚合统计</span>
-                    <span v-else-if="rework.reworkConclusion === 'CONCESSION'"> — 偏差可接受经特批放行，结论已持久化，证明结论不是静态写死</span>
+                    <span v-if="rework.reworkConclusion === 'REPAIRED'"> — 返修后质量合格，工序状态变更为「进行中」可重新交接。结论值 <code>REPAIRED</code> 已持久化到数据库 <code>rework_conclusion</code> 字段</span>
+                    <span v-else-if="rework.reworkConclusion === 'SCRAPPED'"> — 无法修复予以报废，零件剔除补投，工序状态变更为「已通过」。结论值 <code>SCRAPPED</code> 已持久化，复盘页按此字段聚合统计</span>
+                    <span v-else-if="rework.reworkConclusion === 'CONCESSION'"> — 偏差经特批认可放行，工序状态变更为「已通过」。结论值 <code>CONCESSION</code> 已持久化，证明结论不是静态写死</span>
                   </template>
                   <template v-else>
-                    <strong>返修进行中</strong> — 结论待操作员根据实际返修结果填写，系统不预设固定值
+                    <strong>返修进行中</strong> — 结论待操作员根据实际返修结果填写，系统不预设固定值。可选择：已修复 / 报废 / 让步接收
                   </template>
                 </div>
                 <button
