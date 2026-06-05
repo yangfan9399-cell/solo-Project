@@ -60,7 +60,7 @@ class CoursePackagesController < ApplicationController
 
   def request_refund
     return render_readonly if @course_package.archived?
-    return render_no_permission unless @current_user.consultant?
+    return render_no_permission unless @current_user.manager?
 
     if @course_package.request_refund!(@current_user, params[:algorithm], params[:dispute_reason])
       redirect_to @course_package, notice: '退款申请已提交'

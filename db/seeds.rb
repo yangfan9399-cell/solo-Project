@@ -42,7 +42,7 @@ package1 = CoursePackage.create!(
   )
 end
 
-6.times do |i|
+5.times do |i|
   package1.consumption_records.create!(
     service_name: '美白淡斑护理',
     sessions_used: 1,
@@ -52,9 +52,19 @@ end
   )
 end
 
-package1.update!(remaining_sessions: 32)
+8.times do |i|
+  package1.consumption_records.create!(
+    service_name: '抗衰紧致护理',
+    sessions_used: 1,
+    performed_by: consultant1,
+    performed_at: (i + 9).weeks.ago,
+    record_type: 'normal'
+  )
+end
 
-puts "✓ 样本1: 正常消耗 - 面部护理年卡 (48次，剩余32次，已消耗9次补水+7次美白)"
+used1_used = package1.consumption_records.sum(:sessions_used)
+package1.update!(remaining_sessions: 48 - used1_used)
+puts "✓ 样本1: 正常消耗 - 面部护理年卡 (48次，已消耗#{used1_used}次，剩余#{package1.remaining_sessions}次"
 
 package2 = CoursePackage.create!(
   member:,
@@ -62,7 +72,7 @@ package2 = CoursePackage.create!(
   name: '身体SPA套餐',
   original_price: 5680.00,
   total_sessions: 20,
-  remaining_sessions: 8,
+  remaining_sessions: 10,
   purchased_at: 2.months.ago,
   status: 'active',
   notes: '含精油按摩和热石护理'
@@ -96,12 +106,11 @@ package2.consumption_records.create!(
   record_type: 'exchange'
 )
 
-package2.update!(remaining_sessions: 10)
-
-puts "✓ 样本2: 项目换购 - 身体SPA套餐 (20次，剩余10次，含2次换购记录)"
+used2_used = package2.consumption_records.sum(:sessions_used)
+package2.update!(remaining_sessions: 20 - used2_used)
+puts "✓ 样本2: 项目换购 - 身体SPA套餐 (20次，已消耗#{used2_used}次，剩余#{package2.remaining_sessions}次，含2次换购记录"
 
 package2.transfer_consultant!(consultant1, manager, '王顾问离职，转交李顾问跟进')
-
 puts "✓ 样本3: 顾问转交 - 从王顾问转交给李顾问"
 
 package3 = CoursePackage.create!(
@@ -110,7 +119,7 @@ package3 = CoursePackage.create!(
   name: '至尊VIP综合卡',
   original_price: 19800.00,
   total_sessions: 100,
-  remaining_sessions: 65,
+  remaining_sessions: 75,
   purchased_at: 6.months.ago,
   status: 'refund_pending',
   notes: '综合美容卡，全项目通用'
@@ -126,10 +135,11 @@ package3 = CoursePackage.create!(
   )
 end
 
-package3.update!(remaining_sessions: 75)
+used3_used = package3.consumption_records.sum(:sessions_used)
+package3.update!(remaining_sessions: 100 - used3_used)
 
 review_node = package3.review_nodes.create!(
-  reviewer: consultant1,
+  reviewer: manager,
   status: 'pending',
   refund_amount: package3.calculate_refund('standard'),
   refund_algorithm: 'standard',
@@ -137,8 +147,7 @@ review_node = package3.review_nodes.create!(
 )
 
 package3.update!(status: 'refund_pending')
-
-puts "✓ 样本4: 退款待复核 - 至尊VIP综合卡 (申请退款中)"
+puts "✓ 样本4: 退款待复核 - 至尊VIP综合卡 (已消耗#{used3_used}次，剩余#{package3.remaining_sessions}次，申请退款中)"
 
 package4 = CoursePackage.create!(
   member:,
@@ -162,10 +171,22 @@ package4 = CoursePackage.create!(
   )
 end
 
-package4.update!(remaining_sessions: 22)
+4.times do |i|
+  package4.consumption_records.create!(
+    service_name: '射频溶脂护理',
+    sessions_used: 1,
+    performed_by: consultant2,
+    performed_at: (i + 9).weeks.ago,
+    record_type: 'normal'
+  )
+end
+
+used4_used = package4.consumption_records.sum(:sessions_used)
+package4.update!(remaining_sessions: 30 - used4_used)
+puts "✓ 样本5: 已归档 - 纤体塑形套餐"
 
 old_node = package4.review_nodes.create!(
-  reviewer: consultant1,
+  reviewer: manager,
   status: 'approved',
   refund_amount: package4.calculate_refund('penalty'),
   refund_algorithm: 'penalty',
@@ -183,8 +204,7 @@ package4.review_nodes.create!(
   reviewed_at: 5.days.ago
 )
 package4.update!(status: 'archived')
-
-puts "✓ 样本5: 已归档 - 纤体塑形套餐"
+puts "  - 已消耗#{used4_used}次，剩余#{package4.remaining_sessions}次"
 
 package5 = CoursePackage.create!(
   member:,
@@ -192,7 +212,7 @@ package5 = CoursePackage.create!(
   name: '眼部护理年卡',
   original_price: 3800.00,
   total_sessions: 24,
-  remaining_sessions: 12,
+  remaining_sessions: 16,
   purchased_at: 5.months.ago,
   status: 'refund_pending'
 )
@@ -207,30 +227,31 @@ package5 = CoursePackage.create!(
   )
 end
 
-package5.update!(remaining_sessions: 16)
+used5_used = package5.consumption_records.sum(:sessions_used)
+package5.update!(remaining_sessions: 24 - used5_used)
 
 archived_node = package5.review_nodes.create!(
-  reviewer: consultant1,
+  reviewer: manager,
   status: 'archived',
   refund_amount: package5.calculate_refund('standard'),
   refund_algorithm: 'standard',
   reviewed_at: 2.weeks.ago
 )
-package5.update!(status: 'archived')
+package5.update!(status: 'refund_approved')
 
 archived_node.reopen!(
   manager,
   'discounted',
   '客户提出异议，店长介入重新审核，改用优惠算法'
 )
-
-puts "✓ 样本6: 退款金额争议 - 眼部护理年卡 (有争议记录，显示新旧算法对比)"
+puts "✓ 样本6: 退款金额争议 - 眼部护理年卡"
+puts "  - 已消耗#{used5_used}次，剩余#{package5.remaining_sessions}次（有争议记录，显示新旧算法对比)"
 
 puts ""
 puts "🎉 所有样本数据创建完成！"
 puts "=" * 50
 puts "登录账号切换方式：点击右上角用户名切换"
-puts "- 张店长 (manager) - 可复核、转交、归档、返工"
-puts "- 李顾问 (consultant) - 可登记消耗、换购、申请退款"
+puts "- 张店长 (manager) - 可发起退款、复核、转交、归档、返工"
+puts "- 李顾问 (consultant) - 可登记消耗、换购"
 puts "- 王顾问 (consultant)"
 puts "- 陈顾问 (consultant)"
