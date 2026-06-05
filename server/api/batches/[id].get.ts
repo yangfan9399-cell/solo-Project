@@ -32,15 +32,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const touristIds = batch.tourists.map(tb => tb.touristId)
-
   const materialAudits = await prisma.materialAudit.findMany({
     where: {
-      material: {
-        touristId: {
-          in: touristIds
-        }
-      }
+      batchId: id
     },
     include: {
       material: {

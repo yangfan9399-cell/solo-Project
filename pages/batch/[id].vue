@@ -539,7 +539,8 @@ const saveMaterialStatus = async () => {
       body: {
         status: materialEditForm.value.status,
         notes: materialEditForm.value.notes,
-        userId: 1
+        userId: 1,
+        batchId: route.params.id
       }
     })
     showMaterialModal.value = false

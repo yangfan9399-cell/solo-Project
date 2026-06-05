@@ -31,10 +31,11 @@ model VisaBatch {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy  User          @relation("CreatedBy", fields: [createdById], references: [id])
-  reviewedBy User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
-  tourists   TouristBatch[]
-  auditLogs  AuditLog[]
+  createdBy       User            @relation("CreatedBy", fields: [createdById], references: [id])
+  reviewedBy      User?           @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  tourists        TouristBatch[]
+  auditLogs       AuditLog[]
+  materialAudits  MaterialAudit[]
 }
 
 model Tourist {
@@ -83,13 +84,15 @@ model Material {
 model MaterialAudit {
   id          Int      @id @default(autoincrement())
   materialId  Int
+  batchId     Int?
   userId      Int
   action      String
   notes       String?
   createdAt   DateTime @default(now())
 
-  material  Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  material  Material   @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  batch     VisaBatch? @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id])
 }
 
 model AuditLog {
