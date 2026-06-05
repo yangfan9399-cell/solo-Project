@@ -174,8 +174,14 @@
 
     <el-dialog v-model="showCreateDialog" title="新建调度工单" width="500px">
       <el-form :model="createForm" label-width="100px">
-        <el-form-item label="站点编号">
-          <el-input v-model="createForm.stationCode" placeholder="请输入站点编号" />
+        <el-form-item :label="isStationErrorSample ? '上报站点编号' : '站点编号'">
+          <el-input
+            v-model="createForm.stationCode"
+            :placeholder="isStationErrorSample ? '请输入上报的站点编号，留空默认 ST999' : '请输入站点编号'"
+          />
+          <div v-if="isStationErrorSample" class="tip-text">
+            留空将按 <b>ST999</b> 创建可重绑的站点错误工单
+          </div>
         </el-form-item>
         <el-form-item label="需求数量">
           <el-input-number v-model="createForm.requiredQuantity" :min="1" :max="100" />
@@ -302,6 +308,10 @@ const reviewForm = ref({
   reason: '',
   reviewerId: '',
   reviewerName: '陈复核',
+});
+
+const isStationErrorSample = computed(() => {
+  return createForm.value.sampleType === DispatchSampleType.STATION_ERROR;
 });
 
 const statusOptions = computed(() => {
@@ -551,5 +561,12 @@ onMounted(() => {
     border-radius: 8px;
     text-align: center;
   }
+}
+
+.tip-text {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 6px;
+  line-height: 1.5;
 }
 </style>
