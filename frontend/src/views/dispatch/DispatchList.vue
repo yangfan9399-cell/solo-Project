@@ -410,7 +410,6 @@ async function createOrder() {
       data.sampleType = createForm.value.sampleType;
       if (createForm.value.sampleType === DispatchSampleType.STATION_ERROR) {
         data.reportedStationCode = createForm.value.stationCode || 'ST999';
-        data.stationCode = '';
       }
     }
     await dispatchApi.create(data);

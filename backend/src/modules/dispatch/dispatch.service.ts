@@ -81,8 +81,14 @@ export class DispatchService {
       let station: Station | null = null;
       let stationCodeError = false;
       let stationCodeErrorMessage: string | null = null;
+      const reportedCode = dto.reportedStationCode || dto.stationCode;
 
-      if (dto.stationId) {
+      const isForcedError = dto.sampleType === DispatchSampleType.STATION_ERROR;
+
+      if (isForcedError) {
+        stationCodeError = true;
+        stationCodeErrorMessage = `站点编号 ${reportedCode} 不存在，请检查或重新绑定站点`;
+      } else if (dto.stationId) {
         station = await this.stationService.findOne(dto.stationId);
       } else if (dto.stationCode) {
         const validation = await this.stationService.validateStationCode(dto.stationCode);
@@ -92,6 +98,9 @@ export class DispatchService {
           stationCodeError = true;
           stationCodeErrorMessage = validation.message || '站点编号错误';
         }
+      } else if (dto.reportedStationCode) {
+        stationCodeError = true;
+        stationCodeErrorMessage = `站点编号 ${dto.reportedStationCode} 不存在，请检查或重新绑定站点`;
       }
 
       if (!station && !stationCodeError) {
@@ -102,7 +111,7 @@ export class DispatchService {
         orderNo: this.generateOrderNo(),
         stationId: station?.id,
         station,
-        reportedStationCode: dto.reportedStationCode || dto.stationCode,
+        reportedStationCode: reportedCode,
         requiredQuantity: dto.requiredQuantity,
         status: DispatchStatus.PENDING,
         sampleType: dto.sampleType,
@@ -119,7 +128,7 @@ export class DispatchService {
         nodeType: stationCodeError ? NodeType.STATION_ERROR : NodeType.ALERT,
         title: stationCodeError ? '站点编号错误' : '缺车告警',
         description: stationCodeError
-          ? `${stationCodeErrorMessage}\n上报站点编号：${dto.reportedStationCode || dto.stationCode}`
+          ? `${stationCodeErrorMessage}\n上报站点编号：${reportedCode}`
           : `站点缺车，需补充 ${dto.requiredQuantity} 辆自行车`,
         operatorName: '系统',
       });
