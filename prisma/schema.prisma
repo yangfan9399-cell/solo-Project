@@ -1,0 +1,187 @@
+// Prisma schema for Content Topic Review & Scheduling System
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "wasm"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  EDITOR
+  CHIEF_EDITOR
+  SCHEDULER
+  REVIEWER
+}
+
+enum TopicStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  COPYRIGHT_MISSING
+  TITLE_REVISION
+  SCHEDULED
+  SCHEDULE_CONFLICT
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
+
+enum ReviewResult {
+  APPROVED
+  COPYRIGHT_MISSING
+  TITLE_REVISION
+  REJECTED
+}
+
+enum ScheduleConflictType {
+  SAME_CATEGORY
+  SAME_SERIES
+  HOT_TOPIC
+  TIME_SLOT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      UserRole
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submittedTopics Topic[] @relation("SubmitterTopics")
+  reviews      Review[]
+  schedules    Schedule[]
+  archiveLogs  ArchiveLog[]
+  revisionRecords RevisionRecord[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  topics Topic[]
+}
+
+model Topic {
+  id            String      @id @default(cuid())
+  title         String
+  originalTitle String?
+  summary       String
+  source        String
+  sourceUrl     String?
+  categoryId      String?
+  copyrightEvidence String?
+  contentOutline  String?
+  status        TopicStatus @default(DRAFT)
+  priority      Int         @default(2)
+  delayCount    Int         @default(0)
+  rejectCount  Int         @default(0)
+  rejectReason  String?
+  currentHandlerId  String?
+  submitterId   String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  scheduledAt   DateTime?
+  publishedAt   DateTime?
+  archivedAt    DateTime?
+
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  submitter      User        @relation("SubmitterTopics", fields: [submitterId], references: [id])
+  reviews        Review[]
+  schedules      Schedule[]
+  revisionRecords   RevisionRecord[]
+  archiveLogs      ArchiveLog[]
+  statusHistory   StatusHistory[]
+  conflictDetectedConflicts ScheduleConflict[] @relation("ConflictedTopic")
+  conflictCausedConflicts  ScheduleConflict[] @relation("CausingTopic")
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([submitterId])
+  @@index([scheduledAt])
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  topicId     String
+  reviewerId  String
+  result      ReviewResult
+  comment     String?
+  createdAt   DateTime     @default(now())
+
+  topic    Topic  @relation(fields: [topicId], references: [id])
+  reviewer User   @relation(fields: [reviewerId], references: [id])
+}
+
+model Schedule {
+  id           String   @id @default(cuid())
+  topicId      String
+  schedulerId  String
+  scheduledAt DateTime
+  timeSlot     String?
+  note         String?
+  isPrimary  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  topic     Topic @relation(fields: [topicId], references: [id])
+  scheduler User  @relation(fields: [schedulerId], references: [id])
+}
+
+model ScheduleConflict {
+  id              String              @id @default(cuid())
+  topicId         String
+  conflictingTopicId String
+  conflictType    ScheduleConflictType
+  description    String?
+  detectedAt      DateTime            @default(now())
+  resolved       Boolean             @default(false)
+  resolvedAt    DateTime?
+
+  topic         Topic @relation("ConflictedTopic", fields: [topicId], references: [id])
+  conflictingTopic Topic @relation("CausingTopic", fields: [conflictingTopicId], references: [id])
+}
+
+model RevisionRecord {
+  id         String   @id @default(cuid())
+  topicId    String
+  editorId   String
+  fieldName  String
+  oldValue   String?
+  newValue   String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  topic  Topic @relation(fields: [topicId], references: [id])
+  editor User  @relation(fields: [editorId], references: [id])
+}
+
+model ArchiveLog {
+  id        String   @id @default(cuid())
+  topicId   String
+  reviewerId String
+  action    String
+  comment   String?
+  createdAt DateTime @default(now())
+
+  topic    Topic @relation(fields: [topicId], references: [id])
+  reviewer User  @relation(fields: [reviewerId], references: [id])
+}
+
+model StatusHistory {
+  id        String      @id @default(cuid())
+  topicId   String
+  status    TopicStatus
+  operatorId String?
+  remark    String?
+  createdAt DateTime    @default(now())
+
+  topic Topic @relation(fields: [topicId], references: [id])
+}
