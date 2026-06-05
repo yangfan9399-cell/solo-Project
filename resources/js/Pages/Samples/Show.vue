@@ -37,7 +37,7 @@
 
         <div v-if="sample.conflict_note" class="mb-6">
             <ConflictAlert :conflict-note="sample.conflict_note" :conflict-sample="sample.conflict_sample" />
-            
+
             <div v-if="$page.props.auth.user.role === 'reviewer'" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                 <h3 class="text-sm font-medium text-yellow-800 mb-2">解决编号冲突</h3>
                 <form @submit.prevent="resolveConflict" class="flex gap-2 items-end">
@@ -91,7 +91,10 @@
                         </div>
                         <div>
                             <label class="text-sm text-gray-500">抽样员</label>
-                            <p class="font-medium">{{ sample.sampler?.name }}</p>
+                            <p class="font-medium">
+                                <span v-if="sample.sampler?.name">{{ sample.sampler.name }}</span>
+                                <span v-else class="text-gray-400">未记录</span>
+                            </p>
                         </div>
                     </div>
 
@@ -110,7 +113,7 @@
                             >
                                 <img
                                     :src="photo"
-                                    :alt="`取证照片 ${index + 1}`"
+                                    :alt="`取证照片 ${index + 1}"
                                     class="w-full h-full object-cover"
                                 />
                             </div>
@@ -124,135 +127,181 @@
                     </div>
                 </div>
 
-                <div v-if="sample.inspection_results && sample.inspection_results.length > 0" class="bg-white shadow rounded-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">检测结果</h2>
-                    <div v-for="(result, index) in sample.inspection_results" :key="result.id" class="mb-4 last:mb-0">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="font-medium">检测记录 {{ index + 1 }}</span>
-                            <span :class="result.result === 'qualified' ? 'text-green-600' : 'text-red-600'" class="font-medium">
-                                {{ result.result === 'qualified' ? '合格' : result.result === 'pesticide_exceeded' ? '农残超标' : '其他不合格' }}
-                            </span>
+                    <div v-if="sample.inspection_results && sample.inspection_results.length > 0">
+                        <div v-for="(result, index) in sample.inspection_results" :key="result.id" class="mb-4 last:mb-0">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-medium">检测记录 {{ index + 1 }}</span>
+                                <span :class="result.result === 'qualified' ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                                    {{ result.result === 'qualified' ? '合格' : result.result === 'pesticide_exceeded' ? '农残超标' : '其他不合格' }}
+                                </span>
+                            </div>
+                            <div class="bg-gray-50 rounded-md p-4">
+                                <p class="text-sm text-gray-600 mb-2">
+                                    检测员:
+                                    <span v-if="result.inspector?.name">{{ result.inspector.name }}</span>
+                                    <span v-else class="text-gray-400">未记录</span>
+                                    | 检测日期: {{ result.inspection_date }}
+                                </p>
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-left text-gray-500">
+                                            <th class="pb-2">检测指标</th>
+                                            <th class="pb-2">限值</th>
+                                            <th class="pb-2">检测值</th>
+                                            <th class="pb-2">结果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="indicator in result.indicators" :key="indicator.name" class="border-t border-gray-200">
+                                            <td class="py-2">{{ indicator.name }}</td>
+                                            <td class="py-2">{{ indicator.limit }} {{ indicator.unit }}</td>
+                                            <td class="py-2">{{ indicator.value }} {{ indicator.unit }}</td>
+                                            <td class="py-2">
+                                                <span :class="indicator.value <= indicator.limit ? 'text-green-600' : 'text-red-600'">
+                                                    {{ indicator.value <= indicator.limit ? '合格' : '超标' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <p class="mt-3 text-sm font-medium">检测结论: {{ result.conclusion }}</p>
+                                <div v-if="result.report_file" class="mt-3 pt-3 border-t border-gray-200">
+                                    <a :href="result.report_file" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z" />
+                                        </svg>
+                                        查看检测报告
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-gray-50 rounded-md p-4">
-                            <p class="text-sm text-gray-600 mb-2">
-                                检测员: {{ result.inspector?.name }} | 检测日期: {{ result.inspection_date }}
-                            </p>
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="text-left text-gray-500">
-                                        <th class="pb-2">检测指标</th>
-                                        <th class="pb-2">限值</th>
-                                        <th class="pb-2">检测值</th>
-                                        <th class="pb-2">结果</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="indicator in result.indicators" :key="indicator.name" class="border-t border-gray-200">
-                                        <td class="py-2">{{ indicator.name }}</td>
-                                        <td class="py-2">{{ indicator.limit }} {{ indicator.unit }}</td>
-                                        <td class="py-2">{{ indicator.value }} {{ indicator.unit }}</td>
-                                        <td class="py-2">
-                                            <span :class="indicator.value <= indicator.limit ? 'text-green-600' : 'text-red-600'">
-                                                {{ indicator.value <= indicator.limit ? '合格' : '超标' }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <p class="mt-3 text-sm font-medium">检测结论: {{ result.conclusion }}</p>
-                        </div>
+                    </div>
+                    <div v-else class="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span class="text-sm">暂无检测结果</span>
                     </div>
                 </div>
 
-                <div v-if="sample.disposal" class="bg-white shadow rounded-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">处置信息</h2>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-sm text-gray-500">处置动作</label>
-                            <p class="font-medium">{{ sample.disposal.action_name }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">处置建议</label>
-                            <p class="font-medium">{{ sample.disposal.suggestion }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">复核人</label>
-                            <p class="font-medium">{{ sample.disposal.reviewer?.name }}</p>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">状态</label>
-                            <p class="font-medium">{{ sample.disposal.status_name }}</p>
-                        </div>
-                        <div v-if="sample.disposal.decision_note">
-                            <label class="text-sm text-gray-500">复核决定备注</label>
-                            <p class="font-medium">{{ sample.disposal.decision_note }}</p>
-                        </div>
-                    </div>
-
-                    <div v-if="sample.disposal.status === 'pending' && $page.props.auth.user.role === 'reviewer'" class="mt-4 pt-4 border-t border-gray-200">
-                        <h3 class="text-sm font-medium text-gray-700 mb-3">复核操作</h3>
+                    <div v-if="sample.disposal">
                         <div class="space-y-3">
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">复核备注</label>
-                                <textarea
-                                    v-model="decisionNote"
-                                    rows="2"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                ></textarea>
+                                <label class="text-sm text-gray-500">处置动作</label>
+                                <p class="font-medium">{{ sample.disposal.action_name }}</p>
                             </div>
-                            <div class="flex gap-2">
+                            <div>
+                                <label class="text-sm text-gray-500">处置建议</label>
+                                <p class="font-medium">{{ sample.disposal.suggestion }}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">复核人</label>
+                                <p class="font-medium">
+                                    <span v-if="sample.disposal.reviewer?.name">{{ sample.disposal.reviewer.name }}</span>
+                                    <span v-else class="text-gray-400">未记录</span>
+                                </p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">状态</label>
+                                <p class="font-medium">{{ sample.disposal.status_name }}</p>
+                            </div>
+                            <div v-if="sample.disposal.decision_note">
+                                <label class="text-sm text-gray-500">复核决定备注</label>
+                                <p class="font-medium">{{ sample.disposal.decision_note }}</p>
+                            </div>
+                        </div>
+
+                        <div v-if="sample.disposal.status === 'pending' && $page.props.auth.user.role === 'reviewer'" class="mt-4 pt-4 border-t border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-700 mb-3">复核操作</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">复核备注</label>
+                                    <textarea
+                                        v-model="decisionNote"
+                                        rows="2"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
+                                    ></textarea>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button
+                                        @click="approveDisposal"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                                    >
+                                        批准处置
+                                    </button>
+                                    <button
+                                        @click="returnToSampler"
+                                        class="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm hover:bg-yellow-700"
+                                    >
+                                        退回抽样员
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-sm">暂无处置信息</span>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">复检申请</h2>
+                    <div v-if="sample.reinspection_requests && sample.reinspection_requests.length > 0">
+                        <div v-for="request in sample.reinspection_requests" :key="request.id" class="mb-4 last:mb-0">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">申请时间: {{ request.created_at }}</span>
+                                <span :class="{
+                                    'text-yellow-600': request.status === 'pending',
+                                    'text-green-600': request.status === 'approved',
+                                    'text-red-600': request.status === 'rejected',
+                                    'text-blue-600': request.status === 'completed',
+                                }" class="font-medium">
+                                    {{ request.status_name }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600">
+                                申请人:
+                                <span v-if="request.requester?.name">{{ request.requester.name }}</span>
+                                <span v-else class="text-gray-400">未记录</span>
+                            </p>
+                            <p class="text-sm">申请原因: {{ request.reason }}</p>
+                            <div v-if="request.review_note" class="mt-2 text-sm">
+                                <p>审核意见: {{ request.review_note }}</p>
+                                <p class="text-gray-500">
+                                    审核人:
+                                    <span v-if="request.reviewer?.name">{{ request.reviewer.name }}</span>
+                                    <span v-else class="text-gray-400">未记录</span>
+                                </p>
+                            </div>
+
+                            <div v-if="request.status === 'pending' && $page.props.auth.user.role === 'reviewer'" class="mt-3 flex gap-2">
                                 <button
-                                    @click="approveDisposal"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                                    @click="approveReinspection(request)"
+                                    class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
                                 >
-                                    批准处置
+                                    批准
                                 </button>
                                 <button
-                                    @click="returnToSampler"
-                                    class="px-4 py-2 bg-yellow-600 text-white rounded-md text-sm hover:bg-yellow-700"
+                                    @click="rejectReinspection(request)"
+                                    class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
                                 >
-                                    退回抽样员
+                                    拒绝
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div v-if="sample.reinspection_requests && sample.reinspection_requests.length > 0" class="bg-white shadow rounded-lg p-6">
-                    <h2 class="text-lg font-medium text-gray-900 mb-4">复检申请</h2>
-                    <div v-for="request in sample.reinspection_requests" :key="request.id" class="mb-4 last:mb-0">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-medium">申请时间: {{ request.created_at }}</span>
-                            <span :class="{
-                                'text-yellow-600': request.status === 'pending',
-                                'text-green-600': request.status === 'approved',
-                                'text-red-600': request.status === 'rejected',
-                                'text-blue-600': request.status === 'completed',
-                            }" class="font-medium">
-                                {{ request.status_name }}
-                            </span>
-                        </div>
-                        <p class="text-sm text-gray-600">申请人: {{ request.requester?.name }}</p>
-                        <p class="text-sm">申请原因: {{ request.reason }}</p>
-                        <div v-if="request.review_note" class="mt-2 text-sm">
-                            <p>审核意见: {{ request.review_note }}</p>
-                            <p class="text-gray-500">审核人: {{ request.reviewer?.name }}</p>
-                        </div>
-
-                        <div v-if="request.status === 'pending' && $page.props.auth.user.role === 'reviewer'" class="mt-3 flex gap-2">
-                            <button
-                                @click="approveReinspection(request)"
-                                class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                            >
-                                批准
-                            </button>
-                            <button
-                                @click="rejectReinspection(request)"
-                                class="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
-                            >
-                                拒绝
-                            </button>
-                        </div>
+                    <div v-else class="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356A1.99 1.99 0 0121 8.414V17a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1zm1 1H4z" />
+                        </svg>
+                        <span class="text-sm">暂无复检申请</span>
                     </div>
                 </div>
 
