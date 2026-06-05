@@ -1,5 +1,5 @@
 class CoursePackagesController < ApplicationController
-  before_action :set_course_package, only: %i[show consume exchange transfer request_refund approve reject archive reopen]
+  before_action :set_course_package, only: %i[show consume exchange transfer request_refund approve reject archive reopen add_note]
   before_action :set_current_user
 
   def index
@@ -119,6 +119,7 @@ class CoursePackagesController < ApplicationController
   def add_note
     return render_readonly if @course_package.archived?
     return render_no_permission unless @current_user.consultant?
+    return render_readonly unless %w[active refund_rejected].include?(@course_package.status)
 
     if @course_package.add_customer_note!(params[:content], @current_user, params[:note_type] || 'general')
       redirect_to @course_package, notice: '客户说明已添加'
