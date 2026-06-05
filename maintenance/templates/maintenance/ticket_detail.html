@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}工单详情 #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div id="ticket-detail">
+    {% include 'maintenance/partials/ticket_detail_content.html' %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+        if (evt.detail.isError) {
+            alert('操作失败：' + (evt.detail.xhr.responseText || '未知错误'));
+        }
+    });
+    
+    document.body.addEventListener('showModal', function(evt) {
+        const modal = document.getElementById(evt.detail.modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    });
+    
+    document.body.addEventListener('hideModal', function(evt) {
+        const modal = document.getElementById(evt.detail.modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}电梯详情 - {{ elevator.elevator_number }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center space-x-4">
+    <a href="{% url 'maintenance:elevator_list' %}" class="text-gray-500 hover:text-gray-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </a>
+    <h1 class="text-2xl font-bold text-gray-900">电梯详情 - {{ elevator.elevator_number }}</h1>
+    <span class="px-3 py-1 rounded-full text-sm font-medium 
+        {% if elevator.status == 'running' %}bg-green-100 text-green-800
+        {% elif elevator.status == 'stopped' %}bg-red-100 text-red-800
+        {% elif elevator.status == 'maintenance' %}bg-blue-100 text-blue-800
+        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+        {{ elevator.get_status_display }}
+    </span>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900">基本信息</h2>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <span class="text-sm text-gray-500">电梯编号</span>
+                <p class="font-medium">{{ elevator.elevator_number }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">所在楼宇</span>
+                <p class="font-medium">{{ elevator.building }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">楼层范围</span>
+                <p class="font-medium">{{ elevator.floor }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">生产厂家</span>
+                <p class="font-medium">{{ elevator.manufacturer }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">安装日期</span>
+                <p class="font-medium">{{ elevator.install_date|date:"Y-m-d" }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">维保单位</span>
+                <p class="font-medium">{{ elevator.maintenance_company.name|default:"-" }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">上次维保日期</span>
+                <p class="font-medium">{{ elevator.last_maintenance_date|date:"Y-m-d"|default:"-" }}</p>
+            </div>
+            <div>
+                <span class="text-sm text-gray-500">下次维保日期</span>
+                <p class="font-medium">{{ elevator.next_maintenance_date|date:"Y-m-d"|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900">最近故障工单</h2>
+        <div class="space-y-3">
+            {% for ticket in tickets %}
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="font-medium text-sm">#{{ ticket.id }} - {{ ticket.get_fault_source_display }}</p>
+                    <p class="text-xs text-gray-500">{{ ticket.fault_description|truncatechars:50 }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="px-2 py-1 text-xs rounded-full 
+                        {% if ticket.status == 'archived' %}bg-gray-100 text-gray-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ ticket.get_status_display }}
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">{{ ticket.report_time|date:"Y-m-d" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">暂无故障记录</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900">维保计划</h2>
+        <div class="space-y-3">
+            {% for plan in plans %}
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="font-medium text-sm">{{ plan.get_plan_type_display }}</p>
+                    <p class="text-xs text-gray-500">{{ plan.description|truncatechars:50 }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="px-2 py-1 text-xs rounded-full 
+                        {% if plan.status == 'completed' %}bg-green-100 text-green-800
+                        {% elif plan.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ plan.get_status_display }}
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">{{ plan.plan_date|date:"Y-m-d" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">暂无维保计划</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

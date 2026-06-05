@@ -1,0 +1,4 @@
+{% load maintenance_extras %}
+<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ ticket.status|get_status_color }}">
+    {{ ticket.get_status_display }}
+</span>
