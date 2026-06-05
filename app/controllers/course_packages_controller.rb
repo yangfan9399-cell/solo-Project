@@ -10,6 +10,7 @@ class CoursePackagesController < ApplicationController
     @consumption_records = @course_package.consumption_records.order(performed_at: :desc)
     @review_nodes = @course_package.review_nodes.order(created_at: :desc)
     @responsibility_changes = @course_package.responsibility_changes.order(transferred_at: :desc)
+    @customer_notes = @course_package.customer_notes.order(created_at: :desc)
   end
 
   def consume
@@ -112,6 +113,17 @@ class CoursePackagesController < ApplicationController
       redirect_to @course_package, notice: '已重新发起复核'
     else
       redirect_to @course_package, alert: '重新发起复核失败'
+    end
+  end
+
+  def add_note
+    return render_readonly if @course_package.archived?
+    return render_no_permission unless @current_user.consultant? || @current_user.manager?
+
+    if @course_package.add_customer_note!(params[:content], @current_user, params[:note_type] || 'general')
+      redirect_to @course_package, notice: '客户说明已添加'
+    else
+      redirect_to @course_package, alert: '客户说明添加失败'
     end
   end
 

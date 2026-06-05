@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_05_085627) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_05_092550) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_085627) do
     t.datetime "updated_at", null: false
     t.index ["consultant_id"], name: "index_course_packages_on_consultant_id"
     t.index ["member_id"], name: "index_course_packages_on_member_id"
+  end
+
+  create_table "customer_notes", force: :cascade do |t|
+    t.bigint "author_id", null: false
+    t.text "content"
+    t.bigint "course_package_id", null: false
+    t.datetime "created_at", null: false
+    t.string "note_type", default: "general"
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_customer_notes_on_author_id"
+    t.index ["course_package_id"], name: "index_customer_notes_on_course_package_id"
   end
 
   create_table "members", force: :cascade do |t|
@@ -97,6 +108,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_085627) do
   add_foreign_key "consumption_records", "users", column: "performed_by_id"
   add_foreign_key "course_packages", "members"
   add_foreign_key "course_packages", "users", column: "consultant_id"
+  add_foreign_key "customer_notes", "course_packages"
+  add_foreign_key "customer_notes", "users", column: "author_id"
   add_foreign_key "responsibility_changes", "course_packages"
   add_foreign_key "responsibility_changes", "users", column: "from_consultant_id"
   add_foreign_key "responsibility_changes", "users", column: "to_consultant_id"

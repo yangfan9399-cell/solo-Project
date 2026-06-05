@@ -42,4 +42,14 @@ module ApplicationHelper
     else status
     end
   end
+
+  def note_type_text(note_type)
+    case note_type
+    when 'general' then '普通说明'
+    when 'refund_request' then '退款申请说明'
+    when 'refund_reject' then '退款退回说明'
+    when 'follow_up' then '跟进记录'
+    else note_type
+    end
+  end
 end

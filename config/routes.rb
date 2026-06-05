@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       post :reject
       post :archive
       post :reopen
+      post :add_note
     end
   end
 

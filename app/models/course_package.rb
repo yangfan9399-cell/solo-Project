@@ -4,6 +4,7 @@ class CoursePackage < ApplicationRecord
   has_many :consumption_records, dependent: :destroy
   has_many :review_nodes, dependent: :destroy
   has_many :responsibility_changes, dependent: :destroy
+  has_many :customer_notes, dependent: :destroy
 
   STATUSES = %w[active refund_pending refund_approved refund_rejected archived].freeze
 
@@ -97,6 +98,43 @@ class CoursePackage < ApplicationRecord
 
   def current_review_node
     review_nodes.order(created_at: :desc).first
+  end
+
+  def current_responsible_person
+    case status
+    when 'active', 'refund_rejected'
+      { person: consultant, role: 'consultant', label: '责任顾问' }
+    when 'refund_pending', 'refund_approved'
+      reviewer = current_review_node&.reviewer
+      { person: reviewer, role: 'manager', label: '复核店长' }
+    when 'archived'
+      { person: nil, role: 'archived', label: '已归档' }
+    else
+      { person: consultant, role: 'consultant', label: '责任顾问' }
+    end
+  end
+
+  def pending_handler
+    case status
+    when 'refund_pending'
+      { type: 'refund_review', label: '待店长复核退款', handler: current_review_node&.reviewer }
+    when 'active', 'refund_rejected'
+      { type: 'service', label: '顾问跟进中', handler: consultant }
+    when 'refund_approved'
+      { type: 'refund_approved', label: '退款已批准，待执行', handler: current_review_node&.reviewer }
+    when 'archived'
+      { type: 'archived', label: '已归档', handler: nil }
+    else
+      { type: 'unknown', label: '未知状态', handler: nil }
+    end
+  end
+
+  def add_customer_note!(content, author, note_type = 'general')
+    customer_notes.create!(
+      content:,
+      author:,
+      note_type:
+    )
   end
 
   private

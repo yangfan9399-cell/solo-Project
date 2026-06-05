@@ -64,6 +64,10 @@ end
 
 used1_used = package1.consumption_records.sum(:sessions_used)
 package1.update!(remaining_sessions: 48 - used1_used)
+
+package1.add_customer_note!('客户反馈皮肤干燥，建议下次护理增加保湿精华导入', consultant1, 'follow_up')
+package1.add_customer_note!('客户预约下周三下午2点来做护理', consultant1, 'general')
+
 puts "✓ 样本1: 正常消耗 - 面部护理年卡 (48次，已消耗#{used1_used}次，剩余#{package1.remaining_sessions}次"
 
 package2 = CoursePackage.create!(
@@ -111,6 +115,9 @@ package2.update!(remaining_sessions: 20 - used2_used)
 puts "✓ 样本2: 项目换购 - 身体SPA套餐 (20次，已消耗#{used2_used}次，剩余#{package2.remaining_sessions}次，含2次换购记录"
 
 package2.transfer_consultant!(consultant1, manager, '王顾问离职，转交李顾问跟进')
+
+package2.add_customer_note!('客户对换购的面部刮痧效果满意，计划继续换购', consultant2, 'follow_up')
+
 puts "✓ 样本3: 顾问转交 - 从王顾问转交给李顾问"
 
 package3 = CoursePackage.create!(
@@ -147,6 +154,10 @@ review_node = package3.review_nodes.create!(
 )
 
 package3.update!(status: 'refund_pending')
+
+package3.add_customer_note!('客户电话咨询退款流程，已告知需要店长审核，预计3-5个工作日', consultant1, 'follow_up')
+package3.add_customer_note!('客户情绪比较焦急，已安抚并承诺优先处理', consultant1, 'general')
+
 puts "✓ 样本4: 退款待复核 - 至尊VIP综合卡 (已消耗#{used3_used}次，剩余#{package3.remaining_sessions}次，申请退款中)"
 
 package4 = CoursePackage.create!(
