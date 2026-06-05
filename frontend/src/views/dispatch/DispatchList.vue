@@ -260,7 +260,8 @@ import {
   ArrowDown,
 } from '@element-plus/icons-vue';
 import { dispatchApi, userApi } from '@/api';
-import type { DispatchOrder, DispatchStatus, DispatchSampleType } from '@/types';
+import type { DispatchOrder, DispatchStatus } from '@/types';
+import { DispatchSampleType } from '@/types';
 import { dispatchStatusMap, sampleTypeMap } from '@/utils/constants';
 import dayjs from 'dayjs';
 
@@ -401,17 +402,21 @@ function goToDetail(id: string) {
 
 async function createOrder() {
   try {
+    const isStationError = createForm.value.sampleType === DispatchSampleType.STATION_ERROR;
+    const stationCode = createForm.value.stationCode;
+    const reportedCode = stationCode || 'ST999';
+
     const data: any = {
-      stationCode: createForm.value.stationCode,
+      stationCode: stationCode,
+      reportedStationCode: isStationError ? reportedCode : stationCode,
       requiredQuantity: createForm.value.requiredQuantity,
       remark: createForm.value.remark,
     };
+
     if (createForm.value.sampleType) {
       data.sampleType = createForm.value.sampleType;
-      if (createForm.value.sampleType === DispatchSampleType.STATION_ERROR) {
-        data.reportedStationCode = createForm.value.stationCode || 'ST999';
-      }
     }
+
     await dispatchApi.create(data);
     ElMessage.success('创建调度工单创建成功');
     showCreateDialog.value = false;
