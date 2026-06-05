@@ -89,13 +89,20 @@ const canArchive = computed(() => {
   return application.value?.status === 'FIRE_PASSED' && !isArchived.value
 })
 
-const canRectify = computed(() => {
-  if (!application.value || isArchived.value) return false
-  const pendingNode = application.value.inspectionNodes.find(
+const pendingRectificationNode = computed(() => {
+  if (!application.value || isArchived.value) return null
+  return application.value.inspectionNodes.find(
+    node => !node.result && 
+            node.nodeType.includes('整改') &&
+            node.rectificationRequirements
+  ) || application.value.inspectionNodes.find(
     node => node.result === 'NEEDS_RECTIFICATION' && 
             node.rectifications.some(r => r.status === 'pending')
   )
-  return !!pendingNode
+})
+
+const canRectify = computed(() => {
+  return !!pendingRectificationNode.value
 })
 
 const openAction = (action: string) => {
@@ -109,7 +116,7 @@ const getActionUsers = () => {
   if (currentAction.value === 'engineer') return engineers.value
   if (currentAction.value === 'fire') return fireInspectors.value
   if (currentAction.value === 'archive') return fireInspectors.value
-  if (currentAction.value === 'rectify') return engineers.value
+  if (currentAction.value === 'rectify') return fireInspectors.value
   return []
 }
 
@@ -156,7 +163,10 @@ const submitAction = async () => {
   
   try {
     if (currentAction.value === 'investment') {
-      await applicationApi.investmentReview(application.value.id, actionForm.value)
+      await applicationApi.investmentReview(application.value.id, {
+        investmentManagerId: actionForm.value.handlerId,
+        drawings: actionForm.value.drawings
+      })
     } else if (currentAction.value === 'engineer') {
       await applicationApi.engineerInspection(application.value.id, actionForm.value)
     } else if (currentAction.value === 'fire') {
@@ -164,13 +174,10 @@ const submitAction = async () => {
     } else if (currentAction.value === 'archive') {
       await applicationApi.archive(application.value.id, actionForm.value)
     } else if (currentAction.value === 'rectify') {
-      const rectNode = application.value.inspectionNodes.find(
-        node => node.result === 'NEEDS_RECTIFICATION'
-      )
-      if (rectNode) {
+      if (pendingRectificationNode.value) {
         await applicationApi.rectificationComplete(application.value.id, {
           handlerId: actionForm.value.handlerId,
-          nodeId: rectNode.id
+          nodeId: pendingRectificationNode.value.id
         })
       }
     }
@@ -488,11 +495,12 @@ onMounted(() => {
           }}
         </div>
         <div class="modal-body">
-          <div class="form-group" v-if="currentAction !== 'rectify'">
+          <div class="form-group">
             <label class="form-label">
               {{ 
                 currentAction === 'investment' ? '招商主管' :
                 currentAction === 'engineer' ? '工程人员' :
+                currentAction === 'rectify' ? '消防复核人' :
                 '消防复核人'
               }}
             </label>

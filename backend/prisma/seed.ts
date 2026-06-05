@@ -222,12 +222,23 @@ async function main() {
       merchantId: merchants[1].id,
       shopUnitId: shopUnits[1].id,
       projectName: '优衣库2F-005店铺装修工程',
-      status: ApplicationStatus.SUBMITTED,
+      status: ApplicationStatus.INVESTMENT_REVIEWED,
       constructionStart: new Date('2024-03-01'),
       constructionEnd: new Date('2024-04-15'),
       estimatedCost: 1200000,
       projectScope: '大面积服装店面装修，包含试衣间、收银台、展示区等',
       investmentManagerId: investmentManager.id,
+      drawings: {
+        create: [
+          {
+            name: '平面布置图',
+            type: FileType.FLOOR_PLAN,
+            fileUrl: '/drawings/uniqlo-floor.pdf',
+            uploadedById: investmentManager.id,
+            description: '初步平面布置图'
+          }
+        ]
+      },
       inspectionNodes: {
         create: [
           {
@@ -236,15 +247,11 @@ async function main() {
             result: InspectionResult.PASSED,
             handlerId: investmentManager.id,
             handledAt: new Date('2024-02-25'),
-            remarks: '资料初步审核，待补充完整图纸'
+            remarks: '资料审核通过，进入工程检查环节'
           },
           {
             nodeType: '工程人员现场检查',
-            nodeOrder: 2,
-            result: InspectionResult.DRAWINGS_MISSING,
-            handlerId: engineer.id,
-            handledAt: new Date('2024-03-05'),
-            remarks: '缺少电气线路图和消防喷淋布置图，请补充后重新提交'
+            nodeOrder: 2
           },
           {
             nodeType: '消防复核',
@@ -265,7 +272,7 @@ async function main() {
     }
   })
 
-  console.log('图纸缺失样本创建完成')
+  console.log('图纸缺失样本创建完成 - 待工程检查')
 
   const timeConflictApp = await prisma.application.create({
     data: {

@@ -237,7 +237,9 @@ export default async function applicationRoutes(server: FastifyInstance) {
       return server.httpErrors.conflict('检测到施工时间冲突，请重新安排施工时段')
     }
 
-    const secondNode = application.inspectionNodes[1]
+    const secondNode = application.inspectionNodes.find(
+      node => node.nodeType === '工程人员现场检查' && !node.result
+    ) || application.inspectionNodes[1]
 
     return await prisma.$transaction(async (tx) => {
       await tx.inspectionNode.update({
@@ -250,30 +252,30 @@ export default async function applicationRoutes(server: FastifyInstance) {
         }
       })
 
-      const newStatus = data.result === 'PASSED' 
-        ? ApplicationStatus.ENGINEER_INSPECTED
-        : data.result === 'DRAWINGS_MISSING'
-        ? ApplicationStatus.SUBMITTED
-        : ApplicationStatus.ENGINEER_INSPECTED
+      let newStatus = ApplicationStatus.ENGINEER_INSPECTED
 
-      if (data.result === 'NEEDS_RECTIFICATION') {
+      if (data.result === 'PASSED') {
+        newStatus = ApplicationStatus.ENGINEER_INSPECTED
+      } else if (data.result === 'DRAWINGS_MISSING') {
+        newStatus = ApplicationStatus.INVESTMENT_REVIEWED
+        await tx.inspectionNode.create({
+          data: {
+            applicationId: id,
+            nodeType: '工程人员现场检查',
+            nodeOrder: application!.inspectionNodes.length,
+            remarks: '补充图纸后重新检查'
+          }
+        })
+      } else if (data.result === 'NEEDS_RECTIFICATION') {
+        newStatus = ApplicationStatus.ENGINEER_INSPECTED
         await tx.rectification.create({
           data: {
             inspectionNodeId: secondNode.id,
             description: data.remarks || '需进行现场整改'
           }
         })
-      }
-
-      if (data.result === 'DRAWINGS_MISSING') {
-        await tx.inspectionNode.update({
-          where: { id: secondNode.id },
-          data: {
-            result: null,
-            handlerId: null,
-            handledAt: null
-          }
-        })
+      } else if (data.result === 'REJECTED') {
+        newStatus = ApplicationStatus.SUBMITTED
       }
 
       return await tx.application.update({
@@ -282,7 +284,9 @@ export default async function applicationRoutes(server: FastifyInstance) {
         include: {
           merchant: true,
           shopUnit: true,
-          inspectionNodes: true
+          inspectionNodes: {
+            orderBy: { nodeOrder: 'asc' }
+          }
         }
       })
     })
@@ -305,7 +309,9 @@ export default async function applicationRoutes(server: FastifyInstance) {
       return server.httpErrors.badRequest('当前状态不可进行消防复核')
     }
 
-    const thirdNode = application.inspectionNodes[2]
+    const thirdNode = application.inspectionNodes.find(
+      node => node.nodeType === '消防复核' && !node.result
+    ) || application.inspectionNodes[2]
 
     return await prisma.$transaction(async (tx) => {
       await tx.inspectionNode.update({
@@ -361,11 +367,31 @@ export default async function applicationRoutes(server: FastifyInstance) {
     const { id } = request.params as { id: string }
     const data = z.object({ handlerId: z.string(), nodeId: z.string() }).parse(request.body)
 
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: { inspectionNodes: true }
+    })
+
+    if (!application) {
+      return server.httpErrors.notFound('申请不存在')
+    }
+
+    const rectNode = application.inspectionNodes.find(n => n.id === data.nodeId)
+    if (!rectNode) {
+      return server.httpErrors.notFound('验收节点不存在')
+    }
+
+    const originalFireNode = application.inspectionNodes.find(
+      n => n.result === 'NEEDS_RECTIFICATION' && n.nodeType === '消防复核'
+    )
+
     return await prisma.$transaction(async (tx) => {
-      await tx.rectification.updateMany({
-        where: { inspectionNodeId: data.nodeId },
-        data: { status: 'completed', completedAt: new Date() }
-      })
+      if (originalFireNode) {
+        await tx.rectification.updateMany({
+          where: { inspectionNodeId: originalFireNode.id },
+          data: { status: 'completed', completedAt: new Date() }
+        })
+      }
 
       await tx.inspectionNode.update({
         where: { id: data.nodeId },
@@ -373,13 +399,24 @@ export default async function applicationRoutes(server: FastifyInstance) {
           result: InspectionResult.PASSED,
           handlerId: data.handlerId,
           handledAt: new Date(),
-          remarks: '整改完成，待复核'
+          remarks: '整改完成，消防复核通过'
         }
+      })
+
+      await tx.application.update({
+        where: { id },
+        data: { status: ApplicationStatus.FIRE_PASSED }
       })
 
       return await tx.application.findUnique({
         where: { id },
-        include: { inspectionNodes: true }
+        include: {
+          merchant: true,
+          shopUnit: true,
+          inspectionNodes: {
+            include: { rectifications: true }
+          }
+        }
       })
     })
   })
