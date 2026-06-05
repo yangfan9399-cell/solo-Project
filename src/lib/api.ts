@@ -1,41 +1,29 @@
 import { Order } from './mockData';
 
 export async function fetchOrders(): Promise<Order[]> {
-  try {
-    const res = await fetch('/api/orders', { 
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch orders: ${res.status}`);
-    }
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.warn('[API] fetchOrders failed, using mock data:', (error as Error).message);
-    const { mockOrders } = await import('./mockData');
-    return [...mockOrders];
+  const res = await fetch('/api/orders', {
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `获取订单列表失败 (${res.status})`);
   }
+  return res.json();
 }
 
 export async function fetchOrder(id: string): Promise<Order | null> {
-  try {
-    const res = await fetch(`/api/orders/${id}`, {
-      cache: 'no-store',
-      next: { revalidate: 0 }
-    });
-    if (!res.ok) {
-      if (res.status === 404) return null;
-      throw new Error('Failed to fetch order');
-    }
-    return res.json();
-  } catch (error) {
-    console.warn('API unavailable, using mock data:', error);
-    const { getOrderById } = await import('./mockData');
-    return getOrderById(id) || null;
+  const res = await fetch(`/api/orders/${id}`, {
+    cache: 'no-store',
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `获取订单详情失败 (${res.status})`);
   }
+  return res.json();
 }
 
-export async function approveOrder(orderId: string, reviewerName = '李明') {
+export async function approveOrder(orderId: string, reviewerName = '李明'): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,12 +31,12 @@ export async function approveOrder(orderId: string, reviewerName = '李明') {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to approve order');
+    throw new Error(data.error || '放行订单失败');
   }
   return res.json();
 }
 
-export async function rejectOrder(orderId: string, reviewerName = '李明', reason: string) {
+export async function rejectOrder(orderId: string, reviewerName = '李明', reason: string): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -56,12 +44,12 @@ export async function rejectOrder(orderId: string, reviewerName = '李明', reas
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to reject order');
+    throw new Error(data.error || '退回订单失败');
   }
   return res.json();
 }
 
-export async function archiveOrder(orderId: string, operatorName = '系统') {
+export async function archiveOrder(orderId: string, operatorName = '系统'): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/archive`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -69,12 +57,12 @@ export async function archiveOrder(orderId: string, operatorName = '系统') {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to archive order');
+    throw new Error(data.error || '归档订单失败');
   }
   return res.json();
 }
 
-export async function supplementDocuments(orderId: string, handlerName = '张伟', notes: string) {
+export async function supplementDocuments(orderId: string, handlerName = '张伟', notes: string): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/supplement`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -82,17 +70,17 @@ export async function supplementDocuments(orderId: string, handlerName = '张伟
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to supplement documents');
+    throw new Error(data.error || '补充资料失败');
   }
   return res.json();
 }
 
 export async function resolveClassification(
-  orderId: string, 
-  handlerName = '张伟', 
-  finalHsCode: string, 
+  orderId: string,
+  handlerName = '张伟',
+  finalHsCode: string,
   notes: string
-) {
+): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/classification`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -100,7 +88,7 @@ export async function resolveClassification(
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to resolve classification');
+    throw new Error(data.error || '确认归类失败');
   }
   return res.json();
 }
@@ -110,7 +98,7 @@ export async function resolveAmountDiscrepancy(
   handlerName = '张伟',
   correctedAmount: number,
   notes: string
-) {
+): Promise<Order> {
   const res = await fetch(`/api/orders/${orderId}/amount`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -118,7 +106,7 @@ export async function resolveAmountDiscrepancy(
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to resolve amount discrepancy');
+    throw new Error(data.error || '更正金额失败');
   }
   return res.json();
 }

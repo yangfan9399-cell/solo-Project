@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { OrderStatus, Role } from '@prisma/client';
+import { getFormattedOrder } from '@/lib/formatOrder';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { reviewerName = '李明' } = await request.json();
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         amountDiscrepancy: true,
       },
@@ -39,7 +41,7 @@ export async function POST(
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: OrderStatus.APPROVED,
           customsReviewerId: reviewer?.id,
@@ -48,7 +50,7 @@ export async function POST(
 
       await tx.historyNode.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           action: '放行通过',
           status: 'APPROVED',
           notes: '单证齐全，准予放行',
@@ -70,7 +72,8 @@ export async function POST(
       return updated;
     });
 
-    return NextResponse.json({ success: true, order: updatedOrder });
+    const formattedOrder = await getFormattedOrder(prisma, id);
+    return NextResponse.json(formattedOrder);
   } catch (error) {
     console.error('Error approving order:', error);
     return NextResponse.json(

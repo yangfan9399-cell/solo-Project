@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { OrderStatus, Role } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { getFormattedOrder } from '@/lib/formatOrder';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { handlerName = '张伟', correctedAmount, notes } = await request.json();
 
@@ -18,7 +20,7 @@ export async function POST(
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         amountDiscrepancy: true,
         documents: true,
@@ -41,7 +43,7 @@ export async function POST(
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: OrderStatus.UNDER_REVIEW,
           declaredAmount: new Prisma.Decimal(correctedAmount),
@@ -54,7 +56,7 @@ export async function POST(
 
       await tx.document.updateMany({
         where: {
-          orderId: params.id,
+          orderId: id,
           status: 'MISMATCH',
         },
         data: {
@@ -76,7 +78,7 @@ export async function POST(
       const historyNotes = `更正后金额: ¥${correctedAmount.toFixed(2)}${notes ? ', ' + notes : ''}`;
       await tx.historyNode.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           action: '金额更正完成',
           status: 'UNDER_REVIEW',
           notes: historyNotes,
@@ -88,7 +90,8 @@ export async function POST(
       return updated;
     });
 
-    return NextResponse.json({ success: true, order: updatedOrder });
+    const formattedOrder = await getFormattedOrder(prisma, id);
+    return NextResponse.json(formattedOrder);
   } catch (error) {
     console.error('Error resolving amount discrepancy:', error);
     return NextResponse.json(

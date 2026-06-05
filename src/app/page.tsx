@@ -10,13 +10,13 @@ import {
 import { useOrderStore } from '@/lib/orderStore';
 
 export default function Home() {
-  const { orders, loading, fetchOrders, useMockFallback } = useOrderStore();
+  const { orders, loading, error, fetchOrders, clearError } = useOrderStore();
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -50,17 +50,55 @@ export default function Home() {
     { value: 'ARCHIVED', label: '已归档' },
   ];
 
+  const handleRetry = () => {
+    clearError();
+    fetchOrders();
+  };
+
+  if (loading && orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
+  if (error && orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="text-4xl">⚠️</div>
+        <div className="text-lg font-medium text-gray-800">加载失败</div>
+        <div className="text-sm text-gray-500 max-w-md text-center">{error}</div>
+        <button
+          onClick={handleRetry}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          重新加载
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-800">清关处理台</h1>
-          {useMockFallback && (
-            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-              ⚠️ 演示模式 (内存数据)
-            </span>
-          )}
+      {error && orders.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span className="text-sm">{error}</span>
+          </div>
+          <button
+            onClick={handleRetry}
+            className="text-sm text-red-700 underline hover:no-underline"
+          >
+            重试
+          </button>
         </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">清关处理台</h1>
         <div className="text-sm text-gray-500">
           共 {orders.length} 票订单
         </div>
@@ -140,7 +178,16 @@ export default function Home() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredOrders.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                      <span>刷新中...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
                     暂无符合条件的订单

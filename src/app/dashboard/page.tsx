@@ -6,12 +6,17 @@ import { getStatusLabel, OrderStatus } from '@/lib/mockData';
 import { useOrderStore } from '@/lib/orderStore';
 
 export default function DashboardPage() {
-  const { orders, loading, fetchOrders, useMockFallback } = useOrderStore();
+  const { orders, loading, error, fetchOrders, clearError } = useOrderStore();
   const [timeRange, setTimeRange] = useState('all');
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const handleRetry = () => {
+    clearError();
+    fetchOrders();
+  };
 
   const stats = useMemo(() => {
     const total = orders.length;
@@ -104,16 +109,51 @@ export default function DashboardPage() {
     });
   }, [orders]);
 
+  if (loading && orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
+  if (error && orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="text-4xl">⚠️</div>
+        <div className="text-lg font-medium text-gray-800">加载失败</div>
+        <div className="text-sm text-gray-500 max-w-md text-center">{error}</div>
+        <button
+          onClick={handleRetry}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          重新加载
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {error && orders.length > 0 && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span className="text-sm">{error}</span>
+          </div>
+          <button
+            onClick={handleRetry}
+            className="text-sm text-red-700 underline hover:no-underline"
+          >
+            重试
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-gray-800">📊 复盘统计</h1>
-          {useMockFallback && (
-            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-              ⚠️ 演示模式 (内存数据)
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-4">
           <select

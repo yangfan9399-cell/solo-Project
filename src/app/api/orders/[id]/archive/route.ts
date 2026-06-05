@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
+import { getFormattedOrder } from '@/lib/formatOrder';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { operatorName = '系统' } = await request.json();
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!order) {
@@ -29,7 +31,7 @@ export async function POST(
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: OrderStatus.ARCHIVED,
         },
@@ -37,7 +39,7 @@ export async function POST(
 
       await tx.historyNode.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           action: '归档',
           status: 'ARCHIVED',
           operator: operatorName,
@@ -48,7 +50,8 @@ export async function POST(
       return updated;
     });
 
-    return NextResponse.json({ success: true, order: updatedOrder });
+    const formattedOrder = await getFormattedOrder(prisma, id);
+    return NextResponse.json(formattedOrder);
   } catch (error) {
     console.error('Error archiving order:', error);
     return NextResponse.json(

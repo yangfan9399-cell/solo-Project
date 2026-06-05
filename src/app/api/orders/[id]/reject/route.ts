@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { OrderStatus, Role } from '@prisma/client';
+import { getFormattedOrder } from '@/lib/formatOrder';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { reviewerName = '李明', reason } = await request.json();
 
@@ -17,7 +19,7 @@ export async function POST(
     }
 
     const order = await prisma.order.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!order) {
@@ -36,7 +38,7 @@ export async function POST(
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
           status: OrderStatus.REJECTED,
           customsReviewerId: reviewer?.id,
@@ -45,7 +47,7 @@ export async function POST(
 
       await tx.historyNode.create({
         data: {
-          orderId: params.id,
+          orderId: id,
           action: '退回',
           status: 'REJECTED',
           notes: reason,
@@ -57,7 +59,8 @@ export async function POST(
       return updated;
     });
 
-    return NextResponse.json({ success: true, order: updatedOrder });
+    const formattedOrder = await getFormattedOrder(prisma, id);
+    return NextResponse.json(formattedOrder);
   } catch (error) {
     console.error('Error rejecting order:', error);
     return NextResponse.json(

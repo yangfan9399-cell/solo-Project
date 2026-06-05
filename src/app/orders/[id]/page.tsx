@@ -17,7 +17,7 @@ type ModalType = 'approve' | 'reject' | 'archive' | 'supplement' | 'classificati
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { orders, loading, fetchOrder, approveOrder, rejectOrder, archiveOrder, supplementDocuments, resolveClassification, resolveAmountDiscrepancy, useMockFallback } = useOrderStore();
+  const { orders, loading, error, fetchOrder, clearError, approveOrder, rejectOrder, archiveOrder, supplementDocuments, resolveClassification, resolveAmountDiscrepancy } = useOrderStore();
   const order = orders.find(o => o.id === params.id);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -47,8 +47,25 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
   if (loading && !order) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
+  if (error && !order) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <div className="text-4xl">⚠️</div>
+        <div className="text-lg font-medium text-gray-800">加载失败</div>
+        <div className="text-sm text-gray-500 max-w-md text-center">{error}</div>
+        <button
+          onClick={() => { clearError(); fetchOrder(params.id); }}
+          className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          重新加载
+        </button>
       </div>
     );
   }
@@ -189,6 +206,21 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         </div>
       )}
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span className="text-sm">{error}</span>
+          </div>
+          <button
+            onClick={() => { clearError(); fetchOrder(params.id); }}
+            className="text-sm text-red-700 underline hover:no-underline"
+          >
+            重试
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 flex-wrap">
           <Link href="/" className="text-gray-500 hover:text-primary">
@@ -198,11 +230,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status as OrderStatus)}`}>
             {getStatusLabel(order.status as OrderStatus)}
           </span>
-          {useMockFallback && (
-            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-              ⚠️ 演示模式
-            </span>
-          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           {canSupplement && (
