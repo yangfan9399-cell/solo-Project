@@ -767,7 +767,7 @@ export async function getPendingFinanceReviews() {
     .from(expiryReports)
     .where(
       and(
-        eq(expiryReports.status, "approved"),
+        sql`(${expiryReports.status} = 'approved' OR ${expiryReports.status} = 'archived')`,
         eq(expiryReports.disposalType, "destruction")
       )
     )
