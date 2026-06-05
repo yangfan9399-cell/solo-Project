@@ -191,7 +191,27 @@
     </div>
 
     <div v-if="inventoryCheck" class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">库存一致性校验</h3>
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">库存复盘</h3>
+      <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+        <div class="grid grid-cols-4 gap-4 text-sm">
+          <div>
+            <span class="text-gray-500">总批次:</span>
+            <span class="font-medium ml-1">{{ inventoryCheck.summary.totalBatches }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">一致批次:</span>
+            <span class="font-medium ml-1 text-green-600">{{ inventoryCheck.summary.consistentBatches }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">当前总库存:</span>
+            <span class="font-medium ml-1">{{ inventoryCheck.summary.totalCurrentStock }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500">累计出库:</span>
+            <span class="font-medium ml-1">{{ inventoryCheck.summary.totalOutbound }}</span>
+          </div>
+        </div>
+      </div>
       <div
         v-for="item in inventoryCheck.details"
         :key="item.batchId"
@@ -200,10 +220,13 @@
         <div>
           <span class="font-medium">{{ item.supplyName }}</span>
           <span class="text-sm text-gray-500 ml-2">({{ item.batchNumber }})</span>
+          <span v-if="item.isExpired" class="text-xs text-red-500 ml-2">已过期</span>
         </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm">批次库存: {{ item.batchQuantity }}</span>
-          <span class="text-sm">已出库: {{ item.outboundQuantity }}</span>
+        <div class="flex items-center space-x-4 text-sm">
+          <span>当前库存: <strong>{{ item.currentStock }}</strong></span>
+          <span>已出库: {{ item.totalOutbound }}</span>
+          <span>已退回: {{ item.totalReturned }}</span>
+          <span>净出库: {{ item.netOutbound }}</span>
           <span :class="item.isConsistent ? 'text-green-600' : 'text-red-600'">
             {{ item.isConsistent ? '✓ 一致' : '✗ 不一致' }}
           </span>

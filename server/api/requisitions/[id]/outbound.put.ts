@@ -1,5 +1,5 @@
 import prisma from '~/server/utils/prisma'
-import { RequisitionStatus } from '@prisma/client'
+import { RequisitionStatus, Role } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -10,12 +10,36 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '缺少必填字段' })
   }
 
+  const admin = await prisma.user.findUnique({
+    where: { id: warehouseAdminId }
+  })
+
+  if (!admin || admin.role !== Role.WAREHOUSE_ADMIN) {
+    throw createError({ statusCode: 403, message: '仅库房管理员可执行出库操作' })
+  }
+
+  const requisition = await prisma.requisition.findUnique({
+    where: { id }
+  })
+
+  if (!requisition) {
+    throw createError({ statusCode: 404, message: '领用记录不存在' })
+  }
+
+  if (requisition.status !== RequisitionStatus.PENDING) {
+    throw createError({ statusCode: 400, message: '仅待处理状态可执行出库操作' })
+  }
+
   const batch = await prisma.supplyBatch.findUnique({
     where: { id: supplyBatchId }
   })
 
   if (!batch) {
     throw createError({ statusCode: 404, message: '批次不存在' })
+  }
+
+  if (batch.supplyId !== requisition.supplyId) {
+    throw createError({ statusCode: 400, message: '批次与耗材不匹配' })
   }
 
   const now = new Date()
@@ -33,7 +57,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const requisition = await prisma.requisition.update({
+  const updatedRequisition = await prisma.requisition.update({
     where: { id },
     data: {
       status: RequisitionStatus.OUTBOUND,
@@ -69,5 +93,5 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return requisition
+  return updatedRequisition
 })

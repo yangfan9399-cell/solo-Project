@@ -66,20 +66,33 @@ const filteredUsers = computed(() => {
   return (users.value as any[]).filter(u => u.role === selectedRole.value)
 })
 
+watch(selectedRole, (role) => {
+  const filtered = filteredUsers.value
+  if (role && filtered.length > 0) {
+    const firstUser = filtered[0]
+    selectedUserId.value = firstUser.id
+    currentUser.value = firstUser
+    currentRole.value = firstUser.role
+  } else if (!role) {
+    selectedUserId.value = ''
+    currentUser.value = null
+    currentRole.value = ''
+  }
+}, { immediate: true })
+
 watch(selectedUserId, (userId) => {
   if (userId && users.value) {
     const user = (users.value as any[]).find(u => u.id === userId)
-    currentUser.value = user
-    currentRole.value = user?.role || ''
+    if (user) {
+      currentUser.value = user
+      currentRole.value = user.role
+      if (selectedRole.value !== user.role) {
+        selectedRole.value = user.role
+      }
+    }
   } else {
     currentUser.value = null
     currentRole.value = ''
   }
 })
-
-watch(filteredUsers, (users) => {
-  if (users.length > 0 && !selectedUserId.value) {
-    selectedUserId.value = users[0].id
-  }
-}, { immediate: true })
 </script>

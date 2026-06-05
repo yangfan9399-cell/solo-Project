@@ -43,9 +43,12 @@
               {{ req.actualQuantity || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
-              <span :class="getStockClass(req)">
-                {{ req.supplyBatch?.quantity || '-' }}
-              </span>
+              <div class="flex flex-col">
+                <span :class="getStockClass(req)">
+                  {{ req.supplyBatch?.quantity || '-' }}
+                </span>
+                <span v-if="isBatchExpired(req.supplyBatch?.expiredAt)" class="text-xs text-red-500">已过期</span>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span :class="getStatusClass(req.status)">
