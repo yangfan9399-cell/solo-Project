@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  INSPECTOR
+  PROPERTY_MANAGER
+  FIRE_VERIFIER
+}
+
+enum HazardStatus {
+  REPORTED
+  ASSIGNED
+  IN_PROGRESS
+  SUBMITTED
+  PASSED
+  REJECTED
+  ARCHIVED
+}
+
+enum HazardLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PhotoType {
+  BEFORE
+  AFTER
+  INSPECTION
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      UserRole
+  department String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reportedHazards   Hazard[]       @relation("Reporter")
+  assignedHazards   Hazard[]       @relation("Assignee")
+  statusTransitions StatusTransition[]
+  createdPhotos     Photo[]
+
+  @@map("users")
+}
+
+model Hazard {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  location    String
+  level       HazardLevel
+  source      String
+  status      HazardStatus  @default(REPORTED)
+
+  reporterId  String
+  reporter    User         @relation("Reporter", fields: [reporterId], references: [id])
+
+  assigneeId  String?
+  assignee    User?        @relation("Assignee", fields: [assigneeId], references: [id])
+
+  photos      Photo[]
+  rectification Rectification?
+  statusTransitions StatusTransition[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("hazards")
+}
+
+model Photo {
+  id        String    @id @default(cuid())
+  hazardId  String
+  hazard    Hazard    @relation(fields: [hazardId], references: [id], onDelete: Cascade)
+  type      PhotoType
+  url       String
+  uploadedById String
+  uploadedBy User      @relation(fields: [uploadedById], references: [id])
+  description String?
+  createdAt DateTime  @default(now())
+
+  @@map("photos")
+}
+
+model Rectification {
+  id          String   @id @default(cuid())
+  hazardId    String   @unique
+  hazard      Hazard   @relation(fields: [hazardId], references: [id], onDelete: Cascade)
+  measure     String
+  materials   String
+  deadline    DateTime
+  submittedAt DateTime?
+  verifiedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("rectifications")
+}
+
+model StatusTransition {
+  id        String       @id @default(cuid())
+  hazardId  String
+  hazard    Hazard       @relation(fields: [hazardId], references: [id], onDelete: Cascade)
+  fromStatus HazardStatus?
+  toStatus   HazardStatus
+  remark    String?
+  createdById String
+  createdBy  User         @relation(fields: [createdById], references: [id])
+  createdAt  DateTime     @default(now())
+
+  @@map("status_transitions")
+}
