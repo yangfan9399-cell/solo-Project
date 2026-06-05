@@ -34,6 +34,10 @@
 	let feedbackNotes = '';
 	let feedbackRating = 5;
 	let feedbackComment = '';
+	let feedbackBadReviewReason = 'QUALITY';
+	let feedbackPhotos: string[] = [];
+	let feedbackPhotoUrl = '';
+	let feedbackError = '';
 	
 	let qualityResult = '';
 	let qualityNotes = '';
@@ -176,29 +180,68 @@
 		}
 	}
 	
+	function addPhoto() {
+		if (feedbackPhotoUrl && feedbackPhotoUrl.trim()) {
+			feedbackPhotos.push(feedbackPhotoUrl.trim());
+			feedbackPhotoUrl = '';
+		}
+	}
+	
+	function removePhoto(index: number) {
+		feedbackPhotos.splice(index, 1);
+	}
+	
+	function resetFeedbackForm() {
+		feedbackStartTime = '';
+		feedbackEndTime = '';
+		feedbackNotes = '';
+		feedbackRating = 5;
+		feedbackComment = '';
+		feedbackBadReviewReason = 'QUALITY';
+		feedbackPhotos = [];
+		feedbackPhotoUrl = '';
+		feedbackError = '';
+	}
+	
 	async function handleFeedback() {
+		feedbackError = '';
+		
+		const currentCleaner = getCurrentCleaner();
+		if (!currentCleaner) {
+			feedbackError = '该订单暂无有效派工';
+			return;
+		}
+		
 		try {
 			const res = await fetch('/api/feedback', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					orderId: order?.id,
+					cleanerId: currentCleaner.id,
 					actualStartTime: feedbackStartTime,
 					actualEndTime: feedbackEndTime,
 					serviceNotes: feedbackNotes,
-					photoEvidence: [],
+					photoEvidence: feedbackPhotos,
 					customerRating: feedbackRating,
 					customerComment: feedbackComment,
-					badReviewReason: feedbackRating < 3 ? 'QUALITY' : 'NOT_APPLICABLE'
+					badReviewReason: feedbackRating < 3 ? feedbackBadReviewReason : 'NOT_APPLICABLE'
 				})
 			});
 			
-			if (res.ok) {
-				showFeedbackModal = false;
-				loadData();
+			const data = await res.json();
+			
+			if (!res.ok) {
+				feedbackError = data.error || '提交服务反馈失败';
+				return;
 			}
+			
+			showFeedbackModal = false;
+			resetFeedbackForm();
+			loadData();
 		} catch (e) {
 			console.error('提交反馈失败:', e);
+			feedbackError = '网络错误，请稍后重试';
 		}
 	}
 	
@@ -602,43 +645,121 @@
 	{/if}
 	
 	{#if showFeedbackModal}
-		<div class="modal-overlay" on:click={() => showFeedbackModal = false}>
-			<div class="modal" on:click|stopPropagation>
+		<div class="modal-overlay" on:click={() => { showFeedbackModal = false; resetFeedbackForm(); }}>
+			<div class="modal modal-lg" on:click|stopPropagation>
 				<div class="modal-header">
 					<h3>提交服务反馈</h3>
-					<button class="close" on:click={() => showFeedbackModal = false}>×</button>
+					<button class="close" on:click={() => { showFeedbackModal = false; resetFeedbackForm(); }}>×</button>
 				</div>
 				<div class="modal-body">
+					{#if feedbackError}
+						<div class="alert alert-danger">
+							{feedbackError}
+						</div>
+					{/if}
+					
+					<div class="form-group">
+						<label>服务保洁员</label>
+						<div class="cleaner-card">
+							<div class="avatar">{getCurrentCleaner()?.name?.charAt(0)}</div>
+							<div class="cleaner-info-lg">
+								<div class="cleaner-name-lg">{getCurrentCleaner()?.name}</div>
+								<div class="cleaner-region">{getCurrentCleaner()?.region}</div>
+							</div>
+							<span class="badge active">当前派工</span>
+						</div>
+					</div>
+					
 					<div class="form-row">
 						<div class="form-group">
-							<label>实际开始时间</label>
+							<label>实际开始时间 <span class="required">*</span></label>
 							<input type="datetime-local" bind:value={feedbackStartTime} />
 						</div>
 						<div class="form-group">
-							<label>实际结束时间</label>
+							<label>实际结束时间 <span class="required">*</span></label>
 							<input type="datetime-local" bind:value={feedbackEndTime} />
 						</div>
 					</div>
+					
 					<div class="form-group">
-						<label>服务说明</label>
-						<textarea bind:value={feedbackNotes} rows={4} placeholder="请描述服务内容..."></textarea>
+						<label>服务说明 <span class="required">*</span></label>
+						<textarea 
+							bind:value={feedbackNotes} 
+							rows={4} 
+							placeholder="请详细描述服务内容、清洁范围、特殊处理等（至少10字）"
+						></textarea>
 					</div>
+					
 					<div class="form-group">
-						<label>客户评分</label>
+						<label>照片证据</label>
+						<div class="photo-upload-area">
+							<div class="photo-list">
+								{#each feedbackPhotos as photo, index}
+									<div class="photo-item">
+										<div class="photo-preview">📷</div>
+										<button class="photo-remove" on:click={() => removePhoto(index)}>×</button>
+									</div>
+								{/each}
+							</div>
+							<div class="photo-add">
+								<input 
+									type="text" 
+									bind:value={feedbackPhotoUrl} 
+									placeholder="输入照片URL或文件名"
+									on:keydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPhoto(); } }}
+								/>
+								<button type="button" class="btn btn-small" on:click={addPhoto}>添加</button>
+							</div>
+							<div class="photo-hint">已添加 {feedbackPhotos.length} 张照片</div>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label>客户评分 <span class="required">*</span></label>
 						<div class="rating-input">
 							{#each { length: 5 } as _, i}
 								<span class="star-input" class:active={i < feedbackRating} on:click={() => feedbackRating = i + 1}>★</span>
 							{/each}
+							<span class="rating-text">{feedbackRating} 分</span>
 						</div>
 					</div>
+					
 					<div class="form-group">
 						<label>客户评价</label>
-						<textarea bind:value={feedbackComment} rows={3} placeholder="客户反馈内容..."></textarea>
+						<textarea bind:value={feedbackComment} rows={3} placeholder="客户反馈内容（选填）"></textarea>
 					</div>
+					
+					{#if feedbackRating < 3}
+						<div class="form-group bad-review-section">
+							<label>差评原因 <span class="required">*</span></label>
+							<div class="bad-review-options">
+								<label class="radio-option">
+									<input type="radio" bind:group={feedbackBadReviewReason} value="ATTITUDE" />
+									<span>服务态度</span>
+								</label>
+								<label class="radio-option">
+									<input type="radio" bind:group={feedbackBadReviewReason} value="QUALITY" />
+									<span>服务质量</span>
+								</label>
+								<label class="radio-option">
+									<input type="radio" bind:group={feedbackBadReviewReason} value="PUNCTUALITY" />
+									<span>准时性</span>
+								</label>
+								<label class="radio-option">
+									<input type="radio" bind:group={feedbackBadReviewReason} value="COMMUNICATION" />
+									<span>沟通问题</span>
+								</label>
+								<label class="radio-option">
+									<input type="radio" bind:group={feedbackBadReviewReason} value="OTHER" />
+									<span>其他</span>
+								</label>
+							</div>
+						</div>
+					{/if}
 				</div>
 				<div class="modal-footer">
-					<button class="btn btn-default" on:click={() => showFeedbackModal = false}>取消</button>
-					<button class="btn btn-primary" on:click={handleFeedback}>提交</button>
+					<button class="btn btn-default" on:click={() => { showFeedbackModal = false; resetFeedbackForm(); }}>取消</button>
+					<button class="btn btn-primary" on:click={handleFeedback}>提交反馈</button>
 				</div>
 			</div>
 		</div>
@@ -1380,5 +1501,163 @@
 	
 	.rework-actions .btn.full-width {
 		width: 100%;
+	}
+	
+	.modal-lg {
+		max-width: 600px;
+	}
+	
+	.cleaner-card {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 16px;
+		background: #f5f7fa;
+		border-radius: 8px;
+		border: 1px solid #e8eaf6;
+	}
+	
+	.cleaner-card .avatar {
+		width: 44px;
+		height: 44px;
+		font-size: 18px;
+	}
+	
+	.cleaner-info-lg {
+		flex: 1;
+	}
+	
+	.cleaner-name-lg {
+		font-weight: 600;
+		color: #333;
+		font-size: 15px;
+	}
+	
+	.cleaner-region {
+		font-size: 12px;
+		color: #999;
+		margin-top: 2px;
+	}
+	
+	.photo-upload-area {
+		border: 1px dashed #ddd;
+		border-radius: 8px;
+		padding: 16px;
+		background: #fafafa;
+	}
+	
+	.photo-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+	
+	.photo-item {
+		position: relative;
+		width: 64px;
+		height: 64px;
+	}
+	
+	.photo-preview {
+		width: 100%;
+		height: 100%;
+		background: #e3f2fd;
+		border-radius: 6px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 24px;
+	}
+	
+	.photo-remove {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		width: 20px;
+		height: 20px;
+		background: #f44336;
+		color: white;
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		font-size: 14px;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.photo-add {
+		display: flex;
+		gap: 8px;
+	}
+	
+	.photo-add input {
+		flex: 1;
+	}
+	
+	.btn-small {
+		padding: 6px 14px;
+		font-size: 13px;
+		background: #667eea;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+	
+	.btn-small:hover {
+		background: #5a67d8;
+	}
+	
+	.photo-hint {
+		font-size: 12px;
+		color: #999;
+		margin-top: 8px;
+	}
+	
+	.rating-input {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	
+	.rating-text {
+		font-size: 14px;
+		color: #666;
+		font-weight: 500;
+	}
+	
+	.bad-review-section {
+		background: #ffebee;
+		padding: 16px;
+		border-radius: 8px;
+	}
+	
+	.bad-review-options {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 8px;
+	}
+	
+	.radio-option {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 8px 12px;
+		background: white;
+		border-radius: 6px;
+		cursor: pointer;
+		font-size: 13px;
+	}
+	
+	.radio-option input {
+		margin: 0;
+	}
+	
+	.radio-option:hover {
+		background: #f5f5f5;
 	}
 </style>
