@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useBookingStore, meetingRooms } from '../services/bookingService';
 import { formatDateTime, formatCurrency, getStatusText, getStatusColor, getConflictTypeText, getConflictTypeColor, getRoleText, formatDate, formatTime } from '../utils/format';
@@ -7,13 +7,15 @@ import { BookingStatus, ConflictType, Role } from '../types';
 function BookingDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const booking = useBookingStore((state) => state.getBookingById(id || ''));
+  const bookings = useBookingStore((state) => state.bookings);
   const updateBooking = useBookingStore((state) => state.updateBooking);
   const confirmCostAllocation = useBookingStore((state) => state.confirmCostAllocation);
   const addFlowRecord = useBookingStore((state) => state.addFlowRecord);
   const resolveConflict = useBookingStore((state) => state.resolveConflict);
   const archiveBooking = useBookingStore((state) => state.archiveBooking);
   const checkConflict = useBookingStore((state) => state.checkConflict);
+
+  const booking = useMemo(() => bookings.find((b) => b.id === id), [bookings, id]);
 
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [resolveOption, setResolveOption] = useState<'room' | 'time'>('room');

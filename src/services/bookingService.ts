@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Booking, BookingStatus, ConflictType, ConflictInfo, Role, CostAllocation, FlowRecord, BookingEquipment } from '../types';
+import { Booking, BookingStatus, ConflictType, ConflictInfo, Role, CostAllocation, FlowRecord } from '../types';
 import { bookings as initialBookings, meetingRooms, departments } from '../data/mockData';
 
 interface BookingStore {
