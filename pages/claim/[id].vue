@@ -243,7 +243,19 @@ function getDocumentStatusClass(status: DocumentStatus) {
         <rect x="1" y="3" width="22" height="5"></rect>
         <line x1="10" y1="12" x2="14" y2="12"></line>
       </svg>
-      <span>该卷宗已归档，当前为只读模式。{{ claim.previousConclusion ? `原结论：${statusLabels[claim.previousConclusion as keyof typeof statusLabels] || claim.previousConclusion}` : '' }}</span>
+      <div class="archive-banner-content">
+        <div class="archive-banner-title">该卷宗已归档，当前为只读模式</div>
+        <div class="archive-banner-details">
+          <div class="archive-banner-item">
+            <span class="archive-banner-label">原结论：</span>
+            <span class="archive-banner-value">{{ claim.previousConclusionText || (claim.previousConclusion ? statusLabels[claim.previousConclusion as keyof typeof statusLabels] : '无') }}</span>
+          </div>
+          <div v-if="claim.archiveReason" class="archive-banner-item">
+            <span class="archive-banner-label">归档原因：</span>
+            <span class="archive-banner-value">{{ claim.archiveReason }}</span>
+          </div>
+        </div>
+      </div>
       <button v-if="canPerformAction('reopen')" class="btn btn-sm btn-outline" @click.stop="showReopenModal = true">
         重新开启
       </button>
@@ -698,6 +710,8 @@ function getDocumentStatusClass(status: DocumentStatus) {
     <ReopenModal
       v-model:visible="showReopenModal"
       :previous-conclusion="claim.previousConclusion || ''"
+      :previous-conclusion-text="claim.previousConclusionText || ''"
+      :archive-reason="claim.archiveReason || ''"
       @submit="handleReopenSubmit"
     />
   </div>
@@ -727,10 +741,10 @@ function getDocumentStatusClass(status: DocumentStatus) {
   right: 0;
   z-index: 40;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 10px;
-  padding: 10px 20px;
+  gap: 12px;
+  padding: 12px 20px;
   background-color: #fef3c7;
   color: #92400e;
   font-size: 14px;
@@ -738,8 +752,49 @@ function getDocumentStatusClass(status: DocumentStatus) {
   border-bottom: 1px solid #fde68a;
 }
 
+.archive-banner-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.archive-banner-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.archive-banner-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #a16207;
+}
+
+.archive-banner-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.archive-banner-label {
+  opacity: 0.8;
+}
+
+.archive-banner-value {
+  font-weight: 500;
+}
+
+.archive-banner > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .archive-banner .btn {
   margin-left: 16px;
+  flex-shrink: 0;
 }
 
 .page-header {
@@ -751,7 +806,7 @@ function getDocumentStatusClass(status: DocumentStatus) {
 }
 
 .is-archived .page-header {
-  padding-top: 50px;
+  padding-top: 70px;
 }
 
 .header-left {

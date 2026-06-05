@@ -51,7 +51,7 @@ const isDispute = computed(() => reviewResult.value === 'DISPUTE')
 const canSubmit = computed(() => {
   if (!opinion.value.trim()) return false
   if (isDispute.value) {
-    if (!disputeTermClause.value.trim() || !disputeReason.value.trim() || !disputeSupplementPath.value.trim()) return false
+    if (!disputeTermClause.value.trim() || !disputeTermDescription.value.trim() || !disputeReason.value.trim() || !disputeSupplementPath.value.trim()) return false
   }
   return true
 })
@@ -163,7 +163,7 @@ function formatAmount(amount?: number): string {
           />
         </div>
         <div class="form-group">
-          <label class="label">条款描述</label>
+          <label class="label">条款描述 <span class="required">*</span></label>
           <textarea
             v-model="disputeTermDescription"
             class="textarea"

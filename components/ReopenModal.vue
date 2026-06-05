@@ -5,6 +5,8 @@ import Modal from './Modal.vue'
 interface Props {
   visible: boolean
   previousConclusion?: string
+  previousConclusionText?: string
+  archiveReason?: string
 }
 
 const props = defineProps<Props>()
@@ -38,10 +40,14 @@ function handleSubmit() {
       <div class="conclusion-section card">
         <div class="conclusion-title">原结论</div>
         <div class="conclusion-content">
-          <template v-if="previousConclusion">
-            {{ previousConclusion }}
+          <template v-if="previousConclusionText || previousConclusion">
+            {{ previousConclusionText || previousConclusion }}
           </template>
           <span v-else class="text-gray-400">无</span>
+        </div>
+        <div v-if="archiveReason" class="conclusion-reason">
+          <span class="reason-label">归档原因：</span>
+          <span class="reason-value">{{ archiveReason }}</span>
         </div>
       </div>
 
@@ -97,6 +103,23 @@ function handleSubmit() {
   color: var(--gray-800);
   font-weight: 500;
   line-height: 1.6;
+}
+
+.conclusion-reason {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.reason-label {
+  color: var(--gray-500);
+}
+
+.reason-value {
+  font-weight: 500;
+  color: var(--gray-700);
 }
 
 .reopen-tip {

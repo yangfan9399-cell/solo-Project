@@ -114,16 +114,18 @@ export function useClaimStore() {
 
     const prevStatus = (claim.previousConclusion as ClaimStatus) || 'DRAFT'
     const prevConclusion = claim.previousConclusionText || statusLabels[prevStatus]
+    const archiveReason = claim.archiveReason || '未记录'
 
     claim.isArchived = false
     claim.reopenedFrom = claim.previousConclusion
+    claim.lastArchiveReason = claim.archiveReason
     claim.reopenReason = reason
     claim.reopenDate = new Date().toISOString()
-    claim.previousConclusion = undefined
-    claim.previousConclusionText = undefined
+    claim.previousConclusion = claim.previousConclusion
+    claim.previousConclusionText = claim.previousConclusionText
 
     claim.status = 'REOPENED'
-    addHistoryNode(claimId, '重新开启', 'REOPENED', `卷宗重新开启，原因：${reason}。旧结论：${prevConclusion}`)
+    addHistoryNode(claimId, '重新开启', 'REOPENED', `卷宗重新开启，原因：${reason}。旧结论：${prevConclusion}。原归档原因：${archiveReason}`)
 
     setTimeout(() => {
       const c = claims.value.find(cl => cl.id === claimId)

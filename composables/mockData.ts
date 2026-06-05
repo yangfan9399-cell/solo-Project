@@ -118,6 +118,7 @@ export interface Claim {
   reopenedFrom?: string
   reopenReason?: string
   reopenDate?: string
+  lastArchiveReason?: string
   documents: Document[]
   reviews: Review[]
   historyNodes: HistoryNode[]
