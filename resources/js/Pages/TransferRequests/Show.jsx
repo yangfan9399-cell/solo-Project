@@ -1,8 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useState, useEffect } from 'react';
 
 export default function Show({ request, carriers }) {
+    const { flash } = usePage().props;
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showManifestModal, setShowManifestModal] = useState(false);
     const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -401,7 +402,10 @@ export default function Show({ request, carriers }) {
                         <form onSubmit={(e) => {
                             e.preventDefault();
                             postCarrier(route('transfer-requests.update-carrier', request.id), {
-                                onSuccess: () => setShowChangeCarrierModal(false)
+                                onSuccess: () => {
+                                    setShowChangeCarrierModal(false);
+                                    router.reload({ only: ['request', 'carriers'] });
+                                }
                             });
                         }}>
                             <div className="mb-4">

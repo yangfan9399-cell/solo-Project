@@ -30,6 +30,39 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'routes' => $this->getNamedRoutes(),
+            'app_url' => config('app.url'),
         ]);
+    }
+
+    private function getNamedRoutes(): array
+    {
+        return [
+            'home' => '/',
+            'login' => '/login',
+            'logout' => '/logout',
+            'dashboard' => '/dashboard',
+            'waste-batches' => [
+                'index' => '/waste-batches',
+                'create' => '/waste-batches/create',
+                'store' => '/waste-batches',
+                'show' => '/waste-batches/:id',
+            ],
+            'transfer-requests' => [
+                'index' => '/transfer-requests',
+                'create' => '/transfer-requests/create',
+                'store' => '/transfer-requests',
+                'show' => '/transfer-requests/:id',
+                'update-carrier' => '/transfer-requests/:id/update-carrier',
+            ],
+            'manifest-forms' => [
+                'create' => '/transfer-requests/:id/manifest/create',
+                'store' => '/manifest-forms',
+                'verify' => '/manifest-forms/:id/verify',
+            ],
+            'reviews' => [
+                'store' => '/reviews',
+            ],
+        ];
     }
 }
