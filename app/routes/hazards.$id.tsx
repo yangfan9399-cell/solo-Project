@@ -313,12 +313,19 @@ export const action: ActionFunction = async ({ request, params }) => {
       const verifyResult = formData.get('verifyResult') as string;
       const remark = formData.get('remark') as string;
 
+      if (!verifyResult || !['pass', 'reject'].includes(verifyResult)) {
+        return json<ActionError>({ 
+          error: '请选择验收结果（通过或退回整改）',
+          errorType: 'verify'
+        }, { status: 400 });
+      }
+
       const hasBeforePhoto = hazard.photos.some((p: Photo) => p.type === 'BEFORE');
       const hasAfterPhoto = hazard.photos.some((p: Photo) => p.type === 'AFTER');
 
       if (verifyResult === 'pass' && (!hasBeforePhoto || !hasAfterPhoto)) {
         return json<ActionError>({ 
-          error: '整改前后照片不完整，请先补充证据照片后再验收',
+          error: '整改前后照片不完整，无法通过验收',
           errorType: 'verify',
           missingPhotos: !hasBeforePhoto ? '缺少整改前照片' : (!hasAfterPhoto ? '缺少整改后照片' : '照片不完整')
         }, { status: 400 });
@@ -989,15 +996,26 @@ export default function HazardDetail() {
                     <Form method="post" className="p-4 bg-gray-50 rounded-lg">
                       <input type="hidden" name="_action" value="verify" />
                       <div className="space-y-3">
+                        {actionData?.error && actionData?.errorType === 'verify' && (
+                          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded">
+                            <p className="font-medium">❌ {actionData.error}</p>
+                            {actionData.missingPhotos && (
+                              <p className="text-xs mt-1">提示：{actionData.missingPhotos}，请在下方补充照片后再尝试通过验收</p>
+                            )}
+                          </div>
+                        )}
                         {(!hasBeforePhoto || !hasAfterPhoto) && (
-                          <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-2 rounded">
-                            ⚠️ 照片不完整：{!hasBeforePhoto && '缺少整改前照片 '}{!hasAfterPhoto && '缺少整改后照片'}
-                            <br />照片缺失时无法通过验收
+                          <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm p-3 rounded">
+                            <p className="font-medium">⚠️ 照片不完整，无法通过验收</p>
+                            <p className="text-xs mt-1">
+                              当前缺失：{!hasBeforePhoto && '整改前照片 '}{!hasAfterPhoto && '整改后照片'}
+                              <br />请先补充证据照片，或选择"退回整改"
+                            </p>
                           </div>
                         )}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            验收结果
+                            验收结果 <span className="text-red-500">*</span>
                           </label>
                           <div className="flex gap-4">
                             <label className="flex items-center gap-2">
@@ -1005,20 +1023,21 @@ export default function HazardDetail() {
                                 type="radio"
                                 name="verifyResult"
                                 value="pass"
-                                defaultChecked
+                                defaultChecked={hasBeforePhoto && hasAfterPhoto}
                                 className="text-green-600"
                                 disabled={!hasBeforePhoto || !hasAfterPhoto}
                               />
-                              <span className="text-sm">通过</span>
+                              <span className={`text-sm ${(!hasBeforePhoto || !hasAfterPhoto) ? 'text-gray-400' : ''}`}>通过</span>
                             </label>
                             <label className="flex items-center gap-2">
                               <input
                                 type="radio"
                                 name="verifyResult"
                                 value="reject"
+                                defaultChecked={!hasBeforePhoto || !hasAfterPhoto}
                                 className="text-red-600"
                               />
-                              <span className="text-sm">退回整改</span>
+                              <span className="text-sm text-red-600 font-medium">退回整改</span>
                             </label>
                           </div>
                         </div>
@@ -1030,7 +1049,7 @@ export default function HazardDetail() {
                             name="remark"
                             rows={2}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
-                            placeholder="请填写验收意见"
+                            placeholder="请填写验收意见（退回时必填）"
                           />
                         </div>
                         <div className="flex gap-2">
