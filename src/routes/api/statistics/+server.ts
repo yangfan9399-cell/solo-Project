@@ -7,7 +7,7 @@ import {
 	courses,
 	teachers,
 	followUps,
-	sourceChannelEnum
+	users
 } from '$lib/db/schema';
 import { eq, sql, count, sum, and, desc } from 'drizzle-orm';
 
@@ -59,6 +59,86 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from(followUps)
 		.groupBy(followUps.conversionStatus);
 
+	const channelDetails = await db
+		.select({
+			channel: students.sourceChannel,
+			appointmentId: appointments.id,
+			studentName: students.name,
+			studentPhone: students.phone,
+			courseName: courses.name,
+			teacherName: teachers.name,
+			appointmentStatus: appointments.status,
+			conversionStatus: followUps.conversionStatus,
+			scheduledAt: appointments.scheduledAt,
+			consultantName: users.name
+		})
+		.from(students)
+		.leftJoin(appointments, eq(students.id, appointments.studentId))
+		.leftJoin(courses, eq(appointments.courseId, courses.id))
+		.leftJoin(teachers, eq(appointments.teacherId, teachers.id))
+		.leftJoin(followUps, eq(appointments.id, followUps.appointmentId))
+		.leftJoin(users, eq(appointments.consultantId, users.id))
+		.where(sql`appointments.id IS NOT NULL`);
+
+	const courseDetails = await db
+		.select({
+			courseId: courses.id,
+			appointmentId: appointments.id,
+			studentName: students.name,
+			studentPhone: students.phone,
+			courseName: courses.name,
+			teacherName: teachers.name,
+			appointmentStatus: appointments.status,
+			conversionStatus: followUps.conversionStatus,
+			scheduledAt: appointments.scheduledAt,
+			consultantName: users.name
+		})
+		.from(courses)
+		.leftJoin(appointments, eq(courses.id, appointments.courseId))
+		.leftJoin(students, eq(appointments.studentId, students.id))
+		.leftJoin(teachers, eq(appointments.teacherId, teachers.id))
+		.leftJoin(followUps, eq(appointments.id, followUps.appointmentId))
+		.leftJoin(users, eq(appointments.consultantId, users.id))
+		.where(sql`appointments.id IS NOT NULL`);
+
+	const statusDetails = await db
+		.select({
+			appointmentStatus: appointments.status,
+			appointmentId: appointments.id,
+			studentName: students.name,
+			studentPhone: students.phone,
+			courseName: courses.name,
+			teacherName: teachers.name,
+			conversionStatus: followUps.conversionStatus,
+			scheduledAt: appointments.scheduledAt,
+			consultantName: users.name
+		})
+		.from(appointments)
+		.leftJoin(students, eq(appointments.studentId, students.id))
+		.leftJoin(courses, eq(appointments.courseId, courses.id))
+		.leftJoin(teachers, eq(appointments.teacherId, teachers.id))
+		.leftJoin(followUps, eq(appointments.id, followUps.appointmentId))
+		.leftJoin(users, eq(appointments.consultantId, users.id));
+
+	const conversionDetails = await db
+		.select({
+			conversionStatus: followUps.conversionStatus,
+			appointmentId: appointments.id,
+			studentName: students.name,
+			studentPhone: students.phone,
+			courseName: courses.name,
+			teacherName: teachers.name,
+			appointmentStatus: appointments.status,
+			scheduledAt: appointments.scheduledAt,
+			consultantName: users.name
+		})
+		.from(followUps)
+		.leftJoin(appointments, eq(followUps.appointmentId, appointments.id))
+		.leftJoin(students, eq(appointments.studentId, students.id))
+		.leftJoin(courses, eq(appointments.courseId, courses.id))
+		.leftJoin(teachers, eq(appointments.teacherId, teachers.id))
+		.leftJoin(users, eq(appointments.consultantId, users.id));
+
 	const missingFeedback = await db
 		.select({
 			id: appointments.id,
@@ -79,10 +159,18 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		);
 
 	return json({
-		byChannel: channelStats,
-		byCourse: courseStats,
-		byStatus: statusStats,
-		byConversion: conversionStats,
+		summary: {
+			byChannel: channelStats,
+			byCourse: courseStats,
+			byStatus: statusStats,
+			byConversion: conversionStats
+		},
+		details: {
+			byChannel: channelDetails,
+			byCourse: courseDetails,
+			byStatus: statusDetails,
+			byConversion: conversionDetails
+		},
 		missingFeedback
 	});
 };
