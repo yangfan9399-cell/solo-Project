@@ -1,0 +1,395 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        维修单 <%= @repair_order.order_number %>
+        <% if @repair_order.warranty_repair? %>
+          <span class="ml-2 text-sm font-normal bg-orange-100 text-orange-800 px-2 py-1 rounded">质保返修</span>
+        <% end %>
+        <% if @repair_order.archived? %>
+          <span class="ml-2 text-sm font-normal bg-gray-100 text-gray-600 px-2 py-1 rounded">已归档</span>
+        <% end %>
+      </h1>
+      <p class="text-gray-500 mt-1">
+        创建于 <%= @repair_order.created_at.strftime('%Y-%m-%d %H:%M') %>
+      </p>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to '返回列表', repair_orders_path, class: 'bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300' %>
+      <% unless @repair_order.archived? %>
+        <%= link_to '编辑', edit_repair_order_path(@repair_order), class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @repair_order.status == 'quote_over_budget' %>
+    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700 font-medium">报价超出预算！</p>
+          <p class="text-sm text-red-600 mt-1">
+            预算上限: ¥<%= '%.2f' % @repair_order.budget_limit %>
+            报价总额: ¥<%= '%.2f' % @repair_order.quote_total %>
+            超出: ¥<%= '%.2f' % (@repair_order.quote_total - @repair_order.budget_limit) %>
+          </p>
+          <div class="mt-3 flex space-x-3">
+            <%= button_to '调整报价', new_repair_order_quote_item_path(@repair_order), method: :get, class: 'bg-yellow-600 text-white px-3 py-1.5 rounded text-sm' %>
+            <%= button_to '申请升级审批', approve_quote_repair_order_path(@repair_order), method: :patch, class: 'bg-red-600 text-white px-3 py-1.5 rounded text-sm' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @repair_order.parts_out_of_stock? %>
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-yellow-700 font-medium">存在缺货配件，维修无法开始</p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">车辆信息</h2>
+          <%= link_to '查看车辆', vehicle_path(@vehicle), class: 'text-sm text-blue-600' %>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
+            <div>
+              <dt class="text-sm font-medium text-gray-500">车牌号</dt>
+              <dd class="mt-1 text-lg font-semibold text-gray-900"><%= @vehicle.plate_number %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">车型</dt>
+              <dd class="mt-1 text-lg font-semibold text-gray-900"><%= "#{@vehicle.brand} #{@vehicle.model}" %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">VIN</dt>
+              <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @vehicle.vin %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">里程</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.mileage.try(:to_s) || '-' %> 公里</dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">车主</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.owner_name %></dd>
+            </div>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">联系电话</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.owner_phone %></dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">故障记录</h2>
+          <% unless @repair_order.archived? %>
+            <%= link_to '添加故障', new_repair_order_fault_path(@repair_order), class: 'text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700' %>
+          <% end %>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.faults.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @repair_order.faults.each do |fault| %>
+                <li class="px-4 py-4">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-medium text-gray-900"><%= fault.title %></p>
+                      <p class="text-sm text-gray-500 mt-1"><%= fault.description %></p>
+                    </div>
+                    <div class="flex space-x-2">
+                      <span class="px-2 text-xs rounded-full <%= fault.severity == 'critical' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>">
+                        <%= fault.severity %>
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无故障记录</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">报价明细</h2>
+          <div class="flex items-center space-x-4">
+            <span class="text-lg font-bold text-gray-900">总计: ¥<%= '%.2f' % @repair_order.quote_total %></span>
+            <% unless @repair_order.archived? || @repair_order.quote_approved? %>
+              <%= link_to '添加项目', new_repair_order_quote_item_path(@repair_order), class: 'text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700' %>
+            <% end %>
+          </div>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.quote_items.any? %>
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">类型</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">项目</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500">数量</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500">单价</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500">小计</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% @repair_order.quote_items.each do |item| %>
+                  <tr>
+                    <td class="px-4 py-3 text-sm"><%= item.item_type %></td>
+                    <td class="px-4 py-3 text-sm font-medium"><%= item.name %></td>
+                    <td class="px-4 py-3 text-sm text-right"><%= item.quantity %></td>
+                    <td class="px-4 py-3 text-sm text-right">¥<%= '%.2f' % item.unit_price %></td>
+                    <td class="px-4 py-3 text-sm text-right font-medium">¥<%= '%.2f' % item.total_price %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无报价明细</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">配件状态</h2>
+          <% unless @repair_order.archived? %>
+            <%= link_to '添加配件', new_repair_order_part_path(@repair_order), class: 'text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700' %>
+          <% end %>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.parts.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @repair_order.parts.each do |part| %>
+                <li class="px-4 py-4 flex justify-between items-center">
+                  <div>
+                    <p class="font-medium text-gray-900"><%= part.name %></p>
+                    <p class="text-sm text-gray-500">品牌: <%= part.brand || '-' %> | 零件号: <%= part.part_number || '-' %></p>
+                  </div>
+                  <div class="flex items-center space-x-3">
+                    <span class="px-2 py-1 text-xs rounded-full <%= part_status_class(part.status) %>">
+                      <%= part.status %>
+                    </span>
+                    <% unless @repair_order.archived? %>
+                      <%= link_to '更新', edit_repair_order_part_path(@repair_order, part), class: 'text-sm text-blue-600' %>
+                    <% end %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无配件记录</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">维修记录</h2>
+          <% unless @repair_order.archived? %>
+            <%= link_to '添加记录', new_repair_order_repair_log_path(@repair_order), class: 'text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700' %>
+          <% end %>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.repair_logs.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @repair_order.repair_logs.each do |log| %>
+                <li class="px-4 py-4">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-medium text-gray-900"><%= log.title %></p>
+                      <p class="text-sm text-gray-500 mt-1"><%= log.description %></p>
+                      <p class="text-xs text-gray-400 mt-2">
+                        技师: <%= log.technician&.name || '-' %> |
+                        开始: <%= log.started_at&.strftime('%Y-%m-%d %H:%M') %> |
+                        <% if log.completed_at %>
+                          完成: <%= log.completed_at.strftime('%Y-%m-%d %H:%M') %>
+                        <% end %>
+                      </p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+                      <%= log.status %>
+                    </span>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无维修记录</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+          <h2 class="text-lg font-medium text-gray-900">质保回访</h2>
+          <% unless @repair_order.archived? %>
+            <%= link_to '添加回访', new_repair_order_follow_up_path(@repair_order), class: 'text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700' %>
+          <% end %>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.follow_ups.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @repair_order.follow_ups.each do |fu| %>
+                <li class="px-4 py-4">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-medium text-gray-900">
+                        <%= fu.follow_up_at&.strftime('%Y-%m-%d') %> - <%= fu.contact_method %>
+                      </p>
+                      <p class="text-sm text-gray-500 mt-1">满意度: <%= fu.satisfaction %></p>
+                      <p class="text-sm text-gray-600 mt-1"><%= fu.feedback %></p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full <%= fu.completed? ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                      <%= fu.completed? ? '已完成' : '待回访' %>
+                    </span>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无回访记录</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+          <h2 class="text-lg font-medium text-gray-900">当前状态</h2>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5">
+          <span class="px-3 py-2 inline-flex text-sm font-semibold rounded-full <%= status_class(@repair_order.status) %>">
+            <%= @repair_order.status_name %>
+          </span>
+          <% if @repair_order.budget_limit.present? %>
+            <div class="mt-4">
+              <p class="text-sm text-gray-500">预算上限</p>
+              <p class="text-xl font-bold text-gray-900">¥<%= '%.2f' % @repair_order.budget_limit %></p>
+            </div>
+          <% end %>
+          <div class="mt-4">
+            <p class="text-sm text-gray-500">当前费用</p>
+            <p class="text-xl font-bold text-gray-900">¥<%= '%.2f' % @repair_order.total_amount %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+          <h2 class="text-lg font-medium text-gray-900">操作</h2>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 space-y-3">
+          <% unless @repair_order.archived? %>
+            <% if @repair_order.faults.any? && @repair_order.quote_items.any? && !@repair_order.quote_approved? %>
+              <%= button_to '提交报价', submit_quote_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700' %>
+            <% end %>
+
+            <% if @repair_order.quote_approved? && !@repair_order.parts_out_of_stock? && @repair_order.status != 'in_repair' && @repair_order.status != 'repair_completed' && @repair_order.status != 'review_approved' && @repair_order.status != 'follow_up_completed' %>
+              <%= button_to '开始维修', start_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700' %>
+            <% end %>
+
+            <% if @repair_order.status == 'in_repair' %>
+              <%= button_to '完成维修', complete_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700' %>
+            <% end %>
+
+            <% if @repair_order.status == 'repair_completed' %>
+              <div class="space-y-2">
+                <%= button_to '复核通过', review_complete_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-green-600 text-white py-2 rounded hover:bg-green-700' %>
+                <%= button_to '退回修改', review_return_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+              </div>
+            <% end %>
+
+            <% if @repair_order.status == 'review_approved' %>
+              <%= button_to '完成回访', complete_followup_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700' %>
+            <% end %>
+
+            <% if @repair_order.status == 'follow_up_completed' && !@repair_order.archived? %>
+              <%= button_to '归档', archive_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-gray-600 text-white py-2 rounded hover:bg-gray-700', data: { confirm: '确定要归档吗？归档后将只读' } %>
+            <% end %>
+
+            <% if @repair_order.archived? %>
+              <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
+            <% end %>
+          <% else %>
+            <p class="text-sm text-gray-500 text-center">已归档，无法修改</p>
+            <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+          <h2 class="text-lg font-medium text-gray-900">历史节点</h2>
+        </div>
+        <div class="border-t border-gray-200">
+          <% if @repair_order.order_histories.any? %>
+            <ol class="relative border-l border-gray-200 ml-4 my-4">
+              <% @repair_order.order_histories.order(created_at: :desc).each do |history| %>
+                <li class="mb-6 ml-6">
+                  <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white">
+                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  </span>
+                  <h3 class="flex items-center text-sm font-medium text-gray-900">
+                    <%= history.action %>
+                    <% if history.node_type %>
+                      <span class="ml-2 text-xs px-1.5 py-0.5 bg-gray-100 rounded"><%= history.node_type %></span>
+                    <% end %>
+                  </h3>
+                  <time class="block text-xs text-gray-400"><%= history.created_at.strftime('%Y-%m-%d %H:%M') %></time>
+                  <% if history.notes.present? %>
+                    <p class="text-sm text-gray-600 mt-1"><%= history.notes %></p>
+                  <% end %>
+                  <p class="text-xs text-gray-400 mt-1">操作人: <%= history.user&.name || '系统' %></p>
+                </li>
+              <% end %>
+            </ol>
+          <% else %>
+            <p class="px-4 py-4 text-gray-500">暂无历史记录</p>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @vehicle.repair_orders.count > 1 %>
+        <div class="bg-white shadow sm:rounded-lg">
+          <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg font-medium text-gray-900">车辆历史维修</h2>
+          </div>
+          <div class="border-t border-gray-200">
+            <ul class="divide-y divide-gray-200">
+              <% @vehicle.repair_orders.where.not(id: @repair_order.id).order(created_at: :desc).limit(5).each do |order| %>
+                <li class="px-4 py-3">
+                  <%= link_to repair_order_path(order), class: 'block' do %>
+                    <p class="text-sm font-medium text-blue-600"><%= order.order_number %></p>
+                    <p class="text-xs text-gray-500"><%= order.created_at.strftime('%Y-%m-%d') %> | <%= order.status_name %></p>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

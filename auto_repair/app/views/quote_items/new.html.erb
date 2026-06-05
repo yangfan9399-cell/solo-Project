@@ -1,0 +1,40 @@
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">添加报价项目</h1>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <%= form_with model: [@repair_order, @quote_item] do |form| %>
+      <div class="px-4 py-5 sm:p-6 space-y-4">
+        <div>
+          <%= form.label :item_type, '项目类型', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :item_type, %w[labor part material other].map { |t| [I18n.t("item_types.#{t}", default: t.humanize), t] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :name, '项目名称', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_field :name, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :description, '项目描述', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :description, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :quantity, '数量', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :quantity, step: '0.01', value: 1, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :unit_price, '单价(元)', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :unit_price, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+        <%= link_to '取消', repair_order_path(@repair_order), class: 'text-gray-600 hover:text-gray-900 mr-4' %>
+        <%= form.submit '保存', class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+      </div>
+    <% end %>
+  </div>
+</div>

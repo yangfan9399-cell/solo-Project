@@ -1,0 +1,35 @@
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">新建维修单</h1>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <%= form_with model: @repair_order do |form| %>
+      <div class="px-4 py-5 sm:p-6 space-y-4">
+        <div>
+          <%= form.label :vehicle_id, '选择车辆', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :vehicle_id, Vehicle.all.map { |v| [v.full_name, v.id] }, { include_blank: true }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :customer_description, '客户描述', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :customer_description, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :budget_limit, '预算上限(元)', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :budget_limit, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :warranty_months, '质保期限(月)', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :warranty_months, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500', value: 3 %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+        <%= link_to '取消', repair_orders_path, class: 'text-gray-600 hover:text-gray-900 mr-4' %>
+        <%= form.submit '创建', class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+      </div>
+    <% end %>
+  </div>
+</div>

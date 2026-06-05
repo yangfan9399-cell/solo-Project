@@ -1,0 +1,62 @@
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">添加车辆</h1>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <%= form_with model: @vehicle do |form| %>
+      <div class="px-4 py-5 sm:p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :plate_number, '车牌号', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :plate_number, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :vin, 'VIN', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :vin, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :brand, '品牌', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :brand, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :model, '型号', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :model, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <%= form.label :color, '颜色', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :color, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :year, '年份', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :year, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :mileage, '里程(公里)', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.number_field :mileage, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :owner_name, '车主姓名', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :owner_name, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :owner_phone, '联系电话', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.text_field :owner_phone, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+        <%= link_to '取消', vehicles_path, class: 'text-gray-600 hover:text-gray-900 mr-4' %>
+        <%= form.submit '保存', class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+      </div>
+    <% end %>
+  </div>
+</div>

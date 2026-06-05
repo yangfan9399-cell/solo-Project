@@ -1,0 +1,123 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-gray-900"><%= @vehicle.full_name %></h1>
+    <div class="flex space-x-3">
+      <%= link_to '返回列表', vehicles_path, class: 'bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300' %>
+      <%= link_to '新建维修单', new_vehicle_repair_order_path(@vehicle), class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white shadow sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <h2 class="text-lg font-medium text-gray-900">车辆详情</h2>
+      </div>
+      <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-4">
+          <div>
+            <dt class="text-sm font-medium text-gray-500">车牌号</dt>
+            <dd class="mt-1 text-lg font-semibold text-gray-900"><%= @vehicle.plate_number %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">品牌型号</dt>
+            <dd class="mt-1 text-lg font-semibold text-gray-900"><%= "#{@vehicle.brand} #{@vehicle.model}" %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">年份</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.year %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">颜色</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.color %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">VIN</dt>
+            <dd class="mt-1 text-sm text-gray-900 font-mono"><%= @vehicle.vin %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">里程</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.mileage.try(:to_s) || '-' %> 公里</dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">车主</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.owner_name %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">电话</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @vehicle.owner_phone %></dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-lg">
+      <div class="px-4 py-5 sm:px-6">
+        <h2 class="text-lg font-medium text-gray-900">维修统计</h2>
+      </div>
+      <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+        <dl class="space-y-4">
+          <div class="flex justify-between">
+            <dt class="text-sm font-medium text-gray-500">总维修次数</dt>
+            <dd class="text-sm font-bold text-gray-900"><%= @repair_orders.count %> 次</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm font-medium text-gray-500">质保返修次数</dt>
+            <dd class="text-sm font-bold text-orange-600"><%= @vehicle.warranty_repairs.count %> 次</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-sm font-medium text-gray-500">累计维修费用</dt>
+            <dd class="text-sm font-bold text-gray-900">¥<%= '%.2f' % @vehicle.total_repair_cost %></dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+      <h2 class="text-lg font-medium text-gray-900">维修历史</h2>
+    </div>
+    <div class="border-t border-gray-200">
+      <% if @repair_orders.any? %>
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">单号</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">日期</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">状态</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">金额</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">类型</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <% @repair_orders.each do |order| %>
+              <tr>
+                <td class="px-4 py-3 text-sm font-mono"><%= order.order_number %></td>
+                <td class="px-4 py-3 text-sm"><%= order.created_at.strftime('%Y-%m-%d') %></td>
+                <td class="px-4 py-3">
+                  <span class="px-2 text-xs rounded-full <%= status_class(order.status) %>">
+                    <%= order.status_name %>
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm">¥<%= '%.2f' % order.total_amount %></td>
+                <td class="px-4 py-3 text-sm">
+                  <% if order.warranty_repair? %>
+                    <span class="text-orange-600">质保返修</span>
+                  <% else %>
+                    正常维修
+                  <% end %>
+                </td>
+                <td class="px-4 py-3 text-sm">
+                  <%= link_to '查看', repair_order_path(order), class: 'text-blue-600' %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="px-4 py-4 text-gray-500">暂无维修记录</p>
+      <% end %>
+    </div>
+  </div>
+</div>

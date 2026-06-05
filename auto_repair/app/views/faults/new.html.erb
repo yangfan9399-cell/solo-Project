@@ -1,0 +1,35 @@
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">添加故障记录</h1>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <%= form_with model: [@repair_order, @fault] do |form| %>
+      <div class="px-4 py-5 sm:p-6 space-y-4">
+        <div>
+          <%= form.label :title, '故障标题', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_field :title, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :description, '故障描述', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :description, rows: 4, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :severity, '严重程度', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.select :severity, %w[low medium high critical].map { |s| [I18n.t("severities.#{s}", default: s.humanize), s] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+          <div>
+            <%= form.label :category, '故障类别', class: 'block text-sm font-medium text-gray-700' %>
+            <%= form.select :category, %w[engine transmission brakes suspension electrical body other].map { |c| [I18n.t("categories.#{c}", default: c.humanize), c] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+        <%= link_to '取消', repair_order_path(@repair_order), class: 'text-gray-600 hover:text-gray-900 mr-4' %>
+        <%= form.submit '保存', class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+      </div>
+    <% end %>
+  </div>
+</div>

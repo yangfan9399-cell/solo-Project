@@ -1,0 +1,46 @@
+zh:
+  roles:
+    service_advisor: "服务顾问"
+    technician: "技师"
+    manager: "店长"
+    customer_service: "客服"
+
+  repair_order_statuses:
+    draft: "草稿"
+    fault_recorded: "已记录故障"
+    quote_submitted: "报价已提交"
+    quote_over_budget: "报价超预算"
+    quote_approved: "报价已批准"
+    quote_rejected: "报价已拒绝"
+    parts_pending: "配件待确认"
+    parts_available: "配件已就绪"
+    in_repair: "维修中"
+    repair_completed: "维修完成"
+    under_review: "复核中"
+    review_approved: "复核通过"
+    review_returned: "复核退回"
+    follow_up_scheduled: "待回访"
+    follow_up_completed: "回访完成"
+    archived: "已归档"
+    warranty_repair: "质保返修"
+
+  severities:
+    low: "轻微"
+    medium: "中等"
+    high: "严重"
+    critical: "紧急"
+
+  categories:
+    engine: "发动机"
+    transmission: "变速箱"
+    brakes: "刹车系统"
+    suspension: "悬挂系统"
+    electrical: "电气系统"
+    body: "车身"
+    other: "其他"
+
+  item_types:
+    labor: "工时"
+    part: "配件"
+    material: "材料"
+    other: "其他"

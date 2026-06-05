@@ -1,0 +1,33 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-gray-900">车辆列表</h1>
+    <%= link_to '添加车辆', new_vehicle_path, class: 'bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700' %>
+  </div>
+
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车牌号</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车型</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车主</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维修次数</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% @vehicles.each do |vehicle| %>
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap font-mono text-sm"><%= vehicle.plate_number %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= "#{vehicle.brand} #{vehicle.model}" %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= vehicle.owner_name %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= vehicle.repair_orders.count %> 次</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+              <%= link_to '查看', vehicle_path(vehicle), class: 'text-blue-600 hover:text-blue-900' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
