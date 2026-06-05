@@ -21,4 +21,34 @@ module ApplicationHelper
     else 'bg-gray-100 text-gray-800'
     end
   end
+
+  def contact_method_name(method)
+    case method
+    when 'phone' then '电话'
+    when 'wechat' then '微信'
+    when 'sms' then '短信'
+    when 'email' then '邮件'
+    else method.to_s.humanize
+    end
+  end
+
+  def satisfaction_name(level)
+    case level
+    when 'very_satisfied' then '非常满意'
+    when 'satisfied' then '满意'
+    when 'neutral' then '一般'
+    when 'dissatisfied' then '不满意'
+    when 'very_dissatisfied' then '非常不满意'
+    else level.to_s.humanize
+    end
+  end
+
+  def satisfaction_class(level)
+    case level
+    when 'very_satisfied', 'satisfied' then 'bg-green-100 text-green-800'
+    when 'neutral' then 'bg-gray-100 text-gray-800'
+    when 'dissatisfied', 'very_dissatisfied' then 'bg-red-100 text-red-800'
+    else 'bg-gray-100 text-gray-800'
+    end
+  end
 end

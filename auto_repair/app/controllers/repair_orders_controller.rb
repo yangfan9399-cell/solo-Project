@@ -144,6 +144,16 @@ class RepairOrdersController < ApplicationController
     user = customer_service_user
 
     @repair_order.transaction do
+      follow_up = @repair_order.follow_ups.create_or_find_by(user: user)
+      follow_up.update!(
+        contact_method: params[:contact_method].presence || 'phone',
+        satisfaction: params[:satisfaction].presence || 'satisfied',
+        feedback: params[:notes],
+        notes: params[:notes],
+        completed: true,
+        follow_up_at: Time.current
+      )
+
       @repair_order.update!(
         status: 'follow_up_completed',
         follow_up_note: params[:notes]

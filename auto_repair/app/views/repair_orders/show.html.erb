@@ -249,15 +249,23 @@
         <div class="border-t border-gray-200">
           <% if @repair_order.follow_ups.any? %>
             <ul class="divide-y divide-gray-200">
-              <% @repair_order.follow_ups.each do |fu| %>
+              <% @repair_order.follow_ups.order(created_at: :desc).each do |fu| %>
                 <li class="px-4 py-4">
                   <div class="flex justify-between items-start">
-                    <div>
-                      <p class="font-medium text-gray-900">
-                        <%= fu.follow_up_at&.strftime('%Y-%m-%d') %> - <%= fu.contact_method %>
-                      </p>
-                      <p class="text-sm text-gray-500 mt-1">满意度: <%= fu.satisfaction %></p>
-                      <p class="text-sm text-gray-600 mt-1"><%= fu.feedback %></p>
+                    <div class="flex-1">
+                      <div class="flex items-center space-x-2">
+                        <p class="font-medium text-gray-900">
+                          <%= fu.follow_up_at&.strftime('%Y-%m-%d %H:%M') %>
+                        </p>
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                          <%= contact_method_name(fu.contact_method) %>
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded <%= satisfaction_class(fu.satisfaction) %>">
+                          <%= satisfaction_name(fu.satisfaction) %>
+                        </span>
+                      </div>
+                      <p class="text-sm text-gray-600 mt-2"><%= fu.feedback.presence || fu.notes %></p>
+                      <p class="text-xs text-gray-400 mt-2">客服: <%= fu.user&.name || '-' %></p>
                     </div>
                     <span class="px-2 py-1 text-xs rounded-full <%= fu.completed? ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
                       <%= fu.completed? ? '已完成' : '待回访' %>
@@ -354,9 +362,21 @@
               <div class="space-y-3 p-3 bg-gray-50 rounded">
                 <p class="text-sm font-medium text-gray-700">客服回访</p>
                 <%= form_with url: complete_followup_repair_order_path(@repair_order), method: :patch do |form| %>
-                  <div class="space-y-2">
-                    <%= form.label :notes, '回访备注', class: 'block text-sm font-medium text-gray-700' %>
-                    <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入回访结果...' %>
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <%= form.label :contact_method, '回访方式', class: 'block text-sm font-medium text-gray-700' %>
+                        <%= form.select :contact_method, [['电话', 'phone'], ['微信', 'wechat'], ['短信', 'sms'], ['邮件', 'email']], {}, class: 'mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm' %>
+                      </div>
+                      <div>
+                        <%= form.label :satisfaction, '满意度', class: 'block text-sm font-medium text-gray-700' %>
+                        <%= form.select :satisfaction, [['非常满意', 'very_satisfied'], ['满意', 'satisfied'], ['一般', 'neutral'], ['不满意', 'dissatisfied'], ['非常不满意', 'very_dissatisfied']], {}, class: 'mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm' %>
+                      </div>
+                    </div>
+                    <div>
+                      <%= form.label :notes, '回访反馈', class: 'block text-sm font-medium text-gray-700' %>
+                      <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入客户反馈...' %>
+                    </div>
                     <%= form.submit '完成回访', class: 'w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700' %>
                   </div>
                 <% end %>
