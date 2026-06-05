@@ -2,9 +2,9 @@ import type { MetaFunction, LoaderFunction, ActionFunction } from "@remix-run/no
 import { Link, useLoaderData, useFetcher } from "@remix-run/react";
 import { db } from "~/db";
 import { registrations, participants, projects, groups, reviews, history } from "~/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { formatDate, formatDateTime, getStatusColor, getStatusLabel, isDocumentExpired } from "~/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export const meta: MetaFunction = () => {
   return [{ title: "资格审核工作台" }];
@@ -195,6 +195,28 @@ export const action: ActionFunction = async ({ request }) => {
 export default function ReviewPage() {
   const { pendingReviews, allGroups } = useLoaderData<typeof loader>();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const prevListRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    const currentIds = pendingReviews.map((r: any) => r.id);
+    const prevIds = prevListRef.current;
+
+    if (selectedId !== null && !currentIds.includes(selectedId)) {
+      const prevIndex = prevIds.indexOf(selectedId);
+      if (prevIndex >= 0) {
+        if (currentIds.length > 0) {
+          const nextIndex = Math.min(prevIndex, currentIds.length - 1);
+          setSelectedId(currentIds[nextIndex]);
+        } else {
+          setSelectedId(null);
+        }
+      }
+    }
+
+    prevListRef.current = currentIds;
+  }, [pendingReviews, selectedId]);
+
+  const selectedRecord = pendingReviews.find((r: any) => r.id === selectedId);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -249,9 +271,10 @@ export default function ReviewPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow">
-            {selectedId ? (
+            {selectedRecord ? (
               <ReviewDetail
-                registration={pendingReviews.find((r: any) => r.id === selectedId)!}
+                key={selectedId}
+                registration={selectedRecord}
                 allGroups={allGroups}
               />
             ) : (
@@ -264,19 +287,40 @@ export default function ReviewPage() {
   );
 }
 
-function ReviewDetail({ registration: reg, allGroups }: any) {
+function ReviewDetail({ registration: reg, allGroups }: { registration: any; allGroups: any }) {
   const fetcher = useFetcher<typeof action>();
   const [clerkNotes, setClerkNotes] = useState("");
   const [refereeNotes, setRefereeNotes] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
+  const prevRegId = useRef<number | null>(null);
 
   useEffect(() => {
-    if (reg) {
+    if (!reg) return;
+    if (prevRegId.current !== reg.id) {
+      prevRegId.current = reg.id;
       setClerkNotes(reg.clerkNotes || "");
       setRefereeNotes(reg.refereeNotes || "");
       setSelectedGroup(reg.groupId?.toString() || "");
     }
-  }, [reg.id]);
+  }, [reg]);
+
+  useEffect(() => {
+    if (
+      fetcher.data?.success &&
+      fetcher.data.registrationId === reg?.id &&
+      fetcher.state === "idle"
+    ) {
+      setClerkNotes("");
+      setRefereeNotes("");
+      setSelectedGroup("");
+    }
+  }, [fetcher.data, fetcher.state, reg?.id]);
+
+  if (!reg) {
+    return (
+      <div className="p-8 text-center text-gray-500">请选择一个报名记录进行审核</div>
+    );
+  }
 
   const docExpired = isDocumentExpired(reg.idExpiryDate);
   const projectGroups = allGroups.filter((g: any) => g.projectId === reg.projectId);
@@ -289,8 +333,6 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
   const canRefereeAction =
     reg.registrationStatus === "pending" ||
     reg.registrationStatus === "needs_info";
-
-  if (!reg) return null;
 
   return (
     <div className="divide-y divide-gray-200">
