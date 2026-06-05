@@ -14,8 +14,10 @@ class ManifestFormController extends Controller
 {
     public function create(TransferRequest $transferRequest): Response
     {
+        $transferRequest->load(['wasteBatch.wasteCategory']);
+
         return Inertia::render('ManifestForms/Create', [
-            'transferRequest' => $transferRequest->load('wasteBatch'),
+            'transferRequest' => $transferRequest,
         ]);
     }
 

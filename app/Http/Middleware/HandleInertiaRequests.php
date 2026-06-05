@@ -38,30 +38,30 @@ class HandleInertiaRequests extends Middleware
     private function getNamedRoutes(): array
     {
         return [
-            'home' => '/',
-            'login' => '/login',
-            'logout' => '/logout',
-            'dashboard' => '/dashboard',
+            'home' => route('home'),
+            'login' => route('login'),
+            'logout' => route('logout'),
+            'dashboard' => route('dashboard'),
             'waste-batches' => [
-                'index' => '/waste-batches',
-                'create' => '/waste-batches/create',
-                'store' => '/waste-batches',
-                'show' => '/waste-batches/:id',
+                'index' => route('waste-batches.index'),
+                'create' => route('waste-batches.create'),
+                'store' => route('waste-batches.store'),
+                'show' => str_replace('_ID_', ':id', route('waste-batches.show', '_ID_')),
             ],
             'transfer-requests' => [
-                'index' => '/transfer-requests',
-                'create' => '/transfer-requests/create',
-                'store' => '/transfer-requests',
-                'show' => '/transfer-requests/:id',
-                'update-carrier' => '/transfer-requests/:id/update-carrier',
+                'index' => route('transfer-requests.index'),
+                'create' => route('transfer-requests.create'),
+                'store' => route('transfer-requests.store'),
+                'show' => str_replace('_ID_', ':id', route('transfer-requests.show', '_ID_')),
+                'update-carrier' => str_replace('_ID_', ':id', route('transfer-requests.update-carrier', '_ID_')),
             ],
             'manifest-forms' => [
-                'create' => '/transfer-requests/:id/manifest/create',
-                'store' => '/manifest-forms',
-                'verify' => '/manifest-forms/:id/verify',
+                'create' => str_replace('_ID_', ':id', route('manifest-forms.create', ['transferRequest' => '_ID_'])),
+                'store' => route('manifest-forms.store'),
+                'verify' => str_replace('_ID_', ':id', route('manifest-forms.verify', '_ID_')),
             ],
             'reviews' => [
-                'store' => '/reviews',
+                'store' => route('reviews.store'),
             ],
         ];
     }

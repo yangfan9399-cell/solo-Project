@@ -27,7 +27,8 @@ export function useRoute() {
             if (current && typeof current === 'object' && parts[i] in current) {
                 current = current[parts[i]];
             } else {
-                return '#';
+                console.warn(`[Route] Named route not found: ${name}`);
+                return 'javascript:void(0)';
             }
         }
         
@@ -35,7 +36,8 @@ export function useRoute() {
             return buildUrl(current, params);
         }
         
-        return '#';
+        console.warn(`[Route] Named route not found: ${name}`);
+        return 'javascript:void(0)';
     };
 
     return route;
@@ -51,7 +53,8 @@ export function route(name, params = {}) {
             if (current && typeof current === 'object' && parts[i] in current) {
                 current = current[parts[i]];
             } else {
-                return '#';
+                console.warn(`[Route] Named route not found: ${name}`);
+                return 'javascript:void(0)';
             }
         }
         
@@ -96,7 +99,13 @@ export function route(name, params = {}) {
         }
         return baseUrl + routeValue(params);
     }
-    return baseUrl + (routeValue || '#');
+    
+    if (!routeValue) {
+        console.warn(`[Route] Named route not found in static fallback: ${name}`);
+        return 'javascript:void(0)';
+    }
+    
+    return baseUrl + routeValue;
 }
 
 export default route;
