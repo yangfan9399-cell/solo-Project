@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBatches    VisaBatch[]   @relation("CreatedBy")
+  reviewedBatches   VisaBatch[]   @relation("ReviewedBy")
+  auditLogs         AuditLog[]
+  materialAudits    MaterialAudit[]
+}
+
+model VisaBatch {
+  id          Int      @id @default(autoincrement())
+  batchNo     String   @unique
+  country     String
+  status      String
+  submitDate  DateTime?
+  createdById Int
+  reviewedById Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy  User          @relation("CreatedBy", fields: [createdById], references: [id])
+  reviewedBy User?         @relation("ReviewedBy", fields: [reviewedById], references: [id])
+  tourists   TouristBatch[]
+  auditLogs  AuditLog[]
+}
+
+model Tourist {
+  id              Int      @id @default(autoincrement())
+  name            String
+  passportNo      String   @unique
+  passportExpire  DateTime
+  birthDate       DateTime?
+  phone           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  batches    TouristBatch[]
+  materials  Material[]
+}
+
+model TouristBatch {
+  id         Int      @id @default(autoincrement())
+  touristId  Int
+  batchId    Int
+  visaResult String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tourist  Tourist   @relation(fields: [touristId], references: [id], onDelete: Cascade)
+  batch    VisaBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([touristId, batchId])
+}
+
+model Material {
+  id          Int      @id @default(autoincrement())
+  touristId   Int
+  type        String
+  status      String
+  fileName    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tourist  Tourist          @relation(fields: [touristId], references: [id], onDelete: Cascade)
+  audits   MaterialAudit[]
+}
+
+model MaterialAudit {
+  id          Int      @id @default(autoincrement())
+  materialId  Int
+  userId      Int
+  action      String
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  material  Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  batchId   Int
+  userId    Int
+  action    String
+  notes     String?
+  createdAt DateTime @default(now())
+
+  batch  VisaBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  user   User      @relation(fields: [userId], references: [id])
+}
