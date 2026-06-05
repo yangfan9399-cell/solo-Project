@@ -14,6 +14,12 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/resources/workers-by-team": {
+    params: {};
+  };
+  "/resources/check-area-conflict": {
+    params: {};
+  };
   "/permits": {
     params: {};
   };
@@ -33,7 +39,15 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/permits" | "/permits/new" | "/permits/:id" | "/statistics";
+    page: "/" | "/resources/workers-by-team" | "/resources/check-area-conflict" | "/permits" | "/permits/new" | "/permits/:id" | "/statistics";
+  };
+  "routes/resources.workers-by-team.ts": {
+    id: "routes/resources.workers-by-team";
+    page: "/resources/workers-by-team";
+  };
+  "routes/resources.check-area-conflict.ts": {
+    id: "routes/resources.check-area-conflict";
+    page: "/resources/check-area-conflict";
   };
   "routes/_app.tsx": {
     id: "routes/_app";
@@ -67,6 +81,8 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
+  "routes/resources.workers-by-team": typeof import("./app/routes/resources.workers-by-team.ts");
+  "routes/resources.check-area-conflict": typeof import("./app/routes/resources.check-area-conflict.ts");
   "routes/_app": typeof import("./app/routes/_app.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
   "routes/permits": typeof import("./app/routes/permits.tsx");

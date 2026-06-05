@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useLoaderData, useNavigate, Form, redirect, useOutletContext } from "react-router";
-import { getTeams, getAreas, getWorkersByTeamId, createPermit, checkAreaConflict } from "~/lib/services";
+import { useState, useEffect } from "react";
+import { useLoaderData, useNavigate, Form, redirect, useOutletContext, useFetcher } from "react-router";
+import { getTeams, getAreas, createPermit } from "~/lib/services";
 import { CONSTRUCTION_TYPES, type UserRole } from "~/lib/utils";
+import type { Worker } from "~/lib/types";
 
 export const loader = async () => {
   const teams = await getTeams();
@@ -46,27 +47,35 @@ export default function NewPermit() {
   const navigate = useNavigate();
   const { currentRole } = useOutletContext<{ currentRole: UserRole }>();
 
+  const workersFetcher = useFetcher<{ workers: Worker[] }>();
+  const conflictFetcher = useFetcher<{
+    hasConflict: boolean;
+    conflictingPermits: any[];
+    error?: string;
+  }>();
+
   const [selectedTeam, setSelectedTeam] = useState<string>("");
   const [selectedArea, setSelectedArea] = useState<string>("");
   const [selectedWorkers, setSelectedWorkers] = useState<number[]>([]);
   const [hasDocuments, setHasDocuments] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [teamWorkers, setTeamWorkers] = useState<any[]>([]);
-  const [conflictCheck, setConflictCheck] = useState<{
-    hasConflict: boolean;
-    conflictingPermits: any[];
-  } | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
 
-  const handleTeamChange = async (teamId: string) => {
+  const teamWorkers = workersFetcher.data?.workers || [];
+  const isLoadingWorkers = workersFetcher.state === "loading";
+  const isCheckingConflict = conflictFetcher.state === "submitting";
+  const conflictCheck = conflictFetcher.data && !conflictFetcher.data.error
+    ? {
+        hasConflict: conflictFetcher.data.hasConflict,
+        conflictingPermits: conflictFetcher.data.conflictingPermits,
+      }
+    : null;
+
+  const handleTeamChange = (teamId: string) => {
     setSelectedTeam(teamId);
     setSelectedWorkers([]);
     if (teamId) {
-      const workers = await getWorkersByTeamId(parseInt(teamId));
-      setTeamWorkers(workers);
-    } else {
-      setTeamWorkers([]);
+      workersFetcher.load(`/resources/workers-by-team?teamId=${teamId}`);
     }
   };
 
@@ -78,16 +87,16 @@ export default function NewPermit() {
     );
   };
 
-  const checkConflict = async () => {
+  const checkConflict = () => {
     if (!selectedArea || !startDate || !endDate) return;
-    setIsChecking(true);
-    const result = await checkAreaConflict(
-      parseInt(selectedArea),
-      startDate,
-      endDate
-    );
-    setConflictCheck(result);
-    setIsChecking(false);
+    const formData = new FormData();
+    formData.append("areaId", selectedArea);
+    formData.append("startDate", startDate);
+    formData.append("endDate", endDate);
+    conflictFetcher.submit(formData, {
+      method: "post",
+      action: "/resources/check-area-conflict",
+    });
   };
 
   const getToday = () => {
@@ -182,6 +191,12 @@ export default function NewPermit() {
               </div>
             </div>
           )}
+
+          {isLoadingWorkers && (
+            <div className="mt-4 text-center text-slate-400 text-sm">
+              加载施工人员中...
+            </div>
+          )}
         </div>
 
         <div className="card p-6">
@@ -208,7 +223,7 @@ export default function NewPermit() {
                 value={selectedArea}
                 onChange={(e) => {
                   setSelectedArea(e.target.value);
-                  setConflictCheck(null);
+                  conflictFetcher.data = undefined;
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}
@@ -231,7 +246,7 @@ export default function NewPermit() {
                 min={getToday()}
                 onChange={(e) => {
                   setStartDate(e.target.value);
-                  setConflictCheck(null);
+                  conflictFetcher.data = undefined;
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}
@@ -247,7 +262,7 @@ export default function NewPermit() {
                 min={startDate || getToday()}
                 onChange={(e) => {
                   setEndDate(e.target.value);
-                  setConflictCheck(null);
+                  conflictFetcher.data = undefined;
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}
@@ -291,10 +306,10 @@ export default function NewPermit() {
             <button
               type="button"
               onClick={checkConflict}
-              disabled={!selectedArea || !startDate || !endDate || isChecking}
+              disabled={!selectedArea || !startDate || !endDate || isCheckingConflict}
               className="btn-secondary"
             >
-              {isChecking ? "检测中..." : "🔍 检测区域冲突"}
+              {isCheckingConflict ? "检测中..." : "🔍 检测区域冲突"}
             </button>
           </div>
 

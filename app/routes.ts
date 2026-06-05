@@ -1,5 +1,13 @@
 export default [
   {
+    path: "resources/workers-by-team",
+    file: "routes/resources.workers-by-team.ts",
+  },
+  {
+    path: "resources/check-area-conflict",
+    file: "routes/resources.check-area-conflict.ts",
+  },
+  {
     path: "",
     file: "routes/_app.tsx",
     children: [

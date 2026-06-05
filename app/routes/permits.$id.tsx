@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { useLoaderData, useNavigate, Form, useActionData, redirect, useOutletContext } from "react-router";
+import { useLoaderData, useNavigate, Form, useActionData, redirect, useOutletContext, useFetcher } from "react-router";
 import { StatusBadge } from "~/components/StatusBadge";
 import { ConstructionTypeBadge } from "~/components/ConstructionTypeBadge";
 import {
@@ -22,7 +22,7 @@ import { PERMIT_STATUS_LABELS, USER_ROLE_LABELS, CONSTRUCTION_TYPES, type UserRo
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import type { Permit, PermitHistory, Worker, ConstructionTeam, ConstructionArea } from "~/lib/types";
-import { getAreas, checkAreaConflict } from "~/lib/services";
+import { getAreas } from "~/lib/services";
 
 export const loader = async ({ params }: { params: { id: string } }) => {
   const id = parseInt(params.id);
@@ -91,6 +91,12 @@ export default function PermitDetail() {
   const navigate = useNavigate();
   const actionData = useActionData<typeof action>();
 
+  const conflictFetcher = useFetcher<{
+    hasConflict: boolean;
+    conflictingPermits: Permit[];
+    error?: string;
+  }>();
+
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -99,19 +105,25 @@ export default function PermitDetail() {
   const [rescheduleAreaId, setRescheduleAreaId] = useState(String(permit.areaId));
   const [rescheduleStartDate, setRescheduleStartDate] = useState(permit.startDate);
   const [rescheduleEndDate, setRescheduleEndDate] = useState(permit.endDate);
-  const [conflictCheckResult, setConflictCheckResult] = useState<{
-    hasConflict: boolean;
-    conflictingPermits: Permit[];
-  } | null>(null);
 
-  const checkConflict = async () => {
-    const result = await checkAreaConflict(
-      parseInt(rescheduleAreaId),
-      rescheduleStartDate,
-      rescheduleEndDate,
-      permit.id
-    );
-    setConflictCheckResult(result);
+  const isCheckingConflict = conflictFetcher.state === "submitting";
+  const conflictCheckResult = conflictFetcher.data && !conflictFetcher.data.error
+    ? {
+        hasConflict: conflictFetcher.data.hasConflict,
+        conflictingPermits: conflictFetcher.data.conflictingPermits,
+      }
+    : null;
+
+  const checkConflict = () => {
+    const formData = new FormData();
+    formData.append("areaId", rescheduleAreaId);
+    formData.append("startDate", rescheduleStartDate);
+    formData.append("endDate", rescheduleEndDate);
+    formData.append("excludePermitId", String(permit.id));
+    conflictFetcher.submit(formData, {
+      method: "post",
+      action: "/resources/check-area-conflict",
+    });
   };
 
   const renderActions = () => {
@@ -644,7 +656,7 @@ export default function PermitDetail() {
                   value={rescheduleAreaId}
                   onChange={(e) => {
                     setRescheduleAreaId(e.target.value);
-                    setConflictCheckResult(null);
+                    conflictFetcher.data = undefined;
                   }}
                 >
                   {areas.map((a) => (
@@ -664,7 +676,7 @@ export default function PermitDetail() {
                   value={rescheduleStartDate}
                   onChange={(e) => {
                     setRescheduleStartDate(e.target.value);
-                    setConflictCheckResult(null);
+                    conflictFetcher.data = undefined;
                   }}
                 />
               </div>
@@ -677,7 +689,7 @@ export default function PermitDetail() {
                   value={rescheduleEndDate}
                   onChange={(e) => {
                     setRescheduleEndDate(e.target.value);
-                    setConflictCheckResult(null);
+                    conflictFetcher.data = undefined;
                   }}
                 />
               </div>
@@ -687,8 +699,9 @@ export default function PermitDetail() {
               type="button"
               className="btn-secondary w-full"
               onClick={checkConflict}
+              disabled={isCheckingConflict}
             >
-              🔍 检测区域冲突
+              {isCheckingConflict ? "检测中..." : "🔍 检测区域冲突"}
             </button>
 
             {conflictCheckResult && (
