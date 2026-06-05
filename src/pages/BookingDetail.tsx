@@ -15,6 +15,7 @@ function BookingDetail() {
   const [newStartTime, setNewStartTime] = useState('');
   const [newEndTime, setNewEndTime] = useState('');
   const [conflictCheck, setConflictCheck] = useState<{ hasConflict: boolean; message: string } | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   if (!booking) {
     return (
@@ -31,6 +32,7 @@ function BookingDetail() {
   const allCostsConfirmed = booking.costAllocations.every((c) => c.confirmed);
 
   const checkNewConflict = async () => {
+    setFormError(null);
     if (resolveOption === 'room' && newRoomId) {
       const start = booking.startTime instanceof Date ? booking.startTime.toISOString() : new Date(booking.startTime).toISOString();
       const end = booking.endTime instanceof Date ? booking.endTime.toISOString() : new Date(booking.endTime).toISOString();
@@ -42,6 +44,30 @@ function BookingDetail() {
       const conflict = await checkConflict(booking.meetingRoomId, start, end, booking.id);
       setConflictCheck(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
     }
+  };
+
+  const validateResolveForm = () => {
+    if (resolveOption === 'room') {
+      if (!newRoomId) {
+        setFormError('请选择新的会议室');
+        return false;
+      }
+    } else {
+      if (!newDate || !newStartTime || !newEndTime) {
+        setFormError('请填写完整的日期和时间');
+        return false;
+      }
+      if (newStartTime >= newEndTime) {
+        setFormError('结束时间必须晚于开始时间');
+        return false;
+      }
+    }
+    if (conflictCheck?.hasConflict) {
+      setFormError('仍存在时间冲突，请调整后再提交');
+      return false;
+    }
+    setFormError(null);
+    return true;
   };
 
   return (
@@ -311,7 +337,11 @@ function BookingDetail() {
               </button>
             </div>
 
-            <Form method="post">
+            <Form method="post" onSubmit={(e) => {
+              if (!validateResolveForm()) {
+                e.preventDefault();
+              }
+            }}>
               <input type="hidden" name="action" value="resolveConflict" />
               
               {resolveOption === 'room' ? (
@@ -382,7 +412,13 @@ function BookingDetail() {
                 </div>
               )}
 
-              {conflictCheck && (
+              {formError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-red-700 text-sm">⚠️ {formError}</span>
+                </div>
+              )}
+
+              {conflictCheck && !formError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <span className="text-red-700 text-sm">⚠️ {conflictCheck.message}</span>
                 </div>
@@ -391,7 +427,15 @@ function BookingDetail() {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => setShowResolveModal(false)}
+                  onClick={() => {
+                    setShowResolveModal(false);
+                    setFormError(null);
+                    setConflictCheck(null);
+                    setNewRoomId('');
+                    setNewDate('');
+                    setNewStartTime('');
+                    setNewEndTime('');
+                  }}
                   className="btn btn-secondary"
                 >
                   取消

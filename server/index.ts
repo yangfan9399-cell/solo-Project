@@ -7,6 +7,23 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+let usePrisma = false;
+let prisma: any = null;
+
+try {
+  const { PrismaClient, BookingStatus, ConflictType, Role } = require('@prisma/client');
+  prisma = new PrismaClient();
+  usePrisma = true;
+  console.log('PrismaClient loaded successfully');
+} catch (error) {
+  console.log('PrismaClient not available, using memory mode');
+  usePrisma = false;
+}
+
+type BookingStatusType = 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'ARCHIVED' | 'CONFLICT';
+type ConflictTypeType = 'TIME_OVERLAP' | 'EQUIPMENT_MISSING' | 'COST_ALLOCATION_MISMATCH' | 'NONE';
+type RoleType = 'ADMIN' | 'DEPARTMENT_HEAD' | 'REVIEWER';
+
 interface Department {
   id: string;
   name: string;
@@ -441,35 +458,179 @@ function addFlowRecord(bookingId: string, action: string, operator: string, role
   }
 }
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Meeting Room Booking API is running (memory mode)' });
-});
+async function getPrismaBookingWithRelations(id: string) {
+  return prisma.booking.findUnique({
+    where: { id },
+    include: {
+      meetingRoom: {
+        include: {
+          equipments: true,
+        },
+      },
+      department: true,
+      costAllocations: {
+        include: {
+          department: true,
+        },
+      },
+      bookingEquipments: true,
+      flowRecords: true,
+    },
+  });
+}
 
-app.get('/api/departments', (req, res) => {
-  res.json(departments);
-});
+async function getAllPrismaBookingsWithRelations() {
+  return prisma.booking.findMany({
+    include: {
+      meetingRoom: {
+        include: {
+          equipments: true,
+        },
+      },
+      department: true,
+      costAllocations: {
+        include: {
+          department: true,
+        },
+      },
+      bookingEquipments: true,
+      flowRecords: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+}
 
-app.get('/api/meeting-rooms', (req, res) => {
-  res.json(meetingRooms);
-});
-
-app.get('/api/bookings', (req, res) => {
-  res.json(bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-});
-
-app.get('/api/bookings/:id', (req, res) => {
-  const booking = getBookingById(req.params.id);
-  if (!booking) {
-    return res.status(404).json({ error: 'Booking not found' });
+app.get('/api/health', async (req, res) => {
+  if (usePrisma) {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      res.json({ status: 'ok', message: 'Meeting Room Booking API is running (PostgreSQL mode)', mode: 'prisma' });
+    } catch (error) {
+      res.json({ status: 'ok', message: 'Meeting Room Booking API is running (PostgreSQL mode - database connection may be limited)', mode: 'prisma' });
+    }
+  } else {
+    res.json({ status: 'ok', message: 'Meeting Room Booking API is running (memory mode)', mode: 'memory' });
   }
-  res.json(booking);
 });
 
-app.get('/api/check-conflict', (req, res) => {
+app.get('/api/departments', async (req, res) => {
+  if (usePrisma) {
+    try {
+      const depts = await prisma.department.findMany({
+        orderBy: { name: 'asc' },
+      });
+      res.json(depts);
+    } catch (error) {
+      res.json(departments);
+    }
+  } else {
+    res.json(departments);
+  }
+});
+
+app.get('/api/meeting-rooms', async (req, res) => {
+  if (usePrisma) {
+    try {
+      const rooms = await prisma.meetingRoom.findMany({
+        include: {
+          equipments: true,
+        },
+        orderBy: { floor: 'asc' },
+      });
+      res.json(rooms);
+    } catch (error) {
+      res.json(meetingRooms);
+    }
+  } else {
+    res.json(meetingRooms);
+  }
+});
+
+app.get('/api/bookings', async (req, res) => {
+  if (usePrisma) {
+    try {
+      const bookingsData = await getAllPrismaBookingsWithRelations();
+      res.json(bookingsData);
+    } catch (error) {
+      res.json(bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }
+  } else {
+    res.json(bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  }
+});
+
+app.get('/api/bookings/:id', async (req, res) => {
+  if (usePrisma) {
+    try {
+      const booking = await getPrismaBookingWithRelations(req.params.id);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      res.json(booking);
+    } catch (error) {
+      const booking = getBookingById(req.params.id);
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      res.json(booking);
+    }
+  } else {
+    const booking = getBookingById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    res.json(booking);
+  }
+});
+
+app.get('/api/check-conflict', async (req, res) => {
   const { meetingRoomId, startTime, endTime, excludeBookingId } = req.query;
   
-  const start = new Date(startTime as string).getTime();
-  const end = new Date(endTime as string).getTime();
+  const start = new Date(startTime as string);
+  const end = new Date(endTime as string);
+  
+  if (usePrisma) {
+    try {
+      const conflictingBooking = await prisma.booking.findFirst({
+        where: {
+          meetingRoomId: meetingRoomId as string,
+          id: excludeBookingId ? { not: excludeBookingId as string } : undefined,
+          status: {
+            notIn: ['CANCELLED', 'REJECTED', 'ARCHIVED'],
+          },
+          OR: [
+            {
+              startTime: {
+                lt: end,
+              },
+              endTime: {
+                gt: start,
+              },
+            },
+          ],
+        },
+        include: {
+          department: true,
+        },
+      });
+
+      if (conflictingBooking) {
+        res.json({
+          hasConflict: true,
+          type: 'TIME_OVERLAP',
+          reason: `与"${conflictingBooking.title}"时间重叠，该会议室已被${conflictingBooking.department?.name || '其他部门'}预订`,
+          conflictingBooking,
+        });
+      } else {
+        res.json({ hasConflict: false, type: 'NONE', reason: '' });
+      }
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
   
   const conflictingBooking = bookings.find((b) => {
     if (b.meetingRoomId !== meetingRoomId) return false;
@@ -479,7 +640,7 @@ app.get('/api/check-conflict', (req, res) => {
     const bStart = new Date(b.startTime).getTime();
     const bEnd = new Date(b.endTime).getTime();
     
-    return (start < bEnd && end > bStart);
+    return (start.getTime() < bEnd && end.getTime() > bStart);
   });
 
   if (conflictingBooking) {
@@ -494,7 +655,7 @@ app.get('/api/check-conflict', (req, res) => {
   }
 });
 
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', async (req, res) => {
   const {
     title,
     meetingRoomId,
@@ -510,6 +671,82 @@ app.post('/api/bookings', (req, res) => {
     conflictReason,
     equipmentWarnings,
   } = req.body;
+
+  if (usePrisma) {
+    try {
+      const { BookingStatus, ConflictType, Role } = require('@prisma/client');
+      const newBooking = await prisma.booking.create({
+        data: {
+          title,
+          meetingRoomId,
+          departmentId,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          totalCost,
+          applicant,
+          applicantRole: Role.ADMIN,
+          equipmentNotes,
+          status: conflictType && conflictType !== 'NONE' ? BookingStatus.CONFLICT : BookingStatus.PENDING,
+          conflictType: conflictType || ConflictType.NONE,
+          conflictReason,
+          bookingEquipments: {
+            create: selectedEquipments.map((eq: string) => ({
+              name: eq,
+              available: !equipmentWarnings?.includes(eq),
+            })),
+          },
+          costAllocations: {
+            create: allocations.map((alloc: any) => ({
+              departmentId: alloc.departmentId,
+              amount: alloc.amount,
+              percentage: alloc.percentage,
+              confirmed: false,
+            })),
+          },
+          flowRecords: {
+            create: {
+              action: '创建预订',
+              operator: applicant,
+              role: Role.ADMIN,
+              remark: '行政经办人提交预订申请',
+            },
+          },
+        },
+        include: {
+          meetingRoom: {
+            include: {
+              equipments: true,
+            },
+          },
+          department: true,
+          costAllocations: {
+            include: {
+              department: true,
+            },
+          },
+          bookingEquipments: true,
+          flowRecords: true,
+        },
+      });
+
+      if (conflictType && conflictType !== 'NONE') {
+        await prisma.flowRecord.create({
+          data: {
+            bookingId: newBooking.id,
+            action: '冲突检测',
+            operator: '系统',
+            role: Role.ADMIN,
+            remark: conflictReason || '检测到预订冲突',
+          },
+        });
+      }
+
+      res.status(201).json(newBooking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
 
   const room = meetingRooms.find(r => r.id === meetingRoomId);
   const dept = departments.find(d => d.id === departmentId);
@@ -556,13 +793,56 @@ app.post('/api/bookings', (req, res) => {
     createdAt: new Date().toISOString(),
   };
 
+  if (conflictType && conflictType !== 'NONE') {
+    addFlowRecord(newBooking.id, '冲突检测', '系统', 'ADMIN', conflictReason || '检测到预订冲突');
+  }
+
   bookings.push(newBooking);
   res.status(201).json(newBooking);
 });
 
-app.put('/api/bookings/:id/confirm-cost', (req, res) => {
+app.put('/api/bookings/:id/confirm-cost', async (req, res) => {
   const { id } = req.params;
   const { allocationId, confirmedBy } = req.body;
+
+  if (usePrisma) {
+    try {
+      const { Role } = require('@prisma/client');
+      const allocation = await prisma.costAllocation.findUnique({
+        where: { id: allocationId },
+      });
+
+      if (!allocation) {
+        return res.status(404).json({ error: 'Cost allocation not found' });
+      }
+
+      await prisma.costAllocation.update({
+        where: { id: allocationId },
+        data: {
+          confirmed: true,
+          confirmedAt: new Date(),
+          confirmedBy,
+        },
+      });
+
+      await prisma.flowRecord.create({
+        data: {
+          bookingId: id,
+          action: '费用确认',
+          operator: confirmedBy,
+          role: Role.DEPARTMENT_HEAD,
+          remark: '费用分摊已确认',
+        },
+      });
+
+      const booking = await getPrismaBookingWithRelations(id);
+      res.json(booking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
+
   const booking = getBookingById(id);
   
   if (!booking) {
@@ -580,8 +860,37 @@ app.put('/api/bookings/:id/confirm-cost', (req, res) => {
   res.json(booking);
 });
 
-app.put('/api/bookings/:id/confirm', (req, res) => {
+app.put('/api/bookings/:id/confirm', async (req, res) => {
   const { id } = req.params;
+
+  if (usePrisma) {
+    try {
+      const { BookingStatus, Role } = require('@prisma/client');
+      await prisma.booking.update({
+        where: { id },
+        data: {
+          status: BookingStatus.CONFIRMED,
+        },
+      });
+
+      await prisma.flowRecord.create({
+        data: {
+          bookingId: id,
+          action: '确认预订',
+          operator: '王复核',
+          role: Role.REVIEWER,
+          remark: '复核通过，预订已确认',
+        },
+      });
+
+      const booking = await getPrismaBookingWithRelations(id);
+      res.json(booking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
+
   const booking = getBookingById(id);
   
   if (!booking) {
@@ -593,8 +902,37 @@ app.put('/api/bookings/:id/confirm', (req, res) => {
   res.json(booking);
 });
 
-app.put('/api/bookings/:id/reject', (req, res) => {
+app.put('/api/bookings/:id/reject', async (req, res) => {
   const { id } = req.params;
+
+  if (usePrisma) {
+    try {
+      const { BookingStatus, Role } = require('@prisma/client');
+      await prisma.booking.update({
+        where: { id },
+        data: {
+          status: BookingStatus.REJECTED,
+        },
+      });
+
+      await prisma.flowRecord.create({
+        data: {
+          bookingId: id,
+          action: '拒绝预订',
+          operator: '王复核',
+          role: Role.REVIEWER,
+          remark: '预订申请被拒绝',
+        },
+      });
+
+      const booking = await getPrismaBookingWithRelations(id);
+      res.json(booking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
+
   const booking = getBookingById(id);
   
   if (!booking) {
@@ -606,9 +944,66 @@ app.put('/api/bookings/:id/reject', (req, res) => {
   res.json(booking);
 });
 
-app.put('/api/bookings/:id/resolve-conflict', (req, res) => {
+app.put('/api/bookings/:id/resolve-conflict', async (req, res) => {
   const { id } = req.params;
   const { newMeetingRoomId, newStartTime, newEndTime } = req.body;
+
+  if (usePrisma) {
+    try {
+      const { BookingStatus, ConflictType, Role } = require('@prisma/client');
+      const updateData: any = {
+        status: BookingStatus.PENDING,
+        conflictType: ConflictType.NONE,
+        conflictReason: null,
+      };
+
+      let remark = '';
+
+      if (newMeetingRoomId) {
+        updateData.meetingRoomId = newMeetingRoomId;
+        const room = await prisma.meetingRoom.findUnique({
+          where: { id: newMeetingRoomId },
+        });
+        remark = `更换会议室为 ${room?.name}`;
+      }
+
+      if (newStartTime && newEndTime) {
+        updateData.startTime = new Date(newStartTime);
+        updateData.endTime = new Date(newEndTime);
+        remark = `调整时间为 ${new Date(newStartTime).toLocaleString()} - ${new Date(newEndTime).toLocaleTimeString()}`;
+
+        if (newMeetingRoomId) {
+          const room = await prisma.meetingRoom.findUnique({
+            where: { id: newMeetingRoomId },
+          });
+          const hours = (new Date(newEndTime).getTime() - new Date(newStartTime).getTime()) / (1000 * 60 * 60);
+          updateData.totalCost = hours * (room?.hourlyRate || 0);
+        }
+      }
+
+      await prisma.booking.update({
+        where: { id },
+        data: updateData,
+      });
+
+      await prisma.flowRecord.create({
+        data: {
+          bookingId: id,
+          action: '解决冲突',
+          operator: '王复核',
+          role: Role.REVIEWER,
+          remark,
+        },
+      });
+
+      const booking = await getPrismaBookingWithRelations(id);
+      res.json(booking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
+
   const booking = getBookingById(id);
   
   if (!booking) {
@@ -642,8 +1037,37 @@ app.put('/api/bookings/:id/resolve-conflict', (req, res) => {
   res.json(booking);
 });
 
-app.put('/api/bookings/:id/archive', (req, res) => {
+app.put('/api/bookings/:id/archive', async (req, res) => {
   const { id } = req.params;
+
+  if (usePrisma) {
+    try {
+      const { BookingStatus, Role } = require('@prisma/client');
+      await prisma.booking.update({
+        where: { id },
+        data: {
+          status: BookingStatus.ARCHIVED,
+        },
+      });
+
+      await prisma.flowRecord.create({
+        data: {
+          bookingId: id,
+          action: '归档',
+          operator: '王复核',
+          role: Role.REVIEWER,
+          remark: '预订记录已归档',
+        },
+      });
+
+      const booking = await getPrismaBookingWithRelations(id);
+      res.json(booking);
+      return;
+    } catch (error) {
+      // Fall through to memory mode
+    }
+  }
+
   const booking = getBookingById(id);
   
   if (!booking) {
@@ -656,5 +1080,5 @@ app.put('/api/bookings/:id/archive', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT} (memory mode)`);
+  console.log(`Server is running on http://localhost:${PORT} (${usePrisma ? 'PostgreSQL mode with fallback' : 'memory mode'})`);
 });
