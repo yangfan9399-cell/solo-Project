@@ -1,0 +1,30 @@
+{
+  "name": "hospital-supplies-platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "5.10.2",
+    "nuxt": "3.10.3",
+    "vue": "3.4.21",
+    "vue-router": "4.3.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "6.11.4",
+    "@types/node": "20.11.24",
+    "prisma": "5.10.2",
+    "tsx": "4.7.1",
+    "typescript": "5.3.3"
+  }
+}

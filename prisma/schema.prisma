@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  NURSE
+  WAREHOUSE_ADMIN
+  DEPARTMENT_REVIEWER
+}
+
+enum RequisitionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  OUTBOUND
+  VERIFIED
+  RETURNED
+  CANCELLED
+}
+
+model Department {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  role         Role
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  requisitionsAsNurse       Requisition[] @relation("nurse")
+  requisitionsAsWarehouse   Requisition[] @relation("warehouseAdmin")
+  requisitionsAsReviewer    Requisition[] @relation("reviewer")
+  historyEntries            RequisitionHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supply {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  spec     String
+  unit     String
+
+  batches SupplyBatch[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SupplyBatch {
+  id          String   @id @default(cuid())
+  supplyId    String
+  batchNumber String
+  quantity    Int
+  expiredAt   DateTime
+  supply      Supply   @relation(fields: [supplyId], references: [id])
+
+  requisitions Requisition[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supplyId, batchNumber])
+}
+
+model Requisition {
+  id                String            @id @default(cuid())
+  requisitionNo     String            @unique
+  supplyId          String
+  supplyBatchId     String?
+  departmentId      String
+  nurseId           String
+  warehouseAdminId  String?
+  reviewerId        String?
+  applyQuantity     Int
+  actualQuantity    Int?
+  status            RequisitionStatus @default(PENDING)
+  usageDescription  String?
+  outboundBasis     String?
+  reviewOpinion     String?
+
+  supply           Supply          @relation(fields: [supplyId], references: [id])
+  supplyBatch      SupplyBatch?    @relation(fields: [supplyBatchId], references: [id])
+  department       Department      @relation(fields: [departmentId], references: [id])
+  nurse            User            @relation("nurse", fields: [nurseId], references: [id])
+  warehouseAdmin   User?           @relation("warehouseAdmin", fields: [warehouseAdminId], references: [id])
+  reviewer         User?           @relation("reviewer", fields: [reviewerId], references: [id])
+  history          RequisitionHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RequisitionHistory {
+  id            String            @id @default(cuid())
+  requisitionId String
+  status        RequisitionStatus
+  operatorId    String
+  remark        String?
+
+  requisition Requisition @relation(fields: [requisitionId], references: [id])
+  operator    User        @relation(fields: [operatorId], references: [id])
+
+  createdAt DateTime @default(now())
+}
