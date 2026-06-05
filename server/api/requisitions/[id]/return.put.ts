@@ -1,5 +1,5 @@
 import prisma from '~/server/utils/prisma'
-import { RequisitionStatus } from '@prisma/client'
+import { RequisitionStatus, InventoryChangeType } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -63,6 +63,19 @@ export default defineEventHandler(async (event) => {
       remark: reviewOpinion || '退回申请'
     }
   })
+
+  if (requisition.supplyBatchId && requisition.actualQuantity) {
+    await prisma.inventoryChange.create({
+      data: {
+        batchId: requisition.supplyBatchId,
+        requisitionId: id,
+        changeType: InventoryChangeType.RETURN,
+        quantity: requisition.actualQuantity,
+        operatorId: reviewerId,
+        remark: '领用退回'
+      }
+    })
+  }
 
   return updated
 })

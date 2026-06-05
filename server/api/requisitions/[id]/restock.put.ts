@@ -1,5 +1,5 @@
 import prisma from '~/server/utils/prisma'
-import { RequisitionStatus } from '@prisma/client'
+import { InventoryChangeType, Role } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -8,6 +8,14 @@ export default defineEventHandler(async (event) => {
 
   if (!id || !warehouseAdminId || !quantity) {
     throw createError({ statusCode: 400, message: '缺少必填字段' })
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { id: warehouseAdminId }
+  })
+
+  if (!admin || admin.role !== Role.WAREHOUSE_ADMIN) {
+    throw createError({ statusCode: 403, message: '仅库房管理员可执行补货操作' })
   }
 
   const requisition = await prisma.requisition.findUnique({
@@ -28,12 +36,14 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  await prisma.requisitionHistory.create({
+  await prisma.inventoryChange.create({
     data: {
+      batchId: requisition.supplyBatchId,
       requisitionId: id,
-      status: RequisitionStatus.OUTBOUND,
+      changeType: InventoryChangeType.RESTOCK,
+      quantity,
       operatorId: warehouseAdminId,
-      remark: remark || `补货 ${quantity} ${requisition.supply?.unit || ''}`
+      remark: remark || `补货 ${quantity}`
     }
   })
 

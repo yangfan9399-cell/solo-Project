@@ -20,7 +20,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">申请科室</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">申请数量</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">实际数量</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">库存数量</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">库存(当前/初始)</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
           </tr>
@@ -44,9 +44,15 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm">
               <div class="flex flex-col">
-                <span :class="getStockClass(req)">
-                  {{ req.supplyBatch?.quantity || '-' }}
-                </span>
+                <div class="flex items-center space-x-1">
+                  <span :class="getStockClass(req)">
+                    {{ req.supplyBatch?.quantity || '-' }}
+                  </span>
+                  <span class="text-gray-400">/</span>
+                  <span class="text-gray-400">
+                    {{ req.supplyBatch?.initialStock || '-' }}
+                  </span>
+                </div>
                 <span v-if="isBatchExpired(req.supplyBatch?.expiredAt)" class="text-xs text-red-500">已过期</span>
               </div>
             </td>

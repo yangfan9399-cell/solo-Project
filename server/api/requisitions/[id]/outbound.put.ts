@@ -1,5 +1,5 @@
 import prisma from '~/server/utils/prisma'
-import { RequisitionStatus, Role } from '@prisma/client'
+import { RequisitionStatus, Role, InventoryChangeType } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -90,6 +90,17 @@ export default defineEventHandler(async (event) => {
       status: RequisitionStatus.OUTBOUND,
       operatorId: warehouseAdminId,
       remark: '确认出库'
+    }
+  })
+
+  await prisma.inventoryChange.create({
+    data: {
+      batchId: supplyBatchId,
+      requisitionId: id,
+      changeType: InventoryChangeType.OUTBOUND,
+      quantity: actualQuantity,
+      operatorId: warehouseAdminId,
+      remark: '领用出库'
     }
   })
 

@@ -62,19 +62,42 @@ model Supply {
 }
 
 model SupplyBatch {
-  id          String   @id @default(cuid())
-  supplyId    String
-  batchNumber String
-  quantity    Int
-  expiredAt   DateTime
-  supply      Supply   @relation(fields: [supplyId], references: [id])
+  id           String   @id @default(cuid())
+  supplyId     String
+  batchNumber  String
+  quantity     Int
+  initialStock Int
+  expiredAt    DateTime
+  supply       Supply   @relation(fields: [supplyId], references: [id])
 
-  requisitions Requisition[]
+  requisitions     Requisition[]
+  inventoryChanges InventoryChange[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([supplyId, batchNumber])
+}
+
+enum InventoryChangeType {
+  OUTBOUND
+  RETURN
+  RESTOCK
+}
+
+model InventoryChange {
+  id            String             @id @default(cuid())
+  batchId       String
+  requisitionId String?
+  changeType    InventoryChangeType
+  quantity      Int
+  operatorId    String
+  remark        String?
+
+  batch       SupplyBatch @relation(fields: [batchId], references: [id])
+  requisition Requisition? @relation(fields: [requisitionId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 model Requisition {

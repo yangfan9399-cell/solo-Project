@@ -105,13 +105,17 @@
 
     <div class="bg-white rounded-lg shadow p-6" v-if="requisition.supplyBatch">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">批次与库存</h3>
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-4 gap-4">
         <div>
           <span class="text-sm text-gray-500">批次号</span>
           <p class="font-medium">{{ requisition.supplyBatch.batchNumber }}</p>
         </div>
         <div>
-          <span class="text-sm text-gray-500">库存数量</span>
+          <span class="text-sm text-gray-500">初始库存</span>
+          <p class="font-medium">{{ requisition.supplyBatch.initialStock }} {{ requisition.supply.unit }}</p>
+        </div>
+        <div>
+          <span class="text-sm text-gray-500">当前库存</span>
           <p class="font-medium">{{ currentStock }} {{ requisition.supply.unit }}</p>
         </div>
         <div>
@@ -192,8 +196,8 @@
 
     <div v-if="inventoryCheck" class="bg-white rounded-lg shadow p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">库存复盘</h3>
-      <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-        <div class="grid grid-cols-4 gap-4 text-sm">
+      <div class="mb-4 p-3 rounded-lg" :class="inventoryCheck.isAllConsistent ? 'bg-green-50' : 'bg-red-50'">
+        <div class="grid grid-cols-5 gap-4 text-sm">
           <div>
             <span class="text-gray-500">总批次:</span>
             <span class="font-medium ml-1">{{ inventoryCheck.summary.totalBatches }}</span>
@@ -203,33 +207,58 @@
             <span class="font-medium ml-1 text-green-600">{{ inventoryCheck.summary.consistentBatches }}</span>
           </div>
           <div>
+            <span class="text-gray-500">不一致批次:</span>
+            <span class="font-medium ml-1 text-red-600">{{ inventoryCheck.summary.inconsistentBatches }}</span>
+          </div>
+          <div>
             <span class="text-gray-500">当前总库存:</span>
             <span class="font-medium ml-1">{{ inventoryCheck.summary.totalCurrentStock }}</span>
           </div>
           <div>
-            <span class="text-gray-500">累计出库:</span>
-            <span class="font-medium ml-1">{{ inventoryCheck.summary.totalOutbound }}</span>
+            <span class="text-gray-500">总差额:</span>
+            <span class="font-medium ml-1" :class="inventoryCheck.summary.totalDifference >= 0 ? 'text-green-600' : 'text-red-600'">
+              {{ inventoryCheck.summary.totalDifference >= 0 ? '+' : '' }}{{ inventoryCheck.summary.totalDifference }}
+            </span>
           </div>
         </div>
       </div>
       <div
         v-for="item in inventoryCheck.details"
         :key="item.batchId"
-        class="flex items-center justify-between py-2 border-b last:border-0"
+        class="py-3 border-b last:border-0"
       >
-        <div>
-          <span class="font-medium">{{ item.supplyName }}</span>
-          <span class="text-sm text-gray-500 ml-2">({{ item.batchNumber }})</span>
-          <span v-if="item.isExpired" class="text-xs text-red-500 ml-2">已过期</span>
-        </div>
-        <div class="flex items-center space-x-4 text-sm">
-          <span>当前库存: <strong>{{ item.currentStock }}</strong></span>
-          <span>已出库: {{ item.totalOutbound }}</span>
-          <span>已退回: {{ item.totalReturned }}</span>
-          <span>净出库: {{ item.netOutbound }}</span>
-          <span :class="item.isConsistent ? 'text-green-600' : 'text-red-600'">
-            {{ item.isConsistent ? '✓ 一致' : '✗ 不一致' }}
-          </span>
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium">{{ item.supplyName }}</span>
+              <span class="text-sm text-gray-500">({{ item.batchNumber }})</span>
+              <span v-if="item.isExpired" class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">已过期</span>
+              <span :class="item.isConsistent ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'" class="text-xs px-2 py-0.5 rounded">
+                {{ item.isConsistent ? '✓ 一致' : '✗ 不一致' }}
+              </span>
+            </div>
+            <div v-if="!item.isConsistent && item.inconsistencyReasons.length > 0" class="mt-2">
+              <div v-for="(reason, idx) in item.inconsistencyReasons" :key="idx" class="text-xs text-red-600">
+                ⚠️ {{ reason }}
+              </div>
+            </div>
+          </div>
+          <div class="text-right text-sm">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+              <span class="text-gray-500">初始库存:</span>
+              <span class="font-medium">{{ item.initialStock }}</span>
+              <span class="text-gray-500">出库/退回/补货:</span>
+              <span>{{ item.totalOutbound }} / {{ item.totalReturned }} / {{ item.totalRestock }}</span>
+              <span class="text-gray-500">预期库存:</span>
+              <span>{{ item.expectedStock }}</span>
+              <span class="text-gray-500">实际库存:</span>
+              <span class="font-medium">{{ item.currentStock }}</span>
+              <span class="text-gray-500">差额:</span>
+              <span :class="item.difference >= 0 ? 'text-green-600' : 'text-red-600'" class="font-medium">
+                {{ item.difference >= 0 ? '+' : '' }}{{ item.difference }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

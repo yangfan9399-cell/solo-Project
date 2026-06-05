@@ -1,9 +1,10 @@
-import { PrismaClient, Role, RequisitionStatus } from '@prisma/client'
+import { PrismaClient, Role, RequisitionStatus, InventoryChangeType } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('开始清理数据...')
+  await prisma.inventoryChange.deleteMany()
   await prisma.requisitionHistory.deleteMany()
   await prisma.requisition.deleteMany()
   await prisma.supplyBatch.deleteMany()
@@ -110,7 +111,8 @@ async function main() {
     data: {
       supplyId: syringe.id,
       batchNumber: 'SYR-2024-001',
-      quantity: 500,
+      initialStock: 500,
+      quantity: 490,
       expiredAt: futureDate
     }
   })
@@ -119,6 +121,7 @@ async function main() {
     data: {
       supplyId: glove.id,
       batchNumber: 'GLO-2024-001',
+      initialStock: 15,
       quantity: 5,
       expiredAt: futureDate
     }
@@ -128,6 +131,7 @@ async function main() {
     data: {
       supplyId: gauze.id,
       batchNumber: 'GAU-2024-001',
+      initialStock: 200,
       quantity: 200,
       expiredAt: pastDate
     }
@@ -137,7 +141,8 @@ async function main() {
     data: {
       supplyId: catheter.id,
       batchNumber: 'CAT-2024-001',
-      quantity: 100,
+      initialStock: 100,
+      quantity: 95,
       expiredAt: futureDate
     }
   })
@@ -184,6 +189,17 @@ async function main() {
     ]
   })
 
+  await prisma.inventoryChange.create({
+    data: {
+      batchId: batch1.id,
+      requisitionId: req1.id,
+      changeType: InventoryChangeType.OUTBOUND,
+      quantity: 10,
+      operatorId: warehouseAdmin.id,
+      remark: '领用出库'
+    }
+  })
+
   console.log('创建领用记录 - 场景2: 库存不足...')
   const req2 = await prisma.requisition.create({
     data: {
@@ -204,6 +220,17 @@ async function main() {
       status: RequisitionStatus.PENDING,
       operatorId: nurse1.id,
       remark: '提交领用申请'
+    }
+  })
+
+  await prisma.inventoryChange.create({
+    data: {
+      batchId: batch2.id,
+      requisitionId: req2.id,
+      changeType: InventoryChangeType.OUTBOUND,
+      quantity: 10,
+      operatorId: warehouseAdmin.id,
+      remark: '模拟历史出库（创建不一致）'
     }
   })
 
@@ -236,6 +263,17 @@ async function main() {
         remark: '申请人科室与申请科室不符，拒绝申请'
       }
     ]
+  })
+
+  await prisma.inventoryChange.create({
+    data: {
+      batchId: batch4.id,
+      requisitionId: req3.id,
+      changeType: InventoryChangeType.OUTBOUND,
+      quantity: 5,
+      operatorId: warehouseAdmin.id,
+      remark: '领用出库（后被拒绝，创建不一致）'
+    }
   })
 
   console.log('创建领用记录 - 场景4: 批次过期...')
