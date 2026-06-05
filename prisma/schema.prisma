@@ -28,34 +28,37 @@ model Department {
   name  String @unique
   users User[]
 
+  requisitions Requisition[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model User {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
   role         Role
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  requisitionsAsNurse       Requisition[] @relation("nurse")
-  requisitionsAsWarehouse   Requisition[] @relation("warehouseAdmin")
-  requisitionsAsReviewer    Requisition[] @relation("reviewer")
-  historyEntries            RequisitionHistory[]
+  requisitionsAsNurse     Requisition[]        @relation("nurse")
+  requisitionsAsWarehouse Requisition[]        @relation("warehouseAdmin")
+  requisitionsAsReviewer  Requisition[]        @relation("reviewer")
+  historyEntries          RequisitionHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Supply {
-  id       String  @id @default(cuid())
-  name     String
-  code     String  @unique
-  spec     String
-  unit     String
+  id   String @id @default(cuid())
+  name String
+  code String @unique
+  spec String
+  unit String
 
-  batches SupplyBatch[]
+  batches      SupplyBatch[]
+  requisitions Requisition[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,7 +89,7 @@ enum InventoryChangeType {
 }
 
 model InventoryChange {
-  id            String             @id @default(cuid())
+  id            String              @id @default(cuid())
   batchId       String
   requisitionId String?
   changeType    InventoryChangeType
@@ -94,35 +97,36 @@ model InventoryChange {
   operatorId    String
   remark        String?
 
-  batch       SupplyBatch @relation(fields: [batchId], references: [id])
+  batch       SupplyBatch  @relation(fields: [batchId], references: [id])
   requisition Requisition? @relation(fields: [requisitionId], references: [id])
 
   createdAt DateTime @default(now())
 }
 
 model Requisition {
-  id                String            @id @default(cuid())
-  requisitionNo     String            @unique
-  supplyId          String
-  supplyBatchId     String?
-  departmentId      String
-  nurseId           String
-  warehouseAdminId  String?
-  reviewerId        String?
-  applyQuantity     Int
-  actualQuantity    Int?
-  status            RequisitionStatus @default(PENDING)
-  usageDescription  String?
-  outboundBasis     String?
-  reviewOpinion     String?
+  id               String            @id @default(cuid())
+  requisitionNo    String            @unique
+  supplyId         String
+  supplyBatchId    String?
+  departmentId     String
+  nurseId          String
+  warehouseAdminId String?
+  reviewerId       String?
+  applyQuantity    Int
+  actualQuantity   Int?
+  status           RequisitionStatus @default(PENDING)
+  usageDescription String?
+  outboundBasis    String?
+  reviewOpinion    String?
 
-  supply           Supply          @relation(fields: [supplyId], references: [id])
-  supplyBatch      SupplyBatch?    @relation(fields: [supplyBatchId], references: [id])
-  department       Department      @relation(fields: [departmentId], references: [id])
-  nurse            User            @relation("nurse", fields: [nurseId], references: [id])
-  warehouseAdmin   User?           @relation("warehouseAdmin", fields: [warehouseAdminId], references: [id])
-  reviewer         User?           @relation("reviewer", fields: [reviewerId], references: [id])
+  supply           Supply               @relation(fields: [supplyId], references: [id])
+  supplyBatch      SupplyBatch?         @relation(fields: [supplyBatchId], references: [id])
+  department       Department           @relation(fields: [departmentId], references: [id])
+  nurse            User                 @relation("nurse", fields: [nurseId], references: [id])
+  warehouseAdmin   User?                @relation("warehouseAdmin", fields: [warehouseAdminId], references: [id])
+  reviewer         User?                @relation("reviewer", fields: [reviewerId], references: [id])
   history          RequisitionHistory[]
+  inventoryChanges InventoryChange[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
