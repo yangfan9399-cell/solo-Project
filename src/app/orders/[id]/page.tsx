@@ -17,8 +17,15 @@ type ModalType = 'approve' | 'reject' | 'archive' | 'supplement' | 'classificati
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { orders, approveOrder, rejectOrder, archiveOrder, supplementDocuments, resolveClassification, resolveAmountDiscrepancy } = useOrderStore();
+  const { orders, loading, fetchOrder, approveOrder, rejectOrder, archiveOrder, supplementDocuments, resolveClassification, resolveAmountDiscrepancy, useMockFallback } = useOrderStore();
   const order = orders.find(o => o.id === params.id);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (params.id) {
+      fetchOrder(params.id);
+    }
+  }, [params.id, fetchOrder]);
   
   const [showModal, setShowModal] = useState<ModalType>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -38,6 +45,14 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     }
   }, [order]);
 
+  if (loading && !order) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
   if (!order) {
     notFound();
   }
@@ -55,65 +70,103 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    setIsProcessing(true);
     try {
-      approveOrder(order.id, '李明');
+      await approveOrder(order.id, '李明');
       showToast('订单已放行', 'success');
       setShowModal(null);
     } catch (e) {
       showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectReason.trim()) {
       showToast('请输入退回原因', 'error');
       return;
     }
-    rejectOrder(order.id, '李明', rejectReason);
-    showToast('订单已退回', 'success');
-    setShowModal(null);
-    setRejectReason('');
+    setIsProcessing(true);
+    try {
+      await rejectOrder(order.id, '李明', rejectReason);
+      showToast('订单已退回', 'success');
+      setShowModal(null);
+      setRejectReason('');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleArchive = () => {
-    archiveOrder(order.id, '系统');
-    showToast('订单已归档', 'success');
-    setShowModal(null);
+  const handleArchive = async () => {
+    setIsProcessing(true);
+    try {
+      await archiveOrder(order.id, '系统');
+      showToast('订单已归档', 'success');
+      setShowModal(null);
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleSupplement = () => {
+  const handleSupplement = async () => {
     if (!supplementNotes.trim()) {
       showToast('请输入补充说明', 'error');
       return;
     }
-    supplementDocuments(order.id, '张伟', supplementNotes);
-    showToast('资料补充完成，已提交关务复核', 'success');
-    setShowModal(null);
-    setSupplementNotes('');
+    setIsProcessing(true);
+    try {
+      await supplementDocuments(order.id, '张伟', supplementNotes);
+      showToast('资料补充完成，已提交关务复核', 'success');
+      setShowModal(null);
+      setSupplementNotes('');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleResolveClassification = () => {
+  const handleResolveClassification = async () => {
     if (!finalHsCode.trim()) {
       showToast('请输入最终HS编码', 'error');
       return;
     }
-    resolveClassification(order.id, '张伟', finalHsCode, classificationNotes);
-    showToast('归类说明已确认，已提交关务复核', 'success');
-    setShowModal(null);
-    setClassificationNotes('');
+    setIsProcessing(true);
+    try {
+      await resolveClassification(order.id, '张伟', finalHsCode, classificationNotes);
+      showToast('归类说明已确认，已提交关务复核', 'success');
+      setShowModal(null);
+      setClassificationNotes('');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleResolveAmount = () => {
+  const handleResolveAmount = async () => {
     const amount = parseFloat(correctedAmount);
     if (isNaN(amount) || amount <= 0) {
       showToast('请输入有效金额', 'error');
       return;
     }
-    resolveAmountDiscrepancy(order.id, '张伟', amount, amountNotes);
-    showToast('金额更正完成，已提交关务复核', 'success');
-    setShowModal(null);
-    setAmountNotes('');
+    setIsProcessing(true);
+    try {
+      await resolveAmountDiscrepancy(order.id, '张伟', amount, amountNotes);
+      showToast('金额更正完成，已提交关务复核', 'success');
+      setShowModal(null);
+      setAmountNotes('');
+    } catch (e) {
+      showToast((e as Error).message, 'error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const documentStatusColor = (status: string) => {
@@ -137,7 +190,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       )}
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <Link href="/" className="text-gray-500 hover:text-primary">
             ← 返回列表
           </Link>
@@ -145,12 +198,18 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status as OrderStatus)}`}>
             {getStatusLabel(order.status as OrderStatus)}
           </span>
+          {useMockFallback && (
+            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              ⚠️ 演示模式
+            </span>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           {canSupplement && (
             <button
               onClick={() => setShowModal('supplement')}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               📝 补资料
             </button>
@@ -158,7 +217,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           {canResolveClassification && (
             <button
               onClick={() => setShowModal('classification')}
-              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               🏷️ 归类说明
             </button>
@@ -166,7 +226,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           {canResolveAmount && (
             <button
               onClick={() => setShowModal('amount')}
-              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               💰 更正金额
             </button>
@@ -174,7 +235,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           {canApprove && (
             <button
               onClick={() => setShowModal('approve')}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ✓ 确认放行
             </button>
@@ -182,7 +244,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           {canReject && (
             <button
               onClick={() => setShowModal('reject')}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               ✗ 退回
             </button>
@@ -190,7 +253,8 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           {canArchive && (
             <button
               onClick={() => setShowModal('archive')}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              disabled={isProcessing}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               📁 归档
             </button>

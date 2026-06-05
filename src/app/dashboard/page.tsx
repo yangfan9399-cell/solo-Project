@@ -1,13 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getStatusLabel, OrderStatus } from '@/lib/mockData';
 import { useOrderStore } from '@/lib/orderStore';
 
 export default function DashboardPage() {
-  const { orders } = useOrderStore();
+  const { orders, loading, fetchOrders, useMockFallback } = useOrderStore();
   const [timeRange, setTimeRange] = useState('all');
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const stats = useMemo(() => {
     const total = orders.length;
@@ -103,7 +107,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">📊 复盘统计</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-800">📊 复盘统计</h1>
+          {useMockFallback && (
+            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              ⚠️ 演示模式 (内存数据)
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           <select
             value={timeRange}

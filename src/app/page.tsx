@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   getStatusLabel, 
@@ -10,7 +10,11 @@ import {
 import { useOrderStore } from '@/lib/orderStore';
 
 export default function Home() {
-  const { orders } = useOrderStore();
+  const { orders, loading, fetchOrders, useMockFallback } = useOrderStore();
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -49,7 +53,14 @@ export default function Home() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">清关处理台</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-800">清关处理台</h1>
+          {useMockFallback && (
+            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              ⚠️ 演示模式 (内存数据)
+            </span>
+          )}
+        </div>
         <div className="text-sm text-gray-500">
           共 {orders.length} 票订单
         </div>
