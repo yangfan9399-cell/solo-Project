@@ -62,7 +62,8 @@
               <template v-if="currentRole === 'WAREHOUSE_ADMIN' && req.status === 'PENDING'">
                 <button
                   @click="handleOutbound(req)"
-                  class="text-green-600 hover:text-green-800 mr-2"
+                  :disabled="isBatchExpired(req.supplyBatch?.expiredAt)"
+                  class="text-green-600 hover:text-green-800 mr-2 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
                   出库
                 </button>
@@ -72,20 +73,35 @@
                 >
                   补货
                 </button>
+                <span v-if="isBatchExpired(req.supplyBatch?.expiredAt)" class="text-xs text-red-500 ml-2 block">批次已过期</span>
               </template>
-              <template v-if="currentRole === 'DEPARTMENT_REVIEWER' && req.status === 'OUTBOUND'">
+              <template v-if="req.status === 'PENDING' && (isBatchExpired(req.supplyBatch?.expiredAt) || currentRole === 'NURSE')">
                 <button
-                  @click="handleVerify(req)"
-                  class="text-green-600 hover:text-green-800 mr-2"
+                  v-if="canCancel(req)"
+                  @click="handleCancel(req)"
+                  class="text-gray-600 hover:text-gray-800 ml-2"
                 >
-                  核销
+                  撤回
                 </button>
-                <button
-                  @click="handleReturn(req)"
-                  class="text-red-600 hover:text-red-800"
-                >
-                  退回
-                </button>
+              </template>
+              <template v-if="currentRole === 'DEPARTMENT_REVIEWER'">
+                <template v-if="req.status === 'OUTBOUND'">
+                  <template v-if="isSameDepartment(req)">
+                    <button
+                      @click="handleVerify(req)"
+                      class="text-green-600 hover:text-green-800 mr-2"
+                    >
+                      核销
+                    </button>
+                    <button
+                      @click="handleReturn(req)"
+                      class="text-red-600 hover:text-red-800"
+                    >
+                      退回
+                    </button>
+                  </template>
+                  <span v-else class="text-xs text-gray-400" title="仅同科室复核人可操作">非本科室</span>
+                </template>
               </template>
             </td>
           </tr>
@@ -126,6 +142,13 @@
       @close="showReturnModal = false"
       @updated="fetchRequisitions"
     />
+
+    <CancelModal
+      v-if="showCancelModal"
+      :requisition="selectedRequisition"
+      @close="showCancelModal = false"
+      @updated="fetchRequisitions"
+    />
   </div>
 </template>
 
@@ -140,6 +163,7 @@ const showOutboundModal = ref(false)
 const showRestockModal = ref(false)
 const showVerifyModal = ref(false)
 const showReturnModal = ref(false)
+const showCancelModal = ref(false)
 const selectedRequisition = ref<any>(null)
 
 const getStatusLabel = (status: string) => {
@@ -192,5 +216,25 @@ const handleVerify = (req: any) => {
 const handleReturn = (req: any) => {
   selectedRequisition.value = req
   showReturnModal.value = true
+}
+
+const handleCancel = (req: any) => {
+  selectedRequisition.value = req
+  showCancelModal.value = true
+}
+
+const isBatchExpired = (expiredAt: string | Date | null | undefined) => {
+  if (!expiredAt) return false
+  return new Date(expiredAt) < new Date()
+}
+
+const canCancel = (req: any) => {
+  if (!currentUser.value) return false
+  return currentUser.value.departmentId === req.departmentId
+}
+
+const isSameDepartment = (req: any) => {
+  if (!currentUser.value) return false
+  return currentUser.value.departmentId === req.departmentId
 }
 </script>

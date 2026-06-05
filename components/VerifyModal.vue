@@ -8,8 +8,12 @@
         <div class="bg-gray-50 rounded-lg p-4">
           <p class="text-sm text-gray-600">领用单号: {{ requisition.requisitionNo }}</p>
           <p class="text-sm text-gray-600">耗材: {{ requisition.supply.name }}</p>
+          <p class="text-sm text-gray-600">申请科室: {{ requisition.department.name }}</p>
           <p class="text-sm text-gray-600">实际出库: {{ requisition.actualQuantity }} {{ requisition.supply.unit }}</p>
           <p class="text-sm text-gray-600">出库管理员: {{ requisition.warehouseAdmin?.name }}</p>
+          <p v-if="!isSameDepartment" class="text-sm text-red-600 mt-2">
+            ⚠️ 您不属于该科室，无法执行核销操作
+          </p>
         </div>
 
         <div>
@@ -33,7 +37,7 @@
         </button>
         <button
           @click="handleSubmit"
-          :disabled="loading"
+          :disabled="loading || !isSameDepartment"
           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
         >
           {{ loading ? '处理中...' : '确认核销' }}
@@ -57,6 +61,11 @@ const form = ref({
 
 const loading = ref(false)
 const error = ref('')
+
+const isSameDepartment = computed(() => {
+  if (!currentUser.value) return false
+  return currentUser.value.departmentId === props.requisition.departmentId
+})
 
 const handleSubmit = async () => {
   loading.value = true

@@ -13,6 +13,50 @@
           {{ getStatusLabel(requisition.status) }}
         </span>
       </div>
+      <div class="flex items-center space-x-2">
+        <template v-if="currentRole === 'WAREHOUSE_ADMIN' && requisition.status === 'PENDING'">
+          <button
+            @click="handleOutbound"
+            :disabled="isBatchExpired"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            出库
+          </button>
+          <button
+            @click="handleRestock"
+            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
+            补货
+          </button>
+          <span v-if="isBatchExpired" class="text-sm text-red-500">批次已过期</span>
+        </template>
+        <template v-if="requisition.status === 'PENDING' && (isBatchExpired || currentRole === 'NURSE')">
+          <button
+            v-if="canCancel"
+            @click="handleCancel"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            撤回申请
+          </button>
+        </template>
+        <template v-if="currentRole === 'DEPARTMENT_REVIEWER' && requisition.status === 'OUTBOUND'">
+          <template v-if="isSameDepartment">
+            <button
+              @click="handleVerify"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              核销
+            </button>
+            <button
+              @click="handleReturn"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              退回
+            </button>
+          </template>
+          <span v-else class="text-sm text-gray-400" title="仅同科室复核人可操作">非本科室，无法操作</span>
+        </template>
+      </div>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6">
@@ -166,6 +210,41 @@
         </div>
       </div>
     </div>
+
+    <OutboundModal
+      v-if="showOutboundModal"
+      :requisition="requisition"
+      @close="showOutboundModal = false"
+      @updated="refreshData"
+    />
+
+    <RestockModal
+      v-if="showRestockModal"
+      :requisition="requisition"
+      @close="showRestockModal = false"
+      @updated="refreshData"
+    />
+
+    <VerifyModal
+      v-if="showVerifyModal"
+      :requisition="requisition"
+      @close="showVerifyModal = false"
+      @updated="refreshData"
+    />
+
+    <ReturnModal
+      v-if="showReturnModal"
+      :requisition="requisition"
+      @close="showReturnModal = false"
+      @updated="refreshData"
+    />
+
+    <CancelModal
+      v-if="showCancelModal"
+      :requisition="requisition"
+      @close="showCancelModal = false"
+      @updated="refreshData"
+    />
   </div>
 </template>
 
@@ -173,11 +252,20 @@
 const route = useRoute()
 const id = route.params.id as string
 
-const { data: requisition } = await useFetch(`/api/requisitions/${id}`)
-const { data: inventoryCheck } = await useFetch('/api/inventory/verify')
+const currentRole = inject<Ref<string>>('currentRole', ref(''))
+const currentUser = inject<Ref<any>>('currentUser', ref(null))
+
+const { data: requisition, refresh: refreshRequisition } = await useFetch(`/api/requisitions/${id}`)
+const { data: inventoryCheck, refresh: refreshInventory } = await useFetch('/api/inventory/verify')
 
 const currentStock = ref(0)
 const isBatchExpired = ref(false)
+
+const showOutboundModal = ref(false)
+const showRestockModal = ref(false)
+const showVerifyModal = ref(false)
+const showReturnModal = ref(false)
+const showCancelModal = ref(false)
 
 watch(requisition, (req) => {
   if (req?.supplyBatch) {
@@ -185,6 +273,41 @@ watch(requisition, (req) => {
     isBatchExpired.value = new Date(req.supplyBatch.expiredAt) < new Date()
   }
 }, { immediate: true })
+
+const canCancel = computed(() => {
+  if (!currentUser.value || !requisition.value) return false
+  return currentUser.value.departmentId === requisition.value.departmentId
+})
+
+const isSameDepartment = computed(() => {
+  if (!currentUser.value || !requisition.value) return false
+  return currentUser.value.departmentId === requisition.value.departmentId
+})
+
+const refreshData = () => {
+  refreshRequisition()
+  refreshInventory()
+}
+
+const handleOutbound = () => {
+  showOutboundModal.value = true
+}
+
+const handleRestock = () => {
+  showRestockModal.value = true
+}
+
+const handleVerify = () => {
+  showVerifyModal.value = true
+}
+
+const handleReturn = () => {
+  showReturnModal.value = true
+}
+
+const handleCancel = () => {
+  showCancelModal.value = true
+}
 
 const formatDate = (date: string | Date) => {
   return new Date(date).toLocaleString('zh-CN')

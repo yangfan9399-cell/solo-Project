@@ -12,7 +12,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">选择批次</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">选择批次（仅未过期）</label>
           <select
             v-model="form.supplyBatchId"
             class="w-full border rounded-lg px-3 py-2"
@@ -20,15 +20,16 @@
           >
             <option value="">请选择批次</option>
             <option
-              v-for="batch in supplyBatches"
+              v-for="batch in validBatches"
               :key="batch.id"
               :value="batch.id"
-              :disabled="isBatchExpired(batch.expiredAt)"
             >
               {{ batch.batchNumber }} - 库存: {{ batch.quantity }} - 有效期: {{ formatDate(batch.expiredAt) }}
-              <span v-if="isBatchExpired(batch.expiredAt)" class="text-red-500">(已过期)</span>
             </option>
           </select>
+          <p v-if="validBatches.length === 0" class="text-xs text-red-600 mt-1">
+            该耗材无可用批次，请先补货或更换其他耗材
+          </p>
         </div>
 
         <div v-if="selectedBatch">
@@ -42,9 +43,6 @@
           />
           <p v-if="selectedBatch.quantity < requisition.applyQuantity" class="text-xs text-orange-600 mt-1">
             库存不足，当前库存: {{ selectedBatch.quantity }}
-          </p>
-          <p v-if="isSelectedBatchExpired" class="text-xs text-red-600 mt-1">
-            该批次已过期，请更换批次或撤回申请
           </p>
         </div>
 
@@ -69,7 +67,7 @@
         </button>
         <button
           @click="handleSubmit"
-          :disabled="loading || isSelectedBatchExpired"
+          :disabled="loading || !form.supplyBatchId"
           class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
         >
           {{ loading ? '处理中...' : '确认出库' }}
@@ -104,13 +102,12 @@ const supplyBatches = computed(() => {
   return supply?.batches || []
 })
 
-const isSelectedBatchExpired = computed(() => {
-  if (!selectedBatch.value) return false
-  return isBatchExpired(selectedBatch.value.expiredAt)
+const validBatches = computed(() => {
+  return supplyBatches.value.filter((batch: any) => !isBatchExpired(batch.expiredAt))
 })
 
 const onBatchChange = () => {
-  selectedBatch.value = supplyBatches.value.find((b: any) => b.id === form.value.supplyBatchId)
+  selectedBatch.value = validBatches.value.find((b: any) => b.id === form.value.supplyBatchId)
   if (selectedBatch.value) {
     form.value.actualQuantity = Math.min(props.requisition.applyQuantity, selectedBatch.value.quantity)
   }
@@ -127,11 +124,6 @@ const formatDate = (date: string | Date) => {
 const handleSubmit = async () => {
   if (!form.value.supplyBatchId || !form.value.actualQuantity) {
     error.value = '请选择批次并填写实际数量'
-    return
-  }
-
-  if (isSelectedBatchExpired.value) {
-    error.value = '该批次已过期，请更换批次'
     return
   }
 
