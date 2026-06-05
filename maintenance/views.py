@@ -7,6 +7,7 @@ from .models import (
     Elevator,
     FaultTicket,
     MaintenancePlan,
+    MaintenanceRecord,
     ActionLog,
     Part,
     MaintenanceCompany,
@@ -390,8 +391,11 @@ def start_plan(request, pk):
     if not _check_user_role(request.user, ['maintenance_staff']):
         return JsonResponse({'success': False, 'error': '只有维保人员可以开始维保'}, status=403)
     
-    if plan.assigned_to and plan.assigned_to.id != request.user.id:
-        return JsonResponse({'success': False, 'error': '只能开始指派给自己的维保计划'}, status=403)
+    if not plan.assigned_to:
+        return JsonResponse({'success': False, 'error': '该维保计划尚未指派维保人员，请先指派后再开始'}, status=400)
+    
+    if plan.assigned_to.id != request.user.id:
+        return JsonResponse({'success': False, 'error': f'该计划已指派给 {plan.assigned_to.get_full_name() or plan.assigned_to.username}，您无权执行'}, status=403)
     
     old_status = plan.status
     plan.status = 'in_progress'
@@ -425,8 +429,11 @@ def submit_plan_record(request, pk):
     if not _check_user_role(request.user, ['maintenance_staff']):
         return JsonResponse({'success': False, 'error': '只有维保人员可以提交维保记录'}, status=403)
     
-    if plan.assigned_to and plan.assigned_to.id != request.user.id:
-        return JsonResponse({'success': False, 'error': '只能提交自己负责的维保计划'}, status=403)
+    if not plan.assigned_to:
+        return JsonResponse({'success': False, 'error': '该维保计划尚未指派维保人员'}, status=400)
+    
+    if plan.assigned_to.id != request.user.id:
+        return JsonResponse({'success': False, 'error': f'该计划指派给 {plan.assigned_to.get_full_name() or plan.assigned_to.username}，您无权提交'}, status=403)
     
     check_items = {
         'traction_system': request.POST.get('traction_system', '').strip(),

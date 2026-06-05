@@ -227,13 +227,19 @@
             <div class="bg-white shadow rounded-lg p-6">
                 <h2 class="text-lg font-semibold mb-4 text-gray-900">操作</h2>
                 <div class="space-y-3">
-                    {% if plan.status == 'pending' and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
+                    {% if plan.status == 'pending' and plan.assigned_to and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
                     <form hx-post="{% url 'maintenance:start_plan' plan.id %}" hx-target="#plan-detail" hx-swap="innerHTML">
                         {% csrf_token %}
                         <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                             开始执行维保
                         </button>
                     </form>
+                    {% endif %}
+
+                    {% if plan.status == 'pending' and not plan.assigned_to %}
+                    <div class="text-center text-yellow-600 text-sm py-2 bg-yellow-50 rounded-md">
+                        ⚠️ 该计划尚未指派维保人员
+                    </div>
                     {% endif %}
 
                     {% if plan.status == 'returned' %}
@@ -247,7 +253,7 @@
                     </div>
                     {% endif %}
 
-                    {% if plan.status|plan_status_in:'in_progress,returned' and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
+                    {% if plan.status|plan_status_in:'in_progress,returned' and plan.assigned_to and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
                     <button @click="showSubmitModal = true" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                         提交维保记录
                     </button>
@@ -265,9 +271,19 @@
                     </div>
                     {% endif %}
 
+                    {% if plan.status == 'pending' and plan.assigned_to and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id != user.id %}
+                    <div class="text-center text-gray-400 text-sm py-2">
+                        该计划已指派给其他维保人员
+                    </div>
+                    {% endif %}
                     {% if plan.status == 'pending' and user.userprofile.role != 'maintenance_staff' %}
                     <div class="text-center text-gray-400 text-sm py-2">
                         只有指派的维保人员可以开始执行
+                    </div>
+                    {% endif %}
+                    {% if plan.status|plan_status_in:'in_progress,returned' and plan.assigned_to and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id != user.id %}
+                    <div class="text-center text-gray-400 text-sm py-2">
+                        该计划由其他维保人员负责
                     </div>
                     {% endif %}
                     {% if plan.status|plan_status_in:'in_progress,returned' and user.userprofile.role != 'maintenance_staff' %}
