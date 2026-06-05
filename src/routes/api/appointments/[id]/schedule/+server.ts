@@ -38,13 +38,17 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			.set({ status: 'teacher_conflict', updatedAt: new Date() })
 			.where(eq(appointments.id, appointmentId));
 
+		const oldValues = { status: existing.status };
+		const newValues = { status: 'teacher_conflict' };
+		const conflictStudentName = conflictCheck.conflictingAppointments?.[0]?.student?.name || '其他学员';
+
 		await db.insert(appointmentChanges).values({
 			appointmentId,
 			changedBy: locals.user.id,
 			changeType: 'conflict_detected',
-			oldValue: existing.status,
-			newValue: 'teacher_conflict',
-			reason: `检测到老师时间冲突：${conflictCheck.conflictingAppointments?.[0]?.student?.name} 的课程`
+			oldValue: JSON.stringify(oldValues),
+			newValue: JSON.stringify(newValues),
+			reason: `检测到老师时间冲突：${conflictStudentName} 的课程`
 		});
 
 		return json(
@@ -53,7 +57,9 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				conflict: true,
 				message: '老师时间冲突',
 				conflictingAppointments: conflictCheck.conflictingAppointments,
-				alternativeTeachers: conflictCheck.alternativeTeachers
+				conflictTeacher: conflictCheck.conflictTeacher,
+				alternativeTeachers: conflictCheck.alternativeTeachers,
+				suggestedTimeSlots: conflictCheck.suggestedTimeSlots
 			},
 			{ status: 409 }
 		);
@@ -71,12 +77,23 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		.where(eq(appointments.id, appointmentId))
 		.returning();
 
+	const oldValues = {
+		status: existing.status,
+		teacherId: existing.teacherId,
+		scheduledAt: existing.scheduledAt
+	};
+	const newValues = {
+		status: 'scheduled',
+		teacherId,
+		scheduledAt
+	};
+
 	await db.insert(appointmentChanges).values({
 		appointmentId,
 		changedBy: locals.user.id,
 		changeType: 'schedule_confirmed',
-		oldValue: existing.status,
-		newValue: 'scheduled',
+		oldValue: JSON.stringify(oldValues),
+		newValue: JSON.stringify(newValues),
 		reason: '教务确认排课'
 	});
 

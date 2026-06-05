@@ -166,10 +166,18 @@
 	function safelyParseJSON(value: string | null): any {
 		if (!value) return {};
 		try {
-			return JSON.parse(value);
+			const parsed = JSON.parse(value);
+			if (typeof parsed === 'object' && parsed !== null) {
+				return parsed;
+			}
+			return { status: value };
 		} catch {
-			return {};
+			return { status: value };
 		}
+	}
+
+	function isStatusString(value: any): boolean {
+		return typeof value === 'string' && !value.startsWith('{');
 	}
 
 	function getStatusColor(status: string) {
@@ -464,11 +472,13 @@
 													</div>
 												{/if}
 												{#if oldData.teacherId !== undefined || newData.teacherId !== undefined}
+													{@const oldTeacherName = teachers.find((t) => t.id === oldData.teacherId)?.name}
+													{@const newTeacherName = teachers.find((t) => t.id === newData.teacherId)?.name}
 													<div class="flex items-center space-x-2 mt-1">
-														<span class="text-slate-500">老师ID：</span>
-														<span class="text-slate-600 line-through">{oldData.teacherId ?? '-'}</span>
+														<span class="text-slate-500">老师：</span>
+														<span class="text-slate-600 line-through">{oldTeacherName ?? oldData.teacherId ?? '-'}</span>
 														<span class="text-slate-400">→</span>
-														<span class="text-green-600 font-medium">{newData.teacherId ?? '-'}</span>
+														<span class="text-green-600 font-medium">{newTeacherName ?? newData.teacherId ?? '-'}</span>
 													</div>
 												{/if}
 											</div>
