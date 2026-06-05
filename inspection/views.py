@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
@@ -369,21 +370,43 @@ def evidence_adopt(request, pk, evidence_id):
     order = get_object_or_404(WorkOrder, pk=pk)
     evidence = get_object_or_404(Evidence, pk=evidence_id, work_order=order)
     
-    if not evidence.is_adopted:
-        evidence.is_adopted = True
-        evidence.adopted_by = request.user
-        evidence.adopted_at = timezone.now()
-        if request.POST.get('note'):
-            evidence.adopt_note = request.POST.get('note')
-        evidence.save()
-        
-        WorkOrderHistory.objects.create(
-            work_order=order,
-            action='adopt_evidence',
-            operator=request.user,
-            comment=f'采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
-        )
+    if request.method != 'POST':
+        messages.error(request, '非法请求：仅支持 POST 方式')
+        return redirect('work_order_detail', pk=pk)
     
+    if order.status == 'archived':
+        messages.error(request, '操作失败：已归档工单禁止修改证据采用状态')
+        return redirect('work_order_detail', pk=pk)
+    
+    is_allowed = (
+        request.user.role == 'admin' or
+        (request.user.role == 'inspector' and order.inspector == request.user) or
+        (request.user.role == 'reviewer' and order.reviewer == request.user)
+    )
+    
+    if not is_allowed:
+        messages.error(request, '权限不足：仅工单的巡检员、复核人或管理员可操作证据采用状态')
+        return redirect('work_order_detail', pk=pk)
+    
+    if evidence.is_adopted:
+        messages.warning(request, '该证据已被采用')
+        return redirect('work_order_detail', pk=pk)
+    
+    evidence.is_adopted = True
+    evidence.adopted_by = request.user
+    evidence.adopted_at = timezone.now()
+    if request.POST.get('note'):
+        evidence.adopt_note = request.POST.get('note')
+    evidence.save()
+    
+    WorkOrderHistory.objects.create(
+        work_order=order,
+        action='adopt_evidence',
+        operator=request.user,
+        comment=f'采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
+    )
+    
+    messages.success(request, '证据采用成功')
     return redirect('work_order_detail', pk=pk)
 
 
@@ -392,19 +415,41 @@ def evidence_unadopt(request, pk, evidence_id):
     order = get_object_or_404(WorkOrder, pk=pk)
     evidence = get_object_or_404(Evidence, pk=evidence_id, work_order=order)
     
-    if evidence.is_adopted:
-        evidence.is_adopted = False
-        evidence.adopted_by = None
-        evidence.adopted_at = None
-        evidence.save()
-        
-        WorkOrderHistory.objects.create(
-            work_order=order,
-            action='unadopt_evidence',
-            operator=request.user,
-            comment=f'取消采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
-        )
+    if request.method != 'POST':
+        messages.error(request, '非法请求：仅支持 POST 方式')
+        return redirect('work_order_detail', pk=pk)
     
+    if order.status == 'archived':
+        messages.error(request, '操作失败：已归档工单禁止修改证据采用状态')
+        return redirect('work_order_detail', pk=pk)
+    
+    is_allowed = (
+        request.user.role == 'admin' or
+        (request.user.role == 'inspector' and order.inspector == request.user) or
+        (request.user.role == 'reviewer' and order.reviewer == request.user)
+    )
+    
+    if not is_allowed:
+        messages.error(request, '权限不足：仅工单的巡检员、复核人或管理员可操作证据采用状态')
+        return redirect('work_order_detail', pk=pk)
+    
+    if not evidence.is_adopted:
+        messages.warning(request, '该证据未被采用')
+        return redirect('work_order_detail', pk=pk)
+    
+    evidence.is_adopted = False
+    evidence.adopted_by = None
+    evidence.adopted_at = None
+    evidence.save()
+    
+    WorkOrderHistory.objects.create(
+        work_order=order,
+        action='unadopt_evidence',
+        operator=request.user,
+        comment=f'取消采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
+    )
+    
+    messages.success(request, '已取消证据采用')
     return redirect('work_order_detail', pk=pk)
 
 
