@@ -149,13 +149,28 @@ export default function RegistrationDetail() {
               </div>
             </div>
 
-            {(registration.score || registration.rank) && (
-              <div className="mt-6 pt-6 border-t">
-                <h3 className="font-semibold mb-4">比赛成绩</h3>
+            <div className={`mt-6 pt-6 border-t ${
+              (registration.checkInStatus === "checked_in" || registration.checkInStatus === "late")
+                ? ""
+                : "hidden"
+            }`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">比赛成绩</h3>
+                {!registration.score && (
+                  <Link
+                    to="/scoring"
+                    className="text-sm px-3 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+                  >
+                    🏆 去录入成绩
+                  </Link>
+                )}
+              </div>
+
+              {(registration.score || registration.rank) ? (
                 <div className="grid grid-cols-2 gap-4">
                   {registration.score && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">成绩</label>
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                      <label className="block text-sm font-medium text-indigo-700">成绩</label>
                       <div className="text-2xl font-bold text-indigo-600">
                         {registration.score > 1000
                           ? (registration.score / 100).toFixed(2) + " 秒"
@@ -164,14 +179,19 @@ export default function RegistrationDetail() {
                     </div>
                   )}
                   {registration.rank && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">排名</label>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <label className="block text-sm font-medium text-green-700">排名</label>
                       <div className="text-2xl font-bold text-green-600">第 {registration.rank} 名</div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 border-dashed rounded-lg p-6 text-center">
+                  <div className="text-gray-400 text-lg">⏳ 成绩待录入</div>
+                  <div className="text-sm text-gray-500 mt-1">参赛者已检录，等待裁判录入成绩</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

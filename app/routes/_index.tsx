@@ -72,7 +72,13 @@ export default function Index() {
           </div>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <Link
+            to="/register"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            📝 参赛者报名
+          </Link>
           <Link
             to="/review"
             className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
@@ -84,6 +90,12 @@ export default function Index() {
             className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
           >
             检录工作台
+          </Link>
+          <Link
+            to="/scoring"
+            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+          >
+            🏆 成绩归档
           </Link>
           <Link
             to="/analytics"
