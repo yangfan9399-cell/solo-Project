@@ -210,7 +210,18 @@ export default async function applicationRoutes(server: FastifyInstance) {
         include: {
           merchant: true,
           shopUnit: true,
-          inspectionNodes: true
+          investmentManager: true,
+          inspectionNodes: {
+            include: {
+              handler: true,
+              rectifications: true
+            },
+            orderBy: { nodeOrder: 'asc' }
+          },
+          responsiblePersons: true,
+          drawings: {
+            include: { uploadedBy: true }
+          }
         }
       })
     })
@@ -258,12 +269,13 @@ export default async function applicationRoutes(server: FastifyInstance) {
         newStatus = ApplicationStatus.ENGINEER_INSPECTED
       } else if (data.result === 'DRAWINGS_MISSING') {
         newStatus = ApplicationStatus.INVESTMENT_REVIEWED
+        const maxNodeOrder = Math.max(...application!.inspectionNodes.map(n => n.nodeOrder))
         await tx.inspectionNode.create({
           data: {
             applicationId: id,
-            nodeType: '工程人员现场检查',
-            nodeOrder: application!.inspectionNodes.length,
-            remarks: '补充图纸后重新检查'
+            nodeType: '工程人员现场检查（补图后）',
+            nodeOrder: maxNodeOrder + 1,
+            remarks: '补充图纸后重新进行工程检查'
           }
         })
       } else if (data.result === 'NEEDS_RECTIFICATION') {
@@ -284,8 +296,17 @@ export default async function applicationRoutes(server: FastifyInstance) {
         include: {
           merchant: true,
           shopUnit: true,
+          investmentManager: true,
           inspectionNodes: {
+            include: {
+              handler: true,
+              rectifications: true
+            },
             orderBy: { nodeOrder: 'asc' }
+          },
+          responsiblePersons: true,
+          drawings: {
+            include: { uploadedBy: true }
           }
         }
       })
@@ -327,11 +348,12 @@ export default async function applicationRoutes(server: FastifyInstance) {
       })
 
       if (data.result === 'NEEDS_RECTIFICATION') {
+        const currentMaxNodeOrder = Math.max(...application.inspectionNodes.map(n => n.nodeOrder))
         await tx.inspectionNode.create({
           data: {
             applicationId: id,
             nodeType: '消防整改复核',
-            nodeOrder: application.inspectionNodes.length + 1,
+            nodeOrder: currentMaxNodeOrder + 1,
             rectificationRequirements: data.rectificationRequirements,
             rectificationDeadline: data.rectificationDeadline ? new Date(data.rectificationDeadline) : null
           }
@@ -357,7 +379,18 @@ export default async function applicationRoutes(server: FastifyInstance) {
         include: {
           merchant: true,
           shopUnit: true,
-          inspectionNodes: true
+          investmentManager: true,
+          inspectionNodes: {
+            include: {
+              handler: true,
+              rectifications: true
+            },
+            orderBy: { nodeOrder: 'asc' }
+          },
+          responsiblePersons: true,
+          drawings: {
+            include: { uploadedBy: true }
+          }
         }
       })
     })
@@ -413,8 +446,17 @@ export default async function applicationRoutes(server: FastifyInstance) {
         include: {
           merchant: true,
           shopUnit: true,
+          investmentManager: true,
           inspectionNodes: {
-            include: { rectifications: true }
+            include: {
+              handler: true,
+              rectifications: true
+            },
+            orderBy: { nodeOrder: 'asc' }
+          },
+          responsiblePersons: true,
+          drawings: {
+            include: { uploadedBy: true }
           }
         }
       })
@@ -441,7 +483,18 @@ export default async function applicationRoutes(server: FastifyInstance) {
       include: {
         merchant: true,
         shopUnit: true,
-        inspectionNodes: true
+        investmentManager: true,
+        inspectionNodes: {
+          include: {
+            handler: true,
+            rectifications: true
+          },
+          orderBy: { nodeOrder: 'asc' }
+        },
+        responsiblePersons: true,
+        drawings: {
+          include: { uploadedBy: true }
+        }
       }
     })
   })

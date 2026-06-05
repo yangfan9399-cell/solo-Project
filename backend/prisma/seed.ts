@@ -40,52 +40,27 @@ async function main() {
 
   console.log('用户创建完成')
 
-  const merchants = await Promise.all([
-    prisma.merchant.upsert({
-      where: { email: 'starbucks@coffee.com' },
-      update: {},
-      create: {
-        name: '星巴克咖啡',
-        contactName: '陈店长',
-        phone: '13900139001',
-        email: 'starbucks@coffee.com',
-        businessType: '餐饮'
-      }
-    }),
-    prisma.merchant.upsert({
-      where: { email: 'uniqlo@fashion.com' },
-      update: {},
-      create: {
-        name: '优衣库',
-        contactName: '刘经理',
-        phone: '13900139002',
-        email: 'uniqlo@fashion.com',
-        businessType: '服装'
-      }
-    }),
-    prisma.merchant.upsert({
-      where: { email: 'haidilao@hotpot.com' },
-      update: {},
-      create: {
-        name: '海底捞火锅',
-        contactName: '周店长',
-        phone: '13900139003',
-        email: 'haidilao@hotpot.com',
-        businessType: '餐饮'
-      }
-    }),
-    prisma.merchant.upsert({
-      where: { email: 'apple@tech.com' },
-      update: {},
-      create: {
-        name: '苹果零售店',
-        contactName: '吴经理',
-        phone: '13900139004',
-        email: 'apple@tech.com',
-        businessType: '数码'
-      }
-    })
-  ])
+  const merchantData = [
+    { name: '星巴克咖啡', contactName: '陈店长', phone: '13900139001', email: 'starbucks@coffee.com', businessType: '餐饮' },
+    { name: '优衣库', contactName: '刘经理', phone: '13900139002', email: 'uniqlo@fashion.com', businessType: '服装' },
+    { name: '海底捞火锅', contactName: '周店长', phone: '13900139003', email: 'haidilao@hotpot.com', businessType: '餐饮' },
+    { name: '苹果零售店', contactName: '吴经理', phone: '13900139004', email: 'apple@tech.com', businessType: '数码' }
+  ]
+
+  const merchants = await Promise.all(
+    merchantData.map(data => 
+      prisma.merchant.upsert({
+        where: { email: data.email },
+        update: {
+          name: data.name,
+          contactName: data.contactName,
+          phone: data.phone,
+          businessType: data.businessType
+        },
+        create: data
+      })
+    )
+  )
 
   console.log('商户创建完成')
 

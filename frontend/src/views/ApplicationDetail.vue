@@ -101,6 +101,20 @@ const pendingRectificationNode = computed(() => {
   )
 })
 
+const pendingEngineerNode = computed(() => {
+  if (!application.value || isArchived.value) return null
+  return application.value.inspectionNodes.find(
+    node => !node.result && node.nodeType.includes('工程人员现场检查')
+  )
+})
+
+const pendingFireNode = computed(() => {
+  if (!application.value || isArchived.value) return null
+  return application.value.inspectionNodes.find(
+    node => !node.result && node.nodeType.includes('消防复核')
+  )
+})
+
 const canRectify = computed(() => {
   return !!pendingRectificationNode.value
 })
