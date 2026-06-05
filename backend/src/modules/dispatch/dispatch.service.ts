@@ -104,7 +104,7 @@ export class DispatchService {
         station,
         reportedStationCode: dto.reportedStationCode || dto.stationCode,
         requiredQuantity: dto.requiredQuantity,
-        status: stationCodeError ? DispatchStatus.CANCELLED : DispatchStatus.PENDING,
+        status: DispatchStatus.PENDING,
         sampleType: dto.sampleType,
         stationCodeError,
         stationCodeErrorMessage: stationCodeErrorMessage || undefined,

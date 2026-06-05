@@ -80,7 +80,7 @@
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column label="站点信息" min-width="200">
+        <el-table-column label="站点信息" min-width="220">
           <template #default="{ row }">
             <div v-if="row.station">
               <div class="text-bold">{{ row.station.name }}</div>
@@ -89,10 +89,15 @@
               </div>
             </div>
             <div v-else-if="row.reportedStationCode">
-              <el-tag type="danger" size="small">站点编号错误</el-tag>
-              <div class="text-danger" style="font-size: 12px; margin-top: 4px;">
+              <div class="flex gap-8 items-center mb-4">
+                <el-tag type="danger" size="small">站点编号错误</el-tag>
+              </div>
+              <div class="text-danger" style="font-size: 12px; margin-bottom: 8px;">
                 上报编号：{{ row.reportedStationCode }}
               </div>
+              <el-button type="primary" size="small" link @click.stop="openRebindDialog(row)">
+                立即绑定站点 →
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -150,7 +155,7 @@
               <el-dropdown-item v-if="row.status === 'arrived'" command="pending-review">
                 提交复核
               </el-dropdown-item>
-              <el-dropdown-item v-if="row.statusCodeError" command="rebind">
+              <el-dropdown-item v-if="row.stationCodeError" command="rebind">
                 重新绑定站点
               </el-dropdown-item>
               <el-dropdown-item v-if="row.status === 'pending_review'" command="review-pass">
@@ -416,6 +421,11 @@ async function createOrder() {
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || '创建失败');
   }
+}
+
+function openRebindDialog(row: DispatchOrder) {
+  currentOrder.value = row;
+  showRebindDialog.value = true;
 }
 
 function handleAction(cmd: string, row: DispatchOrder) {

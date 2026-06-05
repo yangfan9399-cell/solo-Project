@@ -226,7 +226,7 @@ export class SeedService implements OnModuleInit {
       orderNo: 'DD202401150003',
       reportedStationCode: 'ST999',
       requiredQuantity: 10,
-      status: DispatchStatus.CANCELLED,
+      status: DispatchStatus.PENDING,
       sampleType: DispatchSampleType.STATION_ERROR,
       stationCodeError: true,
       stationCodeErrorMessage: '站点编号 ST999 不存在，请检查或重新绑定站点',

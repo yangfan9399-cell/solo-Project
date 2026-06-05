@@ -118,6 +118,27 @@
               </div>
             </div>
           </template>
+          <template v-else-if="order?.stationCodeError">
+            <div class="station-error-card">
+              <el-alert
+                :title="order.stationCodeErrorMessage || '站点编号错误'"
+                type="error"
+                show-icon
+                :closable="false"
+                class="mb-16"
+              >
+                <template #default>
+                  <p class="mb-8">上报站点编号：<strong>{{ order.reportedStationCode }}</strong></p>
+                  <p>请重新绑定正确的站点编号后继续调度流程。</p>
+                </template>
+              </el-alert>
+              <div class="text-center">
+                <el-button type="primary" @click="showRebindDialog = true">
+                  立即重新绑定站点
+                </el-button>
+              </div>
+            </div>
+          </template>
           <template v-else>
             <el-empty description="暂无站点信息" />
           </template>
@@ -880,6 +901,10 @@ onMounted(() => {
       font-family: monospace;
       font-size: 13px;
     }
+  }
+
+  .station-error-card {
+    padding: 16px 0;
   }
 }
 </style>
