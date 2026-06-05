@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
 
         $this->createQualifiedSample($sampler, $inspector);
         $this->createPesticideExceededSample($sampler, $inspector);
-        $this->createConflictSamples($sampler);
+        $this->createConflictSamples($sampler, $inspector);
         $this->createReinspectionSample($sampler, $inspector, $reviewer);
     }
 
@@ -153,8 +153,9 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    protected function createConflictSamples($sampler)
+    protected function createConflictSamples($sampler, $inspector)
     {
+
         $sample1 = Sample::create([
             'sample_number' => 'AG-2024-003',
             'product_name' => '西红柿',
@@ -164,29 +165,11 @@ class DatabaseSeeder extends Seeder
             'quantity' => 25.0,
             'unit' => 'kg',
             'sample_source' => '农户：赵大宝',
+            'evidence_photos' => json_encode([
+                'https://example.com/photos/tomato1.jpg',
+            ]),
             'sampler_id' => $sampler->id,
             'status' => Sample::STATUS_REGISTERED,
-            'conflict_note' => '与样品 AG-2024-003 编号冲突',
-        ]);
-
-        $sample2 = Sample::create([
-            'sample_number' => 'AG-2024-003-2',
-            'product_name' => '草莓',
-            'origin' => '辽宁省大连市庄河市',
-            'batch_number' => 'DL-2024-0120',
-            'production_date' => '2024-01-20',
-            'quantity' => 15.0,
-            'unit' => 'kg',
-            'sample_source' => '草莓种植合作社',
-            'sampler_id' => $sampler->id,
-            'status' => Sample::STATUS_REGISTERED,
-            'conflict_sample_id' => $sample1->id,
-            'conflict_note' => '与样品 AG-2024-003 编号冲突',
-        ]);
-
-        $sample1->update([
-            'conflict_sample_id' => $sample2->id,
-            'conflict_note' => "与样品 {$sample2->sample_number} 编号冲突",
         ]);
 
         StatusHistory::create([
@@ -194,7 +177,39 @@ class DatabaseSeeder extends Seeder
             'user_id' => $sampler->id,
             'old_status' => null,
             'new_status' => Sample::STATUS_REGISTERED,
-            'note' => '样品登记 - 存在编号冲突',
+            'note' => '样品登记',
+        ]);
+
+        $sample2 = Sample::create([
+            'sample_number' => 'AG-2024-003',
+            'product_name' => '草莓',
+            'origin' => '辽宁省大连市庄河市',
+            'batch_number' => 'DL-2024-0120',
+            'production_date' => '2024-01-20',
+            'quantity' => 15.0,
+            'unit' => 'kg',
+            'sample_source' => '草莓种植合作社',
+            'evidence_photos' => json_encode([
+                'https://example.com/photos/strawberry1.jpg',
+                'https://example.com/photos/strawberry2.jpg',
+            ]),
+            'sampler_id' => $sampler->id,
+            'status' => Sample::STATUS_REGISTERED,
+            'conflict_sample_id' => $sample1->id,
+            'conflict_note' => '与样品 AG-2024-003（西红柿）编号冲突，产地不同需复核',
+        ]);
+
+        $sample1->update([
+            'conflict_sample_id' => $sample2->id,
+            'conflict_note' => '与样品 AG-2024-003（草莓）编号冲突，产地不同需复核',
+        ]);
+
+        StatusHistory::create([
+            'sample_id' => $sample1->id,
+            'user_id' => $sampler->id,
+            'old_status' => Sample::STATUS_REGISTERED,
+            'new_status' => Sample::STATUS_REGISTERED,
+            'note' => '检测到编号冲突',
         ]);
 
         StatusHistory::create([
@@ -203,6 +218,32 @@ class DatabaseSeeder extends Seeder
             'old_status' => null,
             'new_status' => Sample::STATUS_REGISTERED,
             'note' => '样品登记 - 存在编号冲突',
+        ]);
+
+        InspectionResult::create([
+            'sample_id' => $sample1->id,
+            'inspector_id' => $inspector->id,
+            'inspection_date' => '2024-01-21',
+            'indicators' => json_encode([
+                ['name' => '敌敌畏', 'limit' => 0.05, 'unit' => 'mg/kg', 'value' => 0.02],
+                ['name' => '乐果', 'limit' => 0.02, 'unit' => 'mg/kg', 'value' => 0.03],
+                ['name' => '毒死蜱', 'limit' => 0.05, 'unit' => 'mg/kg', 'value' => 0.01],
+                ['name' => '氯氰菊酯', 'limit' => 0.5, 'unit' => 'mg/kg', 'value' => 0.1],
+                ['name' => '溴氰菊酯', 'limit' => 0.2, 'unit' => 'mg/kg', 'value' => 0.05],
+                ['name' => '多菌灵', 'limit' => 0.5, 'unit' => 'mg/kg', 'value' => 0.2],
+            ]),
+            'result' => InspectionResult::RESULT_PESTICIDE_EXCEEDED,
+            'conclusion' => '乐果检测值为0.03mg/kg，超过国家标准限值0.02mg/kg，判定为农残超标。因存在编号冲突，需先解决冲突再进行处置。',
+        ]);
+
+        $sample1->update(['status' => Sample::STATUS_UNQUALIFIED]);
+
+        StatusHistory::create([
+            'sample_id' => $sample1->id,
+            'user_id' => $inspector->id,
+            'old_status' => Sample::STATUS_REGISTERED,
+            'new_status' => Sample::STATUS_UNQUALIFIED,
+            'note' => '检测结果: 农残超标 - 乐果超标（存在编号冲突，需先解决）',
         ]);
     }
 

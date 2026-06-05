@@ -99,6 +99,29 @@
                         <label class="text-sm text-gray-500">样品来源补充</label>
                         <p class="font-medium mt-1">{{ sample.sample_source }}</p>
                     </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <label class="text-sm text-gray-500">取证照片/报告</label>
+                        <div v-if="sample.evidence_photos && sample.evidence_photos.length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                            <div
+                                v-for="(photo, index) in sample.evidence_photos"
+                                :key="index"
+                                class="aspect-square bg-gray-100 rounded-lg overflow-hidden"
+                            >
+                                <img
+                                    :src="photo"
+                                    :alt="`取证照片 ${index + 1}`"
+                                    class="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                        <div v-else class="mt-2 flex items-center text-gray-400">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-sm">暂无取证照片</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="sample.inspection_results && sample.inspection_results.length > 0" class="bg-white shadow rounded-lg p-6">
@@ -233,9 +256,9 @@
                     </div>
                 </div>
 
-                <div v-if="sample.status_history && sample.status_history.length > 0" class="bg-white shadow rounded-lg p-6">
+                <div class="bg-white shadow rounded-lg p-6">
                     <h2 class="text-lg font-medium text-gray-900 mb-4">状态历史</h2>
-                    <div class="space-y-4">
+                    <div v-if="sample.status_history && sample.status_history.length > 0" class="space-y-4">
                         <div v-for="history in sample.status_history" :key="history.id" class="flex gap-4">
                             <div class="flex flex-col items-center">
                                 <div class="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -246,10 +269,20 @@
                                     <span class="font-medium text-sm">{{ history.new_status_name }}</span>
                                     <span class="text-xs text-gray-500">{{ history.created_at }}</span>
                                 </div>
-                                <p class="text-sm text-gray-600">操作人: {{ history.user?.name }}</p>
+                                <p class="text-sm text-gray-600">
+                                    操作人:
+                                    <span v-if="history.user?.name">{{ history.user.name }}</span>
+                                    <span v-else class="text-gray-400">未记录</span>
+                                </p>
                                 <p v-if="history.note" class="text-sm text-gray-500">{{ history.note }}</p>
                             </div>
                         </div>
+                    </div>
+                    <div v-else class="flex flex-col items-center justify-center py-8 text-gray-400">
+                        <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-sm">暂无状态历史记录</span>
                     </div>
                 </div>
             </div>

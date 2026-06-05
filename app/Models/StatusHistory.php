@@ -22,6 +22,17 @@ class StatusHistory extends Model
         'new_status_name',
     ];
 
+    protected static array $statusMap = [
+        Sample::STATUS_REGISTERED => '已登记',
+        Sample::STATUS_TESTING => '检测中',
+        Sample::STATUS_QUALIFIED => '合格',
+        Sample::STATUS_UNQUALIFIED => '不合格',
+        Sample::STATUS_PROCESSING => '处置中',
+        Sample::STATUS_REINSPECTION_APPLIED => '复检申请中',
+        Sample::STATUS_RETURNED => '已退回',
+        Sample::STATUS_ARCHIVED => '已归档',
+    ];
+
     public function sample(): BelongsTo
     {
         return $this->belongsTo(Sample::class);
@@ -34,11 +45,14 @@ class StatusHistory extends Model
 
     public function getOldStatusNameAttribute()
     {
-        return $this->old_status ? Sample::where('status', $this->old_status)->first()?->status_name ?? '未知' : '无';
+        if (!$this->old_status) {
+            return '无';
+        }
+        return self::$statusMap[$this->old_status] ?? '未知';
     }
 
     public function getNewStatusNameAttribute()
     {
-        return Sample::where('status', $this->new_status)->first()?->status_name ?? '未知';
+        return self::$statusMap[$this->new_status] ?? '未知';
     }
 }
