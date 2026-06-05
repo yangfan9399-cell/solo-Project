@@ -23,3 +23,23 @@ def get_status_color(status):
         'archived': 'bg-gray-100 text-gray-800',
     }
     return colors.get(status, 'bg-gray-100 text-gray-800')
+
+
+@register.filter
+def get_plan_status_color(status):
+    colors = {
+        'pending': 'bg-yellow-100 text-yellow-800',
+        'in_progress': 'bg-blue-100 text-blue-800',
+        'submitted': 'bg-orange-100 text-orange-800',
+        'reviewing': 'bg-teal-100 text-teal-800',
+        'approved': 'bg-green-100 text-green-800',
+        'returned': 'bg-red-100 text-red-800',
+        'completed': 'bg-gray-100 text-gray-800',
+        'cancelled': 'bg-gray-200 text-gray-600',
+    }
+    return colors.get(status, 'bg-gray-100 text-gray-800')
+
+
+@register.filter
+def plan_status_in(status, status_list):
+    return status in status_list.split(',')

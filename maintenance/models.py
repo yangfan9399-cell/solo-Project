@@ -86,7 +86,11 @@ class MaintenancePlan(models.Model):
     STATUS_CHOICES = [
         ('pending', '待执行'),
         ('in_progress', '执行中'),
-        ('completed', '已完成'),
+        ('submitted', '已提交待复核'),
+        ('reviewing', '复核中'),
+        ('approved', '已通过'),
+        ('returned', '已退回重填'),
+        ('completed', '已完成归档'),
         ('cancelled', '已取消'),
     ]
 
@@ -109,8 +113,28 @@ class MaintenancePlan(models.Model):
         related_name='created_plans',
         verbose_name='创建人'
     )
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    current_responsible = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='responsible_plans',
+        verbose_name='当前责任人'
+    )
+    submitted_at = models.DateTimeField('提交时间', null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_plans',
+        verbose_name='复核人'
+    )
+    reviewed_at = models.DateTimeField('复核时间', null=True, blank=True)
+    review_comment = models.TextField('复核意见', blank=True)
     completed_at = models.DateTimeField('完成时间', null=True, blank=True)
+    archived_at = models.DateTimeField('归档时间', null=True, blank=True)
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
 
     class Meta:
         verbose_name = '维保计划'
@@ -118,6 +142,9 @@ class MaintenancePlan(models.Model):
 
     def __str__(self):
         return f"{self.elevator.elevator_number} - {self.get_plan_type_display()}"
+
+    def can_approve(self):
+        return self.status in ['submitted', 'reviewing']
 
 
 class Part(models.Model):
@@ -281,6 +308,11 @@ class ActionLog(models.Model):
         ('archive', '归档'),
         ('note', '备注'),
         ('status_change', '状态变更'),
+        ('plan_start', '开始维保'),
+        ('plan_submit', '提交维保记录'),
+        ('plan_review_pass', '计划复核通过'),
+        ('plan_review_return', '计划复核退回'),
+        ('plan_complete', '计划完成归档'),
     ]
 
     ticket = models.ForeignKey(

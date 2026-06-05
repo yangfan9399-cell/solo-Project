@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}维保计划详情{% endblock %}
+
+{% block content %}
+<div id="plan-detail">
+    {% include 'maintenance/partials/plan_detail_content.html' %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+        if (evt.detail.isError) {
+            alert('操作失败：' + (evt.detail.xhr.responseText || '未知错误'));
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+<div id="plan-action-logs" class="space-y-3">
+    {% for log in plan.action_logs.all %}
+    <div class="flex">
+        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+            {% if log.action_type == 'plan_start' %}
+            <span class="text-xs">🔧</span>
+            {% elif log.action_type == 'plan_submit' %}
+            <span class="text-xs">📤</span>
+            {% elif log.action_type == 'plan_review_pass' %}
+            <span class="text-xs">👍</span>
+            {% elif log.action_type == 'plan_review_return' %}
+            <span class="text-xs">👎</span>
+            {% elif log.action_type == 'plan_complete' %}
+            <span class="text-xs">📦</span>
+            {% else %}
+            <span class="text-xs">💬</span>
+            {% endif %}
+        </div>
+        <div class="ml-3 flex-1">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-gray-900">
+                    {{ log.performed_by.get_full_name|default:log.performed_by.username }}
+                </p>
+                <p class="text-xs text-gray-500">{{ log.performed_at|date:"Y-m-d H:i" }}</p>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">{{ log.description }}</p>
+            {% if log.from_status and log.to_status %}
+            <p class="text-xs text-gray-400 mt-1">
+                {{ log.get_from_status_display|default:log.from_status }} → {{ log.get_to_status_display|default:log.to_status }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-sm text-gray-500 text-center py-4">暂无操作记录</p>
+    {% endfor %}
+</div>

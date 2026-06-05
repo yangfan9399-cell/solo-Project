@@ -148,7 +148,8 @@ class Command(BaseCommand):
             description='按期维保：检查曳引系统、导轨润滑、安全装置测试、门系统检查',
             status='pending',
             assigned_to=user_maintenance1,
-            created_by=user_admin
+            created_by=user_admin,
+            current_responsible=user_maintenance1
         )
         ActionLog.objects.create(
             plan=plan1,
@@ -165,15 +166,79 @@ class Command(BaseCommand):
             status='completed',
             assigned_to=user_maintenance2,
             created_by=user_admin,
-            completed_at=timezone.now() - timedelta(days=2)
+            completed_at=timezone.now() - timedelta(days=2),
+            archived_at=timezone.now() - timedelta(days=2)
         )
         ActionLog.objects.create(
             plan=plan2,
-            action_type='submit_check',
+            action_type='plan_complete',
             description='按期维保完成，检查项目全部合格',
             performed_by=user_maintenance2
         )
-        self.stdout.write(f'Created maintenance plans')
+
+        plan3 = MaintenancePlan.objects.create(
+            elevator=elevators[1],
+            plan_type='regular',
+            plan_date=date(2026, 6, 12),
+            description='按期维保：进行月度例行检查和维护',
+            status='in_progress',
+            assigned_to=user_maintenance1,
+            created_by=user_admin,
+            current_responsible=user_maintenance1
+        )
+        ActionLog.objects.create(
+            plan=plan3,
+            action_type='plan_start',
+            description='维保人员已开始执行按期维保',
+            performed_by=user_maintenance1,
+            from_status='pending',
+            to_status='in_progress'
+        )
+
+        plan4 = MaintenancePlan.objects.create(
+            elevator=elevators[4],
+            plan_type='regular',
+            plan_date=date(2026, 6, 8),
+            description='按期维保：已提交记录，等待物业复核',
+            status='submitted',
+            assigned_to=user_maintenance2,
+            created_by=user_admin,
+            submitted_at=timezone.now() - timedelta(hours=2),
+            current_responsible=user_reviewer
+        )
+        ActionLog.objects.create(
+            plan=plan4,
+            action_type='plan_submit',
+            description='维保记录已提交，等待物业复核',
+            performed_by=user_maintenance2,
+            from_status='in_progress',
+            to_status='submitted'
+        )
+
+        plan5 = MaintenancePlan.objects.create(
+            elevator=elevators[3],
+            plan_type='regular',
+            plan_date=date(2026, 6, 5),
+            description='按期维保：复核退回，需要重新填写',
+            status='returned',
+            assigned_to=user_maintenance1,
+            created_by=user_admin,
+            submitted_at=timezone.now() - timedelta(days=1),
+            reviewed_by=user_reviewer,
+            reviewed_at=timezone.now() - timedelta(hours=6),
+            review_comment='检查项目填写不完整，请补充曳引系统和安全装置的检查结果',
+            current_responsible=user_maintenance1
+        )
+        ActionLog.objects.create(
+            plan=plan5,
+            action_type='plan_review_return',
+            description='复核退回：检查项目填写不完整，请补充曳引系统和安全装置的检查结果',
+            performed_by=user_reviewer,
+            from_status='submitted',
+            to_status='returned'
+        )
+
+        self.stdout.write(f'Created 5 maintenance plans with different statuses')
 
         ticket1 = FaultTicket.objects.create(
             elevator=elevators[1],

@@ -21,4 +21,9 @@ urlpatterns = [
     path('elevators/<int:pk>/', views.elevator_detail, name='elevator_detail'),
     
     path('plans/', views.plan_list, name='plan_list'),
+    path('plans/<int:pk>/', views.plan_detail, name='plan_detail'),
+    path('plans/<int:pk>/start/', views.start_plan, name='start_plan'),
+    path('plans/<int:pk>/submit/', views.submit_plan_record, name='submit_plan_record'),
+    path('plans/<int:pk>/review/', views.review_plan, name='review_plan'),
+    path('plans/<int:pk>/note/', views.add_plan_note, name='add_plan_note'),
 ]

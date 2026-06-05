@@ -10,6 +10,7 @@
 <div class="bg-white shadow rounded-lg overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
+            {% load maintenance_extras %}
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">电梯编号</th>
@@ -17,8 +18,9 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">计划日期</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维保内容</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">指派人员</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前责任人</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -29,22 +31,25 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.plan_date|date:"Y-m-d" }}</td>
                     <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{{ plan.description }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            {% if plan.status == 'completed' %}bg-green-100 text-green-800
-                            {% elif plan.status == 'in_progress' %}bg-blue-100 text-blue-800
-                            {% elif plan.status == 'pending' %}bg-yellow-100 text-yellow-800
-                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ plan.status|get_plan_status_color }}">
                             {{ plan.get_status_display }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ plan.assigned_to.get_full_name|default:plan.assigned_to.username|default:"-" }}
+                        {% if plan.current_responsible %}
+                            {{ plan.current_responsible.get_full_name|default:plan.current_responsible.username }}
+                        {% else %}
+                            <span class="text-gray-400">-</span>
+                        {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ plan.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'maintenance:plan_detail' plan.id %}" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">暂无维保计划</td>
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-500">暂无维保计划</td>
                 </tr>
                 {% endfor %}
             </tbody>
