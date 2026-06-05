@@ -371,16 +371,26 @@ def review_page(request):
     
     orders = WorkOrder.objects.filter(created_at__date__range=[start_date, end_date])
     
+    total_orders = orders.count()
+    
     by_area = orders.values('light_pole__area').annotate(
         count=Count('id'),
         archived=Count('id', filter=Q(status='archived')),
-        rework_count=Sum('rework_count')
+        total_reworks=Sum('rework_count')
     ).order_by('-count')
+    
+    for item in by_area:
+        item['completion_rate'] = round((item['archived'] / item['count'] * 100), 1) if item['count'] > 0 else 0
+        if item['total_reworks'] is None:
+            item['total_reworks'] = 0
     
     by_fault_type = orders.values('fault_type').annotate(
         count=Count('id'),
         archived=Count('id', filter=Q(status='archived'))
     ).order_by('-count')
+    
+    for item in by_fault_type:
+        item['completion_rate'] = round((item['archived'] / item['count'] * 100), 1) if item['count'] > 0 else 0
     
     energy_anomalies = orders.filter(fault_type='energy_spike').aggregate(
         total=Count('id'),
@@ -388,10 +398,18 @@ def review_page(request):
         avg_energy_diff=Avg(F('actual_energy') - F('expected_energy'), filter=Q(actual_energy__isnull=False, expected_energy__isnull=False))
     )
     
+    if energy_anomalies['total'] and energy_anomalies['total'] > 0:
+        energy_anomalies['resolution_rate'] = round((energy_anomalies['resolved'] / energy_anomalies['total'] * 100), 1)
+    else:
+        energy_anomalies['resolution_rate'] = 0
+    
     rework_stats = orders.filter(rework_count__gt=0).aggregate(
         total_rework_orders=Count('id'),
         total_reworks=Sum('rework_count')
     )
+    
+    if rework_stats['total_reworks'] is None:
+        rework_stats['total_reworks'] = 0
     
     rework_by_inspector = orders.filter(rework_count__gt=0).values(
         'inspector__username', 'inspector__first_name', 'inspector__last_name'
@@ -404,6 +422,7 @@ def review_page(request):
         'form': form,
         'start_date': start_date,
         'end_date': end_date,
+        'total_orders': total_orders,
         'by_area': by_area,
         'by_fault_type': by_fault_type,
         'energy_anomalies': energy_anomalies,

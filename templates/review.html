@@ -24,7 +24,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow p-6">
             <div class="text-sm text-gray-500 mb-1">总工单量</div>
-            <div class="text-3xl font-bold text-blue-600">{{ by_area|length }}</div>
+            <div class="text-3xl font-bold text-blue-600">{{ total_orders }}</div>
         </div>
         <div class="bg-white rounded-xl shadow p-6">
             <div class="text-sm text-gray-500 mb-1">能耗异常工单</div>
@@ -48,13 +48,13 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <span class="font-medium">{{ item.light_pole__area|default:'未指定' }}</span>
-                        <span class="text-sm text-gray-500">{{ item.count }} 单 · 完成 {{ item.archived }}</span>
+                        <span class="text-sm text-gray-500">{{ item.count }} 单 · 完成 {{ item.archived }} ({{ item.completion_rate }}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-blue-600 h-2 rounded-full" style="width: {% if item.count > 0 %}{{ item.archived|divisibleby:item.count|yesno:'100,0' }}{% else %}0{% endif %}%"></div>
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ item.completion_rate }}%"></div>
                     </div>
-                    {% if item.rework_count > 0 %}
-                    <div class="text-xs text-red-500 mt-1">返工 {{ item.rework_count }} 次</div>
+                    {% if item.total_reworks > 0 %}
+                    <div class="text-xs text-red-500 mt-1">返工 {{ item.total_reworks }} 次</div>
                     {% endif %}
                 </div>
                 {% empty %}
@@ -79,10 +79,10 @@
                             {% elif item.fault_type == 'control_issue' %}控制问题
                             {% else %}其他{% endif %}
                         </span>
-                        <span class="text-sm text-gray-500">{{ item.count }} 单</span>
+                        <span class="text-sm text-gray-500">{{ item.count }} 单 · 完成率 {{ item.completion_rate }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-{% if item.fault_type == 'energy_spike' %}red{% elif item.fault_type == 'location_error' %}purple{% elif item.fault_type == 'duplicate' %}gray{% else %}blue{% endif %}-600 h-2 rounded-full" style="width: {% if item.count > 0 %}100{% else %}0{% endif %}%"></div>
+                        <div class="bg-{% if item.fault_type == 'energy_spike' %}red{% elif item.fault_type == 'location_error' %}purple{% elif item.fault_type == 'duplicate' %}gray{% else %}blue{% endif %}-600 h-2 rounded-full" style="width: {{ item.completion_rate }}%"></div>
                     </div>
                 </div>
                 {% empty %}
@@ -94,7 +94,7 @@
 
     <div class="bg-white rounded-xl shadow p-6">
         <h2 class="text-lg font-semibold mb-4">能耗异常分析</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="text-center p-4 bg-red-50 rounded-lg">
                 <div class="text-4xl font-bold text-red-600">{{ energy_anomalies.total|default:0 }}</div>
                 <div class="text-sm text-gray-600 mt-1">异常工单总数</div>
@@ -102,6 +102,10 @@
             <div class="text-center p-4 bg-green-50 rounded-lg">
                 <div class="text-4xl font-bold text-green-600">{{ energy_anomalies.resolved|default:0 }}</div>
                 <div class="text-sm text-gray-600 mt-1">已解决</div>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                <div class="text-4xl font-bold text-blue-600">{{ energy_anomalies.resolution_rate }}%</div>
+                <div class="text-sm text-gray-600 mt-1">解决率</div>
             </div>
             <div class="text-center p-4 bg-orange-50 rounded-lg">
                 <div class="text-4xl font-bold text-orange-600">
