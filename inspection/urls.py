@@ -15,6 +15,7 @@ urlpatterns = [
     path('orders/<int:pk>/start/', views.work_order_start, name='work_order_start'),
     path('orders/<int:pk>/complete-inspection/', views.work_order_complete_inspection, name='work_order_complete_inspection'),
     path('orders/<int:pk>/return/', views.work_order_return, name='work_order_return'),
+    path('orders/<int:pk>/review-confirm/', views.work_order_review_confirm, name='work_order_review_confirm'),
     path('orders/<int:pk>/archive/', views.work_order_archive, name='work_order_archive'),
     path('orders/<int:pk>/upload-evidence/', views.evidence_upload, name='evidence_upload'),
     

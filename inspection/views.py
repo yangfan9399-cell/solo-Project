@@ -282,6 +282,30 @@ def work_order_return(request, pk):
 
 
 @login_required
+def work_order_review_confirm(request, pk):
+    order = get_object_or_404(WorkOrder, pk=pk)
+    
+    if request.method == 'POST':
+        form = WorkOrderReviewForm(request.POST, instance=order)
+        if form.is_valid():
+            old_status = order.status
+            form.save()
+            order.reviewed_at = timezone.now()
+            order.save()
+            
+            WorkOrderHistory.objects.create(
+                work_order=order,
+                action='review_confirm',
+                operator=request.user,
+                comment='复核确认完成，异常原因已记录',
+                old_status=old_status,
+                new_status=order.status
+            )
+    
+    return redirect('work_order_detail', pk=pk)
+
+
+@login_required
 def work_order_archive(request, pk):
     order = get_object_or_404(WorkOrder, pk=pk)
     

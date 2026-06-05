@@ -387,7 +387,7 @@
     <div x-show="showReviewForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" @click.away="showReviewForm = false">
             <h3 class="text-lg font-semibold mb-4">复核确认</h3>
-            <form action="{% url 'work_order_archive' order.pk %}" method="post">
+            <form action="{% url 'work_order_review_confirm' order.pk %}" method="post">
                 {% csrf_token %}
                 <div class="space-y-4">
                     <div>
@@ -405,7 +405,7 @@
                 </div>
                 <div class="flex justify-end gap-2 mt-6">
                     <button type="button" @click="showReviewForm = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">确认并归档</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">确认复核</button>
                 </div>
             </form>
         </div>
