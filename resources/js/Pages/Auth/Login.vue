@@ -1,0 +1,75 @@
+<template>
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">农产品检测系统</h2>
+                <p class="mt-2 text-center text-sm text-gray-600">登录您的账户</p>
+            </div>
+            <form @submit.prevent="submit" class="mt-8 space-y-6">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <label for="email" class="sr-only">邮箱地址</label>
+                        <input
+                            id="email"
+                            v-model="form.email"
+                            type="email"
+                            required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                            placeholder="邮箱地址"
+                        />
+                    </div>
+                    <div>
+                        <label for="password" class="sr-only">密码</label>
+                        <input
+                            id="password"
+                            v-model="form.password"
+                            type="password"
+                            required
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                            placeholder="密码"
+                        />
+                    </div>
+                </div>
+
+                <div v-if="errors.email" class="text-red-500 text-sm mt-2">
+                    {{ errors.email }}
+                </div>
+
+                <div>
+                    <button
+                        type="submit"
+                        :disabled="processing"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                    >
+                        <span v-if="processing">登录中...</span>
+                        <span v-else>登录</span>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 p-4 bg-gray-50 rounded-md">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">测试账号：</h3>
+                <ul class="text-xs text-gray-500 space-y-1">
+                    <li>抽样员: sampler@example.com / password</li>
+                    <li>检测员: inspector@example.com / password</li>
+                    <li>复核人: reviewer@example.com / password</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { useForm } from '@inertiajs/vue3';
+
+const form = useForm({
+    email: '',
+    password: '',
+});
+
+const submit = () => {
+    form.post(route('login'));
+};
+
+const { processing, errors } = form;
+</script>
