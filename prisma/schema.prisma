@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  DOCUMENTS_INCOMPLETE
+  INVOICE_MISMATCH
+  CLASSIFICATION_CONFLICT
+  ID_MISSING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum DocumentStatus {
+  COMPLETE
+  INCOMPLETE
+  PENDING_REVIEW
+}
+
+enum Role {
+  DOCUMENT_HANDLER
+  CUSTOMS_REVIEWER
+}
+
+model Order {
+  id                String          @id @default(uuid())
+  orderNumber       String          @unique
+  source            String
+  sourceOrderNo     String?
+  country           String
+  category          String
+  declaredValue     Decimal
+  actualValue       Decimal?
+  declaredAmount    Decimal
+  actualAmount      Decimal?
+  recipientName     String
+  recipientIdType   String?
+  recipientIdNumber String?
+  trackingNumber    String?
+  status            OrderStatus     @default(PENDING)
+  documentStatus    DocumentStatus  @default(INCOMPLETE)
+  documentHandlerId String?
+  customsReviewerId String?
+  documentHandler   User?           @relation("DocumentHandler", fields: [documentHandlerId], references: [id])
+  customsReviewer   User?           @relation("CustomsReviewer", fields: [customsReviewerId], references: [id])
+  invoice           Invoice?
+  items             OrderItem[]
+  documents         Document[]
+  historyNodes      HistoryNode[]
+  clearanceBasis    ClearanceBasis?
+  amountDiscrepancy AmountDiscrepancy?
+  classificationNote ClassificationNote?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id])
+  invoiceNumber   String
+  invoiceDate     DateTime
+  supplierName    String
+  totalAmount     Decimal
+  currency        String   @default("USD")
+  items           InvoiceItem[]
+  createdAt       DateTime @default(now())
+}
+
+model InvoiceItem {
+  id        String  @id @default(uuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  name      String
+  quantity  Int
+  unitPrice Decimal
+  total     Decimal
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id])
+  name            String
+  declaredName    String
+  hsCode          String?
+  declaredHsCode  String?
+  quantity        Int
+  unitPrice       Decimal
+  total           Decimal
+  weight          Decimal?
+  classificationNote String?
+  createdAt       DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  type      String
+  name      String
+  url       String?
+  status    String   @default("PENDING")
+  notes     String?
+  uploadedBy String?
+  uploadedAt DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model HistoryNode {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  action    String
+  status    String
+  notes     String?
+  operator  String
+  role      String
+  timestamp DateTime @default(now())
+}
+
+model ClearanceBasis {
+  id                String   @id @default(uuid())
+  orderId           String   @unique
+  order             Order    @relation(fields: [orderId], references: [id])
+  basisType         String
+  regulationReference String?
+  explanation       String?
+  approvedBy        String?
+  approvedAt        DateTime?
+}
+
+model AmountDiscrepancy {
+  id               String   @id @default(uuid())
+  orderId          String   @unique
+  order            Order    @relation(fields: [orderId], references: [id])
+  declaredAmount   Decimal
+  actualAmount     Decimal
+  difference       Decimal
+  differencePercent Decimal
+  discrepancySource String
+  correctionPath   String
+  resolved         Boolean  @default(false)
+  resolvedAt       DateTime?
+  resolvedBy       String?
+}
+
+model ClassificationNote {
+  id              String   @id @default(uuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id])
+  itemName        String
+  declaredHsCode  String
+  suggestedHsCode String
+  reason          String
+  status          String   @default("PENDING")
+  resolved        Boolean  @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+}
+
+model User {
+  id                String        @id @default(uuid())
+  name              String
+  email             String        @unique
+  role              Role
+  handledOrders     Order[]       @relation("DocumentHandler")
+  reviewedOrders    Order[]       @relation("CustomsReviewer")
+  createdAt         DateTime      @default(now())
+}
