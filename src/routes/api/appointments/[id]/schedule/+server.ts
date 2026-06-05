@@ -127,7 +127,7 @@ async function checkTeacherConflict(
 				),
 				excludeAppointmentId ? sql`appointments.id != ${excludeAppointmentId}` : sql`TRUE`,
 				lt(appointments.scheduledAt, newEndTime),
-				gt(sql`appointments.scheduled_at + (appointments.duration || 60) * interval '1 minute'`, newStartTime)
+				gt(sql`appointments.scheduled_at + COALESCE(appointments.duration, 60) * interval '1 minute'`, newStartTime)
 			)
 		);
 

@@ -10,10 +10,7 @@ import {
 	users,
 	followUps
 } from '$lib/db/schema';
-import { eq, desc, alias } from 'drizzle-orm';
-
-const followUpConsultantAlias = alias(users, 'follow_up_consultant');
-const supervisorAlias = alias(users, 'supervisor');
+import { eq, desc, sql } from 'drizzle-orm';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!locals.user) {
@@ -54,12 +51,22 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const followUpRecords = await db
 		.select({
 			followUp: followUps,
-			consultant: followUpConsultantAlias,
-			supervisor: supervisorAlias
+			consultant: {
+				id: sql<number>`fu_consultant.id`,
+				name: sql<string>`fu_consultant.name`,
+				email: sql<string>`fu_consultant.email`,
+				role: sql<string>`fu_consultant.role`
+			},
+			supervisor: {
+				id: sql<number>`fu_supervisor.id`,
+				name: sql<string>`fu_supervisor.name`,
+				email: sql<string>`fu_supervisor.email`,
+				role: sql<string>`fu_supervisor.role`
+			}
 		})
 		.from(followUps)
-		.leftJoin(followUpConsultantAlias, eq(followUps.consultantId, followUpConsultantAlias.id))
-		.leftJoin(supervisorAlias, eq(followUps.supervisorId, supervisorAlias.id))
+		.leftJoin(sql`users AS fu_consultant`, sql`fu_consultant.id = follow_ups.consultant_id`)
+		.leftJoin(sql`users AS fu_supervisor`, sql`fu_supervisor.id = follow_ups.supervisor_id`)
 		.where(eq(followUps.appointmentId, appointmentId))
 		.orderBy(desc(followUps.createdAt));
 
