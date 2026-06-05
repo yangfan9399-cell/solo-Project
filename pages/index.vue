@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { onMounted, watch } from 'vue'
 import { useClaimStore } from '~/composables/useClaimStore'
 import type { ClaimStatus } from '~/composables/mockData'
 import StatusBadge from '~/components/StatusBadge.vue'
 import { getUserById } from '~/composables/mockData'
 
-const { stats, statusFilter, filteredClaims } = useClaimStore()
+const claimStore = useClaimStore()
+const { stats, statusFilter, filteredClaims, loading } = claimStore
 
 const filterTabs: Array<{ key: ClaimStatus | 'ALL'; label: string }> = [
   { key: 'ALL', label: '全部' },
@@ -30,6 +32,14 @@ function getHandlerName(handlerId?: string) {
   const user = getUserById(handlerId)
   return user?.name || '-'
 }
+
+onMounted(() => {
+  claimStore.loadClaims()
+})
+
+watch(statusFilter, () => {
+  claimStore.loadClaims()
+})
 </script>
 
 <template>

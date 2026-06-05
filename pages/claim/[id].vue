@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClaimStore } from '~/composables/useClaimStore'
 import { statusLabels, statusColors, reviewResultLabels, roleLabels, documentStatusLabels } from '~/composables/mockData'
@@ -28,12 +28,23 @@ const showReopenModal = ref(false)
 
 const claimId = computed(() => route.params.id as string)
 
-const claim = computed(() => {
-  return claimStore.getClaim(claimId.value)
-})
+const claim = computed(() => claimStore.currentClaim.value)
+const loading = computed(() => claimStore.loading.value)
 
 const isArchived = computed(() => claim.value?.isArchived)
 const isLiabilityDispute = computed(() => claim.value?.status === 'LIABILITY_DISPUTE')
+
+async function loadClaimData() {
+  await claimStore.loadClaim(claimId.value)
+}
+
+onMounted(() => {
+  loadClaimData()
+})
+
+watch(claimId, () => {
+  loadClaimData()
+})
 
 function goBack() {
   router.back()
@@ -139,7 +150,7 @@ function handleCalculationSubmit(data: any) {
   showCalculationModal.value = false
 }
 
-function handleReviewSubmit(data: {
+async function handleReviewSubmit(data: {
   result: string
   opinion: string
   isLiabilityConfirmed: boolean
@@ -152,76 +163,36 @@ function handleReviewSubmit(data: {
 }) {
   if (!claim.value) return
 
-  claimStore.addReview(claimId.value, {
-    userId: claimStore.currentUser.value?.id,
-    stage: 'REVIEWER',
-    result: data.result,
-    opinion: data.opinion,
-    isLiabilityConfirmed: data.isLiabilityConfirmed
-  })
-
-  if (data.result === 'APPROVED') {
-    const calc = claim.value.calculation
-    if (calc && calc.limitExceeded) {
-      claimStore.updateClaimStatus(claimId.value, 'AMOUNT_EXCEEDED', '审核通过，金额超限需复核')
-    } else {
-      claimStore.updateClaimStatus(claimId.value, 'UNDER_REVIEW', '审核通过，提交复核')
-    }
-  } else if (data.result === 'SUPPLEMENT_REQUIRED') {
-    claimStore.updateClaimStatus(claimId.value, 'MATERIALS_MISSING', '审核要求补充材料')
-  } else if (data.result === 'DISPUTE') {
-    claimStore.updateClaimStatus(claimId.value, 'LIABILITY_DISPUTE', '审核发现责任免除争议')
-    if (data.disputeTerms) {
-      claim.value.disputeTerms.push({
-        id: `disp-${Date.now()}`,
-        claimId: claimId.value,
-        termClause: data.disputeTerms.termClause,
-        termDescription: data.disputeTerms.termDescription,
-        disputeReason: data.disputeTerms.disputeReason,
-        supplementPath: data.disputeTerms.supplementPath,
-        isResolved: false
-      })
-    }
-  } else if (data.result === 'REJECTED') {
-    claimStore.updateClaimStatus(claimId.value, 'REJECTED', '审核拒绝')
+  const updated = await claimStore.submitReview(claimId.value, data)
+  if (updated) {
+    showReviewModal.value = false
   }
-
-  showReviewModal.value = false
 }
 
-function handleApprovalSubmit(data: { result: string; opinion: string }) {
+async function handleApprovalSubmit(data: { result: string; opinion: string }) {
   if (!claim.value) return
 
-  claimStore.addReview(claimId.value, {
-    userId: claimStore.currentUser.value?.id,
-    stage: 'APPROVER',
-    result: data.result === 'RETURNED' ? 'SUPPLEMENT_REQUIRED' : data.result,
-    opinion: data.opinion,
-    isLiabilityConfirmed: data.result === 'APPROVED'
-  })
-
-  if (data.result === 'APPROVED') {
-    claimStore.updateClaimStatus(claimId.value, 'PAID', '复核批准赔付')
-  } else if (data.result === 'REJECTED') {
-    claimStore.updateClaimStatus(claimId.value, 'REJECTED', '复核拒绝赔付')
-  } else if (data.result === 'RETURNED') {
-    claimStore.updateClaimStatus(claimId.value, 'MATERIALS_MISSING', '复核退回，要求补充材料')
+  const updated = await claimStore.submitApproval(claimId.value, data)
+  if (updated) {
+    showApprovalModal.value = false
   }
-
-  showApprovalModal.value = false
 }
 
-function handleArchiveSubmit(data: { archiveReason: string }) {
+async function handleArchiveSubmit(data: { archiveReason: string }) {
   if (!claim.value) return
   const lastReview = claim.value.reviews[claim.value.reviews.length - 1]
   const conclusionText = lastReview?.opinion || statusLabels[claim.value.status as keyof typeof statusLabels]
-  claimStore.archiveClaim(claimId.value, data.archiveReason, conclusionText)
-  showArchiveModal.value = false
+  const updated = await claimStore.archiveClaim(claimId.value, data.archiveReason, conclusionText)
+  if (updated) {
+    showArchiveModal.value = false
+  }
 }
 
-function handleReopenSubmit(data: { reopenReason: string }) {
-  claimStore.reopenClaim(claimId.value, data.reopenReason)
-  showReopenModal.value = false
+async function handleReopenSubmit(data: { reopenReason: string }) {
+  const updated = await claimStore.reopenClaim(claimId.value, data.reopenReason)
+  if (updated) {
+    showReopenModal.value = false
+  }
 }
 
 function getDocumentStatusClass(status: DocumentStatus) {
