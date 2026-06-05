@@ -264,14 +264,51 @@
                 </div>
             </div>
 
+            {% if adopted_evidences %}
+            <div class="bg-green-50 rounded-xl shadow p-6 border-2 border-green-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-green-800">✅ 已采用证据</h2>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for evidence in adopted_evidences %}
+                    <div class="bg-white border-2 border-green-300 rounded-lg p-3">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="text-2xl">
+                                {% if evidence.evidence_type == 'photo' %}📷
+                                {% elif evidence.evidence_type == 'video' %}🎬
+                                {% elif evidence.evidence_type == 'document' %}📄
+                                {% else %}📎{% endif %}
+                            </div>
+                            <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">已采用</span>
+                        </div>
+                        <div class="text-sm font-medium">{{ evidence.description|default:evidence.get_evidence_type_display }}</div>
+                        <div class="text-xs text-gray-500 mt-1">上传: {{ evidence.uploaded_by.get_full_name|default:'未知' }}</div>
+                        {% if evidence.adopted_by %}
+                        <div class="text-xs text-green-600 mt-1">采用: {{ evidence.adopted_by.get_full_name|default:'未知' }} · {{ evidence.adopted_at|date:'Y-m-d H:i' }}</div>
+                        {% endif %}
+                        <div class="flex gap-2 mt-2">
+                            <a href="{{ evidence.file.url }}" target="_blank" class="text-xs text-blue-600 hover:underline">查看文件</a>
+                            {% if can_manage_evidence and order.status != 'archived' %}
+                            <form action="{% url 'evidence_unadopt' order.pk evidence.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs text-red-600 hover:underline" onclick="return confirm('确定取消采用此证据吗？')">取消采用</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <div class="bg-white rounded-xl shadow p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold">证据材料</h2>
                     <button @click="showEvidenceForm = true" class="text-sm text-blue-600 hover:underline">+ 上传证据</button>
                 </div>
-                {% if evidences %}
+                {% if normal_evidences %}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {% for evidence in evidences %}
+                    {% for evidence in normal_evidences %}
                     <div class="border rounded-lg p-3">
                         <div class="text-2xl mb-2">
                             {% if evidence.evidence_type == 'photo' %}📷
@@ -281,12 +318,20 @@
                         </div>
                         <div class="text-sm font-medium">{{ evidence.description|default:evidence.get_evidence_type_display }}</div>
                         <div class="text-xs text-gray-500 mt-1">{{ evidence.uploaded_by.get_full_name|default:'未知' }} · {{ evidence.created_at|date:'Y-m-d H:i' }}</div>
-                        <a href="{{ evidence.file.url }}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">查看文件</a>
+                        <div class="flex gap-2 mt-2">
+                            <a href="{{ evidence.file.url }}" target="_blank" class="text-xs text-blue-600 hover:underline">查看文件</a>
+                            {% if can_manage_evidence and order.status != 'archived' %}
+                            <form action="{% url 'evidence_adopt' order.pk evidence.pk %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs text-green-600 hover:underline" onclick="return confirm('确定采用此证据吗？')">采用</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-gray-500">暂无证据材料</p>
+                <p class="text-gray-500">暂无普通证据材料</p>
                 {% endif %}
             </div>
         </div>
@@ -303,6 +348,8 @@
                             {% elif h.action == 'review_confirm' %}bg-purple-500
                             {% elif h.action == 'archive' %}bg-gray-500
                             {% elif h.action == 'return' %}bg-red-500
+                            {% elif h.action == 'adopt_evidence' %}bg-emerald-500
+                            {% elif h.action == 'unadopt_evidence' %}bg-orange-500
                             {% else %}bg-yellow-500{% endif %}">
                         </div>
                         <div class="text-sm font-medium">{{ h.get_action_display }}</div>

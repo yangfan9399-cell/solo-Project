@@ -18,6 +18,8 @@ urlpatterns = [
     path('orders/<int:pk>/review-confirm/', views.work_order_review_confirm, name='work_order_review_confirm'),
     path('orders/<int:pk>/archive/', views.work_order_archive, name='work_order_archive'),
     path('orders/<int:pk>/upload-evidence/', views.evidence_upload, name='evidence_upload'),
+    path('orders/<int:pk>/evidence/<int:evidence_id>/adopt/', views.evidence_adopt, name='evidence_adopt'),
+    path('orders/<int:pk>/evidence/<int:evidence_id>/unadopt/', views.evidence_unadopt, name='evidence_unadopt'),
     
     path('review/', views.review_page, name='review'),
     

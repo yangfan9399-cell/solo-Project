@@ -153,6 +153,8 @@ class WorkOrderHistory(models.Model):
         ('archive', '归档'),
         ('update', '更新信息'),
         ('add_evidence', '添加证据'),
+        ('adopt_evidence', '采用证据'),
+        ('unadopt_evidence', '取消采用证据'),
     ]
 
     work_order = models.ForeignKey(WorkOrder, on_delete=models.CASCADE, related_name='history', verbose_name='工单')
@@ -184,13 +186,18 @@ class Evidence(models.Model):
     evidence_type = models.CharField(max_length=20, choices=EVIDENCE_TYPE_CHOICES, verbose_name='证据类型')
     file = models.FileField(upload_to='evidences/%Y/%m/%d/', verbose_name='文件')
     description = models.CharField(max_length=255, blank=True, verbose_name='说明')
-    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='上传人')
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='uploaded_evidences', verbose_name='上传人')
+    is_adopted = models.BooleanField(default=False, verbose_name='是否采用')
+    adopted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='adopted_evidences', verbose_name='采用人')
+    adopted_at = models.DateTimeField(null=True, blank=True, verbose_name='采用时间')
+    adopt_note = models.CharField(max_length=255, blank=True, verbose_name='采用说明')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='上传时间')
 
     class Meta:
         verbose_name = '证据'
         verbose_name_plural = verbose_name
-        ordering = ['-created_at']
+        ordering = ['-is_adopted', '-created_at']
 
     def __str__(self):
-        return f'{self.work_order.order_number} - {self.get_evidence_type_display()}'
+        status = '✓' if self.is_adopted else ''
+        return f'{self.work_order.order_number} - {self.get_evidence_type_display()} {status}'

@@ -130,8 +130,12 @@ def work_order_create(request):
 def work_order_detail(request, pk):
     order = get_object_or_404(WorkOrder.objects.select_related('light_pole', 'reporter', 'inspector', 'reviewer', 'energy_reading'), pk=pk)
     history = order.history.select_related('operator').all()
-    evidences = order.evidences.select_related('uploaded_by').all()
+    evidences = order.evidences.select_related('uploaded_by', 'adopted_by').all()
+    adopted_evidences = [e for e in evidences if e.is_adopted]
+    normal_evidences = [e for e in evidences if not e.is_adopted]
     energy_readings = order.light_pole.energy_readings.all()[:7] if order.light_pole else []
+    
+    can_manage_evidence = request.user.role in ['inspector', 'reviewer', 'admin']
     
     assign_inspector_form = AssignInspectorForm()
     assign_reviewer_form = AssignReviewerForm()
@@ -144,7 +148,10 @@ def work_order_detail(request, pk):
         'order': order,
         'history': history,
         'evidences': evidences,
+        'adopted_evidences': adopted_evidences,
+        'normal_evidences': normal_evidences,
         'energy_readings': energy_readings,
+        'can_manage_evidence': can_manage_evidence,
         'assign_inspector_form': assign_inspector_form,
         'assign_reviewer_form': assign_reviewer_form,
         'inspect_form': inspect_form,
@@ -353,6 +360,50 @@ def evidence_upload(request, pk):
                 operator=request.user,
                 comment=f'上传证据: {evidence.get_evidence_type_display()}'
             )
+    
+    return redirect('work_order_detail', pk=pk)
+
+
+@login_required
+def evidence_adopt(request, pk, evidence_id):
+    order = get_object_or_404(WorkOrder, pk=pk)
+    evidence = get_object_or_404(Evidence, pk=evidence_id, work_order=order)
+    
+    if not evidence.is_adopted:
+        evidence.is_adopted = True
+        evidence.adopted_by = request.user
+        evidence.adopted_at = timezone.now()
+        if request.POST.get('note'):
+            evidence.adopt_note = request.POST.get('note')
+        evidence.save()
+        
+        WorkOrderHistory.objects.create(
+            work_order=order,
+            action='adopt_evidence',
+            operator=request.user,
+            comment=f'采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
+        )
+    
+    return redirect('work_order_detail', pk=pk)
+
+
+@login_required
+def evidence_unadopt(request, pk, evidence_id):
+    order = get_object_or_404(WorkOrder, pk=pk)
+    evidence = get_object_or_404(Evidence, pk=evidence_id, work_order=order)
+    
+    if evidence.is_adopted:
+        evidence.is_adopted = False
+        evidence.adopted_by = None
+        evidence.adopted_at = None
+        evidence.save()
+        
+        WorkOrderHistory.objects.create(
+            work_order=order,
+            action='unadopt_evidence',
+            operator=request.user,
+            comment=f'取消采用证据: {evidence.get_evidence_type_display()} - {evidence.description or evidence.file.name}'
+        )
     
     return redirect('work_order_detail', pk=pk)
 
