@@ -551,14 +551,11 @@ export default function HazardDetail() {
         </div>
       )}
 
-      {actionData?.error && (
-        <div className={`mb-4 px-4 py-3 rounded-lg ${
-          actionData.errorType === 'verify' ? 'bg-yellow-50 border border-yellow-200 text-yellow-800' :
-          'bg-red-50 border border-red-200 text-red-700'
-        }`}>
-          <p className="font-medium">{actionData.error}</p>
+      {actionData?.error && actionData?.errorType !== 'verify' && (
+        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <p className="font-medium">❌ {actionData.error}</p>
           {actionData.missingPhotos && (
-            <p className="text-sm mt-1">提示：{actionData.missingPhotos}，请在下方补充照片</p>
+            <p className="text-sm mt-1">提示：{actionData.missingPhotos}</p>
           )}
         </div>
       )}
