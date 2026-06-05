@@ -1,14 +1,7 @@
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import ConflictBadge from "@/components/ConflictBadge";
-import {
-  getExpiryReportDetail,
-  getTransferRequestsByReportId,
-  getDestructionRequestsByReportId,
-  getAuditLogsByReportId,
-  getEvidenceByReportId,
-  getHistoryNodesByReportId,
-} from "@/lib/mockData";
+import { getReportDetail, restartInventory } from "@/lib/actions";
 import {
   formatDate,
   formatDateTime,
@@ -18,16 +11,15 @@ import {
   formatCurrency,
 } from "@/lib/utils";
 
-export default function ReportDetailPage({ params }: { params: { id: string } }) {
+export default async function ReportDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const reportId = Number(params.id);
-  const report = getExpiryReportDetail(reportId);
-  const transfers = getTransferRequestsByReportId(reportId);
-  const destructions = getDestructionRequestsByReportId(reportId);
-  const auditLogs = getAuditLogsByReportId(reportId);
-  const evidence = getEvidenceByReportId(reportId);
-  const historyNodes = getHistoryNodesByReportId(reportId);
+  const detail = await getReportDetail(reportId);
 
-  if (!report) {
+  if (!detail) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
@@ -41,7 +33,24 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
     );
   }
 
-  const daysUntilExpiry = report.batch?.expiryDate ? getDaysUntilExpiry(report.batch.expiryDate) : 0;
+  const {
+    report,
+    store,
+    reportedBy,
+    batch,
+    suggestedStore,
+    transferRequest,
+    destructionRequest,
+    evidence,
+    historyNodes,
+    auditLogs,
+    sourceStore,
+    targetStore,
+  } = detail;
+
+  const daysUntilExpiry = batch?.expiryDate
+    ? getDaysUntilExpiry(batch.expiryDate)
+    : 0;
 
   const nodeIcons: Record<string, string> = {
     report: "📝",
@@ -53,24 +62,35 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
     transferred: "🚚",
     destroyed: "🔥",
     archived: "📦",
+    approve_transfer: "✅",
+    approve_destruction: "✅",
+    finance_approve: "💰",
+    restart_inventory: "🔄",
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <Link href="/reports" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+        <Link
+          href="/reports"
+          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+        >
           ← 返回列表
         </Link>
         <div className="flex items-center justify-between mt-2">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">上报详情 - {report.reportNumber}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              上报详情 - {report.reportNumber}
+            </h1>
             <p className="mt-1 text-gray-600">
-              {report.batch?.medicine?.name} - {report.store?.name}
+              {batch?.medicine?.name} - {store?.name}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={report.status} />
-            {report.conflictType !== "none" && <ConflictBadge conflictType={report.conflictType} />}
+            {report.conflictType !== "none" && (
+              <ConflictBadge conflictType={report.conflictType} />
+            )}
           </div>
         </div>
       </div>
@@ -80,7 +100,9 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
           <div className="flex items-start gap-4">
             <span className="text-3xl">🚫</span>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-red-800">批号不一致 - 流程已阻断</h3>
+              <h3 className="text-lg font-bold text-red-800">
+                批号不一致 - 流程已阻断
+              </h3>
               <p className="mt-2 text-red-700">{report.conflictNotes}</p>
               <div className="mt-4 flex gap-4">
                 <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
@@ -100,7 +122,9 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
           <div className="flex items-start gap-4">
             <span className="text-3xl">⚠️</span>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-orange-800">销毁数量超限</h3>
+              <h3 className="text-lg font-bold text-orange-800">
+                销毁数量超限提醒
+              </h3>
               <p className="mt-2 text-orange-700">{report.conflictNotes}</p>
             </div>
           </div>
@@ -108,12 +132,14 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
       )}
 
       {report.conflictType === "store_conflict" && (
-        <div className="mb-6 p-6 bg-purple-50 border border-purple-200 rounded-xl">
+        <div className="mb-6 p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
           <div className="flex items-start gap-4">
             <span className="text-3xl">⚡</span>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-purple-800">责任门店冲突</h3>
-              <p className="mt-2 text-purple-700">{report.conflictNotes}</p>
+              <h3 className="text-lg font-bold text-yellow-800">
+                责任门店冲突
+              </h3>
+              <p className="mt-2 text-yellow-700">{report.conflictNotes}</p>
             </div>
           </div>
         </div>
@@ -123,51 +149,73 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">💊 药品信息</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div>
                 <div className="text-sm text-gray-500">药品名称</div>
-                <div className="mt-1 font-medium text-gray-900">{report.batch?.medicine?.name}</div>
+                <div className="font-medium text-gray-900 mt-1">
+                  {batch?.medicine?.name}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">通用名</div>
-                <div className="mt-1 text-gray-700">{report.batch?.medicine?.genericName}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">药品类别</div>
-                <div className="mt-1 text-gray-700">{getCategoryText(report.batch?.medicine?.category || "")}</div>
+                <div className="text-gray-700 mt-1">
+                  {batch?.medicine?.genericName}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">规格</div>
-                <div className="mt-1 text-gray-700">{report.batch?.medicine?.specification}</div>
+                <div className="text-gray-700 mt-1">
+                  {batch?.medicine?.specification}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">生产厂家</div>
-                <div className="mt-1 text-gray-700">{report.batch?.medicine?.manufacturer}</div>
+                <div className="text-gray-700 mt-1">
+                  {batch?.medicine?.manufacturer}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-500">药品类别</div>
+                <div className="text-gray-700 mt-1">
+                  {getCategoryText(batch?.medicine?.category || "")}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">单价</div>
-                <div className="mt-1 font-medium text-gray-900">{formatCurrency(report.batch?.medicine?.price || 0)}</div>
+                <div className="text-gray-700 mt-1">
+                  {formatCurrency(batch?.medicine?.price || 0)}
+                </div>
               </div>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">🏷️ 批次与效期</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              🏷️ 批次与效期
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <div className="text-sm text-gray-500">批号</div>
-                <div className="mt-1 font-mono font-medium text-gray-900">{report.batch?.batchNumber}</div>
+                <div className="font-medium text-gray-900 mt-1">
+                  {batch?.batchNumber}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">生产日期</div>
-                <div className="mt-1 text-gray-700">{formatDate(report.batch?.productionDate || null)}</div>
+                <div className="text-gray-700 mt-1">
+                  {formatDate(batch?.productionDate || null)}
+                </div>
               </div>
-              <div className="col-span-2">
+              <div>
                 <div className="text-sm text-gray-500">有效期至</div>
-                <div className={`mt-1 text-lg font-bold ${daysUntilExpiry <= 30 ? "text-red-600" : "text-gray-900"}`}>
-                  {formatDate(report.batch?.expiryDate || null)}
-                  <span className="ml-3 text-sm font-normal">
-                    (还有 <span className={daysUntilExpiry <= 30 ? "text-red-600" : ""}>{daysUntilExpiry}</span> 天过期)
+                <div
+                  className={`font-medium mt-1 ${
+                    daysUntilExpiry <= 30 ? "text-red-600" : "text-gray-900"
+                  }`}
+                >
+                  {formatDate(batch?.expiryDate || null)}
+                  <span className="ml-2 text-sm">
+                    (剩余 {daysUntilExpiry} 天)
                   </span>
                 </div>
               </div>
@@ -175,244 +223,206 @@ export default function ReportDetailPage({ params }: { params: { id: string } })
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">🏪 门店与库存</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">
+              🏪 门店与库存
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <div className="text-sm text-gray-500">原门店</div>
-                <div className="mt-1 font-medium text-gray-900">{report.store?.name}</div>
-                <div className="text-sm text-gray-500">{report.store?.code}</div>
+                <div className="font-medium text-gray-900 mt-1">
+                  {store?.name}
+                </div>
+                <div className="text-sm text-gray-500">{store?.code}</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">上报人</div>
-                <div className="mt-1 text-gray-700">{report.reportedByUser?.name}</div>
+                <div className="text-gray-700 mt-1">{reportedBy?.name}</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500">上报数量</div>
-                <div className="mt-1 text-xl font-bold text-gray-900">
-                  {report.reportedQuantity} {report.batch?.medicine?.unit}
+                <div className="text-gray-700 mt-1">
+                  {report.reportedQuantity} {batch?.medicine?.unit}
+                </div>
+                <div className="text-sm text-gray-500">
+                  系统库存: {report.inventoryQuantity}
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-500">系统库存</div>
-                <div className="mt-1 text-gray-700">
-                  {report.inventoryQuantity} {report.batch?.medicine?.unit}
-                  {report.reportedQuantity !== report.inventoryQuantity && (
-                    <span className="ml-2 text-red-500 text-sm">(不一致)</span>
-                  )}
-                </div>
-              </div>
-              {report.suggestedTransferStore && (
+              {report.suggestedTransferStoreId && (
                 <div>
-                  <div className="text-sm text-gray-500">建议调拨目标门店</div>
-                  <div className="mt-1 text-green-700 font-medium">
-                    📤 {report.suggestedTransferStore.name}
+                  <div className="text-sm text-gray-500">建议调拨门店</div>
+                  <div className="text-green-700 font-medium mt-1">
+                    {suggestedStore?.name}
                   </div>
                 </div>
               )}
-              <div>
-                <div className="text-sm text-gray-500">建议处置方式</div>
-                <div className="mt-1">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    report.disposalType === "transfer" ? "bg-green-100 text-green-800" :
-                    report.disposalType === "destruction" ? "bg-red-100 text-red-800" :
-                    "bg-gray-100 text-gray-800"
-                  }`}>
-                    {getDisposalTypeText(report.disposalType)}
-                  </span>
-                </div>
-              </div>
             </div>
-            {report.notes && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="text-sm text-gray-500">备注说明</div>
-                <div className="mt-1 text-gray-700">{report.notes}</div>
-              </div>
-            )}
           </div>
 
-          {transfers.length > 0 && (
+          {transferRequest && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">📤 调拨信息</h2>
-              {transfers.map((transfer) => (
-                <div key={transfer.id} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <div className="text-sm text-gray-500">调出门店</div>
-                      <div className="mt-1 font-medium text-gray-900">{transfer.sourceStore?.name}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">调入门店</div>
-                      <div className="mt-1 font-medium text-gray-900">{transfer.targetStore?.name}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">调拨数量</div>
-                      <div className="mt-1 text-xl font-bold text-green-600">
-                        {transfer.quantity} {report.batch?.medicine?.unit}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">状态</div>
-                      <div className="mt-1">
-                        <StatusBadge status={transfer.status} />
-                      </div>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <div className="text-sm text-gray-500">调出门店</div>
+                  <div className="font-medium text-gray-900 mt-1">
+                    {sourceStore?.name}
                   </div>
-                  {transfer.notes && (
-                    <div>
-                      <div className="text-sm text-gray-500">备注</div>
-                      <div className="mt-1 text-gray-700">{transfer.notes}</div>
-                    </div>
-                  )}
                 </div>
-              ))}
+                <div>
+                  <div className="text-sm text-gray-500">调入门店</div>
+                  <div className="font-medium text-green-700 mt-1">
+                    {targetStore?.name}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">调拨数量</div>
+                  <div className="text-gray-700 mt-1">
+                    {transferRequest.quantity} {batch?.medicine?.unit}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">状态</div>
+                  <StatusBadge status={transferRequest.status} />
+                </div>
+              </div>
+              {transferRequest.notes && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="text-sm text-gray-500">调拨说明</div>
+                  <div className="text-gray-700 mt-1">{transferRequest.notes}</div>
+                </div>
+              )}
             </div>
           )}
 
-          {destructions.length > 0 && (
+          {destructionRequest && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">🗑️ 销毁信息</h2>
-              {destructions.map((destruction) => (
-                <div key={destruction.id} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <div className="text-sm text-gray-500">销毁门店</div>
-                      <div className="mt-1 font-medium text-gray-900">{destruction.store?.name}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">状态</div>
-                      <div className="mt-1">
-                        <StatusBadge status={destruction.status} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">申请销毁数量</div>
-                      <div className="mt-1 text-xl font-bold text-red-600">
-                        {destruction.quantity} {report.batch?.medicine?.unit}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">最大允许销毁数量</div>
-                      <div className="mt-1 text-gray-700">
-                        {destruction.maxAllowedQuantity} {report.batch?.medicine?.unit}
-                        {destruction.quantity > destruction.maxAllowedQuantity && (
-                          <span className="ml-2 text-red-500 text-sm">(超限)</span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">损耗金额</div>
-                      <div className="mt-1 text-lg font-bold text-red-600">
-                        {formatCurrency(destruction.lossAmount || 0)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">药师审核</div>
-                      <div className="mt-1 text-gray-700">
-                        {destruction.approvedByUser?.name || "-"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-500">财务复核</div>
-                      <div className="mt-1 text-gray-700">
-                        {destruction.financeApprovedByUser?.name || "-"}
-                      </div>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <div className="text-sm text-gray-500">销毁门店</div>
+                  <div className="font-medium text-gray-900 mt-1">
+                    {store?.name}
                   </div>
-                  {destruction.notes && (
-                    <div>
-                      <div className="text-sm text-gray-500">备注</div>
-                      <div className="mt-1 text-gray-700">{destruction.notes}</div>
-                    </div>
-                  )}
                 </div>
-              ))}
+                <div>
+                  <div className="text-sm text-gray-500">销毁数量</div>
+                  <div className="text-gray-700 mt-1">
+                    {destructionRequest.quantity} {batch?.medicine?.unit}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">月度限额</div>
+                  <div className="text-gray-700 mt-1">
+                    {destructionRequest.maxAllowedQuantity}{" "}
+                    {batch?.medicine?.unit}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">损耗金额</div>
+                  <div className="font-bold text-red-600 mt-1">
+                    {formatCurrency(destructionRequest.lossAmount || 0)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">状态</div>
+                  <StatusBadge status={destructionRequest.status} />
+                </div>
+              </div>
+              {destructionRequest.notes && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="text-sm text-gray-500">销毁说明</div>
+                  <div className="text-gray-700 mt-1">{destructionRequest.notes}</div>
+                </div>
+              )}
             </div>
           )}
 
-          {evidence.length > 0 && (
+          {evidence && evidence.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">📎 采用证据</h2>
-              <div className="space-y-3">
-                {evidence.map((item) => (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {evidence.map((ev: any) => (
                   <div
-                    key={item.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    key={ev.id}
+                    className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="text-2xl">
-                        {item.fileType.startsWith("image") ? "🖼️" : "📄"}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{item.fileName}</div>
-                        <div className="text-sm text-gray-500">
-                          上传人: {item.uploadedByUser?.name} · {formatDateTime(item.createdAt)}
-                        </div>
-                        {item.description && (
-                          <div className="text-sm text-gray-600 mt-1">{item.description}</div>
-                        )}
-                      </div>
+                    <div className="text-2xl mb-2">📄</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {ev.fileName}
                     </div>
-                    <a
-                      href={item.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      查看
-                    </a>
+                    {ev.description && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {ev.description}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
 
-        <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">📜 历史节点</h2>
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
               <div className="space-y-6">
-                {historyNodes.map((node, index) => (
-                  <div key={node.id} className="relative pl-10">
-                    <div className="absolute left-0 top-1 w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                      <span className="text-sm">{nodeIcons[node.nodeType] || "📌"}</span>
+                {historyNodes.map((node: any, index: number) => (
+                  <div key={node.id} className="relative pl-12">
+                    <div className="absolute left-0 w-8 h-8 rounded-full bg-white border-4 border-gray-300 flex items-center justify-center text-lg">
+                      {nodeIcons[node.nodeType] || "📌"}
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{node.title}</div>
-                      <div className="text-sm text-gray-600 mt-1">{node.description}</div>
-                      {node.quantityChange && (
-                        <div className="text-sm text-blue-600 mt-1">
-                          数量变化: {node.quantityChange}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium text-gray-900">{node.title}</div>
+                        <div className="text-sm text-gray-500">
+                          {formatDateTime(node.createdAt)}
                         </div>
-                      )}
-                      <div className="text-xs text-gray-400 mt-2">
-                        {node.user?.name} · {formatDateTime(node.createdAt)}
                       </div>
+                      <div className="text-sm text-gray-600">{node.description}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
+        </div>
 
+        <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">📋 审核日志</h2>
-            <div className="space-y-3">
-              {auditLogs.slice(0, 5).map((log) => (
-                <div key={log.id} className="pb-3 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-gray-700 text-sm">{log.action}</div>
-                    <div className="text-xs text-gray-400">{formatDateTime(log.createdAt)}</div>
+            <div className="space-y-4">
+              {auditLogs.map((log: any) => (
+                <div
+                  key={log.id}
+                  className="p-3 bg-gray-50 rounded-lg border border-gray-100"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-sm font-medium text-gray-700">
+                      {log.action.replace(/_/g, " ")}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatDateTime(log.createdAt)}
+                    </div>
                   </div>
                   {log.notes && (
-                    <div className="text-sm text-gray-500 mt-1">{log.notes}</div>
+                    <div className="text-sm text-gray-600">{log.notes}</div>
                   )}
-                  <div className="text-xs text-gray-400 mt-1">操作人: {log.user?.name}</div>
+                  {log.previousStatus && log.newStatus && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {log.previousStatus} → {log.newStatus}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+
+          {report.notes && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">📝 备注</h2>
+              <div className="text-gray-700">{report.notes}</div>
+            </div>
+          )}
         </div>
       </div>
     </div>

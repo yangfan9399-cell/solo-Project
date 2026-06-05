@@ -1,13 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { mockStores, mockMedicines, mockBatches } from "@/lib/mockData";
 import { getCategoryText } from "@/lib/utils";
+import {
+  createReport,
+  getStores,
+  getMedicines,
+  getBatchesByMedicine,
+  getInventoryByStoreAndBatch,
+} from "@/lib/actions";
+
+interface Store {
+  id: number;
+  name: string;
+  code: string;
+  address: string;
+  region: string;
+  manager: string;
+  phone: string;
+  createdAt: string;
+}
+
+interface Medicine {
+  id: number;
+  name: string;
+  genericName: string;
+  specification: string;
+  manufacturer: string;
+  category: string;
+  unit: string;
+  price: string;
+}
+
+interface Batch {
+  id: number;
+  medicineId: number;
+  batchNumber: string;
+  productionDate: string;
+  expiryDate: string;
+  medicine?: Medicine;
+}
 
 export default function NewReportPage() {
   const router = useRouter();
+  const [stores, setStores] = useState<Store[]>([]);
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [formData, setFormData] = useState({
     storeId: 1,
     medicineId: 1,
@@ -17,25 +57,99 @@ export default function NewReportPage() {
     notes: "",
     disposalType: "none" as "transfer" | "destruction" | "none",
     suggestedTransferStoreId: undefined as number | undefined,
+    actualBatchNumber: "",
+    systemBatchNumber: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  const selectedBatches = mockBatches.filter((b) => b.medicineId === formData.medicineId);
-  const selectedMedicine = mockMedicines.find((m) => m.id === formData.medicineId);
+  useEffect(() => {
+    async function loadData() {
+      const [storesData, medicinesData] = await Promise.all([
+        getStores(),
+        getMedicines(),
+      ]);
+      setStores(storesData);
+      setMedicines(medicinesData);
+
+      if (medicinesData.length > 0) {
+        const batchesData = await getBatchesByMedicine(medicinesData[0].id);
+        setBatches(batchesData);
+      }
+    }
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    async function loadBatches() {
+      if (formData.medicineId) {
+        const batchesData = await getBatchesByMedicine(formData.medicineId);
+        setBatches(batchesData);
+        if (batchesData.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            batchId: batchesData[0].id,
+            systemBatchNumber: batchesData[0].batchNumber,
+            actualBatchNumber: batchesData[0].batchNumber,
+          }));
+        }
+      }
+    }
+    loadBatches();
+  }, [formData.medicineId]);
+
+  useEffect(() => {
+    async function loadInventory() {
+      if (formData.storeId && formData.batchId) {
+        const inventory = await getInventoryByStoreAndBatch(
+          formData.storeId,
+          formData.batchId
+        );
+        setFormData((prev) => ({
+          ...prev,
+          inventoryQuantity: inventory?.quantity || 0,
+        }));
+      }
+    }
+    loadInventory();
+  }, [formData.storeId, formData.batchId]);
+
+  const selectedMedicine = medicines.find((m) => m.id === formData.medicineId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const result = await createReport({
+        storeId: formData.storeId,
+        reportedBy: 1,
+        batchId: formData.batchId,
+        reportedQuantity: formData.reportedQuantity,
+        inventoryQuantity: formData.inventoryQuantity,
+        notes: formData.notes,
+        disposalType: formData.disposalType,
+        suggestedTransferStoreId: formData.suggestedTransferStoreId,
+        actualBatchNumber: formData.actualBatchNumber,
+        systemBatchNumber: formData.systemBatchNumber,
+      });
 
-    setIsSubmitting(false);
-    setShowSuccess(true);
-
-    setTimeout(() => {
-      router.push("/reports");
-    }, 2000);
+      if (result.success) {
+        setIsSubmitting(false);
+        setShowSuccess(true);
+        setTimeout(() => {
+          router.push("/reports");
+        }, 2000);
+      } else {
+        setError(result.error || "提交失败");
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      setError("提交失败，请重试");
+      setIsSubmitting(false);
+    }
   };
 
   if (showSuccess) {
@@ -60,6 +174,12 @@ export default function NewReportPage() {
         <p className="mt-1 text-gray-600">门店经办人上报近效期药品批次和库存说明</p>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">📝 基本信息</h2>
@@ -74,7 +194,7 @@ export default function NewReportPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {mockStores.map((store) => (
+                {stores.map((store) => (
                   <option key={store.id} value={store.id}>
                     {store.name} ({store.code})
                   </option>
@@ -89,18 +209,15 @@ export default function NewReportPage() {
               <select
                 value={formData.medicineId}
                 onChange={(e) => {
-                  const medicineId = Number(e.target.value);
-                  const batches = mockBatches.filter((b) => b.medicineId === medicineId);
                   setFormData({
                     ...formData,
-                    medicineId,
-                    batchId: batches.length > 0 ? batches[0].id : 0,
+                    medicineId: Number(e.target.value),
                   });
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {mockMedicines.map((medicine) => (
+                {medicines.map((medicine) => (
                   <option key={medicine.id} value={medicine.id}>
                     {medicine.name} - {getCategoryText(medicine.category)}
                   </option>
@@ -114,11 +231,19 @@ export default function NewReportPage() {
               </label>
               <select
                 value={formData.batchId}
-                onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
+                onChange={(e) => {
+                  const batch = batches.find((b) => b.id === Number(e.target.value));
+                  setFormData({
+                    ...formData,
+                    batchId: Number(e.target.value),
+                    systemBatchNumber: batch?.batchNumber || "",
+                    actualBatchNumber: batch?.batchNumber || "",
+                  });
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {selectedBatches.map((batch) => (
+                {batches.map((batch) => (
                   <option key={batch.id} value={batch.id}>
                     {batch.batchNumber} (有效期至: {batch.expiryDate})
                   </option>
@@ -141,6 +266,31 @@ export default function NewReportPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">📦 库存信息</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                系统记录批号
+              </label>
+              <input
+                type="text"
+                value={formData.systemBatchNumber}
+                disabled
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                实际盘点批号 <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.actualBatchNumber}
+                onChange={(e) => setFormData({ ...formData, actualBatchNumber: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="请输入实际盘点的批号"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">如与系统记录不一致将自动阻断流程</p>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 上报数量 ({selectedMedicine?.unit || "盒"}) <span className="text-red-500">*</span>
@@ -171,7 +321,21 @@ export default function NewReportPage() {
             </div>
           </div>
 
-          {formData.reportedQuantity !== formData.inventoryQuantity && formData.reportedQuantity > 0 && (
+          {formData.actualBatchNumber !== formData.systemBatchNumber && formData.actualBatchNumber && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-lg">🚫</span>
+                <div>
+                  <p className="font-medium text-red-800">批号不一致</p>
+                  <p className="text-sm text-red-700">
+                    实际盘点批号 ({formData.actualBatchNumber}) 与系统记录批号 ({formData.systemBatchNumber}) 不一致，流程将被阻断，请重新盘点确认
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {formData.actualBatchNumber === formData.systemBatchNumber && formData.reportedQuantity !== formData.inventoryQuantity && formData.reportedQuantity > 0 && (
             <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-start gap-3">
                 <span className="text-lg">⚠️</span>
@@ -241,7 +405,7 @@ export default function NewReportPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">请选择目标门店</option>
-                  {mockStores
+                  {stores
                     .filter((s) => s.id !== formData.storeId)
                     .map((store) => (
                       <option key={store.id} value={store.id}>

@@ -1,25 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import ConflictBadge from "@/components/ConflictBadge";
-import { mockExpiryReports, getBatchById, getStoreById, mockUsers } from "@/lib/mockData";
+import {
+  getAllReports,
+  type Store,
+} from "@/lib/actions";
 import { formatDate, formatDateTime, getDisposalTypeText, getDaysUntilExpiry } from "@/lib/utils";
 
+interface Batch {
+  id: number;
+  medicineId: number;
+  batchNumber: string;
+  productionDate: string;
+  expiryDate: string;
+  medicine?: {
+    id: number;
+    name: string;
+    genericName: string;
+    specification: string;
+    manufacturer: string;
+    category: string;
+    unit: string;
+    price: string;
+  };
+}
+
+interface ReportItem {
+  report: {
+    id: number;
+    reportNumber: string;
+    storeId: number;
+    reportedBy: number;
+    batchId: number;
+    reportedQuantity: number;
+    inventoryQuantity: number;
+    notes?: string;
+    conflictType: string;
+    conflictNotes?: string;
+    status: string;
+    disposalType: string;
+    suggestedTransferStoreId?: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  store?: Store;
+  batch?: Batch;
+}
+
 export default function ReportsPage() {
+  const [reports, setReports] = useState<ReportItem[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterConflict, setFilterConflict] = useState<string>("all");
 
-  const reports = mockExpiryReports
-    .filter((r) => filterStatus === "all" || r.status === filterStatus)
-    .filter((r) => filterConflict === "all" || r.conflictType === filterConflict)
-    .map((report) => ({
-      ...report,
-      batch: getBatchById(report.batchId),
-      store: getStoreById(report.storeId),
-      reportedByUser: mockUsers.find((u) => u.id === report.reportedBy),
-    }));
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    const data = await getAllReports();
+    setReports(data as ReportItem[]);
+  }
+
+  const filteredReports = reports
+    .filter((r) => filterStatus === "all" || r.report.status === filterStatus)
+    .filter(
+      (r) =>
+        filterConflict === "all" || r.report.conflictType === filterConflict
+    );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -75,37 +125,70 @@ export default function ReportsPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">上报编号</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">药品信息</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">上报门店</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">数量</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">效期</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">处置方式</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">状态</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">上报时间</th>
-                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">操作</th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  上报编号
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  药品信息
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  上报门店
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  数量
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  效期
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  处置方式
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  状态
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  上报时间
+                </th>
+                <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                  操作
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {reports.map((report) => {
-                const daysUntilExpiry = report.batch?.expiryDate ? getDaysUntilExpiry(report.batch.expiryDate) : 0;
+              {filteredReports.map((item) => {
+                const { report, store, batch } = item;
+                const daysUntilExpiry = batch?.expiryDate
+                  ? getDaysUntilExpiry(batch.expiryDate)
+                  : 0;
                 return (
-                  <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={report.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="py-4 px-6">
-                      <Link href={`/reports/${report.id}`} className="text-blue-600 hover:text-blue-700 font-medium">
+                      <Link
+                        href={`/reports/${report.id}`}
+                        className="text-blue-600 hover:text-blue-700 font-medium"
+                      >
                         {report.reportNumber}
                       </Link>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="font-medium text-gray-900">{report.batch?.medicine?.name}</div>
-                      <div className="text-sm text-gray-500">批号: {report.batch?.batchNumber}</div>
+                      <div className="font-medium text-gray-900">
+                        {batch?.medicine?.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        批号: {batch?.batchNumber}
+                      </div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="text-gray-700">{report.store?.name}</div>
-                      <div className="text-sm text-gray-500">{report.store?.code}</div>
+                      <div className="text-gray-700">{store?.name}</div>
+                      <div className="text-sm text-gray-500">{store?.code}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="text-gray-700">{report.reportedQuantity} {report.batch?.medicine?.unit}</div>
+                      <div className="text-gray-700">
+                        {report.reportedQuantity} {batch?.medicine?.unit}
+                      </div>
                       {report.reportedQuantity !== report.inventoryQuantity && (
                         <div className="text-xs text-red-600">
                           系统库存: {report.inventoryQuantity}
@@ -113,24 +196,36 @@ export default function ReportsPage() {
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <div className={daysUntilExpiry <= 30 ? "text-red-600 font-medium" : "text-gray-700"}>
-                        {formatDate(report.batch?.expiryDate || null)}
+                      <div
+                        className={
+                          daysUntilExpiry <= 30
+                            ? "text-red-600 font-medium"
+                            : "text-gray-700"
+                        }
+                      >
+                        {formatDate(batch?.expiryDate || null)}
                         <div className="text-xs">还有 {daysUntilExpiry} 天</div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        report.disposalType === "transfer" ? "bg-green-100 text-green-800" :
-                        report.disposalType === "destruction" ? "bg-red-100 text-red-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          report.disposalType === "transfer"
+                            ? "bg-green-100 text-green-800"
+                            : report.disposalType === "destruction"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
                         {getDisposalTypeText(report.disposalType)}
                       </span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col gap-1">
                         <StatusBadge status={report.status} />
-                        {report.conflictType !== "none" && <ConflictBadge conflictType={report.conflictType} />}
+                        {report.conflictType !== "none" && (
+                          <ConflictBadge conflictType={report.conflictType} />
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-500">
@@ -150,7 +245,7 @@ export default function ReportsPage() {
             </tbody>
           </table>
         </div>
-        {reports.length === 0 && (
+        {filteredReports.length === 0 && (
           <div className="py-12 text-center text-gray-500">
             <div className="text-4xl mb-4">📭</div>
             <p>暂无符合条件的上报记录</p>
