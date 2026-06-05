@@ -22,6 +22,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('waste-batches', WasteBatchController::class);
 
     Route::resource('transfer-requests', TransferRequestController::class);
+    Route::post('/transfer-requests/{transferRequest}/update-carrier', [TransferRequestController::class, 'updateCarrier'])
+        ->name('transfer-requests.update-carrier');
 
     Route::get('/transfer-requests/{transferRequest}/manifest/create', [ManifestFormController::class, 'create'])
         ->name('manifest-forms.create');

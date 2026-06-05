@@ -93,7 +93,35 @@ class TransferRequestController extends Controller
 
         return Inertia::render('TransferRequests/Show', [
             'request' => $transferRequest,
-            'canApprove' => $transferRequest->canBeApproved(),
+            'carriers' => Carrier::where('is_active', true)->get(),
         ]);
+    }
+
+    public function updateCarrier(Request $request, TransferRequest $transferRequest): RedirectResponse
+    {
+        $validated = $request->validate([
+            'carrier_id' => 'required|exists:carriers,id',
+        ]);
+
+        $newCarrier = Carrier::findOrFail($validated['carrier_id']);
+
+        if ($newCarrier->isQualificationExpired()) {
+            return back()->with('error', '选择的承运单位资质已过期，请选择其他单位');
+        }
+
+        $oldCarrierName = $transferRequest->carrier->name;
+        $transferRequest->update(['carrier_id' => $validated['carrier_id']]);
+
+        ProcessHistory::create([
+            'processable_type' => TransferRequest::class,
+            'processable_id' => $transferRequest->id,
+            'action' => '更换承运单位',
+            'from_status' => $transferRequest->status,
+            'to_status' => $transferRequest->status,
+            'remark' => "承运单位由「{$oldCarrierName}」更换为「{$newCarrier->name}」",
+            'performed_by' => auth()->id(),
+        ]);
+
+        return back()->with('success', '承运单位更换成功，可继续进行复核');
     }
 }

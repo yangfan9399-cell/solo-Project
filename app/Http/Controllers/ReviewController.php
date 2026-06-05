@@ -20,15 +20,14 @@ class ReviewController extends Controller
 
         $transferRequest = TransferRequest::findOrFail($validated['transfer_request_id']);
 
-        if ($validated['result'] === 'approved' && !$transferRequest->canBeApproved()) {
-            $error = '';
+        if ($validated['result'] === 'approved') {
             if ($transferRequest->carrier->isQualificationExpired()) {
-                $error = '承运单位资质已过期，请更换承运单位后再放行';
-            } elseif (!$transferRequest->manifestForm || $transferRequest->manifestForm->status !== 'verified') {
-                $error = '联单未确认，无法放行';
+                return back()->with('error', '承运单位资质已过期，请更换承运单位后再放行。当前申请可退回或归档。');
             }
             
-            return back()->with('error', $error);
+            if (!$transferRequest->manifestForm || $transferRequest->manifestForm->status !== 'verified') {
+                return back()->with('error', '联单未确认，无法放行');
+            }
         }
 
         $review = Review::create([

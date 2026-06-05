@@ -1,15 +1,18 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Show({ request, canApprove }) {
+export default function Show({ request, carriers }) {
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [showManifestModal, setShowManifestModal] = useState(false);
     const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showChangeCarrierModal, setShowChangeCarrierModal] = useState(false);
+
+    const isCarrierExpired = new Date(request.carrier.qualification_expiry_date) < new Date();
 
     const { data: reviewData, setData: setReviewData, post: postReview, processing: reviewProcessing } = useForm({
         transfer_request_id: request.id,
-        result: 'approved',
+        result: isCarrierExpired ? 'rejected' : 'approved',
         review_remark: '',
     });
 
@@ -25,6 +28,16 @@ export default function Show({ request, canApprove }) {
         verification_remark: '',
     });
 
+    const { data: carrierData, setData: setCarrierData, post: postCarrier, processing: carrierProcessing } = useForm({
+        carrier_id: '',
+    });
+
+    useEffect(() => {
+        if (isCarrierExpired && reviewData.result === 'approved') {
+            setReviewData('result', 'rejected');
+        }
+    }, []);
+
     const getStatusColor = (status) => {
         const colors = {
             pending: 'bg-yellow-100 text-yellow-800',
@@ -35,8 +48,6 @@ export default function Show({ request, canApprove }) {
         };
         return colors[status] || 'bg-gray-100 text-gray-800';
     };
-
-    const isCarrierExpired = new Date(request.carrier.qualification_expiry_date) < new Date();
 
     return (
         <AuthenticatedLayout
@@ -59,12 +70,27 @@ export default function Show({ request, canApprove }) {
             <div className="py-12">
                 <div className="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     {isCarrierExpired && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <div className="flex items-center">
-                                <svg className="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <div className="bg-orange-50 border border-orange-300 rounded-lg p-4">
+                            <div className="flex items-start">
+                                <svg className="w-5 h-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
-                                <span className="text-red-700 font-medium">⚠️ 承运单位资质已过期，禁止放行！请更换承运单位后再操作。</span>
+                                <div className="flex-1">
+                                    <p className="text-orange-700 font-medium">
+                                        ⚠️ 承运单位资质已过期，禁止放行！
+                                    </p>
+                                    <p className="text-orange-600 text-sm mt-1">
+                                        当前申请可选择退回或归档。如需放行，请先更换为有效资质的承运单位。
+                                    </p>
+                                    {request.status === 'manifest_verified' && !request.review && (
+                                        <button
+                                            onClick={() => setShowChangeCarrierModal(true)}
+                                            className="mt-2 px-3 py-1.5 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 font-medium"
+                                        >
+                                            更换承运单位
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -235,18 +261,13 @@ export default function Show({ request, canApprove }) {
                             <div className="p-6">
                                 <button
                                     onClick={() => setShowReviewModal(true)}
-                                    disabled={!canApprove}
-                                    className={`px-6 py-3 rounded-md font-medium ${
-                                        canApprove
-                                            ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                    className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
                                 >
                                     进行复核
                                 </button>
-                                {!canApprove && (
-                                    <p className="mt-2 text-sm text-red-600">
-                                        存在资质过期或联单未确认问题，无法放行
+                                {isCarrierExpired && (
+                                    <p className="mt-2 text-sm text-orange-600">
+                                        提示：由于承运单位资质过期，当前仅可选择退回或归档
                                     </p>
                                 )}
                             </div>
@@ -314,6 +335,13 @@ export default function Show({ request, canApprove }) {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
                         <h3 className="text-lg font-semibold mb-4">复核决定</h3>
+                        {isCarrierExpired && (
+                            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <p className="text-sm text-orange-700">
+                                    ⚠️ 承运单位资质已过期，<strong>无法选择放行</strong>。请选择退回或归档，或先更换承运单位。
+                                </p>
+                            </div>
+                        )}
                         <form onSubmit={(e) => {
                             e.preventDefault();
                             postReview(route('reviews.store'));
@@ -325,7 +353,9 @@ export default function Show({ request, canApprove }) {
                                     onChange={(e) => setReviewData('result', e.target.value)}
                                     className="w-full rounded-md border-gray-300 shadow-sm"
                                 >
-                                    <option value="approved">放行</option>
+                                    <option value="approved" disabled={isCarrierExpired}>
+                                        放行 {isCarrierExpired && '(资质过期，不可选)'}
+                                    </option>
                                     <option value="rejected">退回</option>
                                     <option value="archived">归档</option>
                                 </select>
@@ -354,6 +384,59 @@ export default function Show({ request, canApprove }) {
                                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium disabled:opacity-50"
                                 >
                                     确认提交
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showChangeCarrierModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full mx-4 p-6">
+                        <h3 className="text-lg font-semibold mb-4">更换承运单位</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            选择一个具有有效资质的承运单位以继续复核流程。
+                        </p>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            postCarrier(route('transfer-requests.update-carrier', request.id), {
+                                onSuccess: () => setShowChangeCarrierModal(false)
+                            });
+                        }}>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">选择承运单位</label>
+                                <select
+                                    value={carrierData.carrier_id}
+                                    onChange={(e) => setCarrierData('carrier_id', e.target.value)}
+                                    className="w-full rounded-md border-gray-300 shadow-sm"
+                                    required
+                                >
+                                    <option value="">请选择承运单位</option>
+                                    {carriers && carriers.map((carrier) => {
+                                        const expired = new Date(carrier.qualification_expiry_date) < new Date();
+                                        return (
+                                            <option key={carrier.id} value={carrier.id} disabled={expired}>
+                                                {carrier.name} {expired ? '(资质过期)' : `(有效期至: ${carrier.qualification_expiry_date})`}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowChangeCarrierModal(false)}
+                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={carrierProcessing || !carrierData.carrier_id}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium disabled:opacity-50"
+                                >
+                                    确认更换
                                 </button>
                             </div>
                         </form>
