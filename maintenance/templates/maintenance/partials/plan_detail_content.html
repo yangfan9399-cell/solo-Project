@@ -1,6 +1,27 @@
+{% load maintenance_extras %}
 <div x-data="{ 
     showSubmitModal: false, 
-    showReviewModal: false 
+    showReviewModal: false,
+    submitForm: { 
+        traction_system: '', 
+        guide_system: '', 
+        door_system: '', 
+        safety_device: '', 
+        electrical_system: '', 
+        car_system: '', 
+        handling_result: '' 
+    },
+    reviewComment: '', 
+    reviewAction: '',
+    isFormValid() {
+        return this.submitForm.traction_system && 
+               this.submitForm.guide_system && 
+               this.submitForm.door_system && 
+               this.submitForm.safety_device && 
+               this.submitForm.electrical_system && 
+               this.submitForm.car_system && 
+               this.submitForm.handling_result.trim();
+    }
 }">
     <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center space-x-4">
@@ -206,7 +227,7 @@
             <div class="bg-white shadow rounded-lg p-6">
                 <h2 class="text-lg font-semibold mb-4 text-gray-900">操作</h2>
                 <div class="space-y-3">
-                    {% if plan.status == 'pending' %}
+                    {% if plan.status == 'pending' and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
                     <form hx-post="{% url 'maintenance:start_plan' plan.id %}" hx-target="#plan-detail" hx-swap="innerHTML">
                         {% csrf_token %}
                         <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
@@ -220,16 +241,19 @@
                         <p class="text-sm text-red-700">
                             <strong>复核退回意见：</strong>{{ plan.review_comment }}
                         </p>
+                        <p class="text-xs text-red-600 mt-1">
+                            退回时间：{{ plan.reviewed_at|date:"Y-m-d H:i" }}，由 {{ plan.reviewed_by.get_full_name|default:plan.reviewed_by.username }} 退回
+                        </p>
                     </div>
                     {% endif %}
 
-                    {% if plan.status|plan_status_in:'in_progress,returned' %}
+                    {% if plan.status|plan_status_in:'in_progress,returned' and user.userprofile.role == 'maintenance_staff' and plan.assigned_to.id == user.id %}
                     <button @click="showSubmitModal = true" class="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                         提交维保记录
                     </button>
                     {% endif %}
 
-                    {% if plan.status == 'submitted' %}
+                    {% if plan.status == 'submitted' and user.userprofile.role == 'property_reviewer' %}
                     <button @click="showReviewModal = true" class="w-full bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
                         复核处理
                     </button>
@@ -240,6 +264,22 @@
                         计划已完成归档，不可操作
                     </div>
                     {% endif %}
+
+                    {% if plan.status == 'pending' and user.userprofile.role != 'maintenance_staff' %}
+                    <div class="text-center text-gray-400 text-sm py-2">
+                        只有指派的维保人员可以开始执行
+                    </div>
+                    {% endif %}
+                    {% if plan.status|plan_status_in:'in_progress,returned' and user.userprofile.role != 'maintenance_staff' %}
+                    <div class="text-center text-gray-400 text-sm py-2">
+                        只有指派的维保人员可以提交记录
+                    </div>
+                    {% endif %}
+                    {% if plan.status == 'submitted' and user.userprofile.role != 'property_reviewer' %}
+                    <div class="text-center text-gray-400 text-sm py-2">
+                        只有物业复核人可以进行复核
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -247,16 +287,17 @@
 
     <div x-show="showSubmitModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-semibold mb-4">提交维保记录</h3>
+            <h3 class="text-lg font-semibold mb-2">提交维保记录</h3>
+            <p class="text-sm text-gray-500 mb-4"><span class="text-red-500">*</span> 标记为必填项</p>
             <form hx-post="{% url 'maintenance:submit_plan_record' plan.id %}" hx-target="#plan-detail" hx-swap="innerHTML" @submit="showSubmitModal = false">
                 {% csrf_token %}
                 <div class="space-y-4">
                     <div>
-                        <h4 class="font-medium mb-2">检查项目</h4>
+                        <h4 class="font-medium mb-2">检查项目 <span class="text-red-500">*</span></h4>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">曳引系统</label>
-                                <select name="traction_system" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">曳引系统 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.traction_system" name="traction_system" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -264,8 +305,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">导轨系统</label>
-                                <select name="guide_system" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">导轨系统 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.guide_system" name="guide_system" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -273,8 +314,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">门系统</label>
-                                <select name="door_system" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">门系统 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.door_system" name="door_system" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -282,8 +323,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">安全装置</label>
-                                <select name="safety_device" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">安全装置 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.safety_device" name="safety_device" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -291,8 +332,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">电气系统</label>
-                                <select name="electrical_system" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">电气系统 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.electrical_system" name="electrical_system" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -300,8 +341,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-600 mb-1">轿厢系统</label>
-                                <select name="car_system" class="w-full border rounded-md px-3 py-2 text-sm">
+                                <label class="block text-sm text-gray-600 mb-1">轿厢系统 <span class="text-red-500">*</span></label>
+                                <select x-model="submitForm.car_system" name="car_system" class="w-full border rounded-md px-3 py-2 text-sm" required>
                                     <option value="">请选择</option>
                                     <option value="正常">正常</option>
                                     <option value="轻微异常">轻微异常</option>
@@ -315,8 +356,8 @@
                         <textarea name="abnormal_items" rows="2" class="w-full border rounded-md px-3 py-2" placeholder="请描述发现的异常情况..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">处理结果</label>
-                        <textarea name="handling_result" rows="3" class="w-full border rounded-md px-3 py-2" required placeholder="请详细描述处理结果..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">处理结果 <span class="text-red-500">*</span></label>
+                        <textarea x-model="submitForm.handling_result" name="handling_result" rows="3" class="w-full border rounded-md px-3 py-2" required placeholder="请详细描述处理结果..."></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">更换配件（可选）</label>
@@ -325,7 +366,7 @@
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" @click="showSubmitModal = false" class="px-4 py-2 border rounded-md hover:bg-gray-50">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">提交复核</button>
+                    <button type="submit" :disabled="!isFormValid()" :class="isFormValid() ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'" class="px-4 py-2 text-white rounded-md">提交复核</button>
                 </div>
             </form>
         </div>
@@ -337,13 +378,16 @@
             <form hx-post="{% url 'maintenance:review_plan' plan.id %}" hx-target="#plan-detail" hx-swap="innerHTML" @submit="showReviewModal = false">
                 {% csrf_token %}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">复核意见（可选）</label>
-                    <textarea name="comment" rows="3" class="w-full border rounded-md px-3 py-2" placeholder="请输入复核意见..."></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        复核意见 <span x-show="reviewAction === 'return'" class="text-red-500">*</span>
+                    </label>
+                    <textarea x-model="reviewComment" name="comment" rows="3" class="w-full border rounded-md px-3 py-2" :required="reviewAction === 'return'" placeholder="请输入复核意见..."></textarea>
+                    <p x-show="reviewAction === 'return' && !reviewComment.trim()" class="text-red-500 text-xs mt-1">退回时必须填写退回原因</p>
                 </div>
                 <div class="flex justify-end space-x-3">
                     <button type="button" @click="showReviewModal = false" class="px-4 py-2 border rounded-md hover:bg-gray-50">取消</button>
-                    <button type="submit" name="action" value="return" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">退回重填</button>
-                    <button type="submit" name="action" value="pass" class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700">通过并归档</button>
+                    <button type="submit" name="action" value="return" @click="reviewAction = 'return'" :disabled="reviewAction === 'return' && !reviewComment.trim()" :class="(reviewAction !== 'return' || reviewComment.trim()) ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'" class="px-4 py-2 text-white rounded-md">退回重填</button>
+                    <button type="submit" name="action" value="pass" @click="reviewAction = 'pass'" class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700">通过并归档</button>
                 </div>
             </form>
         </div>

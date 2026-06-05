@@ -371,143 +371,201 @@ def plan_detail(request, pk):
     return render(request, 'maintenance/plan_detail.html', context)
 
 
+def _check_user_role(user, allowed_roles):
+    if not hasattr(user, 'userprofile'):
+        return False
+    return user.userprofile.role in allowed_roles
+
+
 @login_required
 def start_plan(request, pk):
-    if request.method == 'POST':
-        plan = get_object_or_404(MaintenancePlan, pk=pk)
-        old_status = plan.status
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    
+    plan = get_object_or_404(MaintenancePlan, pk=pk)
+    
+    if plan.status != 'pending':
+        return JsonResponse({'success': False, 'error': '只能开始待执行的维保计划'}, status=400)
+    
+    if not _check_user_role(request.user, ['maintenance_staff']):
+        return JsonResponse({'success': False, 'error': '只有维保人员可以开始维保'}, status=403)
+    
+    if plan.assigned_to and plan.assigned_to.id != request.user.id:
+        return JsonResponse({'success': False, 'error': '只能开始指派给自己的维保计划'}, status=403)
+    
+    old_status = plan.status
+    plan.status = 'in_progress'
+    plan.current_responsible = request.user
+    plan.save()
+    
+    ActionLog.objects.create(
+        plan=plan,
+        action_type='plan_start',
+        description='维保人员已开始执行按期维保',
+        performed_by=request.user,
+        from_status=old_status,
+        to_status='in_progress'
+    )
+    
+    if request.htmx:
+        return _render_plan_detail_partial(request, plan)
+    return redirect('maintenance:plan_detail', pk=pk)
+
+
+@login_required
+def submit_plan_record(request, pk):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    
+    plan = get_object_or_404(MaintenancePlan, pk=pk)
+    
+    if plan.status not in ['in_progress', 'returned']:
+        return JsonResponse({'success': False, 'error': '当前状态不允许提交维保记录'}, status=400)
+    
+    if not _check_user_role(request.user, ['maintenance_staff']):
+        return JsonResponse({'success': False, 'error': '只有维保人员可以提交维保记录'}, status=403)
+    
+    if plan.assigned_to and plan.assigned_to.id != request.user.id:
+        return JsonResponse({'success': False, 'error': '只能提交自己负责的维保计划'}, status=403)
+    
+    check_items = {
+        'traction_system': request.POST.get('traction_system', '').strip(),
+        'guide_system': request.POST.get('guide_system', '').strip(),
+        'door_system': request.POST.get('door_system', '').strip(),
+        'safety_device': request.POST.get('safety_device', '').strip(),
+        'electrical_system': request.POST.get('electrical_system', '').strip(),
+        'car_system': request.POST.get('car_system', '').strip(),
+    }
+    handling_result = request.POST.get('handling_result', '').strip()
+    
+    empty_checks = [k for k, v in check_items.items() if not v]
+    if empty_checks:
+        check_names = {
+            'traction_system': '曳引系统',
+            'guide_system': '导轨系统',
+            'door_system': '门系统',
+            'safety_device': '安全装置',
+            'electrical_system': '电气系统',
+            'car_system': '轿厢系统',
+        }
+        missing = '、'.join([check_names[k] for k in empty_checks])
+        return JsonResponse({'success': False, 'error': f'请完成所有检查项：{missing}'}, status=400)
+    
+    if not handling_result:
+        return JsonResponse({'success': False, 'error': '请填写处理结果'}, status=400)
+    
+    abnormal_items = request.POST.get('abnormal_items', '').strip()
+    parts_replaced = request.POST.get('parts_replaced', '').strip()
+    
+    from django.contrib.auth.models import User
+    reviewer = User.objects.filter(userprofile__role='property_reviewer').first()
+    
+    MaintenanceRecord.objects.create(
+        plan=plan,
+        elevator=plan.elevator,
+        check_items=check_items,
+        abnormal_items=abnormal_items,
+        handling_result=handling_result,
+        parts_replaced=parts_replaced,
+        maintenance_staff=request.user
+    )
+    
+    old_status = plan.status
+    plan.status = 'submitted'
+    plan.submitted_at = timezone.now()
+    plan.current_responsible = reviewer
+    plan.save()
+    
+    ActionLog.objects.create(
+        plan=plan,
+        action_type='plan_submit',
+        description='维保记录已提交，等待物业复核',
+        performed_by=request.user,
+        from_status=old_status,
+        to_status='submitted'
+    )
+    
+    if request.htmx:
+        return _render_plan_detail_partial(request, plan)
+    return redirect('maintenance:plan_detail', pk=pk)
+
+
+@login_required
+def review_plan(request, pk):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    
+    plan = get_object_or_404(MaintenancePlan, pk=pk)
+    
+    if plan.status != 'submitted':
+        return JsonResponse({'success': False, 'error': '只能复核已提交的维保计划'}, status=400)
+    
+    if not _check_user_role(request.user, ['property_reviewer']):
+        return JsonResponse({'success': False, 'error': '只有物业复核人可以进行复核操作'}, status=403)
+    
+    old_status = plan.status
+    action = request.POST.get('action')
+    comment = request.POST.get('comment', '').strip()
+    
+    if action == 'pass':
+        plan.status = 'completed'
+        plan.reviewed_by = request.user
+        plan.reviewed_at = timezone.now()
+        plan.review_comment = comment
+        plan.completed_at = timezone.now()
+        plan.archived_at = timezone.now()
+        plan.current_responsible = None
         
-        plan.status = 'in_progress'
+        plan.elevator.last_maintenance_date = timezone.now().date()
+        plan.elevator.status = 'running'
+        plan.elevator.save()
+        
+        plan.save()
+        
+        ActionLog.objects.create(
+            plan=plan,
+            action_type='plan_review_pass',
+            description=f'复核通过，电梯已恢复运行：{comment}' if comment else '复核通过，电梯恢复正常运行',
+            performed_by=request.user,
+            from_status=old_status,
+            to_status='completed'
+        )
+        
+        ActionLog.objects.create(
+            plan=plan,
+            action_type='plan_complete',
+            description='维保计划已完成归档',
+            performed_by=request.user,
+            from_status=old_status,
+            to_status='completed'
+        )
+        
+    elif action == 'return':
+        if not comment:
+            return JsonResponse({'success': False, 'error': '退回时请填写退回原因'}, status=400)
+        
+        plan.status = 'returned'
+        plan.reviewed_by = request.user
+        plan.reviewed_at = timezone.now()
+        plan.review_comment = comment
         plan.current_responsible = plan.assigned_to
         plan.save()
         
         ActionLog.objects.create(
             plan=plan,
-            action_type='plan_start',
-            description='维保人员已开始执行按期维保',
+            action_type='plan_review_return',
+            description=f'复核退回，请重新处理：{comment}',
             performed_by=request.user,
             from_status=old_status,
-            to_status='in_progress'
+            to_status='returned'
         )
-        
-        if request.htmx:
-            return _render_plan_detail_partial(request, plan)
-        return redirect('maintenance:plan_detail', pk=pk)
-    return HttpResponse(status=405)
-
-
-@login_required
-def submit_plan_record(request, pk):
-    if request.method == 'POST':
-        plan = get_object_or_404(MaintenancePlan, pk=pk)
-        old_status = plan.status
-        
-        check_items = {
-            'traction_system': request.POST.get('traction_system', ''),
-            'guide_system': request.POST.get('guide_system', ''),
-            'door_system': request.POST.get('door_system', ''),
-            'safety_device': request.POST.get('safety_device', ''),
-            'electrical_system': request.POST.get('electrical_system', ''),
-            'car_system': request.POST.get('car_system', ''),
-        }
-        abnormal_items = request.POST.get('abnormal_items', '')
-        handling_result = request.POST.get('handling_result', '')
-        parts_replaced = request.POST.get('parts_replaced', '')
-        
-        from django.contrib.auth.models import User
-        reviewer = User.objects.filter(userprofile__role='property_reviewer').first()
-        
-        MaintenanceRecord.objects.create(
-            plan=plan,
-            elevator=plan.elevator,
-            check_items=check_items,
-            abnormal_items=abnormal_items,
-            handling_result=handling_result,
-            parts_replaced=parts_replaced,
-            maintenance_staff=request.user
-        )
-        
-        plan.status = 'submitted'
-        plan.submitted_at = timezone.now()
-        plan.current_responsible = reviewer
-        plan.save()
-        
-        ActionLog.objects.create(
-            plan=plan,
-            action_type='plan_submit',
-            description='维保记录已提交，等待物业复核',
-            performed_by=request.user,
-            from_status=old_status,
-            to_status='submitted'
-        )
-        
-        if request.htmx:
-            return _render_plan_detail_partial(request, plan)
-        return redirect('maintenance:plan_detail', pk=pk)
-    return HttpResponse(status=405)
-
-
-@login_required
-def review_plan(request, pk):
-    if request.method == 'POST':
-        plan = get_object_or_404(MaintenancePlan, pk=pk)
-        old_status = plan.status
-        action = request.POST.get('action')
-        comment = request.POST.get('comment', '')
-        
-        if action == 'pass':
-            plan.status = 'approved'
-            plan.reviewed_by = request.user
-            plan.reviewed_at = timezone.now()
-            plan.review_comment = comment
-            plan.elevator.last_maintenance_date = timezone.now().date()
-            plan.elevator.save()
-            
-            ActionLog.objects.create(
-                plan=plan,
-                action_type='plan_review_pass',
-                description=f'复核通过：{comment}' if comment else '复核通过，电梯恢复正常运行',
-                performed_by=request.user,
-                from_status=old_status,
-                to_status='approved'
-            )
-            
-            plan.status = 'completed'
-            plan.completed_at = timezone.now()
-            plan.archived_at = timezone.now()
-            plan.current_responsible = None
-            plan.save()
-            
-            ActionLog.objects.create(
-                plan=plan,
-                action_type='plan_complete',
-                description='维保计划已完成归档',
-                performed_by=request.user,
-                from_status='approved',
-                to_status='completed'
-            )
-            
-        elif action == 'return':
-            plan.status = 'returned'
-            plan.reviewed_by = request.user
-            plan.reviewed_at = timezone.now()
-            plan.review_comment = comment
-            plan.current_responsible = plan.assigned_to
-            plan.save()
-            
-            ActionLog.objects.create(
-                plan=plan,
-                action_type='plan_review_return',
-                description=f'复核退回：{comment}' if comment else '复核退回，请重新填写维保记录',
-                performed_by=request.user,
-                from_status=old_status,
-                to_status='returned'
-            )
-        
-        if request.htmx:
-            return _render_plan_detail_partial(request, plan)
-        return redirect('maintenance:plan_detail', pk=pk)
-    return HttpResponse(status=405)
+    
+    else:
+        return JsonResponse({'success': False, 'error': '无效的操作类型'}, status=400)
+    
+    if request.htmx:
+        return _render_plan_detail_partial(request, plan)
+    return redirect('maintenance:plan_detail', pk=pk)
 
 
 @login_required
