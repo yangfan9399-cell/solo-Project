@@ -5,10 +5,23 @@
             <p class="mt-1 text-sm text-gray-500">{{ sample.sample_number }} - {{ sample.product_name }}</p>
         </div>
 
-        <div v-if="!sample.canBeDisposed" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p class="text-red-700">
-                {{ sample.conflict_note || '样品当前状态不允许处置' }}
-            </p>
+        <div v-if="!sample.can_be_disposed" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-400 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <div>
+                    <p class="text-red-700 font-medium">
+                        {{ sample.has_conflict ? '样品存在编号冲突，无法进行处置' : '样品当前状态不允许处置' }}
+                    </p>
+                    <p v-if="sample.conflict_note" class="text-sm text-red-600 mt-1">
+                        {{ sample.conflict_note }}
+                    </p>
+                    <p v-if="sample.conflict_sample" class="text-sm text-red-600 mt-1">
+                        冲突来源: 样品 {{ sample.conflict_sample.sample_number }} - {{ sample.conflict_sample.product_name }}
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -76,7 +89,7 @@
                         </Link>
                         <button
                             type="submit"
-                            :disabled="processing || !sample.canBeDisposed"
+                            :disabled="processing || !sample.can_be_disposed"
                             class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
                         >
                             <span v-if="processing">提交中...</span>

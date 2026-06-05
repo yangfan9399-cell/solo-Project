@@ -16,6 +16,11 @@ class Disposal extends Model
         'status',
     ];
 
+    protected $appends = [
+        'action_name',
+        'status_name',
+    ];
+
     const ACTION_RELEASE = 'release';
     const ACTION_DESTROY = 'destroy';
     const ACTION_RETURN_TO_ORIGIN = 'return_to_origin';

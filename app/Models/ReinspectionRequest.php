@@ -21,6 +21,10 @@ class ReinspectionRequest extends Model
         'reviewed_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'status_name',
+    ];
+
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';

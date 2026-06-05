@@ -18,14 +18,14 @@
                         录入检测结果
                     </Link>
                     <Link
-                        v-if="sample.status === 'unqualified' && $page.props.auth.user.role === 'reviewer'"
+                        v-if="sample.can_be_disposed && $page.props.auth.user.role === 'reviewer'"
                         :href="route('disposals.create', sample.id)"
                         class="px-4 py-2 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700"
                     >
                         创建处置建议
                     </Link>
                     <Link
-                        v-if="sample.status === 'unqualified' && ($page.props.auth.user.role === 'sampler' || $page.props.auth.user.role === 'reviewer')"
+                        v-if="sample.status === 'unqualified' && !sample.has_conflict && ($page.props.auth.user.role === 'sampler' || $page.props.auth.user.role === 'reviewer')"
                         :href="route('reinspections.create', sample.id)"
                         class="px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700"
                     >

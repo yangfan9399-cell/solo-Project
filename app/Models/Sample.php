@@ -31,6 +31,13 @@ class Sample extends Model
         'quantity' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'status_name',
+        'status_color',
+        'can_be_disposed',
+        'has_conflict',
+    ];
+
     const STATUS_REGISTERED = 'registered';
     const STATUS_TESTING = 'testing';
     const STATUS_QUALIFIED = 'qualified';
@@ -115,11 +122,21 @@ class Sample extends Model
         return !is_null($this->conflict_sample_id) || $this->conflictingSamples()->exists();
     }
 
+    public function getHasConflictAttribute()
+    {
+        return $this->hasConflict();
+    }
+
     public function canBeDisposed()
     {
         if ($this->hasConflict()) {
             return false;
         }
         return in_array($this->status, [self::STATUS_UNQUALIFIED, self::STATUS_PROCESSING]);
+    }
+
+    public function getCanBeDisposedAttribute()
+    {
+        return $this->canBeDisposed();
     }
 }

@@ -47,13 +47,17 @@ class DisposalService
 
     public function approveDisposal(Disposal $disposal, $decisionNote = null, User $reviewer)
     {
-        return DB::transaction(function () use ($disposal, $decisionNote, $reviewer) {
+        $sample = $disposal->sample;
+
+        if ($sample->hasConflict()) {
+            throw new \Exception("样品存在编号冲突，无法批准处置，请先解决冲突");
+        }
+
+        return DB::transaction(function () use ($disposal, $decisionNote, $reviewer, $sample) {
             $disposal->update([
                 'status' => Disposal::STATUS_APPROVED,
                 'decision_note' => $decisionNote,
             ]);
-
-            $sample = $disposal->sample;
 
             if ($disposal->action === Disposal::ACTION_REINSPECTION) {
                 $newStatus = Sample::STATUS_REINSPECTION_APPLIED;
@@ -76,13 +80,17 @@ class DisposalService
 
     public function returnToSampler(Disposal $disposal, $returnNote, User $reviewer)
     {
-        return DB::transaction(function () use ($disposal, $returnNote, $reviewer) {
+        $sample = $disposal->sample;
+
+        if ($sample->hasConflict()) {
+            throw new \Exception("样品存在编号冲突，无法退回，请先解决冲突");
+        }
+
+        return DB::transaction(function () use ($disposal, $returnNote, $reviewer, $sample) {
             $disposal->update([
                 'status' => Disposal::STATUS_RETURNED,
                 'decision_note' => $returnNote,
             ]);
-
-            $sample = $disposal->sample;
             
             $this->sampleService->updateSampleStatus(
                 $sample,

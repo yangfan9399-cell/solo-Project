@@ -17,6 +17,11 @@ class StatusHistory extends Model
         'note',
     ];
 
+    protected $appends = [
+        'old_status_name',
+        'new_status_name',
+    ];
+
     public function sample(): BelongsTo
     {
         return $this->belongsTo(Sample::class);
