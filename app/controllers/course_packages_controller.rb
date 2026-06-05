@@ -118,7 +118,7 @@ class CoursePackagesController < ApplicationController
 
   def add_note
     return render_readonly if @course_package.archived?
-    return render_no_permission unless @current_user.consultant? || @current_user.manager?
+    return render_no_permission unless @current_user.consultant?
 
     if @course_package.add_customer_note!(params[:content], @current_user, params[:note_type] || 'general')
       redirect_to @course_package, notice: '客户说明已添加'

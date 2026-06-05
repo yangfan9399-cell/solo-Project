@@ -22,7 +22,7 @@ class ReviewNode < ApplicationRecord
   def reject!(manager_notes = nil)
     transaction do
       update!(status: 'rejected', review_notes: manager_notes, reviewed_at: Time.current)
-      course_package.update!(status: 'active')
+      course_package.update!(status: 'refund_rejected')
     end
   end
 

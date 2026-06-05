@@ -160,6 +160,47 @@ package3.add_customer_note!('客户情绪比较焦急，已安抚并承诺优先
 
 puts "✓ 样本4: 退款待复核 - 至尊VIP综合卡 (已消耗#{used3_used}次，剩余#{package3.remaining_sessions}次，申请退款中)"
 
+package6 = CoursePackage.create!(
+  member:,
+  consultant: consultant1,
+  name: '美甲美睫套餐',
+  original_price: 2680.00,
+  total_sessions: 12,
+  remaining_sessions: 8,
+  purchased_at: 2.months.ago,
+  status: 'refund_rejected',
+  notes: '含美甲6次+美睫6次'
+)
+
+4.times do |i|
+  package6.consumption_records.create!(
+    service_name: ['日式美甲', '睫毛嫁接'].sample,
+    sessions_used: 1,
+    performed_by: consultant1,
+    performed_at: (i + 1).weeks.ago,
+    record_type: 'normal'
+  )
+end
+
+used6_used = package6.consumption_records.sum(:sessions_used)
+package6.update!(remaining_sessions: 12 - used6_used)
+
+rejected_node = package6.review_nodes.create!(
+  reviewer: manager,
+  status: 'rejected',
+  refund_amount: package6.calculate_refund('standard'),
+  refund_algorithm: 'standard',
+  dispute_reason: '客户因个人时间原因申请退款',
+  review_notes: '套餐未使用部分可转让给朋友，不支持现金退款',
+  reviewed_at: 3.days.ago
+)
+package6.update!(status: 'refund_rejected')
+
+package6.add_customer_note!('已告知客户退款申请被拒，建议转让给朋友使用', consultant1, 'refund_reject')
+package6.add_customer_note!('客户表示需要考虑，下周再回复', consultant1, 'follow_up')
+
+puts "✓ 样本7: 退款已退回 - 美甲美睫套餐 (已消耗#{used6_used}次，剩余#{package6.remaining_sessions}次)"
+
 package4 = CoursePackage.create!(
   member:,
   consultant: consultant2,
