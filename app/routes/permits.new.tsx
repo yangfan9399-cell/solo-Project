@@ -60,20 +60,34 @@ export default function NewPermit() {
   const [hasDocuments, setHasDocuments] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [teamWorkers, setTeamWorkers] = useState<Worker[]>([]);
+  const [conflictCheck, setConflictCheck] = useState<{
+    hasConflict: boolean;
+    conflictingPermits: any[];
+  } | null>(null);
 
-  const teamWorkers = workersFetcher.data?.workers || [];
   const isLoadingWorkers = workersFetcher.state === "loading";
   const isCheckingConflict = conflictFetcher.state === "submitting";
-  const conflictCheck = conflictFetcher.data && !conflictFetcher.data.error
-    ? {
+
+  useEffect(() => {
+    if (workersFetcher.data?.workers) {
+      setTeamWorkers(workersFetcher.data.workers);
+    }
+  }, [workersFetcher.data]);
+
+  useEffect(() => {
+    if (conflictFetcher.data && !conflictFetcher.data.error) {
+      setConflictCheck({
         hasConflict: conflictFetcher.data.hasConflict,
         conflictingPermits: conflictFetcher.data.conflictingPermits,
-      }
-    : null;
+      });
+    }
+  }, [conflictFetcher.data]);
 
   const handleTeamChange = (teamId: string) => {
     setSelectedTeam(teamId);
     setSelectedWorkers([]);
+    setTeamWorkers([]);
     if (teamId) {
       workersFetcher.load(`/resources/workers-by-team?teamId=${teamId}`);
     }
@@ -223,7 +237,7 @@ export default function NewPermit() {
                 value={selectedArea}
                 onChange={(e) => {
                   setSelectedArea(e.target.value);
-                  conflictFetcher.data = undefined;
+                  setConflictCheck(null);
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}
@@ -246,7 +260,7 @@ export default function NewPermit() {
                 min={getToday()}
                 onChange={(e) => {
                   setStartDate(e.target.value);
-                  conflictFetcher.data = undefined;
+                  setConflictCheck(null);
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}
@@ -262,7 +276,7 @@ export default function NewPermit() {
                 min={startDate || getToday()}
                 onChange={(e) => {
                   setEndDate(e.target.value);
-                  conflictFetcher.data = undefined;
+                  setConflictCheck(null);
                 }}
                 required
                 disabled={currentRole !== "SECURITY_OFFICER"}

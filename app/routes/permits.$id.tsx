@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useLoaderData, useNavigate, Form, useActionData, redirect, useOutletContext, useFetcher } from "react-router";
 import { StatusBadge } from "~/components/StatusBadge";
 import { ConstructionTypeBadge } from "~/components/ConstructionTypeBadge";
@@ -105,14 +105,21 @@ export default function PermitDetail() {
   const [rescheduleAreaId, setRescheduleAreaId] = useState(String(permit.areaId));
   const [rescheduleStartDate, setRescheduleStartDate] = useState(permit.startDate);
   const [rescheduleEndDate, setRescheduleEndDate] = useState(permit.endDate);
+  const [conflictCheckResult, setConflictCheckResult] = useState<{
+    hasConflict: boolean;
+    conflictingPermits: Permit[];
+  } | null>(null);
 
   const isCheckingConflict = conflictFetcher.state === "submitting";
-  const conflictCheckResult = conflictFetcher.data && !conflictFetcher.data.error
-    ? {
+
+  useEffect(() => {
+    if (conflictFetcher.data && !conflictFetcher.data.error) {
+      setConflictCheckResult({
         hasConflict: conflictFetcher.data.hasConflict,
         conflictingPermits: conflictFetcher.data.conflictingPermits,
-      }
-    : null;
+      });
+    }
+  }, [conflictFetcher.data]);
 
   const checkConflict = () => {
     const formData = new FormData();
@@ -656,7 +663,7 @@ export default function PermitDetail() {
                   value={rescheduleAreaId}
                   onChange={(e) => {
                     setRescheduleAreaId(e.target.value);
-                    conflictFetcher.data = undefined;
+                    setConflictCheckResult(null);
                   }}
                 >
                   {areas.map((a) => (
@@ -676,7 +683,7 @@ export default function PermitDetail() {
                   value={rescheduleStartDate}
                   onChange={(e) => {
                     setRescheduleStartDate(e.target.value);
-                    conflictFetcher.data = undefined;
+                    setConflictCheckResult(null);
                   }}
                 />
               </div>
@@ -689,7 +696,7 @@ export default function PermitDetail() {
                   value={rescheduleEndDate}
                   onChange={(e) => {
                     setRescheduleEndDate(e.target.value);
-                    conflictFetcher.data = undefined;
+                    setConflictCheckResult(null);
                   }}
                 />
               </div>
