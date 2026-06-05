@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useBookingStore } from '../services/bookingService';
+import { Link, useLoaderData } from 'react-router-dom';
 import { formatDateTime, formatCurrency, getStatusText, getStatusColor, getConflictTypeText, getConflictTypeColor } from '../utils/format';
-import { BookingStatus, ConflictType } from '../types';
+import { BookingStatus, ConflictType, Booking } from '../types';
 
 function BookingList() {
-  const bookings = useBookingStore((state) => state.bookings);
+  const { bookings } = useLoaderData() as { bookings: Booking[] };
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'ALL'>('ALL');
   const [conflictFilter, setConflictFilter] = useState<ConflictType | 'ALL'>('ALL');
 
-  const filteredBookings = bookings.filter((booking) => {
+  const filteredBookings = bookings.filter((booking: Booking) => {
     const statusMatch = statusFilter === 'ALL' || booking.status === statusFilter;
     const conflictMatch = conflictFilter === 'ALL' || booking.conflictType === conflictFilter;
     return statusMatch && conflictMatch;
@@ -17,9 +16,9 @@ function BookingList() {
 
   const stats = {
     total: bookings.length,
-    confirmed: bookings.filter((b) => b.status === BookingStatus.CONFIRMED).length,
-    conflict: bookings.filter((b) => b.status === BookingStatus.CONFLICT).length,
-    pending: bookings.filter((b) => b.status === BookingStatus.PENDING).length,
+    confirmed: bookings.filter((b: Booking) => b.status === BookingStatus.CONFIRMED).length,
+    conflict: bookings.filter((b: Booking) => b.status === BookingStatus.CONFLICT).length,
+    pending: bookings.filter((b: Booking) => b.status === BookingStatus.PENDING).length,
   };
 
   return (
@@ -101,7 +100,7 @@ function BookingList() {
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((booking) => (
+              {filteredBookings.map((booking: Booking) => (
                 <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4">
                     <div className="font-medium text-gray-900">{booking.title}</div>

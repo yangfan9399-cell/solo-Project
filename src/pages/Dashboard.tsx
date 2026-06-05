@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useBookingStore, meetingRooms, departments } from '../services/bookingService';
+import { useLoaderData } from 'react-router-dom';
 import { formatCurrency, getConflictTypeText } from '../utils/format';
-import { ConflictType, BookingStatus } from '../types';
+import { ConflictType, BookingStatus, Booking, MeetingRoom, Department } from '../types';
 import {
   BarChart,
   Bar,
@@ -21,7 +21,11 @@ import {
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 function Dashboard() {
-  const bookings = useBookingStore((state) => state.bookings);
+  const { bookings, meetingRooms, departments } = useLoaderData() as { 
+    bookings: Booking[], 
+    meetingRooms: MeetingRoom[], 
+    departments: Department[] 
+  };
 
   const stats = useMemo(() => {
     const totalBookings = bookings.length;
@@ -56,7 +60,7 @@ function Dashboard() {
         费用总额: data.cost,
       }))
       .sort((a, b) => parseInt(a.floor) - parseInt(b.floor));
-  }, [bookings]);
+  }, [bookings, meetingRooms]);
 
   const byDepartment = useMemo(() => {
     const deptMap = new Map<string, { count: number; cost: number; conflictCount: number }>();
@@ -82,7 +86,7 @@ function Dashboard() {
         费用总额: data.cost,
         冲突次数: data.conflictCount,
       }));
-  }, [bookings]);
+  }, [bookings, departments]);
 
   const byConflictType = useMemo(() => {
     const conflictMap = new Map<ConflictType, number>();

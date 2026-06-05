@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useBookingStore, meetingRooms, departments } from '../services/bookingService';
-import { BookingStatus, ConflictType, Role, CostAllocation, BookingEquipment } from '../types';
+import { useNavigate, useLoaderData, Form } from 'react-router-dom';
 import { formatCurrency } from '../utils/format';
+import { MeetingRoom, Department } from '../types';
+import { checkConflict } from '../api/client';
 
 function NewBooking() {
   const navigate = useNavigate();
-  const addBooking = useBookingStore((state) => state.addBooking);
-  const checkConflict = useBookingStore((state) => state.checkConflict);
-  const checkEquipmentAvailability = useBookingStore((state) => state.checkEquipmentAvailability);
-  const checkCostAllocation = useBookingStore((state) => state.checkCostAllocation);
+  const { meetingRooms, departments } = useLoaderData() as { meetingRooms: MeetingRoom[], departments: Department[] };
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,107 +37,32 @@ function NewBooking() {
   };
 
   const totalCost = calculateTotalCost();
+  const totalPercentage = costAllocations.reduce((sum, c) => sum + c.percentage, 0);
+  const costValid = Math.abs(totalPercentage - 100) < 0.01;
 
   useEffect(() => {
-    if (formData.meetingRoomId && formData.date && formData.startTime && formData.endTime) {
-      const start = new Date(`${formData.date}T${formData.startTime}`);
-      const end = new Date(`${formData.date}T${formData.endTime}`);
-      const conflict = checkConflict(formData.meetingRoomId, start, end);
-      setConflictInfo(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
-    } else {
-      setConflictInfo(null);
-    }
-  }, [formData.meetingRoomId, formData.date, formData.startTime, formData.endTime, checkConflict]);
+    const checkTimeConflict = async () => {
+      if (formData.meetingRoomId && formData.date && formData.startTime && formData.endTime) {
+        const start = `${formData.date}T${formData.startTime}`;
+        const end = `${formData.date}T${formData.endTime}`;
+        const conflict = await checkConflict(formData.meetingRoomId, start, end);
+        setConflictInfo(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
+      } else {
+        setConflictInfo(null);
+      }
+    };
+    checkTimeConflict();
+  }, [formData.meetingRoomId, formData.date, formData.startTime, formData.endTime]);
 
   useEffect(() => {
-    if (formData.meetingRoomId && selectedEquipments.length > 0) {
-      const result = checkEquipmentAvailability(formData.meetingRoomId, selectedEquipments);
-      setEquipmentWarning(result.missing);
+    if (formData.meetingRoomId && selectedEquipments.length > 0 && selectedRoom) {
+      const roomEquipments = selectedRoom.equipments?.map((e: any) => e.name) || [];
+      const missing = selectedEquipments.filter((eq) => !roomEquipments.includes(eq));
+      setEquipmentWarning(missing);
     } else {
       setEquipmentWarning([]);
     }
-  }, [formData.meetingRoomId, selectedEquipments, checkEquipmentAvailability]);
-
-  const costCheck = checkCostAllocation(
-    costAllocations.map((c) => ({ ...c, id: '', bookingId: '', amount: 0, confirmed: false, createdAt: new Date(), updatedAt: new Date() }))
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const start = new Date(`${formData.date}T${formData.startTime}`);
-    const end = new Date(`${formData.date}T${formData.endTime}`);
-
-    let finalStatus = BookingStatus.PENDING;
-    let finalConflictType = ConflictType.NONE;
-    let conflictReason = '';
-
-    if (conflictInfo?.hasConflict) {
-      finalStatus = BookingStatus.CONFLICT;
-      finalConflictType = ConflictType.TIME_OVERLAP;
-      conflictReason = conflictInfo.message;
-    } else if (equipmentWarning.length > 0) {
-      finalStatus = BookingStatus.CONFLICT;
-      finalConflictType = ConflictType.EQUIPMENT_MISSING;
-      conflictReason = `缺少设备: ${equipmentWarning.join(', ')}`;
-    } else if (!costCheck.valid) {
-      finalStatus = BookingStatus.CONFLICT;
-      finalConflictType = ConflictType.COST_ALLOCATION_MISMATCH;
-      conflictReason = `费用分摊比例总和为${costCheck.totalPercentage}%，不足100%`;
-    }
-
-    const bookingEquipments: BookingEquipment[] = selectedEquipments.map((eq, index) => ({
-      id: `be-new-${index}`,
-      bookingId: '',
-      name: eq,
-      available: !equipmentWarning.includes(eq),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-
-    const allocations: CostAllocation[] = costAllocations.map((c, index) => ({
-      id: `cost-new-${index}`,
-      bookingId: '',
-      departmentId: c.departmentId,
-      amount: (totalCost * c.percentage) / 100,
-      percentage: c.percentage,
-      confirmed: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-
-    addBooking({
-      title: formData.title,
-      meetingRoomId: formData.meetingRoomId,
-      meetingRoom: selectedRoom,
-      departmentId: formData.departmentId,
-      department: departments.find((d) => d.id === formData.departmentId),
-      startTime: start,
-      endTime: end,
-      status: finalStatus,
-      conflictType: finalConflictType,
-      conflictReason,
-      totalCost,
-      applicant: formData.applicant,
-      applicantRole: Role.ADMIN,
-      equipmentNotes: formData.equipmentNotes,
-      costAllocations: allocations,
-      flowRecords: [
-        {
-          id: 'flow-new-1',
-          bookingId: '',
-          action: '创建预订',
-          operator: formData.applicant,
-          role: Role.ADMIN,
-          remark: '行政经办人提交预订申请',
-          createdAt: new Date(),
-        },
-      ],
-      bookingEquipments,
-    });
-
-    navigate('/');
-  };
+  }, [formData.meetingRoomId, selectedEquipments, selectedRoom]);
 
   const handleCostAllocationChange = (index: number, field: 'departmentId' | 'percentage', value: string | number) => {
     const newAllocations = [...costAllocations];
@@ -167,7 +89,12 @@ function NewBooking() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <Form method="post" className="space-y-6">
+        <input type="hidden" name="selectedEquipments" value={JSON.stringify(selectedEquipments)} />
+        <input type="hidden" name="costAllocations" value={JSON.stringify(costAllocations)} />
+        <input type="hidden" name="equipmentWarnings" value={JSON.stringify(equipmentWarning)} />
+        <input type="hidden" name="totalCost" value={totalCost} />
+
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">基本信息</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -175,6 +102,7 @@ function NewBooking() {
               <label className="label">会议主题 *</label>
               <input
                 type="text"
+                name="title"
                 className="input"
                 required
                 value={formData.title}
@@ -185,6 +113,7 @@ function NewBooking() {
             <div>
               <label className="label">会议室 *</label>
               <select
+                name="meetingRoomId"
                 className="input"
                 required
                 value={formData.meetingRoomId}
@@ -201,6 +130,7 @@ function NewBooking() {
             <div>
               <label className="label">申请部门 *</label>
               <select
+                name="departmentId"
                 className="input"
                 required
                 value={formData.departmentId}
@@ -218,6 +148,7 @@ function NewBooking() {
               <label className="label">日期 *</label>
               <input
                 type="date"
+                name="date"
                 className="input"
                 required
                 value={formData.date}
@@ -229,6 +160,7 @@ function NewBooking() {
                 <label className="label">开始时间 *</label>
                 <input
                   type="time"
+                  name="startTime"
                   className="input"
                   required
                   value={formData.startTime}
@@ -239,6 +171,7 @@ function NewBooking() {
                 <label className="label">结束时间 *</label>
                 <input
                   type="time"
+                  name="endTime"
                   className="input"
                   required
                   value={formData.endTime}
@@ -250,6 +183,7 @@ function NewBooking() {
               <label className="label">经办人 *</label>
               <input
                 type="text"
+                name="applicant"
                 className="input"
                 required
                 value={formData.applicant}
@@ -301,6 +235,7 @@ function NewBooking() {
           <div className="mt-4">
             <label className="label">设备说明</label>
             <textarea
+              name="equipmentNotes"
               className="input"
               rows={3}
               value={formData.equipmentNotes}
@@ -369,9 +304,9 @@ function NewBooking() {
               <span className="text-gray-600">总费用:</span>
               <span className="ml-2 text-xl font-bold text-gray-900">{formatCurrency(totalCost)}</span>
             </div>
-            <div className={`${!costCheck.valid ? 'text-red-600' : 'text-green-600'}`}>
-              分摊比例合计: {costCheck.totalPercentage}%
-              {!costCheck.valid && ' (需等于100%)'}
+            <div className={`${!costValid ? 'text-red-600' : 'text-green-600'}`}>
+              分摊比例合计: {totalPercentage}%
+              {!costValid && ' (需等于100%)'}
             </div>
           </div>
         </div>
@@ -384,7 +319,7 @@ function NewBooking() {
             提交预订
           </button>
         </div>
-      </form>
+      </Form>
     </div>
   );
 }

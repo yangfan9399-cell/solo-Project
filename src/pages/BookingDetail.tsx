@@ -1,21 +1,12 @@
-import { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useBookingStore, meetingRooms } from '../services/bookingService';
+import { useState } from 'react';
+import { useNavigate, useLoaderData, Form } from 'react-router-dom';
 import { formatDateTime, formatCurrency, getStatusText, getStatusColor, getConflictTypeText, getConflictTypeColor, getRoleText, formatDate, formatTime } from '../utils/format';
-import { BookingStatus, ConflictType, Role } from '../types';
+import { BookingStatus, ConflictType, Booking, MeetingRoom } from '../types';
+import { checkConflict } from '../api/client';
 
 function BookingDetail() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const bookings = useBookingStore((state) => state.bookings);
-  const updateBooking = useBookingStore((state) => state.updateBooking);
-  const confirmCostAllocation = useBookingStore((state) => state.confirmCostAllocation);
-  const addFlowRecord = useBookingStore((state) => state.addFlowRecord);
-  const resolveConflict = useBookingStore((state) => state.resolveConflict);
-  const archiveBooking = useBookingStore((state) => state.archiveBooking);
-  const checkConflict = useBookingStore((state) => state.checkConflict);
-
-  const booking = useMemo(() => bookings.find((b) => b.id === id), [bookings, id]);
+  const { booking, meetingRooms } = useLoaderData() as { booking: Booking, meetingRooms: MeetingRoom[] };
 
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [resolveOption, setResolveOption] = useState<'room' | 'time'>('room');
@@ -36,56 +27,22 @@ function BookingDetail() {
     );
   }
 
-  const handleConfirmBooking = () => {
-    if (booking.status === BookingStatus.CONFLICT) {
-      return;
-    }
-    updateBooking(booking.id, { status: BookingStatus.CONFIRMED });
-    addFlowRecord(booking.id, '确认预订', '王复核', Role.REVIEWER, '复核通过，预订已确认');
-  };
-
-  const handleRejectBooking = () => {
-    updateBooking(booking.id, { status: BookingStatus.REJECTED });
-    addFlowRecord(booking.id, '拒绝预订', '王复核', Role.REVIEWER, '预订申请被拒绝');
-  };
-
-  const handleConfirmCost = (allocationId: string) => {
-    confirmCostAllocation(booking.id, allocationId, '部门负责人');
-    addFlowRecord(booking.id, '费用确认', '部门负责人', Role.DEPARTMENT_HEAD, '费用分摊已确认');
-  };
-
-  const handleArchive = () => {
-    archiveBooking(booking.id);
-    addFlowRecord(booking.id, '归档', '王复核', Role.REVIEWER, '预订记录已归档');
-  };
-
-  const checkNewConflict = () => {
-    if (resolveOption === 'room' && newRoomId) {
-      const conflict = checkConflict(newRoomId, booking.startTime, booking.endTime, booking.id);
-      setConflictCheck(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
-    } else if (resolveOption === 'time' && newDate && newStartTime && newEndTime) {
-      const start = new Date(`${newDate}T${newStartTime}`);
-      const end = new Date(`${newDate}T${newEndTime}`);
-      const conflict = checkConflict(booking.meetingRoomId, start, end, booking.id);
-      setConflictCheck(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
-    }
-  };
-
-  const handleResolveConflict = () => {
-    if (resolveOption === 'room' && newRoomId) {
-      resolveConflict(booking.id, newRoomId);
-      addFlowRecord(booking.id, '解决冲突', '王复核', Role.REVIEWER, `更换会议室为 ${meetingRooms.find((r) => r.id === newRoomId)?.name}`);
-    } else if (resolveOption === 'time' && newDate && newStartTime && newEndTime) {
-      const start = new Date(`${newDate}T${newStartTime}`);
-      const end = new Date(`${newDate}T${newEndTime}`);
-      resolveConflict(booking.id, undefined, start, end);
-      addFlowRecord(booking.id, '解决冲突', '王复核', Role.REVIEWER, `调整时间为 ${formatDateTime(start)} - ${formatTime(end)}`);
-    }
-    setShowResolveModal(false);
-  };
-
   const isTimeOverlap = booking.conflictType === ConflictType.TIME_OVERLAP;
   const allCostsConfirmed = booking.costAllocations.every((c) => c.confirmed);
+
+  const checkNewConflict = async () => {
+    if (resolveOption === 'room' && newRoomId) {
+      const start = booking.startTime instanceof Date ? booking.startTime.toISOString() : new Date(booking.startTime).toISOString();
+      const end = booking.endTime instanceof Date ? booking.endTime.toISOString() : new Date(booking.endTime).toISOString();
+      const conflict = await checkConflict(newRoomId, start, end, booking.id);
+      setConflictCheck(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
+    } else if (resolveOption === 'time' && newDate && newStartTime && newEndTime) {
+      const start = `${newDate}T${newStartTime}`;
+      const end = `${newDate}T${newEndTime}`;
+      const conflict = await checkConflict(booking.meetingRoomId, start, end, booking.id);
+      setConflictCheck(conflict.hasConflict ? { hasConflict: true, message: conflict.reason } : null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -253,12 +210,14 @@ function BookingDetail() {
                     <span className="font-medium text-gray-900">{formatCurrency(alloc.amount)}</span>
                   </div>
                   {!alloc.confirmed && (
-                    <button
-                      onClick={() => handleConfirmCost(alloc.id)}
-                      className="mt-3 w-full btn btn-success text-sm py-1.5"
-                    >
-                      部门负责人确认
-                    </button>
+                    <Form method="post" className="mt-3">
+                      <input type="hidden" name="action" value="confirmCost" />
+                      <input type="hidden" name="allocationId" value={alloc.id} />
+                      <input type="hidden" name="confirmedBy" value="部门负责人" />
+                      <button type="submit" className="w-full btn btn-success text-sm py-1.5">
+                        部门负责人确认
+                      </button>
+                    </Form>
                   )}
                   {alloc.confirmed && alloc.confirmedBy && (
                     <div className="mt-2 text-xs text-gray-500">
@@ -279,12 +238,18 @@ function BookingDetail() {
             
             {booking.status === BookingStatus.PENDING && allCostsConfirmed && (
               <>
-                <button onClick={handleConfirmBooking} className="w-full btn btn-success">
-                  ✓ 复核通过
-                </button>
-                <button onClick={handleRejectBooking} className="w-full btn btn-danger">
-                  ✗ 拒绝预订
-                </button>
+                <Form method="post">
+                  <input type="hidden" name="action" value="confirm" />
+                  <button type="submit" className="w-full btn btn-success mb-3">
+                    ✓ 复核通过
+                  </button>
+                </Form>
+                <Form method="post">
+                  <input type="hidden" name="action" value="reject" />
+                  <button type="submit" className="w-full btn btn-danger">
+                    ✗ 拒绝预订
+                  </button>
+                </Form>
               </>
             )}
 
@@ -301,12 +266,15 @@ function BookingDetail() {
             )}
 
             {(booking.status === BookingStatus.CONFIRMED || booking.status === BookingStatus.REJECTED) && (
-              <button onClick={handleArchive} className="w-full btn btn-secondary">
-                📦 归档记录
-              </button>
+              <Form method="post">
+                <input type="hidden" name="action" value="archive" />
+                <button type="submit" className="w-full btn btn-secondary">
+                  📦 归档记录
+                </button>
+              </Form>
             )}
 
-            <button onClick={() => navigate('/')} className="w-full btn btn-secondary">
+            <button onClick={() => navigate('/')} className="w-full btn btn-secondary mt-3">
               ← 返回列表
             </button>
           </div>
@@ -320,6 +288,7 @@ function BookingDetail() {
             
             <div className="flex space-x-2 mb-6">
               <button
+                type="button"
                 onClick={() => setResolveOption('room')}
                 className={`flex-1 py-2 px-4 rounded-lg border ${
                   resolveOption === 'room'
@@ -330,6 +299,7 @@ function BookingDetail() {
                 🔄 更换会议室
               </button>
               <button
+                type="button"
                 onClick={() => setResolveOption('time')}
                 className={`flex-1 py-2 px-4 rounded-lg border ${
                   resolveOption === 'time'
@@ -341,91 +311,100 @@ function BookingDetail() {
               </button>
             </div>
 
-            {resolveOption === 'room' ? (
-              <div className="mb-6">
-                <label className="label">选择新会议室</label>
-                <select
-                  className="input"
-                  value={newRoomId}
-                  onChange={(e) => {
-                    setNewRoomId(e.target.value);
-                    setTimeout(checkNewConflict, 100);
-                  }}
-                >
-                  <option value="">请选择会议室</option>
-                  {meetingRooms
-                    .filter((r) => r.id !== booking.meetingRoomId)
-                    .map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name} - {room.floor}楼 ({room.capacity}人, ¥{room.hourlyRate}/小时)
-                      </option>
-                    ))}
-                </select>
-              </div>
-            ) : (
-              <div className="mb-6 space-y-4">
-                <div>
-                  <label className="label">新日期</label>
-                  <input
-                    type="date"
+            <Form method="post">
+              <input type="hidden" name="action" value="resolveConflict" />
+              
+              {resolveOption === 'room' ? (
+                <div className="mb-6">
+                  <label className="label">选择新会议室</label>
+                  <select
+                    name="newMeetingRoomId"
                     className="input"
-                    value={newDate}
+                    value={newRoomId}
                     onChange={(e) => {
-                      setNewDate(e.target.value);
+                      setNewRoomId(e.target.value);
                       setTimeout(checkNewConflict, 100);
                     }}
-                  />
+                  >
+                    <option value="">请选择会议室</option>
+                    {meetingRooms
+                      .filter((r) => r.id !== booking.meetingRoomId)
+                      .map((room) => (
+                        <option key={room.id} value={room.id}>
+                          {room.name} - {room.floor}楼 ({room.capacity}人, ¥{room.hourlyRate}/小时)
+                        </option>
+                      ))}
+                  </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+              ) : (
+                <div className="mb-6 space-y-4">
                   <div>
-                    <label className="label">开始时间</label>
+                    <label className="label">新日期</label>
                     <input
-                      type="time"
+                      type="date"
+                      name="newDate"
                       className="input"
-                      value={newStartTime}
+                      value={newDate}
                       onChange={(e) => {
-                        setNewStartTime(e.target.value);
+                        setNewDate(e.target.value);
                         setTimeout(checkNewConflict, 100);
                       }}
                     />
                   </div>
-                  <div>
-                    <label className="label">结束时间</label>
-                    <input
-                      type="time"
-                      className="input"
-                      value={newEndTime}
-                      onChange={(e) => {
-                        setNewEndTime(e.target.value);
-                        setTimeout(checkNewConflict, 100);
-                      }}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="label">开始时间</label>
+                      <input
+                        type="time"
+                        name="newStartTime"
+                        className="input"
+                        value={newStartTime}
+                        onChange={(e) => {
+                          setNewStartTime(e.target.value);
+                          setTimeout(checkNewConflict, 100);
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="label">结束时间</label>
+                      <input
+                        type="time"
+                        name="newEndTime"
+                        className="input"
+                        value={newEndTime}
+                        onChange={(e) => {
+                          setNewEndTime(e.target.value);
+                          setTimeout(checkNewConflict, 100);
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {conflictCheck && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <span className="text-red-700 text-sm">⚠️ {conflictCheck.message}</span>
-              </div>
-            )}
+              {conflictCheck && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-red-700 text-sm">⚠️ {conflictCheck.message}</span>
+                </div>
+              )}
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowResolveModal(false)}
-                className="btn btn-secondary"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleResolveConflict}
-                className="btn btn-primary"
-                disabled={conflictCheck?.hasConflict || (resolveOption === 'room' ? !newRoomId : !newDate || !newStartTime || !newEndTime)}
-              >
-                确认调整
-              </button>
-            </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowResolveModal(false)}
+                  className="btn btn-secondary"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={conflictCheck?.hasConflict}
+                >
+                  确认调整
+                </button>
+              </div>
+            </Form>
           </div>
         </div>
       )}
