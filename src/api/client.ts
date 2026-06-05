@@ -66,7 +66,7 @@ export async function resolveConflict(bookingId: string, data: any) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  return res.json();
+  return res;
 }
 
 export async function archiveBooking(bookingId: string) {

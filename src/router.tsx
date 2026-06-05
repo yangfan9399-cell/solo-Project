@@ -84,33 +84,50 @@ export async function detailAction({ params, request }: ActionFunctionArgs) {
   const action = formData.get('action') as string;
   const bookingId = params.id!;
 
-  switch (action) {
-    case 'confirmCost':
-      await confirmCost(bookingId, formData.get('allocationId') as string, formData.get('confirmedBy') as string);
-      break;
-    case 'confirm':
-      await confirmBooking(bookingId);
-      break;
-    case 'reject':
-      await rejectBooking(bookingId);
-      break;
-    case 'resolveConflict':
-      const resolveData: any = {};
-      if (formData.get('newMeetingRoomId')) {
-        resolveData.newMeetingRoomId = formData.get('newMeetingRoomId');
-      }
-      if (formData.get('newStartTime') && formData.get('newEndTime')) {
-        resolveData.newStartTime = `${formData.get('newDate')}T${formData.get('newStartTime')}`;
-        resolveData.newEndTime = `${formData.get('newDate')}T${formData.get('newEndTime')}`;
-      }
-      await resolveConflict(bookingId, resolveData);
-      break;
-    case 'archive':
-      await archiveBooking(bookingId);
-      break;
-  }
+  try {
+    switch (action) {
+      case 'confirmCost':
+        await confirmCost(bookingId, formData.get('allocationId') as string, formData.get('confirmedBy') as string);
+        break;
+      case 'confirm':
+        await confirmBooking(bookingId);
+        break;
+      case 'reject':
+        await rejectBooking(bookingId);
+        break;
+      case 'resolveConflict':
+        const resolveData: any = {};
+        if (formData.get('newMeetingRoomId')) {
+          resolveData.newMeetingRoomId = formData.get('newMeetingRoomId');
+        }
+        if (formData.get('newStartTime') && formData.get('newEndTime')) {
+          resolveData.newStartTime = `${formData.get('newDate')}T${formData.get('newStartTime')}`;
+          resolveData.newEndTime = `${formData.get('newDate')}T${formData.get('newEndTime')}`;
+        }
+        const resolveResult = await resolveConflict(bookingId, resolveData);
+        if (!resolveResult.ok) {
+          const errorData = await resolveResult.json();
+          return { 
+            success: false, 
+            action: 'resolveConflict', 
+            error: errorData.error,
+            details: errorData
+          };
+        }
+        break;
+      case 'archive':
+        await archiveBooking(bookingId);
+        break;
+    }
 
-  return redirect(`/booking/${bookingId}`);
+    return redirect(`/booking/${bookingId}`);
+  } catch (error) {
+    return { 
+      success: false, 
+      action, 
+      error: (error as Error).message 
+    };
+  }
 }
 
 export const router = createBrowserRouter([

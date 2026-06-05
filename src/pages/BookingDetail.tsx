@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, useLoaderData, Form } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLoaderData, useActionData, Form } from 'react-router-dom';
 import { formatDateTime, formatCurrency, getStatusText, getStatusColor, getConflictTypeText, getConflictTypeColor, getRoleText, formatDate, formatTime } from '../utils/format';
 import { BookingStatus, ConflictType, Booking, MeetingRoom } from '../types';
 import { checkConflict } from '../api/client';
 
 function BookingDetail() {
   const navigate = useNavigate();
+  const actionData = useActionData() as any;
   const { booking, meetingRooms } = useLoaderData() as { booking: Booking, meetingRooms: MeetingRoom[] };
 
   const [showResolveModal, setShowResolveModal] = useState(false);
@@ -30,6 +31,12 @@ function BookingDetail() {
 
   const isTimeOverlap = booking.conflictType === ConflictType.TIME_OVERLAP;
   const allCostsConfirmed = booking.costAllocations.every((c) => c.confirmed);
+
+  useEffect(() => {
+    if (actionData && actionData.success === false && actionData.action === 'resolveConflict') {
+      setFormError(actionData.error || '解决冲突失败，请重试');
+    }
+  }, [actionData]);
 
   const checkNewConflict = async () => {
     setFormError(null);
