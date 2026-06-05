@@ -130,21 +130,37 @@
       <div class="space-y-6">
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900">操作记录</h3>
+            <h3 class="text-lg font-medium text-gray-900">最近改动</h3>
+            <p class="text-sm text-gray-500 mt-1">包含材料补正、出签结果、批次操作</p>
           </div>
-          <div class="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-            <div v-for="log in batch.auditLogs" :key="log.id" class="p-4">
+          <div class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+            <div v-for="log in batch.allActivityLogs" :key="log.id" class="p-4">
               <div class="flex items-start">
-                <div class="flex-shrink-0 w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
+                <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full" :class="getLogDotColor(log.type)"></div>
                 <div class="ml-3 flex-1">
-                  <p class="text-sm font-medium text-gray-900">{{ log.user.name }}</p>
-                  <p class="text-sm text-gray-600">{{ getActionText(log.action) }}</p>
-                  <p v-if="log.notes" class="text-xs text-gray-500 mt-1">{{ log.notes }}</p>
+                  <div class="flex items-center space-x-2">
+                    <p class="text-sm font-medium text-gray-900">{{ log.user.name }}</p>
+                    <span :class="getLogBadgeClass(log.type)" class="px-2 py-0.5 text-xs font-medium rounded">
+                      {{ getLogTypeText(log.type) }}
+                    </span>
+                  </div>
+                  <div v-if="log.type === 'MATERIAL'" class="mt-1">
+                    <p class="text-sm text-gray-700">
+                      <span class="font-medium text-blue-600">{{ log.touristName }}</span>
+                      的
+                      <span class="font-medium">{{ log.materialType }}</span>
+                    </p>
+                    <p v-if="log.notes" class="text-xs text-gray-500 mt-1">{{ log.notes }}</p>
+                  </div>
+                  <div v-else class="mt-1">
+                    <p class="text-sm text-gray-600">{{ getActionText(log.action) }}</p>
+                    <p v-if="log.notes" class="text-xs text-gray-500 mt-1">{{ log.notes }}</p>
+                  </div>
                   <p class="text-xs text-gray-400 mt-1">{{ formatDateTime(log.createdAt) }}</p>
                 </div>
               </div>
             </div>
-            <div v-if="batch.auditLogs.length === 0" class="p-4 text-center text-gray-500 text-sm">
+            <div v-if="batch.allActivityLogs.length === 0" class="p-4 text-center text-gray-500 text-sm">
               暂无操作记录
             </div>
           </div>
@@ -243,6 +259,28 @@
 <script setup lang="ts">
 import type { TouristWithDetails, AuditLogEntry, MaterialWithStatus } from '~/types'
 
+interface MaterialAuditLog {
+  id: string
+  type: 'MATERIAL'
+  touristName: string
+  materialType: string
+  action: string
+  notes: string | null
+  createdAt: string
+  user: { name: string }
+}
+
+interface BatchAuditLog {
+  id: string
+  type: 'BATCH'
+  action: string
+  notes: string | null
+  createdAt: string
+  user: { name: string }
+}
+
+type ActivityLog = MaterialAuditLog | BatchAuditLog
+
 const route = useRoute()
 const batch = ref<{
   id: number
@@ -256,6 +294,8 @@ const batch = ref<{
   reviewedBy?: { name: string } | null
   tourists: TouristWithDetails[]
   auditLogs: AuditLogEntry[]
+  materialAudits: MaterialAuditLog[]
+  allActivityLogs: ActivityLog[]
 } | null>(null)
 
 const error = ref('')
@@ -392,6 +432,30 @@ const getActionText = (action: string) => {
     UPDATE_MATERIAL: '更新材料状态'
   }
   return texts[action] || action
+}
+
+const getLogDotColor = (type: string) => {
+  const colors: Record<string, string> = {
+    MATERIAL: 'bg-green-500',
+    BATCH: 'bg-blue-500'
+  }
+  return colors[type] || 'bg-gray-500'
+}
+
+const getLogBadgeClass = (type: string) => {
+  const classes: Record<string, string> = {
+    MATERIAL: 'bg-green-100 text-green-800',
+    BATCH: 'bg-blue-100 text-blue-800'
+  }
+  return classes[type] || 'bg-gray-100 text-gray-800'
+}
+
+const getLogTypeText = (type: string) => {
+  const texts: Record<string, string> = {
+    MATERIAL: '材料',
+    BATCH: '批次'
+  }
+  return texts[type] || type
 }
 
 const formatDate = (date: string | Date) => {
