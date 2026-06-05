@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  CUSTOMER_SERVICE
+  CLEANER
+  QUALITY_INSPECTOR
+}
+
+enum OrderStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+  NEEDS_REWORK
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  REASSIGNED
+  CANCELLED_LEAVE
+}
+
+enum QualityResult {
+  PASSED
+  REJECTED
+  COMPENSATION
+}
+
+enum OrderSource {
+  PHONE
+  WECHAT
+  APP
+  WALK_IN
+  REFERRAL
+}
+
+enum BadReviewReason {
+  NOT_APPLICABLE
+  ATTITUDE
+  QUALITY
+  PUNCTUALITY
+  COMMUNICATION
+  OTHER
+}
+
+model Staff {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  role      StaffRole
+  region    String?
+  avatar    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  assignments          Assignment[]       @relation("assignedCleaner")
+  createdOrders        Order[]            @relation("orderCreator")
+  qualityChecks        QualityCheck[]
+  reassignedFrom       Assignment[]       @relation("reassignedFromStaff")
+  reassignedTo         Assignment[]       @relation("reassignedToStaff")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  address   String
+  region    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNo         String        @unique
+  customerId      String
+  source          OrderSource
+  serviceType     String
+  serviceAddress  String
+  region          String
+  scheduledDate   DateTime
+  scheduledHours  Int
+  estimatedPrice  Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  createdBy       String?
+  creator         Staff?        @relation("orderCreator", fields: [createdBy], references: [id])
+  assignments     Assignment[]
+  serviceFeedback ServiceFeedback?
+  qualityChecks   QualityCheck[]
+  reworkCount     Int           @default(0)
+
+  @@index([status])
+  @@index([region])
+  @@index([scheduledDate])
+}
+
+model Assignment {
+  id               String            @id @default(cuid())
+  orderId          String
+  cleanerId        String
+  status           AssignmentStatus  @default(ACTIVE)
+  assignedAt       DateTime          @default(now())
+  reassignedAt     DateTime?
+  reassignedById   String?
+  reassignedToId   String?
+  reassignedReason String?
+  notes            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  order            Order             @relation(fields: [orderId], references: [id])
+  cleaner          Staff             @relation("assignedCleaner", fields: [cleanerId], references: [id])
+  reassignedBy     Staff?            @relation("reassignedFromStaff", fields: [reassignedById], references: [id])
+  reassignedTo     Staff?            @relation("reassignedToStaff", fields: [reassignedToId], references: [id])
+
+  @@index([orderId])
+  @@index([cleanerId])
+}
+
+model ServiceFeedback {
+  id              String         @id @default(cuid())
+  orderId         String         @unique
+  actualStartTime DateTime
+  actualEndTime   DateTime
+  actualHours     Decimal        @db.Decimal(4, 2)
+  serviceNotes    String
+  photoEvidence   String[]
+  submittedAt     DateTime       @default(now())
+  customerRating  Int?
+  customerComment String?
+  badReviewReason BadReviewReason @default(NOT_APPLICABLE)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  order           Order          @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model QualityCheck {
+  id              String        @id @default(cuid())
+  orderId         String
+  inspectorId     String
+  result          QualityResult
+  actualHours     Decimal?      @db.Decimal(4, 2)
+  hoursDeficit    Decimal?      @db.Decimal(4, 2)
+  notes           String
+  compensation    Decimal?      @db.Decimal(10, 2)
+  needsRework     Boolean       @default(false)
+  reworkReason    String?
+  checkedAt       DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order           Order         @relation(fields: [orderId], references: [id])
+  inspector       Staff         @relation(fields: [inspectorId], references: [id])
+
+  @@index([orderId])
+  @@index([inspectorId])
+}
