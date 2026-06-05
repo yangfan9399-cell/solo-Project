@@ -35,10 +35,17 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="sample in samples.data" :key="sample.id" :class="{ 'bg-red-50': sample.conflict_sample_id }">
+                    <tr v-for="sample in samples.data" :key="sample.id" :class="{ 'bg-yellow-50': sample.has_conflict }">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ sample.sample_number }}</div>
-                            <div v-if="sample.conflict_sample_id" class="text-xs text-red-600">存在编号冲突，无法处置</div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-900">{{ sample.sample_number }}</span>
+                                <span v-if="sample.has_conflict" class="ml-2 px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                    编号冲突
+                                </span>
+                            </div>
+                            <div v-if="sample.has_conflict" class="text-xs text-yellow-700 mt-1">
+                                冲突来源: {{ sample.conflict_sample?.sample_number }} - {{ sample.conflict_sample?.product_name }}
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">{{ sample.product_name }}</div>
@@ -56,13 +63,20 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <Link
-                                v-if="!sample.conflict_sample_id"
+                                v-if="sample.can_be_disposed"
                                 :href="route('disposals.create', sample.id)"
                                 class="text-orange-600 hover:text-orange-900"
                             >
                                 创建处置建议
                             </Link>
-                            <span v-else class="text-gray-400">请先解决冲突</span>
+                            <span v-if="sample.has_conflict" class="text-gray-400">存在编号冲突</span>
+                            <Link
+                                v-if="!sample.can_be_disposed && !sample.has_conflict"
+                                :href="route('samples.show', sample.id)"
+                                class="text-green-600 hover:text-green-900"
+                            >
+                                查看详情
+                            </Link>
                         </td>
                     </tr>
                     <tr v-if="samples.data.length === 0">

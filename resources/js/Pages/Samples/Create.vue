@@ -5,6 +5,23 @@
             <p class="mt-1 text-sm text-gray-500">登记新的检测样品</p>
         </div>
 
+        <div v-if="conflictSample" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-yellow-400 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-yellow-800">检测到编号冲突</h3>
+                    <p class="text-sm text-yellow-700 mt-1">
+                        已存在相同编号的样品：<span class="font-medium">{{ conflictSample.sample_number }} - {{ conflictSample.product_name }}</span>（产地：{{ conflictSample.origin }}）
+                    </p>
+                    <p class="text-sm text-yellow-600 mt-1">
+                        继续提交将记录冲突来源，该样品在冲突解决前无法进行处置。
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white shadow rounded-lg p-6">
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -15,15 +32,9 @@
                             type="text"
                             @blur="checkConflict"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500"
-                            :class="{ 'border-red-500': conflictError }"
+                            :class="{ 'border-yellow-500': conflictSample }"
                             placeholder="如: AG-2024-001"
                         />
-                        <div v-if="conflictError" class="mt-1 text-sm text-red-600">
-                            样品编号已存在！请使用其他编号。
-                        </div>
-                        <div v-if="conflictSample" class="mt-1 text-sm text-red-600">
-                            与样品 {{ conflictSample.sample_number }} - {{ conflictSample.product_name }} 冲突
-                        </div>
                     </div>
 
                     <div>
@@ -106,10 +117,12 @@
                     </Link>
                     <button
                         type="submit"
-                        :disabled="processing || conflictError"
-                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                        :disabled="processing"
+                        class="px-4 py-2 rounded-md text-white hover:opacity-90 disabled:opacity-50"
+                        :class="conflictSample ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'"
                     >
                         <span v-if="processing">提交中...</span>
+                        <span v-else-if="conflictSample">继续提交（记录冲突）</span>
                         <span v-else>提交</span>
                     </button>
                 </div>
@@ -135,12 +148,10 @@ const form = useForm({
     evidence_photos: [],
 });
 
-const conflictError = ref(false);
 const conflictSample = ref(null);
 
 const checkConflict = async () => {
     if (!form.sample_number) {
-        conflictError.value = false;
         conflictSample.value = null;
         return;
     }
@@ -148,8 +159,7 @@ const checkConflict = async () => {
     try {
         const response = await fetch(route('samples.check-conflict') + '?sample_number=' + encodeURIComponent(form.sample_number));
         const data = await response.json();
-        conflictError.value = data.has_conflict;
-        conflictSample.value = data.conflict_sample;
+        conflictSample.value = data.has_conflict ? data.conflict_sample : null;
     } catch (e) {
         console.error(e);
     }

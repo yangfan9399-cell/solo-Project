@@ -21,7 +21,7 @@ class DisposalController extends Controller
     {
         $this->authorizeReviewer();
 
-        $query = Sample::with(['sampler', 'inspectionResult', 'disposal'])
+        $query = Sample::with(['sampler', 'inspectionResult', 'disposal', 'conflictSample'])
             ->whereIn('status', [Sample::STATUS_UNQUALIFIED, Sample::STATUS_PROCESSING])
             ->orderBy('created_at', 'desc');
 
