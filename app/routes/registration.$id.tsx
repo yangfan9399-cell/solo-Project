@@ -1,5 +1,5 @@
 import type { MetaFunction, LoaderFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useParams } from "@remix-run/react";
 import { db } from "~/db";
 import { registrations, participants, projects, groups, history, reviews } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -58,6 +58,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function RegistrationDetail() {
   const { registration, history, reviews } = useLoaderData<typeof loader>();
+  const params = useParams();
+  const registrationId = params.id;
   const docExpired = isDocumentExpired(registration.idExpiryDate);
   const genderMismatch = registration.gender !== registration.groupGender;
 
@@ -158,7 +160,7 @@ export default function RegistrationDetail() {
                 <h3 className="font-semibold">比赛成绩</h3>
                 {!registration.score && (
                   <Link
-                    to="/scoring"
+                    to={`/scoring?selected=${registrationId}`}
                     className="text-sm px-3 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
                   >
                     🏆 去录入成绩

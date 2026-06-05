@@ -1,10 +1,10 @@
 import type { MetaFunction, LoaderFunction, ActionFunction } from "@remix-run/node";
-import { Link, useLoaderData, useFetcher } from "@remix-run/react";
+import { Link, useLoaderData, useFetcher, useSearchParams } from "@remix-run/react";
 import { db } from "~/db";
 import { registrations, participants, projects, groups, history } from "~/db/schema";
-import { eq, and, inArray, ne, isNull } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { formatDateTime, getStatusColor, getStatusLabel } from "~/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const meta: MetaFunction = () => {
   return [{ title: "成绩归档" }];
@@ -40,12 +40,36 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const registrationId = Number(formData.get("registrationId"));
   const actionType = formData.get("action") as string;
-  const scoreValue = formData.get("score") as string;
-  const rankValue = formData.get("rank") as string;
+
+  const [registration] = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, registrationId))
+    .limit(1);
+
+  if (!registration) {
+    return { error: "报名记录不存在" };
+  }
+
+  if (
+    registration.checkInStatus !== "checked_in" &&
+    registration.checkInStatus !== "late"
+  ) {
+    return { error: "仅已检录或迟到的记录可录入成绩" };
+  }
 
   if (actionType === "submit_score") {
+    const scoreValue = formData.get("score") as string;
+    const rankValue = formData.get("rank") as string;
     const score = Number(scoreValue);
     const rank = Number(rankValue);
+
+    if (isNaN(score) || score <= 0) {
+      return { error: "成绩必须为有效正数", registrationId };
+    }
+    if (isNaN(rank) || rank <= 0 || !Number.isInteger(rank)) {
+      return { error: "名次必须为正整数", registrationId };
+    }
 
     await db.transaction(async (tx) => {
       await tx
@@ -58,8 +82,10 @@ export const action: ActionFunction = async ({ request }) => {
         action: "score_submitted",
         actorName: "裁判李老师",
         details: `成绩录入: ${score > 1000 ? (score / 100).toFixed(2) + "秒" : score + "分"}, 排名: 第${rank}名`,
-      });
+      } as any);
     });
+
+    return { success: true, registrationId };
   }
 
   if (actionType === "clear_score") {
@@ -74,16 +100,39 @@ export const action: ActionFunction = async ({ request }) => {
         action: "clerk_updated",
         actorName: "裁判李老师",
         details: "成绩已清空",
-      });
+      } as any);
     });
+
+    return { success: true, registrationId };
   }
 
-  return null;
+  return { error: "无效操作", registrationId };
 };
 
 export default function ScoringPage() {
   const { checkedInRecords } = useLoaderData<typeof loader>();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedFromUrl = searchParams.get("selected");
+
+  const [selectedId, setSelectedId] = useState<number | null>(
+    selectedFromUrl ? Number(selectedFromUrl) : null
+  );
+
+  useEffect(() => {
+    if (selectedFromUrl) {
+      const id = Number(selectedFromUrl);
+      const exists = checkedInRecords.some((r: any) => r.id === id);
+      if (exists) {
+        setSelectedId(id);
+      }
+    }
+  }, [selectedFromUrl, checkedInRecords]);
+
+  const handleSelect = (id: number) => {
+    setSelectedId(id);
+    setSearchParams({ selected: id.toString() });
+  };
+
   const selectedRecord = checkedInRecords.find((r: any) => r.id === selectedId);
 
   const scoredCount = checkedInRecords.filter((r: any) => r.score !== null).length;
@@ -134,7 +183,7 @@ export default function ScoringPage() {
                   <div
                     key={reg.id}
                     className={`p-4 cursor-pointer hover:bg-gray-50 ${selectedId === reg.id ? "bg-orange-50" : ""}`}
-                    onClick={() => setSelectedId(reg.id)}
+                    onClick={() => handleSelect(reg.id)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -191,9 +240,14 @@ export default function ScoringPage() {
 }
 
 function ScoringForm({ record }: { record: any }) {
-  const fetcher = useFetcher();
-  const [score, setScore] = useState(record.score?.toString() || "");
-  const [rank, setRank] = useState(record.rank?.toString() || "");
+  const fetcher = useFetcher<typeof action>();
+  const [score, setScore] = useState("");
+  const [rank, setRank] = useState("");
+
+  useEffect(() => {
+    setScore(record.score?.toString() || "");
+    setRank(record.rank?.toString() || "");
+  }, [record.id, record.score, record.rank]);
 
   const formatScoreDisplay = (value: string) => {
     if (!value) return "";
@@ -204,6 +258,10 @@ function ScoringForm({ record }: { record: any }) {
     return value + " 分";
   };
 
+  const error = fetcher.data?.error && fetcher.data.registrationId === record.id
+    ? fetcher.data.error
+    : null;
+
   return (
     <div className="divide-y divide-gray-200">
       <div className="px-6 py-4 bg-gray-50">
@@ -211,6 +269,12 @@ function ScoringForm({ record }: { record: any }) {
       </div>
 
       <div className="p-6 space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="text-red-700 font-medium">⚠️ {error}</div>
+          </div>
+        )}
+
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="font-medium text-orange-800">{record.participantName}</div>
           <div className="text-sm text-orange-700">
@@ -247,10 +311,13 @@ function ScoringForm({ record }: { record: any }) {
               </label>
               <input
                 type="number"
+                min="1"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
                 placeholder="例如: 10500 表示 10.50秒"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                  error?.includes("成绩") ? "border-red-500" : ""
+                }`}
               />
               {score && (
                 <div className="text-sm text-gray-500 mt-1">
@@ -265,10 +332,13 @@ function ScoringForm({ record }: { record: any }) {
               <input
                 type="number"
                 min="1"
+                step="1"
                 value={rank}
                 onChange={(e) => setRank(e.target.value)}
                 placeholder="例如: 1"
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+                  error?.includes("名次") ? "border-red-500" : ""
+                }`}
               />
               {rank && (
                 <div className="text-sm text-gray-500 mt-1">
@@ -279,7 +349,7 @@ function ScoringForm({ record }: { record: any }) {
           </div>
         </div>
 
-        {record.score !== null && (
+        {record.score !== null && !error && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="text-sm text-green-700">当前已归档成绩</div>
             <div className="text-2xl font-bold text-green-600">
