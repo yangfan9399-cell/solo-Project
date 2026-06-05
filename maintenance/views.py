@@ -116,43 +116,61 @@ def confirm_stop(request, pk):
 
 @login_required
 def dispatch_ticket(request, pk):
-    if request.method == 'POST':
-        ticket = get_object_or_404(FaultTicket, pk=pk)
-        old_status = ticket.status
-        assigned_to_id = request.POST.get('assigned_to')
-        
-        from django.contrib.auth.models import User
-        assigned_to = get_object_or_404(User, pk=assigned_to_id)
-        
-        elevator_company = ticket.elevator.maintenance_company
-        user_company = None
-        if hasattr(assigned_to, 'userprofile'):
-            user_company = assigned_to.userprofile.company
-        
-        company_mismatch = elevator_company and user_company and elevator_company != user_company
-        
-        ticket.status = 'dispatched'
-        ticket.assigned_to = assigned_to
-        ticket.assigned_time = timezone.now()
-        ticket.current_responsible = assigned_to
-        ticket.company_mismatch = company_mismatch
-        if company_mismatch:
-            ticket.mismatch_note = f"电梯维保单位为{ticket.elevator.maintenance_company.name}，派单给了{user_company.name}的维保人员"
-        ticket.save()
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    
+    ticket = get_object_or_404(FaultTicket, pk=pk)
+    assigned_to_id = request.POST.get('assigned_to')
+    
+    from django.contrib.auth.models import User
+    assigned_to = get_object_or_404(User, pk=assigned_to_id)
+    
+    elevator_company = ticket.elevator.maintenance_company
+    user_company = None
+    if hasattr(assigned_to, 'userprofile'):
+        user_company = assigned_to.userprofile.company
+    
+    company_mismatch = elevator_company and user_company and elevator_company != user_company
+    
+    old_status = ticket.status
+    
+    if ticket.status == 'reported':
+        ticket.status = 'confirmed'
+        ticket.stop_confirmation_by = request.user
+        ticket.stop_confirmation_time = timezone.now()
+        ticket.elevator.status = 'stopped'
+        ticket.elevator.save()
         
         ActionLog.objects.create(
             ticket=ticket,
-            action_type='dispatch',
-            description=f'已派单给{assigned_to.get_full_name()}处理',
+            action_type='confirm_stop',
+            description='物业经办人已确认停梯，电梯已停止运行',
             performed_by=request.user,
-            from_status=old_status,
-            to_status='dispatched'
+            from_status='reported',
+            to_status='confirmed'
         )
-        
-        if request.htmx:
-            return _render_ticket_detail_partial(request, ticket)
-        return redirect('ticket_detail', pk=pk)
-    return HttpResponse(status=405)
+    
+    ticket.status = 'dispatched'
+    ticket.assigned_to = assigned_to
+    ticket.assigned_time = timezone.now()
+    ticket.current_responsible = assigned_to
+    ticket.company_mismatch = company_mismatch
+    if company_mismatch:
+        ticket.mismatch_note = f"电梯维保单位为{ticket.elevator.maintenance_company.name}，派单给了{user_company.name}的维保人员"
+    ticket.save()
+    
+    ActionLog.objects.create(
+        ticket=ticket,
+        action_type='dispatch',
+        description=f'已派单给{assigned_to.get_full_name()}处理',
+        performed_by=request.user,
+        from_status=old_status if old_status != 'reported' else 'confirmed',
+        to_status='dispatched'
+    )
+    
+    if request.htmx:
+        return _render_ticket_detail_partial(request, ticket)
+    return redirect('ticket_detail', pk=pk)
 
 
 @login_required

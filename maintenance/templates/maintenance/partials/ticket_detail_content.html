@@ -185,6 +185,12 @@
                         <span class="font-medium">{{ ticket.stop_confirmation_by.get_full_name|default:ticket.stop_confirmation_by.username }}</span>
                     </div>
                     {% endif %}
+                    {% if ticket.stop_confirmation_time %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">停梯确认时间</span>
+                        <span class="font-medium">{{ ticket.stop_confirmation_time|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% endif %}
                     {% if ticket.assigned_to %}
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-500">指派维保人员</span>
