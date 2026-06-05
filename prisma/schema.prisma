@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  ARCHIVED
+  CONFLICT
+}
+
+enum ConflictType {
+  TIME_OVERLAP
+  EQUIPMENT_MISSING
+  COST_ALLOCATION_MISMATCH
+  NONE
+}
+
+enum Role {
+  ADMIN
+  DEPARTMENT_HEAD
+  REVIEWER
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings  Booking[]
+  costAllocations CostAllocation[]
+}
+
+model MeetingRoom {
+  id        String   @id @default(cuid())
+  name      String
+  floor     Int
+  capacity  Int
+  hourlyRate Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  equipments Equipment[]
+  bookings   Booking[]
+}
+
+model Equipment {
+  id            String   @id @default(cuid())
+  name          String
+  meetingRoomId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  meetingRoom MeetingRoom @relation(fields: [meetingRoomId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  title           String
+  meetingRoomId   String
+  departmentId    String
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus @default(PENDING)
+  conflictType    ConflictType  @default(NONE)
+  conflictReason  String?
+  totalCost       Float
+  applicant       String
+  applicantRole   Role
+  equipmentNotes  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  meetingRoom     MeetingRoom      @relation(fields: [meetingRoomId], references: [id], onDelete: Cascade)
+  department      Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  costAllocations CostAllocation[]
+  flowRecords     FlowRecord[]
+  bookingEquipments BookingEquipment[]
+}
+
+model BookingEquipment {
+  id        String   @id @default(cuid())
+  bookingId String
+  name      String
+  available Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+model CostAllocation {
+  id           String   @id @default(cuid())
+  bookingId    String
+  departmentId String
+  amount       Float
+  percentage   Float
+  confirmed    Boolean  @default(false)
+  confirmedAt  DateTime?
+  confirmedBy  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking    Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+}
+
+model FlowRecord {
+  id        String   @id @default(cuid())
+  bookingId String
+  action    String
+  operator  String
+  role      Role
+  remark    String?
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
