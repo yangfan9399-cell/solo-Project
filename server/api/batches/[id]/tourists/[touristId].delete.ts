@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const batchId = parseInt(getRouterParam(event, 'id') || '0')
   const touristId = parseInt(getRouterParam(event, 'touristId') || '0')
   const body = await readBody(event)
-  const { visaResult, notes, userId = 1 } = body
+  const { userId = 1, reason } = body
 
   const touristBatch = await prisma.touristBatch.findUnique({
     where: {
@@ -25,35 +25,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const oldResult = touristBatch.visaResult
-
-  const updated = await prisma.touristBatch.update({
+  await prisma.touristBatch.delete({
     where: {
       touristId_batchId: {
         touristId,
         batchId
       }
-    },
-    data: {
-      visaResult,
-      notes
     }
   })
-
-  const resultText: Record<string, string> = {
-    PENDING: '待补充',
-    APPROVED: '已出签',
-    REJECTED: '拒签'
-  }
 
   await prisma.auditLog.create({
     data: {
       batchId,
       userId,
-      action: 'UPDATE_VISA_RESULT',
-      notes: `更新${touristBatch.tourist.name}的出签结果：${oldResult ? resultText[oldResult] || oldResult : '未设置'} → ${visaResult ? resultText[visaResult] || visaResult : '未设置'}${notes ? `，备注：${notes}` : ''}`
+      action: 'REMOVE_TOURIST',
+      notes: `移除游客：${touristBatch.tourist.name}${reason ? `，原因：${reason}` : ''}`
     }
   })
 
-  return updated
+  return { success: true }
 })

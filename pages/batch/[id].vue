@@ -47,11 +47,16 @@
       {{ error }}
     </div>
 
+    <div v-if="success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded text-green-700">
+      {{ success }}
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-white rounded-lg shadow overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 class="text-lg font-medium text-gray-900">游客列表 ({{ batch.tourists.length }}人)</h3>
+            <span class="text-sm text-gray-500">经办人可进行材料补正处理</span>
           </div>
           <div class="divide-y divide-gray-200">
             <div v-for="tourist in batch.tourists" :key="tourist.id" class="p-6">
@@ -74,31 +79,45 @@
                     备注: {{ tourist.batchNotes }}
                   </div>
                 </div>
-                <div v-if="batch.status === 'SUBMITTED'" class="ml-4">
-                  <select @change="updateVisaResult(tourist.id, ($event.target as HTMLSelectElement).value)" 
-                          class="border rounded px-2 py-1 text-sm">
-                    <option value="">更新出签结果</option>
-                    <option value="PENDING" :selected="tourist.visaResult === 'PENDING'">待补充</option>
-                    <option value="APPROVED" :selected="tourist.visaResult === 'APPROVED'">已出签</option>
-                    <option value="REJECTED" :selected="tourist.visaResult === 'REJECTED'">拒签</option>
-                  </select>
+                <div class="flex flex-col items-end space-y-2">
+                  <div v-if="batch.status === 'SUBMITTED'" class="flex items-center space-x-2">
+                    <select @change="updateVisaResult(tourist.id, ($event.target as HTMLSelectElement).value)" 
+                            class="border rounded px-2 py-1 text-sm">
+                      <option value="">更新出签结果</option>
+                      <option value="PENDING" :selected="tourist.visaResult === 'PENDING'">待补充</option>
+                      <option value="APPROVED" :selected="tourist.visaResult === 'APPROVED'">已出签</option>
+                      <option value="REJECTED" :selected="tourist.visaResult === 'REJECTED'">拒签</option>
+                    </select>
+                  </div>
+                  <button v-if="tourist.isPassportExpired && batch.status !== 'ARCHIVED'"
+                          @click="confirmRemoveTourist(tourist)"
+                          class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
+                    移出批次
+                  </button>
                 </div>
               </div>
 
               <div class="mt-4">
-                <h5 class="text-sm font-medium text-gray-700 mb-2">材料清单</h5>
+                <div class="flex items-center justify-between mb-2">
+                  <h5 class="text-sm font-medium text-gray-700">材料清单</h5>
+                  <span class="text-xs text-gray-500">点击材料卡片可编辑状态和补正说明</span>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div v-for="material in tourist.materials" :key="material.id" 
                        :class="getMaterialCardClass(material.status)" 
-                       class="p-3 rounded-lg border">
+                       class="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
+                       @click="openMaterialEdit(tourist, material)">
                     <div class="flex items-center justify-between">
                       <span class="text-sm font-medium">{{ material.type }}</span>
                       <span :class="getMaterialStatusClass(material.status)" class="text-xs font-medium">
                         {{ getMaterialStatusText(material.status) }}
                       </span>
                     </div>
-                    <div v-if="material.notes" class="mt-1 text-xs text-gray-500">
+                    <div v-if="material.notes" class="mt-1 text-xs text-gray-500 line-clamp-1">
                       {{ material.notes }}
+                    </div>
+                    <div class="mt-2 text-xs text-gray-400">
+                      点击编辑 →
                     </div>
                   </div>
                 </div>
@@ -124,6 +143,9 @@
                   <p class="text-xs text-gray-400 mt-1">{{ formatDateTime(log.createdAt) }}</p>
                 </div>
               </div>
+            </div>
+            <div v-if="batch.auditLogs.length === 0" class="p-4 text-center text-gray-500 text-sm">
+              暂无操作记录
             </div>
           </div>
         </div>
@@ -166,11 +188,60 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showMaterialModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">材料补正处理</h3>
+        <p class="text-sm text-gray-500 mb-4">
+          游客: {{ editingTourist?.name }} | 材料: {{ editingMaterial?.type }}
+        </p>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">材料状态</label>
+            <select v-model="materialEditForm.status" class="w-full border rounded-lg px-3 py-2 text-sm">
+              <option value="COMPLETE">齐全</option>
+              <option value="PENDING">待提交</option>
+              <option value="REJECTED">不合格</option>
+              <option value="EXPIRED">已过期</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">补正说明</label>
+            <textarea v-model="materialEditForm.notes" class="w-full border rounded-lg p-3 text-sm" rows="3" placeholder="请输入补正说明..."></textarea>
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end space-x-3">
+          <button @click="showMaterialModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>
+          <button @click="saveMaterialStatus" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showRemoveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">确认移出批次</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          确定要将 <span class="font-medium text-red-600">{{ removingTourist?.name }}</span> 移出当前批次吗？
+        </p>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">移出原因</label>
+          <textarea v-model="removeReason" class="w-full border rounded-lg p-3 text-sm" rows="2" placeholder="请输入移出原因..."></textarea>
+        </div>
+
+        <div class="mt-4 flex justify-end space-x-3">
+          <button @click="showRemoveModal = false" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">取消</button>
+          <button @click="confirmRemove" class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700">确认移出</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { TouristWithDetails, AuditLogEntry } from '~/types'
+import type { TouristWithDetails, AuditLogEntry, MaterialWithStatus } from '~/types'
 
 const route = useRoute()
 const batch = ref<{
@@ -188,8 +259,21 @@ const batch = ref<{
 } | null>(null)
 
 const error = ref('')
+const success = ref('')
 const showRejectModal = ref(false)
 const rejectNotes = ref('')
+
+const showMaterialModal = ref(false)
+const editingTourist = ref<TouristWithDetails | null>(null)
+const editingMaterial = ref<MaterialWithStatus | null>(null)
+const materialEditForm = ref({
+  status: '',
+  notes: ''
+})
+
+const showRemoveModal = ref(false)
+const removingTourist = ref<TouristWithDetails | null>(null)
+const removeReason = ref('')
 
 const passportExpiredAlert = computed(() => {
   if (!batch.value) return ''
@@ -299,10 +383,13 @@ const getActionText = (action: string) => {
   const texts: Record<string, string> = {
     CREATE_BATCH: '创建批次',
     ADD_TOURIST: '添加游客',
+    REMOVE_TOURIST: '移除游客',
     SUBMIT: '确认递签',
     REJECT: '退回补正',
     ARCHIVE: '归档',
-    UPDATE_STATUS: '更新状态'
+    UPDATE_STATUS: '更新状态',
+    UPDATE_VISA_RESULT: '更新出签结果',
+    UPDATE_MATERIAL: '更新材料状态'
   }
   return texts[action] || action
 }
@@ -315,21 +402,32 @@ const formatDateTime = (date: string | Date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
-const updateStatus = async (status: string) => {
+const clearMessages = () => {
   error.value = ''
+  success.value = ''
+}
+
+const showSuccess = (msg: string) => {
+  success.value = msg
+  setTimeout(() => { success.value = '' }, 3000)
+}
+
+const updateStatus = async (status: string) => {
+  clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/status`, {
       method: 'POST',
       body: { status, notes: status === 'SUBMITTED' ? '确认递签' : status === 'ARCHIVED' ? '归档完成' : '' }
     })
     await fetchBatch()
+    showSuccess('状态更新成功')
   } catch (e: any) {
     error.value = e.data?.message || '操作失败'
   }
 }
 
 const confirmReject = async () => {
-  error.value = ''
+  clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/status`, {
       method: 'POST',
@@ -338,20 +436,80 @@ const confirmReject = async () => {
     showRejectModal.value = false
     rejectNotes.value = ''
     await fetchBatch()
+    showSuccess('退回补正成功')
   } catch (e: any) {
     error.value = e.data?.message || '操作失败'
   }
 }
 
 const updateVisaResult = async (touristId: number, result: string) => {
+  clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/tourists/${touristId}`, {
       method: 'POST',
-      body: { visaResult: result || null }
+      body: { visaResult: result || null, userId: 1 }
     })
     await fetchBatch()
+    showSuccess('出签结果更新成功')
   } catch (e: any) {
     error.value = e.data?.message || '更新失败'
+  }
+}
+
+const openMaterialEdit = (tourist: TouristWithDetails, material: MaterialWithStatus) => {
+  editingTourist.value = tourist
+  editingMaterial.value = material
+  materialEditForm.value = {
+    status: material.status,
+    notes: material.notes || ''
+  }
+  showMaterialModal.value = true
+}
+
+const saveMaterialStatus = async () => {
+  if (!editingMaterial.value) return
+  clearMessages()
+  try {
+    await $fetch(`/api/materials/${editingMaterial.value.id}`, {
+      method: 'PATCH',
+      body: {
+        status: materialEditForm.value.status,
+        notes: materialEditForm.value.notes,
+        userId: 1
+      }
+    })
+    showMaterialModal.value = false
+    await fetchBatch()
+    showSuccess('材料状态更新成功')
+  } catch (e: any) {
+    error.value = e.data?.message || '更新失败'
+  }
+}
+
+const confirmRemoveTourist = (tourist: TouristWithDetails) => {
+  removingTourist.value = tourist
+  removeReason.value = '护照过期'
+  showRemoveModal.value = true
+}
+
+const confirmRemove = async () => {
+  if (!removingTourist.value) return
+  clearMessages()
+  try {
+    await $fetch(`/api/batches/${route.params.id}/tourists/${removingTourist.value.id}`, {
+      method: 'DELETE',
+      body: {
+        userId: 1,
+        reason: removeReason.value
+      }
+    })
+    showRemoveModal.value = false
+    removingTourist.value = null
+    removeReason.value = ''
+    await fetchBatch()
+    showSuccess('游客已移出批次')
+  } catch (e: any) {
+    error.value = e.data?.message || '操作失败'
   }
 }
 
