@@ -1,0 +1,57 @@
+<% content_for :title, "疗程卡列表" %>
+
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-800">会员疗程卡列表</h2>
+  <p class="text-gray-600 mt-1">点击查看详情进行消耗登记和退款复核</p>
+</div>
+
+<div class="bg-white shadow overflow-hidden rounded-lg">
+  <table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">会员信息</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">疗程名称</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">剩余次数</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前顾问</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-200">
+      <% @course_packages.each do |package| %>
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-gray-900"><%= package.member.name %></div>
+            <div class="text-sm text-gray-500"><%= package.member.phone %></div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900"><%= package.name %></div>
+            <div class="text-sm text-gray-500">¥<%= package.original_price %></div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div class="text-sm <%= package.remaining_sessions == 0 ? 'text-red-600' : 'text-gray-900' %>">
+                <%= package.remaining_sessions %> / <%= package.total_sessions %>
+              </div>
+              <div class="ml-2 w-20 bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" style="width: <%= (package.remaining_sessions.to_f / package.total_sessions * 100).round %>%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <%= package.consultant.name %>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 py-1 text-xs rounded-full <%= status_class(package.status) %>">
+              <%= status_text(package.status) %>
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <%= link_to '查看详情', course_package_path(package),
+              class: 'text-blue-600 hover:text-blue-900 font-medium' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

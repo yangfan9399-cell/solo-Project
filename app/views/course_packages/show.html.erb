@@ -1,0 +1,434 @@
+<% content_for :title, "#{@course_package.member.name} - #{@course_package.name}" %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <%= link_to '← 返回列表', course_packages_path, class: 'text-blue-600 hover:text-blue-900 text-sm mb-2 inline-block' %>
+    <h2 class="text-2xl font-bold text-gray-800"><%= @course_package.member.name %> - <%= @course_package.name %></h2>
+    <div class="flex items-center space-x-4 mt-2">
+      <span class="px-3 py-1 text-sm rounded-full <%= status_class(@course_package.status) %>">
+        <%= status_text(@course_package.status) %>
+      </span>
+      <% if @course_package.archived? %>
+        <span class="text-sm text-gray-500">📌 只读模式</span>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 购买记录与使用情况</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500">购买日期</p>
+          <p class="font-medium"><%= @course_package.purchased_at.strftime('%Y-%m-%d') %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">原价</p>
+          <p class="font-medium">¥<%= sprintf('%.2f', @course_package.original_price) %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">单次价格</p>
+          <p class="font-medium">¥<%= sprintf('%.2f', @course_package.price_per_session) %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">当前责任顾问</p>
+          <p class="font-medium text-blue-600"><%= @course_package.consultant.name %></p>
+        </div>
+        <div class="col-span-2">
+          <p class="text-sm text-gray-500 mb-2">使用进度</p>
+          <div class="flex items-center space-x-4">
+            <div class="flex-1 bg-gray-200 rounded-full h-4">
+              <div class="bg-green-500 h-4 rounded-full transition-all" style="width: <%= (@course_package.used_sessions.to_f / @course_package.total_sessions * 100).round %>%"></div>
+            </div>
+            <span class="text-sm font-medium">
+              已用 <%= @course_package.used_sessions %> / <%= @course_package.total_sessions %> 次
+              (<span class="text-green-600">剩余 <%= @course_package.remaining_sessions %> 次</span>)
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">💆 已消耗项目记录</h3>
+      <% if @consumption_records.any? %>
+        <div class="space-y-3">
+          <% @consumption_records.each do |record| %>
+            <div class="border border-gray-200 rounded-lg p-4 <%= record.exchange? ? 'bg-purple-50' : '' %>">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="font-medium"><%= record.service_name %></span>
+                    <% if record.exchange? %>
+                      <span class="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">换购</span>
+                    <% end %>
+                  </div>
+                  <p class="text-sm text-gray-500">消耗 <%= record.sessions_used %> 次 · 执行人: <%= record.performed_by.name %></p>
+                  <p class="text-sm text-gray-500"><%= record.performed_at.strftime('%Y-%m-%d %H:%M') %></p>
+                </div>
+              </div>
+              <% if record.customer_notes.present? %>
+                <div class="mt-2 pt-2 border-t border-gray-100">
+                  <p class="text-sm text-gray-600"><span class="font-medium">客户说明:</span> <%= record.customer_notes %></p>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-gray-500 text-center py-8">暂无消耗记录</p>
+      <% end %>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">📜 历史变更记录</h3>
+      <% if @responsibility_changes.any? %>
+        <div class="space-y-3">
+          <% @responsibility_changes.each do |change| %>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <div class="flex items-center space-x-2">
+                <span class="text-orange-500">🔄</span>
+                <span class="font-medium">顾问转交</span>
+              </div>
+              <p class="text-sm text-gray-600 mt-1">
+                <%= change.from_consultant.name %> → <%= change.to_consultant.name %>
+              </p>
+              <p class="text-sm text-gray-500">操作人: <%= change.transferred_by.name %> · <%= change.transferred_at.strftime('%Y-%m-%d %H:%M') %></p>
+              <p class="text-sm text-gray-600 mt-2">原因: <%= change.transfer_reason %></p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-gray-500 text-center py-8">暂无变更记录</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <% unless @course_package.archived? %>
+      <% if @current_user.consultant? %>
+        <div class="bg-white shadow rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">👩‍💼 顾问操作</h3>
+          <div class="space-y-4">
+            <button onclick="openModal('consumeModal')" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition">
+              登记服务消耗
+            </button>
+            <button onclick="openModal('exchangeModal')" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded transition">
+              项目换购
+            </button>
+            <button onclick="openModal('refundModal')" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded transition">
+              申请退款
+            </button>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @current_user.manager? %>
+        <div class="bg-white shadow rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">👔 店长操作</h3>
+          <div class="space-y-4">
+            <button onclick="openModal('transferModal')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded transition">
+              转交顾问
+            </button>
+
+            <% if @course_package.status == 'refund_pending' %>
+              <div class="border-t pt-4">
+                <p class="text-sm text-gray-600 mb-3">当前有退款申请待复核</p>
+                <div class="space-y-2">
+                  <button onclick="openModal('approveModal')" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition">
+                    ✓ 批准退款
+                  </button>
+                  <button onclick="openModal('rejectModal')" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded transition">
+                    ✗ 退回申请
+                  </button>
+                </div>
+              </div>
+            <% end %>
+
+            <% if %w[refund_approved refund_rejected].include?(@course_package.status) %>
+              <%= button_to '📦 归档', archive_course_package_path(@course_package),
+                method: :post,
+                class: 'w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded transition',
+                data: { confirm: '确定要归档吗？归档后将只读。' } %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">💰 退款计算依据</h3>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-500">标准算法:</span>
+          <span class="font-medium">¥<%= sprintf('%.2f', @course_package.calculate_refund('standard')) %></span>
+        </div>
+        <p class="text-gray-400 text-xs">剩余次数 × 单次价格</p>
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">优惠算法:</span>
+          <span class="font-medium">¥<%= sprintf('%.2f', @course_package.calculate_refund('discounted')) %></span>
+        </div>
+        <p class="text-gray-400 text-xs">标准退款 × 0.8 (八折)</p>
+
+        <div class="flex justify-between">
+          <span class="text-gray-500">违约金算法:</span>
+          <span class="font-medium">¥<%= sprintf('%.2f', @course_package.calculate_refund('penalty')) %></span>
+        </div>
+        <p class="text-gray-400 text-xs">标准退款 - 已消费×0.3</p>
+      </div>
+    </div>
+
+    <% if @review_nodes.any? %>
+      <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">🔍 复核节点历史</h3>
+        <div class="space-y-3">
+          <% @review_nodes.each do |node| %>
+            <div class="border border-gray-200 rounded-lg p-4 <%= node.disputed? ? 'bg-red-50 border-red-200' : '' %>">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="px-2 py-0.5 text-xs rounded <%= review_status_class(node.status) %>">
+                    <%= review_status_text(node.status) %>
+                  </span>
+                  <p class="text-sm text-gray-500 mt-1">复核人: <%= node.reviewer.name %></p>
+                </div>
+                <span class="text-sm font-medium text-green-600">¥<%= sprintf('%.2f', node.refund_amount) %></span>
+              </div>
+
+              <% if node.disputed? %>
+                <div class="mt-3 pt-3 border-t border-red-200">
+                  <p class="text-sm font-medium text-red-700 mb-2">⚠️ 退款金额争议</p>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="bg-gray-100 p-2 rounded">
+                      <p class="text-gray-500 text-xs">旧算法金额</p>
+                      <p class="font-medium line-through">¥<%= sprintf('%.2f', node.old_refund_amount) %></p>
+                    </div>
+                    <div class="bg-green-100 p-2 rounded">
+                      <p class="text-gray-500 text-xs">新算法金额</p>
+                      <p class="font-medium">¥<%= sprintf('%.2f', node.new_refund_amount) %></p>
+                    </div>
+                  </div>
+                  <div class="mt-2 p-2 bg-yellow-50 rounded">
+                    <p class="text-xs text-gray-500">差异原因:</p>
+                    <p class="text-sm text-gray-700"><%= node.dispute_reason %></p>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2">差额: <span class="font-medium text-<%= node.amount_difference > 0 ? 'green' : 'red' %>-600">
+                    <%= node.amount_difference > 0 ? '+' : '' %>¥<%= sprintf('%.2f', node.amount_difference) %>
+                  </span></p>
+                </div>
+              <% end %>
+
+              <% if node.review_notes.present? %>
+                <p class="text-sm text-gray-600 mt-2"><span class="font-medium">复核意见:</span> <%= node.review_notes %></p>
+              <% end %>
+
+              <% if @current_user.manager? && node.status == 'archived' %>
+                <div class="mt-3 pt-3 border-t border-gray-200">
+                  <button onclick="openReopenModal(<%= node.id %>)" class="text-sm text-blue-600 hover:text-blue-800">
+                    🔄 返工（生成新复核节点）
+                  </button>
+                </div>
+              <% end %>
+
+              <p class="text-xs text-gray-400 mt-2"><%= node.created_at.strftime('%Y-%m-%d %H:%M') %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="consumeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">登记服务消耗</h3>
+    <%= form_tag consume_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">服务项目名称</label>
+          <input type="text" name="service_name" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">消耗次数</label>
+          <input type="number" name="sessions_used" value="1" min="1" max="<%= @course_package.remaining_sessions %>" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">客户说明 (可选)</label>
+          <textarea name="customer_notes" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('consumeModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">确认登记</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="exchangeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">项目换购登记</h3>
+    <%= form_tag exchange_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">换购项目名称</label>
+          <input type="text" name="service_name" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">抵扣次数</label>
+          <input type="number" name="sessions_used" value="1" min="1" max="<%= @course_package.remaining_sessions %>" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">客户说明</label>
+          <textarea name="customer_notes" rows="2" placeholder="请注明换购原因..." class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('exchangeModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 rounded">确认换购</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="refundModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">申请退款</h3>
+    <%= form_tag request_refund_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">退款算法</label>
+          <select name="algorithm" class="w-full border rounded-lg px-3 py-2">
+            <option value="standard">标准算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('standard')) %></option>
+            <option value="discounted">优惠算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('discounted')) %></option>
+            <option value="penalty">违约金算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('penalty')) %></option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">申请原因</label>
+          <textarea name="dispute_reason" rows="3" placeholder="请说明退款原因..." class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('refundModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded">提交申请</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="transferModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">转交顾问</h3>
+    <%= form_tag transfer_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">转交至</label>
+          <select name="to_consultant_id" class="w-full border rounded-lg px-3 py-2">
+            <% User.where(role: 'consultant').where.not(id: @course_package.consultant_id).each do |consultant| %>
+              <option value="<%= consultant.id %>"><%= consultant.name %></option>
+            <% end %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">转交原因</label>
+          <textarea name="transfer_reason" rows="3" required class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('transferModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded">确认转交</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">批准退款</h3>
+    <%= form_tag approve_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div class="bg-green-50 p-3 rounded-lg">
+          <p class="text-sm text-gray-600">拟退款金额:</p>
+          <p class="text-2xl font-bold text-green-600">¥<%= sprintf('%.2f', @course_package.current_review_node&.refund_amount || 0) %></p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">复核意见 (可选)</label>
+          <textarea name="manager_notes" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('approveModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded">确认批准</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">退回退款申请</h3>
+    <%= form_tag reject_course_package_path(@course_package), method: :post do %>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">退回原因</label>
+          <textarea name="manager_notes" rows="3" required class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('rejectModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded">确认退回</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div id="reopenModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <h3 class="text-lg font-semibold mb-4">返工 - 生成新复核节点</h3>
+    <%= form_tag reopen_course_package_path(@course_package), method: :post do %>
+      <input type="hidden" name="review_node_id" id="reopenReviewNodeId">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">新退款算法</label>
+          <select name="new_algorithm" class="w-full border rounded-lg px-3 py-2">
+            <option value="standard">标准算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('standard')) %></option>
+            <option value="discounted">优惠算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('discounted')) %></option>
+            <option value="penalty">违约金算法 - ¥<%= sprintf('%.2f', @course_package.calculate_refund('penalty')) %></option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">争议原因</label>
+          <textarea name="dispute_reason" rows="3" required placeholder="请说明重新复核的原因和算法调整依据..." class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+      <div class="flex space-x-3 mt-6">
+        <button type="button" onclick="closeModal('reopenModal')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded">取消</button>
+        <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">发起新复核</button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+
+  function openReopenModal(nodeId) {
+    document.getElementById('reopenReviewNodeId').value = nodeId;
+    openModal('reopenModal');
+  }
+
+  document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal(modal.id);
+    });
+  });
+</script>

@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  member: one
+  consultant: one
+  name: MyString
+  original_price: 9.99
+  total_sessions: 1
+  remaining_sessions: 1
+  purchased_at: 2026-06-05 16:56:07
+  status: MyString
+  notes: MyText
+
+two:
+  member: two
+  consultant: two
+  name: MyString
+  original_price: 9.99
+  total_sessions: 1
+  remaining_sessions: 1
+  purchased_at: 2026-06-05 16:56:07
+  status: MyString
+  notes: MyText

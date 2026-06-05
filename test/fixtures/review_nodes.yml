@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  course_package: one
+  reviewer: one
+  status: MyString
+  refund_amount: 9.99
+  refund_algorithm: MyString
+  old_refund_amount: 9.99
+  new_refund_amount: 9.99
+  dispute_reason: MyText
+  review_notes: MyText
+  reviewed_at: 2026-06-05 16:56:21
+  parent_node: one
+
+two:
+  course_package: two
+  reviewer: two
+  status: MyString
+  refund_amount: 9.99
+  refund_algorithm: MyString
+  old_refund_amount: 9.99
+  new_refund_amount: 9.99
+  dispute_reason: MyText
+  review_notes: MyText
+  reviewed_at: 2026-06-05 16:56:21
+  parent_node: two
