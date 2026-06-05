@@ -500,12 +500,35 @@ export async function restartInventory(input: RestartInventoryInput) {
   }
 
   await db
+    .update(medicineBatches)
+    .set({
+      batchNumber: input.newBatchNumber,
+    })
+    .where(eq(medicineBatches.id, report.batchId));
+
+  await db
+    .update(inventory)
+    .set({
+      quantity: input.newQuantity,
+      lastCountedAt: new Date(),
+      lastCountedBy: input.restartedBy,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(inventory.storeId, report.storeId),
+        eq(inventory.batchId, report.batchId)
+      )
+    );
+
+  await db
     .update(expiryReports)
     .set({
       status: "pending",
       conflictType: "none",
       conflictNotes: null,
       reportedQuantity: input.newQuantity,
+      inventoryQuantity: input.newQuantity,
       notes: input.notes || null,
       updatedAt: new Date(),
     })
