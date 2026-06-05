@@ -71,7 +71,7 @@ async function main() {
         scheduledDate: new Date('2024-01-17T08:00:00'),
         scheduledHours: 3,
         estimatedPrice: 150,
-        status: OrderStatus.ARCHIVED,
+        status: OrderStatus.NEEDS_REWORK,
         createdBy: csStaff[1].id,
         reworkCount: 1
       },

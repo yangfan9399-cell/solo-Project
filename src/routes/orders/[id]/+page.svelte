@@ -19,9 +19,15 @@
 	let showQualityModal = false;
 	let cleaners: Staff[] = [];
 	let inspectors: Staff[] = [];
+	let customerServiceStaff: Staff[] = [];
 	
+	let currentStaff: Staff | null = null;
 	let reassignCleanerId = '';
 	let reassignReason = '';
+	let reassignError = '';
+	
+	let isHoursInsufficient = false;
+	let hoursInfo = { scheduled: 0, actual: 0, deficit: 0, ratio: 0 };
 	
 	let feedbackStartTime = '';
 	let feedbackEndTime = '';
@@ -76,15 +82,33 @@
 	async function loadData() {
 		loading = true;
 		try {
-			const [orderRes, cleanersRes, inspectorsRes] = await Promise.all([
+			const [orderRes, cleanersRes, inspectorsRes, csRes] = await Promise.all([
 				fetch(`/api/orders/${$page.params.id}`),
 				fetch('/api/staff?role=CLEANER'),
-				fetch('/api/staff?role=QUALITY_INSPECTOR')
+				fetch('/api/staff?role=QUALITY_INSPECTOR'),
+				fetch('/api/staff?role=CUSTOMER_SERVICE')
 			]);
 			
 			order = await orderRes.json();
 			cleaners = await cleanersRes.json();
 			inspectors = await inspectorsRes.json();
+			customerServiceStaff = await csRes.json();
+			
+			if (customerServiceStaff.length > 0) {
+				currentStaff = customerServiceStaff[0];
+			}
+			
+			if (order?.serviceFeedback) {
+				const scheduled = order.scheduledHours;
+				const actual = Number(order.serviceFeedback.actualHours) || 0;
+				isHoursInsufficient = actual < scheduled * 0.9;
+				hoursInfo = {
+					scheduled,
+					actual,
+					deficit: Math.max(0, scheduled - actual),
+					ratio: scheduled > 0 ? Math.round((actual / scheduled) * 100) : 0
+				};
+			}
 		} catch (e) {
 			console.error('加载数据失败:', e);
 		} finally {
@@ -112,7 +136,14 @@
 	}
 	
 	async function handleReassign() {
-		if (!reassignCleanerId) return;
+		reassignError = '';
+		
+		if (!reassignCleanerId) {
+			reassignError = '请选择保洁员';
+			return;
+		}
+		
+		const hasActiveAssignment = order?.assignments?.some(a => a.status === 'ACTIVE');
 		
 		try {
 			const res = await fetch('/api/assign', {
@@ -121,19 +152,27 @@
 				body: JSON.stringify({
 					orderId: order?.id,
 					cleanerId: reassignCleanerId,
-					reassign: true,
-					reassignReason: reassignReason || 'CUSTOMER_REQUEST',
-					reassignedById: 'temp',
-					notes: '客服改派'
+					reassign: hasActiveAssignment,
+					reassignReason: reassignReason || undefined,
+					reassignedById: hasActiveAssignment ? currentStaff?.id : undefined,
+					notes: hasActiveAssignment ? '客服改派' : '客服首次派工'
 				})
 			});
 			
-			if (res.ok) {
-				showReassignModal = false;
-				loadData();
+			const data = await res.json();
+			
+			if (!res.ok) {
+				reassignError = data.error || '派工失败';
+				return;
 			}
+			
+			showReassignModal = false;
+			reassignCleanerId = '';
+			reassignReason = '';
+			loadData();
 		} catch (e) {
-			console.error('改派失败:', e);
+			console.error('派工失败:', e);
+			reassignError = '网络错误，请稍后重试';
 		}
 	}
 	
@@ -443,40 +482,120 @@
 						{/if}
 					</div>
 				</div>
+				
+				{#if isHoursInsufficient && order.status !== 'ARCHIVED'}
+					<div class="card alert-card danger">
+						<h3>⏰ 服务时长不足</h3>
+						<div class="hours-summary">
+							<div class="hours-item">
+								<span class="hours-label">预约时长</span>
+								<span class="hours-value">{hoursInfo.scheduled} 小时</span>
+							</div>
+							<div class="hours-item">
+								<span class="hours-label">实际时长</span>
+								<span class="hours-value bad">{hoursInfo.actual} 小时</span>
+							</div>
+							<div class="hours-item">
+								<span class="hours-label">时长缺口</span>
+								<span class="hours-value bad">-{hoursInfo.deficit} 小时</span>
+							</div>
+							<div class="hours-item">
+								<span class="hours-label">完成率</span>
+								<span class="hours-value bad">{hoursInfo.ratio}%</span>
+							</div>
+						</div>
+						<div class="processing-paths">
+							<h4>处理路径</h4>
+							<div class="path-item" on:click={() => { qualityResult = 'REJECTED'; showQualityModal = true; }}>
+								<div class="path-icon">🔄</div>
+								<div class="path-info">
+									<div class="path-title">退回返工</div>
+									<div class="path-desc">安排保洁员补服务至满时长</div>
+								</div>
+							</div>
+							<div class="path-item" on:click={() => { qualityResult = 'COMPENSATION'; showQualityModal = true; }}>
+								<div class="path-icon">💰</div>
+								<div class="path-info">
+									<div class="path-title">申请补偿</div>
+									<div class="path-desc">与客户协商部分退款补偿</div>
+								</div>
+							</div>
+							<div class="path-item disabled">
+								<div class="path-icon">✅</div>
+								<div class="path-info">
+									<div class="path-title">直接通过</div>
+									<div class="path-desc">时长不足无法直接通过</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				{/if}
+				
+				{#if order.status === 'NEEDS_REWORK'}
+					<div class="card alert-card warning">
+						<h3>🔧 待返工处理</h3>
+						<p class="rework-desc">该订单需要返工处理，请安排保洁员重新服务</p>
+						<div class="rework-actions">
+							<button class="btn btn-primary full-width" on:click={() => showReassignModal = true}>
+								安排返工派工
+							</button>
+						</div>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</div>
 	
 	{#if showReassignModal}
-		<div class="modal-overlay" on:click={() => showReassignModal = false}>
+		<div class="modal-overlay" on:click={() => { showReassignModal = false; reassignError = ''; }}>
 			<div class="modal" on:click|stopPropagation>
 				<div class="modal-header">
-					<h3>派工/改派</h3>
-					<button class="close" on:click={() => showReassignModal = false}>×</button>
+					<h3>{order?.assignments?.some(a => a.status === 'ACTIVE') ? '改派订单' : '首次派工'}</h3>
+					<button class="close" on:click={() => { showReassignModal = false; reassignError = ''; }}>×</button>
 				</div>
 				<div class="modal-body">
+					{#if reassignError}
+						<div class="alert alert-danger">
+							{reassignError}
+						</div>
+					{/if}
+					
 					<div class="form-group">
-						<label>选择保洁员</label>
+						<label>经办人</label>
+						<div class="staff-info">
+							<span class="staff-name">{currentStaff?.name || '未选择'}</span>
+							<span class="staff-role">客服经办人</span>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label>选择保洁员 <span class="required">*</span></label>
 						<select bind:value={reassignCleanerId}>
-							<option value="">请选择</option>
+							<option value="">请选择保洁员</option>
 							{#each cleaners as cleaner}
 								<option value={cleaner.id}>{cleaner.name} - {cleaner.region}</option>
 							{/each}
 						</select>
 					</div>
-					<div class="form-group">
-						<label>改派原因</label>
-						<select bind:value={reassignReason}>
-							<option value="">正常派工</option>
-							<option value="LEAVE">阿姨请假</option>
-							<option value="CUSTOMER_REQUEST">客户要求更换</option>
-							<option value="OTHER">其他原因</option>
-						</select>
-					</div>
+					
+					{#if order?.assignments?.some(a => a.status === 'ACTIVE')}
+						<div class="form-group">
+							<label>改派原因 <span class="required">*</span></label>
+							<select bind:value={reassignReason}>
+								<option value="">请选择原因</option>
+								<option value="LEAVE">阿姨请假</option>
+								<option value="CUSTOMER_REQUEST">客户要求更换</option>
+								<option value="REWORK">返工派工</option>
+								<option value="OTHER">其他原因</option>
+							</select>
+						</div>
+					{/if}
 				</div>
 				<div class="modal-footer">
-					<button class="btn btn-default" on:click={() => showReassignModal = false}>取消</button>
-					<button class="btn btn-primary" on:click={handleReassign}>确认派工</button>
+					<button class="btn btn-default" on:click={() => { showReassignModal = false; reassignError = ''; }}>取消</button>
+					<button class="btn btn-primary" on:click={handleReassign}>
+						{order?.assignments?.some(a => a.status === 'ACTIVE') ? '确认改派' : '确认派工'}
+					</button>
 				</div>
 			</div>
 		</div>
@@ -1116,5 +1235,150 @@
 		background: #fff3e0;
 		color: #e65100;
 		line-height: 1.6;
+	}
+	
+	.required {
+		color: #f44336;
+	}
+	
+	.staff-info {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 12px;
+		background: #f5f5f5;
+		border-radius: 6px;
+	}
+	
+	.staff-name {
+		font-weight: 600;
+		color: #333;
+	}
+	
+	.staff-role {
+		font-size: 12px;
+		color: #999;
+		background: #e3f2fd;
+		padding: 2px 8px;
+		border-radius: 10px;
+		color: #1976d2;
+	}
+	
+	.alert-card {
+		border: 2px solid;
+	}
+	
+	.alert-card.danger {
+		border-color: #f44336;
+		background: #ffebee;
+	}
+	
+	.alert-card.danger h3 {
+		color: #c62828;
+	}
+	
+	.alert-card.warning {
+		border-color: #ff9800;
+		background: #fff3e0;
+	}
+	
+	.alert-card.warning h3 {
+		color: #e65100;
+	}
+	
+	.hours-summary {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+		margin-bottom: 16px;
+	}
+	
+	.hours-item {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding: 8px;
+		background: white;
+		border-radius: 6px;
+	}
+	
+	.hours-label {
+		font-size: 11px;
+		color: #999;
+	}
+	
+	.hours-value {
+		font-size: 14px;
+		font-weight: 600;
+		color: #333;
+	}
+	
+	.hours-value.bad {
+		color: #f44336;
+	}
+	
+	.processing-paths h4 {
+		margin: 0 0 12px 0;
+		font-size: 14px;
+		color: #333;
+	}
+	
+	.path-item {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 12px;
+		background: white;
+		border-radius: 8px;
+		margin-bottom: 8px;
+		cursor: pointer;
+		transition: all 0.2s;
+		border: 1px solid #eee;
+	}
+	
+	.path-item:hover {
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		transform: translateY(-1px);
+	}
+	
+	.path-item.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	.path-item.disabled:hover {
+		transform: none;
+		box-shadow: none;
+	}
+	
+	.path-icon {
+		font-size: 24px;
+	}
+	
+	.path-info {
+		flex: 1;
+	}
+	
+	.path-title {
+		font-size: 13px;
+		font-weight: 600;
+		color: #333;
+		margin-bottom: 2px;
+	}
+	
+	.path-desc {
+		font-size: 11px;
+		color: #999;
+	}
+	
+	.rework-desc {
+		font-size: 13px;
+		color: #666;
+		margin: 0 0 12px 0;
+		line-height: 1.5;
+	}
+	
+	.rework-actions .btn.full-width {
+		width: 100%;
 	}
 </style>
