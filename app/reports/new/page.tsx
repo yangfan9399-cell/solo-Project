@@ -3,43 +3,24 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCategoryText } from "@/lib/utils";
+import { getCategoryText, formatDate } from "@/lib/utils";
 import {
   createReport,
   getStores,
   getMedicines,
   getBatchesByMedicine,
   getInventoryByStoreAndBatch,
+  type Store,
+  type Medicine,
 } from "@/lib/actions";
-
-interface Store {
-  id: number;
-  name: string;
-  code: string;
-  address: string;
-  region: string;
-  manager: string;
-  phone: string;
-  createdAt: string;
-}
-
-interface Medicine {
-  id: number;
-  name: string;
-  genericName: string;
-  specification: string;
-  manufacturer: string;
-  category: string;
-  unit: string;
-  price: string;
-}
 
 interface Batch {
   id: number;
   medicineId: number;
   batchNumber: string;
-  productionDate: string;
-  expiryDate: string;
+  productionDate: string | Date;
+  expiryDate: string | Date;
+  createdAt: Date;
   medicine?: Medicine;
 }
 
@@ -245,7 +226,7 @@ export default function NewReportPage() {
               >
                 {batches.map((batch) => (
                   <option key={batch.id} value={batch.id}>
-                    {batch.batchNumber} (有效期至: {batch.expiryDate})
+                    {batch.batchNumber} (有效期至: {formatDate(batch.expiryDate)})
                   </option>
                 ))}
               </select>

@@ -81,14 +81,14 @@ interface ReportItem {
     batchId: number;
     reportedQuantity: number;
     inventoryQuantity: number;
-    notes?: string;
+    notes: string | null;
     conflictType: string;
-    conflictNotes?: string;
+    conflictNotes: string | null;
     status: string;
     disposalType: string;
-    suggestedTransferStoreId?: number;
-    createdAt: string;
-    updatedAt: string;
+    suggestedTransferStoreId: number | null;
+    createdAt: Date;
+    updatedAt: Date;
   };
   store?: Store;
   batch?: Batch;
@@ -118,7 +118,7 @@ export default function ReviewPage() {
     setStoreSummaries(stores.filter((s) => s.reportCount > 0));
     setCategorySummaries(categories);
     setDisposalSummaries(disposal);
-    setReports(reportsData as ReportItem[]);
+    setReports(reportsData as unknown as ReportItem[]);
   }
 
   const maxReportCount = Math.max(...storeSummaries.map((s) => s.reportCount), 1);

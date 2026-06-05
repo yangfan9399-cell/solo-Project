@@ -87,8 +87,8 @@ export default async function ReportDetailPage({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <StatusBadge status={report.status} />
-            {report.conflictType !== "none" && (
+            <StatusBadge status={report.status ?? "pending"} />
+            {report.conflictType !== "none" && report.conflictType != null && (
               <ConflictBadge conflictType={report.conflictType} />
             )}
           </div>
@@ -103,7 +103,7 @@ export default async function ReportDetailPage({
               <h3 className="text-lg font-bold text-red-800">
                 批号不一致 - 流程已阻断
               </h3>
-              <p className="mt-2 text-red-700">{report.conflictNotes}</p>
+              <p className="mt-2 text-red-700">{report.conflictNotes ?? ""}</p>
               <div className="mt-4 flex gap-4">
                 <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
                   🔄 启动重新盘点
@@ -125,7 +125,7 @@ export default async function ReportDetailPage({
               <h3 className="text-lg font-bold text-orange-800">
                 销毁数量超限提醒
               </h3>
-              <p className="mt-2 text-orange-700">{report.conflictNotes}</p>
+              <p className="mt-2 text-orange-700">{report.conflictNotes ?? ""}</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default async function ReportDetailPage({
               <h3 className="text-lg font-bold text-yellow-800">
                 责任门店冲突
               </h3>
-              <p className="mt-2 text-yellow-700">{report.conflictNotes}</p>
+              <p className="mt-2 text-yellow-700">{report.conflictNotes ?? ""}</p>
             </div>
           </div>
         </div>
@@ -282,10 +282,10 @@ export default async function ReportDetailPage({
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">状态</div>
-                  <StatusBadge status={transferRequest.status} />
+                  <StatusBadge status={transferRequest.status ?? "pending"} />
                 </div>
               </div>
-              {transferRequest.notes && (
+              {transferRequest.notes != null && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="text-sm text-gray-500">调拨说明</div>
                   <div className="text-gray-700 mt-1">{transferRequest.notes}</div>
@@ -325,10 +325,10 @@ export default async function ReportDetailPage({
                 </div>
                 <div>
                   <div className="text-sm text-gray-500">状态</div>
-                  <StatusBadge status={destructionRequest.status} />
+                  <StatusBadge status={destructionRequest.status ?? "pending"} />
                 </div>
               </div>
-              {destructionRequest.notes && (
+              {destructionRequest.notes != null && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="text-sm text-gray-500">销毁说明</div>
                   <div className="text-gray-700 mt-1">{destructionRequest.notes}</div>

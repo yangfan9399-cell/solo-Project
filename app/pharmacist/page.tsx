@@ -24,14 +24,15 @@ interface Batch {
   id: number;
   medicineId: number;
   batchNumber: string;
-  productionDate: string;
-  expiryDate: string;
+  productionDate: string | Date;
+  expiryDate: string | Date;
+  createdAt: Date;
   medicine?: {
     id: number;
     name: string;
-    genericName: string;
-    specification: string;
-    manufacturer: string;
+    genericName: string | null;
+    specification: string | null;
+    manufacturer: string | null;
     category: string;
     unit: string;
     price: string;
@@ -47,14 +48,14 @@ interface ReportItem {
     batchId: number;
     reportedQuantity: number;
     inventoryQuantity: number;
-    notes?: string;
+    notes: string | null;
     conflictType: string;
-    conflictNotes?: string;
+    conflictNotes: string | null;
     status: string;
     disposalType: string;
-    suggestedTransferStoreId?: number;
-    createdAt: string;
-    updatedAt: string;
+    suggestedTransferStoreId: number | null;
+    createdAt: Date;
+    updatedAt: Date;
   };
   store?: Store;
   batch?: Batch;
@@ -87,7 +88,7 @@ export default function PharmacistPage() {
       getPendingPharmacistReviews(),
       getStores(),
     ]);
-    setReports(reportsData as ReportItem[]);
+    setReports(reportsData as unknown as ReportItem[]);
     setStores(storesData);
   }
 

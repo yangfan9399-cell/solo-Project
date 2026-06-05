@@ -1,11 +1,11 @@
-import { pgTable, serial, varchar, timestamp, integer, text, boolean, date, decimal, jsonb, enum } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, timestamp, integer, text, date, decimal, jsonb, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const roleEnum = enum("role", ["store_clerk", "regional_pharmacist", "finance", "admin"]);
-export const statusEnum = enum("status", ["pending", "approved", "rejected", "blocked", "archived"]);
-export const disposalTypeEnum = enum("disposal_type", ["transfer", "destruction", "none"]);
-export const categoryEnum = enum("category", ["antibiotics", "cardiovascular", "gastrointestinal", "nervous_system", "respiratory", "vitamins", "other"]);
-export const conflictTypeEnum = enum("conflict_type", ["batch_mismatch", "quantity_exceeded", "store_conflict", "none"]);
+export const roleEnum = pgEnum("role", ["store_clerk", "regional_pharmacist", "finance", "admin"]);
+export const statusEnum = pgEnum("status", ["pending", "approved", "rejected", "blocked", "archived"]);
+export const disposalTypeEnum = pgEnum("disposal_type", ["transfer", "destruction", "none"]);
+export const categoryEnum = pgEnum("category", ["antibiotics", "cardiovascular", "gastrointestinal", "nervous_system", "respiratory", "vitamins", "other"]);
+export const conflictTypeEnum = pgEnum("conflict_type", ["batch_mismatch", "quantity_exceeded", "store_conflict", "none"]);
 
 export const stores = pgTable("stores", {
   id: serial("id").primaryKey(),

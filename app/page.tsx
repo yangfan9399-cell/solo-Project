@@ -41,14 +41,14 @@ interface ReportItem {
     batchId: number;
     reportedQuantity: number;
     inventoryQuantity: number;
-    notes?: string;
+    notes: string | null;
     conflictType: string;
-    conflictNotes?: string;
+    conflictNotes: string | null;
     status: string;
     disposalType: string;
-    suggestedTransferStoreId?: number;
-    createdAt: string;
-    updatedAt: string;
+    suggestedTransferStoreId: number | null;
+    createdAt: Date;
+    updatedAt: Date;
   };
   store?: Store;
   batch?: Batch;
@@ -67,7 +67,7 @@ interface SummaryStats {
 
 export default async function Home() {
   const stats = (await getSummaryStats()) as SummaryStats;
-  const allReports = (await getAllReports()) as ReportItem[];
+  const allReports = (await getAllReports()) as unknown as ReportItem[];
   const recentReports = allReports.slice(0, 5);
 
   return (

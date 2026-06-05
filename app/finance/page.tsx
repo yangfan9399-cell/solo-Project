@@ -16,14 +16,15 @@ interface Batch {
   id: number;
   medicineId: number;
   batchNumber: string;
-  productionDate: string;
-  expiryDate: string;
+  productionDate: string | Date;
+  expiryDate: string | Date;
+  createdAt: Date;
   medicine?: {
     id: number;
     name: string;
-    genericName: string;
-    specification: string;
-    manufacturer: string;
+    genericName: string | null;
+    specification: string | null;
+    manufacturer: string | null;
     category: string;
     unit: string;
     price: string;
@@ -39,14 +40,14 @@ interface ReviewItem {
     batchId: number;
     reportedQuantity: number;
     inventoryQuantity: number;
-    notes?: string;
+    notes: string | null;
     conflictType: string;
-    conflictNotes?: string;
+    conflictNotes: string | null;
     status: string;
     disposalType: string;
-    suggestedTransferStoreId?: number;
-    createdAt: string;
-    updatedAt: string;
+    suggestedTransferStoreId: number | null;
+    createdAt: Date;
+    updatedAt: Date;
   };
   store?: Store;
   batch?: Batch;
@@ -56,14 +57,15 @@ interface ReviewItem {
     storeId: number;
     quantity: number;
     maxAllowedQuantity: number;
-    approvedBy?: number;
-    financeApprovedBy?: number;
-    approvedAt?: string;
-    financeApprovedAt?: string;
+    approvedBy: number | null;
+    financeApprovedBy: number | null;
+    approvedAt: Date | null;
+    financeApprovedAt: Date | null;
     status: string;
-    lossAmount?: string;
-    notes?: string;
+    lossAmount: string | null;
+    notes: string | null;
     evidenceUrls: string[];
+    createdAt: Date;
   };
 }
 
@@ -83,7 +85,7 @@ export default function FinancePage() {
 
   async function loadData() {
     const data = await getPendingFinanceReviews();
-    setReviews(data as ReviewItem[]);
+    setReviews(data as unknown as ReviewItem[]);
   }
 
   const filteredReviews = reviews.filter(

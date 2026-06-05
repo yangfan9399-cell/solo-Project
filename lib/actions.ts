@@ -1,22 +1,32 @@
 "use server";
 
+import { db } from "./db";
 import {
-  getData,
-  saveExpiryReport,
-  updateExpiryReport,
-  saveHistoryNode,
-  saveAuditLog,
-  saveTransferRequest,
-  saveDestructionRequest,
-  updateDestructionRequest,
-  updateTransferRequest,
-  getNextReportNumber,
-  getStoreById,
-  getBatchById,
+  stores,
+  users,
+  medicines,
+  medicineBatches,
+  inventory,
+  expiryReports,
+  transferRequests,
+  destructionRequests,
+  auditLogs,
+  evidence,
+  historyNodes,
+  type Store,
+  type User,
+  type Medicine,
+  type MedicineBatch,
   type ExpiryReport,
   type TransferRequest,
   type DestructionRequest,
-} from "./db/storage";
+  type AuditLog,
+  type Evidence,
+  type HistoryNode,
+} from "./db/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
+
+export type { Store, User, Medicine, MedicineBatch };
 
 export interface CreateReportInput {
   storeId: number;
@@ -31,23 +41,64 @@ export interface CreateReportInput {
   systemBatchNumber?: string;
 }
 
-export async function createReport(input: CreateReportInput) {
-  const data = await getData();
-  const batch = getBatchById(data, input.batchId);
-  const store = getStoreById(data, input.storeId);
+async function getNextReportNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(expiryReports)
+    .where(sql`extract(year from ${expiryReports.createdAt}) = ${year}`);
 
-  let conflictType: "batch_mismatch" | "quantity_exceeded" | "store_conflict" | "none" = "none";
+  const count = Number(result[0]?.count || 0) + 1;
+  return `EXP-${year}-${String(count).padStart(5, "0")}`;
+}
+
+export async function createReport(input: CreateReportInput) {
+  const batchResult = await db
+    .select({
+      id: medicineBatches.id,
+      batchNumber: medicineBatches.batchNumber,
+      medicineId: medicineBatches.medicineId,
+      medicine: {
+        name: medicines.name,
+        unit: medicines.unit,
+      },
+    })
+    .from(medicineBatches)
+    .leftJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+    .where(eq(medicineBatches.id, input.batchId))
+    .limit(1);
+
+  const batch = batchResult[0];
+  if (!batch) {
+    return { success: false, error: "药品批次不存在" };
+  }
+
+  const storeResult = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, input.storeId))
+    .limit(1);
+  const store = storeResult[0];
+
+  let conflictType: "batch_mismatch" | "quantity_exceeded" | "store_conflict" | "none" =
+    "none";
   let conflictNotes = "";
   let status: "pending" | "blocked" = "pending";
 
-  if (input.actualBatchNumber && input.systemBatchNumber && input.actualBatchNumber !== input.systemBatchNumber) {
+  if (
+    input.actualBatchNumber &&
+    input.systemBatchNumber &&
+    input.actualBatchNumber !== input.systemBatchNumber
+  ) {
     conflictType = "batch_mismatch";
     conflictNotes = `上报批号为 ${input.systemBatchNumber}，但实际盘点批号为 ${input.actualBatchNumber}，批号不一致`;
     status = "blocked";
   }
 
   if (input.reportedQuantity !== input.inventoryQuantity) {
-    conflictNotes += (conflictNotes ? "; " : "") + `上报数量 ${input.reportedQuantity} 与系统库存 ${input.inventoryQuantity} 不一致`;
+    conflictNotes +=
+      (conflictNotes ? "; " : "") +
+      `上报数量 ${input.reportedQuantity} 与系统库存 ${input.inventoryQuantity} 不一致`;
   }
 
   if (input.disposalType === "destruction" && input.reportedQuantity > 20) {
@@ -55,40 +106,45 @@ export async function createReport(input: CreateReportInput) {
     conflictNotes = `月度销毁限额为20单位，申请销毁${input.reportedQuantity}单位，超出限额${input.reportedQuantity - 20}单位`;
   }
 
-  const report = await saveExpiryReport({
-    reportNumber: getNextReportNumber(),
-    storeId: input.storeId,
-    reportedBy: input.reportedBy,
-    batchId: input.batchId,
-    reportedQuantity: input.reportedQuantity,
-    inventoryQuantity: input.inventoryQuantity,
-    notes: input.notes,
-    conflictType,
-    conflictNotes: conflictNotes || undefined,
-    status,
-    disposalType: input.disposalType,
-    suggestedTransferStoreId: input.suggestedTransferStoreId,
-  });
+  const reportNumber = await getNextReportNumber();
 
-  await saveHistoryNode({
+  const [report] = await db
+    .insert(expiryReports)
+    .values({
+      reportNumber,
+      storeId: input.storeId,
+      reportedBy: input.reportedBy,
+      batchId: input.batchId,
+      reportedQuantity: input.reportedQuantity,
+      inventoryQuantity: input.inventoryQuantity,
+      notes: input.notes,
+      conflictType,
+      conflictNotes: conflictNotes || null,
+      status,
+      disposalType: input.disposalType,
+      suggestedTransferStoreId: input.suggestedTransferStoreId || null,
+    })
+    .returning();
+
+  await db.insert(historyNodes).values({
     reportId: report.id,
     nodeType: "report",
     title: "门店上报",
-    description: `${store?.name || "未知门店"}经办人上报${batch?.medicine?.name || "药品"}近效期情况`,
+    description: `${store?.name || "未知门店"}经办人上报${batch.medicine?.name || "药品"}近效期情况`,
     userId: input.reportedBy,
     quantityChange: input.reportedQuantity,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: report.id,
     userId: input.reportedBy,
     action: "create_report",
     newStatus: status,
-    notes: `创建近效期药品上报：${batch?.medicine?.name || "药品"} ${input.reportedQuantity}${batch?.medicine?.unit || ""}`,
+    notes: `创建近效期药品上报：${batch.medicine?.name || "药品"} ${input.reportedQuantity}${batch.medicine?.unit || ""}`,
   });
 
   if (conflictType === "batch_mismatch") {
-    await saveHistoryNode({
+    await db.insert(historyNodes).values({
       reportId: report.id,
       nodeType: "blocked",
       title: "批号不一致阻断",
@@ -96,7 +152,7 @@ export async function createReport(input: CreateReportInput) {
       userId: input.reportedBy,
     });
 
-    await saveAuditLog({
+    await db.insert(auditLogs).values({
       reportId: report.id,
       userId: input.reportedBy,
       action: "detect_mismatch",
@@ -107,15 +163,22 @@ export async function createReport(input: CreateReportInput) {
   }
 
   if (input.disposalType === "transfer" && input.suggestedTransferStoreId) {
-    await saveHistoryNode({
+    const suggestedStoreResult = await db
+      .select()
+      .from(stores)
+      .where(eq(stores.id, input.suggestedTransferStoreId))
+      .limit(1);
+    const suggestedStore = suggestedStoreResult[0];
+
+    await db.insert(historyNodes).values({
       reportId: report.id,
       nodeType: "suggest_transfer",
       title: "调拨建议",
-      description: `建议调拨至 ${getStoreById(data, input.suggestedTransferStoreId)?.name || "目标门店"}`,
+      description: `建议调拨至 ${suggestedStore?.name || "目标门店"}`,
       userId: input.reportedBy,
     });
 
-    await saveAuditLog({
+    await db.insert(auditLogs).values({
       reportId: report.id,
       userId: input.reportedBy,
       action: "suggest_transfer",
@@ -126,7 +189,7 @@ export async function createReport(input: CreateReportInput) {
   }
 
   if (input.disposalType === "destruction") {
-    await saveHistoryNode({
+    await db.insert(historyNodes).values({
       reportId: report.id,
       nodeType: "request_destruction",
       title: "销毁申请",
@@ -134,7 +197,7 @@ export async function createReport(input: CreateReportInput) {
       userId: input.reportedBy,
     });
 
-    await saveAuditLog({
+    await db.insert(auditLogs).values({
       reportId: report.id,
       userId: input.reportedBy,
       action: "request_destruction",
@@ -156,8 +219,12 @@ export interface ApproveTransferInput {
 }
 
 export async function approveTransfer(input: ApproveTransferInput) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === input.reportId);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, input.reportId))
+    .limit(1);
+  const report = reportResult[0];
 
   if (!report) {
     return { success: false, error: "上报记录不存在" };
@@ -167,27 +234,45 @@ export async function approveTransfer(input: ApproveTransferInput) {
     return { success: false, error: "批号不一致，流程已阻断，请先重新盘点" };
   }
 
-  await updateExpiryReport(input.reportId, {
-    status: "approved",
-    disposalType: "transfer",
-  });
+  await db
+    .update(expiryReports)
+    .set({
+      status: "approved",
+      disposalType: "transfer",
+      updatedAt: new Date(),
+    })
+    .where(eq(expiryReports.id, input.reportId));
 
-  const transferRequest = await saveTransferRequest({
-    reportId: input.reportId,
-    sourceStoreId: report.storeId,
-    targetStoreId: input.targetStoreId,
-    quantity: input.quantity,
-    approvedBy: input.approvedBy,
-    approvedAt: new Date().toISOString(),
-    status: "approved",
-    notes: input.notes,
-    evidenceUrls: [],
-  });
+  const [transferRequest] = await db
+    .insert(transferRequests)
+    .values({
+      reportId: input.reportId,
+      sourceStoreId: report.storeId,
+      targetStoreId: input.targetStoreId,
+      quantity: input.quantity,
+      approvedBy: input.approvedBy,
+      approvedAt: new Date(),
+      status: "approved",
+      notes: input.notes || null,
+      evidenceUrls: [],
+    })
+    .returning();
 
-  const sourceStore = getStoreById(data, report.storeId);
-  const targetStore = getStoreById(data, input.targetStoreId);
+  const sourceStoreResult = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, report.storeId))
+    .limit(1);
+  const sourceStore = sourceStoreResult[0];
 
-  await saveHistoryNode({
+  const targetStoreResult = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, input.targetStoreId))
+    .limit(1);
+  const targetStore = targetStoreResult[0];
+
+  await db.insert(historyNodes).values({
     reportId: input.reportId,
     nodeType: "approve_transfer",
     title: "药师审核通过（调拨）",
@@ -196,7 +281,7 @@ export async function approveTransfer(input: ApproveTransferInput) {
     quantityChange: input.quantity,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: input.reportId,
     userId: input.approvedBy,
     action: "approve_transfer",
@@ -218,32 +303,43 @@ export interface ApproveDestructionInput {
 }
 
 export async function approveDestruction(input: ApproveDestructionInput) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === input.reportId);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, input.reportId))
+    .limit(1);
+  const report = reportResult[0];
 
   if (!report) {
     return { success: false, error: "上报记录不存在" };
   }
 
-  await updateExpiryReport(input.reportId, {
-    status: "approved",
-    disposalType: "destruction",
-  });
+  await db
+    .update(expiryReports)
+    .set({
+      status: "approved",
+      disposalType: "destruction",
+      updatedAt: new Date(),
+    })
+    .where(eq(expiryReports.id, input.reportId));
 
-  const destructionRequest = await saveDestructionRequest({
-    reportId: input.reportId,
-    storeId: report.storeId,
-    quantity: input.quantity,
-    maxAllowedQuantity: input.maxAllowedQuantity,
-    approvedBy: input.approvedBy,
-    approvedAt: new Date().toISOString(),
-    status: "approved",
-    lossAmount: input.lossAmount,
-    notes: input.notes,
-    evidenceUrls: [],
-  });
+  const [destructionRequest] = await db
+    .insert(destructionRequests)
+    .values({
+      reportId: input.reportId,
+      storeId: report.storeId,
+      quantity: input.quantity,
+      maxAllowedQuantity: input.maxAllowedQuantity,
+      approvedBy: input.approvedBy,
+      approvedAt: new Date(),
+      status: "approved",
+      lossAmount: input.lossAmount,
+      notes: input.notes || null,
+      evidenceUrls: [],
+    })
+    .returning();
 
-  await saveHistoryNode({
+  await db.insert(historyNodes).values({
     reportId: input.reportId,
     nodeType: "approve_destruction",
     title: "药师审核通过（销毁）",
@@ -252,7 +348,7 @@ export async function approveDestruction(input: ApproveDestructionInput) {
     quantityChange: input.quantity,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: input.reportId,
     userId: input.approvedBy,
     action: "approve_destruction",
@@ -271,18 +367,26 @@ export interface RejectReportInput {
 }
 
 export async function rejectReport(input: RejectReportInput) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === input.reportId);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, input.reportId))
+    .limit(1);
+  const report = reportResult[0];
 
   if (!report) {
     return { success: false, error: "上报记录不存在" };
   }
 
-  await updateExpiryReport(input.reportId, {
-    status: "rejected",
-  });
+  await db
+    .update(expiryReports)
+    .set({
+      status: "rejected",
+      updatedAt: new Date(),
+    })
+    .where(eq(expiryReports.id, input.reportId));
 
-  await saveHistoryNode({
+  await db.insert(historyNodes).values({
     reportId: input.reportId,
     nodeType: "rejected",
     title: "审核拒绝",
@@ -290,7 +394,7 @@ export async function rejectReport(input: RejectReportInput) {
     userId: input.rejectedBy,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: input.reportId,
     userId: input.rejectedBy,
     action: "reject_report",
@@ -311,29 +415,51 @@ export interface FinanceReviewInput {
 }
 
 export async function financeReview(input: FinanceReviewInput) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === input.reportId);
-  const destructionRequest = data.destructionRequests.find((r) => r.id === input.destructionRequestId);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, input.reportId))
+    .limit(1);
+  const report = reportResult[0];
+
+  const destructionRequestResult = await db
+    .select()
+    .from(destructionRequests)
+    .where(eq(destructionRequests.id, input.destructionRequestId))
+    .limit(1);
+  const destructionRequest = destructionRequestResult[0];
 
   if (!report || !destructionRequest) {
     return { success: false, error: "记录不存在" };
   }
 
-  await updateExpiryReport(input.reportId, {
-    status: "archived",
-  });
+  await db
+    .update(expiryReports)
+    .set({
+      status: "archived",
+      updatedAt: new Date(),
+    })
+    .where(eq(expiryReports.id, input.reportId));
 
-  await updateDestructionRequest(input.destructionRequestId, {
-    financeApprovedBy: input.approvedBy,
-    financeApprovedAt: new Date().toISOString(),
-    status: "archived",
-    lossAmount: input.lossAmount,
-    notes: input.notes,
-  });
+  await db
+    .update(destructionRequests)
+    .set({
+      financeApprovedBy: input.approvedBy,
+      financeApprovedAt: new Date(),
+      status: "archived",
+      lossAmount: input.lossAmount,
+      notes: input.notes || null,
+    })
+    .where(eq(destructionRequests.id, input.destructionRequestId));
 
-  const store = getStoreById(data, report.storeId);
+  const storeResult = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, report.storeId))
+    .limit(1);
+  const store = storeResult[0];
 
-  await saveHistoryNode({
+  await db.insert(historyNodes).values({
     reportId: input.reportId,
     nodeType: "finance_approve",
     title: "财务复核通过",
@@ -341,7 +467,7 @@ export async function financeReview(input: FinanceReviewInput) {
     userId: input.approvedBy,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: input.reportId,
     userId: input.approvedBy,
     action: "finance_approve",
@@ -362,22 +488,30 @@ export interface RestartInventoryInput {
 }
 
 export async function restartInventory(input: RestartInventoryInput) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === input.reportId);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, input.reportId))
+    .limit(1);
+  const report = reportResult[0];
 
   if (!report) {
     return { success: false, error: "上报记录不存在" };
   }
 
-  await updateExpiryReport(input.reportId, {
-    status: "pending",
-    conflictType: "none",
-    conflictNotes: undefined,
-    reportedQuantity: input.newQuantity,
-    notes: input.notes,
-  });
+  await db
+    .update(expiryReports)
+    .set({
+      status: "pending",
+      conflictType: "none",
+      conflictNotes: null,
+      reportedQuantity: input.newQuantity,
+      notes: input.notes || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(expiryReports.id, input.reportId));
 
-  await saveHistoryNode({
+  await db.insert(historyNodes).values({
     reportId: input.reportId,
     nodeType: "restart_inventory",
     title: "重新盘点",
@@ -386,7 +520,7 @@ export async function restartInventory(input: RestartInventoryInput) {
     quantityChange: input.newQuantity,
   });
 
-  await saveAuditLog({
+  await db.insert(auditLogs).values({
     reportId: input.reportId,
     userId: input.restartedBy,
     action: "restart_inventory",
@@ -399,31 +533,113 @@ export async function restartInventory(input: RestartInventoryInput) {
 }
 
 export async function getReportDetail(id: number) {
-  const data = await getData();
-  const report = data.expiryReports.find((r) => r.id === id);
+  const reportResult = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.id, id))
+    .limit(1);
+  const report = reportResult[0];
+
   if (!report) return null;
 
-  const store = getStoreById(data, report.storeId);
-  const reportedBy = data.users.find((u) => u.id === report.reportedBy);
-  const batch = getBatchById(data, report.batchId);
+  const storeResult = await db
+    .select()
+    .from(stores)
+    .where(eq(stores.id, report.storeId))
+    .limit(1);
+  const store = storeResult[0];
+
+  const reportedByResult = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, report.reportedBy))
+    .limit(1);
+  const reportedBy = reportedByResult[0];
+
+  const batchResult = await db
+    .select({
+      id: medicineBatches.id,
+      medicineId: medicineBatches.medicineId,
+      batchNumber: medicineBatches.batchNumber,
+      productionDate: medicineBatches.productionDate,
+      expiryDate: medicineBatches.expiryDate,
+      createdAt: medicineBatches.createdAt,
+      medicine: {
+        id: medicines.id,
+        name: medicines.name,
+        genericName: medicines.genericName,
+        specification: medicines.specification,
+        manufacturer: medicines.manufacturer,
+        category: medicines.category,
+        unit: medicines.unit,
+        price: medicines.price,
+      },
+    })
+    .from(medicineBatches)
+    .leftJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+    .where(eq(medicineBatches.id, report.batchId))
+    .limit(1);
+  const batch = batchResult[0];
+
   const suggestedStore = report.suggestedTransferStoreId
-    ? getStoreById(data, report.suggestedTransferStoreId)
+    ? (
+        await db
+          .select()
+          .from(stores)
+          .where(eq(stores.id, report.suggestedTransferStoreId))
+          .limit(1)
+      )[0]
     : null;
-  const transferRequest = data.transferRequests.find((t) => t.reportId === id);
-  const destructionRequest = data.destructionRequests.find((d) => d.reportId === id);
-  const evidence = data.evidence.filter((e) => e.reportId === id);
-  const historyNodes = data.historyNodes
-    .filter((n) => n.reportId === id)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const auditLogs = data.auditLogs
-    .filter((l) => l.reportId === id)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const transferRequestResult = await db
+    .select()
+    .from(transferRequests)
+    .where(eq(transferRequests.reportId, id))
+    .limit(1);
+  const transferRequest = transferRequestResult[0];
+
+  const destructionRequestResult = await db
+    .select()
+    .from(destructionRequests)
+    .where(eq(destructionRequests.reportId, id))
+    .limit(1);
+  const destructionRequest = destructionRequestResult[0];
+
+  const evidenceList = await db
+    .select()
+    .from(evidence)
+    .where(eq(evidence.reportId, id));
+
+  const historyNodesList = await db
+    .select()
+    .from(historyNodes)
+    .where(eq(historyNodes.reportId, id))
+    .orderBy(desc(historyNodes.createdAt));
+
+  const auditLogsList = await db
+    .select()
+    .from(auditLogs)
+    .where(eq(auditLogs.reportId, id))
+    .orderBy(desc(auditLogs.createdAt));
 
   const sourceStore = transferRequest
-    ? getStoreById(data, transferRequest.sourceStoreId)
+    ? (
+        await db
+          .select()
+          .from(stores)
+          .where(eq(stores.id, transferRequest.sourceStoreId))
+          .limit(1)
+      )[0]
     : null;
+
   const targetStore = transferRequest
-    ? getStoreById(data, transferRequest.targetStoreId)
+    ? (
+        await db
+          .select()
+          .from(stores)
+          .where(eq(stores.id, transferRequest.targetStoreId))
+          .limit(1)
+      )[0]
     : null;
 
   return {
@@ -434,59 +650,204 @@ export async function getReportDetail(id: number) {
     suggestedStore,
     transferRequest,
     destructionRequest,
-    evidence,
-    historyNodes,
-    auditLogs,
+    evidence: evidenceList,
+    historyNodes: historyNodesList,
+    auditLogs: auditLogsList,
     sourceStore,
     targetStore,
   };
 }
 
 export async function getAllReports() {
-  const data = await getData();
-  return data.expiryReports.map((report) => {
-    const store = getStoreById(data, report.storeId);
-    const batch = getBatchById(data, report.batchId);
-    return { report, store, batch };
-  });
+  const reports = await db.select().from(expiryReports).orderBy(desc(expiryReports.createdAt));
+
+  const result = [];
+  for (const report of reports) {
+    const storeResult = await db
+      .select()
+      .from(stores)
+      .where(eq(stores.id, report.storeId))
+      .limit(1);
+    const store = storeResult[0];
+
+    const batchResult = await db
+      .select({
+        id: medicineBatches.id,
+        medicineId: medicineBatches.medicineId,
+        batchNumber: medicineBatches.batchNumber,
+        productionDate: medicineBatches.productionDate,
+        expiryDate: medicineBatches.expiryDate,
+        createdAt: medicineBatches.createdAt,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          genericName: medicines.genericName,
+          specification: medicines.specification,
+          manufacturer: medicines.manufacturer,
+          category: medicines.category,
+          unit: medicines.unit,
+          price: medicines.price,
+        },
+      })
+      .from(medicineBatches)
+      .leftJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicineBatches.id, report.batchId))
+      .limit(1);
+    const batch = batchResult[0];
+
+    result.push({ report, store, batch });
+  }
+
+  return result;
 }
 
 export async function getPendingPharmacistReviews() {
-  const data = await getData();
-  return data.expiryReports
-    .filter((r) => r.status === "pending" || r.status === "blocked")
-    .map((report) => {
-      const store = getStoreById(data, report.storeId);
-      const batch = getBatchById(data, report.batchId);
-      return { report, store, batch };
-    });
+  const reports = await db
+    .select()
+    .from(expiryReports)
+    .where(
+      and(
+        eq(expiryReports.status, "pending"),
+        eq(expiryReports.conflictType, "none")
+      )
+    )
+    .orderBy(desc(expiryReports.createdAt));
+
+  const blockedReports = await db
+    .select()
+    .from(expiryReports)
+    .where(eq(expiryReports.status, "blocked"))
+    .orderBy(desc(expiryReports.createdAt));
+
+  const allReports = [...reports, ...blockedReports];
+
+  const result = [];
+  for (const report of allReports) {
+    const storeResult = await db
+      .select()
+      .from(stores)
+      .where(eq(stores.id, report.storeId))
+      .limit(1);
+    const store = storeResult[0];
+
+    const batchResult = await db
+      .select({
+        id: medicineBatches.id,
+        medicineId: medicineBatches.medicineId,
+        batchNumber: medicineBatches.batchNumber,
+        productionDate: medicineBatches.productionDate,
+        expiryDate: medicineBatches.expiryDate,
+        createdAt: medicineBatches.createdAt,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          genericName: medicines.genericName,
+          specification: medicines.specification,
+          manufacturer: medicines.manufacturer,
+          category: medicines.category,
+          unit: medicines.unit,
+          price: medicines.price,
+        },
+      })
+      .from(medicineBatches)
+      .leftJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicineBatches.id, report.batchId))
+      .limit(1);
+    const batch = batchResult[0];
+
+    result.push({ report, store, batch });
+  }
+
+  return result;
 }
 
 export async function getPendingFinanceReviews() {
-  const data = await getData();
-  return data.expiryReports
-    .filter((r) => r.status === "approved" && r.disposalType === "destruction")
-    .map((report) => {
-      const store = getStoreById(data, report.storeId);
-      const batch = getBatchById(data, report.batchId);
-      const destructionRequest = data.destructionRequests.find((d) => d.reportId === report.id);
-      return { report, store, batch, destructionRequest };
-    });
+  const reports = await db
+    .select()
+    .from(expiryReports)
+    .where(
+      and(
+        eq(expiryReports.status, "approved"),
+        eq(expiryReports.disposalType, "destruction")
+      )
+    )
+    .orderBy(desc(expiryReports.createdAt));
+
+  const result = [];
+  for (const report of reports) {
+    const storeResult = await db
+      .select()
+      .from(stores)
+      .where(eq(stores.id, report.storeId))
+      .limit(1);
+    const store = storeResult[0];
+
+    const batchResult = await db
+      .select({
+        id: medicineBatches.id,
+        medicineId: medicineBatches.medicineId,
+        batchNumber: medicineBatches.batchNumber,
+        productionDate: medicineBatches.productionDate,
+        expiryDate: medicineBatches.expiryDate,
+        createdAt: medicineBatches.createdAt,
+        medicine: {
+          id: medicines.id,
+          name: medicines.name,
+          genericName: medicines.genericName,
+          specification: medicines.specification,
+          manufacturer: medicines.manufacturer,
+          category: medicines.category,
+          unit: medicines.unit,
+          price: medicines.price,
+        },
+      })
+      .from(medicineBatches)
+      .leftJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicineBatches.id, report.batchId))
+      .limit(1);
+    const batch = batchResult[0];
+
+    const destructionRequestResult = await db
+      .select()
+      .from(destructionRequests)
+      .where(eq(destructionRequests.reportId, report.id))
+      .limit(1);
+    const destructionRequest = destructionRequestResult[0];
+
+    result.push({ report, store, batch, destructionRequest });
+  }
+
+  return result;
 }
 
 export async function getSummaryStats() {
-  const data = await getData();
+  const totalReportsResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(expiryReports);
+  const totalReports = Number(totalReportsResult[0]?.count || 0);
 
-  const totalReports = data.expiryReports.length;
-  const pendingReports = data.expiryReports.filter((r) => r.status === "pending").length;
-  const blockedReports = data.expiryReports.filter((r) => r.status === "blocked").length;
+  const pendingReportsResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(expiryReports)
+    .where(eq(expiryReports.status, "pending"));
+  const pendingReports = Number(pendingReportsResult[0]?.count || 0);
 
-  let totalLoss = 0;
-  data.destructionRequests.forEach((d) => {
-    if (d.lossAmount && (d.status === "approved" || d.status === "archived")) {
-      totalLoss += parseFloat(d.lossAmount);
-    }
-  });
+  const blockedReportsResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(expiryReports)
+    .where(eq(expiryReports.status, "blocked"));
+  const blockedReports = Number(blockedReportsResult[0]?.count || 0);
+
+  const totalLossResult = await db
+    .select({ total: sql<number>`sum(${destructionRequests.lossAmount})` })
+    .from(destructionRequests)
+    .where(
+      or(
+        eq(destructionRequests.status, "approved"),
+        eq(destructionRequests.status, "archived")
+      )
+    );
+  const totalLoss = Number(totalLossResult[0]?.total || 0);
 
   return {
     totalReports,
@@ -496,133 +857,208 @@ export async function getSummaryStats() {
   };
 }
 
-export async function getStoreSummaries() {
-  const data = await getData();
-  const summaries: Array<{
-    store: typeof data.stores[0];
-    reportCount: number;
-    transferQuantity: number;
-    destructionQuantity: number;
-    lossAmount: number;
-  }> = [];
+function or(...conditions: any[]) {
+  if (conditions.length === 0) return undefined;
+  return conditions.reduce((acc, cond) => sql`${acc} OR ${cond}`);
+}
 
-  data.stores.forEach((store) => {
-    const storeReports = data.expiryReports.filter((r) => r.storeId === store.id);
-    const transferRequests = data.transferRequests.filter(
-      (t) => data.expiryReports.find((r) => r.id === t.reportId)?.storeId === store.id
-    );
-    const destructionRequests = data.destructionRequests.filter(
-      (d) => data.expiryReports.find((r) => r.id === d.reportId)?.storeId === store.id
-    );
+export async function getStoreSummaries() {
+  const allStores = await db.select().from(stores);
+  const summaries = [];
+
+  for (const store of allStores) {
+    const storeReportsResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(expiryReports)
+      .where(eq(expiryReports.storeId, store.id));
+    const reportCount = Number(storeReportsResult[0]?.count || 0);
+
+    const transferQuantityResult = await db
+      .select({ total: sql<number>`sum(${transferRequests.quantity})` })
+      .from(transferRequests)
+      .innerJoin(
+        expiryReports,
+        eq(transferRequests.reportId, expiryReports.id)
+      )
+      .where(eq(expiryReports.storeId, store.id));
+    const transferQuantity = Number(transferQuantityResult[0]?.total || 0);
+
+    const destructionResult = await db
+      .select({
+        quantity: sql<number>`sum(${destructionRequests.quantity})`,
+        loss: sql<number>`sum(${destructionRequests.lossAmount})`,
+      })
+      .from(destructionRequests)
+      .innerJoin(
+        expiryReports,
+        eq(destructionRequests.reportId, expiryReports.id)
+      )
+      .where(eq(expiryReports.storeId, store.id));
+    const destructionQuantity = Number(destructionResult[0]?.quantity || 0);
+    const lossAmount = Number(destructionResult[0]?.loss || 0);
 
     summaries.push({
       store,
-      reportCount: storeReports.length,
-      transferQuantity: transferRequests.reduce((sum, t) => sum + t.quantity, 0),
-      destructionQuantity: destructionRequests.reduce((sum, d) => sum + d.quantity, 0),
-      lossAmount: destructionRequests.reduce((sum, d) => sum + (d.lossAmount ? parseFloat(d.lossAmount) : 0), 0),
+      reportCount,
+      transferQuantity,
+      destructionQuantity,
+      lossAmount,
     });
-  });
+  }
 
   return summaries;
 }
 
 export async function getCategorySummaries() {
-  const data = await getData();
-  const summaries: Array<{
-    category: string;
-    reportCount: number;
-    transferQuantity: number;
-    destructionQuantity: number;
-    lossAmount: number;
-  }> = [];
+  const categories = [
+    "antibiotics",
+    "cardiovascular",
+    "gastrointestinal",
+    "nervous_system",
+    "respiratory",
+    "vitamins",
+    "other",
+  ];
+  const summaries = [];
 
-  const categories = ["antibiotics", "cardiovascular", "gastrointestinal", "nervous_system", "respiratory", "vitamins", "other"];
+  for (const category of categories) {
+    const categoryReportsResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(expiryReports)
+      .innerJoin(
+        medicineBatches,
+        eq(expiryReports.batchId, medicineBatches.id)
+      )
+      .innerJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicines.category, category as any));
+    const reportCount = Number(categoryReportsResult[0]?.count || 0);
 
-  categories.forEach((category) => {
-    const categoryMedicines = data.medicines.filter((m) => m.category === category);
-    const categoryBatches = data.medicineBatches.filter((b) =>
-      categoryMedicines.some((m) => m.id === b.medicineId)
-    );
-    const categoryReports = data.expiryReports.filter((r) =>
-      categoryBatches.some((b) => b.id === r.batchId)
-    );
+    const transferQuantityResult = await db
+      .select({ total: sql<number>`sum(${transferRequests.quantity})` })
+      .from(transferRequests)
+      .innerJoin(
+        expiryReports,
+        eq(transferRequests.reportId, expiryReports.id)
+      )
+      .innerJoin(
+        medicineBatches,
+        eq(expiryReports.batchId, medicineBatches.id)
+      )
+      .innerJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicines.category, category as any));
+    const transferQuantity = Number(transferQuantityResult[0]?.total || 0);
 
-    const transferRequests = data.transferRequests.filter((t) =>
-      categoryReports.some((r) => r.id === t.reportId)
-    );
-    const destructionRequests = data.destructionRequests.filter((d) =>
-      categoryReports.some((r) => r.id === d.reportId)
-    );
+    const destructionResult = await db
+      .select({
+        quantity: sql<number>`sum(${destructionRequests.quantity})`,
+        loss: sql<number>`sum(${destructionRequests.lossAmount})`,
+      })
+      .from(destructionRequests)
+      .innerJoin(
+        expiryReports,
+        eq(destructionRequests.reportId, expiryReports.id)
+      )
+      .innerJoin(
+        medicineBatches,
+        eq(expiryReports.batchId, medicineBatches.id)
+      )
+      .innerJoin(medicines, eq(medicineBatches.medicineId, medicines.id))
+      .where(eq(medicines.category, category as any));
+    const destructionQuantity = Number(destructionResult[0]?.quantity || 0);
+    const lossAmount = Number(destructionResult[0]?.loss || 0);
 
     summaries.push({
       category,
-      reportCount: categoryReports.length,
-      transferQuantity: transferRequests.reduce((sum, t) => sum + t.quantity, 0),
-      destructionQuantity: destructionRequests.reduce((sum, d) => sum + d.quantity, 0),
-      lossAmount: destructionRequests.reduce((sum, d) => sum + (d.lossAmount ? parseFloat(d.lossAmount) : 0), 0),
+      reportCount,
+      transferQuantity,
+      destructionQuantity,
+      lossAmount,
     });
-  });
+  }
 
   return summaries;
 }
 
 export async function getDisposalSummaries() {
-  const data = await getData();
+  const transferResult = await db
+    .select({
+      count: sql<number>`count(*)`,
+      totalQuantity: sql<number>`sum(${transferRequests.quantity})`,
+    })
+    .from(transferRequests)
+    .where(sql`${transferRequests.status} != 'rejected'`);
 
-  const transferRequests = data.transferRequests.filter((t) => t.status !== "rejected");
-  const destructionRequests = data.destructionRequests.filter((d) => d.status !== "rejected");
-
-  const transferCount = transferRequests.length;
-  const transferTotalQuantity = transferRequests.reduce((sum, t) => sum + t.quantity, 0);
-  const destructionCount = destructionRequests.length;
-  const destructionTotalQuantity = destructionRequests.reduce((sum, d) => sum + d.quantity, 0);
-  const totalLoss = destructionRequests.reduce((sum, d) => sum + (d.lossAmount ? parseFloat(d.lossAmount) : 0), 0);
+  const destructionResult = await db
+    .select({
+      count: sql<number>`count(*)`,
+      totalQuantity: sql<number>`sum(${destructionRequests.quantity})`,
+      totalLoss: sql<number>`sum(${destructionRequests.lossAmount})`,
+    })
+    .from(destructionRequests)
+    .where(sql`${destructionRequests.status} != 'rejected'`);
 
   return {
     transfer: {
-      count: transferCount,
-      totalQuantity: transferTotalQuantity,
+      count: Number(transferResult[0]?.count || 0),
+      totalQuantity: Number(transferResult[0]?.totalQuantity || 0),
     },
     destruction: {
-      count: destructionCount,
-      totalQuantity: destructionTotalQuantity,
-      totalLoss,
+      count: Number(destructionResult[0]?.count || 0),
+      totalQuantity: Number(destructionResult[0]?.totalQuantity || 0),
+      totalLoss: Number(destructionResult[0]?.totalLoss || 0),
     },
   };
 }
 
 export async function getStores() {
-  const data = await getData();
-  return data.stores;
+  return db.select().from(stores);
 }
 
 export async function getMedicines() {
-  const data = await getData();
-  return data.medicines;
+  return db.select().from(medicines);
 }
 
 export async function getBatches() {
-  const data = await getData();
-  return data.medicineBatches;
+  return db.select().from(medicineBatches);
 }
 
 export async function getBatchesByMedicine(medicineId: number) {
-  const data = await getData();
-  return data.medicineBatches
-    .filter((b) => b.medicineId === medicineId)
-    .map((b) => ({
-      ...b,
-      medicine: data.medicines.find((m) => m.id === b.medicineId),
-    }));
+  const batches = await db
+    .select({
+      id: medicineBatches.id,
+      medicineId: medicineBatches.medicineId,
+      batchNumber: medicineBatches.batchNumber,
+      productionDate: medicineBatches.productionDate,
+      expiryDate: medicineBatches.expiryDate,
+      createdAt: medicineBatches.createdAt,
+    })
+    .from(medicineBatches)
+    .where(eq(medicineBatches.medicineId, medicineId));
+
+  const medicineResult = await db
+    .select()
+    .from(medicines)
+    .where(eq(medicines.id, medicineId))
+    .limit(1);
+  const medicine = medicineResult[0];
+
+  return batches.map((batch) => ({
+    ...batch,
+    medicine,
+  }));
 }
 
 export async function getInventoryByStoreAndBatch(storeId: number, batchId: number) {
-  const data = await getData();
-  return data.inventory.find((i) => i.storeId === storeId && i.batchId === batchId);
+  const result = await db
+    .select()
+    .from(inventory)
+    .where(
+      and(eq(inventory.storeId, storeId), eq(inventory.batchId, batchId))
+    )
+    .limit(1);
+  return result[0];
 }
 
 export async function getUsers() {
-  const data = await getData();
-  return data.users;
+  return db.select().from(users);
 }
