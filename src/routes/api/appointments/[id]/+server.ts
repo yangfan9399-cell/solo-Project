@@ -10,7 +10,10 @@ import {
 	users,
 	followUps
 } from '$lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, alias } from 'drizzle-orm';
+
+const followUpConsultantAlias = alias(users, 'follow_up_consultant');
+const supervisorAlias = alias(users, 'supervisor');
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!locals.user) {
@@ -51,12 +54,12 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const followUpRecords = await db
 		.select({
 			followUp: followUps,
-			consultant: users,
-			supervisor: users
+			consultant: followUpConsultantAlias,
+			supervisor: supervisorAlias
 		})
 		.from(followUps)
-		.leftJoin(users, eq(followUps.consultantId, users.id))
-		.leftJoin(users as supervisors, eq(followUps.supervisorId, supervisors.id))
+		.leftJoin(followUpConsultantAlias, eq(followUps.consultantId, followUpConsultantAlias.id))
+		.leftJoin(supervisorAlias, eq(followUps.supervisorId, supervisorAlias.id))
 		.where(eq(followUps.appointmentId, appointmentId))
 		.orderBy(desc(followUps.createdAt));
 

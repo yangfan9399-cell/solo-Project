@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { getStatusDisplayName, getConversionStatusDisplayName } from '$lib/auth';
 	import type { User, Appointment } from '$lib/db/schema';
+	import NewAppointmentModal from '$lib/components/NewAppointmentModal.svelte';
 
 	interface AppointmentData {
 		appointment: Appointment;
@@ -165,7 +166,3 @@
 		loadAppointments();
 	}} />
 {/if}
-
-<script lang="ts">
-	import NewAppointmentModal from '$lib/components/NewAppointmentModal.svelte';
-</script>

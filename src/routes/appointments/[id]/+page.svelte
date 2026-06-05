@@ -163,6 +163,15 @@
 		detail = await res.json();
 	}
 
+	function safelyParseJSON(value: string | null): any {
+		if (!value) return {};
+		try {
+			return JSON.parse(value);
+		} catch {
+			return {};
+		}
+	}
+
 	function getStatusColor(status: string) {
 		const colors: Record<string, string> = {
 			pending_booking: 'bg-yellow-100 text-yellow-800',
@@ -429,13 +438,43 @@
 									<div class="ml-3 flex-1">
 										<div class="flex items-center justify-between">
 											<span class="text-sm font-medium text-slate-700">
-												{item.changeType === 'reschedule' ? '改期' : item.changeType === 'schedule_confirmed' ? '排课确认' : item.changeType === 'conflict_detected' ? '冲突检测' : '更新'}
+												{item.change.changeType === 'reschedule' ? '改期' : item.change.changeType === 'schedule_confirmed' ? '排课确认' : item.change.changeType === 'conflict_detected' ? '冲突检测' : '更新'}
 											</span>
 											<span class="text-xs text-slate-500">{formatDate(item.change.createdAt)}</span>
 										</div>
 										<p class="text-xs text-slate-500">操作人：{item.changedBy?.name}</p>
+										{#if item.change.oldValue && item.change.newValue}
+											<div class="mt-2 p-3 bg-slate-50 rounded text-xs">
+												{@const oldData = safelyParseJSON(item.change.oldValue)}
+												{@const newData = safelyParseJSON(item.change.newValue)}
+												{#if oldData.status || newData.status}
+													<div class="flex items-center space-x-2">
+														<span class="text-slate-500">状态：</span>
+														<span class="text-slate-600 line-through">{oldData.status ? getStatusDisplayName(oldData.status) : '-'}</span>
+														<span class="text-slate-400">→</span>
+														<span class="text-green-600 font-medium">{newData.status ? getStatusDisplayName(newData.status) : '-'}</span>
+													</div>
+												{/if}
+												{#if oldData.scheduledAt || newData.scheduledAt}
+													<div class="flex items-center space-x-2 mt-1">
+														<span class="text-slate-500">时间：</span>
+														<span class="text-slate-600 line-through">{oldData.scheduledAt ? formatDate(oldData.scheduledAt) : '-'}</span>
+														<span class="text-slate-400">→</span>
+														<span class="text-green-600 font-medium">{newData.scheduledAt ? formatDate(newData.scheduledAt) : '-'}</span>
+													</div>
+												{/if}
+												{#if oldData.teacherId !== undefined || newData.teacherId !== undefined}
+													<div class="flex items-center space-x-2 mt-1">
+														<span class="text-slate-500">老师ID：</span>
+														<span class="text-slate-600 line-through">{oldData.teacherId ?? '-'}</span>
+														<span class="text-slate-400">→</span>
+														<span class="text-green-600 font-medium">{newData.teacherId ?? '-'}</span>
+													</div>
+												{/if}
+											</div>
+										{/if}
 										{#if item.change.reason}
-											<p class="text-sm text-slate-600 mt-1">{item.change.reason}</p>
+											<p class="text-sm text-slate-600 mt-2">💡 {item.change.reason}</p>
 										{/if}
 									</div>
 								</div>
@@ -478,27 +517,92 @@
 			</div>
 
 			{#if conflictInfo}
-				<div class="px-6 py-4">
+				<div class="px-6 py-4 max-h-[80vh] overflow-y-auto">
 					<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-						<h4 class="font-medium text-red-800 mb-2">⚠️ 老师时间冲突</h4>
-						<p class="text-sm text-red-700">{conflictInfo.message}</p>
+						<h4 class="font-medium text-red-800 mb-3">⚠️ 老师时间冲突</h4>
+						<p class="text-sm text-red-700 mb-3">{conflictInfo.message}</p>
+
+						{#if conflictInfo.conflictingAppointments?.length > 0}
+							<div class="mb-4">
+								<p class="text-sm font-medium text-red-700 mb-2">冲突详情：</p>
+								{#each conflictInfo.conflictingAppointments as ca}
+									<div class="bg-white rounded p-2 text-xs space-y-1">
+										<p><span class="text-slate-500">学生：</span>{ca.student.name}</p>
+										<p><span class="text-slate-500">课程：</span>{ca.course.name}</p>
+										<p><span class="text-slate-500">时间：</span>{formatDate(ca.appointment.scheduledAt)}</p>
+									</div>
+								{/each}
+							</div>
+						{/if}
+
 						{#if conflictInfo.alternativeTeachers?.length > 0}
-							<div class="mt-3">
-								<p class="text-sm font-medium text-red-700">推荐替代老师：</p>
-								<ul class="mt-1 space-y-1">
+							<div class="mb-4">
+								<p class="text-sm font-medium text-red-700 mb-2">方案一：更换老师</p>
+								<div class="space-y-2 max-h-32 overflow-y-auto">
 									{#each conflictInfo.alternativeTeachers as t}
-										<li class="text-sm text-red-600">• {t.name} ({t.specialties?.join(', ')})</li>
+										<button
+											type="button"
+											on:click={() => {
+												scheduleTeacherId = t.id.toString();
+												conflictInfo = null;
+											}}
+											class="w-full text-left bg-white rounded p-2 text-xs hover:bg-green-50 cursor-pointer border border-transparent hover:border-green-300"
+										>
+											<div class="flex items-center justify-between">
+												<span class="font-medium text-slate-700">{t.name}</span>
+												{#if t.matchSpecialties > 0}
+													<span class="text-green-600 text-xs bg-green-100 px-1.5 py-0.5 rounded">匹配</span>
+												{/if}
+											</div>
+											<p class="text-slate-500 mt-0.5">{t.specialties?.join(', ')}</p>
+										</button>
 									{/each}
-								</ul>
+								</div>
+							</div>
+						{/if}
+
+						{#if conflictInfo.suggestedTimeSlots?.length > 0}
+							<div>
+								<p class="text-sm font-medium text-red-700 mb-2">方案二：改期（{conflictInfo.conflictTeacher?.name || '该老师'} 可用时间）</p>
+								<div class="grid grid-cols-2 gap-2">
+									{#each conflictInfo.suggestedTimeSlots as slot}
+										<button
+											type="button"
+											on:click={() => {
+												const [month, day] = slot.date.split('/');
+												const year = new Date().getFullYear();
+												const time = slot.time;
+												scheduleScheduledAt = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${time}`;
+												conflictInfo = null;
+											}}
+											class="text-center bg-white rounded p-2 text-xs hover:bg-blue-50 cursor-pointer border border-transparent hover:border-blue-300"
+										>
+											<p class="font-medium text-slate-700">{slot.date}</p>
+											<p class="text-blue-600">{slot.time}</p>
+										</button>
+									{/each}
+								</div>
 							</div>
 						{/if}
 					</div>
-					<button
-						on:click={() => (conflictInfo = null)}
-						class="w-full py-2 text-sm text-blue-600 hover:text-blue-800"
-					>
-						重新选择
-					</button>
+					<div class="flex space-x-2">
+						<button
+							on:click={() => (conflictInfo = null)}
+							class="flex-1 py-2 text-sm border border-slate-300 rounded hover:bg-slate-50"
+						>
+							手动选择
+						</button>
+						<button
+							on:click={() => {
+								showSchedule = false;
+								showReschedule = true;
+								conflictInfo = null;
+							}}
+							class="flex-1 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+						>
+							去改期
+						</button>
+					</div>
 				</div>
 			{:else}
 				<div class="px-6 py-4 space-y-4">

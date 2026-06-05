@@ -1,8 +1,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/db';
-import { appointments, teachers, appointmentChanges } from '$lib/db/schema';
-import { eq, and, sql, gte, lte, or } from 'drizzle-orm';
+import { appointments, teachers, appointmentChanges, students, courses } from '$lib/db/schema';
+import { eq, and, sql, or, lt, gt } from 'drizzle-orm';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	if (!locals.user) {
@@ -89,18 +89,18 @@ async function checkTeacherConflict(
 	duration: number,
 	excludeAppointmentId?: number
 ) {
-	const endTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
+	const newStartTime = scheduledAt;
+	const newEndTime = new Date(scheduledAt.getTime() + duration * 60 * 1000);
 
 	const conflicting = await db
 		.select({
 			appointment: appointments,
-			student: {
-				id: sql`students.id`,
-				name: sql`students.name`
-			}
+			student: students,
+			course: courses
 		})
 		.from(appointments)
-		.leftJoin(sql`students`, sql`students.id = appointments.student_id`)
+		.leftJoin(students, eq(appointments.studentId, students.id))
+		.leftJoin(courses, eq(appointments.courseId, courses.id))
 		.where(
 			and(
 				eq(appointments.teacherId, teacherId),
@@ -109,28 +109,83 @@ async function checkTeacherConflict(
 					eq(appointments.status, 'pending_schedule')
 				),
 				excludeAppointmentId ? sql`appointments.id != ${excludeAppointmentId}` : sql`TRUE`,
-				gte(appointments.scheduledAt, scheduledAt),
-				lte(appointments.scheduledAt, endTime)
+				lt(appointments.scheduledAt, newEndTime),
+				gt(sql`appointments.scheduled_at + (appointments.duration || 60) * interval '1 minute'`, newStartTime)
 			)
 		);
 
 	if (conflicting.length > 0) {
-		const [teacher] = await db
+		const [currentTeacher] = await db
 			.select()
 			.from(teachers)
 			.where(eq(teachers.id, teacherId));
 
-		const alternatives = await db
-			.select()
-			.from(teachers)
-			.where(sql`specialties && ${teacher?.specialties || []}::text[] AND id != ${teacherId}`);
+		const allTeachers = await db.select().from(teachers);
+		const alternativeTeachers = allTeachers
+			.filter((t) => t.id !== teacherId)
+			.map((t) => ({
+				...t,
+				matchSpecialties: currentTeacher?.specialties
+					? t.specialties?.filter((s) => currentTeacher.specialties?.includes(s)).length || 0
+					: 0
+			}))
+			.sort((a, b) => b.matchSpecialties - a.matchSpecialties);
+
+		const suggestedTimeSlots = generateSuggestedSlots(
+			newStartTime,
+			duration,
+			conflicting.map((c) => ({
+				start: new Date(c.appointment.scheduledAt!),
+				end: new Date(
+					new Date(c.appointment.scheduledAt!).getTime() +
+						(c.appointment.duration || 60) * 60 * 1000
+				)
+			}))
+		);
 
 		return {
 			hasConflict: true,
 			conflictingAppointments: conflicting,
-			alternativeTeachers: alternatives
+			conflictTeacher: currentTeacher,
+			alternativeTeachers,
+			suggestedTimeSlots
 		};
 	}
 
 	return { hasConflict: false };
+}
+
+function generateSuggestedSlots(
+	preferredTime: Date,
+	duration: number,
+	conflicts: Array<{ start: Date; end: Date }>
+) {
+	const suggestions: Array<{ date: string; time: string }> = [];
+	const daysToCheck = 7;
+	const hoursToCheck = [9, 10, 11, 14, 15, 16, 17, 19, 20];
+
+	for (let dayOffset = 0; dayOffset < daysToCheck; dayOffset++) {
+		for (const hour of hoursToCheck) {
+			const candidateTime = new Date(preferredTime);
+			candidateTime.setDate(candidateTime.getDate() + dayOffset);
+			candidateTime.setHours(hour, 0, 0, 0);
+
+			const candidateEnd = new Date(candidateTime.getTime() + duration * 60 * 1000);
+
+			const hasConflict = conflicts.some(
+				(c) => candidateTime < c.end && candidateEnd > c.start
+			);
+
+			if (!hasConflict && candidateTime > new Date()) {
+				suggestions.push({
+					date: candidateTime.toLocaleDateString('zh-CN'),
+					time: `${hour.toString().padStart(2, '0')}:00`
+				});
+				if (suggestions.length >= 5) break;
+			}
+		}
+		if (suggestions.length >= 5) break;
+	}
+
+	return suggestions;
 }
