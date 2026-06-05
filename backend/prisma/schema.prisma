@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MERCHANT
+  INVESTMENT_MANAGER
+  ENGINEER
+  FIRE_INSPECTOR
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  INVESTMENT_REVIEWED
+  ENGINEER_INSPECTED
+  FIRE_PASSED
+  FIRE_REJECTED
+  ARCHIVED
+}
+
+enum InspectionResult {
+  PASSED
+  REJECTED
+  NEEDS_RECTIFICATION
+  DRAWINGS_MISSING
+  TIME_CONFLICT
+}
+
+enum FileType {
+  FLOOR_PLAN
+  FIRE_PLAN
+  ELECTRICAL_PLAN
+  CONSTRUCTION_DRAWING
+  CERTIFICATE
+  OTHER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      UserRole
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdApplications Application[] @relation("creator")
+  handledNodes        InspectionNode[] @relation("handler")
+}
+
+model Merchant {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String
+  phone       String
+  email       String
+  businessType String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[]
+}
+
+model ShopUnit {
+  id          String   @id @default(cuid())
+  unitNumber  String   @unique
+  floor       String
+  area        Float
+  status      String   @default("available")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  applications Application[]
+}
+
+model Application {
+  id               String              @id @default(cuid())
+  merchantId       String
+  shopUnitId       String
+  projectName      String
+  status           ApplicationStatus   @default(DRAFT)
+  constructionStart DateTime
+  constructionEnd   DateTime
+  estimatedCost    Float?
+  projectScope     String
+  investmentManagerId String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  merchant         Merchant            @relation(fields: [merchantId], references: [id])
+  shopUnit         ShopUnit            @relation(fields: [shopUnitId], references: [id])
+  investmentManager User?              @relation("creator", fields: [investmentManagerId], references: [id])
+  drawings         Drawing[]
+  inspectionNodes  InspectionNode[]
+  responsiblePersons ResponsiblePerson[]
+}
+
+model Drawing {
+  id            String   @id @default(cuid())
+  applicationId String
+  name          String
+  type          FileType
+  fileUrl       String
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+  description   String?
+
+  application   Application @relation(fields: [applicationId], references: [id])
+  uploadedBy    User        @relation(fields: [uploadedById], references: [id])
+}
+
+model InspectionNode {
+  id             String            @id @default(cuid())
+  applicationId  String
+  nodeType       String
+  result         InspectionResult?
+  remarks        String?
+  handlerId      String?
+  handledAt      DateTime?
+  nodeOrder      Int
+  rectificationDeadline DateTime?
+  rectificationRequirements String?
+  createdAt      DateTime          @default(now())
+
+  application    Application       @relation(fields: [applicationId], references: [id])
+  handler        User?             @relation("handler", fields: [handlerId], references: [id])
+  rectifications Rectification[]
+}
+
+model Rectification {
+  id               String   @id @default(cuid())
+  inspectionNodeId String
+  description      String
+  status           String   @default("pending")
+  completedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  inspectionNode   InspectionNode @relation(fields: [inspectionNodeId], references: [id])
+}
+
+model ResponsiblePerson {
+  id             String   @id @default(cuid())
+  applicationId  String
+  name           String
+  role           String
+  phone          String
+  email          String?
+  createdAt      DateTime @default(now())
+
+  application    Application @relation(fields: [applicationId], references: [id])
+}

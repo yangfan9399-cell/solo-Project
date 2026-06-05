@@ -1,0 +1,17 @@
+{
+  "name": "mall-fire-acceptance-platform",
+  "version": "1.0.0",
+  "description": "商场商户装修申请与消防验收平台",
+  "private": true,
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "db:push": "cd backend && npm run db:push",
+    "db:seed": "cd backend && npm run db:seed",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "keywords": ["vue3", "fastify", "prisma", "postgresql", "fire-safety"],
+  "author": ""
+}
