@@ -3,15 +3,14 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { 
-  getOrders, 
   getStatusLabel, 
   getStatusColor, 
-  Order,
   OrderStatus 
 } from '@/lib/mockData';
+import { useOrderStore } from '@/lib/orderStore';
 
 export default function Home() {
-  const orders = getOrders();
+  const { orders } = useOrderStore();
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -137,7 +136,7 @@ export default function Home() {
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order: Order) => (
+                filteredOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="font-medium text-primary">

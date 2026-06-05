@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { getOrders, Order, OrderStatus, getStatusLabel } from '@/lib/mockData';
+import { getStatusLabel, OrderStatus } from '@/lib/mockData';
+import { useOrderStore } from '@/lib/orderStore';
 
 export default function DashboardPage() {
-  const orders = getOrders();
+  const { orders } = useOrderStore();
   const [timeRange, setTimeRange] = useState('all');
 
   const stats = useMemo(() => {
@@ -80,6 +81,7 @@ export default function DashboardPage() {
         const last = new Date(order.historyNodes[order.historyNodes.length - 1].timestamp);
         const hours = (last.getTime() - first.getTime()) / (1000 * 60 * 60);
         return {
+          id: order.id,
           orderNumber: order.orderNumber,
           country: order.country,
           category: order.category,
@@ -88,6 +90,7 @@ export default function DashboardPage() {
         };
       }
       return {
+        id: order.id,
         orderNumber: order.orderNumber,
         country: order.country,
         category: order.category,
@@ -287,7 +290,7 @@ export default function DashboardPage() {
                   <tr key={item.orderNumber}>
                     <td className="py-2">
                       <Link 
-                        href={`/orders/${orders.find(o => o.orderNumber === item.orderNumber)?.id}`}
+                        href={`/orders/${item.id}`}
                         className="text-primary hover:underline font-medium"
                       >
                         {item.orderNumber}
