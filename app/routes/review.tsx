@@ -4,7 +4,7 @@ import { db } from "~/db";
 import { registrations, participants, projects, groups, reviews, history } from "~/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { formatDate, formatDateTime, getStatusColor, getStatusLabel, isDocumentExpired } from "~/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const meta: MetaFunction = () => {
   return [{ title: "资格审核工作台" }];
@@ -49,11 +49,38 @@ export const loader: LoaderFunction = async () => {
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const registrationId = Number(formData.get("registrationId"));
-  const action = formData.get("action") as string;
+  const actionType = formData.get("action") as string;
   const notes = formData.get("notes") as string;
-  const groupId = formData.get("groupId") ? Number(formData.get("groupId")) : undefined;
+  const groupIdStr = formData.get("groupId") as string;
+  const groupId = groupIdStr ? Number(groupIdStr) : undefined;
 
-  if (action === "clerk_update") {
+  const [registration] = await db
+    .select()
+    .from(registrations)
+    .where(eq(registrations.id, registrationId))
+    .limit(1);
+
+  if (!registration) {
+    return { error: "报名记录不存在", registrationId };
+  }
+
+  if (actionType === "clerk_update") {
+    if (groupId) {
+      const [targetGroup] = await db
+        .select()
+        .from(groups)
+        .where(eq(groups.id, groupId))
+        .limit(1);
+
+      if (!targetGroup) {
+        return { error: "目标组别不存在", registrationId };
+      }
+
+      if (targetGroup.projectId !== registration.projectId) {
+        return { error: "只能调整到同一项目下的其他组别", registrationId };
+      }
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(registrations)
@@ -64,12 +91,7 @@ export const action: ActionFunction = async ({ request }) => {
         .where(eq(registrations.id, registrationId));
 
       if (groupId) {
-        const reg = await tx
-          .select()
-          .from(registrations)
-          .where(eq(registrations.id, registrationId))
-          .limit(1);
-        const oldGroupId = reg[0].groupId;
+        const oldGroupId = registration.groupId;
 
         await tx
           .update(registrations)
@@ -83,14 +105,14 @@ export const action: ActionFunction = async ({ request }) => {
           details: `组别调整: ${notes || "经办人调整组别"}`,
           oldGroupId,
           newGroupId: groupId,
-        });
+        } as any);
       } else {
         await tx.insert(history).values({
           registrationId,
           action: "clerk_updated",
           actorName: "经办人小王",
           details: notes,
-        });
+        } as any);
       }
 
       await tx.insert(reviews).values({
@@ -99,66 +121,75 @@ export const action: ActionFunction = async ({ request }) => {
         reviewerName: "经办人小王",
         decision: groupId ? "组别调整" : "资料补充",
         notes,
-      });
+      } as any);
     });
+
+    return { success: true, registrationId, action: "clerk_update" };
   }
 
-  if (action === "referee_approve") {
+  if (actionType === "referee_approve" || actionType === "referee_reject") {
+    if (
+      registration.registrationStatus !== "pending" &&
+      registration.registrationStatus !== "needs_info"
+    ) {
+      return { error: "仅待处理或需补资料的记录可进行裁判审核", registrationId };
+    }
+
     await db.transaction(async (tx) => {
-      await tx
-        .update(registrations)
-        .set({
-          registrationStatus: "qualified",
-          refereeNotes: notes,
-        })
-        .where(eq(registrations.id, registrationId));
+      if (actionType === "referee_approve") {
+        await tx
+          .update(registrations)
+          .set({
+            registrationStatus: "qualified",
+            refereeNotes: notes,
+          })
+          .where(eq(registrations.id, registrationId));
 
-      await tx.insert(history).values({
-        registrationId,
-        action: "referee_approved",
-        actorName: "裁判李老师",
-        details: notes || "资格审核通过",
-      });
+        await tx.insert(history).values({
+          registrationId,
+          action: "referee_approved",
+          actorName: "裁判李老师",
+          details: notes || "资格审核通过",
+        } as any);
 
-      await tx.insert(reviews).values({
-        registrationId,
-        reviewerRole: "referee",
-        reviewerName: "裁判李老师",
-        decision: "通过",
-        notes,
-      });
+        await tx.insert(reviews).values({
+          registrationId,
+          reviewerRole: "referee",
+          reviewerName: "裁判李老师",
+          decision: "通过",
+          notes,
+        } as any);
+      } else {
+        await tx
+          .update(registrations)
+          .set({
+            registrationStatus: "disqualified",
+            checkInStatus: "rejected",
+            refereeNotes: notes,
+          })
+          .where(eq(registrations.id, registrationId));
+
+        await tx.insert(history).values({
+          registrationId,
+          action: "referee_rejected",
+          actorName: "裁判李老师",
+          details: notes || "资格审核不通过",
+        } as any);
+
+        await tx.insert(reviews).values({
+          registrationId,
+          reviewerRole: "referee",
+          reviewerName: "裁判李老师",
+          decision: "不通过",
+          notes,
+        } as any);
+      }
     });
+
+    return { success: true, registrationId, action: actionType };
   }
 
-  if (action === "referee_reject") {
-    await db.transaction(async (tx) => {
-      await tx
-        .update(registrations)
-        .set({
-          registrationStatus: "disqualified",
-          checkInStatus: "rejected",
-          refereeNotes: notes,
-        })
-        .where(eq(registrations.id, registrationId));
-
-      await tx.insert(history).values({
-        registrationId,
-        action: "referee_rejected",
-        actorName: "裁判李老师",
-        details: notes || "资格审核不通过",
-      });
-
-      await tx.insert(reviews).values({
-        registrationId,
-        reviewerRole: "referee",
-        reviewerName: "裁判李老师",
-        decision: "不通过",
-        notes,
-      });
-    });
-  }
-
-  return null;
+  return { error: "无效操作", registrationId };
 };
 
 export default function ReviewPage() {
@@ -234,13 +265,30 @@ export default function ReviewPage() {
 }
 
 function ReviewDetail({ registration: reg, allGroups }: any) {
-  const fetcher = useFetcher();
-  const [clerkNotes, setClerkNotes] = useState(reg?.clerkNotes || "");
-  const [refereeNotes, setRefereeNotes] = useState(reg?.refereeNotes || "");
-  const [selectedGroup, setSelectedGroup] = useState(reg?.groupId?.toString() || "");
+  const fetcher = useFetcher<typeof action>();
+  const [clerkNotes, setClerkNotes] = useState("");
+  const [refereeNotes, setRefereeNotes] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState("");
 
-  const docExpired = reg && isDocumentExpired(reg.idExpiryDate);
-  const projectGroups = allGroups.filter((g: any) => g.projectId === reg?.projectId);
+  useEffect(() => {
+    if (reg) {
+      setClerkNotes(reg.clerkNotes || "");
+      setRefereeNotes(reg.refereeNotes || "");
+      setSelectedGroup(reg.groupId?.toString() || "");
+    }
+  }, [reg.id]);
+
+  const docExpired = isDocumentExpired(reg.idExpiryDate);
+  const projectGroups = allGroups.filter((g: any) => g.projectId === reg.projectId);
+
+  const error =
+    fetcher.data?.error && fetcher.data.registrationId === reg.id
+      ? fetcher.data.error
+      : null;
+
+  const canRefereeAction =
+    reg.registrationStatus === "pending" ||
+    reg.registrationStatus === "needs_info";
 
   if (!reg) return null;
 
@@ -251,6 +299,12 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
       </div>
 
       <div className="p-6 space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="text-red-700 font-medium">⚠️ {error}</div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-500">姓名</label>
@@ -311,7 +365,9 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">经办人备注</label>
           <textarea
-            className="w-full border rounded-lg p-2"
+            className={`w-full border rounded-lg p-2 ${
+              error?.includes("组别") || error?.includes("资料") ? "border-red-500" : ""
+            }`}
             rows={2}
             value={clerkNotes}
             onChange={(e) => setClerkNotes(e.target.value)}
@@ -319,9 +375,14 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">调整组别（如需）</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            调整组别（如需）
+            <span className="text-gray-400 text-xs ml-1">仅限同一项目下的组别</span>
+          </label>
           <select
-            className="w-full border rounded-lg p-2"
+            className={`w-full border rounded-lg p-2 ${
+              error?.includes("组别") ? "border-red-500" : ""
+            }`}
             value={selectedGroup}
             onChange={(e) => setSelectedGroup(e.target.value)}
           >
@@ -352,14 +413,28 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
         <h3 className="font-semibold text-indigo-800">裁判复核</h3>
       </div>
       <div className="p-6 space-y-4">
+        {!canRefereeAction && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="text-gray-600 text-sm">
+              当前状态：<strong>{getStatusLabel(reg.registrationStatus)}</strong>
+            </div>
+            <div className="text-gray-500 text-sm mt-1">
+              仅「待处理」或「需补资料」状态的记录可进行裁判审核
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">裁判审核意见</label>
           <textarea
-            className="w-full border rounded-lg p-2"
+            className={`w-full border rounded-lg p-2 ${
+              error?.includes("裁判") ? "border-red-500" : ""
+            }`}
             rows={2}
             value={refereeNotes}
             onChange={(e) => setRefereeNotes(e.target.value)}
             placeholder="填写审核意见..."
+            disabled={!canRefereeAction}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -370,7 +445,7 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
             <button
               type="submit"
               className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              disabled={fetcher.state !== "idle"}
+              disabled={!canRefereeAction || fetcher.state !== "idle"}
             >
               通过资格
             </button>
@@ -382,12 +457,17 @@ function ReviewDetail({ registration: reg, allGroups }: any) {
             <button
               type="submit"
               className="w-full py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              disabled={fetcher.state !== "idle"}
+              disabled={!canRefereeAction || fetcher.state !== "idle"}
             >
               取消资格
             </button>
           </fetcher.Form>
         </div>
+        {!canRefereeAction && (
+          <p className="text-xs text-gray-500 text-center">
+            该记录状态已处理，不可重复提交
+          </p>
+        )}
       </div>
     </div>
   );
