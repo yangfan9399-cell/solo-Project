@@ -469,7 +469,10 @@ export default async function applicationRoutes(server: FastifyInstance) {
     const { id } = request.params as { id: string }
     const data = archiveSchema.parse(request.body)
 
-    const application = await prisma.application.findUnique({ where: { id } })
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: { inspectionNodes: true }
+    })
 
     if (!application) {
       return server.httpErrors.notFound('申请不存在')
@@ -479,25 +482,41 @@ export default async function applicationRoutes(server: FastifyInstance) {
       return server.httpErrors.badRequest('只有消防验收通过的申请才能归档')
     }
 
-    return await prisma.application.update({
-      where: { id },
-      data: { status: ApplicationStatus.ARCHIVED },
-      include: {
-        merchant: true,
-        shopUnit: true,
-        investmentManager: true,
-        inspectionNodes: {
-          include: {
-            handler: true,
-            rectifications: true
-          },
-          orderBy: { nodeOrder: 'asc' }
-        },
-        responsiblePersons: true,
-        drawings: {
-          include: { uploadedBy: true }
+    const maxNodeOrder = Math.max(...application.inspectionNodes.map(n => n.nodeOrder))
+
+    return await prisma.$transaction(async (tx) => {
+      await tx.inspectionNode.create({
+        data: {
+          applicationId: id,
+          nodeType: '归档',
+          nodeOrder: maxNodeOrder + 1,
+          result: InspectionResult.PASSED,
+          handlerId: data.handlerId,
+          handledAt: new Date(),
+          remarks: '档案整理完成，资料齐全，正式归档'
         }
-      }
+      })
+
+      return await tx.application.update({
+        where: { id },
+        data: { status: ApplicationStatus.ARCHIVED },
+        include: {
+          merchant: true,
+          shopUnit: true,
+          investmentManager: true,
+          inspectionNodes: {
+            include: {
+              handler: true,
+              rectifications: true
+            },
+            orderBy: { nodeOrder: 'asc' }
+          },
+          responsiblePersons: true,
+          drawings: {
+            include: { uploadedBy: true }
+          }
+        }
+      })
     })
   })
 

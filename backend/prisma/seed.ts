@@ -169,6 +169,14 @@ async function main() {
             handlerId: fireInspector.id,
             handledAt: new Date('2024-02-10'),
             remarks: '消防设施齐全，疏散通道畅通，验收通过'
+          },
+          {
+            nodeType: '归档',
+            nodeOrder: 4,
+            result: InspectionResult.PASSED,
+            handlerId: fireInspector.id,
+            handledAt: new Date('2024-02-15'),
+            remarks: '档案整理完成，资料齐全，正式归档'
           }
         ]
       },
