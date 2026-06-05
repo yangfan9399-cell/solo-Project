@@ -1,12 +1,14 @@
+import { db } from "~/db";
 import {
-  mockUsers,
-  mockTeams,
-  mockWorkers,
-  mockAreas,
-  mockPermits,
-  mockPermitHistories,
-  mockPermitWorkers,
-} from "./mockData";
+  users,
+  constructionTeams,
+  workers,
+  constructionAreas,
+  permits,
+  permitHistories,
+  permitWorkers,
+} from "~/db/schema";
+import { eq, and, or, like, desc, between, ne, isNull, inArray } from "drizzle-orm";
 import type {
   Permit,
   PermitHistory,
@@ -17,12 +19,66 @@ import type {
 } from "./types";
 import { generatePermitNumber } from "./utils";
 
-let permits = [...mockPermits];
-let permitHistories = [...mockPermitHistories];
-let permitWorkers = [...mockPermitWorkers];
-let nextPermitId = mockPermits.length + 1;
-let nextHistoryId = mockPermitHistories.length + 1;
-let nextPermitWorkerId = mockPermitWorkers.length + 1;
+function formatDateField(value: Date | string | null | undefined): string {
+  if (!value) return "";
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
+
+function mapPermit(p: any): Permit {
+  return {
+    ...p,
+    createdAt: formatDateField(p.createdAt),
+    updatedAt: formatDateField(p.updatedAt),
+    checkInTime: p.checkInTime ? formatDateField(p.checkInTime) : undefined,
+    checkOutTime: p.checkOutTime ? formatDateField(p.checkOutTime) : undefined,
+    actualCheckIn: p.actualCheckIn ? formatDateField(p.actualCheckIn) : undefined,
+    actualCheckOut: p.actualCheckOut ? formatDateField(p.actualCheckOut) : undefined,
+    safetyBriefingEvidence: p.safetyBriefingEvidence as
+      | Array<{ type: string; url: string; description: string }>
+      | undefined,
+  };
+}
+
+function mapTeam(t: any): ConstructionTeam {
+  return {
+    ...t,
+    createdAt: formatDateField(t.createdAt),
+  };
+}
+
+function mapWorker(w: any): Worker {
+  return {
+    ...w,
+    certExpireDate: w.certExpireDate
+      ? typeof w.certExpireDate === "string"
+        ? w.certExpireDate
+        : w.certExpireDate.toISOString?.().split("T")[0] || ""
+      : undefined,
+    createdAt: formatDateField(w.createdAt),
+  };
+}
+
+function mapArea(a: any): ConstructionArea {
+  return {
+    ...a,
+    createdAt: formatDateField(a.createdAt),
+  };
+}
+
+function mapUser(u: any): User {
+  return {
+    ...u,
+    createdAt: formatDateField(u.createdAt),
+  };
+}
+
+function mapHistory(h: any): PermitHistory {
+  return {
+    ...h,
+    createdAt: formatDateField(h.createdAt),
+  };
+}
 
 export async function getPermits(filters?: {
   status?: string;
@@ -30,75 +86,131 @@ export async function getPermits(filters?: {
   areaId?: number;
   search?: string;
 }): Promise<Permit[]> {
-  let result = [...permits];
+  const conditions: any[] = [];
 
   if (filters?.status) {
-    result = result.filter((p) => p.status === filters.status);
+    conditions.push(eq(permits.status, filters.status));
   }
   if (filters?.constructionType) {
-    result = result.filter((p) => p.constructionType === filters.constructionType);
+    conditions.push(eq(permits.constructionType, filters.constructionType));
   }
   if (filters?.areaId) {
-    result = result.filter((p) => p.areaId === filters.areaId);
+    conditions.push(eq(permits.areaId, filters.areaId));
   }
   if (filters?.search) {
-    const search = filters.search.toLowerCase();
-    result = result.filter(
-      (p) =>
-        p.permitNumber.toLowerCase().includes(search) ||
-        p.workContent.toLowerCase().includes(search)
+    conditions.push(
+      or(
+        like(permits.permitNumber, `%${filters.search}%`),
+        like(permits.workContent, `%${filters.search}%`)
+      )
     );
   }
 
-  return result.sort((a, b) => b.id - a.id);
+  const result = await db
+    .select()
+    .from(permits)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(permits.id));
+
+  return result.map(mapPermit);
 }
 
 export async function getPermitById(id: number): Promise<Permit | undefined> {
-  return permits.find((p) => p.id === id);
+  const result = await db
+    .select()
+    .from(permits)
+    .where(eq(permits.id, id))
+    .limit(1);
+
+  return result.length > 0 ? mapPermit(result[0]) : undefined;
 }
 
 export async function getPermitHistories(
   permitId: number
 ): Promise<PermitHistory[]> {
-  return permitHistories
-    .filter((h) => h.permitId === permitId)
-    .sort((a, b) => a.id - b.id);
+  const result = await db
+    .select()
+    .from(permitHistories)
+    .where(eq(permitHistories.permitId, permitId))
+    .orderBy(permitHistories.id);
+
+  return result.map(mapHistory);
 }
 
 export async function getPermitWorkers(
   permitId: number
 ): Promise<Worker[]> {
-  const pwList = permitWorkers.filter((pw) => pw.permitId === permitId);
+  const pwList = await db
+    .select()
+    .from(permitWorkers)
+    .where(eq(permitWorkers.permitId, permitId));
+
+  if (pwList.length === 0) return [];
+
   const workerIds = pwList.map((pw) => pw.workerId);
-  return mockWorkers.filter((w) => workerIds.includes(w.id));
+  const workerList = await db
+    .select()
+    .from(workers)
+    .where(inArray(workers.id, workerIds));
+
+  return workerList.map(mapWorker);
 }
 
 export async function getTeams(): Promise<ConstructionTeam[]> {
-  return mockTeams;
+  const result = await db.select().from(constructionTeams);
+  return result.map(mapTeam);
 }
 
-export async function getTeamById(id: number): Promise<ConstructionTeam | undefined> {
-  return mockTeams.find((t) => t.id === id);
+export async function getTeamById(
+  id: number
+): Promise<ConstructionTeam | undefined> {
+  const result = await db
+    .select()
+    .from(constructionTeams)
+    .where(eq(constructionTeams.id, id))
+    .limit(1);
+  return result.length > 0 ? mapTeam(result[0]) : undefined;
 }
 
 export async function getWorkersByTeamId(teamId: number): Promise<Worker[]> {
-  return mockWorkers.filter((w) => w.teamId === teamId);
+  const result = await db
+    .select()
+    .from(workers)
+    .where(eq(workers.teamId, teamId));
+  return result.map(mapWorker);
 }
 
 export async function getAreas(): Promise<ConstructionArea[]> {
-  return mockAreas.filter((a) => a.isActive);
+  const result = await db
+    .select()
+    .from(constructionAreas)
+    .where(eq(constructionAreas.isActive, true));
+  return result.map(mapArea);
 }
 
-export async function getAreaById(id: number): Promise<ConstructionArea | undefined> {
-  return mockAreas.find((a) => a.id === id);
+export async function getAreaById(
+  id: number
+): Promise<ConstructionArea | undefined> {
+  const result = await db
+    .select()
+    .from(constructionAreas)
+    .where(eq(constructionAreas.id, id))
+    .limit(1);
+  return result.length > 0 ? mapArea(result[0]) : undefined;
 }
 
 export async function getUsers(): Promise<User[]> {
-  return mockUsers;
+  const result = await db.select().from(users);
+  return result.map(mapUser);
 }
 
 export async function getUserById(id: number): Promise<User | undefined> {
-  return mockUsers.find((u) => u.id === id);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  return result.length > 0 ? mapUser(result[0]) : undefined;
 }
 
 export interface CreatePermitData {
@@ -116,82 +228,78 @@ export interface CreatePermitData {
 }
 
 export async function createPermit(data: CreatePermitData): Promise<Permit> {
-  const newPermit: Permit = {
-    id: nextPermitId++,
-    permitNumber: generatePermitNumber(),
-    teamId: data.teamId,
-    areaId: data.areaId,
-    constructionType: data.constructionType,
-    startDate: data.startDate,
-    endDate: data.endDate,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    workContent: data.workContent,
-    status: data.hasDocuments ? "PENDING_AREA_CONFIRM" : "PENDING_DOCUMENT",
-    securityOfficerId: 1,
-    hasDocuments: data.hasDocuments,
-    documentMissingReason: data.documentMissingReason,
-    hasAreaConflict: false,
-    safetyBriefingStatus: "PENDING",
-    safetyBriefingEvidence: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    anomalyType: data.hasDocuments ? undefined : "DOCUMENT_MISSING",
-    anomalyReason: data.hasDocuments ? undefined : "证件缺失",
-  };
+  return await db.transaction(async (tx) => {
+    const status = data.hasDocuments ? "PENDING_AREA_CONFIRM" : "PENDING_DOCUMENT";
+    const anomalyType = data.hasDocuments ? null : "DOCUMENT_MISSING";
+    const anomalyReason = data.hasDocuments ? null : "证件缺失";
 
-  permits.push(newPermit);
+    const [newPermit] = await tx
+      .insert(permits)
+      .values({
+        permitNumber: generatePermitNumber(),
+        teamId: data.teamId,
+        areaId: data.areaId,
+        constructionType: data.constructionType,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        workContent: data.workContent,
+        status,
+        securityOfficerId: 1,
+        hasDocuments: data.hasDocuments,
+        documentMissingReason: data.documentMissingReason || null,
+        hasAreaConflict: false,
+        safetyBriefingStatus: "PENDING",
+        safetyBriefingEvidence: [],
+        anomalyType,
+        anomalyReason,
+      })
+      .returning();
 
-  for (const workerId of data.workerIds) {
-    permitWorkers.push({
-      id: nextPermitWorkerId++,
+    for (const workerId of data.workerIds) {
+      await tx.insert(permitWorkers).values({
+        permitId: newPermit.id,
+        workerId,
+      });
+    }
+
+    await tx.insert(permitHistories).values({
       permitId: newPermit.id,
-      workerId,
-      createdAt: new Date().toISOString(),
+      action: "CREATE",
+      statusTo: "DRAFT",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: "创建施工许可申请",
     });
-  }
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: newPermit.id,
-    action: "CREATE",
-    statusTo: "DRAFT",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: "创建施工许可申请",
-    createdAt: new Date().toISOString(),
+    if (data.hasDocuments) {
+      await tx.insert(permitHistories).values({
+        permitId: newPermit.id,
+        action: "SUBMIT",
+        statusFrom: "DRAFT",
+        statusTo: "PENDING_AREA_CONFIRM",
+        operatorId: 1,
+        operatorName: "张安保",
+        operatorRole: "SECURITY_OFFICER",
+        remark: "提交审核，等待工程负责人确认施工区域",
+      });
+    } else {
+      await tx.insert(permitHistories).values({
+        permitId: newPermit.id,
+        action: "REJECT_DOCUMENT",
+        statusFrom: "DRAFT",
+        statusTo: "PENDING_DOCUMENT",
+        operatorId: 1,
+        operatorName: "张安保",
+        operatorRole: "SECURITY_OFFICER",
+        remark: data.documentMissingReason || "证件不全，需要补充",
+      });
+    }
+
+    return mapPermit(newPermit);
   });
-
-  if (data.hasDocuments) {
-    permitHistories.push({
-      id: nextHistoryId++,
-      permitId: newPermit.id,
-      action: "SUBMIT",
-      statusFrom: "DRAFT",
-      statusTo: "PENDING_AREA_CONFIRM",
-      operatorId: 1,
-      operatorName: "张安保",
-      operatorRole: "SECURITY_OFFICER",
-      remark: "提交审核，等待工程负责人确认施工区域",
-      createdAt: new Date().toISOString(),
-    });
-  } else {
-    permitHistories.push({
-      id: nextHistoryId++,
-      permitId: newPermit.id,
-      action: "REJECT_DOCUMENT",
-      statusFrom: "DRAFT",
-      statusTo: "PENDING_DOCUMENT",
-      operatorId: 1,
-      operatorName: "张安保",
-      operatorRole: "SECURITY_OFFICER",
-      remark: data.documentMissingReason || "证件不全，需要补充",
-      createdAt: new Date().toISOString(),
-    });
-  }
-
-  return newPermit;
 }
 
 export async function checkAreaConflict(
@@ -200,78 +308,112 @@ export async function checkAreaConflict(
   endDate: string,
   excludePermitId?: number
 ): Promise<{ hasConflict: boolean; conflictingPermits: Permit[] }> {
-  const conflictingPermits = permits.filter((p) => {
-    if (excludePermitId && p.id === excludePermitId) return false;
-    if (p.areaId !== areaId) return false;
-    if (p.status === "COMPLETED" || p.status === "AREA_CONFLICT") return false;
+  const conditions: any[] = [
+    eq(permits.areaId, areaId),
+    ne(permits.status, "COMPLETED"),
+    ne(permits.status, "AREA_CONFLICT"),
+  ];
 
-    const pStart = new Date(p.startDate);
-    const pEnd = new Date(p.endDate);
+  if (excludePermitId) {
+    conditions.push(ne(permits.id, excludePermitId));
+  }
+
+  const allPermits = await db
+    .select()
+    .from(permits)
+    .where(and(...conditions));
+
+  const conflictingPermits = allPermits.filter((p) => {
+    const pStart = new Date(p.startDate as string);
+    const pEnd = new Date(p.endDate as string);
     const nStart = new Date(startDate);
     const nEnd = new Date(endDate);
-
     return nStart <= pEnd && nEnd >= pStart;
   });
 
   return {
     hasConflict: conflictingPermits.length > 0,
-    conflictingPermits,
+    conflictingPermits: conflictingPermits.map(mapPermit),
   };
 }
 
-export async function confirmArea(permitId: number): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+export async function confirmArea(
+  permitId: number
+): Promise<Permit | undefined> {
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "PENDING_SAFETY_BRIEFING";
-  permit.engineeringManagerId = 2;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "CONFIRM_AREA",
-    statusFrom: "PENDING_AREA_CONFIRM",
-    statusTo: "PENDING_SAFETY_BRIEFING",
-    operatorId: 2,
-    operatorName: "李工程",
-    operatorRole: "ENGINEERING_MANAGER",
-    remark: "施工区域确认无误",
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "PENDING_SAFETY_BRIEFING",
+        engineeringManagerId: 2,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "CONFIRM_AREA",
+      statusFrom: "PENDING_AREA_CONFIRM",
+      statusTo: "PENDING_SAFETY_BRIEFING",
+      operatorId: 2,
+      operatorName: "李工程",
+      operatorRole: "ENGINEERING_MANAGER",
+      remark: "施工区域确认无误",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function markAreaConflict(
   permitId: number,
   conflictDetail: string
 ): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "AREA_CONFLICT";
-  permit.hasAreaConflict = true;
-  permit.areaConflictDetail = conflictDetail;
-  permit.anomalyType = "AREA_CONFLICT";
-  permit.anomalyReason = "施工区域冲突";
-  permit.engineeringManagerId = 2;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "AREA_CONFLICT",
-    statusFrom: "PENDING_AREA_CONFIRM",
-    statusTo: "AREA_CONFLICT",
-    operatorId: 2,
-    operatorName: "李工程",
-    operatorRole: "ENGINEERING_MANAGER",
-    remark: conflictDetail,
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "AREA_CONFLICT",
+        hasAreaConflict: true,
+        areaConflictDetail: conflictDetail,
+        anomalyType: "AREA_CONFLICT",
+        anomalyReason: "施工区域冲突",
+        engineeringManagerId: 2,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "AREA_CONFLICT",
+      statusFrom: "PENDING_AREA_CONFIRM",
+      statusTo: "AREA_CONFLICT",
+      operatorId: 2,
+      operatorName: "李工程",
+      operatorRole: "ENGINEERING_MANAGER",
+      remark: conflictDetail,
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function updateAreaAndResubmit(
@@ -280,215 +422,316 @@ export async function updateAreaAndResubmit(
   startDate: string,
   endDate: string
 ): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.areaId = areaId;
-  permit.startDate = startDate;
-  permit.endDate = endDate;
-  permit.status = "PENDING_AREA_CONFIRM";
-  permit.hasAreaConflict = false;
-  permit.areaConflictDetail = undefined;
-  permit.anomalyType = undefined;
-  permit.anomalyReason = undefined;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "RESUBMIT_AREA",
-    statusFrom: "AREA_CONFLICT",
-    statusTo: "PENDING_AREA_CONFIRM",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: "调整施工区域/时间后重新提交",
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        areaId,
+        startDate,
+        endDate,
+        status: "PENDING_AREA_CONFIRM",
+        hasAreaConflict: false,
+        areaConflictDetail: null,
+        anomalyType: null,
+        anomalyReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "RESUBMIT_AREA",
+      statusFrom: "AREA_CONFLICT",
+      statusTo: "PENDING_AREA_CONFIRM",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: "调整施工区域/时间后重新提交",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
-export async function confirmSafety(permitId: number): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+export async function confirmSafety(
+  permitId: number
+): Promise<Permit | undefined> {
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "APPROVED";
-  permit.safetyBriefingStatus = "COMPLETED";
-  permit.safetyReviewerId = 3;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "CONFIRM_SAFETY",
-    statusFrom: "PENDING_SAFETY_BRIEFING",
-    statusTo: "APPROVED",
-    operatorId: 3,
-    operatorName: "王安全",
-    operatorRole: "SAFETY_REVIEWER",
-    remark: "安全交底完成，施工许可已批准",
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "APPROVED",
+        safetyBriefingStatus: "COMPLETED",
+        safetyReviewerId: 3,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "CONFIRM_SAFETY",
+      statusFrom: "PENDING_SAFETY_BRIEFING",
+      statusTo: "APPROVED",
+      operatorId: 3,
+      operatorName: "王安全",
+      operatorRole: "SAFETY_REVIEWER",
+      remark: "安全交底完成，施工许可已批准",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function rejectSafety(
   permitId: number,
   reason: string
 ): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "SAFETY_BRIEFING_REJECTED";
-  permit.safetyBriefingStatus = "REJECTED";
-  permit.safetyRejectReason = reason;
-  permit.safetyReviewerId = 3;
-  permit.anomalyType = "SAFETY_BRIEFING_FAILED";
-  permit.anomalyReason = "安全交底未通过";
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "REJECT_SAFETY",
-    statusFrom: "PENDING_SAFETY_BRIEFING",
-    statusTo: "SAFETY_BRIEFING_REJECTED",
-    operatorId: 3,
-    operatorName: "王安全",
-    operatorRole: "SAFETY_REVIEWER",
-    remark: reason,
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "SAFETY_BRIEFING_REJECTED",
+        safetyBriefingStatus: "REJECTED",
+        safetyRejectReason: reason,
+        safetyReviewerId: 3,
+        anomalyType: "SAFETY_BRIEFING_FAILED",
+        anomalyReason: "安全交底未通过",
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "REJECT_SAFETY",
+      statusFrom: "PENDING_SAFETY_BRIEFING",
+      statusTo: "SAFETY_BRIEFING_REJECTED",
+      operatorId: 3,
+      operatorName: "王安全",
+      operatorRole: "SAFETY_REVIEWER",
+      remark: reason,
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
-export async function resubmitSafety(permitId: number): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+export async function resubmitSafety(
+  permitId: number
+): Promise<Permit | undefined> {
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "PENDING_SAFETY_BRIEFING";
-  permit.safetyBriefingStatus = "PENDING";
-  permit.safetyRejectReason = undefined;
-  permit.anomalyType = undefined;
-  permit.anomalyReason = undefined;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "RESUBMIT_SAFETY",
-    statusFrom: "SAFETY_BRIEFING_REJECTED",
-    statusTo: "PENDING_SAFETY_BRIEFING",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: "重新提交安全交底审核",
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "PENDING_SAFETY_BRIEFING",
+        safetyBriefingStatus: "PENDING",
+        safetyRejectReason: null,
+        anomalyType: null,
+        anomalyReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "RESUBMIT_SAFETY",
+      statusFrom: "SAFETY_BRIEFING_REJECTED",
+      statusTo: "PENDING_SAFETY_BRIEFING",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: "重新提交安全交底审核",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function supplyDocuments(
   permitId: number
 ): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "PENDING_AREA_CONFIRM";
-  permit.hasDocuments = true;
-  permit.documentMissingReason = undefined;
-  permit.anomalyType = undefined;
-  permit.anomalyReason = undefined;
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "SUPPLY_DOCUMENTS",
-    statusFrom: "PENDING_DOCUMENT",
-    statusTo: "PENDING_AREA_CONFIRM",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: "证件已补齐，提交区域确认",
-    createdAt: new Date().toISOString(),
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "PENDING_AREA_CONFIRM",
+        hasDocuments: true,
+        documentMissingReason: null,
+        anomalyType: null,
+        anomalyReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "SUPPLY_DOCUMENTS",
+      statusFrom: "PENDING_DOCUMENT",
+      statusTo: "PENDING_AREA_CONFIRM",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: "证件已补齐，提交区域确认",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function checkIn(permitId: number): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  permit.status = "IN_PROGRESS";
-  permit.actualCheckIn = new Date().toISOString();
-  permit.checkInTime = new Date().toISOString();
-  permit.updatedAt = new Date().toISOString();
+    if (!permit) return undefined;
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "CHECK_IN",
-    statusFrom: "APPROVED",
-    statusTo: "IN_PROGRESS",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: "施工队入园登记",
-    createdAt: new Date().toISOString(),
+    const now = new Date();
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "IN_PROGRESS",
+        actualCheckIn: now,
+        checkInTime: now,
+        updatedAt: now,
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "CHECK_IN",
+      statusFrom: "APPROVED",
+      statusTo: "IN_PROGRESS",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: "施工队入园登记",
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function checkOut(permitId: number): Promise<Permit | undefined> {
-  const permit = permits.find((p) => p.id === permitId);
-  if (!permit) return undefined;
+  return await db.transaction(async (tx) => {
+    const [permit] = await tx
+      .select()
+      .from(permits)
+      .where(eq(permits.id, permitId))
+      .limit(1);
 
-  const now = new Date();
-  const actualCheckIn = permit.actualCheckIn
-    ? new Date(permit.actualCheckIn)
-    : now;
-  const durationMs = now.getTime() - actualCheckIn.getTime();
-  const durationHours = Math.round(durationMs / (1000 * 60 * 60));
+    if (!permit) return undefined;
 
-  const plannedEnd = new Date(`${permit.endDate}T${permit.endTime}`);
-  if (now > plannedEnd) {
-    permit.anomalyType = "OVERSTAY";
-    permit.anomalyReason = "超时滞留";
-  }
+    const now = new Date();
+    const actualCheckIn = permit.actualCheckIn
+      ? permit.actualCheckIn instanceof Date
+        ? permit.actualCheckIn
+        : new Date(permit.actualCheckIn as unknown as string)
+      : now;
+    const durationMs = now.getTime() - actualCheckIn.getTime();
+    const durationHours = Math.round(durationMs / (1000 * 60 * 60));
 
-  permit.status = "COMPLETED";
-  permit.actualCheckOut = now.toISOString();
-  permit.checkOutTime = now.toISOString();
-  permit.stayDurationHours = durationHours;
-  permit.updatedAt = new Date().toISOString();
+    const plannedEnd = new Date(
+      `${permit.endDate}T${permit.endTime}`
+    );
 
-  permitHistories.push({
-    id: nextHistoryId++,
-    permitId: permit.id,
-    action: "CHECK_OUT",
-    statusFrom: "IN_PROGRESS",
-    statusTo: "COMPLETED",
-    operatorId: 1,
-    operatorName: "张安保",
-    operatorRole: "SECURITY_OFFICER",
-    remark: `施工队离场核销，实际滞留${durationHours}小时`,
-    createdAt: new Date().toISOString(),
+    let anomalyType = permit.anomalyType;
+    let anomalyReason = permit.anomalyReason;
+    if (now > plannedEnd && !permit.anomalyType) {
+      anomalyType = "OVERSTAY";
+      anomalyReason = "超时滞留";
+    }
+
+    const [updated] = await tx
+      .update(permits)
+      .set({
+        status: "COMPLETED",
+        actualCheckOut: now,
+        checkOutTime: now,
+        stayDurationHours: durationHours,
+        anomalyType,
+        anomalyReason,
+        updatedAt: now,
+      })
+      .where(eq(permits.id, permitId))
+      .returning();
+
+    await tx.insert(permitHistories).values({
+      permitId: permit.id,
+      action: "CHECK_OUT",
+      statusFrom: "IN_PROGRESS",
+      statusTo: "COMPLETED",
+      operatorId: 1,
+      operatorName: "张安保",
+      operatorRole: "SECURITY_OFFICER",
+      remark: `施工队离场核销，实际滞留${durationHours}小时`,
+    });
+
+    return mapPermit(updated);
   });
-
-  return permit;
 }
 
 export async function getStatistics() {
-  const completedPermits = permits.filter((p) => p.status === "COMPLETED");
-  const totalPermits = permits.length;
-  const anomalyPermits = permits.filter((p) => p.anomalyType && p.anomalyType !== "NONE");
+  const allPermits = await db.select().from(permits);
+  const allAreas = await db.select().from(constructionAreas);
+
+  const areaMap = new Map<number, string>();
+  for (const area of allAreas) {
+    areaMap.set(area.id, area.name);
+  }
+
+  const completedPermits = allPermits.filter((p) => p.status === "COMPLETED");
+  const totalPermits = allPermits.length;
+  const anomalyPermits = allPermits.filter(
+    (p) => p.anomalyType && p.anomalyType !== "NONE"
+  );
 
   const byType: Record<string, number> = {};
   const byArea: Record<string, number> = {};
@@ -496,16 +739,18 @@ export async function getStatistics() {
   let totalStayHours = 0;
   let completedCount = 0;
 
-  for (const permit of permits) {
-    byType[permit.constructionType] = (byType[permit.constructionType] || 0) + 1;
+  for (const permit of allPermits) {
+    byType[permit.constructionType] =
+      (byType[permit.constructionType] || 0) + 1;
 
-    const area = mockAreas.find((a) => a.id === permit.areaId);
-    if (area) {
-      byArea[area.name] = (byArea[area.name] || 0) + 1;
+    const areaName = areaMap.get(permit.areaId);
+    if (areaName) {
+      byArea[areaName] = (byArea[areaName] || 0) + 1;
     }
 
     if (permit.anomalyType && permit.anomalyType !== "NONE") {
-      byAnomaly[permit.anomalyType] = (byAnomaly[permit.anomalyType] || 0) + 1;
+      byAnomaly[permit.anomalyType] =
+        (byAnomaly[permit.anomalyType] || 0) + 1;
     } else if (!permit.anomalyType) {
       byAnomaly["NONE"] = (byAnomaly["NONE"] || 0) + 1;
     }
@@ -516,7 +761,8 @@ export async function getStatistics() {
     }
   }
 
-  const avgStayHours = completedCount > 0 ? Math.round(totalStayHours / completedCount) : 0;
+  const avgStayHours =
+    completedCount > 0 ? Math.round(totalStayHours / completedCount) : 0;
 
   const stayDurationDistribution = [
     { range: "0-8小时", count: 0 },
