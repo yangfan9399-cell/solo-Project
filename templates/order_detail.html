@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ order.order_number }} - 工单详情{% endblock %}
+
+{% block content %}
+<div x-data="{ 
+    showAssignInspector: false,
+    showAssignReviewer: false,
+    showInspectForm: false,
+    showReviewForm: false,
+    showReturnForm: false,
+    showEvidenceForm: false
+}" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">工单详情</h1>
+            <p class="text-gray-500">{{ order.order_number }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'work_order_list' %}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">返回列表</a>
+            {% if order.status == 'pending' and user.role != 'inspector' %}
+            <button @click="showAssignInspector = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                指派巡检员
+            </button>
+            {% endif %}
+            {% if order.status == 'assigned' and order.inspector == user %}
+            <form action="{% url 'work_order_start' order.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    开始处理
+                </button>
+            </form>
+            {% endif %}
+            {% if order.status == 'in_progress' and order.inspector == user %}
+            <button @click="showInspectForm = true" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                完成巡检
+            </button>
+            {% endif %}
+            {% if order.status == 'inspected' and user.role != 'inspector' %}
+            <button @click="showAssignReviewer = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                指派复核人
+            </button>
+            {% endif %}
+            {% if order.status == 'reviewing' and order.reviewer == user %}
+            <button @click="showReviewForm = true" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                复核确认
+            </button>
+            <button @click="showReturnForm = true" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                退回返工
+            </button>
+            {% endif %}
+            {% if order.status == 'reviewing' and order.can_archive %}
+            <form action="{% url 'work_order_archive' order.pk %}" method="post" 
+                  onsubmit="return confirm('确定要归档此工单吗？')">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    归档工单
+                </button>
+            </form>
+            {% endif %}
+            {% if order.status == 'returned' and order.inspector == user %}
+            <button @click="showInspectForm = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                重新处理
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if order.is_location_error and order.status != 'archived' %}
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <span class="text-2xl">⚠️</span>
+            <div>
+                <h3 class="font-semibold text-red-800">位置编号错误 - 无法归档</h3>
+                <p class="text-red-700 text-sm mt-1">{{ order.location_error_note|default:'请核对坐标或重新绑定设备后才能归档此工单。' }}</p>
+                <p class="text-red-600 text-sm mt-2">建议：请联系管理员更新灯杆位置信息或重新绑定正确的设备。</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">基本信息</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-gray-500">工单标题</div>
+                        <div class="font-medium">{{ order.title }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">工单状态</div>
+                        <div>
+                            <span class="px-2 py-1 rounded text-xs
+                                {% if order.status == 'archived' %}bg-green-100 text-green-700
+                                {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-700
+                                {% elif order.status == 'returned' %}bg-red-100 text-red-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">故障来源</div>
+                        <div>{{ order.get_fault_source_display }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">故障类型</div>
+                        <div>
+                            <span class="px-2 py-1 rounded text-xs 
+                                {% if order.fault_type == 'energy_spike' %}bg-red-100 text-red-700
+                                {% elif order.fault_type == 'location_error' %}bg-purple-100 text-purple-700
+                                {% elif order.fault_type == 'duplicate' %}bg-gray-100 text-gray-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ order.get_fault_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">上报人</div>
+                        <div>{{ order.reporter.get_full_name|default:'-' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">巡检员</div>
+                        <div>{{ order.inspector.get_full_name|default:'未指派' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">复核人</div>
+                        <div>{{ order.reviewer.get_full_name|default:'未指派' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">返工次数</div>
+                        <div class="{% if order.rework_count > 0 %}text-red-600 font-semibold{% endif %}">
+                            {{ order.rework_count }} 次
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">灯杆信息</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-gray-500">灯杆编号</div>
+                        <div class="font-medium">{{ order.light_pole.pole_number }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">设备编号</div>
+                        <div class="font-mono text-sm">{{ order.light_pole.device_id }}</div>
+                    </div>
+                    <div class="col-span-2">
+                        <div class="text-sm text-gray-500">位置地址</div>
+                        <div>{{ order.light_pole.address }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">片区</div>
+                        <div>{{ order.light_pole.area }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">额定功率</div>
+                        <div>{{ order.light_pole.rated_power }}W</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">坐标</div>
+                        <div class="font-mono text-sm">
+                            {% if order.light_pole.longitude and order.light_pole.latitude %}
+                            {{ order.light_pole.longitude }}, {{ order.light_pole.latitude }}
+                            {% else %}
+                            <span class="text-gray-400">未设置</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">能耗读数</h2>
+                {% if energy_readings %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b text-gray-500">
+                                <th class="text-left py-2">日期</th>
+                                <th class="text-right py-2">日耗电量</th>
+                                <th class="text-right py-2">累计电量</th>
+                                <th class="text-center py-2">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reading in energy_readings %}
+                            <tr class="border-b">
+                                <td class="py-2">{{ reading.reading_date }}</td>
+                                <td class="text-right py-2">{{ reading.daily_energy }} kWh</td>
+                                <td class="text-right py-2">{{ reading.cumulative_energy }} kWh</td>
+                                <td class="text-center py-2">
+                                    {% if reading.is_anomaly %}
+                                    <span class="px-2 py-1 rounded text-xs bg-red-100 text-red-700">异常</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 rounded text-xs bg-green-100 text-green-700">正常</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500">暂无能耗数据</p>
+                {% endif %}
+                {% if order.expected_energy or order.actual_energy %}
+                <div class="mt-4 pt-4 border-t grid grid-cols-2 gap-4">
+                    {% if order.expected_energy %}
+                    <div>
+                        <div class="text-sm text-gray-500">预期能耗</div>
+                        <div class="font-medium">{{ order.expected_energy }} kWh</div>
+                    </div>
+                    {% endif %}
+                    {% if order.actual_energy %}
+                    <div>
+                        <div class="text-sm text-gray-500">实际能耗</div>
+                        <div class="font-medium {% if order.expected_energy and order.actual_energy > order.expected_energy %}text-red-600{% endif %}">
+                            {{ order.actual_energy }} kWh
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if order.expected_energy and order.actual_energy %}
+                    <div class="col-span-2">
+                        <div class="text-sm text-gray-500">差值</div>
+                        <div class="font-medium {% if order.actual_energy > order.expected_energy %}text-red-600{% else %}text-green-600{% endif %}">
+                            {{ order.actual_energy|sub:order.expected_energy }} kWh
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">故障与修复说明</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-500 mb-1">故障描述</div>
+                        <div class="bg-gray-50 rounded-lg p-3">{{ order.description|linebreaks }}</div>
+                    </div>
+                    {% if order.repair_description %}
+                    <div>
+                        <div class="text-sm text-gray-500 mb-1">修复说明</div>
+                        <div class="bg-green-50 rounded-lg p-3">{{ order.repair_description|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    {% if order.anomaly_cause %}
+                    <div>
+                        <div class="text-sm text-gray-500 mb-1">异常原因（复核）</div>
+                        <div class="bg-blue-50 rounded-lg p-3">{{ order.anomaly_cause|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    {% if order.review_comment %}
+                    <div>
+                        <div class="text-sm text-gray-500 mb-1">复核意见</div>
+                        <div class="bg-purple-50 rounded-lg p-3">{{ order.review_comment|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">证据材料</h2>
+                    <button @click="showEvidenceForm = true" class="text-sm text-blue-600 hover:underline">+ 上传证据</button>
+                </div>
+                {% if evidences %}
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for evidence in evidences %}
+                    <div class="border rounded-lg p-3">
+                        <div class="text-2xl mb-2">
+                            {% if evidence.evidence_type == 'photo' %}📷
+                            {% elif evidence.evidence_type == 'video' %}🎬
+                            {% elif evidence.evidence_type == 'document' %}📄
+                            {% else %}📎{% endif %}
+                        </div>
+                        <div class="text-sm font-medium">{{ evidence.description|default:evidence.get_evidence_type_display }}</div>
+                        <div class="text-xs text-gray-500 mt-1">{{ evidence.uploaded_by.get_full_name|default:'未知' }} · {{ evidence.created_at|date:'Y-m-d H:i' }}</div>
+                        <a href="{{ evidence.file.url }}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block">查看文件</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500">暂无证据材料</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">历史节点</h2>
+                <div class="space-y-4">
+                    {% for h in history %}
+                    <div class="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-l-0 last:pb-0">
+                        <div class="absolute left-0 top-0 w-3 h-3 -ml-[7px] rounded-full 
+                            {% if h.action == 'create' %}bg-blue-500
+                            {% elif h.action == 'complete_inspection' %}bg-green-500
+                            {% elif h.action == 'review_confirm' %}bg-purple-500
+                            {% elif h.action == 'archive' %}bg-gray-500
+                            {% elif h.action == 'return' %}bg-red-500
+                            {% else %}bg-yellow-500{% endif %}">
+                        </div>
+                        <div class="text-sm font-medium">{{ h.get_action_display }}</div>
+                        <div class="text-xs text-gray-500">{{ h.operator.get_full_name|default:'系统' }} · {{ h.created_at|date:'Y-m-d H:i' }}</div>
+                        {% if h.comment %}
+                        <div class="text-sm text-gray-600 mt-1">{{ h.comment }}</div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">暂无历史记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showAssignInspector" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md" @click.away="showAssignInspector = false">
+            <h3 class="text-lg font-semibold mb-4">指派巡检员</h3>
+            <form action="{% url 'work_order_assign_inspector' order.pk %}" method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择巡检员</label>
+                    {{ assign_inspector_form.inspector }}
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="showAssignInspector = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">确认</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showAssignReviewer" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md" @click.away="showAssignReviewer = false">
+            <h3 class="text-lg font-semibold mb-4">指派复核人</h3>
+            <form action="{% url 'work_order_assign_reviewer' order.pk %}" method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择复核人</label>
+                    {{ assign_reviewer_form.reviewer }}
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="showAssignReviewer = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">确认</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showInspectForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" @click.away="showInspectForm = false">
+            <h3 class="text-lg font-semibold mb-4">完成巡检</h3>
+            <form action="{% url 'work_order_complete_inspection' order.pk %}" method="post">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">修复说明</label>
+                        {{ inspect_form.repair_description }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">实际能耗 (kWh)</label>
+                        {{ inspect_form.actual_energy }}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {{ inspect_form.is_location_error }}
+                        <label class="text-sm font-medium text-gray-700">存在位置编号错误</label>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">位置错误说明</label>
+                        {{ inspect_form.location_error_note }}
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" @click="showInspectForm = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">提交复核</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showReviewForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" @click.away="showReviewForm = false">
+            <h3 class="text-lg font-semibold mb-4">复核确认</h3>
+            <form action="{% url 'work_order_archive' order.pk %}" method="post">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">异常原因</label>
+                        {{ review_form.anomaly_cause }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">复核意见</label>
+                        {{ review_form.review_comment }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">预期能耗 (kWh)</label>
+                        {{ review_form.expected_energy }}
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" @click="showReviewForm = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">确认并归档</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showReturnForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md" @click.away="showReturnForm = false">
+            <h3 class="text-lg font-semibold mb-4">退回返工</h3>
+            <form action="{% url 'work_order_return' order.pk %}" method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">退回原因</label>
+                    {{ return_form.reason }}
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="showReturnForm = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">确认退回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showEvidenceForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md" @click.away="showEvidenceForm = false">
+            <h3 class="text-lg font-semibold mb-4">上传证据</h3>
+            <form action="{% url 'evidence_upload' order.pk %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">证据类型</label>
+                        {{ evidence_form.evidence_type }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">文件</label>
+                        {{ evidence_form.file }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
+                        {{ evidence_form.description }}
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" @click="showEvidenceForm = false" class="px-4 py-2 border rounded hover:bg-gray-50">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">上传</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}数据复盘 - 城市照明巡检管理平台{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">数据复盘</h1>
+        <form method="get" class="flex gap-4 items-end">
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">开始日期</label>
+                {{ form.start_date }}
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600 mb-1">结束日期</label>
+                {{ form.end_date }}
+            </div>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">查询</button>
+        </form>
+    </div>
+    
+    <p class="text-gray-500">统计周期：{{ start_date|date:'Y-m-d' }} 至 {{ end_date|date:'Y-m-d' }}</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-sm text-gray-500 mb-1">总工单量</div>
+            <div class="text-3xl font-bold text-blue-600">{{ by_area|length }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-sm text-gray-500 mb-1">能耗异常工单</div>
+            <div class="text-3xl font-bold text-red-600">{{ energy_anomalies.total|default:0 }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-sm text-gray-500 mb-1">异常已解决</div>
+            <div class="text-3xl font-bold text-green-600">{{ energy_anomalies.resolved|default:0 }}</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-sm text-gray-500 mb-1">返工工单</div>
+            <div class="text-3xl font-bold text-orange-600">{{ rework_stats.total_rework_orders|default:0 }}</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold mb-4">按片区统计</h2>
+            <div class="space-y-3">
+                {% for item in by_area %}
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium">{{ item.light_pole__area|default:'未指定' }}</span>
+                        <span class="text-sm text-gray-500">{{ item.count }} 单 · 完成 {{ item.archived }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: {% if item.count > 0 %}{{ item.archived|divisibleby:item.count|yesno:'100,0' }}{% else %}0{% endif %}%"></div>
+                    </div>
+                    {% if item.rework_count > 0 %}
+                    <div class="text-xs text-red-500 mt-1">返工 {{ item.rework_count }} 次</div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-gray-500">暂无数据</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold mb-4">按故障类型统计</h2>
+            <div class="space-y-3">
+                {% for item in by_fault_type %}
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium">
+                            {% if item.fault_type == 'normal_repair' %}正常修复
+                            {% elif item.fault_type == 'energy_spike' %}能耗突增
+                            {% elif item.fault_type == 'location_error' %}位置编号错误
+                            {% elif item.fault_type == 'duplicate' %}重复派单
+                            {% elif item.fault_type == 'bulb_damage' %}灯泡损坏
+                            {% elif item.fault_type == 'circuit_fault' %}电路故障
+                            {% elif item.fault_type == 'control_issue' %}控制问题
+                            {% else %}其他{% endif %}
+                        </span>
+                        <span class="text-sm text-gray-500">{{ item.count }} 单</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-{% if item.fault_type == 'energy_spike' %}red{% elif item.fault_type == 'location_error' %}purple{% elif item.fault_type == 'duplicate' %}gray{% else %}blue{% endif %}-600 h-2 rounded-full" style="width: {% if item.count > 0 %}100{% else %}0{% endif %}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">暂无数据</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">能耗异常分析</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center p-4 bg-red-50 rounded-lg">
+                <div class="text-4xl font-bold text-red-600">{{ energy_anomalies.total|default:0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">异常工单总数</div>
+            </div>
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <div class="text-4xl font-bold text-green-600">{{ energy_anomalies.resolved|default:0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">已解决</div>
+            </div>
+            <div class="text-center p-4 bg-orange-50 rounded-lg">
+                <div class="text-4xl font-bold text-orange-600">
+                    {% if energy_anomalies.avg_energy_diff %}
+                    {{ energy_anomalies.avg_energy_diff|floatformat:2 }}
+                    {% else %}0{% endif %} kWh
+                </div>
+                <div class="text-sm text-gray-600 mt-1">平均能耗偏差</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">返工统计</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-4 bg-orange-50 rounded-lg">
+                <div class="text-3xl font-bold text-orange-600">{{ rework_stats.total_rework_orders|default:0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">返工工单数</div>
+            </div>
+            <div class="p-4 bg-red-50 rounded-lg">
+                <div class="text-3xl font-bold text-red-600">{{ rework_stats.total_reworks|default:0 }}</div>
+                <div class="text-sm text-gray-600 mt-1">总返工次数</div>
+            </div>
+        </div>
+        
+        {% if rework_by_inspector %}
+        <div class="mt-6">
+            <h3 class="font-medium mb-3">按巡检员统计返工</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b text-gray-500">
+                            <th class="text-left py-2">巡检员</th>
+                            <th class="text-right py-2">返工工单</th>
+                            <th class="text-right py-2">总返工次数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in rework_by_inspector %}
+                        <tr class="border-b">
+                            <td class="py-2">
+                                {% if item.inspector__first_name or item.inspector__last_name %}
+                                {{ item.inspector__first_name }} {{ item.inspector__last_name }}
+                                {% else %}
+                                {{ item.inspector__username }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right py-2">{{ item.order_count }}</td>
+                            <td class="text-right py-2 text-red-600 font-semibold">{{ item.total_reworks }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}仪表盘 - 城市照明巡检管理平台{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">仪表盘</h1>
+        <button onclick="location.href='{% url 'work_order_create' %}'" 
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            + 新建工单
+        </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-blue-600">{{ total_orders }}</div>
+            <div class="text-gray-500 mt-1">总工单数</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-yellow-600">{{ pending_orders }}</div>
+            <div class="text-gray-500 mt-1">待处理</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-orange-600">{{ in_progress_orders }}</div>
+            <div class="text-gray-500 mt-1">处理中</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-green-600">{{ archived_orders }}</div>
+            <div class="text-gray-500 mt-1">已归档</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-red-600">{{ energy_anomalies }}</div>
+            <div class="text-gray-500 mt-1">能耗异常待处理</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <div class="text-3xl font-bold text-purple-600">{{ location_errors }}</div>
+            <div class="text-gray-500 mt-1">位置编号错误</div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">最近工单</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b text-gray-500 text-sm">
+                        <th class="text-left py-3 px-2">工单编号</th>
+                        <th class="text-left py-3 px-2">标题</th>
+                        <th class="text-left py-3 px-2">灯杆</th>
+                        <th class="text-left py-3 px-2">故障类型</th>
+                        <th class="text-left py-3 px-2">状态</th>
+                        <th class="text-left py-3 px-2">巡检员</th>
+                        <th class="text-left py-3 px-2">创建时间</th>
+                        <th class="text-left py-3 px-2">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-2 font-mono text-sm">{{ order.order_number }}</td>
+                        <td class="py-3 px-2">{{ order.title }}</td>
+                        <td class="py-3 px-2">{{ order.light_pole.pole_number }}</td>
+                        <td class="py-3 px-2">
+                            <span class="px-2 py-1 rounded text-xs 
+                                {% if order.fault_type == 'energy_spike' %}bg-red-100 text-red-700
+                                {% elif order.fault_type == 'location_error' %}bg-purple-100 text-purple-700
+                                {% elif order.fault_type == 'duplicate' %}bg-gray-100 text-gray-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ order.get_fault_type_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-2">
+                            <span class="px-2 py-1 rounded text-xs
+                                {% if order.status == 'archived' %}bg-green-100 text-green-700
+                                {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-700
+                                {% elif order.status == 'returned' %}bg-red-100 text-red-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-2">{{ order.inspector.get_full_name|default:'-' }}</td>
+                        <td class="py-3 px-2 text-sm text-gray-500">{{ order.created_at|date:'Y-m-d H:i' }}</td>
+                        <td class="py-3 px-2">
+                            <a href="{% url 'work_order_detail' order.pk %}" class="text-blue-600 hover:underline">查看</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-gray-500">暂无工单</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

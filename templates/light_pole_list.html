@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}灯杆管理 - 城市照明巡检管理平台{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">灯杆管理</h1>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex gap-2 flex-wrap">
+            <a href="{% url 'light_pole_list' %}" 
+               class="px-4 py-2 rounded-lg {% if not selected_area %}bg-blue-600 text-white{% else %}bg-gray-100 hover:bg-gray-200{% endif %}">
+                全部
+            </a>
+            {% for area in areas %}
+            <a href="{% url 'light_pole_list' %}?area={{ area }}" 
+               class="px-4 py-2 rounded-lg {% if selected_area == area %}bg-blue-600 text-white{% else %}bg-gray-100 hover:bg-gray-200{% endif %}">
+                {{ area }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for pole in poles %}
+        <div class="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <div class="text-lg font-semibold">{{ pole.pole_number }}</div>
+                    <div class="text-sm text-gray-500">{{ pole.area }}</div>
+                </div>
+                <span class="px-2 py-1 rounded text-xs {% if pole.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                    {{ pole.is_active|yesno:'启用,停用' }}
+                </span>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">地址</span>
+                    <span class="text-right">{{ pole.address }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">设备编号</span>
+                    <span class="font-mono">{{ pole.device_id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">额定功率</span>
+                    <span>{{ pole.rated_power }}W</span>
+                </div>
+                {% if pole.longitude and pole.latitude %}
+                <div class="flex justify-between">
+                    <span class="text-gray-500">坐标</span>
+                    <span class="font-mono text-xs">{{ pole.longitude|floatformat:4 }}, {{ pole.latitude|floatformat:4 }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="mt-4 pt-4 border-t">
+                <a href="{% url 'light_pole_detail' pole.pk %}" class="text-blue-600 hover:underline text-sm">查看详情 →</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12 text-gray-500">
+            <div class="text-4xl mb-2">💡</div>
+            暂无灯杆数据
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
