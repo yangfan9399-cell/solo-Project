@@ -1,9 +1,12 @@
 import prisma from '~/server/utils/prisma'
+import { assertRole, ROLES } from '~/server/utils/roleCheck'
 
 export default defineEventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '0')
   const body = await readBody(event)
   const { status, notes, userId = 2, touristIds } = body
+
+  await assertRole(userId, ROLES.REVIEWER)
 
   const batch = await prisma.visaBatch.findUnique({
     where: { id },

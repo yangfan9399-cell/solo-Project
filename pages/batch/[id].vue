@@ -11,22 +11,32 @@
           <span>创建时间: {{ formatDate(batch.createdAt) }}</span>
         </div>
       </div>
-      <div class="flex space-x-2">
-        <button v-if="batch.status !== 'SUBMITTED' && batch.status !== 'ARCHIVED'" 
-                @click="updateStatus('SUBMITTED')" 
-                class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-          确认递签
-        </button>
-        <button v-if="batch.status !== 'REJECTED' && batch.status !== 'ARCHIVED'" 
-                @click="showRejectModal = true" 
-                class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700">
-          退回补正
-        </button>
-        <button v-if="batch.status !== 'ARCHIVED'" 
-                @click="updateStatus('ARCHIVED')" 
-                class="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
-          归档
-        </button>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-sm">
+          <span class="text-gray-500">当前身份:</span>
+          <select @change="handleRoleChange" class="border rounded px-2 py-1 text-sm" :disabled="isLoading">
+            <option value="OPERATOR" :selected="isOperator">经办人</option>
+            <option value="REVIEWER" :selected="isReviewer">复核人</option>
+          </select>
+          <span v-if="currentUser" class="text-gray-700 font-medium">{{ currentUser.name }}</span>
+        </div>
+        <div class="flex space-x-2">
+          <button v-if="canSubmit && batch.status !== 'SUBMITTED' && batch.status !== 'ARCHIVED'" 
+                  @click="handleSubmit" 
+                  class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            确认递签
+          </button>
+          <button v-if="canReject && batch.status !== 'REJECTED' && batch.status !== 'ARCHIVED'" 
+                  @click="showRejectModal = true" 
+                  class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+            退回补正
+          </button>
+          <button v-if="canArchive && batch.status !== 'ARCHIVED'" 
+                  @click="handleArchive" 
+                  class="px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
+            归档
+          </button>
+        </div>
       </div>
     </div>
 
@@ -80,8 +90,8 @@
                   </div>
                 </div>
                 <div class="flex flex-col items-end space-y-2">
-                  <div v-if="batch.status === 'SUBMITTED'" class="flex items-center space-x-2">
-                    <select @change="updateVisaResult(tourist.id, ($event.target as HTMLSelectElement).value)" 
+                  <div v-if="canUpdateVisa && batch.status === 'SUBMITTED'" class="flex items-center space-x-2">
+                    <select @change="handleUpdateVisaResult(tourist.id, ($event.target as HTMLSelectElement).value)" 
                             class="border rounded px-2 py-1 text-sm">
                       <option value="">更新出签结果</option>
                       <option value="PENDING" :selected="tourist.visaResult === 'PENDING'">待补充</option>
@@ -89,7 +99,10 @@
                       <option value="REJECTED" :selected="tourist.visaResult === 'REJECTED'">拒签</option>
                     </select>
                   </div>
-                  <button v-if="tourist.isPassportExpired && batch.status !== 'ARCHIVED'"
+                  <div v-else-if="batch.status === 'SUBMITTED'" class="text-xs text-gray-400">
+                    仅复核人可更新出签结果
+                  </div>
+                  <button v-if="canRemoveTourist && tourist.isPassportExpired && batch.status !== 'ARCHIVED'"
                           @click="confirmRemoveTourist(tourist)"
                           class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
                     移出批次
@@ -100,13 +113,14 @@
               <div class="mt-4">
                 <div class="flex items-center justify-between mb-2">
                   <h5 class="text-sm font-medium text-gray-700">材料清单</h5>
-                  <span class="text-xs text-gray-500">点击材料卡片可编辑状态和补正说明</span>
+                  <span v-if="canEditMaterial" class="text-xs text-gray-500">点击材料卡片可编辑状态和补正说明</span>
+                  <span v-else class="text-xs text-gray-400">仅经办人可编辑材料</span>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                   <div v-for="material in tourist.materials" :key="material.id" 
-                       :class="getMaterialCardClass(material.status)" 
-                       class="p-3 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
-                       @click="openMaterialEdit(tourist, material)">
+                       :class="[getMaterialCardClass(material.status), canEditMaterial ? 'cursor-pointer hover:shadow-md' : '']" 
+                       class="p-3 rounded-lg border transition-shadow"
+                       @click="canEditMaterial && openMaterialEdit(tourist, material)">
                     <div class="flex items-center justify-between">
                       <span class="text-sm font-medium">{{ material.type }}</span>
                       <span :class="getMaterialStatusClass(material.status)" class="text-xs font-medium">
@@ -116,7 +130,7 @@
                     <div v-if="material.notes" class="mt-1 text-xs text-gray-500 line-clamp-1">
                       {{ material.notes }}
                     </div>
-                    <div class="mt-2 text-xs text-gray-400">
+                    <div v-if="canEditMaterial" class="mt-2 text-xs text-gray-400">
                       点击编辑 →
                     </div>
                   </div>
@@ -282,6 +296,22 @@ interface BatchAuditLog {
 type ActivityLog = MaterialAuditLog | BatchAuditLog
 
 const route = useRoute()
+const {
+  user: currentUser,
+  isLoading,
+  isOperator,
+  isReviewer,
+  canEditMaterial,
+  canRemoveTourist,
+  canSubmit,
+  canReject,
+  canArchive,
+  fetchUser,
+  switchUser
+} = useCurrentUser()
+
+const canUpdateVisa = computed(() => isReviewer.value)
+
 const batch = ref<{
   id: number
   batchNo: string
@@ -476,26 +506,57 @@ const showSuccess = (msg: string) => {
   setTimeout(() => { success.value = '' }, 3000)
 }
 
-const updateStatus = async (status: string) => {
+const handleRoleChange = async (e: Event) => {
+  const target = e.target as HTMLSelectElement
+  await switchUser(target.value as 'OPERATOR' | 'REVIEWER')
+}
+
+const handleSubmit = async () => {
+  if (!canSubmit.value) {
+    error.value = '只有复核人可以执行递签操作'
+    return
+  }
   clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/status`, {
       method: 'POST',
-      body: { status, notes: status === 'SUBMITTED' ? '确认递签' : status === 'ARCHIVED' ? '归档完成' : '' }
+      body: { status: 'SUBMITTED', notes: '确认递签', userId: currentUser.value?.id }
     })
     await fetchBatch()
-    showSuccess('状态更新成功')
+    showSuccess('递签成功')
+  } catch (e: any) {
+    error.value = e.data?.message || '操作失败'
+  }
+}
+
+const handleArchive = async () => {
+  if (!canArchive.value) {
+    error.value = '只有复核人可以执行归档操作'
+    return
+  }
+  clearMessages()
+  try {
+    await $fetch(`/api/batches/${route.params.id}/status`, {
+      method: 'POST',
+      body: { status: 'ARCHIVED', notes: '归档完成', userId: currentUser.value?.id }
+    })
+    await fetchBatch()
+    showSuccess('归档成功')
   } catch (e: any) {
     error.value = e.data?.message || '操作失败'
   }
 }
 
 const confirmReject = async () => {
+  if (!canReject.value) {
+    error.value = '只有复核人可以执行退回操作'
+    return
+  }
   clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/status`, {
       method: 'POST',
-      body: { status: 'REJECTED', notes: rejectNotes.value }
+      body: { status: 'REJECTED', notes: rejectNotes.value, userId: currentUser.value?.id }
     })
     showRejectModal.value = false
     rejectNotes.value = ''
@@ -506,12 +567,16 @@ const confirmReject = async () => {
   }
 }
 
-const updateVisaResult = async (touristId: number, result: string) => {
+const handleUpdateVisaResult = async (touristId: number, result: string) => {
+  if (!canUpdateVisa.value) {
+    error.value = '只有复核人可以更新出签结果'
+    return
+  }
   clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/tourists/${touristId}`, {
       method: 'POST',
-      body: { visaResult: result || null, userId: 1 }
+      body: { visaResult: result || null, userId: currentUser.value?.id }
     })
     await fetchBatch()
     showSuccess('出签结果更新成功')
@@ -532,6 +597,10 @@ const openMaterialEdit = (tourist: TouristWithDetails, material: MaterialWithSta
 
 const saveMaterialStatus = async () => {
   if (!editingMaterial.value) return
+  if (!canEditMaterial.value) {
+    error.value = '只有经办人或复核人可以编辑材料状态'
+    return
+  }
   clearMessages()
   try {
     await $fetch(`/api/materials/${editingMaterial.value.id}`, {
@@ -539,7 +608,7 @@ const saveMaterialStatus = async () => {
       body: {
         status: materialEditForm.value.status,
         notes: materialEditForm.value.notes,
-        userId: 1,
+        userId: currentUser.value?.id,
         batchId: route.params.id
       }
     })
@@ -559,12 +628,16 @@ const confirmRemoveTourist = (tourist: TouristWithDetails) => {
 
 const confirmRemove = async () => {
   if (!removingTourist.value) return
+  if (!canRemoveTourist.value) {
+    error.value = '只有经办人或复核人可以移出游客'
+    return
+  }
   clearMessages()
   try {
     await $fetch(`/api/batches/${route.params.id}/tourists/${removingTourist.value.id}`, {
       method: 'DELETE',
       body: {
-        userId: 1,
+        userId: currentUser.value?.id,
         reason: removeReason.value
       }
     })
@@ -582,5 +655,8 @@ const fetchBatch = async () => {
   batch.value = await $fetch(`/api/batches/${route.params.id}`)
 }
 
-onMounted(fetchBatch)
+onMounted(async () => {
+  await fetchUser(1)
+  await fetchBatch()
+})
 </script>
