@@ -145,8 +145,16 @@ export const action: ActionFunction = async ({ request, params }) => {
   switch (_action) {
     case 'assign': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json<ActionError>({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限：只有消防复核人可以派发整改任务', errorType: 'assign' }, { status: 403 });
       }
+
+      if (hazard.status !== 'REPORTED') {
+        return json<ActionError>({ 
+          error: `状态错误：当前隐患状态为"${hazard.status}"，只有"已登记(REPORTED)"状态的隐患才能派发`, 
+          errorType: 'assign' 
+        }, { status: 400 });
+      }
+
       const assigneeId = formData.get('assigneeId') as string;
       const measure = formData.get('measure') as string;
       const materials = formData.get('materials') as string;
@@ -155,6 +163,24 @@ export const action: ActionFunction = async ({ request, params }) => {
 
       if (!assigneeId || !measure || !deadline) {
         return json<ActionError>({ error: '请填写完整信息', errorType: 'assign' }, { status: 400 });
+      }
+
+      const assignee = await prisma.user.findUnique({
+        where: { id: assigneeId },
+        select: { role: true, name: true },
+      });
+
+      if (!assignee) {
+        return json<ActionError>({ error: '责任人不存在', errorType: 'assign' }, { status: 400 });
+      }
+
+      if (assignee.role !== 'PROPERTY_MANAGER') {
+        const roleLabel = assignee.role === 'INSPECTOR' ? '巡检员' : 
+                         assignee.role === 'FIRE_VERIFIER' ? '消防复核人' : assignee.role;
+        return json<ActionError>({ 
+          error: `责任人"${assignee.name}"的角色是${roleLabel}，必须选择物业经办人作为整改责任人`, 
+          errorType: 'assign' 
+        }, { status: 400 });
       }
 
       await prisma.hazard.update({
@@ -184,8 +210,19 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     case 'start': {
-      if (user.role !== 'PROPERTY_MANAGER' || hazard.assigneeId !== user.id) {
-        return json<ActionError>({ error: '无权限' }, { status: 403 });
+      if (user.role !== 'PROPERTY_MANAGER') {
+        return json<ActionError>({ error: '无权限：只有物业经办人可以开始整改', errorType: 'start' }, { status: 403 });
+      }
+
+      if (hazard.assigneeId !== user.id) {
+        return json<ActionError>({ error: '无权限：您不是该隐患的责任人', errorType: 'start' }, { status: 403 });
+      }
+
+      if (hazard.status !== 'ASSIGNED') {
+        return json<ActionError>({ 
+          error: `状态错误：当前隐患状态为"${hazard.status}"，只有"已派发(ASSIGNED)"状态才能开始整改`, 
+          errorType: 'start' 
+        }, { status: 400 });
       }
 
       await prisma.hazard.update({
@@ -207,8 +244,19 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     case 'submit': {
-      if (user.role !== 'PROPERTY_MANAGER' || hazard.assigneeId !== user.id) {
-        return json<ActionError>({ error: '无权限' }, { status: 403 });
+      if (user.role !== 'PROPERTY_MANAGER') {
+        return json<ActionError>({ error: '无权限：只有物业经办人可以提交整改', errorType: 'submit' }, { status: 403 });
+      }
+
+      if (hazard.assigneeId !== user.id) {
+        return json<ActionError>({ error: '无权限：您不是该隐患的责任人', errorType: 'submit' }, { status: 403 });
+      }
+
+      if (!['IN_PROGRESS', 'REJECTED'].includes(hazard.status)) {
+        return json<ActionError>({ 
+          error: `状态错误：当前隐患状态为"${hazard.status}"，只有"整改中(IN_PROGRESS)"或"需重改(REJECTED)"状态才能提交验收`, 
+          errorType: 'submit' 
+        }, { status: 400 });
       }
 
       const photoUrl = formData.get('photoUrl') as string;
@@ -252,7 +300,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'verify': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json<ActionError>({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限：只有消防复核人可以验收', errorType: 'verify' }, { status: 403 });
+      }
+
+      if (hazard.status !== 'SUBMITTED') {
+        return json<ActionError>({ 
+          error: `状态错误：当前隐患状态为"${hazard.status}"，只有"待验收(SUBMITTED)"状态的隐患才能进行验收`, 
+          errorType: 'verify' 
+        }, { status: 400 });
       }
 
       const verifyResult = formData.get('verifyResult') as string;
@@ -294,11 +349,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'archive': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json<ActionError>({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限：只有消防复核人可以归档', errorType: 'archive' }, { status: 403 });
       }
 
       if (hazard.status !== 'PASSED') {
-        return json<ActionError>({ error: '只能归档已通过验收的隐患' }, { status: 400 });
+        return json<ActionError>({ 
+          error: `状态错误：当前隐患状态为"${hazard.status}"，只有"已通过(PASSED)"状态的隐患才能归档`, 
+          errorType: 'archive' 
+        }, { status: 400 });
       }
 
       await prisma.hazard.update({
