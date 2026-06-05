@@ -1,29 +1,73 @@
 import { useState } from 'react';
 import { Form, useLoaderData, useActionData, useNavigation, Link } from '@remix-run/react';
-import type { ActionFunction, LoaderFunction } from '@remix-run/node';
+import type { ActionFunction, LoaderFunction, SerializeFrom } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { prisma } from '~/utils/db.server';
 import { requireUser } from '~/utils/session.server';
-import type { Hazard, Photo, StatusTransition, Rectification, User, HazardStatus, PhotoType } from '@prisma/client';
+import type {
+  Hazard,
+  Photo,
+  StatusTransition,
+  Rectification,
+  User,
+  HazardStatus,
+  PhotoType,
+  UserRole,
+} from '@prisma/client';
 
-type HazardDetail = Hazard & {
+type PhotoWithUploader = Photo & {
+  uploadedBy: User;
+};
+
+type StatusTransitionWithCreator = StatusTransition & {
+  createdBy: User;
+};
+
+type HazardDetailData = Hazard & {
   reporter: User;
   assignee: User | null;
-  photos: Photo[];
+  photos: PhotoWithUploader[];
   rectification: Rectification | null;
-  statusTransitions: (StatusTransition & { createdBy: User })[];
+  statusTransitions: StatusTransitionWithCreator[];
+};
+
+type PropertyManagerSummary = {
+  id: string;
+  name: string;
+  department: string | null;
+};
+
+type LoaderData = {
+  user: User;
+  hazard: HazardDetailData;
+  propertyManagers: PropertyManagerSummary[];
+  hasResponsibilityMismatch: boolean;
+  mismatchReason: string | null;
+};
+
+type ActionError = {
+  error: string;
+  errorType?: string;
+  missingPhotos?: string;
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const user = await requireUser(request);
   const { id } = params;
 
+  if (!id) {
+    throw new Response('Not Found', { status: 404 });
+  }
+
   const hazard = await prisma.hazard.findUnique({
     where: { id },
     include: {
       reporter: true,
       assignee: true,
-      photos: { include: { uploadedBy: true } },
+      photos: {
+        include: { uploadedBy: true },
+        orderBy: { createdAt: 'asc' },
+      },
       rectification: true,
       statusTransitions: {
         include: { createdBy: true },
@@ -41,28 +85,67 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     select: { id: true, name: true, department: true },
   });
 
-  return json({ user, hazard: hazard as HazardDetail, propertyManagers });
+  let hasResponsibilityMismatch = false;
+  let mismatchReason: string | null = null;
+
+  if (hazard.assignee) {
+    if (hazard.assignee.role !== 'PROPERTY_MANAGER') {
+      hasResponsibilityMismatch = true;
+      mismatchReason = `责任人"${hazard.assignee.name}"的角色是${
+        hazard.assignee.role === 'INSPECTOR' ? '巡检员' :
+        hazard.assignee.role === 'FIRE_VERIFIER' ? '消防复核人' :
+        hazard.assignee.role
+      }，不是物业经办人`;
+    } else if (['REJECTED', 'SUBMITTED'].includes(hazard.status) && hazard.assignee) {
+      const lastRejectedTransition = hazard.statusTransitions
+        .filter(t => t.toStatus === 'REJECTED')
+        .slice(-1)[0];
+      
+      if (lastRejectedTransition && hazard.status === 'REJECTED') {
+        const submittedAfterReject = hazard.statusTransitions.some(
+          t => t.createdAt > lastRejectedTransition.createdAt && t.toStatus === 'SUBMITTED'
+        );
+        if (!submittedAfterReject) {
+          hasResponsibilityMismatch = true;
+          mismatchReason = `隐患已被退回重改，需重新提交整改后再进行验收`;
+        }
+      }
+    }
+  }
+
+  return json<LoaderData>({
+    user,
+    hazard: hazard as unknown as HazardDetailData,
+    propertyManagers,
+    hasResponsibilityMismatch,
+    mismatchReason,
+  });
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
   const user = await requireUser(request);
   const { id } = params;
+
+  if (!id) {
+    return json<ActionError>({ error: '隐患不存在' }, { status: 404 });
+  }
+
   const formData = await request.formData();
   const _action = formData.get('_action') as string;
 
   const hazard = await prisma.hazard.findUnique({
     where: { id },
-    include: { photos: true, rectification: true },
+    include: { photos: true, rectification: true, assignee: true },
   });
 
   if (!hazard) {
-    return json({ error: '隐患不存在' }, { status: 404 });
+    return json<ActionError>({ error: '隐患不存在' }, { status: 404 });
   }
 
   switch (_action) {
     case 'assign': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限' }, { status: 403 });
       }
       const assigneeId = formData.get('assigneeId') as string;
       const measure = formData.get('measure') as string;
@@ -71,7 +154,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       const remark = formData.get('remark') as string;
 
       if (!assigneeId || !measure || !deadline) {
-        return json({ error: '请填写完整信息', errorType: 'assign' }, { status: 400 });
+        return json<ActionError>({ error: '请填写完整信息', errorType: 'assign' }, { status: 400 });
       }
 
       await prisma.hazard.update({
@@ -102,7 +185,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'start': {
       if (user.role !== 'PROPERTY_MANAGER' || hazard.assigneeId !== user.id) {
-        return json({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限' }, { status: 403 });
       }
 
       await prisma.hazard.update({
@@ -125,7 +208,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'submit': {
       if (user.role !== 'PROPERTY_MANAGER' || hazard.assigneeId !== user.id) {
-        return json({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限' }, { status: 403 });
       }
 
       const photoUrl = formData.get('photoUrl') as string;
@@ -133,7 +216,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       const remark = formData.get('remark') as string;
 
       if (!photoUrl) {
-        return json({ error: '请上传整改后照片', errorType: 'submit' }, { status: 400 });
+        return json<ActionError>({ error: '请上传整改后照片', errorType: 'submit' }, { status: 400 });
       }
 
       await prisma.hazard.update({
@@ -169,17 +252,17 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'verify': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限' }, { status: 403 });
       }
 
       const verifyResult = formData.get('verifyResult') as string;
       const remark = formData.get('remark') as string;
 
-      const hasBeforePhoto = hazard.photos.some(p => p.type === 'BEFORE');
-      const hasAfterPhoto = hazard.photos.some(p => p.type === 'AFTER');
+      const hasBeforePhoto = hazard.photos.some((p: Photo) => p.type === 'BEFORE');
+      const hasAfterPhoto = hazard.photos.some((p: Photo) => p.type === 'AFTER');
 
       if (verifyResult === 'pass' && (!hasBeforePhoto || !hasAfterPhoto)) {
-        return json({ 
+        return json<ActionError>({ 
           error: '整改前后照片不完整，请先补充证据照片后再验收',
           errorType: 'verify',
           missingPhotos: !hasBeforePhoto ? '缺少整改前照片' : (!hasAfterPhoto ? '缺少整改后照片' : '照片不完整')
@@ -211,11 +294,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     case 'archive': {
       if (user.role !== 'FIRE_VERIFIER') {
-        return json({ error: '无权限' }, { status: 403 });
+        return json<ActionError>({ error: '无权限' }, { status: 403 });
       }
 
       if (hazard.status !== 'PASSED') {
-        return json({ error: '只能归档已通过验收的隐患' }, { status: 400 });
+        return json<ActionError>({ error: '只能归档已通过验收的隐患' }, { status: 400 });
       }
 
       await prisma.hazard.update({
@@ -242,12 +325,21 @@ export const action: ActionFunction = async ({ request, params }) => {
       const photoDescription = formData.get('photoDescription') as string;
 
       if (!photoUrl || !photoType) {
-        return json({ error: '请填写照片信息', errorType: 'photo' }, { status: 400 });
+        return json<ActionError>({ error: '请填写照片信息', errorType: 'photo' }, { status: 400 });
+      }
+
+      const canUploadType = getAllowPhotoTypes(user.role, hazard.status, user.id === hazard.reporterId, user.id === hazard.assigneeId);
+      
+      if (!canUploadType.includes(photoType)) {
+        return json<ActionError>({ 
+          error: `您当前角色无权上传${photoType === 'BEFORE' ? '整改前' : photoType === 'AFTER' ? '整改后' : '复查'}照片`,
+          errorType: 'photo' 
+        }, { status: 403 });
       }
 
       await prisma.photo.create({
         data: {
-          hazardId: id!,
+          hazardId: id,
           type: photoType,
           url: photoUrl,
           description: photoDescription,
@@ -259,10 +351,33 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
   }
 
-  return json({ error: '未知操作' }, { status: 400 });
+  return json<ActionError>({ error: '未知操作' }, { status: 400 });
 };
 
-function getStatusBadge(status: string) {
+function getAllowPhotoTypes(
+  userRole: UserRole,
+  hazardStatus: HazardStatus,
+  isReporter: boolean,
+  isAssignee: boolean
+): PhotoType[] {
+  const allowed: PhotoType[] = [];
+
+  if (userRole === 'INSPECTOR' && isReporter && ['REPORTED'].includes(hazardStatus)) {
+    allowed.push('BEFORE');
+  }
+
+  if (userRole === 'PROPERTY_MANAGER' && isAssignee && ['ASSIGNED', 'IN_PROGRESS', 'REJECTED'].includes(hazardStatus)) {
+    allowed.push('AFTER');
+  }
+
+  if (userRole === 'FIRE_VERIFIER' && ['SUBMITTED', 'PASSED', 'REJECTED'].includes(hazardStatus)) {
+    allowed.push('INSPECTION');
+  }
+
+  return allowed;
+}
+
+function getStatusBadge(status: HazardStatus | string) {
   const styles: Record<string, string> = {
     REPORTED: 'bg-yellow-100 text-yellow-800',
     ASSIGNED: 'bg-blue-100 text-blue-800',
@@ -313,8 +428,8 @@ function getLevelBadge(level: string) {
 }
 
 export default function HazardDetail() {
-  const { user, hazard, propertyManagers } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
+  const { user, hazard, propertyManagers, hasResponsibilityMismatch, mismatchReason } = useLoaderData<SerializeFrom<LoaderData>>();
+  const actionData = useActionData<ActionError>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
 
@@ -325,13 +440,29 @@ export default function HazardDetail() {
 
   const canAssign = user.role === 'FIRE_VERIFIER' && hazard.status === 'REPORTED';
   const canStart = user.role === 'PROPERTY_MANAGER' && hazard.assigneeId === user.id && hazard.status === 'ASSIGNED';
-  const canSubmit = user.role === 'PROPERTY_MANAGER' && hazard.assigneeId === user.id && hazard.status === 'IN_PROGRESS';
+  const canSubmit = user.role === 'PROPERTY_MANAGER' && hazard.assigneeId === user.id && ['IN_PROGRESS', 'REJECTED'].includes(hazard.status);
   const canVerify = user.role === 'FIRE_VERIFIER' && hazard.status === 'SUBMITTED';
   const canArchive = user.role === 'FIRE_VERIFIER' && hazard.status === 'PASSED';
-  const canAddPhoto = hazard.status !== 'ARCHIVED';
+  
+  const allowPhotoTypes = getAllowPhotoTypes(
+    user.role as UserRole,
+    hazard.status as HazardStatus,
+    user.id === hazard.reporter.id,
+    user.id === hazard.assignee?.id
+  );
+  const canAddPhoto = hazard.status !== 'ARCHIVED' && allowPhotoTypes.length > 0;
 
-  const hasBeforePhoto = hazard.photos.some(p => p.type === 'BEFORE');
-  const hasAfterPhoto = hazard.photos.some(p => p.type === 'AFTER');
+  const hasBeforePhoto = hazard.photos.some((p) => p.type === 'BEFORE');
+  const hasAfterPhoto = hazard.photos.some((p) => p.type === 'AFTER');
+
+  const getPhotoTypeLabel = (type: string) => {
+    switch (type) {
+      case 'BEFORE': return '整改前';
+      case 'AFTER': return '整改后';
+      case 'INSPECTION': return '复查';
+      default: return type;
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -342,6 +473,18 @@ export default function HazardDetail() {
         <h1 className="text-2xl font-bold text-gray-800">隐患详情</h1>
         {getStatusBadge(hazard.status)}
       </div>
+
+      {hasResponsibilityMismatch && (
+        <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <span className="text-amber-500 text-xl">⚠️</span>
+            <div>
+              <p className="font-medium text-amber-800">责任异常提示</p>
+              <p className="text-sm text-amber-700">{mismatchReason}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {actionData?.error && (
         <div className={`mb-4 px-4 py-3 rounded-lg ${
@@ -386,6 +529,13 @@ export default function HazardDetail() {
                 <div>
                   <span className="text-gray-500">当前责任人：</span>
                   <span className="text-gray-800">{hazard.assignee?.name || '待派发'}</span>
+                  {hazard.assignee && (
+                    <span className="text-xs text-gray-400 ml-1">
+                      ({hazard.assignee.role === 'INSPECTOR' ? '巡检员' :
+                        hazard.assignee.role === 'PROPERTY_MANAGER' ? '物业' :
+                        hazard.assignee.role === 'FIRE_VERIFIER' ? '消防' : hazard.assignee.role})
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -461,10 +611,15 @@ export default function HazardDetail() {
                       name="photoType"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                     >
-                      <option value="BEFORE">整改前</option>
-                      <option value="AFTER">整改后</option>
-                      <option value="INSPECTION">复查</option>
+                      {allowPhotoTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {getPhotoTypeLabel(type)}
+                        </option>
+                      ))}
                     </select>
+                    <p className="text-xs text-gray-400 mt-1">
+                      您当前可上传：{allowPhotoTypes.map(t => getPhotoTypeLabel(t)).join('、')}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -536,9 +691,10 @@ export default function HazardDetail() {
                         photo.type === 'BEFORE' ? 'bg-yellow-500' :
                         photo.type === 'AFTER' ? 'bg-green-500' : 'bg-blue-500'
                       }`}>
-                        {photo.type === 'BEFORE' ? '整改前' : photo.type === 'AFTER' ? '整改后' : '复查'}
+                        {getPhotoTypeLabel(photo.type)}
                       </span>
                       <p className="mt-1 truncate">{photo.description}</p>
+                      <p className="text-gray-300 text-xs">{photo.uploadedBy.name}</p>
                     </div>
                   </div>
                 ))
@@ -551,7 +707,7 @@ export default function HazardDetail() {
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
               <div className="space-y-6">
-                {hazard.statusTransitions.map((transition, index) => (
+                {hazard.statusTransitions.map((transition) => (
                   <div key={transition.id} className="relative pl-10">
                     <div className="absolute left-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow"></div>
                     <div className="bg-gray-50 rounded-lg p-4">
@@ -868,20 +1024,21 @@ export default function HazardDetail() {
                 <>
                   <li>• 可登记新隐患</li>
                   <li>• 可查看隐患详情</li>
-                  <li>• 可补充照片证据</li>
+                  <li>• 登记阶段可上传整改前照片</li>
                 </>
               )}
               {user.role === 'PROPERTY_MANAGER' && (
                 <>
                   <li>• 可查看分配的隐患</li>
                   <li>• 可开始/提交整改</li>
-                  <li>• 可上传整改照片</li>
+                  <li>• 整改阶段可上传整改后照片</li>
                 </>
               )}
               {user.role === 'FIRE_VERIFIER' && (
                 <>
                   <li>• 可派发整改任务</li>
                   <li>• 可验收整改结果</li>
+                  <li>• 验收阶段可上传复查照片</li>
                   <li>• 可归档已完成隐患</li>
                 </>
               )}

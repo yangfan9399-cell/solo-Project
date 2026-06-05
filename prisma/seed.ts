@@ -293,7 +293,53 @@ async function main() {
     },
   });
 
-  console.log('Sample 3 - Assigned, responsibility mismatch case:', hazard3.title);
+  console.log('Sample 3 - Assigned:', hazard3.title);
+
+  const hazard3Mismatch = await prisma.hazard.create({
+    data: {
+      title: '消火栓玻璃破损',
+      description: 'F栋2楼消火栓箱玻璃破损，存在安全隐患',
+      location: 'F栋2楼走廊',
+      level: HazardLevel.MEDIUM,
+      source: '日常巡检',
+      reporterId: inspector.id,
+      assigneeId: inspector.id,
+      photos: {
+        create: {
+          type: PhotoType.BEFORE,
+          url: 'https://picsum.photos/seed/mismatch1/800/600',
+          uploadedById: inspector.id,
+          description: '破损的消火栓玻璃',
+        },
+      },
+      status: HazardStatus.ASSIGNED,
+      rectification: {
+        create: {
+          measure: '更换消火栓箱玻璃',
+          materials: '钢化玻璃、密封胶',
+          deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+      },
+      statusTransitions: {
+        create: [
+          {
+            fromStatus: null,
+            toStatus: HazardStatus.REPORTED,
+            remark: '登记隐患',
+            createdById: inspector.id,
+          },
+          {
+            fromStatus: HazardStatus.REPORTED,
+            toStatus: HazardStatus.ASSIGNED,
+            remark: '误派发至巡检员（责任单位不匹配测试用例）',
+            createdById: fireVerifier.id,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('Sample 3.5 - Responsibility mismatch (wrong role):', hazard3Mismatch.title);
 
   const hazard4 = await prisma.hazard.create({
     data: {
