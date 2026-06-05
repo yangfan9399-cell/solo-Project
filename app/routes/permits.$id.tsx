@@ -721,12 +721,28 @@ export default function PermitDetail() {
               >
                 {conflictCheckResult.hasConflict ? (
                   <div>
-                    <p className="font-medium text-danger-800 flex items-center gap-2">
-                      <span>⚠️</span>检测到区域冲突
+                    <p className="font-semibold text-danger-800 flex items-center gap-2">
+                      <span>⚠️</span>检测到区域冲突，无法直接提交！
                     </p>
-                    <p className="text-sm text-danger-700 mt-2">
-                      该时间段已有 {conflictCheckResult.conflictingPermits.length} 个施工许可
+                    <p className="text-sm text-danger-700 mt-1">
+                      该时间段已有 {conflictCheckResult.conflictingPermits.length} 个施工许可安排在此区域
                     </p>
+                    <ul className="mt-2 space-y-1">
+                      {conflictCheckResult.conflictingPermits.map((p) => (
+                        <li key={p.id} className="text-sm text-danger-600">
+                          • {p.permitNumber} ({p.startDate} ~ {p.endDate})
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 pt-3 border-t border-danger-200">
+                      <p className="text-sm font-medium text-danger-700 mb-2">
+                        💡 建议解决方案：
+                      </p>
+                      <ul className="text-xs text-danger-600 space-y-1">
+                        <li>• <strong>改期</strong>：调整开始或结束日期，避开冲突时段</li>
+                        <li>• <strong>换区域</strong>：选择其他可用的施工区域</li>
+                      </ul>
+                    </div>
                   </div>
                 ) : (
                   <p className="font-medium text-success-800 flex items-center gap-2">
@@ -744,8 +760,12 @@ export default function PermitDetail() {
               >
                 取消
               </button>
-              <button type="submit" className="btn-primary">
-                确认调整并重提
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={conflictCheckResult?.hasConflict ?? false}
+              >
+                {conflictCheckResult?.hasConflict ? "存在区域冲突" : "确认调整并重提"}
               </button>
             </div>
           </Form>

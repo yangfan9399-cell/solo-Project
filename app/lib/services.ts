@@ -229,9 +229,41 @@ export interface CreatePermitData {
 
 export async function createPermit(data: CreatePermitData): Promise<Permit> {
   return await db.transaction(async (tx) => {
-    const status = data.hasDocuments ? "PENDING_AREA_CONFIRM" : "PENDING_DOCUMENT";
-    const anomalyType = data.hasDocuments ? null : "DOCUMENT_MISSING";
-    const anomalyReason = data.hasDocuments ? null : "证件缺失";
+    let status = data.hasDocuments ? "PENDING_AREA_CONFIRM" : "PENDING_DOCUMENT";
+    let anomalyType = data.hasDocuments ? null : "DOCUMENT_MISSING";
+    let anomalyReason = data.hasDocuments ? null : "证件缺失";
+    let hasAreaConflict = false;
+    let areaConflictDetail: string | null = null;
+
+    if (data.hasDocuments) {
+      const conditions: any[] = [
+        eq(permits.areaId, data.areaId),
+        ne(permits.status, "COMPLETED"),
+        ne(permits.status, "AREA_CONFLICT"),
+      ];
+
+      const allPermits = await tx
+        .select()
+        .from(permits)
+        .where(and(...conditions));
+
+      const conflictingPermits = allPermits.filter((p) => {
+        const pStart = new Date(p.startDate as string);
+        const pEnd = new Date(p.endDate as string);
+        const nStart = new Date(data.startDate);
+        const nEnd = new Date(data.endDate);
+        return nStart <= pEnd && nEnd >= pStart;
+      });
+
+      if (conflictingPermits.length > 0) {
+        status = "AREA_CONFLICT";
+        anomalyType = "AREA_CONFLICT";
+        anomalyReason = "施工区域冲突";
+        hasAreaConflict = true;
+        const conflictNames = conflictingPermits.map(p => p.permitNumber).join("、");
+        areaConflictDetail = `检测到与以下许可冲突：${conflictNames}`;
+      }
+    }
 
     const [newPermit] = await tx
       .insert(permits)
@@ -249,7 +281,8 @@ export async function createPermit(data: CreatePermitData): Promise<Permit> {
         securityOfficerId: 1,
         hasDocuments: data.hasDocuments,
         documentMissingReason: data.documentMissingReason || null,
-        hasAreaConflict: false,
+        hasAreaConflict,
+        areaConflictDetail,
         safetyBriefingStatus: "PENDING",
         safetyBriefingEvidence: [],
         anomalyType,
@@ -275,16 +308,29 @@ export async function createPermit(data: CreatePermitData): Promise<Permit> {
     });
 
     if (data.hasDocuments) {
-      await tx.insert(permitHistories).values({
-        permitId: newPermit.id,
-        action: "SUBMIT",
-        statusFrom: "DRAFT",
-        statusTo: "PENDING_AREA_CONFIRM",
-        operatorId: 1,
-        operatorName: "张安保",
-        operatorRole: "SECURITY_OFFICER",
-        remark: "提交审核，等待工程负责人确认施工区域",
-      });
+      if (hasAreaConflict) {
+        await tx.insert(permitHistories).values({
+          permitId: newPermit.id,
+          action: "AREA_CONFLICT",
+          statusFrom: "DRAFT",
+          statusTo: "AREA_CONFLICT",
+          operatorId: 1,
+          operatorName: "张安保",
+          operatorRole: "SECURITY_OFFICER",
+          remark: areaConflictDetail || "检测到区域冲突",
+        });
+      } else {
+        await tx.insert(permitHistories).values({
+          permitId: newPermit.id,
+          action: "SUBMIT",
+          statusFrom: "DRAFT",
+          statusTo: "PENDING_AREA_CONFIRM",
+          operatorId: 1,
+          operatorName: "张安保",
+          operatorRole: "SECURITY_OFFICER",
+          remark: "提交审核，等待工程负责人确认施工区域",
+        });
+      }
     } else {
       await tx.insert(permitHistories).values({
         permitId: newPermit.id,
@@ -348,6 +394,59 @@ export async function confirmArea(
       .limit(1);
 
     if (!permit) return undefined;
+
+    const conditions: any[] = [
+      eq(permits.areaId, permit.areaId),
+      ne(permits.status, "COMPLETED"),
+      ne(permits.status, "AREA_CONFLICT"),
+      ne(permits.id, permitId),
+    ];
+
+    const allPermits = await tx
+      .select()
+      .from(permits)
+      .where(and(...conditions));
+
+    const conflictingPermits = allPermits.filter((p) => {
+      const pStart = new Date(p.startDate as string);
+      const pEnd = new Date(p.endDate as string);
+      const nStart = new Date(permit.startDate as string);
+      const nEnd = new Date(permit.endDate as string);
+      return nStart <= pEnd && nEnd >= pStart;
+    });
+
+    const hasConflict = conflictingPermits.length > 0;
+
+    if (hasConflict) {
+      const conflictDetail = `检测到与以下许可冲突：${conflictingPermits.map(p => p.permitNumber).join("、")}`;
+
+      const [updated] = await tx
+        .update(permits)
+        .set({
+          status: "AREA_CONFLICT",
+          hasAreaConflict: true,
+          areaConflictDetail: conflictDetail,
+          anomalyType: "AREA_CONFLICT",
+          anomalyReason: "施工区域冲突",
+          engineeringManagerId: 2,
+          updatedAt: new Date(),
+        })
+        .where(eq(permits.id, permitId))
+        .returning();
+
+      await tx.insert(permitHistories).values({
+        permitId: permit.id,
+        action: "AREA_CONFLICT",
+        statusFrom: permit.status,
+        statusTo: "AREA_CONFLICT",
+        operatorId: 2,
+        operatorName: "李工程",
+        operatorRole: "ENGINEERING_MANAGER",
+        remark: conflictDetail,
+      });
+
+      return mapPermit(updated);
+    }
 
     const [updated] = await tx
       .update(permits)
@@ -431,32 +530,73 @@ export async function updateAreaAndResubmit(
 
     if (!permit) return undefined;
 
+    const conditions: any[] = [
+      eq(permits.areaId, areaId),
+      ne(permits.status, "COMPLETED"),
+      ne(permits.status, "AREA_CONFLICT"),
+      ne(permits.id, permitId),
+    ];
+
+    const allPermits = await tx
+      .select()
+      .from(permits)
+      .where(and(...conditions));
+
+    const conflictingPermits = allPermits.filter((p) => {
+      const pStart = new Date(p.startDate as string);
+      const pEnd = new Date(p.endDate as string);
+      const nStart = new Date(startDate);
+      const nEnd = new Date(endDate);
+      return nStart <= pEnd && nEnd >= pStart;
+    });
+
+    const hasConflict = conflictingPermits.length > 0;
+    const newStatus = hasConflict ? "AREA_CONFLICT" : "PENDING_AREA_CONFIRM";
+    const newAnomalyType = hasConflict ? "AREA_CONFLICT" : null;
+    const newAnomalyReason = hasConflict ? "施工区域冲突" : null;
+    const conflictDetail = hasConflict
+      ? `检测到与以下许可冲突：${conflictingPermits.map(p => p.permitNumber).join("、")}`
+      : null;
+
     const [updated] = await tx
       .update(permits)
       .set({
         areaId,
         startDate,
         endDate,
-        status: "PENDING_AREA_CONFIRM",
-        hasAreaConflict: false,
-        areaConflictDetail: null,
-        anomalyType: null,
-        anomalyReason: null,
+        status: newStatus,
+        hasAreaConflict: hasConflict,
+        areaConflictDetail: conflictDetail,
+        anomalyType: newAnomalyType,
+        anomalyReason: newAnomalyReason,
         updatedAt: new Date(),
       })
       .where(eq(permits.id, permitId))
       .returning();
 
-    await tx.insert(permitHistories).values({
-      permitId: permit.id,
-      action: "RESUBMIT_AREA",
-      statusFrom: "AREA_CONFLICT",
-      statusTo: "PENDING_AREA_CONFIRM",
-      operatorId: 1,
-      operatorName: "张安保",
-      operatorRole: "SECURITY_OFFICER",
-      remark: "调整施工区域/时间后重新提交",
-    });
+    if (hasConflict) {
+      await tx.insert(permitHistories).values({
+        permitId: permit.id,
+        action: "AREA_CONFLICT",
+        statusFrom: permit.status,
+        statusTo: "AREA_CONFLICT",
+        operatorId: 1,
+        operatorName: "张安保",
+        operatorRole: "SECURITY_OFFICER",
+        remark: conflictDetail || "检测到区域冲突",
+      });
+    } else {
+      await tx.insert(permitHistories).values({
+        permitId: permit.id,
+        action: "RESUBMIT_AREA",
+        statusFrom: permit.status,
+        statusTo: "PENDING_AREA_CONFIRM",
+        operatorId: 1,
+        operatorName: "张安保",
+        operatorRole: "SECURITY_OFFICER",
+        remark: "调整施工区域/时间后重新提交",
+      });
+    }
 
     return mapPermit(updated);
   });

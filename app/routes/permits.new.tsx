@@ -338,21 +338,27 @@ export default function NewPermit() {
               {conflictCheck.hasConflict ? (
                 <div>
                   <p className="font-semibold text-danger-800 flex items-center gap-2">
-                    <span>⚠️</span>检测到区域冲突！
+                    <span>⚠️</span>检测到区域冲突，无法直接提交！
                   </p>
                   <p className="text-sm text-danger-700 mt-1">
                     该时间段已有 {conflictCheck.conflictingPermits.length} 个施工许可安排在此区域
                   </p>
                   <ul className="mt-2 space-y-1">
-                    {conflictCheck.conflictingPermits.map((p) => (
+                    {conflictCheck.conflictingPermits.map((p: any) => (
                       <li key={p.id} className="text-sm text-danger-600">
                         • {p.permitNumber} ({p.startDate} ~ {p.endDate})
                       </li>
                     ))}
                   </ul>
-                  <p className="text-xs text-danger-600 mt-2">
-                    提示：您仍可提交申请，但工程负责人审核时会标记冲突并要求调整
-                  </p>
+                  <div className="mt-3 pt-3 border-t border-danger-200">
+                    <p className="text-sm font-medium text-danger-700 mb-2">
+                      💡 建议解决方案：
+                    </p>
+                    <ul className="text-xs text-danger-600 space-y-1">
+                      <li>• <strong>改期</strong>：调整开始或结束日期，避开冲突时段</li>
+                      <li>• <strong>换区域</strong>：选择其他可用的施工区域</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
                 <p className="font-medium text-success-800 flex items-center gap-2">
@@ -413,9 +419,9 @@ export default function NewPermit() {
           <button
             type="submit"
             className="btn-primary"
-            disabled={currentRole !== "SECURITY_OFFICER"}
+            disabled={currentRole !== "SECURITY_OFFICER" || (conflictCheck?.hasConflict ?? false)}
           >
-            提交申请
+            {conflictCheck?.hasConflict ? "存在区域冲突" : "提交申请"}
           </button>
         </div>
       </Form>
