@@ -31,16 +31,15 @@
           </svg>
         </div>
         <div class="ml-3">
-          <p class="text-sm text-red-700 font-medium">报价超出预算！</p>
+          <p class="text-sm text-red-700 font-medium">报价超出预算！客户确认已被阻断</p>
           <p class="text-sm text-red-600 mt-1">
             预算上限: ¥<%= '%.2f' % @repair_order.budget_limit %>
             报价总额: ¥<%= '%.2f' % @repair_order.quote_total %>
-            超出: ¥<%= '%.2f' % (@repair_order.quote_total - @repair_order.budget_limit) %>
+            <span class="font-bold">超出: ¥<%= '%.2f' % (@repair_order.quote_total - @repair_order.budget_limit) %></span>
           </p>
-          <div class="mt-3 flex space-x-3">
-            <%= button_to '调整报价', new_repair_order_quote_item_path(@repair_order), method: :get, class: 'bg-yellow-600 text-white px-3 py-1.5 rounded text-sm' %>
-            <%= button_to '申请升级审批', approve_quote_repair_order_path(@repair_order), method: :patch, class: 'bg-red-600 text-white px-3 py-1.5 rounded text-sm' %>
-          </div>
+          <p class="text-sm text-red-500 mt-2">
+            请在右侧操作区选择「调整报价」或「申请升级审批」
+          </p>
         </div>
       </div>
     </div>
@@ -301,12 +300,22 @@
           <h2 class="text-lg font-medium text-gray-900">操作</h2>
         </div>
         <div class="border-t border-gray-200 px-4 py-5 space-y-3">
-          <% unless @repair_order.archived? %>
+          <% if @repair_order.archived? %>
+            <p class="text-sm text-gray-500 text-center mb-3">已归档，无法修改</p>
+            <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
+          <% else %>
             <% if @repair_order.faults.any? && @repair_order.quote_items.any? && !@repair_order.quote_approved? %>
               <%= button_to '提交报价', submit_quote_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700' %>
             <% end %>
 
-            <% if @repair_order.quote_approved? && !@repair_order.parts_out_of_stock? && @repair_order.status != 'in_repair' && @repair_order.status != 'repair_completed' && @repair_order.status != 'review_approved' && @repair_order.status != 'follow_up_completed' %>
+            <% if @repair_order.status == 'quote_over_budget' %>
+              <div class="space-y-2">
+                <%= link_to '调整报价', new_repair_order_quote_item_path(@repair_order), class: 'w-full block text-center bg-yellow-600 text-white py-2 rounded hover:bg-yellow-700' %>
+                <%= button_to '申请升级审批', approve_quote_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+              </div>
+            <% end %>
+
+            <% if @repair_order.quote_approved? && !@repair_order.parts_out_of_stock? && @repair_order.status != 'in_repair' && @repair_order.status != 'repair_completed' && @repair_order.status != 'review_approved' && @repair_order.status != 'follow_up_completed' && @repair_order.status != 'follow_up_scheduled' %>
               <%= button_to '开始维修', start_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700' %>
             <% end %>
 
@@ -325,16 +334,9 @@
               <%= button_to '完成回访', complete_followup_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700' %>
             <% end %>
 
-            <% if @repair_order.status == 'follow_up_completed' && !@repair_order.archived? %>
+            <% if @repair_order.status == 'follow_up_completed' %>
               <%= button_to '归档', archive_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-gray-600 text-white py-2 rounded hover:bg-gray-700', data: { confirm: '确定要归档吗？归档后将只读' } %>
             <% end %>
-
-            <% if @repair_order.archived? %>
-              <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
-            <% end %>
-          <% else %>
-            <p class="text-sm text-gray-500 text-center">已归档，无法修改</p>
-            <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
           <% end %>
         </div>
       </div>

@@ -64,6 +64,14 @@ class RepairOrder < ApplicationRecord
     !over_budget?
   end
 
+  def draft?
+    status == 'draft'
+  end
+
+  def follow_up_scheduled?
+    status == 'follow_up_scheduled'
+  end
+
   def archived?
     archived
   end
