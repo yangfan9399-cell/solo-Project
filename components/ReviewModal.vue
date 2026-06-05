@@ -17,7 +17,12 @@ const emit = defineEmits<{
     result: ReviewResult
     opinion: string
     isLiabilityConfirmed: boolean
-    disputeTerms?: { termClause: string; disputeReason: string }
+    disputeTerms?: {
+      termClause: string
+      termDescription: string
+      disputeReason: string
+      supplementPath: string
+    }
   }]
 }>()
 
@@ -25,7 +30,9 @@ const reviewResult = ref<ReviewResult>('APPROVED')
 const opinion = ref<string>('')
 const isLiabilityConfirmed = ref<boolean>(false)
 const disputeTermClause = ref<string>('')
+const disputeTermDescription = ref<string>('')
 const disputeReason = ref<string>('')
+const disputeSupplementPath = ref<string>('')
 
 watch(() => props.visible, (visible) => {
   if (visible) {
@@ -33,7 +40,9 @@ watch(() => props.visible, (visible) => {
     opinion.value = ''
     isLiabilityConfirmed.value = false
     disputeTermClause.value = ''
+    disputeTermDescription.value = ''
     disputeReason.value = ''
+    disputeSupplementPath.value = ''
   }
 })
 
@@ -42,7 +51,7 @@ const isDispute = computed(() => reviewResult.value === 'DISPUTE')
 const canSubmit = computed(() => {
   if (!opinion.value.trim()) return false
   if (isDispute.value) {
-    if (!disputeTermClause.value.trim() || !disputeReason.value.trim()) return false
+    if (!disputeTermClause.value.trim() || !disputeReason.value.trim() || !disputeSupplementPath.value.trim()) return false
   }
   return true
 })
@@ -64,7 +73,9 @@ function handleSubmit() {
   if (isDispute.value) {
     result.disputeTerms = {
       termClause: disputeTermClause.value,
-      disputeReason: disputeReason.value
+      termDescription: disputeTermDescription.value,
+      disputeReason: disputeReason.value,
+      supplementPath: disputeSupplementPath.value
     }
   }
   emit('submit', result)
@@ -143,20 +154,38 @@ function formatAmount(amount?: number): string {
       <div v-if="isDispute" class="dispute-section card">
         <div class="dispute-title">争议条款信息</div>
         <div class="form-group">
-          <label class="label">争议条款</label>
+          <label class="label">争议条款 <span class="required">*</span></label>
           <input
             v-model="disputeTermClause"
             type="text"
             class="input"
-            placeholder="请输入争议条款编号及名称"
+            placeholder="请输入争议条款编号及名称，如：第5条 责任免除"
           />
         </div>
         <div class="form-group">
-          <label class="label">争议理由</label>
+          <label class="label">条款描述</label>
+          <textarea
+            v-model="disputeTermDescription"
+            class="textarea"
+            placeholder="请输入条款的具体内容描述..."
+            rows="2"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="label">争议理由 <span class="required">*</span></label>
           <textarea
             v-model="disputeReason"
             class="textarea"
-            placeholder="请详细说明责任争议的理由..."
+            placeholder="请详细说明认定为责任争议的理由..."
+            rows="3"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="label">补证路径 <span class="required">*</span></label>
+          <textarea
+            v-model="disputeSupplementPath"
+            class="textarea"
+            placeholder="请说明需要补充哪些证据材料，以及如何获取这些证据..."
             rows="3"
           ></textarea>
         </div>

@@ -139,7 +139,17 @@ function handleCalculationSubmit(data: any) {
   showCalculationModal.value = false
 }
 
-function handleReviewSubmit(data: any) {
+function handleReviewSubmit(data: {
+  result: string
+  opinion: string
+  isLiabilityConfirmed: boolean
+  disputeTerms?: {
+    termClause: string
+    termDescription: string
+    disputeReason: string
+    supplementPath: string
+  }
+}) {
   if (!claim.value) return
 
   claimStore.addReview(claimId.value, {
@@ -161,14 +171,14 @@ function handleReviewSubmit(data: any) {
     claimStore.updateClaimStatus(claimId.value, 'MATERIALS_MISSING', '审核要求补充材料')
   } else if (data.result === 'DISPUTE') {
     claimStore.updateClaimStatus(claimId.value, 'LIABILITY_DISPUTE', '审核发现责任免除争议')
-    if (data.disputeTerm) {
+    if (data.disputeTerms) {
       claim.value.disputeTerms.push({
         id: `disp-${Date.now()}`,
         claimId: claimId.value,
-        termClause: data.disputeTerm.clause,
-        termDescription: data.disputeTerm.description,
-        disputeReason: data.disputeTerm.reason,
-        supplementPath: data.disputeTerm.path,
+        termClause: data.disputeTerms.termClause,
+        termDescription: data.disputeTerms.termDescription,
+        disputeReason: data.disputeTerms.disputeReason,
+        supplementPath: data.disputeTerms.supplementPath,
         isResolved: false
       })
     }
@@ -179,35 +189,38 @@ function handleReviewSubmit(data: any) {
   showReviewModal.value = false
 }
 
-function handleApprovalSubmit(data: any) {
+function handleApprovalSubmit(data: { result: string; opinion: string }) {
   if (!claim.value) return
 
   claimStore.addReview(claimId.value, {
     userId: claimStore.currentUser.value?.id,
     stage: 'APPROVER',
-    result: data.result,
+    result: data.result === 'RETURNED' ? 'SUPPLEMENT_REQUIRED' : data.result,
     opinion: data.opinion,
-    isLiabilityConfirmed: true
+    isLiabilityConfirmed: data.result === 'APPROVED'
   })
 
   if (data.result === 'APPROVED') {
-    claimStore.updateClaimStatus(claimId.value, 'PAID', '复核批准，已完成赔付')
+    claimStore.updateClaimStatus(claimId.value, 'PAID', '复核批准赔付')
   } else if (data.result === 'REJECTED') {
     claimStore.updateClaimStatus(claimId.value, 'REJECTED', '复核拒绝赔付')
-  } else if (data.result === 'SUPPLEMENT_REQUIRED') {
-    claimStore.updateClaimStatus(claimId.value, 'MATERIALS_MISSING', '复核要求补充材料')
+  } else if (data.result === 'RETURNED') {
+    claimStore.updateClaimStatus(claimId.value, 'MATERIALS_MISSING', '复核退回，要求补充材料')
   }
 
   showApprovalModal.value = false
 }
 
-function handleArchiveSubmit(reason: string) {
-  claimStore.archiveClaim(claimId.value, reason)
+function handleArchiveSubmit(data: { archiveReason: string }) {
+  if (!claim.value) return
+  const lastReview = claim.value.reviews[claim.value.reviews.length - 1]
+  const conclusionText = lastReview?.opinion || statusLabels[claim.value.status as keyof typeof statusLabels]
+  claimStore.archiveClaim(claimId.value, data.archiveReason, conclusionText)
   showArchiveModal.value = false
 }
 
-function handleReopenSubmit(reason: string) {
-  claimStore.reopenClaim(claimId.value, reason)
+function handleReopenSubmit(data: { reopenReason: string }) {
+  claimStore.reopenClaim(claimId.value, data.reopenReason)
   showReopenModal.value = false
 }
 

@@ -112,8 +112,12 @@ export interface Claim {
   description?: string
   isArchived: boolean
   archiveReason?: string
+  archiveDate?: string
   previousConclusion?: string
+  previousConclusionText?: string
   reopenedFrom?: string
+  reopenReason?: string
+  reopenDate?: string
   documents: Document[]
   reviews: Review[]
   historyNodes: HistoryNode[]

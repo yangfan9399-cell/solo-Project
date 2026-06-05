@@ -93,35 +93,43 @@ export function useClaimStore() {
     })
   }
 
-  function archiveClaim(claimId: string, reason: string) {
+  function archiveClaim(claimId: string, reason: string, conclusionText?: string) {
     const claim = claims.value.find(c => c.id === claimId)
     if (!claim) return
 
-    claim.previousConclusion = claim.status
+    const oldStatus = claim.status
+    claim.previousConclusion = oldStatus
+    claim.previousConclusionText = conclusionText || statusLabels[oldStatus]
     claim.isArchived = true
     claim.archiveReason = reason
-    const oldStatus = claim.status
+    claim.archiveDate = new Date().toISOString()
     claim.status = 'ARCHIVED'
 
-    addHistoryNode(claimId, '归档', 'ARCHIVED', `卷宗已归档，原因：${reason}。原状态：${statusLabels[oldStatus]}`)
+    addHistoryNode(claimId, '归档', 'ARCHIVED', `卷宗已归档，原因：${reason}。原结论：${statusLabels[oldStatus]}`)
   }
 
   function reopenClaim(claimId: string, reason: string) {
     const claim = claims.value.find(c => c.id === claimId)
     if (!claim) return
 
+    const prevStatus = (claim.previousConclusion as ClaimStatus) || 'DRAFT'
+    const prevConclusion = claim.previousConclusionText || statusLabels[prevStatus]
+
     claim.isArchived = false
     claim.reopenedFrom = claim.previousConclusion
-    const prevStatus = claim.previousConclusion as ClaimStatus || 'DRAFT'
-    claim.status = 'REOPENED'
+    claim.reopenReason = reason
+    claim.reopenDate = new Date().toISOString()
+    claim.previousConclusion = undefined
+    claim.previousConclusionText = undefined
 
-    addHistoryNode(claimId, '重新开启', 'REOPENED', `卷宗重新开启，原因：${reason}。原结论：${claim.previousConclusion ? statusLabels[claim.previousConclusion as keyof typeof statusLabels] : '未知'}`)
+    claim.status = 'REOPENED'
+    addHistoryNode(claimId, '重新开启', 'REOPENED', `卷宗重新开启，原因：${reason}。旧结论：${prevConclusion}`)
 
     setTimeout(() => {
       const c = claims.value.find(cl => cl.id === claimId)
       if (c) {
         c.status = prevStatus
-        addHistoryNode(claimId, '恢复处理', prevStatus, '卷宗恢复到重新开启前的处理状态')
+        addHistoryNode(claimId, '恢复处理', prevStatus, '卷宗恢复到重新开启前的处理状态，可继续办理')
       }
     }, 100)
   }
