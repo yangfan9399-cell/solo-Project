@@ -1,0 +1,37 @@
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">完成回访</h1>
+
+  <div class="bg-white shadow sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6 bg-gray-50 border-b">
+      <h3 class="text-sm font-medium text-gray-700">当前回访信息</h3>
+      <div class="mt-2 space-y-1 text-sm text-gray-600">
+        <p>计划时间: <%= @follow_up.follow_up_at&.strftime('%Y-%m-%d %H:%M') %></p>
+        <p>回访方式: <%= contact_method_name(@follow_up.contact_method) %></p>
+      </div>
+    </div>
+
+    <%= form_with model: [@repair_order, @follow_up], url: mark_complete_repair_order_follow_up_path(@repair_order, @follow_up), method: :patch do |form| %>
+      <div class="px-4 py-5 sm:p-6 space-y-4">
+        <div>
+          <%= form.label :satisfaction, '满意度', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :satisfaction, [%w[非常满意 very_satisfied], %w[满意 satisfied], %w[一般 neutral], %w[不满意 dissatisfied], %w[非常不满意 very_dissatisfied]], {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :feedback, '客户反馈', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :feedback, rows: 4, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+
+        <div>
+          <%= form.label :notes, '备注', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :notes, rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500' %>
+        </div>
+      </div>
+
+      <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+        <%= link_to '取消', repair_order_path(@repair_order), class: 'text-gray-600 hover:text-gray-900 mr-4' %>
+        <%= form.submit '完成回访', class: 'bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700' %>
+      </div>
+    <% end %>
+  </div>
+</div>

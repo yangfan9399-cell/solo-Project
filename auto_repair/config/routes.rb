@@ -22,7 +22,12 @@ Rails.application.routes.draw do
     resources :quote_items, only: [:new, :create, :edit, :update, :destroy]
     resources :parts, only: [:new, :create, :edit, :update, :destroy]
     resources :repair_logs, only: [:new, :create, :edit, :update]
-    resources :follow_ups, only: [:new, :create, :edit, :update]
+    resources :follow_ups, only: [:new, :create, :edit, :update] do
+      member do
+        get :complete
+        patch :mark_complete
+      end
+    end
   end
 
   resources :users, only: [:index, :show]

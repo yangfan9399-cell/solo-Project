@@ -34,6 +34,29 @@ class FollowUpsController < ApplicationController
     end
   end
 
+  def complete
+    @follow_up = @repair_order.follow_ups.find(params[:id])
+  end
+
+  def mark_complete
+    @follow_up = @repair_order.follow_ups.find(params[:id])
+    user = customer_service_user
+
+    @repair_order.transaction do
+      @follow_up.update!(
+        satisfaction: params[:satisfaction].presence || params[:follow_up][:satisfaction],
+        feedback: params[:feedback].presence || params[:follow_up][:feedback],
+        notes: params[:notes].presence || params[:follow_up][:notes] || params[:feedback].presence || params[:follow_up][:feedback],
+        completed: true,
+        follow_up_at: Time.current,
+        user: user
+      )
+      @repair_order.update!(status: 'follow_up_completed', follow_up_note: @follow_up.feedback)
+      @repair_order.add_history(user, '完成回访', @follow_up.feedback.presence || '质保回访完成', 'followup')
+    end
+    redirect_to @repair_order, notice: '质保回访已完成'
+  end
+
   private
 
   def set_repair_order
