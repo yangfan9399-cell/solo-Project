@@ -249,7 +249,9 @@ export default async function applicationRoutes(server: FastifyInstance) {
     }
 
     const secondNode = application.inspectionNodes.find(
-      node => node.nodeType === '工程人员现场检查' && !node.result
+      node => node.nodeType.includes('工程人员现场检查') && !node.result
+    ) || application.inspectionNodes.find(
+      node => node.nodeType.includes('工程人员现场检查')
     ) || application.inspectionNodes[1]
 
     return await prisma.$transaction(async (tx) => {

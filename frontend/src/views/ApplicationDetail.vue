@@ -73,22 +73,6 @@ const formatDateTime = (dateStr: string | undefined) => {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
-const canDoInvestmentReview = computed(() => {
-  return application.value?.status === 'SUBMITTED' && !isArchived.value
-})
-
-const canDoEngineerInspection = computed(() => {
-  return application.value?.status === 'INVESTMENT_REVIEWED' && !isArchived.value
-})
-
-const canDoFireInspection = computed(() => {
-  return application.value?.status === 'ENGINEER_INSPECTED' && !isArchived.value
-})
-
-const canArchive = computed(() => {
-  return application.value?.status === 'FIRE_PASSED' && !isArchived.value
-})
-
 const pendingRectificationNode = computed(() => {
   if (!application.value || isArchived.value) return null
   return application.value.inspectionNodes.find(
@@ -113,6 +97,28 @@ const pendingFireNode = computed(() => {
   return application.value.inspectionNodes.find(
     node => !node.result && node.nodeType.includes('消防复核')
   )
+})
+
+const canDoInvestmentReview = computed(() => {
+  if (isArchived.value || !application.value) return false
+  const pendingNode = application.value.inspectionNodes.find(
+    node => !node.result && node.nodeType === '投资主管审核'
+  )
+  return application.value.status === 'SUBMITTED' && !!pendingNode
+})
+
+const canDoEngineerInspection = computed(() => {
+  if (isArchived.value || !application.value) return false
+  return application.value.status === 'INVESTMENT_REVIEWED' && !!pendingEngineerNode.value
+})
+
+const canDoFireInspection = computed(() => {
+  if (isArchived.value || !application.value) return false
+  return application.value.status === 'ENGINEER_INSPECTED' && !!pendingFireNode.value
+})
+
+const canArchive = computed(() => {
+  return application.value?.status === 'FIRE_PASSED' && !isArchived.value
 })
 
 const canRectify = computed(() => {
