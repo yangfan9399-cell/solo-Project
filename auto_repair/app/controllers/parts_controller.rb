@@ -10,7 +10,7 @@ class PartsController < ApplicationController
     @part = @repair_order.parts.new(part_params)
 
     if @part.save
-      @repair_order.add_history(current_user, '添加配件', "#{@part.name} (#{@part.status})", 'other')
+      @repair_order.add_history(service_advisor_user, '添加配件', "#{@part.name} (#{@part.status})", 'other')
       redirect_to @repair_order, notice: '配件已添加'
     else
       render :new, status: :unprocessable_entity
@@ -26,7 +26,7 @@ class PartsController < ApplicationController
     old_status = @part.status
     if @part.update(part_params)
       status_changed = old_status != @part.status ? "状态: #{old_status} → #{@part.status}" : ''
-      @repair_order.add_history(current_user, '更新配件', "#{@part.name} #{status_changed}", 'other')
+      @repair_order.add_history(service_advisor_user, '更新配件', "#{@part.name} #{status_changed}", 'other')
       redirect_to @repair_order, notice: '配件状态已更新'
     else
       render :edit, status: :unprocessable_entity
@@ -36,7 +36,7 @@ class PartsController < ApplicationController
   def destroy
     @part = @repair_order.parts.find(params[:id])
     @part.destroy
-    @repair_order.add_history(current_user, '删除配件', @part.name, 'other')
+    @repair_order.add_history(service_advisor_user, '删除配件', @part.name, 'other')
     redirect_to @repair_order, notice: '配件已删除'
   end
 
@@ -56,7 +56,7 @@ class PartsController < ApplicationController
     params.require(:part).permit(:name, :part_number, :brand, :quantity, :unit_price, :status, :notes, :quote_item_id)
   end
 
-  def current_user
-    @current_user ||= User.first
+  def service_advisor_user
+    @service_advisor_user ||= User.find_by(role: 'service_advisor') || User.first
   end
 end

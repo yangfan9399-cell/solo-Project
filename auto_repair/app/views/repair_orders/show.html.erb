@@ -299,7 +299,7 @@
         <div class="px-4 py-5 sm:px-6">
           <h2 class="text-lg font-medium text-gray-900">操作</h2>
         </div>
-        <div class="border-t border-gray-200 px-4 py-5 space-y-3">
+        <div class="border-t border-gray-200 px-4 py-5 space-y-4">
           <% if @repair_order.archived? %>
             <p class="text-sm text-gray-500 text-center mb-3">已归档，无法修改</p>
             <%= button_to '创建质保返修单', create_warranty_repair_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700' %>
@@ -309,9 +309,16 @@
             <% end %>
 
             <% if @repair_order.status == 'quote_over_budget' %>
-              <div class="space-y-2">
+              <div class="space-y-3 p-3 bg-gray-50 rounded">
+                <p class="text-sm font-medium text-gray-700">报价超预算处理</p>
                 <%= link_to '调整报价', new_repair_order_quote_item_path(@repair_order), class: 'w-full block text-center bg-yellow-600 text-white py-2 rounded hover:bg-yellow-700' %>
-                <%= button_to '申请升级审批', approve_quote_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+                <%= form_with url: approve_quote_repair_order_path(@repair_order), method: :patch do |form| %>
+                  <div class="space-y-2">
+                    <%= form.label :notes, '店长审批备注', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入审批意见...' %>
+                    <%= form.submit '申请升级审批(店长)', class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+                  </div>
+                <% end %>
               </div>
             <% end %>
 
@@ -324,14 +331,36 @@
             <% end %>
 
             <% if @repair_order.status == 'repair_completed' %>
-              <div class="space-y-2">
-                <%= button_to '复核通过', review_complete_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-green-600 text-white py-2 rounded hover:bg-green-700' %>
-                <%= button_to '退回修改', review_return_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+              <div class="space-y-3 p-3 bg-gray-50 rounded">
+                <p class="text-sm font-medium text-gray-700">店长复核</p>
+                <%= form_with url: review_complete_repair_order_path(@repair_order), method: :patch do |form| %>
+                  <div class="space-y-2">
+                    <%= form.label :notes, '复核备注', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入复核意见...' %>
+                    <%= form.submit '复核通过', class: 'w-full bg-green-600 text-white py-2 rounded hover:bg-green-700' %>
+                  </div>
+                <% end %>
+                <%= form_with url: review_return_repair_order_path(@repair_order), method: :patch do |form| %>
+                  <div class="space-y-2">
+                    <%= form.label :notes, '退回原因', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入退回原因...' %>
+                    <%= form.submit '退回修改', class: 'w-full bg-red-600 text-white py-2 rounded hover:bg-red-700' %>
+                  </div>
+                <% end %>
               </div>
             <% end %>
 
             <% if @repair_order.status == 'review_approved' %>
-              <%= button_to '完成回访', complete_followup_repair_order_path(@repair_order), method: :patch, class: 'w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700' %>
+              <div class="space-y-3 p-3 bg-gray-50 rounded">
+                <p class="text-sm font-medium text-gray-700">客服回访</p>
+                <%= form_with url: complete_followup_repair_order_path(@repair_order), method: :patch do |form| %>
+                  <div class="space-y-2">
+                    <%= form.label :notes, '回访备注', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= form.text_area :notes, rows: 2, class: 'w-full rounded-md border-gray-300 shadow-sm text-sm', placeholder: '请输入回访结果...' %>
+                    <%= form.submit '完成回访', class: 'w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700' %>
+                  </div>
+                <% end %>
+              </div>
             <% end %>
 
             <% if @repair_order.status == 'follow_up_completed' %>

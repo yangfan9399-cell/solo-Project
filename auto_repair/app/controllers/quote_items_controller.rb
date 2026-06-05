@@ -10,7 +10,7 @@ class QuoteItemsController < ApplicationController
     @quote_item = @repair_order.quote_items.new(quote_item_params)
 
     if @quote_item.save
-      @repair_order.add_history(current_user, '添加报价项目', "#{@quote_item.name}: ¥#{@quote_item.total_price}", 'quote')
+      @repair_order.add_history(service_advisor_user, '添加报价项目', "#{@quote_item.name}: ¥#{@quote_item.total_price}", 'quote')
       redirect_to @repair_order, notice: '报价项目已添加'
     else
       render :new, status: :unprocessable_entity
@@ -25,7 +25,7 @@ class QuoteItemsController < ApplicationController
     @quote_item = @repair_order.quote_items.find(params[:id])
     old_price = @quote_item.total_price
     if @quote_item.update(quote_item_params)
-      @repair_order.add_history(current_user, '更新报价项目', "#{@quote_item.name}: ¥#{old_price} → ¥#{@quote_item.total_price}", 'quote')
+      @repair_order.add_history(service_advisor_user, '更新报价项目', "#{@quote_item.name}: ¥#{old_price} → ¥#{@quote_item.total_price}", 'quote')
       redirect_to @repair_order, notice: '报价项目已更新'
     else
       render :edit, status: :unprocessable_entity
@@ -35,7 +35,7 @@ class QuoteItemsController < ApplicationController
   def destroy
     @quote_item = @repair_order.quote_items.find(params[:id])
     @quote_item.destroy
-    @repair_order.add_history(current_user, '删除报价项目', "#{@quote_item.name}: ¥#{@quote_item.total_price}", 'quote')
+    @repair_order.add_history(service_advisor_user, '删除报价项目', "#{@quote_item.name}: ¥#{@quote_item.total_price}", 'quote')
     redirect_to @repair_order, notice: '报价项目已删除'
   end
 
@@ -55,7 +55,7 @@ class QuoteItemsController < ApplicationController
     params.require(:quote_item).permit(:item_type, :name, :description, :quantity, :unit_price)
   end
 
-  def current_user
-    @current_user ||= User.first
+  def service_advisor_user
+    @service_advisor_user ||= User.find_by(role: 'service_advisor') || User.first
   end
 end

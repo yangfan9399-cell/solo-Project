@@ -8,11 +8,11 @@ class FollowUpsController < ApplicationController
 
   def create
     @follow_up = @repair_order.follow_ups.new(follow_up_params)
-    @follow_up.user = current_customer_service
+    @follow_up.user = customer_service_user
 
     if @follow_up.save
       @repair_order.update(status: 'follow_up_scheduled') unless @repair_order.follow_up_scheduled?
-      @repair_order.add_history(current_customer_service, '安排回访', "方式: #{@follow_up.contact_method}", 'followup')
+      @repair_order.add_history(customer_service_user, '安排回访', "方式: #{@follow_up.contact_method}", 'followup')
       redirect_to @repair_order, notice: '回访已安排'
     else
       render :new, status: :unprocessable_entity
@@ -27,7 +27,7 @@ class FollowUpsController < ApplicationController
     @follow_up = @repair_order.follow_ups.find(params[:id])
     if @follow_up.update(follow_up_params)
       status_text = @follow_up.completed? ? "已完成 - #{@follow_up.satisfaction}" : "已更新"
-      @repair_order.add_history(current_customer_service, '更新回访记录', "#{status_text}: #{@follow_up.feedback}", 'followup')
+      @repair_order.add_history(customer_service_user, '更新回访记录', "#{status_text}: #{@follow_up.feedback}", 'followup')
       redirect_to @repair_order, notice: '回访记录已更新'
     else
       render :edit, status: :unprocessable_entity
@@ -50,7 +50,7 @@ class FollowUpsController < ApplicationController
     params.require(:follow_up).permit(:follow_up_at, :contact_method, :satisfaction, :feedback, :notes, :completed)
   end
 
-  def current_customer_service
-    @current_customer_service ||= User.find_by(role: 'customer_service') || User.first
+  def customer_service_user
+    @customer_service_user ||= User.find_by(role: 'customer_service') || User.first
   end
 end

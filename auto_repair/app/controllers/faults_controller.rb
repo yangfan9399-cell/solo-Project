@@ -8,11 +8,11 @@ class FaultsController < ApplicationController
 
   def create
     @fault = @repair_order.faults.new(fault_params)
-    @fault.reported_by = current_user
+    @fault.reported_by = service_advisor_user
 
     if @fault.save
       @repair_order.update(status: 'fault_recorded') if @repair_order.draft?
-      @repair_order.add_history(current_user, '记录故障', @fault.title, 'fault')
+      @repair_order.add_history(service_advisor_user, '记录故障', @fault.title, 'fault')
       redirect_to @repair_order, notice: '故障已记录'
     else
       render :new, status: :unprocessable_entity
@@ -26,7 +26,7 @@ class FaultsController < ApplicationController
   def update
     @fault = @repair_order.faults.find(params[:id])
     if @fault.update(fault_params)
-      @repair_order.add_history(current_user, '更新故障', "#{@fault.title}: #{@fault.description}", 'fault')
+      @repair_order.add_history(service_advisor_user, '更新故障', "#{@fault.title}: #{@fault.description}", 'fault')
       redirect_to @repair_order, notice: '故障已更新'
     else
       render :edit, status: :unprocessable_entity
@@ -36,7 +36,7 @@ class FaultsController < ApplicationController
   def destroy
     @fault = @repair_order.faults.find(params[:id])
     @fault.destroy
-    @repair_order.add_history(current_user, '删除故障', @fault.title, 'fault')
+    @repair_order.add_history(service_advisor_user, '删除故障', @fault.title, 'fault')
     redirect_to @repair_order, notice: '故障已删除'
   end
 
@@ -56,7 +56,7 @@ class FaultsController < ApplicationController
     params.require(:fault).permit(:title, :description, :severity, :category)
   end
 
-  def current_user
-    @current_user ||= User.first
+  def service_advisor_user
+    @service_advisor_user ||= User.find_by(role: 'service_advisor') || User.first
   end
 end
