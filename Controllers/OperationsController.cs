@@ -509,7 +509,11 @@ public class OperationsController : Controller
     public IActionResult CompleteReplenishment(int id)
     {
         var set = _context.InstrumentSets
+            .Include(s => s.Department)
+            .Include(s => s.Items)
+                .ThenInclude(i => i.Instrument)
             .Include(s => s.AnomalyRecords)
+                .ThenInclude(a => a.ReportedByUser)
             .FirstOrDefault(s => s.Id == id);
 
         if (set == null)
@@ -517,36 +521,123 @@ public class OperationsController : Controller
             return NotFound();
         }
 
-        var anomaly = set.AnomalyRecords
-            .FirstOrDefault(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems);
-
-        if (anomaly != null)
+        if (set.Status != InstrumentSetStatus.MissingItems)
         {
-            var duration = DateTime.Now - anomaly.ReportedAt;
-            anomaly.Resolved = true;
-            anomaly.ResolvedAt = DateTime.Now;
-            anomaly.ResolutionNotes = "补包完成，器械已补齐";
-            anomaly.ReplenishmentDurationMinutes = (int)duration.TotalMinutes;
+            ModelState.AddModelError(string.Empty, "只有缺件状态的器械包才能执行补包完成操作。");
+            return View("Error");
         }
 
-        var oldStatus = set.Status;
-        set.Status = InstrumentSetStatus.Replenished;
-        set.UpdatedAt = DateTime.Now;
+        var missingItems = set.Items
+            .Where(i => i.ActualQuantity < i.ExpectedQuantity)
+            .Select(i => new InstrumentItemViewModel
+            {
+                InstrumentId = i.InstrumentId,
+                InstrumentName = i.Instrument.Name + " - " + (i.Instrument.Specification ?? ""),
+                ExpectedQuantity = i.ExpectedQuantity,
+                ActualQuantity = i.ActualQuantity
+            })
+            .ToList();
 
-        var supplyUser = _context.Users
-            .FirstOrDefault(u => u.Role == UserRole.SupplyStaff);
+        var activeAnomaly = set.AnomalyRecords
+            .FirstOrDefault(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems);
+
+        var viewModel = new CompleteReplenishmentViewModel
+        {
+            InstrumentSetId = set.Id,
+            SetCode = set.SetCode,
+            SetName = set.Name,
+            DepartmentName = set.Department.Name,
+            MissingItems = missingItems,
+            TotalMissingCount = missingItems.Sum(i => i.ExpectedQuantity - i.ActualQuantity),
+            ReportedAt = activeAnomaly?.ReportedAt ?? set.UpdatedAt,
+            SupplyStaff = _context.Users
+                .Where(u => u.Role == UserRole.SupplyStaff)
+                .OrderBy(u => u.Name)
+                .ToList()
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult CompleteReplenishment(CompleteReplenishmentViewModel model)
+    {
+        var set = _context.InstrumentSets
+            .Include(s => s.Items)
+            .Include(s => s.AnomalyRecords)
+            .FirstOrDefault(s => s.Id == model.InstrumentSetId);
+
+        if (set == null)
+        {
+            return NotFound();
+        }
+
+        if (set.Status != InstrumentSetStatus.MissingItems)
+        {
+            ModelState.AddModelError(string.Empty, "只有缺件状态的器械包才能执行补包完成操作。");
+            model.MissingItems = set.Items
+                .Where(i => i.ActualQuantity < i.ExpectedQuantity)
+                .Select(i => new InstrumentItemViewModel
+                {
+                    InstrumentId = i.InstrumentId,
+                    InstrumentName = i.Instrument.Name,
+                    ExpectedQuantity = i.ExpectedQuantity,
+                    ActualQuantity = i.ActualQuantity
+                })
+                .ToList();
+            model.SupplyStaff = _context.Users
+                .Where(u => u.Role == UserRole.SupplyStaff)
+                .ToList();
+            return View(model);
+        }
+
+        var now = DateTime.Now;
+        var oldStatus = set.Status;
+
+        var missingItemCount = set.Items.Count(i => i.ActualQuantity < i.ExpectedQuantity);
+        var totalMissingQuantity = set.Items.Sum(i => i.ExpectedQuantity - i.ActualQuantity);
+
+        foreach (var item in set.Items)
+        {
+            if (item.ActualQuantity < item.ExpectedQuantity)
+            {
+                item.ActualQuantity = item.ExpectedQuantity;
+            }
+        }
+
+        var activeAnomalies = set.AnomalyRecords
+            .Where(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems)
+            .ToList();
+
+        foreach (var anomaly in activeAnomalies)
+        {
+            var duration = now - anomaly.ReportedAt;
+            anomaly.Resolved = true;
+            anomaly.ResolvedAt = now;
+            anomaly.ResolutionNotes = string.IsNullOrEmpty(model.ResolutionNotes)
+                ? "补包完成，所有缺件器械已补齐"
+                : model.ResolutionNotes;
+            anomaly.ReplenishmentDurationMinutes = (int)Math.Round(duration.TotalMinutes);
+        }
+
+        set.Status = InstrumentSetStatus.Replenished;
+        set.UpdatedAt = now;
 
         var trackingRecord = new TrackingRecord
         {
             InstrumentSetId = set.Id,
             Action = TrackingAction.ReplenishmentCompleted,
-            UserId = supplyUser?.Id ?? 1,
-            ActionTime = DateTime.Now,
-            Remarks = "补包完成，器械已补齐",
+            UserId = model.CompletedByUserId,
+            ActionTime = now,
+            Remarks = string.IsNullOrEmpty(model.Remarks)
+                ? $"补包完成，共补齐 {missingItemCount} 种器械，合计 {totalMissingQuantity} 件"
+                : model.Remarks,
             FromStatus = oldStatus,
             ToStatus = InstrumentSetStatus.Replenished
         };
         _context.TrackingRecords.Add(trackingRecord);
+
         _context.SaveChanges();
 
         return RedirectToAction(nameof(InstrumentSetsController.Details), "InstrumentSets", new { id = set.Id });

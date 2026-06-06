@@ -1,0 +1,147 @@
+@model CompleteReplenishmentViewModel
+@{
+    ViewData["Title"] = "补包完成确认";
+}
+
+<h1 class="page-title">补包完成确认</h1>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="dashboard-card">
+            <h2 class="card-title">器械包信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>编号</label>
+                    <div class="info-value"><code>@Model.SetCode</code></div>
+                </div>
+                <div class="info-item">
+                    <label>名称</label>
+                    <div class="info-value"><strong>@Model.SetName</strong></div>
+                </div>
+                <div class="info-item">
+                    <label>所属科室</label>
+                    <div class="info-value">@Model.DepartmentName</div>
+                </div>
+                <div class="info-item">
+                    <label>缺件上报时间</label>
+                    <div class="info-value">@Model.ReportedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">
+                待补齐器械清单
+                <span class="badge badge-warning">共 @Model.MissingItems.Count 种，缺 @Model.TotalMissingCount 件</span>
+            </h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>器械名称</th>
+                            <th>应有数量</th>
+                            <th>实有数量</th>
+                            <th>需补齐</th>
+                            <th>补包后</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.MissingItems)
+                        {
+                            var missing = item.ExpectedQuantity - item.ActualQuantity;
+                            <tr class="row-danger">
+                                <td><strong>@item.InstrumentName</strong></td>
+                                <td>@item.ExpectedQuantity</td>
+                                <td><span class="text-danger"><strong>@item.ActualQuantity</strong></span></td>
+                                <td><span class="badge badge-danger">+@missing</span></td>
+                                <td><span class="badge badge-success">@item.ExpectedQuantity (齐全)</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>合计</strong></td>
+                            <td><strong>@Model.MissingItems.Sum(i => i.ExpectedQuantity)</strong></td>
+                            <td><strong>@Model.MissingItems.Sum(i => i.ActualQuantity)</strong></td>
+                            <td><strong class="text-danger">@Model.TotalMissingCount 件</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-side">
+        <div class="dashboard-card">
+            <h2 class="card-title">补包完成确认</h2>
+            <div class="alert alert-info">
+                <strong>请确认：</strong>
+                <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0;">
+                    <li>所有缺件器械已补齐</li>
+                    <li>器械检查无误</li>
+                    <li>补包后器械数量与应有数量一致</li>
+                </ul>
+            </div>
+
+            <form asp-controller="Operations" asp-action="CompleteReplenishment" method="post" class="form-styled">
+                <input type="hidden" asp-for="InstrumentSetId" />
+                <input type="hidden" asp-for="SetCode" />
+                <input type="hidden" asp-for="SetName" />
+                <input type="hidden" asp-for="DepartmentName" />
+                <input type="hidden" asp-for="TotalMissingCount" />
+                <input type="hidden" asp-for="ReportedAt" />
+
+                <div class="form-group">
+                    <label>补包操作人 *</label>
+                    <select asp-for="CompletedByUserId" class="form-control">
+                        @if (Model.SupplyStaff != null)
+                        {
+                            @foreach (var user in Model.SupplyStaff)
+                            {
+                                <option value="@user.Id">@user.Name (@user.EmployeeId)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>处理说明</label>
+                    <textarea asp-for="ResolutionNotes" class="form-control" rows="3" placeholder="补包处理说明（可选）"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea asp-for="Remarks" class="form-control" rows="2" placeholder="其他备注（可选）"></textarea>
+                </div>
+
+                <div class="form-actions" style="flex-direction: column;">
+                    <button type="submit" class="btn btn-success btn-lg" style="width: 100%;">
+                        ✓ 确认补包完成
+                    </button>
+                    <a asp-controller="InstrumentSets" asp-action="Details" asp-route-id="@Model.InstrumentSetId" class="btn btn-outline" style="width: 100%;">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">补包后状态变化</h2>
+            <div style="display: flex; align-items: center; justify-content: space-around; padding: 1rem 0;">
+                <div style="text-align: center;">
+                    <span class="status-badge status-missing" style="font-size: 0.875rem; padding: 0.5rem 0.75rem;">缺件</span>
+                    <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">当前状态</div>
+                </div>
+                <div style="font-size: 1.5rem; color: var(--gray-400);">→</div>
+                <div style="text-align: center;">
+                    <span class="status-badge status-replenished" style="font-size: 0.875rem; padding: 0.5rem 0.75rem;">已补包</span>
+                    <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">补包后状态</div>
+                </div>
+            </div>
+            <p class="text-muted" style="font-size: 0.8125rem; text-align: center; margin: 0;">
+                补包完成后，所有缺件器械数量将更新为应有数量，异常记录将标记为已解决。
+            </p>
+        </div>
+    </div>
+</div>

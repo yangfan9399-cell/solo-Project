@@ -117,3 +117,28 @@ public class AnomalyReportViewModel
     [Required]
     public int ReportedByUserId { get; set; }
 }
+
+public class CompleteReplenishmentViewModel
+{
+    public int InstrumentSetId { get; set; }
+    public string SetCode { get; set; } = string.Empty;
+    public string SetName { get; set; } = string.Empty;
+    public string DepartmentName { get; set; } = string.Empty;
+
+    public List<InstrumentItemViewModel> MissingItems { get; set; } = new();
+
+    public int TotalMissingCount { get; set; }
+
+    public DateTime ReportedAt { get; set; }
+
+    [Required]
+    public int CompletedByUserId { get; set; }
+
+    [MaxLength(500)]
+    public string? Remarks { get; set; }
+
+    [MaxLength(500)]
+    public string? ResolutionNotes { get; set; }
+
+    public List<User>? SupplyStaff { get; set; }
+}
