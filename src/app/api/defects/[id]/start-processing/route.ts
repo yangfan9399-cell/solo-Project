@@ -45,11 +45,13 @@ export async function POST(
     const now = new Date();
     const statusBefore = defect.status;
 
+    let historyAction: any = "start_processing";
     let historyDescription = "开始现场检修";
     if (statusBefore === "rejected") {
       historyDescription = "验收退回，重新开始处理";
     } else if (statusBefore === "awaiting_parts") {
-      historyDescription = "备件已到，继续现场检修";
+      historyAction = "parts_arrived";
+      historyDescription = "备件到货，继续现场检修";
     }
 
     const [updatedDefect] = await db
@@ -64,7 +66,7 @@ export async function POST(
 
     await db.insert(defectHistories).values({
       defectId: id,
-      action: "start_processing",
+      action: historyAction,
       userId,
       userName: user?.name,
       description: historyDescription,

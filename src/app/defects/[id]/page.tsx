@@ -271,7 +271,16 @@ export default function DefectDetailPage() {
     defect?.status === "registered";
   const canStartProcess =
     currentUser?.role === "maintenance_worker" &&
-    (defect?.status === "assigned" || defect?.status === "rejected");
+    (defect?.status === "assigned" ||
+      defect?.status === "awaiting_parts" ||
+      defect?.status === "rejected");
+
+  const startProcessLabel =
+    defect?.status === "awaiting_parts"
+      ? "继续处理"
+      : defect?.status === "rejected"
+      ? "重新处理"
+      : "开始处理";
   const canSubmitResult =
     currentUser?.role === "maintenance_worker" &&
     defect?.status === "processing";
@@ -358,7 +367,7 @@ export default function DefectDetailPage() {
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
               >
                 <Play className="h-4 w-4" />
-                开始处理
+                {startProcessLabel}
               </button>
             )}
             {canSubmitResult && (
