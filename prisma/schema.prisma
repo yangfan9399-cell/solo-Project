@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now())
+
+  registeredShipments Shipment[] @relation("WarehouseClerk")
+  judgedDeviations   Deviation[] @relation("QualityManager")
+  reviewedDisposals Disposal[] @relation("Reviewer")
+  historyLogs       HistoryLog[]
+}
+
+model Medicine {
+  id           String   @id @default(cuid())
+  name         String
+  category     String
+  specification String
+  manufacturer String
+  minTemp      Float
+  maxTemp      Float
+  createdAt    DateTime @default(now())
+
+  shipments Shipment[]
+}
+
+model Carrier {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  contact   String?
+  createdAt DateTime @default(now())
+
+  shipments Shipment[]
+}
+
+model Probe {
+  id           String   @id @default(cuid())
+  serialNumber String   @unique
+  model        String
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now())
+
+  shipments          Shipment[]
+  temperatureReadings TemperatureReading[]
+}
+
+model Shipment {
+  id               String   @id @default(cuid())
+  batchNumber      String   @unique
+  medicineId       String
+  medicine         Medicine @relation(fields: [medicineId], references: [id])
+  quantity         Int
+  carrierId        String
+  carrier          Carrier  @relation(fields: [carrierId], references: [id])
+  probeId          String
+  probe            Probe    @relation(fields: [probeId], references: [id])
+  arrivalTime      DateTime
+  warehouseClerkId String
+  warehouseClerk   User     @relation("WarehouseClerk", fields: [warehouseClerkId], references: [id])
+  status           String   @default("REGISTERED")
+  currentHandlerId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  temperatureReadings TemperatureReading[]
+  deviations        Deviation[]
+  disposals       Disposal[]
+  historyLogs     HistoryLog[]
+}
+
+model TemperatureReading {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  probeId    String
+  probe      Probe    @relation(fields: [probeId], references: [id])
+  timestamp  DateTime
+  temperature Float?
+  isOffline  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([shipmentId, timestamp])
+}
+
+model Deviation {
+  id               String   @id @default(cuid())
+  shipmentId       String
+  shipment         Shipment @relation(fields: [shipmentId], references: [id])
+  type             String   @default("NONE")
+  level            String   @default("NONE")
+  description      String?
+  qualityManagerId String?
+  qualityManager   User?    @relation("QualityManager", fields: [qualityManagerId], references: [id])
+  judgment         String?
+  judgedAt         DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Disposal {
+  id           String   @id @default(cuid())
+  shipmentId   String
+  shipment     Shipment @relation(fields: [shipmentId], references: [id])
+  action       String   @default("PENDING")
+  reviewerId   String?
+  reviewer     User?    @relation("Reviewer", fields: [reviewerId], references: [id])
+  comment      String?
+  evidenceUrl String?
+  handledAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model HistoryLog {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  action     String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  comment    String?
+  timestamp  DateTime @default(now())
+
+  @@index([shipmentId, timestamp])
+}
