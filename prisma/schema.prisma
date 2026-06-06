@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -17,10 +17,11 @@ model User {
   role      String
   createdAt DateTime @default(now())
 
-  registeredShipments Shipment[] @relation("WarehouseClerk")
-  judgedDeviations   Deviation[] @relation("QualityManager")
-  reviewedDisposals Disposal[] @relation("Reviewer")
-  historyLogs       HistoryLog[]
+  registeredShipments       Shipment[] @relation("WarehouseClerk")
+  judgedDeviations         Deviation[] @relation("QualityManager")
+  reviewedDisposals        Disposal[] @relation("Reviewer")
+  currentHandlerShipments  Shipment[] @relation("CurrentHandler")
+  historyLogs              HistoryLog[]
 }
 
 model Medicine {
@@ -71,6 +72,7 @@ model Shipment {
   warehouseClerk   User     @relation("WarehouseClerk", fields: [warehouseClerkId], references: [id])
   status           String   @default("REGISTERED")
   currentHandlerId String?
+  currentHandler   User?    @relation("CurrentHandler", fields: [currentHandlerId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

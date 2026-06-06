@@ -70,6 +70,7 @@ async function main() {
 
   const warehouseClerk = await prisma.user.create({
     data: {
+      id: 'user-clerk',
       name: '张仓库',
       email: 'clerk@example.com',
       role: Role.WAREHOUSE_CLERK,
@@ -78,6 +79,7 @@ async function main() {
 
   const qualityManager = await prisma.user.create({
     data: {
+      id: 'user-qa',
       name: '李质量',
       email: 'qa@example.com',
       role: Role.QUALITY_MANAGER,
@@ -86,6 +88,7 @@ async function main() {
 
   const reviewer = await prisma.user.create({
     data: {
+      id: 'user-reviewer',
       name: '王复核',
       email: 'reviewer@example.com',
       role: Role.REVIEWER,
@@ -146,6 +149,7 @@ async function main() {
 
   const carrier1 = await prisma.carrier.create({
     data: {
+      id: 'carrier-sf',
       name: '顺丰冷运',
       contact: '400-811-1111',
     },
@@ -153,6 +157,7 @@ async function main() {
 
   const carrier2 = await prisma.carrier.create({
     data: {
+      id: 'carrier-jd',
       name: '京东冷链',
       contact: '400-000-8888',
     },
@@ -160,6 +165,7 @@ async function main() {
 
   const carrier3 = await prisma.carrier.create({
     data: {
+      id: 'carrier-zto',
       name: '中通冷链',
       contact: '400-827-0270',
     },
@@ -169,6 +175,7 @@ async function main() {
 
   const probe1 = await prisma.probe.create({
     data: {
+      id: 'probe-001',
       serialNumber: 'PROBE-001',
       model: 'TempTale 4',
       status: ProbeStatus.ACTIVE,
@@ -177,6 +184,7 @@ async function main() {
 
   const probe2 = await prisma.probe.create({
     data: {
+      id: 'probe-002',
       serialNumber: 'PROBE-002',
       model: 'TempTale 4',
       status: ProbeStatus.ACTIVE,
@@ -185,6 +193,7 @@ async function main() {
 
   const probe3 = await prisma.probe.create({
     data: {
+      id: 'probe-003',
       serialNumber: 'PROBE-003',
       model: 'LogTag TRIL-8',
       status: ProbeStatus.OFFLINE,
@@ -193,6 +202,7 @@ async function main() {
 
   const probe4 = await prisma.probe.create({
     data: {
+      id: 'probe-004',
       serialNumber: 'PROBE-004',
       model: 'LogTag TRIL-8',
       status: ProbeStatus.ACTIVE,
@@ -203,6 +213,7 @@ async function main() {
 
   const shipment1 = await prisma.shipment.create({
     data: {
+      id: 'shipment-001',
       batchNumber: 'BATCH-2026-001',
       medicineId: medicine1.id,
       quantity: 500,
@@ -278,6 +289,7 @@ async function main() {
 
   const shipment2 = await prisma.shipment.create({
     data: {
+      id: 'shipment-002',
       batchNumber: 'BATCH-2026-002',
       medicineId: medicine2.id,
       quantity: 1000,
@@ -357,6 +369,7 @@ async function main() {
 
   const shipment3 = await prisma.shipment.create({
     data: {
+      id: 'shipment-003',
       batchNumber: 'BATCH-2026-003',
       medicineId: medicine3.id,
       quantity: 200,
@@ -439,6 +452,7 @@ async function main() {
 
   const shipment4 = await prisma.shipment.create({
     data: {
+      id: 'shipment-004',
       batchNumber: 'BATCH-2026-004',
       medicineId: medicine4.id,
       quantity: 300,
@@ -514,6 +528,7 @@ async function main() {
 
   const shipment5 = await prisma.shipment.create({
     data: {
+      id: 'shipment-005',
       batchNumber: 'BATCH-2026-005',
       medicineId: medicine1.id,
       quantity: 800,
@@ -595,6 +610,7 @@ async function main() {
 
   const shipment6 = await prisma.shipment.create({
     data: {
+      id: 'shipment-006',
       batchNumber: 'BATCH-2026-006',
       medicineId: medicine2.id,
       quantity: 500,
