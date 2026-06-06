@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🔧 工装夹具管控系统</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="/" class="nav-link" th:classappend="${#request.requestURI == '/' ? 'active' : ''}">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/fixtures" class="nav-link" th:classappend="${#request.requestURI.startsWith('/fixtures') ? 'active' : ''}">夹具管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/borrows" class="nav-link" th:classappend="${#request.requestURI.startsWith('/borrows') ? 'active' : ''}">借用管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/calibration" class="nav-link" th:classappend="${#request.requestURI.startsWith('/calibration') ? 'active' : ''}">校准管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/analysis" class="nav-link" th:classappend="${#request.requestURI.startsWith('/analysis') ? 'active' : ''}">复盘分析</a>
+                </li>
+            </ul>
+        </div>
+    </nav>

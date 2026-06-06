@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>停线影响分析 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">停线影响分析</h1>
+        <p class="page-subtitle">夹具损坏造成的停线影响分析</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" name="startDate" class="form-control" th:value="${#dates.format(startDate, 'yyyy-MM-dd')}">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">结束日期</label>
+                    <input type="date" name="endDate" class="form-control" th:value="${#dates.format(endDate, 'yyyy-MM-dd')}">
+                </div>
+                <button type="submit" class="btn btn-primary">查询</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <a href="/analysis" class="tab">总览</a>
+        <a href="/analysis/by-production-line" class="tab">按产线</a>
+        <a href="/analysis/by-exception" class="tab">按异常原因</a>
+        <a href="/analysis/downtime-impact" class="tab active">停线影响</a>
+    </div>
+
+    <div class="stat-cards">
+        <div class="stat-card danger">
+            <div class="stat-value" th:text="${stats.totalDowntimeHours}">0</div>
+            <div class="stat-label">总停线时长 (小时)</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">按产线停线统计</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>产线</th>
+                    <th>损坏次数</th>
+                    <th>停线总时长 (小时)</th>
+                    <th>平均每次停线</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stat : ${stats.downtimeByLine}">
+                    <td th:text="${stat[0]}"></td>
+                    <td th:text="${stat[1]}">0</td>
+                    <td class="text-danger" th:text="${stat[2] + ' 小时'}">0 小时</td>
+                    <td>-</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(stats.downtimeByLine)}">
+                    <td colspan="4" class="empty-state">
+                        <div class="empty-state-text">暂无停线记录</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">按损坏类型停线统计</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>损坏类型</th>
+                    <th>次数</th>
+                    <th>停线总时长 (小时)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stat : ${stats.downtimeByDamageType}">
+                    <td th:text="${stat[0]}"></td>
+                    <td th:text="${stat[1]}">0</td>
+                    <td class="text-danger" th:text="${stat[2] + ' 小时'}">0 小时</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(stats.downtimeByDamageType)}">
+                    <td colspan="3" class="empty-state">
+                        <div class="empty-state-text">暂无数据</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">停线事件详情</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>发生时间</th>
+                    <th>夹具</th>
+                    <th>产线</th>
+                    <th>损坏类型</th>
+                    <th>损坏描述</th>
+                    <th>停线时长</th>
+                    <th>维修费用</th>
+                    <th>处理措施</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="damage : ${stats.damageRecords}">
+                    <td th:text="${damage.occurrenceTime != null ? #dates.format(damage.occurrenceTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                    <td><a th:href="@{'/fixtures/' + ${damage.fixture.id}}" th:text="${damage.fixture.fixtureNo}"></a></td>
+                    <td th:text="${damage.productionLine}"></td>
+                    <td>
+                        <span class="badge badge-warning" th:text="${damage.damageType}"></span>
+                    </td>
+                    <td th:text="${damage.description}"></td>
+                    <td class="text-danger" th:text="${damage.downtimeHours != null ? damage.downtimeHours + ' 小时' : '-'}"></td>
+                    <td th:text="${damage.repairCost != null ? '¥' + damage.repairCost : '-'}"></td>
+                    <td th:text="${damage.handlingMeasures ?: '-'}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(stats.damageRecords)}">
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-text">暂无停线事件</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

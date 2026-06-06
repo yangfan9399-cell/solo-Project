@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超期借用 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a href="/borrows" style="color: #666; text-decoration: none;">← 返回列表</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;">借用超期列表</h1>
+        <p class="page-subtitle">所有超期未归还的借用记录</p>
+    </div>
+
+    <div class="alert alert-danger">
+        <strong>注意：</strong>以下借用记录已超过预计归还日期，请尽快安排归还。
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>夹具</th>
+                    <th>申请人</th>
+                    <th>产线</th>
+                    <th>借用日期</th>
+                    <th>预计归还</th>
+                    <th>超期天数</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="borrow : ${overdueBorrows}">
+                    <td th:text="${borrow.id}"></td>
+                    <td>
+                        <a th:href="@{'/fixtures/' + ${borrow.fixture.id}}" th:text="${borrow.fixture.fixtureNo}"></a>
+                    </td>
+                    <td th:text="${borrow.applicant}"></td>
+                    <td th:text="${borrow.productionLine}"></td>
+                    <td th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger" th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger">
+                        <strong th:text="${borrow.overdueDays + ' 天'}"></strong>
+                    </td>
+                    <td>
+                        <a th:href="@{'/borrows/' + ${borrow.id}}" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(overdueBorrows)}">
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-text">暂无超期借用记录</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

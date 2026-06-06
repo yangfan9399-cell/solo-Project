@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${fixture.id != null} ? '编辑夹具' : '新增夹具'">新增夹具 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a href="/fixtures" style="color: #666; text-decoration: none;">← 返回列表</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;" th:text="${fixture.id != null} ? '编辑夹具' : '新增夹具'"></h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${fixture.id != null} ? @{'/fixtures/' + ${fixture.id} + '/edit'} : @{/fixtures}"
+                  method="post" th:object="${fixture}">
+
+                <h3 class="section-title">基本信息</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">夹具编号 *</label>
+                        <input type="text" class="form-control" th:field="*{fixtureNo}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">夹具名称 *</label>
+                        <input type="text" class="form-control" th:field="*{fixtureName}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">夹具类型 *</label>
+                        <select class="form-control" th:field="*{fixtureType}" required>
+                            <option value="">请选择</option>
+                            <option value="定位夹具">定位夹具</option>
+                            <option value="夹紧夹具">夹紧夹具</option>
+                            <option value="检测夹具">检测夹具</option>
+                            <option value="装配夹具">装配夹具</option>
+                            <option value="焊接夹具">焊接夹具</option>
+                            <option value="冲压夹具">冲压夹具</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">适用工序</label>
+                        <input type="text" class="form-control" th:field="*{applicableProcess}" placeholder="如：CNC加工、组装工序等">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">状态</label>
+                        <select class="form-control" th:field="*{status}">
+                            <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.description}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">存放位置</label>
+                        <input type="text" class="form-control" th:field="*{location}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">责任人</label>
+                        <input type="text" class="form-control" th:field="*{responsiblePerson}">
+                    </div>
+                </div>
+
+                <h3 class="section-title" style="margin-top: 1.5rem;">校准信息</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">校准证书号</label>
+                        <input type="text" class="form-control" th:field="*{calibrationCertificate}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">上次校准日期</label>
+                        <input type="date" class="form-control" th:field="*{lastCalibrationDate}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">下次校准日期</label>
+                        <input type="date" class="form-control" th:field="*{nextCalibrationDate}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <textarea class="form-control" rows="3" th:field="*{description}"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="/fixtures" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">工作台</h1>
+        <p class="page-subtitle">工装夹具借用与校准到期管控总览</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="stat-cards">
+        <div class="stat-card info">
+            <div class="stat-value" th:text="${totalFixtures}">0</div>
+            <div class="stat-label">夹具总数</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-value" th:text="${availableFixtures}">0</div>
+            <div class="stat-label">可用数量</div>
+        </div>
+        <div class="stat-card primary">
+            <div class="stat-value" th:text="${borrowedFixtures}">0</div>
+            <div class="stat-label">借用中</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-value" th:text="${maintenanceFixtures}">0</div>
+            <div class="stat-label">维修中</div>
+        </div>
+        <div class="stat-card secondary" style="border-left-color: #6c757d;">
+            <div class="stat-value" th:text="${scrappedFixtures}">0</div>
+            <div class="stat-label">已报废</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-value" th:text="${expiredCalibrationCount}">0</div>
+            <div class="stat-label">校准过期</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-value" th:text="${warningCalibrationCount}">0</div>
+            <div class="stat-label">即将到期</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-value" th:text="${overdueBorrowCount}">0</div>
+            <div class="stat-label">借用超期</div>
+        </div>
+    </div>
+
+    <div class="two-column">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">夹具类型分布</h3>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>夹具类型</th>
+                        <th>数量</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="stat : ${fixtureTypeStats}">
+                        <td th:text="${stat[0]}">-</td>
+                        <td th:text="${stat[1]}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">快捷操作</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="/fixtures/add" class="btn btn-primary" style="text-align: center;">➕ 新增夹具</a>
+                    <a href="/borrows/apply" class="btn btn-success" style="text-align: center;">📋 借用申请</a>
+                    <a href="/calibration/add" class="btn btn-info" style="text-align: center; background-color: #17a2b8;">📝 校准记录</a>
+                    <a href="/analysis" class="btn btn-warning" style="text-align: center;">📊 复盘分析</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${expiredCalibrationCount > 0 or warningCalibrationCount > 0 or overdueBorrowCount > 0}">
+        <div class="card-header">
+            <h3 class="card-title">预警提醒</h3>
+        </div>
+        <div class="card-body">
+            <div th:if="${expiredCalibrationCount > 0}" class="alert alert-danger">
+                有 <strong th:text="${expiredCalibrationCount}"></strong> 个夹具校准已过期！
+                <a href="/calibration/expired" style="color: #721c24; font-weight: bold;">立即查看 →</a>
+            </div>
+            <div th:if="${warningCalibrationCount > 0}" class="alert alert-warning">
+                有 <strong th:text="${warningCalibrationCount}"></strong> 个夹具校准即将到期（7天内）
+                <a href="/calibration/warning" style="color: #856404; font-weight: bold;">立即查看 →</a>
+            </div>
+            <div th:if="${overdueBorrowCount > 0}" class="alert alert-danger">
+                有 <strong th:text="${overdueBorrowCount}"></strong> 个借用已超期！
+                <a href="/borrows/overdue" style="color: #721c24; font-weight: bold;">立即查看 →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校准管理 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">校准管理</h1>
+        <p class="page-subtitle">管理夹具校准记录和有效期监控</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="stat-cards">
+        <div class="stat-card danger">
+            <div class="stat-value" th:text="${#lists.size(expiredFixtures)}">0</div>
+            <div class="stat-label">校准过期</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-value" th:text="${#lists.size(warningFixtures)}">0</div>
+            <div class="stat-label">即将到期（7天内）</div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${not #lists.isEmpty(expiredFixtures)}">
+        <div class="card-header" style="background-color: #fff5f5;">
+            <h3 class="card-title" style="color: #dc3545;">⚠️ 校准过期夹具</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>夹具编号</th>
+                    <th>夹具名称</th>
+                    <th>类型</th>
+                    <th>下次校准日期</th>
+                    <th>过期天数</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fixture : ${expiredFixtures}">
+                    <td><a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a></td>
+                    <td th:text="${fixture.fixtureName}"></td>
+                    <td th:text="${fixture.fixtureType}"></td>
+                    <td class="text-danger" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger">
+                        <strong th:text="${fixture.calibrationExpiredDays + ' 天'}"></strong>
+                    </td>
+                    <td>
+                        <span class="badge badge-danger">已过期</span>
+                    </td>
+                    <td>
+                        <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+                              onsubmit="return confirm('确认送检此夹具？');">
+                            <button type="submit" class="btn btn-warning btn-sm">立即送检</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" th:if="${not #lists.isEmpty(warningFixtures)}">
+        <div class="card-header" style="background-color: #fffbeb;">
+            <h3 class="card-title" style="color: #ffc107;">⏰ 校准即将到期</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>夹具编号</th>
+                    <th>夹具名称</th>
+                    <th>类型</th>
+                    <th>下次校准日期</th>
+                    <th>剩余天数</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fixture : ${warningFixtures}">
+                    <td><a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a></td>
+                    <td th:text="${fixture.fixtureName}"></td>
+                    <td th:text="${fixture.fixtureType}"></td>
+                    <td class="text-warning" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td>
+                        <span th:text="${fixture.daysUntilCalibration + ' 天'}"></span>
+                    </td>
+                    <td>
+                        <span class="badge badge-warning">即将到期</span>
+                    </td>
+                    <td>
+                        <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+                              onsubmit="return confirm('确认安排送检此夹具？');">
+                            <button type="submit" class="btn btn-warning btn-sm">安排送检</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="card-title">校准记录</h3>
+            <a href="/calibration/add" class="btn btn-primary btn-sm">➕ 添加校准记录</a>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>夹具</th>
+                    <th>校准日期</th>
+                    <th>校准机构</th>
+                    <th>证书号</th>
+                    <th>结果</th>
+                    <th>下次校准</th>
+                    <th>校准人</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="record : ${records}">
+                    <td><a th:href="@{'/fixtures/' + ${record.fixture.id}}" th:text="${record.fixture.fixtureNo}"></a></td>
+                    <td th:text="${#dates.format(record.calibrationDate, 'yyyy-MM-dd')}"></td>
+                    <td th:text="${record.calibrationAgency ?: '-'}"></td>
+                    <td th:text="${record.certificateNo ?: '-'}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${record.result.name() == 'PASSED' ? 'badge-success' : 'badge-danger'}"
+                              th:text="${record.result.description}"></span>
+                    </td>
+                    <td th:text="${record.nextCalibrationDate != null ? #dates.format(record.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.calibrator ?: '-'}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(records)}">
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">暂无校准记录</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

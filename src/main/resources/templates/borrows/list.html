@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借用管理 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">借用管理</h1>
+        <p class="page-subtitle">管理夹具借用、归还和质量复核流程</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="card-title">借用记录</h3>
+            <a href="/borrows/apply" class="btn btn-primary btn-sm">➕ 新增申请</a>
+        </div>
+        <div class="card-body">
+            <div class="filter-bar">
+                <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="form-group">
+                        <label class="form-label">状态筛选</label>
+                        <select name="status" class="form-control" onchange="this.form.submit()">
+                            <option value="">全部状态</option>
+                            <option th:each="s : ${statuses}"
+                                    th:value="${s.name()}"
+                                    th:text="${s.description}"
+                                    th:selected="${s.name() == selectedStatus}"></option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>夹具</th>
+                    <th>申请人</th>
+                    <th>产线</th>
+                    <th>借用日期</th>
+                    <th>预计归还</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="borrow : ${borrows}">
+                    <td th:text="${borrow.id}"></td>
+                    <td>
+                        <a th:href="@{'/fixtures/' + ${borrow.fixture.id}}" th:text="${borrow.fixture.fixtureNo}"></a>
+                    </td>
+                    <td th:text="${borrow.applicant}"></td>
+                    <td th:text="${borrow.productionLine}"></td>
+                    <td th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td>
+                        <span th:if="${borrow.isOverdue()}" class="text-danger">
+                            <span th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                            (超期)
+                        </span>
+                        <span th:unless="${borrow.isOverdue()}"
+                              th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${borrow.status.name() == 'RETURNED_NORMAL' ? 'badge-success' :
+                                              borrow.status.name() == 'BORROWED' ? 'badge-primary' :
+                                              borrow.status.name() == 'OVERDUE' ? 'badge-danger' :
+                                              borrow.status.name() == 'RETURNED_DAMAGED' ? 'badge-warning' :
+                                              borrow.status.name() == 'PENDING_OUT' ? 'badge-info' :
+                                              borrow.status.name() == 'PENDING_RETURN' ? 'badge-warning' : 'badge-secondary'}"
+                              th:text="${borrow.status.description}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/borrows/' + ${borrow.id}}" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(borrows)}">
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">暂无借用记录</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

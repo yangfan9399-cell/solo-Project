@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夹具管理 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">夹具管理</h1>
+        <p class="page-subtitle">管理所有工装夹具的基本信息</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="card-title">夹具列表</h3>
+            <a href="/fixtures/add" class="btn btn-primary btn-sm">➕ 新增夹具</a>
+        </div>
+        <div class="card-body">
+            <div class="filter-bar">
+                <form method="get" style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div class="form-group">
+                        <label class="form-label">状态筛选</label>
+                        <select name="status" class="form-control" onchange="this.form.submit()">
+                            <option value="">全部状态</option>
+                            <option th:each="s : ${statuses}"
+                                    th:value="${s.name()}"
+                                    th:text="${s.description}"
+                                    th:selected="${s.name() == selectedStatus}"></option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>夹具编号</th>
+                    <th>夹具名称</th>
+                    <th>夹具类型</th>
+                    <th>适用工序</th>
+                    <th>状态</th>
+                    <th>责任人</th>
+                    <th>下次校准日期</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fixture : ${fixtures}">
+                    <td>
+                        <a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a>
+                    </td>
+                    <td th:text="${fixture.fixtureName}"></td>
+                    <td th:text="${fixture.fixtureType}"></td>
+                    <td th:text="${fixture.applicableProcess}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${fixture.status.name() == 'AVAILABLE' ? 'badge-success' :
+                                              fixture.status.name() == 'BORROWED' ? 'badge-primary' :
+                                              fixture.status.name() == 'IN_MAINTENANCE' ? 'badge-warning' :
+                                              fixture.status.name() == 'IN_CALIBRATION' ? 'badge-info' : 'badge-secondary'}"
+                              th:text="${fixture.status.description}"></span>
+                    </td>
+                    <td th:text="${fixture.responsiblePerson}"></td>
+                    <td>
+                        <span th:if="${fixture.isCalibrationExpired()}" class="badge badge-danger">已过期</span>
+                        <span th:elseif="${fixture.isCalibrationWarning()}" class="badge badge-warning">即将到期</span>
+                        <span th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a th:href="@{'/fixtures/' + ${fixture.id}}" class="btn btn-secondary btn-sm">详情</a>
+                            <a th:href="@{'/fixtures/' + ${fixture.id} + '/edit'}" class="btn btn-primary btn-sm">编辑</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(fixtures)}">
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div class="empty-state-text">暂无夹具数据</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

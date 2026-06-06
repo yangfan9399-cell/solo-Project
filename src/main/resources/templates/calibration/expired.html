@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校准过期列表 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a href="/calibration" style="color: #666; text-decoration: none;">← 返回校准管理</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;">校准过期夹具</h1>
+        <p class="page-subtitle">所有校准已过期的夹具清单</p>
+    </div>
+
+    <div class="expired-banner">
+        <div class="expired-banner-text">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div>
+                <strong>注意：校准过期的夹具禁止出库使用！</strong><br>
+                <span style="font-size: 0.85rem;">请及时安排送检，确保产品质量</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>夹具编号</th>
+                    <th>夹具名称</th>
+                    <th>类型</th>
+                    <th>适用工序</th>
+                    <th>下次校准日期</th>
+                    <th>过期天数</th>
+                    <th>责任人</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fixture : ${expiredFixtures}">
+                    <td><a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a></td>
+                    <td th:text="${fixture.fixtureName}"></td>
+                    <td th:text="${fixture.fixtureType}"></td>
+                    <td th:text="${fixture.applicableProcess}"></td>
+                    <td class="text-danger" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger">
+                        <strong th:text="${fixture.calibrationExpiredDays + ' 天'}"></strong>
+                    </td>
+                    <td th:text="${fixture.responsiblePerson ?: '-'}"></td>
+                    <td>
+                        <div class="btn-group">
+                            <a th:href="@{'/fixtures/' + ${fixture.id}}" class="btn btn-secondary btn-sm">详情</a>
+                            <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+                                  onsubmit="return confirm('确认送检此夹具？');">
+                                <button type="submit" class="btn btn-warning btn-sm">立即送检</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(expiredFixtures)}">
+                    <td colspan="8" class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-text">所有夹具校准均在有效期内</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

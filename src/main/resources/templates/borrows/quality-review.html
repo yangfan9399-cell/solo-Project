@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质量复核 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a th:href="@{'/borrows/' + ${borrow.id}}" style="color: #666; text-decoration: none;">← 返回详情</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;">质量复核</h1>
+        <p class="page-subtitle">质量复核人决定夹具的可用、维修或报废</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="detail-grid" style="margin-bottom: 1.5rem;">
+                <div class="detail-item">
+                    <span class="detail-label">夹具编号</span>
+                    <span class="detail-value" th:text="${borrow.fixture.fixtureNo}"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">夹具名称</span>
+                    <span class="detail-value" th:text="${borrow.fixture.fixtureName}"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">申请人</span>
+                    <span class="detail-value" th:text="${borrow.applicant}"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">产线</span>
+                    <span class="detail-value" th:text="${borrow.productionLine}"></span>
+                </div>
+            </div>
+
+            <div th:if="${borrow.damageDescription != null}" class="damage-section" style="margin-bottom: 1.5rem;">
+                <p class="text-danger" style="font-weight: 600; margin-bottom: 0.5rem;">损坏说明</p>
+                <p style="font-size: 0.9rem;" th:text="${borrow.damageDescription}"></p>
+            </div>
+
+            <form method="post" th:action="@{'/borrows/' + ${borrow.id} + '/quality-review'}">
+                <h3 class="section-title">质量复核</h3>
+
+                <div class="form-group">
+                    <label class="form-label">复核人（质量复核人） *</label>
+                    <input type="text" name="qualityReviewer" class="form-control" required placeholder="请输入姓名">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">复核结果 *</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label th:each="result : ${qualityResults}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e8ecf0; border-radius: 6px; cursor: pointer;">
+                            <input type="radio" name="qualityResult" th:value="${result.name()}" required>
+                            <span>
+                                <strong th:text="${result.description}"></strong>
+                                <span class="badge"
+                                      th:classappend="${result.name() == 'USABLE' ? 'badge-success' :
+                                                      result.name() == 'NEED_REPAIR' ? 'badge-warning' : 'badge-danger'}"
+                                      th:if="${result.name() == 'USABLE'}">夹具可正常使用</span>
+                                <span class="badge"
+                                      th:classappend="${result.name() == 'NEED_REPAIR' ? 'badge-warning' : ''}"
+                                      th:if="${result.name() == 'NEED_REPAIR'}">需维修后使用</span>
+                                <span class="badge"
+                                      th:classappend="${result.name() == 'SCRAP' ? 'badge-danger' : ''}"
+                                      th:if="${result.name() == 'SCRAP'}">夹具已报废</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">复核意见</label>
+                    <textarea name="qualityRemark" class="form-control" rows="4" placeholder="请填写复核意见、维修方案或报废原因等"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('确认提交复核结果？此操作不可撤销。');">
+                        提交复核
+                    </button>
+                    <a th:href="@{'/borrows/' + ${borrow.id}}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

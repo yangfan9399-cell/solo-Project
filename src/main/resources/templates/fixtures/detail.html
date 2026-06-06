@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夹具详情 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a href="/fixtures" style="color: #666; text-decoration: none;">← 返回列表</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;" th:text="${fixture.fixtureName}"></h1>
+        <p class="page-subtitle" th:text="${fixture.fixtureNo}"></p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div th:if="${isCalibrationExpired}" class="expired-banner">
+        <div class="expired-banner-text">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div>
+                <strong>校准已过期！</strong><br>
+                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
+            </div>
+        </div>
+        <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+              onsubmit="return confirm('确认送检此夹具吗？');">
+            <button type="submit" class="btn btn-warning" style="background-color: white; color: #dc3545;">立即送检</button>
+        </form>
+    </div>
+
+    <div th:if="${isCalibrationWarning and !isCalibrationExpired}" class="warning-banner">
+        <div class="expired-banner-text">
+            <span style="font-size: 1.5rem;">⏰</span>
+            <div>
+                <strong>校准即将到期！</strong><br>
+                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
+            </div>
+        </div>
+        <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+              onsubmit="return confirm('确认送检此夹具吗？');">
+            <button type="submit" class="btn btn-warning">安排送检</button>
+        </form>
+    </div>
+
+    <div class="two-column">
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">基本信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">夹具编号</span>
+                            <span class="detail-value" th:text="${fixture.fixtureNo}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">夹具名称</span>
+                            <span class="detail-value" th:text="${fixture.fixtureName}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">夹具类型</span>
+                            <span class="detail-value" th:text="${fixture.fixtureType}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">适用工序</span>
+                            <span class="detail-value" th:text="${fixture.applicableProcess}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">状态</span>
+                            <span class="badge"
+                                  th:classappend="${fixture.status.name() == 'AVAILABLE' ? 'badge-success' :
+                                                  fixture.status.name() == 'BORROWED' ? 'badge-primary' :
+                                                  fixture.status.name() == 'IN_MAINTENANCE' ? 'badge-warning' :
+                                                  fixture.status.name() == 'IN_CALIBRATION' ? 'badge-info' : 'badge-secondary'}"
+                                  th:text="${fixture.status.description}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">存放位置</span>
+                            <span class="detail-value" th:text="${fixture.location}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">责任人</span>
+                            <span class="detail-value" th:text="${fixture.responsiblePerson}"></span>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="margin-top: 1rem;">
+                        <span class="detail-label">描述</span>
+                        <span class="detail-value" th:text="${fixture.description}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">校准信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">校准证书号</span>
+                            <span class="detail-value" th:text="${fixture.calibrationCertificate ?: '-'}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">上次校准日期</span>
+                            <span class="detail-value" th:text="${fixture.lastCalibrationDate != null ? #dates.format(fixture.lastCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">下次校准日期</span>
+                            <span class="detail-value"
+                                  th:classappend="${isCalibrationExpired} ? 'text-danger' : (isCalibrationWarning ? 'text-warning' : '')"
+                                  th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <a href="/calibration/add" th:href="@{'/calibration/add?fixtureId=' + ${fixture.id}}" class="btn btn-info btn-sm" style="background-color: #17a2b8;">添加校准记录</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">快捷操作</h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <a th:href="@{'/borrows/apply?fixtureId=' + ${fixture.id}}"
+                           class="btn btn-success btn-sm"
+                           style="text-align: center;"
+                           th:unless="${fixture.status.name() != 'AVAILABLE' or isCalibrationExpired}">
+                            📋 申请借用
+                        </a>
+                        <a th:if="${fixture.status.name() == 'AVAILABLE' or fixture.status.name() == 'IN_MAINTENANCE'}"
+                           th:href="@{'/fixtures/' + ${fixture.id} + '/edit'}"
+                           class="btn btn-primary btn-sm"
+                           style="text-align: center;">
+                            ✏️ 编辑信息
+                        </a>
+                    </div>
+                    <div th:if="${isCalibrationExpired and fixture.status.name() == 'AVAILABLE'}"
+                         class="calibration-section" style="margin-top: 1rem;">
+                        <p class="text-danger" style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                            ⚠️ 校准已过期，禁止借出！
+                        </p>
+                        <p style="font-size: 0.8rem; color: #666;">
+                            请先安排送检，校准合格后方可使用。
+                        </p>
+                        <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
+                              style="margin-top: 0.5rem;"
+                              onsubmit="return confirm('确认送检此夹具吗？');">
+                            <button type="submit" class="btn btn-warning btn-sm" style="width: 100%;">立即送检</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">校准记录</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        <li th:each="record : ${calibrationRecords}" class="timeline-item">
+                            <div class="timeline-date" th:text="${#dates.format(record.calibrationDate, 'yyyy-MM-dd')}"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">
+                                    <span class="badge"
+                                          th:classappend="${record.result.name() == 'PASSED' ? 'badge-success' : 'badge-danger'}"
+                                          th:text="${record.result.description}"></span>
+                                </div>
+                                <div class="timeline-desc">
+                                    证书号：<span th:text="${record.certificateNo ?: '-'}"></span><br>
+                                    校准机构：<span th:text="${record.calibrationAgency ?: '-'}"></span><br>
+                                    <span th:if="${record.nextCalibrationDate != null}">
+                                        下次校准：<span th:text="${#dates.format(record.nextCalibrationDate, 'yyyy-MM-dd')}"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <div th:if="${#lists.isEmpty(calibrationRecords)}" class="empty-state">
+                        <div class="empty-state-text">暂无校准记录</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">借用记录</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>借用日期</th>
+                    <th>申请人</th>
+                    <th>产线</th>
+                    <th>预计归还</th>
+                    <th>实际归还</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="record : ${borrowRecords}">
+                    <td th:text="${record.borrowDate != null ? #dates.format(record.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.applicant}"></td>
+                    <td th:text="${record.productionLine}"></td>
+                    <td th:text="${record.expectedReturnDate != null ? #dates.format(record.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.actualReturnDate != null ? #dates.format(record.actualReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${record.status.name() == 'RETURNED_NORMAL' ? 'badge-success' :
+                                              record.status.name() == 'BORROWED' ? 'badge-primary' :
+                                              record.status.name() == 'OVERDUE' ? 'badge-danger' :
+                                              record.status.name() == 'RETURNED_DAMAGED' ? 'badge-warning' : 'badge-secondary'}"
+                              th:text="${record.status.description}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/borrows/' + ${record.id}}" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(borrowRecords)}">
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-state-text">暂无借用记录</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

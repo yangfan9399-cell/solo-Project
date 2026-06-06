@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>按产线分析 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">按产线分析</h1>
+        <p class="page-subtitle">各产线夹具使用情况统计</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" name="startDate" class="form-control" th:value="${#dates.format(startDate, 'yyyy-MM-dd')}">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">结束日期</label>
+                    <input type="date" name="endDate" class="form-control" th:value="${#dates.format(endDate, 'yyyy-MM-dd')}">
+                </div>
+                <button type="submit" class="btn btn-primary">查询</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <a href="/analysis" class="tab">总览</a>
+        <a href="/analysis/by-production-line" class="tab active">按产线</a>
+        <a href="/analysis/by-exception" class="tab">按异常原因</a>
+        <a href="/analysis/downtime-impact" class="tab">停线影响</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">产线统计详情</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>产线</th>
+                    <th>借用次数</th>
+                    <th>损坏次数</th>
+                    <th>停线总时长 (小时)</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stat : ${stats.damageByLine}">
+                    <td th:text="${stat[0]}"></td>
+                    <td>-</td>
+                    <td th:text="${stat[1]}">0</td>
+                    <td th:text="${stat[2]}">0</td>
+                    <td>
+                        <a th:href="@{'/borrows?productionLine=' + ${stat[0]}}" class="btn btn-secondary btn-sm">查看借用</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(stats.damageByLine)}">
+                    <td colspan="5" class="empty-state">
+                        <div class="empty-state-text">暂无数据</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>

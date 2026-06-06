@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借用详情 - 工装夹具管控系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: _}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <a href="/borrows" style="color: #666; text-decoration: none;">← 返回列表</a>
+        <h1 class="page-title" style="margin-top: 0.5rem;">借用详情 #<span th:text="${borrow.id}"></span></h1>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="two-column">
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">基本信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">申请编号</span>
+                            <span class="detail-value" th:text="${borrow.id}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">状态</span>
+                            <span class="badge"
+                                  th:classappend="${borrow.status.name() == 'RETURNED_NORMAL' ? 'badge-success' :
+                                                  borrow.status.name() == 'BORROWED' ? 'badge-primary' :
+                                                  borrow.status.name() == 'OVERDUE' ? 'badge-danger' :
+                                                  borrow.status.name() == 'RETURNED_DAMAGED' ? 'badge-warning' :
+                                                  borrow.status.name() == 'PENDING_OUT' ? 'badge-info' :
+                                                  borrow.status.name() == 'PENDING_RETURN' ? 'badge-warning' : 'badge-secondary'}"
+                                  th:text="${borrow.status.description}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">申请人</span>
+                            <span class="detail-value" th:text="${borrow.applicant}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">产线</span>
+                            <span class="detail-value" th:text="${borrow.productionLine}"></span>
+                        </div>
+                    </div>
+                    <div class="detail-item" style="margin-top: 1rem;">
+                        <span class="detail-label">借用目的</span>
+                        <span class="detail-value" th:text="${borrow.purpose ?: '-'}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">时间信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">申请时间</span>
+                            <span class="detail-value" th:text="${#dates.format(borrow.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">借出时间</span>
+                            <span class="detail-value" th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">预计归还</span>
+                            <span class="detail-value"
+                                  th:classappend="${borrow.isOverdue() ? 'text-danger' : ''}"
+                                  th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">实际归还</span>
+                            <span class="detail-value" th:text="${borrow.actualReturnDate != null ? #dates.format(borrow.actualReturnDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${borrow.damageDescription != null or borrow.qualityResult != null}">
+                <div class="card-header">
+                    <h3 class="card-title">质量复核</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">质量复核人</span>
+                            <span class="detail-value" th:text="${borrow.qualityReviewer ?: '-'}"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">复核结果</span>
+                            <span class="badge"
+                                  th:if="${borrow.qualityResult != null}"
+                                  th:classappend="${borrow.qualityResult.name() == 'USABLE' ? 'badge-success' :
+                                                  borrow.qualityResult.name() == 'NEED_REPAIR' ? 'badge-warning' : 'badge-danger'}"
+                                  th:text="${borrow.qualityResult.description}"></span>
+                            <span th:unless="${borrow.qualityResult != null}">-</span>
+                        </div>
+                    </div>
+                    <div th:if="${borrow.qualityRemark != null}" class="detail-item" style="margin-top: 1rem;">
+                        <span class="detail-label">复核意见</span>
+                        <span class="detail-value" th:text="${borrow.qualityRemark}"></span>
+                    </div>
+                    <div th:if="${borrow.damageDescription != null}" class="damage-section">
+                        <p class="text-danger" style="font-weight: 600; margin-bottom: 0.5rem;">损坏说明</p>
+                        <p style="font-size: 0.9rem;" th:text="${borrow.damageDescription}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">夹具信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-item" style="margin-bottom: 0.5rem;">
+                        <span class="detail-label">夹具编号</span>
+                        <span class="detail-value">
+                            <a th:href="@{'/fixtures/' + ${borrow.fixture.id}}" th:text="${borrow.fixture.fixtureNo}"></a>
+                        </span>
+                    </div>
+                    <div class="detail-item" style="margin-bottom: 0.5rem;">
+                        <span class="detail-label">夹具名称</span>
+                        <span class="detail-value" th:text="${borrow.fixture.fixtureName}"></span>
+                    </div>
+                    <div class="detail-item" style="margin-bottom: 0.5rem;">
+                        <span class="detail-label">夹具类型</span>
+                        <span class="detail-value" th:text="${borrow.fixture.fixtureType}"></span>
+                    </div>
+                    <div class="detail-item" style="margin-bottom: 0.5rem;">
+                        <span class="detail-label">适用工序</span>
+                        <span class="detail-value" th:text="${borrow.fixture.applicableProcess}"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">当前状态</span>
+                        <span class="badge"
+                              th:classappend="${borrow.fixture.status.name() == 'AVAILABLE' ? 'badge-success' :
+                                              borrow.fixture.status.name() == 'BORROWED' ? 'badge-primary' :
+                                              borrow.fixture.status.name() == 'IN_MAINTENANCE' ? 'badge-warning' :
+                                              borrow.fixture.status.name() == 'IN_CALIBRATION' ? 'badge-info' : 'badge-secondary'}"
+                              th:text="${borrow.fixture.status.description}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">操作</h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <form th:if="${borrow.status.name() == 'PENDING_OUT'}"
+                              method="post" th:action="@{'/borrows/' + ${borrow.id} + '/confirm-outbound'}">
+                            <div class="form-group">
+                                <label class="form-label">设备管理员</label>
+                                <input type="text" name="adminConfirmer" class="form-control" required placeholder="请输入管理员姓名">
+                            </div>
+                            <button type="submit" class="btn btn-success" style="width: 100%;"
+                                    onclick="return confirm('确认出库？');">
+                                ✅ 确认出库
+                            </button>
+                        </form>
+
+                        <form th:if="${borrow.status.name() == 'PENDING_OUT'}"
+                              method="post" th:action="@{'/borrows/' + ${borrow.id} + '/cancel'}">
+                            <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;"
+                                    onclick="return confirm('确认取消申请？');">
+                                ❌ 取消申请
+                            </button>
+                        </form>
+
+                        <a th:if="${borrow.status.name() == 'BORROWED' or borrow.status.name() == 'OVERDUE'}"
+                           th:href="@{'/borrows/' + ${borrow.id} + '/return'}"
+                           class="btn btn-warning" style="text-align: center;">
+                            📤 归还夹具
+                        </a>
+
+                        <a th:if="${borrow.status.name() == 'PENDING_RETURN'}"
+                           th:href="@{'/borrows/' + ${borrow.id} + '/quality-review'}"
+                           class="btn btn-primary" style="text-align: center;">
+                            🔍 质量复核
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${borrow.adminConfirmer != null}">
+                <div class="card-header">
+                    <h3 class="card-title">确认信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-item" style="margin-bottom: 0.5rem;">
+                        <span class="detail-label">出库确认人</span>
+                        <span class="detail-value" th:text="${borrow.adminConfirmer}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: _}"></div>
+</body>
+</html>
