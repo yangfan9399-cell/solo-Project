@@ -8,7 +8,7 @@ import {
   decimal,
   boolean,
   json,
-  enum as pgEnum,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 

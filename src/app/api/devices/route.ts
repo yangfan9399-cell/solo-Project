@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { dataService } from "@/lib/data-service";
+import { db } from "@/db";
+import { devices } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,12 +9,16 @@ export async function GET(request: Request) {
     ? parseInt(searchParams.get("stationId")!)
     : undefined;
 
-  let devices;
+  let result;
   if (stationId) {
-    devices = dataService.getDevicesByStation(stationId);
+    result = await db
+      .select()
+      .from(devices)
+      .where(eq(devices.stationId, stationId))
+      .orderBy(devices.id);
   } else {
-    devices = dataService.getDevices();
+    result = await db.select().from(devices).orderBy(devices.id);
   }
 
-  return NextResponse.json(devices);
+  return NextResponse.json(result);
 }

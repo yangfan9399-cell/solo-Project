@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { dataService } from "@/lib/data-service";
+import { db } from "@/db";
+import { defects, defectHistories, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(
   request: Request,
@@ -10,14 +12,58 @@ export async function POST(
     const id = parseInt(idStr);
     const { userId } = await request.json();
 
-    const defect = dataService.startProcessing(id, userId);
+    const defectResult = await db
+      .select()
+      .from(defects)
+      .where(eq(defects.id, id))
+      .limit(1);
 
-    if (!defect) {
+    if (defectResult.length === 0) {
       return NextResponse.json({ error: "缺陷不存在" }, { status: 404 });
     }
 
-    return NextResponse.json(defect);
+    const defect = defectResult[0];
+
+    if (defect.status !== "assigned" && defect.status !== "awaiting_parts") {
+      return NextResponse.json(
+        { error: "只有已分派或待备件状态的缺陷才能开始处理" },
+        { status: 400 }
+      );
+    }
+
+    const userResult = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const user = userResult[0];
+
+    const now = new Date();
+    const statusBefore = defect.status;
+
+    const [updatedDefect] = await db
+      .update(defects)
+      .set({
+        status: "processing",
+        processingStartedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(defects.id, id))
+      .returning();
+
+    await db.insert(defectHistories).values({
+      defectId: id,
+      action: "start_processing",
+      userId,
+      userName: user?.name,
+      description: "开始现场检修",
+      statusBefore,
+      statusAfter: "processing",
+    });
+
+    return NextResponse.json(updatedDefect);
   } catch (error) {
+    console.error("操作失败:", error);
     return NextResponse.json(
       { error: "操作失败" },
       { status: 400 }
