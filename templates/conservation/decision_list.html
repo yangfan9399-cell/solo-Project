@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}归库决策 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}归库决策{% endblock %}
+
+{% block content %}
+{% if pending_assessments %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h3>待决策</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>损伤等级</th>
+                    <th>鉴定人</th>
+                    <th>鉴定时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in pending_assessments %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ assessment.circulation.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ assessment.circulation.book.call_number }}</div>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if assessment.damage_level == 'minor' %}badge-success
+                            {% elif assessment.damage_level == 'moderate' %}badge-warning
+                            {% elif assessment.damage_level == 'severe' %}badge-danger
+                            {% else %}badge-danger
+                            {% endif %}">
+                            {{ assessment.get_damage_level_display }}
+                        </span>
+                    </td>
+                    <td>{{ assessment.conservator.real_name|default:"-" }}</td>
+                    <td>{{ assessment.assessed_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'conservation:assessment_detail' assessment.pk %}" class="btn btn-sm btn-outline">查看</a>
+                        <a href="{% url 'conservation:decision' assessment.pk %}" class="btn btn-sm btn-primary" style="margin-left: 4px;">决策</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h3>决策记录</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>决策类型</th>
+                    <th>决策人</th>
+                    <th>决策时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for decision in decisions %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ decision.assessment.circulation.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ decision.assessment.circulation.book.call_number }}</div>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if decision.decision_type == 'return_to_stack' %}badge-success
+                            {% elif decision.decision_type == 'send_for_repair' %}badge-warning
+                            {% elif decision.decision_type == 'compensation' %}badge-danger
+                            {% else %}badge-info
+                            {% endif %}">
+                            {{ decision.get_decision_type_display }}
+                        </span>
+                    </td>
+                    <td>{{ decision.supervisor.real_name|default:"-" }}</td>
+                    <td>{{ decision.decided_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'conservation:assessment_detail' decision.assessment.pk %}" class="btn btn-sm btn-outline">详情</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--color-text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">⚖️</div>
+                        暂无决策记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}损伤鉴定 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}损伤鉴定{% endblock %}
+
+{% block content %}
+{% if pending_returns %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h3>待鉴定（已归还）</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>读者</th>
+                    <th>归还时间</th>
+                    <th>归还状况</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in pending_returns %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ log.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ log.book.call_number }}</div>
+                    </td>
+                    <td>{{ log.reservation.user.real_name }}</td>
+                    <td>{{ log.return_time|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if log.condition_in == 'damaged' %}badge-danger
+                            {% elif log.condition_in == 'poor' %}badge-warning
+                            {% else %}badge-success
+                            {% endif %}">
+                            {{ log.get_condition_in_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'conservation:assess' log.pk %}" class="btn btn-sm btn-primary">开始鉴定</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="action-bar">
+    <div style="display: flex; gap: 8px;">
+        <a href="?status=all" class="btn btn-sm {% if current_status == 'all' %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+        <a href="?status=pending" class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-outline{% endif %}">待决策</a>
+        <a href="?status=decided" class="btn btn-sm {% if current_status == 'decided' %}btn-primary{% else %}btn-outline{% endif %}">已决策</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>损伤等级</th>
+                    <th>鉴定人</th>
+                    <th>鉴定时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in assessments %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ assessment.circulation.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ assessment.circulation.book.call_number }}</div>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if assessment.damage_level == 'minor' %}badge-success
+                            {% elif assessment.damage_level == 'moderate' %}badge-warning
+                            {% elif assessment.damage_level == 'severe' %}badge-danger
+                            {% else %}badge-danger
+                            {% endif %}">
+                            {{ assessment.get_damage_level_display }}
+                        </span>
+                    </td>
+                    <td>{{ assessment.conservator.real_name|default:"-" }}</td>
+                    <td>{{ assessment.assessed_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if assessment.decision %}
+                        <span class="badge badge-muted">已决策</span>
+                        {% else %}
+                        <span class="badge badge-warning">待决策</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'conservation:assessment_detail' assessment.pk %}" class="btn btn-sm btn-outline">详情</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--color-text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">🔍</div>
+                        暂无鉴定记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

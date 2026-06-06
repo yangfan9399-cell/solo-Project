@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}珍本阅览预约与损伤鉴定系统{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% if user.is_authenticated %}
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h1>珍本馆藏管理</h1>
+                <p>预约 · 调阅 · 鉴定</p>
+            </div>
+            
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="/" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <span class="nav-icon">📊</span>
+                        <span>首页概览</span>
+                    </a>
+                </li>
+                
+                <li class="nav-section-title">书目管理</li>
+                <li>
+                    <a href="{% url 'catalog:book_list' %}" class="{% if 'catalog' in request.resolver_match.app_name %}active{% endif %}">
+                        <span class="nav-icon">📚</span>
+                        <span>珍本书目</span>
+                    </a>
+                </li>
+                
+                <li class="nav-section-title">预约流通</li>
+                <li>
+                    <a href="{% url 'reservations:reservation_list' %}" class="{% if 'reservations' in request.resolver_match.app_name %}active{% endif %}">
+                        <span class="nav-icon">📝</span>
+                        <span>预约管理</span>
+                    </a>
+                </li>
+                {% if user.is_librarian %}
+                <li>
+                    <a href="{% url 'circulation:checkout_list' %}" class="{% if 'circulation' in request.resolver_match.app_name %}active{% endif %}">
+                        <span class="nav-icon">🔄</span>
+                        <span>流通管理</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-section-title">鉴定保护</li>
+                {% if user.is_conservator %}
+                <li>
+                    <a href="{% url 'conservation:assessment_list' %}" class="{% if 'conservation' in request.resolver_match.app_name %}active{% endif %}">
+                        <span class="nav-icon">🔍</span>
+                        <span>损伤鉴定</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if user.is_supervisor %}
+                <li>
+                    <a href="{% url 'conservation:decision_list' %}" class="{% if 'decision' in request.path %}active{% endif %}">
+                        <span class="nav-icon">✅</span>
+                        <span>归库决策</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% if user.is_supervisor %}
+                <li class="nav-section-title">统计分析</li>
+                <li>
+                    <a href="{% url 'stats:dashboard' %}" class="{% if 'stats' in request.resolver_match.app_name %}active{% endif %}">
+                        <span class="nav-icon">📈</span>
+                        <span>数据统计</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </aside>
+        
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h2>{% block page_title %}首页概览{% endblock %}</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="user-avatar">{{ user.real_name|first|default:user.username|first }}</div>
+                        <div class="user-details">
+                            <div class="user-name">{{ user.real_name|default:user.username }}</div>
+                            <div class="user-role">{{ user.get_role_display }}</div>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn">退出</button>
+                    </form>
+                </div>
+            </header>
+            
+            <div class="content-wrapper">
+                {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <div class="alert-body">{{ message }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    {% block auth_content %}{% endblock %}
+    {% endif %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

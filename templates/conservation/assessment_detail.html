@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}鉴定详情 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}鉴定详情{% endblock %}
+
+{% block content %}
+<div class="action-bar">
+    <a href="{% url 'conservation:assessment_list' %}" class="btn btn-outline">← 返回列表</a>
+    {% if can_make_decision %}
+    <a href="{% url 'conservation:decision' assessment.pk %}" class="btn btn-primary" style="margin-left: auto;">⚖️ 做出决策</a>
+    {% endif %}
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>珍本信息</h3>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">书名</span>
+                        <span class="info-value" style="font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; color: var(--color-primary);">{{ assessment.circulation.book.title }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">作者</span>
+                        <span class="info-value">{{ assessment.circulation.book.author }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">索书号</span>
+                        <span class="info-value">{{ assessment.circulation.book.call_number }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">馆藏分类</span>
+                        <span class="info-value">{{ assessment.circulation.book.category.name }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>损伤鉴定结果</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 16px;">
+                    <span class="badge 
+                        {% if assessment.damage_level == 'minor' %}badge-success
+                        {% elif assessment.damage_level == 'moderate' %}badge-warning
+                        {% elif assessment.damage_level == 'severe' %}badge-danger
+                        {% else %}badge-danger
+                        {% endif %}" style="font-size: 1rem; padding: 8px 16px;">
+                        损伤等级: {{ assessment.get_damage_level_display }}
+                    </span>
+                </div>
+                
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">损伤类型</span>
+                        <span class="info-value">{{ assessment.get_damage_type_display }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">损伤部位</span>
+                        <span class="info-value">{{ assessment.damage_location|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">是否旧损</span>
+                        <span class="info-value">{% if assessment.previous_damage %}是{% else %}否{% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">鉴定人</span>
+                        <span class="info-value">{{ assessment.conservator.real_name|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">鉴定时间</span>
+                        <span class="info-value">{{ assessment.assessed_at|date:"Y-m-d H:i" }}</span>
+                    </li>
+                </ul>
+                
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">损伤描述</h4>
+                    <p style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text);">{{ assessment.damage_description }}</p>
+                </div>
+                
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">修复建议</h4>
+                    <p style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text);">{{ assessment.repair_suggestion }}</p>
+                </div>
+                
+                {% if assessment.estimated_cost %}
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">预估修复费用</h4>
+                    <p style="font-size: 1.2rem; color: var(--color-accent); font-weight: 600;">¥ {{ assessment.estimated_cost }}</p>
+                </div>
+                {% endif %}
+                
+                {% if assessment.assessment_notes %}
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">鉴定备注</h4>
+                    <p style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text-muted);">{{ assessment.assessment_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>流通信息</h3>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">读者</span>
+                        <span class="info-value">{{ assessment.circulation.reservation.user.real_name }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">读者类型</span>
+                        <span class="info-value">{{ assessment.circulation.reservation.user.get_reader_type_display|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">所属机构</span>
+                        <span class="info-value">{{ assessment.circulation.reservation.user.institution|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">出库时间</span>
+                        <span class="info-value">{{ assessment.circulation.checkout_time|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">归还时间</span>
+                        <span class="info-value">{{ assessment.circulation.return_time|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">借阅时长</span>
+                        <span class="info-value">{{ assessment.circulation.duration_hours }} 小时</span>
+                    </li>
+                    <li>
+                        <span class="info-label">出库馆员</span>
+                        <span class="info-value">{{ assessment.circulation.librarian.real_name|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">接收馆员</span>
+                        <span class="info-value">{{ assessment.circulation.return_receiver.real_name|default:"-" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if assessment.decision %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>归库决策</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 16px;">
+                    <span class="badge 
+                        {% if assessment.decision.decision_type == 'return_to_stack' %}badge-success
+                        {% elif assessment.decision.decision_type == 'send_for_repair' %}badge-warning
+                        {% elif assessment.decision.decision_type == 'compensation' %}badge-danger
+                        {% else %}badge-info
+                        {% endif %}" style="font-size: 1rem; padding: 8px 16px;">
+                        {{ assessment.decision.get_decision_type_display }}
+                    </span>
+                </div>
+                
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">决策人</span>
+                        <span class="info-value">{{ assessment.decision.supervisor.real_name|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">决策时间</span>
+                        <span class="info-value">{{ assessment.decision.decided_at|date:"Y-m-d H:i" }}</span>
+                    </li>
+                </ul>
+                
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">决策理由</h4>
+                    <p style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text);">{{ assessment.decision.decision_reason }}</p>
+                </div>
+                
+                {% if assessment.decision.decision_type == 'compensation' %}
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-primary); margin-bottom: 8px;">赔付信息</h4>
+                    {% if assessment.decision.compensation_amount %}
+                    <p style="font-size: 1.2rem; color: var(--color-accent); font-weight: 600;">赔付金额: ¥ {{ assessment.decision.compensation_amount }}</p>
+                    {% endif %}
+                    {% if assessment.decision.compensation_notes %}
+                    <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 8px;">{{ assessment.decision.compensation_notes }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>决策状态</h3>
+            </div>
+            <div class="card-body">
+                <div style="text-align: center; padding: 20px 0;">
+                    <span class="badge badge-warning" style="font-size: 1rem; padding: 8px 16px;">待主管决策</span>
+                    {% if can_make_decision %}
+                    <div style="margin-top: 16px;">
+                        <a href="{% url 'conservation:decision' assessment.pk %}" class="btn btn-primary">做出决策</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

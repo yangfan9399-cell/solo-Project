@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="action-bar">
+    {% if book.status == 'in_stack' and user.is_reader %}
+    <a href="{% url 'reservations:reservation_create' %}?book_id={{ book.pk }}" class="btn btn-primary">📝 预约此珍本</a>
+    {% endif %}
+    <a href="{% url 'catalog:book_list' %}" class="btn btn-outline">← 返回书目列表</a>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>基本信息</h3>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">书名</span>
+                        <span class="info-value" style="font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; color: var(--color-primary);">{{ book.title }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">作者</span>
+                        <span class="info-value">{{ book.author }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">索书号</span>
+                        <span class="info-value">{{ book.call_number }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">馆藏分类</span>
+                        <span class="info-value">
+                            <span class="badge badge-primary">{{ book.category.name }}</span>
+                            <span class="badge badge-info">{{ book.category.get_rarity_level_display }}</span>
+                        </span>
+                    </li>
+                    <li>
+                        <span class="info-label">馆藏状态</span>
+                        <span class="info-value">
+                            {% if book.status == 'in_stack' %}
+                            <span class="badge badge-success">在库</span>
+                            {% elif book.status == 'reserved' %}
+                            <span class="badge badge-warning">已预约</span>
+                            {% elif book.status == 'checked_out' %}
+                            <span class="badge badge-info">已调出</span>
+                            {% elif book.status == 'in_repair' %}
+                            <span class="badge badge-danger">修复中</span>
+                            {% elif book.status == 'restricted' %}
+                            <span class="badge badge-muted">限制阅览</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="info-label">保存状况</span>
+                        <span class="info-value">{{ book.get_condition_display }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">出版信息</span>
+                        <span class="info-value">{{ book.publisher }} {% if book.published_date %}({{ book.published_date|date:"Y" }}年){% endif %}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">版本</span>
+                        <span class="info-value">{{ book.edition|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">页数/开本</span>
+                        <span class="info-value">{% if book.pages %}{{ book.pages }}页{% endif %} / {{ book.format_size|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">馆藏位置</span>
+                        <span class="info-value">{{ book.location|default:"-" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if book.description %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>内容简介</h3>
+            </div>
+            <div class="card-body">
+                <p style="line-height: 1.8; color: var(--color-text);">{{ book.description }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>历史流转时间线</h3>
+            </div>
+            <div class="card-body">
+                {% if timeline %}
+                <div class="timeline">
+                    {% for event in timeline %}
+                    <div class="timeline-item completed">
+                        <div class="timeline-dot" style="
+                            {% if event.type == 'reservation' %}border-color: var(--color-gold); background: var(--color-gold);{% endif %}
+                            {% if event.type == 'checkout' %}border-color: var(--color-secondary); background: var(--color-secondary);{% endif %}
+                            {% if event.type == 'return' %}border-color: var(--color-info); background: var(--color-info);{% endif %}
+                            {% if event.type == 'assessment' %}border-color: var(--color-accent); background: var(--color-accent);{% endif %}
+                            {% if event.type == 'decision' %}border-color: var(--color-primary); background: var(--color-primary);{% endif %}
+                        "></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">{{ event.title }}</div>
+                            <div class="timeline-meta">{{ event.date|date:"Y-m-d H:i" }}</div>
+                            <div class="timeline-description">{{ event.description }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: var(--color-text-muted); padding: 20px 0;">
+                    暂无流转记录
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if book.damage_records.exists %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>历史损伤记录</h3>
+            </div>
+            <div class="card-body">
+                {% for record in book.damage_records.all %}
+                <div style="padding: 12px 0; border-bottom: 1px dashed var(--color-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span class="badge 
+                            {% if record.damage_level == 'minor' %}badge-success
+                            {% elif record.damage_level == 'moderate' %}badge-warning
+                            {% elif record.damage_level == 'severe' %}badge-danger
+                            {% else %}badge-danger
+                            {% endif %}">
+                            {{ record.get_damage_level_display }}
+                        </span>
+                        <span style="font-size: 0.85rem; color: var(--color-text-muted);">
+                            {{ record.discovered_date|date:"Y-m-d" }}
+                        </span>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--color-text);">{{ record.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

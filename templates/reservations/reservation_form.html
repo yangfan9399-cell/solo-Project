@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}提交预约申请 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}提交预约申请{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>预约信息</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="reservation-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>选择珍本</label>
+                    <select name="book" class="form-control" id="id_book" required hx-get="{% url 'reservations:check_qualification' %}" hx-target="#qualification-result" hx-trigger="change">
+                        <option value="">-- 请选择珍本 --</option>
+                        {% for book in available_books %}
+                        <option value="{{ book.pk }}" {% if selected_book and selected_book.pk == book.pk %}selected{% endif %}>
+                            [{{ book.call_number }}] {{ book.title }} - {{ book.category.name }} ({{ book.category.get_rarity_level_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-hint">仅显示当前在库可预约的珍本</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>预约日期</label>
+                        <input type="date" name="reserved_date" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>开始时间</label>
+                        <input type="time" name="start_time" class="form-control" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>结束时间</label>
+                        <input type="time" name="end_time" class="form-control" value="11:00" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>阅览目的</label>
+                    <select name="purpose" class="form-control" required>
+                        <option value="research">学术研究</option>
+                        <option value="study">学习参考</option>
+                        <option value="teaching">教学使用</option>
+                        <option value="exhibition">展览展示</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>目的说明</label>
+                    <textarea name="purpose_detail" class="form-control" rows="3" placeholder="请简要说明阅览目的和研究内容..."></textarea>
+                </div>
+                
+                <div id="qualification-result" style="margin-top: 20px;">
+                    {% if selected_book %}
+                    <div class="alert alert-info">
+                        <div class="alert-title">请选择珍本后查看资格核验结果</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-top: 24px; display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                        提交预约申请
+                    </button>
+                    <a href="{% url 'reservations:reservation_list' %}" class="btn btn-outline btn-lg">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>预约须知</h3>
+            </div>
+            <div class="card-body">
+                <div style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text);">
+                    <p style="margin-bottom: 12px;"><strong>1. 阅览时间</strong></p>
+                    <p style="margin-bottom: 16px; padding-left: 16px;">
+                        珍本阅览时间为工作日 9:00-17:00，每次预约时段最长 4 小时。
+                    </p>
+                    
+                    <p style="margin-bottom: 12px;"><strong>2. 预约资格</strong></p>
+                    <ul style="margin-bottom: 16px; padding-left: 32px;">
+                        <li>教师读者：可预约所有级别珍本</li>
+                        <li>研究生：可预约普通古籍和珍本</li>
+                        <li>本科生：仅可预约普通古籍</li>
+                    </ul>
+                    
+                    <p style="margin-bottom: 12px;"><strong>3. 证明材料</strong></p>
+                    <ul style="margin-bottom: 16px; padding-left: 32px;">
+                        <li>特藏珍本：需提供研究单位介绍信</li>
+                        <li>研究生预约特藏：需提供导师推荐信</li>
+                        <li>本科生预约珍本：需提供学院研究证明</li>
+                    </ul>
+                    
+                    <p style="margin-bottom: 12px;"><strong>4. 注意事项</strong></p>
+                    <ul style="padding-left: 32px;">
+                        <li>请提前 1-3 个工作日提交预约</li>
+                        <li>同一珍本同一时段仅接受一人预约</li>
+                        <li>阅览时请爱护图书，禁止涂写折叠</li>
+                        <li>如需拍照请征得工作人员同意</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if selected_book %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>已选珍本</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; gap: 16px; align-items: start;">
+                    <div style="width: 80px; height: 110px; background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--color-surface); flex-shrink: 0;">
+                        <span style="font-family: var(--font-serif); font-size: 0.8rem; padding: 8px; text-align: center;">{{ selected_book.title|truncatechars:15 }}</span>
+                    </div>
+                    <div>
+                        <h4 style="font-family: var(--font-serif); font-size: 1rem; color: var(--color-primary); margin-bottom: 4px;">{{ selected_book.title }}</h4>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 8px;">{{ selected_book.author }}</p>
+                        <span class="badge badge-primary">{{ selected_book.category.name }}</span>
+                        <span class="badge badge-info">{{ selected_book.category.get_rarity_level_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bookSelect = document.getElementById('id_book');
+    if (bookSelect && bookSelect.value) {
+        bookSelect.dispatchEvent(new Event('change'));
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dateInput = document.querySelector('input[name="reserved_date"]');
+    if (dateInput) {
+        dateInput.min = today;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}流通管理 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}流通管理{% endblock %}
+
+{% block content %}
+<div class="action-bar">
+    <div style="display: flex; gap: 8px;">
+        <a href="?status=all" class="btn btn-sm {% if current_status == 'all' %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+        <a href="?status=active" class="btn btn-sm {% if current_status == 'active' %}btn-primary{% else %}btn-outline{% endif %}">阅览中</a>
+        <a href="?status=returned" class="btn btn-sm {% if current_status == 'returned' %}btn-primary{% else %}btn-outline{% endif %}">已归还</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>读者</th>
+                    <th>出库时间</th>
+                    <th>归还时间</th>
+                    <th>时长</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ log.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ log.book.call_number }}</div>
+                    </td>
+                    <td>{{ log.reservation.user.real_name }}</td>
+                    <td>{{ log.checkout_time|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if log.return_time %}
+                        {{ log.return_time|date:"Y-m-d H:i" }}
+                        {% else %}
+                        <span style="color: var(--color-text-muted);">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.duration_hours > 0 %}
+                        {{ log.duration_hours }} 小时
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.is_returned %}
+                        <span class="badge badge-muted">已归还</span>
+                        {% else %}
+                        <span class="badge badge-info">阅览中</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'reservations:reservation_detail' log.reservation.pk %}" class="btn btn-sm btn-outline">详情</a>
+                        {% if not log.is_returned %}
+                        <a href="{% url 'circulation:return' log.pk %}" class="btn btn-sm btn-success" style="margin-left: 4px;">归还</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--color-text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">📦</div>
+                        暂无流通记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}归库决策 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}归库决策{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>做出归库决策</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">珍本信息</h4>
+                    <p style="margin-bottom: 8px;"><strong>书名:</strong> {{ assessment.circulation.book.title }}</p>
+                    <p style="margin-bottom: 8px;"><strong>索书号:</strong> {{ assessment.circulation.book.call_number }}</p>
+                    <p><strong>馆藏分类:</strong> {{ assessment.circulation.book.category.name }}</p>
+                </div>
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">鉴定结果</h4>
+                    <p style="margin-bottom: 8px;">
+                        <strong>损伤等级:</strong> 
+                        <span class="badge 
+                            {% if assessment.damage_level == 'minor' %}badge-success
+                            {% elif assessment.damage_level == 'moderate' %}badge-warning
+                            {% elif assessment.damage_level == 'severe' %}badge-danger
+                            {% else %}badge-danger
+                            {% endif %}">
+                            {{ assessment.get_damage_level_display }}
+                        </span>
+                    </p>
+                    <p style="margin-bottom: 8px;"><strong>损伤类型:</strong> {{ assessment.get_damage_type_display }}</p>
+                    <p style="margin-bottom: 8px;"><strong>鉴定人:</strong> {{ assessment.conservator.real_name|default:"-" }}</p>
+                    <p style="margin-top: 12px; font-size: 0.9rem; line-height: 1.7;"><strong>损伤描述:</strong><br>{{ assessment.damage_description }}</p>
+                    <p style="margin-top: 12px; font-size: 0.9rem; line-height: 1.7;"><strong>修复建议:</strong><br>{{ assessment.repair_suggestion }}</p>
+                    {% if assessment.estimated_cost %}
+                    <p style="margin-top: 12px;"><strong>预估修复费用:</strong> 
+                        <span style="color: var(--color-accent); font-weight: 600;">¥ {{ assessment.estimated_cost }}</span>
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>决策类型</label>
+                    <select name="decision_type" class="form-control" required id="decision-type">
+                        <option value="return_to_stack">正常归库</option>
+                        <option value="send_for_repair">送修</option>
+                        <option value="compensation">赔付处理</option>
+                        <option value="restrict_access">限制阅览</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>决策理由</label>
+                    <textarea name="decision_reason" class="form-control" rows="4" required placeholder="请详细说明做出该决策的理由..."></textarea>
+                </div>
+                
+                <div id="compensation-fields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>赔付金额（元）</label>
+                            <input type="number" name="compensation_amount" step="0.01" class="form-control" placeholder="请输入赔付金额">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>赔付说明</label>
+                        <textarea name="compensation_notes" class="form-control" rows="3" placeholder="赔付相关说明..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <div class="alert-title">重要提示</div>
+                    <div class="alert-body">决策一经提交即生效，请仔细核对相关信息。决策结果将直接影响珍本的馆藏状态。</div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                        确认决策
+                    </button>
+                    <a href="{% url 'conservation:assessment_detail' assessment.pk %}" class="btn btn-outline btn-lg" style="flex: 1;">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>决策类型说明</h3>
+            </div>
+            <div class="card-body">
+                <ul style="font-size: 0.85rem; line-height: 1.8; color: var(--color-text); padding-left: 20px;">
+                    <li><strong>正常归库:</strong> 书籍状况良好，直接归入书库</li>
+                    <li><strong>送修:</strong> 书籍有损伤，送修复室处理</li>
+                    <li><strong>赔付处理:</strong> 读者造成损伤，需进行赔偿</li>
+                    <li><strong>限制阅览:</strong> 书籍状况不佳，限制后续阅览</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>读者信息</h3>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 8px;"><strong>姓名:</strong> {{ assessment.circulation.reservation.user.real_name }}</p>
+                <p style="margin-bottom: 8px;"><strong>类型:</strong> {{ assessment.circulation.reservation.user.get_reader_type_display|default:"-" }}</p>
+                <p style="margin-bottom: 8px;"><strong>机构:</strong> {{ assessment.circulation.reservation.user.institution|default:"-" }}</p>
+                {% if assessment.circulation.reservation.user.phone %}
+                <p><strong>电话:</strong> {{ assessment.circulation.reservation.user.phone }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const decisionType = document.getElementById('decision-type');
+    const compensationFields = document.getElementById('compensation-fields');
+    
+    function toggleCompensation() {
+        if (decisionType.value === 'compensation') {
+            compensationFields.style.display = 'block';
+        } else {
+            compensationFields.style.display = 'none';
+        }
+    }
+    
+    decisionType.addEventListener('change', toggleCompensation);
+    toggleCompensation();
+});
+</script>
+{% endblock %}

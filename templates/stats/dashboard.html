@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}数据统计 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}数据统计{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stat-primary">
+        <div class="stat-label">珍本总数</div>
+        <div class="stat-value">{{ total_books }}</div>
+        <div class="stat-change">馆藏总量</div>
+    </div>
+    <div class="stat-card stat-secondary">
+        <div class="stat-label">预约总数</div>
+        <div class="stat-value">{{ total_reservations }}</div>
+        <div class="stat-change">历史累计</div>
+    </div>
+    <div class="stat-card stat-gold">
+        <div class="stat-label">鉴定总数</div>
+        <div class="stat-value">{{ total_assessments }}</div>
+        <div class="stat-change">损伤鉴定记录</div>
+    </div>
+    <div class="stat-card stat-accent">
+        <div class="stat-label">平均处理时长</div>
+        <div class="stat-value">{% if avg_processing_time %}{{ avg_processing_time }}{% else %}-{% endif %}</div>
+        <div class="stat-change">小时（归还到决策）</div>
+    </div>
+</div>
+
+<div class="stats-charts" style="margin-top: 24px;">
+    <div class="chart-card">
+        <h3>📚 馆藏类别分布</h3>
+        <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3>👥 预约人类型分布</h3>
+        <div class="chart-container">
+            <canvas id="readerTypeChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3>🩹 损伤等级分布</h3>
+        <div class="chart-container">
+            <canvas id="damageLevelChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3>⚖️ 归库决策分布</h3>
+        <div class="chart-container">
+            <canvas id="decisionChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card" style="grid-column: 1 / -1;">
+        <h3>📈 月度预约趋势</h3>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3>📋 馆藏状态分布</h3>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3>🔧 损伤类型统计</h3>
+        <div class="chart-container">
+            <canvas id="damageTypeChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <div class="card-header">
+        <h3>📊 详细统计数据</h3>
+    </div>
+    <div class="card-body">
+        <div class="detail-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div>
+                <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 16px;">按馆藏类别</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>类别</th>
+                            <th>珍本数</th>
+                            <th>预约数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in category_stats %}
+                        <tr>
+                            <td>{{ cat.name }}</td>
+                            <td>{{ cat.book_count }}</td>
+                            <td>{{ cat.reservation_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: var(--color-text-muted);">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div>
+                <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 16px;">按读者类型</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>读者类型</th>
+                            <th>人数</th>
+                            <th>预约数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rt in reader_type_stats %}
+                        <tr>
+                            <td>
+                                {% if rt.reader_type == 'undergrad' %}本科生
+                                {% elif rt.reader_type == 'graduate' %}研究生
+                                {% elif rt.reader_type == 'teacher' %}教师
+                                {% elif rt.reader_type == 'researcher' %}研究员
+                                {% else %}{{ rt.reader_type }}{% endif %}
+                            </td>
+                            <td>{{ rt.count }}</td>
+                            <td>{{ rt.reservation_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: var(--color-text-muted);">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div>
+                <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 16px;">处理效率</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>指标</th>
+                            <th>数值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>平均处理时长</td>
+                            <td>{% if avg_processing_time %}{{ avg_processing_time }} 小时{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td>待决策鉴定</td>
+                            <td>{{ pending_count|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td>已完成决策</td>
+                            <td>{{ total_decisions }}</td>
+                        </tr>
+                        <tr>
+                            <td>送修率</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const primaryColor = '#5D2906';
+    const secondaryColor = '#2C5F5D';
+    const accentColor = '#8B2635';
+    const goldColor = '#B8860B';
+    const bgColor = '#F5EFE0';
+    
+    const categoryData = {{ category_stats|safe }};
+    if (categoryData && categoryData.length > 0) {
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(c => c.name),
+                datasets: [{
+                    data: categoryData.map(c => c.book_count),
+                    backgroundColor: [primaryColor, secondaryColor, goldColor, accentColor, '#6B5D4F'],
+                    borderWidth: 2,
+                    borderColor: '#FFFBF2'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#2C1810', font: { size: 12 } }
+                    }
+                }
+            }
+        });
+    }
+    
+    const readerTypeData = {{ reader_type_stats|safe }};
+    const readerTypeMap = {
+        'undergrad': '本科生',
+        'graduate': '研究生',
+        'teacher': '教师',
+        'researcher': '研究员'
+    };
+    if (readerTypeData && readerTypeData.length > 0) {
+        new Chart(document.getElementById('readerTypeChart'), {
+            type: 'bar',
+            data: {
+                labels: readerTypeData.map(r => readerTypeMap[r.reader_type] || r.reader_type),
+                datasets: [{
+                    label: '预约次数',
+                    data: readerTypeData.map(r => r.reservation_count),
+                    backgroundColor: secondaryColor,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
+                    x: { ticks: { color: '#6B5D4F' } }
+                }
+            }
+        });
+    }
+    
+    const damageLevelData = {{ damage_level_stats|safe }};
+    const levelMap = {
+        'minor': '轻微',
+        'moderate': '中度',
+        'severe': '严重',
+        'critical': '损毁'
+    };
+    if (damageLevelData && damageLevelData.length > 0) {
+        new Chart(document.getElementById('damageLevelChart'), {
+            type: 'pie',
+            data: {
+                labels: damageLevelData.map(d => levelMap[d.damage_level] || d.damage_level),
+                datasets: [{
+                    data: damageLevelData.map(d => d.count),
+                    backgroundColor: ['#3D6B35', '#B8860B', '#8B2635', '#5D2906'],
+                    borderWidth: 2,
+                    borderColor: '#FFFBF2'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#2C1810', font: { size: 12 } }
+                    }
+                }
+            }
+        });
+    }
+    
+    const decisionData = {{ decision_stats|safe }};
+    const decisionMap = {
+        'return_to_stack': '正常归库',
+        'send_for_repair': '送修',
+        'compensation': '赔付处理',
+        'restrict_access': '限制阅览'
+    };
+    if (decisionData && decisionData.length > 0) {
+        new Chart(document.getElementById('decisionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: decisionData.map(d => decisionMap[d.decision_type] || d.decision_type),
+                datasets: [{
+                    data: decisionData.map(d => d.count),
+                    backgroundColor: ['#3D6B35', '#B8860B', '#8B2635', '#2C5F5D'],
+                    borderWidth: 2,
+                    borderColor: '#FFFBF2'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#2C1810', font: { size: 12 } }
+                    }
+                }
+            }
+        });
+    }
+    
+    const monthlyData = {{ monthly_reservations|safe }};
+    if (monthlyData && monthlyData.length > 0) {
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(m => {
+                    const date = new Date(m.month);
+                    return (date.getMonth() + 1) + '月';
+                }),
+                datasets: [{
+                    label: '预约数量',
+                    data: monthlyData.map(m => m.count),
+                    borderColor: primaryColor,
+                    backgroundColor: 'rgba(93, 41, 6, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: primaryColor,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
+                    x: { ticks: { color: '#6B5D4F' } }
+                }
+            }
+        });
+    }
+    
+    const statusData = {{ status_stats|safe }};
+    const statusMap = {
+        'in_stack': '在库',
+        'reserved': '已预约',
+        'checked_out': '已调出',
+        'in_repair': '修复中',
+        'restricted': '限制阅览'
+    };
+    if (statusData && statusData.length > 0) {
+        new Chart(document.getElementById('statusChart'), {
+            type: 'bar',
+            data: {
+                labels: statusData.map(s => statusMap[s.status] || s.status),
+                datasets: [{
+                    label: '数量',
+                    data: statusData.map(s => s.count),
+                    backgroundColor: ['#3D6B35', '#B8860B', '#2C5F5D', '#8B2635', '#6B5D4F'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
+                    x: { ticks: { color: '#6B5D4F', font: { size: 11 } } }
+                }
+            }
+        });
+    }
+    
+    const damageTypeData = {{ damage_type_stats|safe }};
+    const typeMap = {
+        'page_damage': '页面破损',
+        'stain': '污渍',
+        'tear': '撕裂',
+        'binding': '装订损坏',
+        'mold': '霉变',
+        'worm': '虫蛀',
+        'other': '其他'
+    };
+    if (damageTypeData && damageTypeData.length > 0) {
+        new Chart(document.getElementById('damageTypeChart'), {
+            type: 'bar',
+            data: {
+                labels: damageTypeData.map(d => typeMap[d.damage_type] || d.damage_type),
+                datasets: [{
+                    label: '数量',
+                    data: damageTypeData.map(d => d.count),
+                    backgroundColor: accentColor,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
+                    y: { ticks: { color: '#6B5D4F' } }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

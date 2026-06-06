@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}驳回预约 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}驳回预约{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        <h3>驳回预约申请</h3>
+    </div>
+    <div class="card-body">
+        <div style="margin-bottom: 24px; padding: 16px; background: var(--color-bg); border-radius: var(--radius-sm);">
+            <p style="margin-bottom: 8px;"><strong>珍本:</strong> {{ reservation.book.title }}</p>
+            <p style="margin-bottom: 8px;"><strong>预约人:</strong> {{ reservation.user.real_name }}</p>
+            <p><strong>预约时间:</strong> {{ reservation.reserved_date|date:"Y-m-d" }} {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>驳回原因</label>
+                <textarea name="reject_reason" class="form-control" rows="4" required placeholder="请填写驳回原因..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn btn-danger" style="flex: 1;">确认驳回</button>
+                <a href="{% url 'reservations:reservation_detail' reservation.pk %}" class="btn btn-outline" style="flex: 1;">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

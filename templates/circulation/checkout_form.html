@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}办理调阅 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}办理调阅{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>调阅交接确认</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">珍本信息</h4>
+                    <p style="margin-bottom: 8px;"><strong>书名:</strong> {{ reservation.book.title }}</p>
+                    <p style="margin-bottom: 8px;"><strong>索书号:</strong> {{ reservation.book.call_number }}</p>
+                    <p style="margin-bottom: 8px;"><strong>馆藏分类:</strong> {{ reservation.book.category.name }}</p>
+                </div>
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">预约信息</h4>
+                    <p style="margin-bottom: 8px;"><strong>读者:</strong> {{ reservation.user.real_name }} ({{ reservation.user.get_reader_type_display|default:"-" }})</p>
+                    <p style="margin-bottom: 8px;"><strong>预约日期:</strong> {{ reservation.reserved_date|date:"Y年m月d日" }}</p>
+                    <p style="margin-bottom: 8px;"><strong>阅览时段:</strong> {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</p>
+                    <p><strong>阅览目的:</strong> {{ reservation.get_purpose_display }}</p>
+                </div>
+                
+                <div class="form-group">
+                    <label>出库状况</label>
+                    <select name="condition_out" class="form-control">
+                        <option value="excellent">完好</option>
+                        <option value="good" selected>良好</option>
+                        <option value="fair">一般</option>
+                        <option value="poor">较差</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>出库状况说明</label>
+                    <textarea name="condition_out_notes" class="form-control" rows="3" placeholder="如有特殊状况请备注..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>读者签收</label>
+                    <input type="text" name="reader_signature" class="form-control" placeholder="请读者签名确认...">
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                        确认出库
+                    </button>
+                    <a href="{% url 'reservations:reservation_detail' reservation.pk %}" class="btn btn-outline btn-lg" style="flex: 1;">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>注意事项</h3>
+            </div>
+            <div class="card-body">
+                <ul style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text); padding-left: 20px;">
+                    <li>请仔细核对珍本信息与预约信息</li>
+                    <li>与读者共同检查书籍外观状况</li>
+                    <li>详细记录出库时的书籍状况</li>
+                    <li>请读者确认签收</li>
+                    <li>提醒读者珍本阅览注意事项</li>
+                    <li>将书籍转交读者并完成交接</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

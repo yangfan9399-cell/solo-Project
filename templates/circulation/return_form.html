@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}办理归还 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}办理归还{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>归还登记</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">珍本信息</h4>
+                    <p style="margin-bottom: 8px;"><strong>书名:</strong> {{ log.book.title }}</p>
+                    <p style="margin-bottom: 8px;"><strong>索书号:</strong> {{ log.book.call_number }}</p>
+                    <p style="margin-bottom: 8px;"><strong>出库时间:</strong> {{ log.checkout_time|date:"Y-m-d H:i" }}</p>
+                    <p><strong>出库状况:</strong> {{ log.get_condition_out_display }}</p>
+                </div>
+                
+                <div style="background: var(--color-bg); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 24px;">
+                    <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin-bottom: 12px;">读者信息</h4>
+                    <p style="margin-bottom: 8px;"><strong>读者:</strong> {{ log.reservation.user.real_name }}</p>
+                    <p style="margin-bottom: 8px;"><strong>所属机构:</strong> {{ log.reservation.user.institution|default:"-" }}</p>
+                    {% if log.reader_signature %}
+                    <p><strong>签收:</strong> {{ log.reader_signature }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>归还状况</label>
+                    <select name="condition_in" class="form-control">
+                        <option value="excellent">完好</option>
+                        <option value="good">良好</option>
+                        <option value="fair">一般</option>
+                        <option value="poor">较差</option>
+                        <option value="damaged">有损伤</option>
+                    </select>
+                    <div class="form-hint">如发现损伤请选择"有损伤"，并在下方详细描述</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>归还状况说明</label>
+                    <textarea name="condition_in_notes" class="form-control" rows="4" placeholder="请详细描述归还时的书籍状况，如有损伤请说明损伤部位和程度..."></textarea>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <div class="alert-title">提示</div>
+                    <div class="alert-body">归还登记完成后，系统将自动通知修复员进行损伤鉴定。如发现明显损伤，请务必详细记录。</div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                        确认归还
+                    </button>
+                    <a href="{% url 'circulation:checkout_list' %}" class="btn btn-outline btn-lg" style="flex: 1;">
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>出库时状况</h3>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 8px;"><strong>状况等级:</strong> {{ log.get_condition_out_display }}</p>
+                {% if log.condition_out_notes %}
+                <p style="font-size: 0.9rem; color: var(--color-text);">{{ log.condition_out_notes }}</p>
+                {% else %}
+                <p style="color: var(--color-text-muted); font-size: 0.9rem;">无特殊说明</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>归还检查要点</h3>
+            </div>
+            <div class="card-body">
+                <ul style="font-size: 0.9rem; line-height: 1.8; color: var(--color-text); padding-left: 20px;">
+                    <li>检查封面、书脊是否有破损</li>
+                    <li>检查书页是否有撕裂、折痕</li>
+                    <li>检查是否有污渍、水渍</li>
+                    <li>检查是否有虫蛀、霉变</li>
+                    <li>检查装订是否松动</li>
+                    <li>核对页码是否完整</li>
+                    <li>与出库状况做对比</li>
+                    <li>如发现损伤请拍照记录</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}登录 - 珍本馆藏管理系统{% endblock %}
+
+{% block auth_content %}
+<div class="login-container">
+    <div class="login-card decoration-corner">
+        <div class="login-header">
+            <h1>📜 珍本馆藏管理系统</h1>
+            <p>预约 · 调阅 · 鉴定 · 归库</p>
+        </div>
+        <div class="login-body">
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <div class="alert-title">登录失败</div>
+                <div class="alert-body">用户名或密码不正确，请重试。</div>
+            </div>
+            {% endif %}
+            
+            {% if next %}
+                {% if user.is_authenticated %}
+                <div class="alert alert-warning">
+                    <div class="alert-body">您的账号没有访问此页面的权限，请使用其他账号登录。</div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <div class="alert-body">请登录以访问该页面。</div>
+                </div>
+                {% endif %}
+            {% endif %}
+            
+            <form method="post" action="{% url 'accounts:login' %}" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_username">用户名</label>
+                    <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="id_password">密码</label>
+                    <input type="password" name="password" id="id_password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">登录系统</button>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+            
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-border);">
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 12px;">测试账号：</p>
+                <div style="font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.8;">
+                    <div>主管: supervisor / 123456</div>
+                    <div>馆员: librarian / 123456</div>
+                    <div>修复员: conservator / 123456</div>
+                    <div>教师读者: teacher_reader / 123456</div>
+                    <div>研究生读者: grad_reader / 123456</div>
+                    <div>本科生读者: undergrad_reader / 123456</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

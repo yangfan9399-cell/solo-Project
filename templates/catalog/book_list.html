@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}珍本书目 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}珍本书目{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <div class="filter-item">
+        <label>馆藏分类</label>
+        <select class="form-control" onchange="window.location.href=this.value">
+            <option value="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}">全部分类</option>
+            {% for cat in categories %}
+            <option value="?category={{ cat.id }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                    {% if current_category == cat.id|stringformat:"i" %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-item">
+        <label>馆藏状态</label>
+        <select class="form-control" onchange="window.location.href=this.value">
+            <option value="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}">全部状态</option>
+            <option value="?status=in_stack{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                    {% if current_status == 'in_stack' %}selected{% endif %}>在库</option>
+            <option value="?status=reserved{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                    {% if current_status == 'reserved' %}selected{% endif %}>已预约</option>
+            <option value="?status=checked_out{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                    {% if current_status == 'checked_out' %}selected{% endif %}>已调出</option>
+            <option value="?status=in_repair{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" 
+                    {% if current_status == 'in_repair' %}selected{% endif %}>修复中</option>
+        </select>
+    </div>
+    <div class="filter-item" style="flex: 2;">
+        <label>搜索</label>
+        <form method="get" style="display: flex; gap: 8px;">
+            <input type="text" name="search" class="form-control" placeholder="搜索书名、作者、索书号..." value="{{ search_query }}">
+            {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+            {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </form>
+    </div>
+</div>
+
+<div class="book-grid">
+    {% for book in books %}
+    <div class="book-card" onclick="window.location.href='{% url 'catalog:book_detail' book.pk %}'">
+        <div class="book-cover">
+            <span class="book-status-badge">
+                {% if book.status == 'in_stack' %}
+                <span class="badge badge-success">在库</span>
+                {% elif book.status == 'reserved' %}
+                <span class="badge badge-warning">已预约</span>
+                {% elif book.status == 'checked_out' %}
+                <span class="badge badge-info">已调出</span>
+                {% elif book.status == 'in_repair' %}
+                <span class="badge badge-danger">修复中</span>
+                {% elif book.status == 'restricted' %}
+                <span class="badge badge-muted">限制阅览</span>
+                {% endif %}
+            </span>
+            <h4>{{ book.title }}</h4>
+        </div>
+        <div class="book-info">
+            <div class="book-title">{{ book.title }}</div>
+            <div class="book-author">{{ book.author }}</div>
+            <div class="book-meta">
+                <span>{{ book.category.name }}</span>
+                <span>{{ book.call_number }}</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--color-text-muted);">
+        <div style="font-size: 3rem; margin-bottom: 16px;">📚</div>
+        <p>暂无符合条件的珍本</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

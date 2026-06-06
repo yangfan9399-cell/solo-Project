@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}预约管理 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}预约管理{% endblock %}
+
+{% block content %}
+<div class="action-bar">
+    {% if user.is_reader %}
+    <a href="{% url 'reservations:reservation_create' %}" class="btn btn-primary">📝 提交新预约</a>
+    {% endif %}
+    
+    <div style="display: flex; gap: 8px; margin-left: auto;">
+        <a href="?" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+        <a href="?status=pending" class="btn btn-sm {% if current_status == 'pending' %}btn-primary{% else %}btn-outline{% endif %}">待审核</a>
+        <a href="?status=approved" class="btn btn-sm {% if current_status == 'approved' %}btn-primary{% else %}btn-outline{% endif %}">已通过</a>
+        <a href="?status=checked_out" class="btn btn-sm {% if current_status == 'checked_out' %}btn-primary{% else %}btn-outline{% endif %}">阅览中</a>
+        <a href="?status=completed" class="btn btn-sm {% if current_status == 'completed' %}btn-primary{% else %}btn-outline{% endif %}">已完成</a>
+        <a href="?status=rejected" class="btn btn-sm {% if current_status == 'rejected' %}btn-primary{% else %}btn-outline{% endif %}">已驳回</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>珍本</th>
+                    <th>{% if user.is_librarian or user.is_supervisor %}预约人{% endif %}</th>
+                    <th>预约日期</th>
+                    <th>时段</th>
+                    <th>阅览目的</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ reservation.book.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ reservation.book.call_number }}</div>
+                    </td>
+                    {% if user.is_librarian or user.is_supervisor %}
+                    <td>
+                        <div>{{ reservation.user.real_name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--color-text-muted);">{{ reservation.user.get_reader_type_display|default:"-" }}</div>
+                    </td>
+                    {% endif %}
+                    <td>{{ reservation.reserved_date|date:"Y-m-d" }}</td>
+                    <td>{{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</td>
+                    <td>{{ reservation.get_purpose_display }}</td>
+                    <td>
+                        {% if reservation.status == 'pending' %}
+                        <span class="badge badge-warning">待审核</span>
+                        {% elif reservation.status == 'approved' %}
+                        <span class="badge badge-success">已通过</span>
+                        {% elif reservation.status == 'rejected' %}
+                        <span class="badge badge-danger">已驳回</span>
+                        {% elif reservation.status == 'checked_out' %}
+                        <span class="badge badge-info">阅览中</span>
+                        {% elif reservation.status == 'completed' %}
+                        <span class="badge badge-muted">已完成</span>
+                        {% elif reservation.status == 'cancelled' %}
+                        <span class="badge badge-muted">已取消</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'reservations:reservation_detail' reservation.pk %}" class="btn btn-sm btn-outline">详情</a>
+                        {% if reservation.status == 'pending' and user.is_librarian %}
+                        <a href="{% url 'reservations:reservation_approve' reservation.pk %}" class="btn btn-sm btn-success" style="margin-left: 4px;">通过</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--color-text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 12px;">📋</div>
+                        暂无预约记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

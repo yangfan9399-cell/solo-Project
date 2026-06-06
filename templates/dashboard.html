@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}首页概览 - 珍本馆藏管理系统{% endblock %}
+
+{% block page_title %}首页概览{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stat-primary">
+        <div class="stat-label">珍本总数</div>
+        <div class="stat-value">{{ total_books }}</div>
+        <div class="stat-change">馆藏总量</div>
+    </div>
+    <div class="stat-card stat-secondary">
+        <div class="stat-label">待审核预约</div>
+        <div class="stat-value">{{ pending_reservations }}</div>
+        <div class="stat-change">等待馆员处理</div>
+    </div>
+    <div class="stat-card stat-gold">
+        <div class="stat-label">已调出</div>
+        <div class="stat-value">{{ checked_out }}</div>
+        <div class="stat-change">阅览中</div>
+    </div>
+    <div class="stat-card stat-accent">
+        <div class="stat-label">待决策</div>
+        <div class="stat-value">{{ pending_assessments }}</div>
+        <div class="stat-change">等待主管审批</div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3>近期预约</h3>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>珍本</th>
+                        <th>预约人</th>
+                        <th>预约日期</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in recent_reservations %}
+                    <tr>
+                        <td>{{ reservation.book.title }}</td>
+                        <td>{{ reservation.user.real_name }}</td>
+                        <td>{{ reservation.reserved_date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if reservation.status == 'pending' %}
+                            <span class="badge badge-warning">待审核</span>
+                            {% elif reservation.status == 'approved' %}
+                            <span class="badge badge-success">已通过</span>
+                            {% elif reservation.status == 'rejected' %}
+                            <span class="badge badge-danger">已驳回</span>
+                            {% elif reservation.status == 'checked_out' %}
+                            <span class="badge badge-info">已调出</span>
+                            {% elif reservation.status == 'completed' %}
+                            <span class="badge badge-muted">已完成</span>
+                            {% else %}
+                            <span class="badge badge-muted">{{ reservation.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'reservations:reservation_detail' reservation.pk %}" class="btn btn-sm btn-outline">查看</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--color-text-muted);">暂无预约记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'reservations:reservation_list' %}" class="btn btn-sm btn-outline">查看全部预约 →</a>
+        </div>
+    </div>
+    
+    <div>
+        {% if user.is_reader %}
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+                <h3>快捷操作</h3>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'reservations:reservation_create' %}" class="btn btn-primary btn-lg" style="width: 100%;">
+                    📝 提交预约申请
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if user.is_librarian %}
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-header">
+                <h3>待办事项</h3>
+            </div>
+            <div class="card-body">
+                {% if pending_reservations > 0 %}
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span>待审核预约</span>
+                        <span class="badge badge-warning">{{ pending_reservations }} 笔</span>
+                    </div>
+                    <a href="{% url 'reservations:reservation_list' %}?status=pending" class="btn btn-sm btn-primary" style="width: 100%;">去处理</a>
+                </div>
+                {% endif %}
+                {% if pending_reservations == 0 %}
+                <p style="color: var(--color-text-muted); text-align: center;">暂无待办事项</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h3>系统说明</h3>
+            </div>
+            <div class="card-body">
+                <div style="font-size: 0.9rem; color: var(--color-text-muted); line-height: 1.8;">
+                    <p><strong>珍本阅览流程：</strong></p>
+                    <ol style="padding-left: 20px; margin-top: 8px;">
+                        <li>读者提交预约申请</li>
+                        <li>系统自动校验资格</li>
+                        <li>馆员审核与调阅</li>
+                        <li>现场阅览与归还</li>
+                        <li>修复员损伤鉴定</li>
+                        <li>主管归库决策</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

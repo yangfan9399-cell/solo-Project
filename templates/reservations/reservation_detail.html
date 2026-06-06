@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}预约详情 - {{ reservation.book.title }}{% endblock %}
+
+{% block page_title %}预约详情{% endblock %}
+
+{% block content %}
+<div class="action-bar">
+    <a href="{% url 'reservations:reservation_list' %}" class="btn btn-outline">← 返回列表</a>
+    
+    {% if can_approve %}
+    <a href="{% url 'reservations:reservation_approve' reservation.pk %}" class="btn btn-success" style="margin-left: auto;">✓ 审核通过</a>
+    {% endif %}
+    {% if can_reject %}
+    <a href="{% url 'reservations:reservation_reject' reservation.pk %}" class="btn btn-danger">✕ 驳回</a>
+    {% endif %}
+    {% if can_cancel %}
+    <a href="{% url 'reservations:reservation_cancel' reservation.pk %}" class="btn btn-outline" style="margin-left: auto;" onclick="return confirm('确定要取消此预约吗？');">取消预约</a>
+    {% endif %}
+    {% if can_checkout %}
+    <a href="{% url 'circulation:checkout' reservation.pk %}" class="btn btn-primary" style="margin-left: auto;">📦 办理调阅</a>
+    {% endif %}
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>珍本信息</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; gap: 20px; align-items: start;">
+                    <div style="width: 100px; height: 140px; background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--color-surface); flex-shrink: 0;">
+                        <span style="font-family: var(--font-serif); font-size: 0.9rem; padding: 8px; text-align: center;">{{ reservation.book.title|truncatechars:20 }}</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="font-family: var(--font-serif); font-size: 1.2rem; color: var(--color-primary); margin-bottom: 8px;">
+                            {{ reservation.book.title }}
+                        </h4>
+                        <p style="color: var(--color-text-muted); margin-bottom: 12px;">{{ reservation.book.author }}</p>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <span class="badge badge-primary">{{ reservation.book.category.name }}</span>
+                            <span class="badge badge-info">{{ reservation.book.category.get_rarity_level_display }}</span>
+                            <span style="font-size: 0.85rem; color: var(--color-text-muted);">索书号: {{ reservation.book.call_number }}</span>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <a href="{% url 'catalog:book_detail' reservation.book.pk %}" class="btn btn-sm btn-outline">查看书目详情 →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>预约信息</h3>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">预约人</span>
+                        <span class="info-value">
+                            <strong>{{ reservation.user.real_name }}</strong>
+                            {% if reservation.user.reader_type %}
+                            <span style="color: var(--color-text-muted); font-size: 0.85rem; margin-left: 8px;">
+                                ({{ reservation.user.get_reader_type_display }})
+                            </span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="info-label">所属机构</span>
+                        <span class="info-value">{{ reservation.user.institution|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">联系电话</span>
+                        <span class="info-value">{{ reservation.user.phone|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">预约日期</span>
+                        <span class="info-value" style="font-weight: 500;">{{ reservation.reserved_date|date:"Y年m月d日" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">阅览时段</span>
+                        <span class="info-value" style="font-weight: 500; color: var(--color-primary);">
+                            {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}
+                        </span>
+                    </li>
+                    <li>
+                        <span class="info-label">阅览目的</span>
+                        <span class="info-value">{{ reservation.get_purpose_display }}</span>
+                    </li>
+                    {% if reservation.purpose_detail %}
+                    <li>
+                        <span class="info-label">目的说明</span>
+                        <span class="info-value">{{ reservation.purpose_detail }}</span>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <span class="info-label">申请时间</span>
+                        <span class="info-value">{{ reservation.created_at|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">当前状态</span>
+                        <span class="info-value">
+                            {% if reservation.status == 'pending' %}
+                            <span class="badge badge-warning">待审核</span>
+                            {% elif reservation.status == 'approved' %}
+                            <span class="badge badge-success">已通过</span>
+                            {% elif reservation.status == 'rejected' %}
+                            <span class="badge badge-danger">已驳回</span>
+                            {% elif reservation.status == 'checked_out' %}
+                            <span class="badge badge-info">阅览中</span>
+                            {% elif reservation.status == 'completed' %}
+                            <span class="badge badge-muted">已完成</span>
+                            {% elif reservation.status == 'cancelled' %}
+                            <span class="badge badge-muted">已取消</span>
+                            {% endif %}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if reservation.qualification_checked %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>资格核验</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert {% if '通过' in reservation.qualification_notes %}alert-success{% else %}alert-danger{% endif %}">
+                    <div class="alert-body">{{ reservation.qualification_notes }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if reservation.reject_reason %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>驳回原因</h3>
+            </div>
+            <div class="card-body">
+                <p style="color: var(--color-danger);">{{ reservation.reject_reason }}</p>
+                {% if reservation.approved_by %}
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px;">
+                    驳回人: {{ reservation.approved_by.real_name }} / {{ reservation.approved_at|date:"Y-m-d H:i" }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div>
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>流程时间线</h3>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for event in timeline %}
+                    <div class="timeline-item {{ event.status }}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">{{ event.title }}</div>
+                            <div class="timeline-meta">{{ event.date|date:"Y-m-d H:i" }}</div>
+                            <div class="timeline-description">{{ event.description }}</div>
+                            {% if event.detail %}
+                            <div class="timeline-detail">{{ event.detail }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        {% if has_circulation %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>交接记录</h3>
+            </div>
+            <div class="card-body">
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label">出库时间</span>
+                        <span class="info-value">{{ circulation.checkout_time|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">出库馆员</span>
+                        <span class="info-value">{{ circulation.librarian.real_name|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">出库状况</span>
+                        <span class="info-value">{{ circulation.get_condition_out_display }}</span>
+                    </li>
+                    {% if circulation.condition_out_notes %}
+                    <li>
+                        <span class="info-label">出库说明</span>
+                        <span class="info-value">{{ circulation.condition_out_notes }}</span>
+                    </li>
+                    {% endif %}
+                    
+                    {% if circulation.return_time %}
+                    <li>
+                        <span class="info-label">归还时间</span>
+                        <span class="info-value">{{ circulation.return_time|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">接收馆员</span>
+                        <span class="info-value">{{ circulation.return_receiver.real_name|default:"-" }}</span>
+                    </li>
+                    <li>
+                        <span class="info-label">归还状况</span>
+                        <span class="info-value">
+                            {% if circulation.condition_in %}
+                            {{ circulation.get_condition_in_display }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% if circulation.condition_in_notes %}
+                    <li>
+                        <span class="info-label">归还说明</span>
+                        <span class="info-value">{{ circulation.condition_in_notes }}</span>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                
+                {% if circulation.is_returned %}
+                    {% if can_assess %}
+                    <div style="margin-top: 16px;">
+                        <a href="{% url 'conservation:assess' circulation.pk %}" class="btn btn-primary" style="width: 100%;">
+                            🔍 进行损伤鉴定
+                        </a>
+                    </div>
+                    {% elif has_assessment %}
+                    <div style="margin-top: 16px;">
+                        <a href="{% url 'conservation:assessment_detail' assessment.pk %}" class="btn btn-outline" style="width: 100%;">
+                            查看鉴定结果 →
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+                
+                {% if can_decide %}
+                <div style="margin-top: 12px;">
+                    <a href="{% url 'conservation:decide' assessment.pk %}" class="btn btn-warning" style="width: 100%;">
+                        ⚖️ 做出归库决策
+                    </a>
+                </div>
+                {% elif has_decision %}
+                <div style="margin-top: 12px;">
+                    <a href="{% url 'conservation:decision_list' %}" class="btn btn-outline" style="width: 100%;">
+                        查看决策记录 →
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if has_assessment %}
+        <div class="card detail-section">
+            <div class="card-header">
+                <h3>损伤描述</h3>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 12px;">
+                    <span class="badge 
+                        {% if assessment.damage_level == 'minor' %}badge-success
+                        {% elif assessment.damage_level == 'moderate' %}badge-warning
+                        {% elif assessment.damage_level == 'severe' %}badge-danger
+                        {% else %}badge-danger
+                        {% endif %}">
+                        损伤等级: {{ assessment.get_damage_level_display }}
+                    </span>
+                </div>
+                <p style="font-size: 0.9rem; line-height: 1.7;">
+                    {{ assessment.damage_description }}
+                </p>
+                {% if assessment.damage_location %}
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 8px;">
+                    损伤部位: {{ assessment.damage_location }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
