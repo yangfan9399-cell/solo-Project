@@ -37,6 +37,7 @@ def stats_dashboard(request):
     ).order_by('decision_type')
     
     avg_processing_time = None
+    processing_time_distribution = []
     completed_decisions = Decision.objects.filter(
         assessment__circulation__return_time__isnull=False
     ).annotate(
@@ -51,11 +52,41 @@ def stats_dashboard(request):
             for d in completed_decisions if d.processing_time
         )
         avg_processing_time = round(total_hours / len(completed_decisions), 1)
+        
+        time_ranges = [
+            ('2小时以内', 0, 2),
+            ('2-6小时', 2, 6),
+            ('6-12小时', 6, 12),
+            ('12-24小时', 12, 24),
+            ('1-3天', 24, 72),
+            ('3天以上', 72, float('inf')),
+        ]
+        
+        for label, min_h, max_h in time_ranges:
+            count = 0
+            for d in completed_decisions:
+                if d.processing_time:
+                    hours = d.processing_time.total_seconds() / 3600
+                    if min_h <= hours < max_h:
+                        count += 1
+            processing_time_distribution.append({
+                'label': label,
+                'count': count,
+            })
     
     total_books = RareBook.objects.count()
     total_reservations = Reservation.objects.count()
     total_assessments = DamageAssessment.objects.count()
     total_decisions = Decision.objects.count()
+    
+    pending_assessments = DamageAssessment.objects.filter(
+        needs_supervisor_review=True
+    ).exclude(
+        id__in=Decision.objects.values_list('assessment_id', flat=True)
+    ).count()
+    
+    repair_count = Decision.objects.filter(decision_type='send_for_repair').count()
+    repair_rate = round((repair_count / total_decisions * 100), 1) if total_decisions > 0 else 0
     
     monthly_reservations = Reservation.objects.annotate(
         month=TruncMonth('created_at')
@@ -74,10 +105,14 @@ def stats_dashboard(request):
         'damage_type_stats': list(damage_type_stats),
         'decision_stats': list(decision_stats),
         'avg_processing_time': avg_processing_time,
+        'processing_time_distribution': processing_time_distribution,
         'total_books': total_books,
         'total_reservations': total_reservations,
         'total_assessments': total_assessments,
         'total_decisions': total_decisions,
+        'pending_assessments': pending_assessments,
+        'repair_count': repair_count,
+        'repair_rate': repair_rate,
         'monthly_reservations': list(monthly_reservations),
         'status_stats': list(status_stats),
         'page_title': '数据统计',
