@@ -298,15 +298,39 @@ def inspection_result(request, pk):
             appointment.calculate_demurrage()
             appointment.save()
 
-            FeeItem.objects.get_or_create(
+            demurrage_item = FeeItem.objects.filter(
                 appointment=appointment,
                 item_name='滞箱费',
-                defaults={
-                    'quantity': appointment.demurrage_days,
-                    'unit_price': appointment.demurrage_fee / max(appointment.demurrage_days, 1) if appointment.demurrage_days else 0,
-                    'amount': appointment.demurrage_fee,
-                }
-            )
+                is_reduction=False,
+            ).first()
+
+            if demurrage_item:
+                old_amount = demurrage_item.amount
+                demurrage_item.quantity = appointment.demurrage_days
+                demurrage_item.unit_price = (
+                    appointment.demurrage_fee / max(appointment.demurrage_days, 1)
+                    if appointment.demurrage_days else 0
+                )
+                demurrage_item.remark = (
+                    f'重新核算：原{old_amount}元，'
+                    f'现{appointment.demurrage_days}天×{demurrage_item.unit_price}元'
+                )
+                demurrage_item.save()
+            else:
+                FeeItem.objects.create(
+                    appointment=appointment,
+                    item_name='滞箱费',
+                    quantity=appointment.demurrage_days,
+                    unit_price=(
+                        appointment.demurrage_fee / max(appointment.demurrage_days, 1)
+                        if appointment.demurrage_days else 0
+                    ),
+                    is_reduction=False,
+                    remark=f'{appointment.container.size}集装箱，超期{appointment.demurrage_days}天',
+                )
+
+            appointment.final_fee = appointment.demurrage_fee - appointment.fee_reduction
+            appointment.save()
 
             appointment.status = AppointmentStatus.PENDING_FEE
             appointment.save()
@@ -398,15 +422,39 @@ def release_after_doc(request, pk):
     appointment.calculate_demurrage()
     appointment.save()
 
-    FeeItem.objects.get_or_create(
+    demurrage_item = FeeItem.objects.filter(
         appointment=appointment,
         item_name='滞箱费',
-        defaults={
-            'quantity': appointment.demurrage_days,
-            'unit_price': appointment.demurrage_fee / max(appointment.demurrage_days, 1) if appointment.demurrage_days else 0,
-            'amount': appointment.demurrage_fee,
-        }
-    )
+        is_reduction=False,
+    ).first()
+
+    if demurrage_item:
+        old_amount = demurrage_item.amount
+        demurrage_item.quantity = appointment.demurrage_days
+        demurrage_item.unit_price = (
+            appointment.demurrage_fee / max(appointment.demurrage_days, 1)
+            if appointment.demurrage_days else 0
+        )
+        demurrage_item.remark = (
+            f'补证后重新核算：原{old_amount}元，'
+            f'现{appointment.demurrage_days}天×{demurrage_item.unit_price}元'
+        )
+        demurrage_item.save()
+    else:
+        FeeItem.objects.create(
+            appointment=appointment,
+            item_name='滞箱费',
+            quantity=appointment.demurrage_days,
+            unit_price=(
+                appointment.demurrage_fee / max(appointment.demurrage_days, 1)
+                if appointment.demurrage_days else 0
+            ),
+            is_reduction=False,
+            remark=f'{appointment.container.size}集装箱，超期{appointment.demurrage_days}天',
+        )
+
+    appointment.final_fee = appointment.demurrage_fee - appointment.fee_reduction
+    appointment.save()
 
     appointment.status = AppointmentStatus.PENDING_FEE
     appointment.save()
