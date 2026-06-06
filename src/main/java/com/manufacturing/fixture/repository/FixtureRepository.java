@@ -34,4 +34,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     boolean existsByFixtureNo(String fixtureNo);
 
     List<Fixture> findByStatusNot(FixtureStatus status);
+
+    @Query("SELECT f FROM Fixture f WHERE f.status = 'AVAILABLE' AND (f.nextCalibrationDate IS NULL OR f.nextCalibrationDate >= :date)")
+    List<Fixture> findAvailableAndCalibrationValid(LocalDate date);
 }

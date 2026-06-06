@@ -20,6 +20,19 @@
 
     <div class="card">
         <div class="card-body">
+
+            <div th:if="${fixtureUnavailable}" class="alert alert-danger" style="margin-bottom: 1.5rem;">
+                <p style="font-weight: 600; margin-bottom: 0.5rem;">
+                    ⚠️ 夹具 <span th:text="${selectedFixture.fixtureNo + ' - ' + selectedFixture.fixtureName}"></span> 无法借用
+                </p>
+                <p style="margin-bottom: 0.75rem;" th:text="${unavailableReason}"></p>
+                <div th:if="${selectedFixture.calibrationExpired}" style="margin-top: 0.5rem;">
+                    <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">请先安排送检校准：</p>
+                    <a th:href="@{'/fixtures/' + ${selectedFixture.id}}" class="btn btn-secondary btn-sm">查看夹具详情</a>
+                    <a th:href="@{'/calibration/add?fixtureId=' + ${selectedFixture.id}}" class="btn btn-info btn-sm" style="background-color: #17a2b8;">📝 添加校准记录</a>
+                </div>
+            </div>
+
             <form method="post" action="/borrows/apply">
                 <h3 class="section-title">选择夹具</h3>
                 <div class="form-group">

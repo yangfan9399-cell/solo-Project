@@ -63,8 +63,29 @@ public class BorrowController {
     public String applyForm(@RequestParam(required = false) Long fixtureId, Model model) {
         List<Fixture> availableFixtures = fixtureService.findAvailableFixtures();
         model.addAttribute("availableFixtures", availableFixtures);
-        model.addAttribute("selectedFixtureId", fixtureId);
         model.addAttribute("defaultReturnDate", LocalDate.now().plusDays(7));
+
+        if (fixtureId != null) {
+            Fixture fixture = fixtureService.findById(fixtureId).orElse(null);
+            if (fixture != null) {
+                boolean isAvailableForBorrow = fixture.getStatus() == com.manufacturing.fixture.entity.FixtureStatus.AVAILABLE
+                        && !fixture.isCalibrationExpired();
+                if (!isAvailableForBorrow) {
+                    model.addAttribute("selectedFixture", fixture);
+                    model.addAttribute("fixtureUnavailable", true);
+                    String reason = "";
+                    if (fixture.getStatus() != com.manufacturing.fixture.entity.FixtureStatus.AVAILABLE) {
+                        reason = "夹具当前状态为" + fixture.getStatus().getDescription() + "，不可借用";
+                    } else if (fixture.isCalibrationExpired()) {
+                        reason = "校准已过期（到期日：" + fixture.getNextCalibrationDate() + "），禁止出库";
+                    }
+                    model.addAttribute("unavailableReason", reason);
+                } else {
+                    model.addAttribute("selectedFixtureId", fixtureId);
+                }
+            }
+        }
+
         return "borrows/apply";
     }
 

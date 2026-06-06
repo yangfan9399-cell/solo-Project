@@ -76,6 +76,6 @@ public class FixtureService {
     }
 
     public List<Fixture> findAvailableFixtures() {
-        return fixtureRepository.findByStatus(FixtureStatus.AVAILABLE);
+        return fixtureRepository.findAvailableAndCalibrationValid(LocalDate.now());
     }
 }
