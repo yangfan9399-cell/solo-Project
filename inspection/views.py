@@ -546,11 +546,13 @@ def fee_review(request, pk):
                     appointment.status = AppointmentStatus.PENDING_FEE
                     appointment.fee_dispute_reason = ''
                     target_status = AppointmentStatus.PENDING_FEE
+                    target_label = '待费用复核'
                 else:
-                    appointment.status = AppointmentStatus.NORMAL_RELEASE
+                    appointment.status = AppointmentStatus.IN_INSPECTION
                     appointment.fee_confirmed_by = None
                     appointment.fee_confirmed_at = None
-                    target_status = AppointmentStatus.NORMAL_RELEASE
+                    target_status = AppointmentStatus.IN_INSPECTION
+                    target_label = '查验中'
 
                 appointment.save()
 
@@ -558,10 +560,10 @@ def fee_review(request, pk):
                     appointment, '费用复核退回', request.user,
                     status_from=old_status,
                     status_to=target_status,
-                    remark=f'退回原因：{reject_reason}',
+                    remark=f'退回原因：{reject_reason}，退回至：{target_label}，场站可重新登记查验结果并重新核算费用',
                 )
 
-                messages.info(request, f'已退回至{target_status.label}状态')
+                messages.info(request, f'已退回至{target_label}状态，场站可重新处理')
 
             return redirect('appointment_detail', pk=pk)
     else:
