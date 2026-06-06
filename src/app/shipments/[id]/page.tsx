@@ -30,7 +30,9 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
 
   const latestDeviation = shipment.deviations[shipment.deviations.length - 1]
   const latestDisposal = shipment.disposals[shipment.disposals.length - 1]
-  const hasOfflineReadings = shipment.temperatureReadings.some((r) => r.isOffline)
+  const isProbeOffline = shipment.probe.status === 'OFFLINE'
+  const hasOfflineReading = shipment.temperatureReadings.some((r) => r.isOffline)
+  const hasProbeOffline = isProbeOffline || hasOfflineReading
   const offlineReadingsCount = shipment.temperatureReadings.filter((r) => r.isOffline).length
 
   return (
@@ -65,10 +67,10 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
                 <Thermometer className="w-5 h-5 mr-2 text-blue-600" />
                 温度曲线
               </h2>
-              {hasOfflineReadings && (
+              {hasProbeOffline && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                   <AlertTriangle className="w-3 h-3 mr-1" />
-                  含 {offlineReadingsCount} 条离线记录
+                  存在离线情况
                 </span>
               )}
             </div>
@@ -85,9 +87,9 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
               </span>
               <span>
                 数据点: {shipment.temperatureReadings.length} 个
-                {hasOfflineReadings && (
+                {hasOfflineReading && (
                   <span className="text-red-600 ml-2">
-                    (含 {offlineReadingsCount} 条离线)
+                    (含 {offlineReadingsCount} 条离线记录)
                   </span>
                 )}
               </span>
@@ -220,15 +222,23 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
                   </span>
                 </dd>
               </div>
-              {hasOfflineReadings && (
+              {hasProbeOffline && (
                 <div className="pt-3 border-t border-gray-100">
                   <div className="p-2 bg-red-50 rounded-md">
                     <p className="text-xs font-medium text-red-700 flex items-center">
                       <AlertTriangle className="w-3 h-3 mr-1" />
-                      温度记录含离线数据
+                      离线情况说明
                     </p>
-                    <p className="text-xs text-red-600 mt-0.5">
-                      共 {offlineReadingsCount} 条离线记录，放行需人工复核
+                    <ul className="text-xs text-red-600 mt-1 space-y-0.5">
+                      {isProbeOffline && (
+                        <li>• 探头当前状态为离线</li>
+                      )}
+                      {hasOfflineReading && (
+                        <li>• 温度记录含 {offlineReadingsCount} 条离线数据</li>
+                      )}
+                    </ul>
+                    <p className="text-xs text-red-700 font-medium mt-1">
+                      放行需人工复核证据
                     </p>
                   </div>
                 </div>

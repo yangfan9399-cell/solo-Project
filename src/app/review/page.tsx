@@ -49,9 +49,11 @@ export default function ReviewPage() {
     (s) => s.status === ShipmentStatus.DEVIATION_JUDGED
   )
 
-  const hasProbeOffline = selectedShipment?.temperatureReadings.some(
+  const isProbeOffline = selectedShipment?.probe.status === 'OFFLINE'
+  const hasOfflineReading = selectedShipment?.temperatureReadings.some(
     (r) => r.isOffline
   )
+  const hasProbeOffline = isProbeOffline || hasOfflineReading
 
   const offlineReadingsCount = selectedShipment?.temperatureReadings.filter(
     (r) => r.isOffline
@@ -255,8 +257,15 @@ export default function ReviewPage() {
                     <AlertTriangle className="w-4 h-4 mr-1" />
                     探头离线警告
                   </p>
-                  <p className="text-xs text-red-600 mt-1">
-                    该批次温度记录中存在 <span className="font-medium">{offlineReadingsCount}</span> 条探头离线记录，
+                  <ul className="text-xs text-red-600 mt-1 space-y-1">
+                    {isProbeOffline && (
+                      <li>• 探头当前状态为离线</li>
+                    )}
+                    {hasOfflineReading && (
+                      <li>• 温度记录中存在 {offlineReadingsCount} 条离线记录</li>
+                    )}
+                  </ul>
+                  <p className="text-xs text-red-700 font-medium mt-2">
                     禁止直接放行，必须提供人工复核证据
                   </p>
                 </div>

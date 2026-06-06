@@ -7,6 +7,7 @@ import {
   DeviationType,
   DeviationLevel,
   DisposalAction,
+  ProbeStatus,
 } from './types'
 
 export interface ShipmentDetail extends Shipment {
@@ -333,9 +334,13 @@ export async function reviewDisposal(input: ReviewDisposalInput): Promise<void> 
   const disposal = store.disposals.find((d) => d.shipmentId === input.shipmentId)
   if (!disposal) throw new Error('处置记录不存在')
 
+  const probe = store.probes.find((p) => p.id === shipment.probeId)
+  const isProbeOffline = probe?.status === ProbeStatus.OFFLINE
+
   const temperatureReadings = store.temperatureReadings.filter((r) => r.shipmentId === input.shipmentId)
   const hasOfflineReading = temperatureReadings.some((r) => r.isOffline)
-  if (hasOfflineReading && input.action === DisposalAction.RELEASE) {
+
+  if ((isProbeOffline || hasOfflineReading) && input.action === DisposalAction.RELEASE) {
     if (!input.evidenceUrl || input.evidenceUrl.trim() === '') {
       throw new Error('探头离线时禁止直接放行，必须上传人工复核证据')
     }
@@ -378,8 +383,16 @@ export async function reviewDisposal(input: ReviewDisposalInput): Promise<void> 
 
 export async function hasProbeOffline(shipmentId: string): Promise<boolean> {
   const store = getStore()
+  const shipment = store.shipments.find((s) => s.id === shipmentId)
+  if (!shipment) return false
+
+  const probe = store.probes.find((p) => p.id === shipment.probeId)
+  const isProbeOffline = probe?.status === ProbeStatus.OFFLINE
+
   const readings = store.temperatureReadings.filter((r) => r.shipmentId === shipmentId)
-  return readings.some((r) => r.isOffline)
+  const hasOfflineReading = readings.some((r) => r.isOffline)
+
+  return isProbeOffline || hasOfflineReading
 }
 
 export interface CarrierStat {
