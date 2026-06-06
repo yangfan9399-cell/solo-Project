@@ -77,6 +77,13 @@
             <canvas id="damageTypeChart"></canvas>
         </div>
     </div>
+    
+    <div class="chart-card">
+        <h3>⏱️ 处理时长分布</h3>
+        <div class="chart-container">
+            <canvas id="processingTimeChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <div class="card" style="margin-top: 24px;">
@@ -159,18 +166,48 @@
                         </tr>
                         <tr>
                             <td>待决策鉴定</td>
-                            <td>{{ pending_count|default:"-" }}</td>
+                            <td>{{ pending_assessments }}</td>
                         </tr>
                         <tr>
                             <td>已完成决策</td>
                             <td>{{ total_decisions }}</td>
                         </tr>
                         <tr>
+                            <td>送修数量</td>
+                            <td>{{ repair_count }}</td>
+                        </tr>
+                        <tr>
                             <td>送修率</td>
-                            <td>-</td>
+                            <td>{% if total_decisions > 0 %}{{ repair_rate }}%{% else %}-{% endif %}</td>
                         </tr>
                     </tbody>
                 </table>
+                
+                <h4 style="font-family: var(--font-serif); color: var(--color-primary); margin: 24px 0 16px 0;">处理时长分布</h4>
+                {% if has_processing_data %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>时长区间</th>
+                            <th>数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in processing_time_distribution %}
+                        {% if item.count > 0 %}
+                        <tr>
+                            <td>{{ item.label }}</td>
+                            <td>{{ item.count }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div style="text-align: center; padding: 24px; color: var(--color-text-muted); font-size: 0.9rem;">
+                    暂无处理时长数据
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

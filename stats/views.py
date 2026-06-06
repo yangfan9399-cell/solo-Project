@@ -88,6 +88,8 @@ def stats_dashboard(request):
     repair_count = Decision.objects.filter(decision_type='send_for_repair').count()
     repair_rate = round((repair_count / total_decisions * 100), 1) if total_decisions > 0 else 0
     
+    has_processing_data = any(item['count'] > 0 for item in processing_time_distribution)
+    
     monthly_reservations = Reservation.objects.annotate(
         month=TruncMonth('created_at')
     ).values('month').annotate(
@@ -106,6 +108,7 @@ def stats_dashboard(request):
         'decision_stats': list(decision_stats),
         'avg_processing_time': avg_processing_time,
         'processing_time_distribution': processing_time_distribution,
+        'has_processing_data': has_processing_data,
         'total_books': total_books,
         'total_reservations': total_reservations,
         'total_assessments': total_assessments,
