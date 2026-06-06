@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -15,8 +15,8 @@ public interface CalibrationRecordRepository extends JpaRepository<CalibrationRe
     List<CalibrationRecord> findByFixtureIdOrderByCalibrationDateDesc(Long fixtureId);
 
     @Query("SELECT c FROM CalibrationRecord c WHERE c.calibrationDate BETWEEN :startDate AND :endDate ORDER BY c.calibrationDate DESC")
-    List<CalibrationRecord> findByCalibrationDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    List<CalibrationRecord> findByCalibrationDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     @Query("SELECT c.result, COUNT(c) FROM CalibrationRecord c WHERE c.calibrationDate BETWEEN :startDate AND :endDate GROUP BY c.result")
-    List<Object[]> countByResultAndDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    List<Object[]> countByResultAndDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

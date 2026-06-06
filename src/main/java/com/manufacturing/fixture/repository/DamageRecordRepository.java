@@ -26,5 +26,5 @@ public interface DamageRecordRepository extends JpaRepository<DamageRecord, Long
     List<Object[]> countByProductionLineAndDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT COALESCE(SUM(d.downtimeHours), 0) FROM DamageRecord d WHERE d.occurrenceTime BETWEEN :startDate AND :endDate")
-    Integer sumDowntimeHours(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    Long sumDowntimeHours(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

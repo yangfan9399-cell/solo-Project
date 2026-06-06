@@ -40,7 +40,7 @@ public class AnalysisController {
         model.addAttribute("endDate", endDate);
 
         model.addAttribute("productionLineStats", analysisService.getAnalysisByProductionLine(start, end));
-        model.addAttribute("exceptionCauseStats", analysisService.getAnalysisByExceptionCause(start, end));
+        model.addAttribute("exceptionCauseStats", analysisService.getAnalysisByExceptionCause(startDate, endDate));
         model.addAttribute("downtimeStats", analysisService.getAnalysisByDowntimeImpact(start, end));
         model.addAttribute("fixtureTypeStats", analysisService.getAnalysisByFixtureType());
 
@@ -91,7 +91,7 @@ public class AnalysisController {
 
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
-        model.addAttribute("stats", analysisService.getAnalysisByExceptionCause(start, end));
+        model.addAttribute("stats", analysisService.getAnalysisByExceptionCause(startDate, endDate));
 
         return "analysis/by-exception";
     }

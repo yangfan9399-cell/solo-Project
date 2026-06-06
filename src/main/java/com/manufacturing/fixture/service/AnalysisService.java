@@ -10,6 +10,7 @@ import com.manufacturing.fixture.repository.FixtureRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,10 +68,11 @@ public class AnalysisService {
             Long borrowCount = borrowMap.getOrDefault(line, 0L);
             Object[] damageRow = damageMap.get(line);
             Long damageCount = 0L;
-            Integer downtimeHours = 0;
+            Long downtimeHours = 0L;
             if (damageRow != null) {
                 damageCount = (Long) damageRow[1];
-                downtimeHours = (Integer) damageRow[2];
+                Number downtimeNum = (Number) damageRow[2];
+                downtimeHours = downtimeNum != null ? downtimeNum.longValue() : 0L;
             }
             combinedStats.add(new Object[]{line, borrowCount, damageCount, downtimeHours});
         }
@@ -90,13 +92,16 @@ public class AnalysisService {
         return result;
     }
 
-    public Map<String, Object> getAnalysisByExceptionCause(LocalDateTime startDate, LocalDateTime endDate) {
+    public Map<String, Object> getAnalysisByExceptionCause(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> result = new HashMap<>();
 
-        List<Object[]> damageByType = damageRecordRepository.countByDamageTypeAndDateRange(startDate, endDate);
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalDateTime.MAX.toLocalTime());
+
+        List<Object[]> damageByType = damageRecordRepository.countByDamageTypeAndDateRange(startDateTime, endDateTime);
         result.put("damageByType", damageByType);
 
-        List<Object[]> borrowStatusStats = borrowRecordRepository.countByStatusAndDateRange(startDate, endDate);
+        List<Object[]> borrowStatusStats = borrowRecordRepository.countByStatusAndDateRange(startDateTime, endDateTime);
         result.put("borrowStatusStats", borrowStatusStats);
 
         List<Object[]> calibrationStats = calibrationRecordRepository.countByResultAndDateRange(startDate, endDate);
@@ -108,8 +113,8 @@ public class AnalysisService {
     public Map<String, Object> getAnalysisByDowntimeImpact(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> result = new HashMap<>();
 
-        Integer totalDowntime = damageRecordRepository.sumDowntimeHours(startDate, endDate);
-        result.put("totalDowntimeHours", totalDowntime != null ? totalDowntime : 0);
+        Long totalDowntime = damageRecordRepository.sumDowntimeHours(startDate, endDate);
+        result.put("totalDowntimeHours", totalDowntime != null ? totalDowntime : 0L);
 
         List<Object[]> downtimeByLine = damageRecordRepository.countByProductionLineAndDateRange(startDate, endDate);
         result.put("downtimeByLine", downtimeByLine);
