@@ -535,6 +535,34 @@ def fee_review(request, pk):
 
                 messages.warning(request, '已登记滞箱费异议')
 
+            elif action == 'reject':
+                reject_reason = form.cleaned_data['reject_reason']
+                if not reject_reason:
+                    messages.error(request, '请填写退回原因')
+                    return redirect('fee_review', pk=pk)
+
+                old_status = appointment.status
+                if old_status == AppointmentStatus.FEE_DISPUTED:
+                    appointment.status = AppointmentStatus.PENDING_FEE
+                    appointment.fee_dispute_reason = ''
+                    target_status = AppointmentStatus.PENDING_FEE
+                else:
+                    appointment.status = AppointmentStatus.NORMAL_RELEASE
+                    appointment.fee_confirmed_by = None
+                    appointment.fee_confirmed_at = None
+                    target_status = AppointmentStatus.NORMAL_RELEASE
+
+                appointment.save()
+
+                _add_history(
+                    appointment, '费用复核退回', request.user,
+                    status_from=old_status,
+                    status_to=target_status,
+                    remark=f'退回原因：{reject_reason}',
+                )
+
+                messages.info(request, f'已退回至{target_status.label}状态')
+
             return redirect('appointment_detail', pk=pk)
     else:
         form = FeeReviewForm()

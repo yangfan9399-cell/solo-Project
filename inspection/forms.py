@@ -102,6 +102,7 @@ class FeeReviewForm(forms.Form):
             ('confirm', '确认费用'),
             ('reduce', '减免后确认'),
             ('dispute', '提出异议'),
+            ('reject', '退回'),
         ],
         widget=forms.HiddenInput(),
     )
@@ -109,6 +110,11 @@ class FeeReviewForm(forms.Form):
         widget=forms.Textarea(attrs={'rows': 3}),
         required=False,
         label='异议原因',
+    )
+    reject_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        label='退回原因',
     )
 
 

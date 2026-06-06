@@ -90,8 +90,15 @@
         <div class="form-group">
             <label class="form-label">异议原因</label>
             <textarea name="dispute_reason" id="id_dispute_reason"
-                      class="form-control" rows="3"
+                      class="form-control" rows="2"
                       placeholder="如有异议，请填写异议原因..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">退回原因</label>
+            <textarea name="reject_reason" id="id_reject_reason"
+                      class="form-control" rows="2"
+                      placeholder="退回时请填写原因..."></textarea>
         </div>
 
         <div class="form-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
@@ -104,7 +111,10 @@
             <button type="button" class="btn btn-danger btn-lg" onclick="submitForm('dispute')">
                 ⚠ 提出异议
             </button>
-            <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-secondary btn-lg">
+            <button type="button" class="btn btn-secondary btn-lg" onclick="submitForm('reject')">
+                ↩ 退回
+            </button>
+            <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-outline-secondary btn-lg" style="background: #fff; color: #6b7280; border: 1px solid #d1d5db;">
                 返回
             </a>
         </div>
@@ -125,6 +135,17 @@ function submitForm(action) {
         const reason = document.getElementById('id_dispute_reason').value.trim();
         if (!reason) {
             alert('请填写异议原因');
+            return;
+        }
+    }
+
+    if (action === 'reject') {
+        const reason = document.getElementById('id_reject_reason').value.trim();
+        if (!reason) {
+            alert('请填写退回原因');
+            return;
+        }
+        if (!confirm('确定要退回吗？退回后将返回上一流程状态。')) {
             return;
         }
     }

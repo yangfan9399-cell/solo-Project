@@ -39,7 +39,7 @@
     <div class="card-header">
         <h2 class="card-title">操作区</h2>
     </div>
-    <div class="action-buttons">
+    <div class="action-buttons" id="action-buttons">
         {% if is_forwarder and appointment.status == 'draft' %}
         <form method="post" action="{% url 'appointment_submit' appointment.pk %}" style="display: inline;">
             {% csrf_token %}
@@ -222,7 +222,7 @@
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">单证清单</h2>
-            <div>
+            <div id="doc-status-badge">
                 {% if appointment.is_doc_complete %}
                 <span class="badge badge-success">✓ 单证齐全</span>
                 {% else %}

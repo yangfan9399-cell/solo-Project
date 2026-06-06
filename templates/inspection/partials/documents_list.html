@@ -1,0 +1,108 @@
+{% for doc in appointment.documents.all %}
+<div class="doc-item {% if not doc.is_submitted and doc.document_type.is_required %}missing{% endif %}">
+    <div class="doc-info">
+        <div class="doc-status">
+            {% if doc.is_submitted %}
+            <span class="badge badge-success">已提交</span>
+            {% elif doc.document_type.is_required %}
+            <span class="badge badge-danger">缺失(必备)</span>
+            {% else %}
+            <span class="badge badge-secondary">未提交</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong>{{ doc.document_type.name }}</strong>
+            {% if doc.document_type.is_required %}
+            <span style="color: #dc2626; font-size: 12px;"> *必备</span>
+            {% endif %}
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        {% if doc.is_submitted %}
+        <span style="font-size: 12px; color: #6b7280;">
+            {{ doc.submitted_at|date:"Y-m-d H:i" }} · {{ doc.submitted_by.get_full_name|default:doc.submitted_by.username }}
+        </span>
+        {% else %}
+        <span style="font-size: 12px; color: #9ca3af;">
+            {{ doc.document_type.description|default:"" }}
+        </span>
+        {% if is_forwarder or is_yard %}
+        <form method="post"
+              action="{% url 'document_submit' appointment.pk doc.pk %}"
+              hx-post="{% url 'document_submit' appointment.pk doc.pk %}"
+              hx-target="#documents-list"
+              hx-swap="innerHTML"
+              style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-primary">提交</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<p style="color: #9ca3af; text-align: center; padding: 20px;">暂无单证信息</p>
+{% endfor %}
+
+<div id="doc-status-badge" hx-swap-oob="true">
+    {% if appointment.is_doc_complete %}
+    <span class="badge badge-success">✓ 单证齐全</span>
+    {% else %}
+    <span class="badge badge-danger">✗ 单证缺失</span>
+    {% endif %}
+</div>
+
+<div id="action-buttons" hx-swap-oob="true">
+    {% if is_forwarder and appointment.status == 'draft' %}
+    <form method="post" action="{% url 'appointment_submit' appointment.pk %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">提交预约</button>
+    </form>
+    {% endif %}
+
+    {% if is_yard and appointment.status == 'submitted' or is_yard and appointment.status == 'rescheduled' %}
+    <form method="post" action="{% url 'inspection_start' appointment.pk %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">开始查验</button>
+    </form>
+    {% endif %}
+
+    {% if is_yard and appointment.status == 'in_inspection' %}
+    <a href="{% url 'inspection_result' appointment.pk %}" class="btn btn-success">登记查验结果</a>
+    {% endif %}
+
+    {% if appointment.status == 'doc_missing' %}
+    <div class="alert alert-danger" style="flex: 1; margin-bottom: 0;">
+        <strong>⚠️ 单证缺失，已阻断放行</strong>
+        <p style="margin: 8px 0 0 0; font-size: 13px;">
+            缺失单证：
+            {% for doc in appointment.missing_documents %}
+            <span class="badge badge-danger" style="margin-left: 4px;">{{ doc.name }}</span>
+            {% empty %}
+            无
+            {% endfor %}
+        </p>
+        {% if is_yard and appointment.is_doc_complete %}
+        <form method="post" action="{% url 'release_after_doc' appointment.pk %}" style="margin-top: 12px;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm">补证完成，执行放行</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if is_fee_auditor and appointment.status == 'pending_fee' or is_fee_auditor and appointment.status == 'fee_disputed' %}
+    <a href="{% url 'fee_review' appointment.pk %}" class="btn btn-success">费用复核</a>
+    {% endif %}
+
+    {% if is_fee_auditor and appointment.status == 'fee_confirmed' %}
+    <form method="post" action="{% url 'appointment_archive' appointment.pk %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">归档</button>
+    </form>
+    {% endif %}
+
+    {% if appointment.status != 'archived' %}
+    <a href="{% url 'appointment_reschedule' appointment.pk %}" class="btn btn-outline" style="background: #fff; color: #2563eb; border: 1px solid #2563eb;">申请改期</a>
+    {% endif %}
+</div>
