@@ -573,6 +573,19 @@ export async function getOverdueStatisticsByCategory() {
 export async function getApprovalDurationStats() {
   const db = await getDb();
 
+  const countResults = db.exec(
+    `SELECT COUNT(*) as total_approved
+     FROM requisitions
+     WHERE status IN (
+       'lab_approved', 'lab_rejected', 
+       'safety_approved', 'safety_rejected',
+       'picked_up', 'returned', 'overdue'
+     )`
+  );
+  const totalApproved = mapRows<{ totalApproved: number }>(
+    countResults[0] || { columns: [], values: [] }
+  )[0]?.totalApproved || 0;
+
   const createResults = db.exec(
     `SELECT requisition_id, created_at 
      FROM operation_logs 
@@ -583,23 +596,23 @@ export async function getApprovalDurationStats() {
   );
 
   const approvalResults = db.exec(
-    `SELECT requisition_id, MAX(created_at) as approved_at
+    `SELECT requisition_id, MIN(created_at) as first_approval_at
      FROM operation_logs 
      WHERE action IN ('lab_approve', 'lab_reject', 'safety_approve', 'safety_reject')
      GROUP BY requisition_id`
   );
-  const approvalLogs = mapRows<{ requisitionId: number; approvedAt: number }>(
+  const approvalLogs = mapRows<{ requisitionId: number; firstApprovalAt: number }>(
     approvalResults[0] || { columns: [], values: [] }
   );
 
   const createMap = new Map(createLogs.map((l) => [l.requisitionId, l.createdAt]));
-  const approvalMap = new Map(approvalLogs.map((l) => [l.requisitionId, l.approvedAt]));
+  const approvalMap = new Map(approvalLogs.map((l) => [l.requisitionId, l.firstApprovalAt]));
 
   const durations: number[] = [];
-  for (const [reqId, approvedAt] of approvalMap) {
+  for (const [reqId, firstApprovalAt] of approvalMap) {
     const createdAt = createMap.get(reqId);
-    if (createdAt && approvedAt) {
-      durations.push(approvedAt - createdAt);
+    if (createdAt && firstApprovalAt && firstApprovalAt > createdAt) {
+      durations.push(firstApprovalAt - createdAt);
     }
   }
 
@@ -609,7 +622,7 @@ export async function getApprovalDurationStats() {
 
   return {
     avgApprovalHours: avgMs !== null ? (avgMs / (1000 * 60 * 60)).toFixed(1) : "N/A",
-    totalApproved: durations.length,
+    totalApproved,
   };
 }
 
