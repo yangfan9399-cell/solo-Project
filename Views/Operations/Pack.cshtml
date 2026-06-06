@@ -1,0 +1,100 @@
+@model PackSetViewModel
+@{
+    ViewData["Title"] = "打包登记";
+    var departments = ViewData["Departments"] as List<Department>;
+    var supplyStaff = ViewData["SupplyStaff"] as List<User>;
+}
+
+<h1 class="page-title">打包登记</h1>
+
+<div class="dashboard-card">
+    <form asp-controller="Operations" asp-action="Pack" method="post" class="form-styled">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>器械包编号 *</label>
+                <input asp-for="SetCode" class="form-control" placeholder="如: SET-GEN-005" />
+                <span asp-validation-for="SetCode" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>器械包名称 *</label>
+                <input asp-for="Name" class="form-control" placeholder="如: 阑尾切除包" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>类型</label>
+                <select asp-for="SetType" class="form-control">
+                    <option value="普外科">普外科</option>
+                    <option value="骨科">骨科</option>
+                    <option value="妇产科">妇产科</option>
+                    <option value="心胸外科">心胸外科</option>
+                    <option value="神经外科">神经外科</option>
+                    <option value="泌尿外科">泌尿外科</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>所属科室 *</label>
+                <select asp-for="DepartmentId" class="form-control">
+                    @if (departments != null)
+                    {
+                        @foreach (var dept in departments)
+                        {
+                            <option value="@dept.Id">@dept.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group form-group-full">
+                <label>描述</label>
+                <textarea asp-for="Description" class="form-control" rows="2" placeholder="可选描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label>打包人 *</label>
+                <select asp-for="PackedByUserId" class="form-control">
+                    @if (supplyStaff != null)
+                    {
+                        @foreach (var user in supplyStaff)
+                        {
+                            <option value="@user.Id">@user.Name (@user.EmployeeId)</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <h3 class="form-section-title">器械清单</h3>
+        <div class="table-responsive">
+            <table class="data-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>器械名称</th>
+                        <th>应有数量</th>
+                        <th>实有数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Items.Count; i++)
+                    {
+                        <tr>
+                            <td>
+                                @Model.Items[i].InstrumentName
+                                <input type="hidden" asp-for="Items[i].InstrumentId" />
+                                <input type="hidden" asp-for="Items[i].InstrumentName" />
+                            </td>
+                            <td style="width: 150px;">
+                                <input asp-for="Items[i].ExpectedQuantity" type="number" min="0" class="form-control form-control-sm" />
+                            </td>
+                            <td style="width: 150px;">
+                                <input asp-for="Items[i].ActualQuantity" type="number" min="0" class="form-control form-control-sm" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">确认打包</button>
+            <a asp-controller="InstrumentSets" asp-action="Index" class="btn btn-outline btn-lg">取消</a>
+        </div>
+    </form>
+</div>

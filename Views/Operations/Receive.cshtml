@@ -1,0 +1,167 @@
+@model ReceiveSetViewModel
+@{
+    ViewData["Title"] = "领用确认";
+    var orNurses = ViewData["OrNurses"] as List<User>;
+}
+
+<h1 class="page-title">手术室领用确认</h1>
+
+@if (Model.IsExpired)
+{
+    <div class="alert alert-danger">
+        <h3>⚠️ 灭菌已过期！</h3>
+        <p>此器械包的灭菌批次已过期，<strong>禁止发放使用</strong>。</p>
+        <p>请退回消毒供应室重新灭菌后再领用。</p>
+    </div>
+}
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="dashboard-card">
+            <h2 class="card-title">器械包信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>编号</label>
+                    <div class="info-value"><code>@Model.SetCode</code></div>
+                </div>
+                <div class="info-item">
+                    <label>名称</label>
+                    <div class="info-value"><strong>@Model.SetName</strong></div>
+                </div>
+                <div class="info-item">
+                    <label>所属科室</label>
+                    <div class="info-value">@Model.DepartmentName</div>
+                </div>
+                <div class="info-item">
+                    <label>灭菌批次</label>
+                    <div class="info-value">
+                        @if (!string.IsNullOrEmpty(Model.BatchNumber))
+                        {
+                            <code>@Model.BatchNumber</code>
+                        }
+                        else
+                        {
+                            <span class="text-muted">未灭菌</span>
+                        }
+                    </div>
+                </div>
+                <div class="info-item @(Model.IsExpired ? "text-danger" : "")">
+                    <label>有效期至</label>
+                    <div class="info-value">
+                        @if (Model.ExpirationDate.HasValue)
+                        {
+                            <strong>@Model.ExpirationDate.Value.ToString("yyyy-MM-dd HH:mm")</strong>
+                            if (Model.IsExpired)
+                            {
+                                <span class="badge badge-danger">已过期</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">器械清单核对</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>器械名称</th>
+                            <th>应有</th>
+                            <th>实有</th>
+                            <th>核对结果</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            var isMissing = item.ActualQuantity < item.ExpectedQuantity;
+                            <tr class="@(isMissing ? "row-danger" : "")">
+                                <td><strong>@item.InstrumentName</strong></td>
+                                <td>@item.ExpectedQuantity</td>
+                                <td>
+                                    @if (isMissing)
+                                    {
+                                        <span class="text-danger"><strong>@item.ActualQuantity</strong></span>
+                                    }
+                                    else
+                                    {
+                                        @item.ActualQuantity
+                                    }
+                                </td>
+                                <td>
+                                    @if (isMissing)
+                                    {
+                                        <span class="badge badge-danger">缺@(item.ExpectedQuantity - item.ActualQuantity)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">✓ 齐全</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.HasMissingItems)
+            {
+                <div class="alert alert-warning">
+                    <strong>⚠️ 注意：</strong> 清点发现器械缺件，请确认是否仍需领用，或上报异常进行补包。
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="detail-side">
+        <div class="dashboard-card">
+            <h2 class="card-title">领用确认</h2>
+            @if (Model.IsExpired)
+            {
+                <div class="alert alert-danger">
+                    <strong>⚠️ 阻断发放</strong><br />
+                    灭菌已过期，无法执行领用操作。
+                </div>
+            }
+            else
+            {
+                <form asp-controller="Operations" asp-action="Receive" method="post" class="form-styled">
+                    <input type="hidden" asp-for="InstrumentSetId" />
+                    <input type="hidden" asp-for="SetCode" />
+                    <input type="hidden" asp-for="SetName" />
+                    <input type="hidden" asp-for="DepartmentName" />
+                    <input type="hidden" asp-for="IsExpired" />
+
+                    <div class="form-group">
+                        <label>领用人（手术室护士）*</label>
+                        <select asp-for="ReceivedByUserId" class="form-control">
+                            @if (orNurses != null)
+                            {
+                                @foreach (var user in orNurses)
+                                {
+                                    <option value="@user.Id">@user.Name (@user.EmployeeId)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="领用备注（可选）"></textarea>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 1rem;">
+                        <button type="submit" class="btn btn-primary btn-lg">确认领用</button>
+                    </div>
+                </form>
+            }
+            <div style="margin-top: 1rem;">
+                <a asp-controller="InstrumentSets" asp-action="Details" asp-route-id="@Model.InstrumentSetId" class="btn btn-outline">返回详情</a>
+            </div>
+        </div>
+    </div>
+</div>

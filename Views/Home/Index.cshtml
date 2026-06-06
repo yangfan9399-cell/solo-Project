@@ -1,0 +1,279 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "首页看板";
+}
+
+<div class="dashboard">
+    <h1 class="page-title">手术器械包追溯看板</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card stat-total">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.TotalSets</div>
+                <div class="stat-label">器械包总数</div>
+            </div>
+        </div>
+        <div class="stat-card stat-ready">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.ReadyForUseCount</div>
+                <div class="stat-label">可用/待领用</div>
+            </div>
+        </div>
+        <div class="stat-card stat-inuse">
+            <div class="stat-icon">🏥</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.InUseCount</div>
+                <div class="stat-label">使用中</div>
+            </div>
+        </div>
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.MissingItemsCount</div>
+                <div class="stat-label">缺件异常</div>
+            </div>
+        </div>
+        <div class="stat-card stat-danger">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.ExpiredCount</div>
+                <div class="stat-label">灭菌过期</div>
+            </div>
+        </div>
+        <div class="stat-card stat-info">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-content">
+                <div class="stat-value">@Model.WrongDepartmentCount</div>
+                <div class="stat-label">科室错领</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h2 class="card-title">按科室统计</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>科室</th>
+                            <th>总数</th>
+                            <th>可用</th>
+                            <th>使用中</th>
+                            <th>异常</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dept in Model.DepartmentStats)
+                        {
+                            <tr>
+                                <td><strong>@dept.DepartmentName</strong></td>
+                                <td>@dept.TotalSets</td>
+                                <td><span class="badge badge-success">@dept.ReadyCount</span></td>
+                                <td><span class="badge badge-info">@dept.InUseCount</span></td>
+                                <td>
+                                    @if (dept.AnomalyCount > 0)
+                                    {
+                                        <span class="badge badge-danger">@dept.AnomalyCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">按器械包类型统计</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>类型</th>
+                            <th>数量</th>
+                            <th>异常数</th>
+                            <th>异常率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var type in Model.SetTypeStats)
+                        {
+                            var rate = type.Count > 0 ? (double)type.AnomalyCount / type.Count * 100 : 0;
+                            <tr>
+                                <td><strong>@type.SetType</strong></td>
+                                <td>@type.Count</td>
+                                <td>
+                                    @if (type.AnomalyCount > 0)
+                                    {
+                                        <span class="badge badge-warning">@type.AnomalyCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span>0</span>
+                                    }
+                                </td>
+                                <td>@rate.ToString("F1")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h2 class="card-title">缺件器械排行</h2>
+            @if (Model.MissingItemStats.Any())
+            {
+                <div class="missing-list">
+                    @foreach (var item in Model.MissingItemStats)
+                    {
+                        <div class="missing-item">
+                            <div class="missing-name">@item.InstrumentName</div>
+                            <div class="missing-bar">
+                                <div class="missing-bar-fill" style="width: @(Math.Min(item.MissingCount * 10, 100))%"></div>
+                            </div>
+                            <div class="missing-count">缺 @item.MissingCount 件</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-text">暂无缺件记录</p>
+            }
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">补包耗时记录</h2>
+            @if (Model.ReplenishmentStats.Any())
+            {
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>器械包编号</th>
+                                <th>名称</th>
+                                <th>耗时</th>
+                                <th>完成时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rep in Model.ReplenishmentStats)
+                            {
+                                <tr>
+                                    <td><code>@rep.SetCode</code></td>
+                                    <td>@rep.SetName</td>
+                                    <td>
+                                        @if (rep.DurationMinutes >= 60)
+                                        {
+                                            <span class="badge badge-warning">@(rep.DurationMinutes / 60)小时@(rep.DurationMinutes % 60)分</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success">@rep.DurationMinutes 分钟</span>
+                                        }
+                                    </td>
+                                    <td><small>@rep.CompletedAt.ToString("MM-dd HH:mm")</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="empty-text">暂无补包记录</p>
+            }
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2 class="card-title">最近异常</h2>
+        @if (Model.RecentAnomalies.Any())
+        {
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>编号</th>
+                            <th>名称</th>
+                            <th>科室</th>
+                            <th>状态</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var set in Model.RecentAnomalies)
+                        {
+                            <tr>
+                                <td><code>@set.SetCode</code></td>
+                                <td>@set.Name</td>
+                                <td>@set.Department.Name</td>
+                                <td>
+                                    <span class="status-badge @GetStatusClass(set.Status)">
+                                        @GetStatusText(set.Status)
+                                    </span>
+                                </td>
+                                <td><small>@set.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                <td>
+                                    <a asp-controller="InstrumentSets" asp-action="Details" asp-route-id="@set.Id" class="btn btn-sm btn-primary">查看</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="empty-text">暂无异常记录</p>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.ReadyForUse => "status-ready",
+            InstrumentSetStatus.InUse => "status-inuse",
+            InstrumentSetStatus.MissingItems => "status-missing",
+            InstrumentSetStatus.Expired => "status-expired",
+            InstrumentSetStatus.WrongDepartment => "status-wrong",
+            InstrumentSetStatus.Sterilized => "status-sterilized",
+            InstrumentSetStatus.Packed => "status-packed",
+            InstrumentSetStatus.Replenished => "status-replenished",
+            InstrumentSetStatus.Returned => "status-returned",
+            _ => "status-default"
+        };
+    }
+
+    string GetStatusText(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.Packed => "已打包",
+            InstrumentSetStatus.Sterilized => "已灭菌",
+            InstrumentSetStatus.ReadyForUse => "可使用",
+            InstrumentSetStatus.InUse => "使用中",
+            InstrumentSetStatus.Returned => "已退回",
+            InstrumentSetStatus.MissingItems => "缺件",
+            InstrumentSetStatus.Expired => "灭菌过期",
+            InstrumentSetStatus.WrongDepartment => "科室错领",
+            InstrumentSetStatus.Replenished => "已补包",
+            InstrumentSetStatus.Quarantine => "待处理",
+            _ => status.ToString()
+        };
+    }
+}

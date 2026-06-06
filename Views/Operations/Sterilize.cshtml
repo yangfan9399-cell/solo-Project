@@ -1,0 +1,104 @@
+@model SterilizeSetViewModel
+@{
+    ViewData["Title"] = "灭菌登记";
+    var packedSets = ViewData["PackedSets"] as List<InstrumentSet>;
+    var supplyStaff = ViewData["SupplyStaff"] as List<User>;
+}
+
+<h1 class="page-title">灭菌登记</h1>
+
+<div class="dashboard-card">
+    <form asp-controller="Operations" asp-action="Sterilize" method="post" class="form-styled">
+        <div class="alert alert-info">
+            <strong>提示：</strong> 选择待灭菌的器械包，填写灭菌批次信息后提交。
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group form-group-full">
+                <label>选择器械包 *</label>
+                <select asp-for="InstrumentSetId" class="form-control">
+                    <option value="">-- 请选择待灭菌的器械包 --</option>
+                    @if (packedSets != null && packedSets.Any())
+                    {
+                        @foreach (var set in packedSets)
+                        {
+                            <option value="@set.Id" selected="@(set.Id == Model.InstrumentSetId)">
+                                @set.SetCode - @set.Name (@set.Department.Name)
+                            </option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="" disabled>暂无可灭菌的器械包</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <h3 class="form-section-title">灭菌信息</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>灭菌批次号 *</label>
+                <input asp-for="BatchNumber" class="form-control" placeholder="如: BATCH-20260606-001" />
+                <span asp-validation-for="BatchNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>灭菌器编号</label>
+                <input asp-for="SterilizerCode" class="form-control" placeholder="如: ST-001" />
+            </div>
+            <div class="form-group">
+                <label>灭菌方式</label>
+                <select asp-for="SterilizationMethod" class="form-control">
+                    <option value="高压蒸汽灭菌">高压蒸汽灭菌</option>
+                    <option value="环氧乙烷灭菌">环氧乙烷灭菌</option>
+                    <option value="等离子灭菌">等离子灭菌</option>
+                    <option value="干热灭菌">干热灭菌</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>操作人 *</label>
+                <select asp-for="PackedByUserId" class="form-control">
+                    @if (supplyStaff != null)
+                    {
+                        @foreach (var user in supplyStaff)
+                        {
+                            <option value="@user.Id">@user.Name (@user.EmployeeId)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>灭菌日期 *</label>
+                <input asp-for="SterilizationDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="SterilizationDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label>失效日期 *</label>
+                <input asp-for="ExpirationDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="ExpirationDate" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">确认灭菌</button>
+            <a asp-controller="InstrumentSets" asp-action="Index" class="btn btn-outline btn-lg">取消</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sterilizationInput = document.getElementById('SterilizationDate');
+    var expirationInput = document.getElementById('ExpirationDate');
+    
+    if (sterilizationInput && expirationInput && !expirationInput.value) {
+        sterilizationInput.addEventListener('change', function() {
+            if (sterilizationInput.value) {
+                var date = new Date(sterilizationInput.value);
+                date.setDate(date.getDate() + 30);
+                expirationInput.value = date.toISOString().slice(0, 16);
+            }
+        });
+    }
+});
+</script>

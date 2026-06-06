@@ -1,0 +1,168 @@
+@model QualityReviewViewModel
+@{
+    ViewData["Title"] = "质控复核";
+    var reviewers = ViewData["Reviewers"] as List<User>;
+}
+
+<h1 class="page-title">质控复核</h1>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="dashboard-card">
+            <h2 class="card-title">器械包信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>编号</label>
+                    <div class="info-value"><code>@Model.SetCode</code></div>
+                </div>
+                <div class="info-item">
+                    <label>名称</label>
+                    <div class="info-value"><strong>@Model.SetName</strong></div>
+                </div>
+                <div class="info-item">
+                    <label>当前状态</label>
+                    <div class="info-value">
+                        <span class="status-badge @GetStatusClass(Model.CurrentStatus)">
+                            @GetStatusText(Model.CurrentStatus)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Items != null && Model.Items.Any())
+        {
+            <div class="dashboard-card">
+                <h2 class="card-title">器械清单复核</h2>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>器械名称</th>
+                                <th>应有</th>
+                                <th>实有</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                var isMissing = item.ActualQuantity < item.ExpectedQuantity;
+                                <tr class="@(isMissing ? "row-danger" : "")">
+                                    <td><strong>@item.InstrumentName</strong></td>
+                                    <td>@item.ExpectedQuantity</td>
+                                    <td>@item.ActualQuantity</td>
+                                    <td>
+                                        @if (isMissing)
+                                        {
+                                            <span class="badge badge-danger">缺@(item.ExpectedQuantity - item.ActualQuantity)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success">齐全</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="detail-side">
+        <div class="dashboard-card">
+            <h2 class="card-title">复核决定</h2>
+            <form asp-controller="Operations" asp-action="QualityReview" method="post" class="form-styled">
+                <input type="hidden" asp-for="InstrumentSetId" />
+                <input type="hidden" asp-for="SetCode" />
+                <input type="hidden" asp-for="SetName" />
+                <input type="hidden" asp-for="CurrentStatus" />
+
+                <div class="form-group">
+                    <label>复核人 *</label>
+                    <select asp-for="ReviewerId" class="form-control">
+                        @if (reviewers != null)
+                        {
+                            @foreach (var user in reviewers)
+                            {
+                                <option value="@user.Id">@user.Name (@user.EmployeeId)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>复核决定 *</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" asp-for="Decision" value="Release" checked />
+                            <span>放行</span>
+                            <small>器械齐全、灭菌合格，准予发放使用</small>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" asp-for="Decision" value="Replenish" />
+                            <span>补包</span>
+                            <small>器械缺件，需退回供应室补齐</small>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" asp-for="Decision" value="Return" />
+                            <span>退回</span>
+                            <small>存在质量问题，退回重处理</small>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>复核意见</label>
+                    <textarea asp-for="Remarks" class="form-control" rows="4" placeholder="请填写复核意见（可选）"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">提交复核</button>
+                </div>
+            </form>
+            <div style="margin-top: 1rem;">
+                <a asp-controller="InstrumentSets" asp-action="Details" asp-route-id="@Model.InstrumentSetId" class="btn btn-outline">返回详情</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.ReadyForUse => "status-ready",
+            InstrumentSetStatus.InUse => "status-inuse",
+            InstrumentSetStatus.MissingItems => "status-missing",
+            InstrumentSetStatus.Expired => "status-expired",
+            InstrumentSetStatus.WrongDepartment => "status-wrong",
+            InstrumentSetStatus.Sterilized => "status-sterilized",
+            InstrumentSetStatus.Packed => "status-packed",
+            InstrumentSetStatus.Replenished => "status-replenished",
+            InstrumentSetStatus.Returned => "status-returned",
+            _ => "status-default"
+        };
+    }
+
+    string GetStatusText(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.Packed => "已打包",
+            InstrumentSetStatus.Sterilized => "已灭菌",
+            InstrumentSetStatus.ReadyForUse => "可使用",
+            InstrumentSetStatus.InUse => "使用中",
+            InstrumentSetStatus.Returned => "已退回",
+            InstrumentSetStatus.MissingItems => "缺件",
+            InstrumentSetStatus.Expired => "灭菌过期",
+            InstrumentSetStatus.WrongDepartment => "科室错领",
+            InstrumentSetStatus.Replenished => "已补包",
+            InstrumentSetStatus.Quarantine => "待处理",
+            _ => status.ToString()
+        };
+    }
+}

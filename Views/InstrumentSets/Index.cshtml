@@ -1,0 +1,143 @@
+@model InstrumentSetListViewModel
+@{
+    ViewData["Title"] = "器械包管理";
+}
+
+<div class="page-header">
+    <h1 class="page-title">器械包管理</h1>
+    <div class="page-actions">
+        <a asp-controller="Operations" asp-action="Pack" class="btn btn-primary">+ 新建打包</a>
+    </div>
+</div>
+
+<div class="filter-card">
+    <form asp-controller="InstrumentSets" asp-action="Index" method="get" class="filter-form">
+        <div class="filter-group">
+            <label>状态筛选</label>
+            <select name="statusFilter" class="form-control">
+                <option value="">全部状态</option>
+                @foreach (var status in Enum.GetValues<InstrumentSetStatus>())
+                {
+                    <option value="@status" selected="@(Model.StatusFilter == status.ToString())">@GetStatusText(status)</option>
+                }
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>科室筛选</label>
+            <select name="departmentFilter" class="form-control">
+                <option value="">全部科室</option>
+                @foreach (var dept in Model.Departments)
+                {
+                    <option value="@dept.Id" selected="@(Model.DepartmentFilter == dept.Id.ToString())">@dept.Name</option>
+                }
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>搜索</label>
+            <input type="text" name="searchTerm" class="form-control" placeholder="编号或名称..." value="@Model.SearchTerm" />
+        </div>
+        <div class="filter-group filter-actions">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary">筛选</button>
+            <a asp-controller="InstrumentSets" asp-action="Index" class="btn btn-outline">重置</a>
+        </div>
+    </form>
+</div>
+
+<div class="result-info">
+    共找到 <strong>@Model.TotalCount</strong> 个器械包
+</div>
+
+<div class="dashboard-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>科室</th>
+                    <th>状态</th>
+                    <th>灭菌批次</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var set in Model.InstrumentSets)
+                {
+                    <tr>
+                        <td><code>@set.SetCode</code></td>
+                        <td><strong>@set.Name</strong></td>
+                        <td>@set.SetType</td>
+                        <td>@set.Department.Name</td>
+                        <td>
+                            <span class="status-badge @GetStatusClass(set.Status)">
+                                @GetStatusText(set.Status)
+                            </span>
+                        </td>
+                        <td>
+                            @if (set.SterilizationBatch != null)
+                            {
+                                <code>@set.SterilizationBatch.BatchNumber</code>
+                                <br />
+                                <small class="text-muted">
+                                    有效期至: @set.SterilizationBatch.ExpirationDate.ToString("yyyy-MM-dd")
+                                </small>
+                                if (set.SterilizationBatch.IsExpired)
+                                {
+                                    <span class="badge badge-danger">已过期</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">未灭菌</span>
+                            }
+                        </td>
+                        <td><small>@set.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                        <td>
+                            <a asp-controller="InstrumentSets" asp-action="Details" asp-route-id="@set.Id" class="btn btn-sm btn-primary">详情</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.ReadyForUse => "status-ready",
+            InstrumentSetStatus.InUse => "status-inuse",
+            InstrumentSetStatus.MissingItems => "status-missing",
+            InstrumentSetStatus.Expired => "status-expired",
+            InstrumentSetStatus.WrongDepartment => "status-wrong",
+            InstrumentSetStatus.Sterilized => "status-sterilized",
+            InstrumentSetStatus.Packed => "status-packed",
+            InstrumentSetStatus.Replenished => "status-replenished",
+            InstrumentSetStatus.Returned => "status-returned",
+            _ => "status-default"
+        };
+    }
+
+    string GetStatusText(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.Packed => "已打包",
+            InstrumentSetStatus.Sterilized => "已灭菌",
+            InstrumentSetStatus.ReadyForUse => "可使用",
+            InstrumentSetStatus.InUse => "使用中",
+            InstrumentSetStatus.Returned => "已退回",
+            InstrumentSetStatus.MissingItems => "缺件",
+            InstrumentSetStatus.Expired => "灭菌过期",
+            InstrumentSetStatus.WrongDepartment => "科室错领",
+            InstrumentSetStatus.Replenished => "已补包",
+            InstrumentSetStatus.Quarantine => "待处理",
+            _ => status.ToString()
+        };
+    }
+}

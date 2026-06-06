@@ -1,0 +1,373 @@
+@model InstrumentSetDetailViewModel
+@{
+    ViewData["Title"] = "器械包详情 - " + Model.InstrumentSet.SetCode;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.InstrumentSet.Name</h1>
+        <p class="page-subtitle">编号: <code>@Model.InstrumentSet.SetCode</code></p>
+    </div>
+    <div class="page-actions">
+        <span class="status-badge @GetStatusClass(Model.InstrumentSet.Status)" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            @GetStatusText(Model.InstrumentSet.Status)
+        </span>
+    </div>
+</div>
+
+<div class="detail-actions">
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.Packed)
+    {
+        <a asp-controller="Operations" asp-action="Sterilize" asp-route-id="@Model.InstrumentSet.Id" class="btn btn-primary">登记灭菌</a>
+    }
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.Sterilized)
+    {
+        <a asp-controller="Operations" asp-action="QualityReview" asp-route-id="@Model.InstrumentSet.Id" class="btn btn-success">质控复核</a>
+    }
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.ReadyForUse && !Model.IsSterilizationExpired)
+    {
+        <a asp-controller="Operations" asp-action="Receive" asp-route-id="@Model.InstrumentSet.Id" class="btn btn-primary">领用确认</a>
+    }
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.ReadyForUse && Model.IsSterilizationExpired)
+    {
+        <button class="btn btn-danger" disabled>灭菌过期 - 禁止发放</button>
+    }
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.InUse)
+    {
+        <a asp-controller="Operations" asp-action="ReportAnomaly" asp-route-id="@Model.InstrumentSet.Id" class="btn btn-warning">异常上报</a>
+    }
+    @if (Model.InstrumentSet.Status == InstrumentSetStatus.MissingItems)
+    {
+        <a asp-controller="Operations" asp-action="CompleteReplenishment" asp-route-id="@Model.InstrumentSet.Id" class="btn btn-success">完成补包</a>
+    }
+    <a asp-controller="InstrumentSets" asp-action="Index" class="btn btn-outline">返回列表</a>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="dashboard-card">
+            <h2 class="card-title">基本信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>器械包名称</label>
+                    <div class="info-value">@Model.InstrumentSet.Name</div>
+                </div>
+                <div class="info-item">
+                    <label>器械包编号</label>
+                    <div class="info-value"><code>@Model.InstrumentSet.SetCode</code></div>
+                </div>
+                <div class="info-item">
+                    <label>类型</label>
+                    <div class="info-value">@Model.InstrumentSet.SetType</div>
+                </div>
+                <div class="info-item">
+                    <label>所属科室</label>
+                    <div class="info-value">@Model.Department.Name</div>
+                </div>
+                <div class="info-item">
+                    <label>描述</label>
+                    <div class="info-value">@(Model.InstrumentSet.Description ?? "-")</div>
+                </div>
+                <div class="info-item">
+                    <label>当前状态</label>
+                    <div class="info-value">
+                        <span class="status-badge @GetStatusClass(Model.InstrumentSet.Status)">
+                            @GetStatusText(Model.InstrumentSet.Status)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">器械清单</h2>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>器械名称</th>
+                            <th>规格</th>
+                            <th>应有数量</th>
+                            <th>实有数量</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            var isMissing = item.ActualQuantity < item.ExpectedQuantity;
+                            <tr class="@(isMissing ? "row-danger" : "")">
+                                <td><strong>@item.Instrument.Name</strong></td>
+                                <td>@(item.Instrument.Specification ?? "-")</td>
+                                <td>@item.ExpectedQuantity</td>
+                                <td>
+                                    @if (isMissing)
+                                    {
+                                        <span class="text-danger"><strong>@item.ActualQuantity</strong></span>
+                                    }
+                                    else
+                                    {
+                                        <span>@item.ActualQuantity</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (isMissing)
+                                    {
+                                        <span class="badge badge-danger">缺件 (少@(item.ExpectedQuantity - item.ActualQuantity))</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">齐全</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2"><strong>合计</strong></td>
+                            <td><strong>@Model.Items.Sum(i => i.ExpectedQuantity)</strong></td>
+                            <td><strong>@Model.Items.Sum(i => i.ActualQuantity)</strong></td>
+                            <td>
+                                @{
+                                    var totalMissing = Model.Items.Sum(i => i.ExpectedQuantity - i.ActualQuantity);
+                                    if (totalMissing > 0)
+                                    {
+                                        <span class="badge badge-danger">共缺 @totalMissing 件</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">器械齐全</span>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="card-title">追溯历史</h2>
+            <div class="timeline">
+                @foreach (var record in Model.TrackingRecords)
+                {
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <span class="timeline-action">@GetActionText(record.Action)</span>
+                                <span class="timeline-time">@record.ActionTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            </div>
+                            <div class="timeline-user">操作人: @record.User.Name (@record.User.EmployeeId)</div>
+                            @if (!string.IsNullOrEmpty(record.Remarks))
+                            {
+                                <div class="timeline-remarks">@record.Remarks</div>
+                            }
+                            @if (record.FromStatus.HasValue || record.ToStatus.HasValue)
+                            {
+                                <div class="timeline-status">
+                                    @if (record.FromStatus.HasValue)
+                                    {
+                                        <span class="status-badge @GetStatusClass(record.FromStatus.Value)">@GetStatusText(record.FromStatus.Value)</span>
+                                    }
+                                    @if (record.FromStatus.HasValue && record.ToStatus.HasValue)
+                                    {
+                                        <span class="timeline-arrow">→</span>
+                                    }
+                                    @if (record.ToStatus.HasValue)
+                                    {
+                                        <span class="status-badge @GetStatusClass(record.ToStatus.Value)">@GetStatusText(record.ToStatus.Value)</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-side">
+        @if (Model.SterilizationBatch != null)
+        {
+            <div class="dashboard-card @(Model.IsSterilizationExpired ? "card-danger" : "")">
+                <h2 class="card-title">
+                    灭菌信息
+                    @if (Model.IsSterilizationExpired)
+                    {
+                        <span class="badge badge-danger">已过期</span>
+                    }
+                </h2>
+                <div class="info-list">
+                    <div class="info-item">
+                        <label>批次号</label>
+                        <div class="info-value"><code>@Model.SterilizationBatch.BatchNumber</code></div>
+                    </div>
+                    <div class="info-item">
+                        <label>灭菌日期</label>
+                        <div class="info-value">@Model.SterilizationBatch.SterilizationDate.ToString("yyyy-MM-dd HH:mm")</div>
+                    </div>
+                    <div class="info-item">
+                        <label>有效期至</label>
+                        <div class="info-value @(Model.IsSterilizationExpired ? "text-danger" : "")">
+                            <strong>@Model.SterilizationBatch.ExpirationDate.ToString("yyyy-MM-dd")</strong>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <label>灭菌器</label>
+                        <div class="info-value">@(Model.SterilizationBatch.SterilizerCode ?? "-")</div>
+                    </div>
+                    <div class="info-item">
+                        <label>灭菌方式</label>
+                        <div class="info-value">@(Model.SterilizationBatch.SterilizationMethod ?? "-")</div>
+                    </div>
+                </div>
+                @if (Model.IsSterilizationExpired)
+                {
+                    <div class="alert alert-danger">
+                        <strong>⚠️ 灭菌已过期</strong><br />
+                        此器械包灭菌已过期，<strong>禁止发放使用</strong>。请退回消毒供应室重新灭菌。
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="dashboard-card">
+                <h2 class="card-title">灭菌信息</h2>
+                <p class="text-muted">此器械包尚未进行灭菌处理</p>
+            </div>
+        }
+
+        @if (Model.ReceivedByUser != null)
+        {
+            <div class="dashboard-card">
+                <h2 class="card-title">领用信息</h2>
+                <div class="info-list">
+                    <div class="info-item">
+                        <label>领用人</label>
+                        <div class="info-value">@Model.ReceivedByUser.Name</div>
+                    </div>
+                    <div class="info-item">
+                        <label>工号</label>
+                        <div class="info-value">@Model.ReceivedByUser.EmployeeId</div>
+                    </div>
+                    <div class="info-item">
+                        <label>领用时间</label>
+                        <div class="info-value">@(Model.InstrumentSet.ReceivedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="dashboard-card">
+            <h2 class="card-title">异常记录</h2>
+            @if (Model.AnomalyRecords.Any())
+            {
+                @foreach (var anomaly in Model.AnomalyRecords)
+                {
+                    <div class="anomaly-card @(anomaly.Resolved ? "anomaly-resolved" : "anomaly-active")">
+                        <div class="anomaly-header">
+                            <span class="badge @(anomaly.Resolved ? "badge-success" : "badge-warning")">
+                                @(anomaly.Resolved ? "已解决" : "待处理")
+                            </span>
+                            <span class="anomaly-type">@GetAnomalyTypeText(anomaly.AnomalyType)</span>
+                        </div>
+                        <div class="anomaly-desc">@anomaly.Description</div>
+                        <div class="anomaly-meta">
+                            <span>上报人: @anomaly.ReportedByUser.Name</span>
+                            <span>@anomaly.ReportedAt.ToString("MM-dd HH:mm")</span>
+                        </div>
+                        @if (anomaly.Resolved && !string.IsNullOrEmpty(anomaly.ResolutionNotes))
+                        {
+                            <div class="anomaly-resolution">
+                                <strong>处理结果:</strong> @anomaly.ResolutionNotes
+                            </div>
+                        }
+                        @if (anomaly.ReplenishmentDurationMinutes.HasValue)
+                        {
+                            <div class="anomaly-duration">
+                                补包耗时: <strong>@anomaly.ReplenishmentDurationMinutes 分钟</strong>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="empty-text">暂无异常记录</p>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.ReadyForUse => "status-ready",
+            InstrumentSetStatus.InUse => "status-inuse",
+            InstrumentSetStatus.MissingItems => "status-missing",
+            InstrumentSetStatus.Expired => "status-expired",
+            InstrumentSetStatus.WrongDepartment => "status-wrong",
+            InstrumentSetStatus.Sterilized => "status-sterilized",
+            InstrumentSetStatus.Packed => "status-packed",
+            InstrumentSetStatus.Replenished => "status-replenished",
+            InstrumentSetStatus.Returned => "status-returned",
+            _ => "status-default"
+        };
+    }
+
+    string GetStatusText(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.Packed => "已打包",
+            InstrumentSetStatus.Sterilized => "已灭菌",
+            InstrumentSetStatus.ReadyForUse => "可使用",
+            InstrumentSetStatus.InUse => "使用中",
+            InstrumentSetStatus.Returned => "已退回",
+            InstrumentSetStatus.MissingItems => "缺件",
+            InstrumentSetStatus.Expired => "灭菌过期",
+            InstrumentSetStatus.WrongDepartment => "科室错领",
+            InstrumentSetStatus.Replenished => "已补包",
+            InstrumentSetStatus.Quarantine => "待处理",
+            _ => status.ToString()
+        };
+    }
+
+    string GetActionText(TrackingAction action)
+    {
+        return action switch
+        {
+            TrackingAction.Packed => "打包完成",
+            TrackingAction.Sterilized => "灭菌完成",
+            TrackingAction.ReadyForRelease => "准予放行",
+            TrackingAction.Released => "发放",
+            TrackingAction.Received => "领用确认",
+            TrackingAction.Returned => "退回",
+            TrackingAction.QualityPassed => "质控通过",
+            TrackingAction.QualityRejected => "质控驳回",
+            TrackingAction.ReplenishmentStarted => "开始补包",
+            TrackingAction.ReplenishmentCompleted => "补包完成",
+            TrackingAction.AnomalyReported => "异常上报",
+            TrackingAction.Quarantined => "隔离",
+            _ => action.ToString()
+        };
+    }
+
+    string GetAnomalyTypeText(AnomalyType type)
+    {
+        return type switch
+        {
+            AnomalyType.MissingItems => "器械缺件",
+            AnomalyType.SterilizationExpired => "灭菌过期",
+            AnomalyType.WrongDepartment => "科室错领",
+            AnomalyType.Damaged => "器械损坏",
+            AnomalyType.Other => "其他异常",
+            _ => type.ToString()
+        };
+    }
+}

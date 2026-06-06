@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 手术器械包追溯平台</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container nav-container">
+                <a asp-controller="Home" asp-action="Index" class="nav-brand">
+                    <span class="brand-icon">🏥</span>
+                    手术器械包追溯平台
+                </a>
+                <div class="nav-menu">
+                    <a asp-controller="Home" asp-action="Index" class="nav-link">首页看板</a>
+                    <a asp-controller="InstrumentSets" asp-action="Index" class="nav-link">器械包管理</a>
+                    <div class="nav-dropdown">
+                        <span class="nav-link dropdown-toggle">消毒供应室 ▾</span>
+                        <div class="dropdown-menu">
+                            <a asp-controller="Operations" asp-action="Pack" class="dropdown-item">打包登记</a>
+                            <a asp-controller="Operations" asp-action="Sterilize" class="dropdown-item">灭菌登记</a>
+                        </div>
+                    </div>
+                    <div class="nav-dropdown">
+                        <span class="nav-link dropdown-toggle">手术室 ▾</span>
+                        <div class="dropdown-menu">
+                            <a asp-controller="InstrumentSets" asp-action="Index" class="dropdown-item" asp-route-statusFilter="ReadyForUse">可领用器械包</a>
+                            <a asp-controller="Operations" asp-action="ReportAnomaly" class="dropdown-item" asp-route-id="1">异常上报</a>
+                        </div>
+                    </div>
+                    <div class="nav-dropdown">
+                        <span class="nav-link dropdown-toggle">质控复核 ▾</span>
+                        <div class="dropdown-menu">
+                            <a asp-controller="InstrumentSets" asp-action="Index" class="dropdown-item" asp-route-statusFilter="Sterilized">待复核包</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 医院消毒供应室 - 手术器械包追溯与缺件补包平台</p>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
