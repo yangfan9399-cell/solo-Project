@@ -47,7 +47,7 @@
                     <td th:text="${fixture.fixtureName}"></td>
                     <td th:text="${fixture.fixtureType}"></td>
                     <td th:text="${fixture.applicableProcess}"></td>
-                    <td class="text-warning" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-warning" th:text="${fixture.nextCalibrationDate != null ? #temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td>
                         <span th:text="${fixture.daysUntilCalibration + ' 天'}"></span>
                     </td>

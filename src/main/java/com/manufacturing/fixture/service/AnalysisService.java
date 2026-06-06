@@ -11,9 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -43,10 +46,40 @@ public class AnalysisService {
         Map<String, Object> result = new HashMap<>();
 
         List<Object[]> borrowByLine = borrowRecordRepository.countByProductionLine(startDate, endDate);
-        result.put("borrowByLine", borrowByLine);
-
         List<Object[]> damageByLine = damageRecordRepository.countByProductionLineAndDateRange(startDate, endDate);
+
+        Map<String, Long> borrowMap = new HashMap<>();
+        for (Object[] row : borrowByLine) {
+            borrowMap.put((String) row[0], (Long) row[1]);
+        }
+
+        Map<String, Object[]> damageMap = new HashMap<>();
+        for (Object[] row : damageByLine) {
+            damageMap.put((String) row[0], row);
+        }
+
+        Set<String> allLines = new HashSet<>();
+        allLines.addAll(borrowMap.keySet());
+        allLines.addAll(damageMap.keySet());
+
+        List<Object[]> combinedStats = new ArrayList<>();
+        for (String line : allLines) {
+            Long borrowCount = borrowMap.getOrDefault(line, 0L);
+            Object[] damageRow = damageMap.get(line);
+            Long damageCount = 0L;
+            Integer downtimeHours = 0;
+            if (damageRow != null) {
+                damageCount = (Long) damageRow[1];
+                downtimeHours = (Integer) damageRow[2];
+            }
+            combinedStats.add(new Object[]{line, borrowCount, damageCount, downtimeHours});
+        }
+
+        combinedStats.sort((a, b) -> ((String) a[0]).compareTo((String) b[0]));
+
+        result.put("borrowByLine", borrowByLine);
         result.put("damageByLine", damageByLine);
+        result.put("combinedByLine", combinedStats);
 
         return result;
     }

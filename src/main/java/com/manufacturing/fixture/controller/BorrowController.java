@@ -30,8 +30,15 @@ public class BorrowController {
         borrowService.updateOverdueStatus();
 
         List<BorrowRecord> borrows;
-        if (status != null && !status.isEmpty()) {
+        boolean hasStatus = status != null && !status.isEmpty();
+        boolean hasProductionLine = productionLine != null && !productionLine.isEmpty();
+
+        if (hasStatus && hasProductionLine) {
+            borrows = borrowService.findByStatusAndProductionLine(BorrowStatus.valueOf(status), productionLine);
+        } else if (hasStatus) {
             borrows = borrowService.findByStatus(BorrowStatus.valueOf(status));
+        } else if (hasProductionLine) {
+            borrows = borrowService.findByProductionLine(productionLine);
         } else {
             borrows = borrowService.findAll();
         }

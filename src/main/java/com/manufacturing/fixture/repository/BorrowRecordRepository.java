@@ -20,6 +20,8 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
 
     List<BorrowRecord> findByStatus(BorrowStatus status);
 
+    List<BorrowRecord> findByStatusAndProductionLine(BorrowStatus status, String productionLine);
+
     List<BorrowRecord> findByApplicantOrderByCreatedAtDesc(String applicant);
 
     @Query("SELECT b FROM BorrowRecord b WHERE b.status = 'BORROWED' AND b.expectedReturnDate < :date")

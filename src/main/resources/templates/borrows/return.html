@@ -33,7 +33,7 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">借用日期</span>
-                    <span class="detail-value" th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></span>
+                    <span class="detail-value" th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></span>
                 </div>
             </div>
 

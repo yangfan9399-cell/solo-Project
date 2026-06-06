@@ -51,7 +51,7 @@
                     <td><a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a></td>
                     <td th:text="${fixture.fixtureName}"></td>
                     <td th:text="${fixture.fixtureType}"></td>
-                    <td class="text-danger" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger" th:text="${fixture.nextCalibrationDate != null ? #temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td class="text-danger">
                         <strong th:text="${fixture.calibrationExpiredDays + ' 天'}"></strong>
                     </td>
@@ -92,7 +92,7 @@
                     <td><a th:href="@{'/fixtures/' + ${fixture.id}}" th:text="${fixture.fixtureNo}"></a></td>
                     <td th:text="${fixture.fixtureName}"></td>
                     <td th:text="${fixture.fixtureType}"></td>
-                    <td class="text-warning" th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-warning" th:text="${fixture.nextCalibrationDate != null ? #temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td>
                         <span th:text="${fixture.daysUntilCalibration + ' 天'}"></span>
                     </td>
@@ -132,7 +132,7 @@
                 <tbody>
                 <tr th:each="record : ${records}">
                     <td><a th:href="@{'/fixtures/' + ${record.fixture.id}}" th:text="${record.fixture.fixtureNo}"></a></td>
-                    <td th:text="${#dates.format(record.calibrationDate, 'yyyy-MM-dd')}"></td>
+                    <td th:text="${#temporals.format(record.calibrationDate, 'yyyy-MM-dd')}"></td>
                     <td th:text="${record.calibrationAgency ?: '-'}"></td>
                     <td th:text="${record.certificateNo ?: '-'}"></td>
                     <td>
@@ -140,7 +140,7 @@
                               th:classappend="${record.result.name() == 'PASSED' ? 'badge-success' : 'badge-danger'}"
                               th:text="${record.result.description}"></span>
                     </td>
-                    <td th:text="${record.nextCalibrationDate != null ? #dates.format(record.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.nextCalibrationDate != null ? #temporals.format(record.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td th:text="${record.calibrator ?: '-'}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(records)}">

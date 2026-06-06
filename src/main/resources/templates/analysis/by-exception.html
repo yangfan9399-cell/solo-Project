@@ -20,11 +20,11 @@
             <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">开始日期</label>
-                    <input type="date" name="startDate" class="form-control" th:value="${#dates.format(startDate, 'yyyy-MM-dd')}">
+                    <input type="date" name="startDate" class="form-control" th:value="${#temporals.format(startDate, 'yyyy-MM-dd')}">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">结束日期</label>
-                    <input type="date" name="endDate" class="form-control" th:value="${#dates.format(endDate, 'yyyy-MM-dd')}">
+                    <input type="date" name="endDate" class="form-control" th:value="${#temporals.format(endDate, 'yyyy-MM-dd')}">
                 </div>
                 <button type="submit" class="btn btn-primary">查询</button>
             </form>

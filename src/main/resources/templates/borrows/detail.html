@@ -65,21 +65,21 @@
                     <div class="detail-grid">
                         <div class="detail-item">
                             <span class="detail-label">申请时间</span>
-                            <span class="detail-value" th:text="${#dates.format(borrow.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+                            <span class="detail-value" th:text="${#temporals.format(borrow.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">借出时间</span>
-                            <span class="detail-value" th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                            <span class="detail-value" th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">预计归还</span>
                             <span class="detail-value"
                                   th:classappend="${borrow.isOverdue() ? 'text-danger' : ''}"
-                                  th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                                  th:text="${borrow.expectedReturnDate != null ? #temporals.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">实际归还</span>
-                            <span class="detail-value" th:text="${borrow.actualReturnDate != null ? #dates.format(borrow.actualReturnDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                            <span class="detail-value" th:text="${borrow.actualReturnDate != null ? #temporals.format(borrow.actualReturnDate, 'yyyy-MM-dd HH:mm') : '-'}"></span>
                         </div>
                     </div>
                 </div>

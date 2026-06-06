@@ -60,14 +60,14 @@
                     </td>
                     <td th:text="${borrow.applicant}"></td>
                     <td th:text="${borrow.productionLine}"></td>
-                    <td th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td>
                         <span th:if="${borrow.isOverdue()}" class="text-danger">
-                            <span th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                            <span th:text="${borrow.expectedReturnDate != null ? #temporals.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
                             (超期)
                         </span>
                         <span th:unless="${borrow.isOverdue()}"
-                              th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
+                              th:text="${borrow.expectedReturnDate != null ? #temporals.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></span>
                     </td>
                     <td>
                         <span class="badge"

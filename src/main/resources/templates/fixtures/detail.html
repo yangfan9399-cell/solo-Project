@@ -24,7 +24,7 @@
             <span style="font-size: 1.5rem;">⚠️</span>
             <div>
                 <strong>校准已过期！</strong><br>
-                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
+                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
             </div>
         </div>
         <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
@@ -38,7 +38,7 @@
             <span style="font-size: 1.5rem;">⏰</span>
             <div>
                 <strong>校准即将到期！</strong><br>
-                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
+                <span style="font-size: 0.85rem;">下次校准日期：<span th:text="${#temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd')}"></span></span>
             </div>
         </div>
         <form method="post" th:action="@{'/fixtures/' + ${fixture.id} + '/send-calibration'}"
@@ -108,13 +108,13 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">上次校准日期</span>
-                            <span class="detail-value" th:text="${fixture.lastCalibrationDate != null ? #dates.format(fixture.lastCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
+                            <span class="detail-value" th:text="${fixture.lastCalibrationDate != null ? #temporals.format(fixture.lastCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">下次校准日期</span>
                             <span class="detail-value"
                                   th:classappend="${isCalibrationExpired} ? 'text-danger' : (isCalibrationWarning ? 'text-warning' : '')"
-                                  th:text="${fixture.nextCalibrationDate != null ? #dates.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
+                                  th:text="${fixture.nextCalibrationDate != null ? #temporals.format(fixture.nextCalibrationDate, 'yyyy-MM-dd') : '-'}"></span>
                         </div>
                     </div>
                     <div style="margin-top: 1rem;">
@@ -168,7 +168,7 @@
                 <div class="card-body">
                     <ul class="timeline">
                         <li th:each="record : ${calibrationRecords}" class="timeline-item">
-                            <div class="timeline-date" th:text="${#dates.format(record.calibrationDate, 'yyyy-MM-dd')}"></div>
+                            <div class="timeline-date" th:text="${#temporals.format(record.calibrationDate, 'yyyy-MM-dd')}"></div>
                             <div class="timeline-content">
                                 <div class="timeline-title">
                                     <span class="badge"
@@ -179,7 +179,7 @@
                                     证书号：<span th:text="${record.certificateNo ?: '-'}"></span><br>
                                     校准机构：<span th:text="${record.calibrationAgency ?: '-'}"></span><br>
                                     <span th:if="${record.nextCalibrationDate != null}">
-                                        下次校准：<span th:text="${#dates.format(record.nextCalibrationDate, 'yyyy-MM-dd')}"></span>
+                                        下次校准：<span th:text="${#temporals.format(record.nextCalibrationDate, 'yyyy-MM-dd')}"></span>
                                     </span>
                                 </div>
                             </div>
@@ -212,11 +212,11 @@
                 </thead>
                 <tbody>
                 <tr th:each="record : ${borrowRecords}">
-                    <td th:text="${record.borrowDate != null ? #dates.format(record.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.borrowDate != null ? #temporals.format(record.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td th:text="${record.applicant}"></td>
                     <td th:text="${record.productionLine}"></td>
-                    <td th:text="${record.expectedReturnDate != null ? #dates.format(record.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
-                    <td th:text="${record.actualReturnDate != null ? #dates.format(record.actualReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.expectedReturnDate != null ? #temporals.format(record.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${record.actualReturnDate != null ? #temporals.format(record.actualReturnDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td>
                         <span class="badge"
                               th:classappend="${record.status.name() == 'RETURNED_NORMAL' ? 'badge-success' :

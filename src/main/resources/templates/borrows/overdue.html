@@ -43,8 +43,8 @@
                     </td>
                     <td th:text="${borrow.applicant}"></td>
                     <td th:text="${borrow.productionLine}"></td>
-                    <td th:text="${borrow.borrowDate != null ? #dates.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
-                    <td class="text-danger" th:text="${borrow.expectedReturnDate != null ? #dates.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td th:text="${borrow.borrowDate != null ? #temporals.format(borrow.borrowDate, 'yyyy-MM-dd') : '-'}"></td>
+                    <td class="text-danger" th:text="${borrow.expectedReturnDate != null ? #temporals.format(borrow.expectedReturnDate, 'yyyy-MM-dd') : '-'}"></td>
                     <td class="text-danger">
                         <strong th:text="${borrow.overdueDays + ' 天'}"></strong>
                     </td>

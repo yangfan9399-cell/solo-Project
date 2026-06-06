@@ -178,6 +178,10 @@ public class BorrowService {
         return borrowRecordRepository.findByStatus(status);
     }
 
+    public List<BorrowRecord> findByStatusAndProductionLine(BorrowStatus status, String productionLine) {
+        return borrowRecordRepository.findByStatusAndProductionLine(status, productionLine);
+    }
+
     @Transactional
     public void updateOverdueStatus() {
         List<BorrowRecord> overdueBorrows = borrowRecordRepository.findOverdueBorrows(LocalDate.now());
