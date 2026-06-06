@@ -1,10 +1,12 @@
 package com.manufacturing.fixture.controller;
 
 import com.manufacturing.fixture.entity.BorrowRecord;
+import com.manufacturing.fixture.entity.DamageRecord;
 import com.manufacturing.fixture.entity.Fixture;
 import com.manufacturing.fixture.entity.FixtureStatus;
 import com.manufacturing.fixture.service.BorrowService;
 import com.manufacturing.fixture.service.CalibrationService;
+import com.manufacturing.fixture.service.DamageService;
 import com.manufacturing.fixture.service.FixtureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -22,6 +24,7 @@ public class FixtureController {
     private final FixtureService fixtureService;
     private final BorrowService borrowService;
     private final CalibrationService calibrationService;
+    private final DamageService damageService;
 
     @GetMapping
     public String list(@RequestParam(required = false) String status,
@@ -48,9 +51,11 @@ public class FixtureController {
                 .orElseThrow(() -> new RuntimeException("夹具不存在"));
 
         List<BorrowRecord> borrowRecords = borrowService.findByFixtureId(id);
+        List<DamageRecord> damageRecords = damageService.findByFixtureId(id);
 
         model.addAttribute("fixture", fixture);
         model.addAttribute("borrowRecords", borrowRecords);
+        model.addAttribute("damageRecords", damageRecords);
         model.addAttribute("calibrationRecords", calibrationService.findByFixtureId(id));
         model.addAttribute("isCalibrationExpired", fixture.isCalibrationExpired());
         model.addAttribute("isCalibrationWarning", fixture.isCalibrationWarning());
