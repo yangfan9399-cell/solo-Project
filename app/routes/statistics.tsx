@@ -127,7 +127,7 @@ export default function Statistics() {
                 <tr key={item.category}>
                   <td className="font-medium">{item.category || "未知"}</td>
                   <td>{item.count} 次</td>
-                  <td>{item.total_quantity?.toFixed(0) || 0}</td>
+                  <td>{item.totalQuantity?.toFixed(0) || 0}</td>
                   <td style={{ width: "200px" }}>
                     <div className="flex items-center gap-2">
                       <div style={{ flex: 1, height: "8px", background: "#e2e8f0", borderRadius: "4px" }}>
@@ -182,12 +182,12 @@ export default function Statistics() {
             <tbody>
               {overdue.map((item) => (
                 <tr key={item.id}>
-                  <td className="font-semibold">{item.requisition_no}</td>
-                  <td>{item.reagent_name}</td>
-                  <td>{item.requester_name}</td>
+                  <td className="font-semibold">{item.requisitionNo}</td>
+                  <td>{item.reagentName}</td>
+                  <td>{item.requesterName}</td>
                   <td className="text-sm text-muted">{item.college}</td>
                   <td>{item.quantity}</td>
-                  <td className="text-sm">{formatDate(item.expected_return_date)}</td>
+                  <td className="text-sm">{formatDate(item.expectedReturnDate)}</td>
                   <td>
                     <span className="badge badge-red">
                       {item.overdueDays} 天

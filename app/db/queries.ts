@@ -361,13 +361,17 @@ export async function createReturn(data: NewReturn): Promise<Return> {
 
 export async function getReturnsByRequisitionId(
   requisitionId: number
-): Promise<Return[]> {
+): Promise<any[]> {
   const db = await getDb();
   const results = db.exec(
-    "SELECT * FROM returns WHERE requisition_id = ? ORDER BY created_at DESC",
+    `SELECT ret.*, u.name as verifier_name
+     FROM returns ret
+     LEFT JOIN users u ON ret.verifier_id = u.id
+     WHERE ret.requisition_id = ?
+     ORDER BY ret.created_at DESC`,
     [requisitionId]
   );
-  return mapRows<Return>(results[0] || { columns: [], values: [] });
+  return mapRows(results[0] || { columns: [], values: [] });
 }
 
 export async function createOperationLog(
@@ -486,9 +490,10 @@ export async function getStatisticsByCategory() {
      GROUP BY r.category
      ORDER BY count DESC`
   );
-  return mapRows<{ category: string; count: number; total_quantity: number }>(
+  const rows = mapRows<{ category: string; count: number; totalQuantity: number }>(
     results[0] || { columns: [], values: [] }
   );
+  return rows;
 }
 
 export async function getOverdueStatistics() {
@@ -509,20 +514,20 @@ export async function getOverdueStatistics() {
 
   const rows = mapRows<{
     id: number;
-    requisition_no: string;
-    reagent_id: number;
-    reagent_name: string;
-    requester_id: number;
-    requester_name: string;
+    requisitionNo: string;
+    reagentId: number;
+    reagentName: string;
+    requesterId: number;
+    requesterName: string;
     college: string;
-    expected_return_date: number;
+    expectedReturnDate: number;
     quantity: number;
   }>(results[0] || { columns: [], values: [] });
 
   return rows.map((r) => ({
     ...r,
     overdueDays: Math.floor(
-      (now - (r.expected_return_date || 0)) / (1000 * 60 * 60 * 24)
+      (now - (r.expectedReturnDate || 0)) / (1000 * 60 * 60 * 24)
     ),
   }));
 }

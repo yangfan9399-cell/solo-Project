@@ -406,7 +406,7 @@ export default function RequisitionDetail() {
                       {getConditionLabel(ret.condition)}
                     </span>
                   </td>
-                  <td className="text-sm">-</td>
+                  <td className="text-sm">{ret.verifierName || "-"}</td>
                   <td className="text-sm text-muted">{ret.notes || "-"}</td>
                 </tr>
               ))}
@@ -425,7 +425,7 @@ export default function RequisitionDetail() {
                 <span className="log-time">{formatDateTime(log.createdAt)}</span>
               </div>
               <div className="log-details">
-                {log.user_name} · {log.details}
+                {log.userName} · {log.details}
               </div>
             </div>
           ))}
