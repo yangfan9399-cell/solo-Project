@@ -1,0 +1,35 @@
+{
+  "name": "q-052",
+  "version": "1.0.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
+    "start": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc",
+    "db:generate": "drizzle-kit generate",
+    "db:setup": "tsx app/db/setup.ts"
+  },
+  "dependencies": {
+    "@remix-run/node": "^2.17.5",
+    "@remix-run/react": "^2.17.5",
+    "@remix-run/serve": "^2.17.5",
+    "drizzle-orm": "^0.45.2",
+    "isbot": "^5.1.41",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.14.1"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.17.5",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "drizzle-kit": "^0.30.6",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3"
+  }
+}
