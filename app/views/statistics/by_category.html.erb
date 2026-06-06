@@ -6,18 +6,22 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-3 gap-4">
+  <div class="grid grid-cols-4 gap-4">
     <div class="bg-white rounded-lg shadow p-4">
       <p class="text-sm text-gray-500">道具类别数</p>
-      <p class="text-2xl font-bold text-amber-600"><%= @category_summary.count %></p>
+      <p class="text-2xl font-bold text-amber-600"><%= @category_stats.count %></p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
       <p class="text-sm text-gray-500">总道具数</p>
-      <p class="text-2xl font-bold text-gray-900"><%= @category_summary.values.sum %></p>
+      <p class="text-2xl font-bold text-gray-900"><%= @category_stats.sum { |s| s[:prop_count] } %></p>
     </div>
     <div class="bg-white rounded-lg shadow p-4">
-      <p class="text-sm text-gray-500">损坏道具数</p>
-      <p class="text-2xl font-bold text-red-600"><%= @category_stats.count { |s| s[:damage_count] > 0 } %></p>
+      <p class="text-sm text-gray-500">总借调次数</p>
+      <p class="text-2xl font-bold text-blue-600"><%= @category_stats.sum { |s| s[:borrow_count] } %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-sm text-gray-500">总赔付金额</p>
+      <p class="text-2xl font-bold text-red-600">¥ <%= @category_stats.sum { |s| s[:compensation_total] }.to_i %></p>
     </div>
   </div>
 
@@ -25,33 +29,32 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">道具</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类别</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10"></th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">道具类别</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">道具数</th>
           <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">借调次数</th>
-          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">损坏次数</th>
-          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">赔付总额</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">损耗次数</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">赔付金额</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
-        <% @category_stats.each do |stat| %>
-          <tr class="hover:bg-gray-50">
+        <% @category_stats.each_with_index do |stat, idx| %>
+          <tr class="hover:bg-amber-50 cursor-pointer" onclick="toggleCategory(<%= idx %>)">
             <td class="px-6 py-4">
-              <div class="flex items-center">
-                <div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xl mr-3">
-                  <%= prop_icon(stat[:prop].category) %>
-                </div>
-                <div>
-                  <p class="font-medium">
-                    <%= link_to stat[:prop].name, prop_path(stat[:prop]), class: "hover:text-amber-600" %>
-                  </p>
-                  <p class="text-sm text-gray-500"><%= stat[:prop].code %></p>
-                </div>
-              </div>
+              <svg id="arrow-<%= idx %>" class="w-5 h-5 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </td>
             <td class="px-6 py-4">
-              <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
-                <%= stat[:prop].category %>
-              </span>
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-amber-100 rounded flex items-center justify-center text-xl mr-3">
+                  <%= prop_icon(stat[:category]) %>
+                </div>
+                <span class="font-medium text-gray-900"><%= stat[:category] %></span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="font-medium text-gray-700"><%= stat[:prop_count] %></span>
             </td>
             <td class="px-6 py-4 text-center">
               <span class="font-medium text-blue-600"><%= stat[:borrow_count] %></span>
@@ -65,20 +68,62 @@
               <span class="font-medium text-amber-600">¥ <%= stat[:compensation_total].to_i %></span>
             </td>
           </tr>
+          <tr id="detail-<%= idx %>" class="hidden bg-gray-50">
+            <td colspan="6" class="px-6 py-4">
+              <div class="pl-8">
+                <p class="text-sm font-medium text-gray-700 mb-3">类别下道具明细</p>
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead>
+                    <tr class="bg-gray-100">
+                      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">道具名称</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">编号</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">借调次数</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">损耗次数</th>
+                      <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">赔付金额</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-100">
+                    <% stat[:props].each do |prop_stat| %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                          <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-sm mr-2">
+                              <%= prop_icon(prop_stat[:prop].category) %>
+                            </div>
+                            <%= link_to prop_stat[:prop].name, prop_path(prop_stat[:prop]), class: "text-gray-900 hover:text-amber-600 font-medium" %>
+                          </div>
+                        </td>
+                        <td class="px-4 py-3 text-center text-gray-500"><%= prop_stat[:prop].code %></td>
+                        <td class="px-4 py-3 text-center text-blue-600 font-medium"><%= prop_stat[:borrow_count] %></td>
+                        <td class="px-4 py-3 text-center">
+                          <span class="font-medium <%= prop_stat[:damage_count] > 0 ? 'text-red-600' : 'text-gray-400' %>">
+                            <%= prop_stat[:damage_count] %>
+                          </span>
+                        </td>
+                        <td class="px-4 py-3 text-right text-amber-600 font-medium">¥ <%= prop_stat[:compensation_total].to_i %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
         <% end %>
       </tbody>
     </table>
   </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">各类别道具数量分布</h3>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <% @category_summary.each do |category, count| %>
-        <div class="p-4 bg-amber-50 rounded-lg text-center">
-          <p class="text-2xl font-bold text-amber-600"><%= count %></p>
-          <p class="text-sm text-gray-600 mt-1"><%= category %></p>
-        </div>
-      <% end %>
-    </div>
-  </div>
 </div>
+
+<script>
+  function toggleCategory(idx) {
+    const detailRow = document.getElementById('detail-' + idx);
+    const arrow = document.getElementById('arrow-' + idx);
+    if (detailRow.classList.contains('hidden')) {
+      detailRow.classList.remove('hidden');
+      arrow.classList.add('rotate-90');
+    } else {
+      detailRow.classList.add('hidden');
+      arrow.classList.remove('rotate-90');
+    }
+  }
+</script>

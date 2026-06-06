@@ -23,19 +23,37 @@ class StatisticsController < ApplicationController
   end
 
   def by_category
-    @category_stats = Prop.all.map do |prop|
-      borrow_count = prop.borrow_records.count
-      damage_count = prop.borrow_records.with_damage.count
-      compensation_total = Compensation.joins(:borrow_record).where(borrow_records: { prop_id: prop.id }).sum(:amount)
+    props_by_category = Prop.includes(borrow_records: :compensation).group_by(&:category)
+
+    @category_stats = props_by_category.map do |category, props|
+      prop_count = props.count
+      borrow_count = props.sum { |p| p.borrow_records.count }
+      damage_count = props.sum { |p| p.borrow_records.with_damage.count }
+      compensation_total = props.sum do |p|
+        p.borrow_records.joins(:compensation).sum("compensations.amount")
+      end
+
+      prop_details = props.map do |prop|
+        prop_borrow_count = prop.borrow_records.count
+        prop_damage_count = prop.borrow_records.with_damage.count
+        prop_compensation = prop.borrow_records.joins(:compensation).sum("compensations.amount")
+        {
+          prop: prop,
+          borrow_count: prop_borrow_count,
+          damage_count: prop_damage_count,
+          compensation_total: prop_compensation
+        }
+      end.sort_by { |s| -s[:borrow_count] }
+
       {
-        prop: prop,
+        category: category,
+        prop_count: prop_count,
         borrow_count: borrow_count,
         damage_count: damage_count,
-        compensation_total: compensation_total
+        compensation_total: compensation_total,
+        props: prop_details
       }
-    end
-
-    @category_summary = Prop.group(:category).count
+    end.sort_by { |s| -s[:borrow_count] }
   end
 
   def by_crew
