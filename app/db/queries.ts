@@ -572,32 +572,44 @@ export async function getOverdueStatisticsByCategory() {
 
 export async function getApprovalDurationStats() {
   const db = await getDb();
-  const results = db.exec(
-    `SELECT 
-        AVG(
-          CAST(
-            (SELECT ol2.created_at - ol1.created_at
-             FROM operation_logs ol1
-             JOIN operation_logs ol2 ON ol1.requisition_id = ol2.requisition_id
-             WHERE ol1.action = 'create_requisition' 
-               AND ol2.action IN ('safety_approve', 'lab_reject', 'safety_reject')
-               AND ol1.requisition_id = r.id
-             LIMIT 1)
-          AS REAL)
-        ) as avg_duration_ms,
-        COUNT(*) as count
-     FROM requisitions r
-     WHERE r.status IN ('safety_approved', 'lab_rejected', 'safety_rejected', 'picked_up', 'returned')`
+
+  const createResults = db.exec(
+    `SELECT requisition_id, created_at 
+     FROM operation_logs 
+     WHERE action = 'create_requisition'`
+  );
+  const createLogs = mapRows<{ requisitionId: number; createdAt: number }>(
+    createResults[0] || { columns: [], values: [] }
   );
 
-  const rows = mapRows<{ avg_duration_ms: number | null; count: number }>(
-    results[0] || { columns: [], values: [] }
+  const approvalResults = db.exec(
+    `SELECT requisition_id, MAX(created_at) as approved_at
+     FROM operation_logs 
+     WHERE action IN ('lab_approve', 'lab_reject', 'safety_approve', 'safety_reject')
+     GROUP BY requisition_id`
+  );
+  const approvalLogs = mapRows<{ requisitionId: number; approvedAt: number }>(
+    approvalResults[0] || { columns: [], values: [] }
   );
 
-  const avgMs = rows[0]?.avg_duration_ms;
+  const createMap = new Map(createLogs.map((l) => [l.requisitionId, l.createdAt]));
+  const approvalMap = new Map(approvalLogs.map((l) => [l.requisitionId, l.approvedAt]));
+
+  const durations: number[] = [];
+  for (const [reqId, approvedAt] of approvalMap) {
+    const createdAt = createMap.get(reqId);
+    if (createdAt && approvedAt) {
+      durations.push(approvedAt - createdAt);
+    }
+  }
+
+  const avgMs = durations.length > 0 
+    ? durations.reduce((a, b) => a + b, 0) / durations.length 
+    : null;
+
   return {
-    avgApprovalHours: avgMs ? (avgMs / (1000 * 60 * 60)).toFixed(1) : "N/A",
-    totalApproved: rows[0]?.count || 0,
+    avgApprovalHours: avgMs !== null ? (avgMs / (1000 * 60 * 60)).toFixed(1) : "N/A",
+    totalApproved: durations.length,
   };
 }
 
