@@ -24,9 +24,13 @@ export async function POST(
 
     const defect = defectResult[0];
 
-    if (defect.status !== "assigned" && defect.status !== "awaiting_parts") {
+    if (
+      defect.status !== "assigned" &&
+      defect.status !== "awaiting_parts" &&
+      defect.status !== "rejected"
+    ) {
       return NextResponse.json(
-        { error: "只有已分派或待备件状态的缺陷才能开始处理" },
+        { error: "只有已分派、待备件或已退回状态的缺陷才能开始处理" },
         { status: 400 }
       );
     }
@@ -40,6 +44,13 @@ export async function POST(
 
     const now = new Date();
     const statusBefore = defect.status;
+
+    let historyDescription = "开始现场检修";
+    if (statusBefore === "rejected") {
+      historyDescription = "验收退回，重新开始处理";
+    } else if (statusBefore === "awaiting_parts") {
+      historyDescription = "备件已到，继续现场检修";
+    }
 
     const [updatedDefect] = await db
       .update(defects)
@@ -56,7 +67,7 @@ export async function POST(
       action: "start_processing",
       userId,
       userName: user?.name,
-      description: "开始现场检修",
+      description: historyDescription,
       statusBefore,
       statusAfter: "processing",
     });

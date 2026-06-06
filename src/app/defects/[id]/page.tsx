@@ -146,9 +146,13 @@ export default function DefectDetailPage() {
       });
       if (res.ok) {
         fetchDefectDetail();
+      } else {
+        const data = await res.json();
+        alert(data.error || "开始处理失败");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("开始处理失败", error);
+      alert(error.message || "开始处理失败");
     }
   };
 
