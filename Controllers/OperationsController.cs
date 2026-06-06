@@ -521,11 +521,10 @@ public class OperationsController : Controller
             return NotFound();
         }
 
-        if (set.Status != InstrumentSetStatus.MissingItems)
-        {
-            ModelState.AddModelError(string.Empty, "只有缺件状态的器械包才能执行补包完成操作。");
-            return View("Error");
-        }
+        var supplyStaffList = _context.Users
+            .Where(u => u.Role == UserRole.SupplyStaff)
+            .OrderBy(u => u.Name)
+            .ToList();
 
         var missingItems = set.Items
             .Where(i => i.ActualQuantity < i.ExpectedQuantity)
@@ -550,11 +549,36 @@ public class OperationsController : Controller
             MissingItems = missingItems,
             TotalMissingCount = missingItems.Sum(i => i.ExpectedQuantity - i.ActualQuantity),
             ReportedAt = activeAnomaly?.ReportedAt ?? set.UpdatedAt,
-            SupplyStaff = _context.Users
-                .Where(u => u.Role == UserRole.SupplyStaff)
-                .OrderBy(u => u.Name)
-                .ToList()
+            SupplyStaff = supplyStaffList
         };
+
+        var hasWarning = false;
+
+        if (set.Status != InstrumentSetStatus.MissingItems)
+        {
+            ModelState.AddModelError(string.Empty,
+                $"当前器械包状态为「{GetStatusText(set.Status)}」，只有「缺件」状态的器械包才能执行补包操作。");
+            hasWarning = true;
+        }
+
+        if (!set.AnomalyRecords.Any(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems))
+        {
+            ModelState.AddModelError(string.Empty,
+                "未找到待处理的缺件异常记录。请先上报缺件异常后再进行补包。");
+            hasWarning = true;
+        }
+
+        if (!missingItems.Any())
+        {
+            ModelState.AddModelError(string.Empty,
+                "器械包内所有器械数量均已齐全，无需执行补包操作。");
+            hasWarning = true;
+        }
+
+        if (hasWarning)
+        {
+            return View(viewModel);
+        }
 
         return View(viewModel);
     }
@@ -564,7 +588,9 @@ public class OperationsController : Controller
     public IActionResult CompleteReplenishment(CompleteReplenishmentViewModel model)
     {
         var set = _context.InstrumentSets
+            .Include(s => s.Department)
             .Include(s => s.Items)
+                .ThenInclude(i => i.Instrument)
             .Include(s => s.AnomalyRecords)
             .FirstOrDefault(s => s.Id == model.InstrumentSetId);
 
@@ -573,22 +599,82 @@ public class OperationsController : Controller
             return NotFound();
         }
 
+        var supplyStaffList = _context.Users
+            .Where(u => u.Role == UserRole.SupplyStaff)
+            .OrderBy(u => u.Name)
+            .ToList();
+
+        var missingItems = set.Items
+            .Where(i => i.ActualQuantity < i.ExpectedQuantity)
+            .Select(i => new InstrumentItemViewModel
+            {
+                InstrumentId = i.InstrumentId,
+                InstrumentName = i.Instrument.Name + " - " + (i.Instrument.Specification ?? ""),
+                ExpectedQuantity = i.ExpectedQuantity,
+                ActualQuantity = i.ActualQuantity
+            })
+            .ToList();
+
+        model.SetCode = set.SetCode;
+        model.SetName = set.Name;
+        model.DepartmentName = set.Department.Name;
+        model.MissingItems = missingItems;
+        model.TotalMissingCount = missingItems.Sum(i => i.ExpectedQuantity - i.ActualQuantity);
+        model.SupplyStaff = supplyStaffList;
+
+        var hasValidationError = false;
+
         if (set.Status != InstrumentSetStatus.MissingItems)
         {
-            ModelState.AddModelError(string.Empty, "只有缺件状态的器械包才能执行补包完成操作。");
-            model.MissingItems = set.Items
-                .Where(i => i.ActualQuantity < i.ExpectedQuantity)
-                .Select(i => new InstrumentItemViewModel
-                {
-                    InstrumentId = i.InstrumentId,
-                    InstrumentName = i.Instrument.Name,
-                    ExpectedQuantity = i.ExpectedQuantity,
-                    ActualQuantity = i.ActualQuantity
-                })
-                .ToList();
-            model.SupplyStaff = _context.Users
-                .Where(u => u.Role == UserRole.SupplyStaff)
-                .ToList();
+            ModelState.AddModelError(string.Empty,
+                $"操作无效：当前器械包状态为「{GetStatusText(set.Status)}」，只有「缺件」状态的器械包才能执行补包完成操作。");
+            hasValidationError = true;
+        }
+
+        var activeAnomalies = set.AnomalyRecords
+            .Where(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems)
+            .ToList();
+
+        var hasActualMissingItems = set.Items.Any(i => i.ActualQuantity < i.ExpectedQuantity);
+
+        if (!activeAnomalies.Any())
+        {
+            ModelState.AddModelError(string.Empty,
+                "操作无效：未找到待处理的缺件异常记录，请确认异常状态。");
+            hasValidationError = true;
+        }
+
+        if (!hasActualMissingItems)
+        {
+            ModelState.AddModelError(string.Empty,
+                "操作无效：器械包内所有器械数量均已齐全，无需补包操作。");
+            hasValidationError = true;
+        }
+
+        if (activeAnomalies.Any() && !hasActualMissingItems)
+        {
+            ModelState.AddModelError(string.Empty,
+                "数据异常：存在未关闭的缺件异常记录但器械数量已齐全，请先核查异常记录。");
+            hasValidationError = true;
+        }
+
+        var operatorUser = _context.Users.FirstOrDefault(u => u.Id == model.CompletedByUserId);
+        if (operatorUser == null)
+        {
+            ModelState.AddModelError(string.Empty, "操作无效：指定的补包操作人不存在。");
+            hasValidationError = true;
+        }
+        else if (operatorUser.Role != UserRole.SupplyStaff)
+        {
+            ModelState.AddModelError(string.Empty,
+                $"操作无效：补包操作人必须为消毒供应室经办人，当前选中的「{operatorUser.Name}」角色为「{GetRoleText(operatorUser.Role)}」，无权执行补包操作。");
+            hasValidationError = true;
+        }
+
+        if (hasValidationError)
+        {
+            var firstAnomaly = activeAnomalies.OrderBy(a => a.ReportedAt).FirstOrDefault();
+            model.ReportedAt = firstAnomaly?.ReportedAt ?? set.UpdatedAt;
             return View(model);
         }
 
@@ -605,10 +691,6 @@ public class OperationsController : Controller
                 item.ActualQuantity = item.ExpectedQuantity;
             }
         }
-
-        var activeAnomalies = set.AnomalyRecords
-            .Where(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems)
-            .ToList();
 
         foreach (var anomaly in activeAnomalies)
         {
@@ -641,5 +723,34 @@ public class OperationsController : Controller
         _context.SaveChanges();
 
         return RedirectToAction(nameof(InstrumentSetsController.Details), "InstrumentSets", new { id = set.Id });
+    }
+
+    private static string GetStatusText(InstrumentSetStatus status)
+    {
+        return status switch
+        {
+            InstrumentSetStatus.Packed => "已打包",
+            InstrumentSetStatus.Sterilized => "已灭菌",
+            InstrumentSetStatus.ReadyForUse => "可使用",
+            InstrumentSetStatus.InUse => "使用中",
+            InstrumentSetStatus.Returned => "已退回",
+            InstrumentSetStatus.MissingItems => "缺件",
+            InstrumentSetStatus.Expired => "灭菌过期",
+            InstrumentSetStatus.WrongDepartment => "科室错领",
+            InstrumentSetStatus.Replenished => "已补包",
+            InstrumentSetStatus.Quarantine => "待处理",
+            _ => status.ToString()
+        };
+    }
+
+    private static string GetRoleText(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.SupplyStaff => "消毒供应室经办人",
+            UserRole.OperatingRoomNurse => "手术室护士",
+            UserRole.QualityReviewer => "质控复核人",
+            _ => role.ToString()
+        };
     }
 }

@@ -92,6 +92,10 @@
                 <input type="hidden" asp-for="TotalMissingCount" />
                 <input type="hidden" asp-for="ReportedAt" />
 
+                <div asp-validation-summary="All" class="alert alert-danger" style="margin-bottom: 1rem;">
+                    <strong>操作无法继续：</strong>
+                </div>
+
                 <div class="form-group">
                     <label>补包操作人 *</label>
                     <select asp-for="CompletedByUserId" class="form-control">
