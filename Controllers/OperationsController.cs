@@ -614,6 +614,8 @@ public class OperationsController : Controller
         model.MissingItems = missingItems;
         model.TotalMissingCount = missingItems.Sum(i => i.ExpectedQuantity - i.ActualQuantity);
         model.SupplyStaff = supplyStaffList;
+        model.CurrentStatus = set.Status;
+        model.CanCompleteReplenishment = true;
 
         var hasValidationError = false;
 
@@ -668,6 +670,24 @@ public class OperationsController : Controller
         {
             var firstAnomaly = activeAnomalies.OrderBy(a => a.ReportedAt).FirstOrDefault();
             model.ReportedAt = firstAnomaly?.ReportedAt ?? set.UpdatedAt;
+            model.CanCompleteReplenishment = false;
+
+            foreach (var entry in ModelState)
+            {
+                foreach (var error in entry.Value.Errors)
+                {
+                    if (!string.IsNullOrEmpty(error.ErrorMessage))
+                    {
+                        model.BlockReasons.Add(error.ErrorMessage);
+                    }
+                }
+            }
+
+            if (!model.BlockReasons.Any())
+            {
+                model.BlockReasons.Add("补包操作校验失败，请检查输入信息后重试。");
+            }
+
             return View(model);
         }
 
