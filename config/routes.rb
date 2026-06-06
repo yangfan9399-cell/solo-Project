@@ -51,6 +51,11 @@ Rails.application.routes.draw do
 
   resources :users
 
+  resource :session, only: [:new, :create, :destroy]
+  get "login", to: "sessions#new", as: :login
+  post "switch_user", to: "sessions#create", as: :switch_user
+  delete "logout", to: "sessions#destroy", as: :logout
+
   get "statistics", to: "statistics#index", as: :statistics
   get "statistics/by_category", to: "statistics#by_category", as: :by_category_statistics
   get "statistics/by_crew", to: "statistics#by_crew", as: :by_crew_statistics

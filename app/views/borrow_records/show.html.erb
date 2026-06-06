@@ -8,33 +8,47 @@
       </span>
     </div>
     <div class="flex space-x-2">
-      <% if @borrow_record.pending? %>
-        <%= link_to "查看冲突", conflicts_borrow_record_path(@borrow_record), class: "px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200" %>
-        <%= button_to "确认借调", confirm_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700", onclick: "return confirm('确认借调该道具？');" %>
+      <% if current_user.stage_manager? %>
+        <% if @borrow_record.pending? %>
+          <%= link_to "查看冲突", conflicts_borrow_record_path(@borrow_record), class: "px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm" %>
+        <% end %>
+        <% if @borrow_record.checked_out? %>
+          <button onclick="document.getElementById('return-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+            申请归还
+          </button>
+        <% end %>
+        <% if @borrow_record.pending? || @borrow_record.confirmed? %>
+          <%= button_to "取消借调", cancel_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm", onclick: "return confirm('确定取消该借调？');" %>
+        <% end %>
       <% end %>
-      <% if @borrow_record.confirmed? %>
-        <%= button_to "出库", checkout_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+
+      <% if current_user.crew_leader? %>
+        <% if @borrow_record.pending? %>
+          <% if @borrow_record.has_conflict? %>
+            <%= link_to "查看冲突", conflicts_borrow_record_path(@borrow_record), class: "px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm" %>
+          <% else %>
+            <%= button_to "确认借调", confirm_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm", onclick: "return confirm('确认借调该道具？');" %>
+          <% end %>
+        <% end %>
       <% end %>
-      <% if @borrow_record.checked_out? %>
-        <button onclick="document.getElementById('return-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          申请归还
-        </button>
-      <% end %>
-      <% if @borrow_record.returning? %>
-        <button onclick="document.getElementById('audit-form').classList.toggle('hidden')" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
-          审核归还
-        </button>
-      <% end %>
-      <% if @borrow_record.damaged? %>
-        <button onclick="document.getElementById('compensation-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-          启动赔付
-        </button>
-        <button onclick="document.getElementById('repair-form').classList.toggle('hidden')" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
-          启动维修
-        </button>
-      <% end %>
-      <% if @borrow_record.pending? || @borrow_record.confirmed? %>
-        <%= button_to "取消借调", cancel_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50", onclick: "return confirm('确定取消该借调？');" %>
+
+      <% if current_user.asset_auditor? %>
+        <% if @borrow_record.confirmed? %>
+          <%= button_to "出库", checkout_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm" %>
+        <% end %>
+        <% if @borrow_record.returning? %>
+          <button onclick="document.getElementById('audit-form').classList.toggle('hidden')" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm">
+            审核归还
+          </button>
+        <% end %>
+        <% if @borrow_record.damaged? %>
+          <button onclick="document.getElementById('compensation-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm">
+            启动赔付
+          </button>
+          <button onclick="document.getElementById('repair-form').classList.toggle('hidden')" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 text-sm">
+            启动维修
+          </button>
+        <% end %>
       <% end %>
     </div>
   </div>
@@ -57,6 +71,29 @@
       <p class="text-red-700 font-medium">⚠️ 本借调已逾期 <%= (Date.today - @borrow_record.expected_end_date).to_i %> 天，请尽快归还。</p>
     </div>
   <% end %>
+
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div class="flex items-start">
+      <span class="text-2xl mr-3">👤</span>
+      <div class="flex-1">
+        <h3 class="text-sm font-semibold text-blue-800">当前身份：<%= current_user.name %>（<%= current_user.role_name %>）</h3>
+        <p class="text-sm text-blue-600 mt-1">
+          <% if current_user.stage_manager? %>
+            可执行操作：登记借调申请、申请归还、取消借调
+          <% elsif current_user.crew_leader? %>
+            可执行操作：确认借调申请、提出赔付争议
+          <% elsif current_user.asset_auditor? %>
+            可执行操作：道具出库、审核归还、启动赔付、启动维修、解决赔付争议
+          <% end %>
+        </p>
+      </div>
+      <div class="text-right">
+        <button onclick="document.getElementById('user-dropdown').classList.toggle('hidden')" class="text-sm text-blue-600 hover:text-blue-800">
+          切换身份 ↓
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div id="return-form" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-6">
     <h3 class="text-lg font-semibold text-blue-800 mb-4">申请归还</h3>

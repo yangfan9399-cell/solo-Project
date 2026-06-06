@@ -38,12 +38,44 @@
           </div>
           <div class="flex items-center space-x-4">
             <% if current_user %>
-              <span class="text-sm">
-                <span class="text-amber-200">当前角色：</span>
-                <span class="font-medium"><%= current_user.role_name %></span>
-                <span class="mx-2">|</span>
-                <span class="font-medium"><%= current_user.name %></span>
-              </span>
+              <div class="relative" id="user-switcher">
+                <button class="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-amber-700" onclick="document.getElementById('user-dropdown').classList.toggle('hidden')">
+                  <div class="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center text-sm font-bold">
+                    <%= current_user.name.first %>
+                  </div>
+                  <div class="text-left">
+                    <p class="text-sm font-medium"><%= current_user.name %></p>
+                    <p class="text-xs text-amber-200"><%= current_user.role_name %></p>
+                  </div>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 text-gray-800">
+                  <div class="px-4 py-2 border-b border-gray-100">
+                    <p class="text-xs text-gray-500 uppercase font-medium">切换身份</p>
+                  </div>
+                  <% User.order(role: :asc, name: :asc).each do |user| %>
+                    <%= form_tag switch_user_path, method: :post, class: "w-full" do %>
+                      <%= hidden_field_tag :user_id, user.id %>
+                      <button type="submit" class="w-full text-left px-4 py-2 hover:bg-amber-50 flex items-center justify-between <%= user.id == current_user.id ? 'bg-amber-100' : '' %>">
+                        <div class="flex items-center space-x-3">
+                          <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                            <%= user.name.first %>
+                          </div>
+                          <div>
+                            <p class="text-sm font-medium text-gray-900"><%= user.name %></p>
+                            <p class="text-xs text-gray-500"><%= user.role_name %></p>
+                          </div>
+                        </div>
+                        <% if user.id == current_user.id %>
+                          <span class="text-amber-600 text-sm">✓</span>
+                        <% end %>
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
             <% end %>
           </div>
         </div>

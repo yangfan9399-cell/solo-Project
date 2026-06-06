@@ -8,8 +8,8 @@
       </span>
     </div>
     <div class="flex space-x-2">
-      <% if @repair_record.in_progress? %>
-        <%= button_to "标记完成", complete_repair_record_path(@repair_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+      <% if current_user.asset_auditor? && @repair_record.in_progress? %>
+        <%= button_to "标记完成", complete_repair_record_path(@repair_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm" %>
       <% end %>
     </div>
   </div>

@@ -1,5 +1,7 @@
 class CompensationsController < ApplicationController
   before_action :set_compensation, only: [:show, :edit, :update, :dispute, :resolve, :pay]
+  before_action :require_crew_leader, only: [:dispute]
+  before_action :require_asset_auditor, only: [:edit, :update, :resolve, :pay]
 
   def index
     @compensations = Compensation.all.includes(borrow_record: [:prop, :crew]).order(created_at: :desc)

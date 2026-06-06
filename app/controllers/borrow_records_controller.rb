@@ -1,5 +1,8 @@
 class BorrowRecordsController < ApplicationController
   before_action :set_borrow_record, only: [:show, :edit, :update, :destroy, :confirm, :checkout, :return, :audit_return, :start_compensation, :start_repair, :cancel, :conflicts]
+  before_action :require_stage_manager, only: [:new, :create, :return, :cancel]
+  before_action :require_crew_leader, only: [:confirm]
+  before_action :require_asset_auditor, only: [:checkout, :audit_return, :start_compensation, :start_repair]
 
   def index
     @borrow_records = BorrowRecord.all.includes(:prop, :crew, :applicant)

@@ -1,5 +1,6 @@
 class PropsController < ApplicationController
   before_action :set_prop, only: [:show, :edit, :update, :destroy, :borrow_history, :inspection_history, :compensation_history]
+  before_action :require_asset_auditor, only: [:new, :create, :edit, :update, :destroy]
 
   def index
     @props = Prop.all

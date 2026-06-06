@@ -8,21 +8,23 @@
       </span>
     </div>
     <div class="flex space-x-2">
-      <% if @compensation.pending? %>
-        <%= button_to "标记已赔付", pay_compensation_path(@compensation), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+      <% if current_user.crew_leader? %>
+        <% if @compensation.pending? %>
+          <button onclick="document.getElementById('dispute-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
+            提出争议
+          </button>
+        <% end %>
       <% end %>
-      <% if @compensation.pending? %>
-        <button onclick="document.getElementById('dispute-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200">
-          提出争议
-        </button>
-      <% end %>
-      <% if @compensation.disputed? %>
-        <button onclick="document.getElementById('resolve-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          解决争议
-        </button>
-      <% end %>
-      <% if @compensation.disputed? %>
-        <%= button_to "标记已赔付", pay_compensation_path(@compensation), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+
+      <% if current_user.asset_auditor? %>
+        <% if @compensation.pending? || @compensation.disputed? %>
+          <%= button_to "标记已赔付", pay_compensation_path(@compensation), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm" %>
+        <% end %>
+        <% if @compensation.disputed? %>
+          <button onclick="document.getElementById('resolve-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+            解决争议
+          </button>
+        <% end %>
       <% end %>
     </div>
   </div>

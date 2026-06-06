@@ -8,9 +8,11 @@
       </span>
     </div>
     <div class="flex space-x-2">
-      <%= link_to "编辑", edit_prop_path(@prop), class: "px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" %>
-      <% if @prop.available? %>
-        <%= link_to "申请借调", new_borrow_record_path(prop_id: @prop.id), class: "px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700" %>
+      <% if current_user.asset_auditor? %>
+        <%= link_to "编辑", edit_prop_path(@prop), class: "px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm" %>
+      <% end %>
+      <% if current_user.stage_manager? && @prop.available? %>
+        <%= link_to "申请借调", new_borrow_record_path(prop_id: @prop.id), class: "px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm" %>
       <% end %>
     </div>
   </div>

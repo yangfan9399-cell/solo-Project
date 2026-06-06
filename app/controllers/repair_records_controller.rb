@@ -1,5 +1,6 @@
 class RepairRecordsController < ApplicationController
   before_action :set_repair_record, only: [:show, :edit, :update, :complete]
+  before_action :require_asset_auditor, only: [:edit, :update, :complete]
 
   def index
     @repair_records = RepairRecord.all.includes(:prop, :handler).order(created_at: :desc)
