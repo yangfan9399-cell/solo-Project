@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}统计复盘 - 港口集装箱查验预约系统{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">统计复盘</h2>
+    </div>
+
+    <form method="get" class="filter-bar">
+        <div class="filter-item">
+            <label class="form-label">开始日期</label>
+            <input type="date" name="start_date" class="form-control" value="{{ form.start_date.value|default:'' }}">
+        </div>
+        <div class="filter-item">
+            <label class="form-label">结束日期</label>
+            <input type="date" name="end_date" class="form-control" value="{{ form.end_date.value|default:'' }}">
+        </div>
+        <div class="filter-item">
+            <label class="form-label">统计维度</label>
+            <select name="group_by" class="form-select" onchange="this.form.submit()">
+                <option value="route" {% if group_by == 'route' %}selected{% endif %}>按航线</option>
+                <option value="forwarder" {% if group_by == 'forwarder' %}selected{% endif %}>按货代</option>
+                <option value="anomaly_type" {% if group_by == 'anomaly_type' %}selected{% endif %}>按异常类型</option>
+                <option value="demurrage_days" {% if group_by == 'demurrage_days' %}selected{% endif %}>按滞箱天数</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">查询</button>
+        <a href="{% url 'statistics' %}" class="btn btn-secondary">重置</a>
+    </form>
+
+    <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+            <div class="stat-label">总预约数</div>
+            <div class="stat-value">{{ total_count }}</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-label">总费用(元)</div>
+            <div class="stat-value">¥ {{ total_fee }}</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-label">总滞箱天数</div>
+            <div class="stat-value">{{ avg_demurrage }} 天</div>
+        </div>
+    </div>
+
+    {% if group_by == 'route' %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>航线</th>
+                    <th>预约总数</th>
+                    <th>正常放行</th>
+                    <th>单证缺失</th>
+                    <th>查验改期</th>
+                    <th>费用异议</th>
+                    <th>总滞箱天数</th>
+                    <th>总费用(元)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><strong>{{ stat.route|default:"-" }}</strong></td>
+                    <td>{{ stat.total }}</td>
+                    <td>{{ stat.normal }}</td>
+                    <td>{{ stat.doc_missing }}</td>
+                    <td>{{ stat.rescheduled }}</td>
+                    <td>{{ stat.fee_disputed }}</td>
+                    <td>{{ stat.total_demurrage|default:0 }}</td>
+                    <td>¥ {{ stat.total_fee|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: #9ca3af; padding: 40px;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if group_by == 'forwarder' %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>货代公司</th>
+                    <th>预约总数</th>
+                    <th>正常放行</th>
+                    <th>单证缺失</th>
+                    <th>查验改期</th>
+                    <th>费用异议</th>
+                    <th>总滞箱天数</th>
+                    <th>总费用(元)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><strong>{{ stat.forwarder_name|default:"-" }}</strong></td>
+                    <td>{{ stat.total }}</td>
+                    <td>{{ stat.normal }}</td>
+                    <td>{{ stat.doc_missing }}</td>
+                    <td>{{ stat.rescheduled }}</td>
+                    <td>{{ stat.fee_disputed }}</td>
+                    <td>{{ stat.total_demurrage|default:0 }}</td>
+                    <td>¥ {{ stat.total_fee|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: #9ca3af; padding: 40px;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if group_by == 'anomaly_type' %}
+    <div class="stats-chart-bar">
+        {% for stat in stats %}
+        {% if stat.count > 0 %}
+        <div class="stats-bar-item">
+            <div class="stats-bar-value">{{ stat.count }}</div>
+            <div class="stats-bar" style="height: {% widthratio stat.count total_count 180 %}px; min-height: 20px;"></div>
+            <div class="stats-bar-label">{{ stat.anomaly_type }}</div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>异常类型</th>
+                    <th>数量</th>
+                    <th>占比</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><strong>{{ stat.anomaly_type }}</strong></td>
+                    <td>{{ stat.count }}</td>
+                    <td>
+                        {% if total_count > 0 %}
+                        {% widthratio stat.count total_count 100 %}%
+                        {% else %}
+                        0%
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if group_by == 'demurrage_days' %}
+    <div class="stats-chart-bar">
+        {% for stat in stats %}
+        {% if stat.count > 0 %}
+        <div class="stats-bar-item">
+            <div class="stats-bar-value">{{ stat.count }}</div>
+            <div class="stats-bar" style="height: {% widthratio stat.count total_count 180 %}px; min-height: 20px;"></div>
+            <div class="stats-bar-label">{{ stat.range }}</div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>滞箱天数区间</th>
+                    <th>箱数</th>
+                    <th>总费用(元)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><strong>{{ stat.range }}</strong></td>
+                    <td>{{ stat.count }}</td>
+                    <td>¥ {{ stat.total_fee|default:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

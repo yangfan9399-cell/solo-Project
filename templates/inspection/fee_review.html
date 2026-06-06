@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}费用复核 - {{ appointment.appointment_no }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">费用复核</h2>
+        <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-sm btn-secondary">返回详情</a>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>预约信息：</strong>{{ appointment.appointment_no }} · {{ appointment.container.container_no }} · {{ appointment.container.size }}
+    </div>
+
+    <div class="card" style="box-shadow: none; border: 1px solid #e5e7eb; margin-bottom: 24px;">
+        <h3 style="font-size: 16px; margin-bottom: 16px;">费用明细</h3>
+        <table class="fee-table">
+            <thead>
+                <tr>
+                    <th>费用项目</th>
+                    <th>数量</th>
+                    <th>单价(元)</th>
+                    <th>金额(元)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in appointment.fee_items.all %}
+                <tr>
+                    <td>
+                        {{ item.item_name }}
+                        {% if item.is_reduction %}
+                        <span class="badge badge-success">减免</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price }}</td>
+                    <td {% if item.is_reduction %}style="color: #059669;"{% endif %}>
+                        {{ item.amount }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #9ca3af; padding: 20px;">
+                        暂无费用明细
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 600;">滞箱天数：</td>
+                    <td>{{ appointment.demurrage_days }} 天</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 600;">滞箱费合计：</td>
+                    <td>¥ {{ appointment.demurrage_fee }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 600;">已减免：</td>
+                    <td style="color: #059669;">- ¥ {{ appointment.fee_reduction }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 700; font-size: 18px;">应付金额：</td>
+                    <td class="fee-total" style="font-size: 18px;">¥ {{ appointment.final_fee }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <form method="post" id="fee-review-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="id_action" value="confirm">
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="form-group">
+                <label class="form-label">减免金额(元)</label>
+                <input type="number" name="fee_reduction" id="id_fee_reduction"
+                       class="form-control" step="0.01" min="0"
+                       value="{{ appointment.fee_reduction }}"
+                       oninput="updateFinalFee()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">减免说明</label>
+                <input type="text" name="reduction_reason" id="id_reduction_reason"
+                       class="form-control" placeholder="请输入减免原因...">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">异议原因</label>
+            <textarea name="dispute_reason" id="id_dispute_reason"
+                      class="form-control" rows="3"
+                      placeholder="如有异议，请填写异议原因..."></textarea>
+        </div>
+
+        <div class="form-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-success btn-lg" onclick="submitForm('confirm')">
+                ✓ 确认费用
+            </button>
+            <button type="button" class="btn btn-warning btn-lg" onclick="submitForm('reduce')">
+                ¥ 减免后确认
+            </button>
+            <button type="button" class="btn btn-danger btn-lg" onclick="submitForm('dispute')">
+                ⚠ 提出异议
+            </button>
+            <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-secondary btn-lg">
+                返回
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function updateFinalFee() {
+    const demurrage = parseFloat('{{ appointment.demurrage_fee }}');
+    const reduction = parseFloat(document.getElementById('id_fee_reduction').value) || 0;
+    const final = Math.max(0, demurrage - reduction);
+}
+
+function submitForm(action) {
+    document.getElementById('id_action').value = action;
+
+    if (action === 'dispute') {
+        const reason = document.getElementById('id_dispute_reason').value.trim();
+        if (!reason) {
+            alert('请填写异议原因');
+            return;
+        }
+    }
+
+    if (action === 'reduce') {
+        const reduction = parseFloat(document.getElementById('id_fee_reduction').value) || 0;
+        if (reduction <= 0) {
+            alert('请输入减免金额');
+            return;
+        }
+    }
+
+    document.getElementById('fee-review-form').submit();
+}
+</script>
+{% endblock %}

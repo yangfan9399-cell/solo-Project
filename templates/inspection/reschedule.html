@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}申请改期 - {{ appointment.appointment_no }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">申请改期</h2>
+        <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-sm btn-secondary">返回详情</a>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>当前预约时间：</strong>
+        {{ appointment.appointment_date|date:"Y-m-d" }} {{ appointment.appointment_time|date:"H:i" }}
+        · {{ appointment.inspection_window.name }}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">新预约日期 *</label>
+                {{ form.new_date }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">新预约时间 *</label>
+                {{ form.new_time }}
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">改期原因 *</label>
+            {{ form.reason }}
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">确认改期</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

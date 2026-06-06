@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 港口集装箱查验预约系统{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">{{ title }}</h2>
+        <a href="{% url 'appointment_list' %}" class="btn btn-sm btn-secondary">返回列表</a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <h3 style="font-size: 16px; margin-bottom: 16px; color: #374151; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+            集装箱信息
+        </h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">箱号 *</label>
+                {{ form.container_no }}
+                {% if form.container_no.errors %}
+                <div class="text-red-500 text-sm">{{ form.container_no.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">箱型 *</label>
+                {{ form.container_size }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">船名 *</label>
+                {{ form.vessel_name }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">航次 *</label>
+                {{ form.voyage_no }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">提单号</label>
+                {{ form.bl_no }}
+            </div>
+        </div>
+
+        <h3 style="font-size: 16px; margin: 24px 0 16px 0; color: #374151; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+            预约信息
+        </h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">货代公司 *</label>
+                {{ form.forwarder }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">船公司 *</label>
+                {{ form.shipping_line }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">航线 *</label>
+                {{ form.route }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">查验窗口 *</label>
+                {{ form.inspection_window }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">预约日期 *</label>
+                {{ form.appointment_date }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">预约时间 *</label>
+                {{ form.appointment_time }}
+            </div>
+        </div>
+
+        <h3 style="font-size: 16px; margin: 24px 0 16px 0; color: #374151; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+            联系信息
+        </h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">联系人 *</label>
+                {{ form.contact_person }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">联系电话 *</label>
+                {{ form.contact_phone }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">查验原因</label>
+            {{ form.inspection_reason }}
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'appointment_list' %}" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

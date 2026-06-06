@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}查验预约列表 - 港口集装箱查验预约系统{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">查验预约列表</h2>
+        {% if is_forwarder %}
+        <a href="{% url 'appointment_create' %}" class="btn btn-primary">＋ 新建预约</a>
+        {% endif %}
+    </div>
+
+    <div class="filter-bar">
+        <form method="get" style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap; align-items: flex-end;">
+            <div class="filter-item">
+                <label class="form-label">状态筛选</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">全部状态</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item" style="flex: 2; min-width: 200px;">
+                <label class="form-label">搜索</label>
+                <input type="text" name="search" class="form-control" placeholder="预约编号/箱号/货代" value="{{ search }}">
+            </div>
+            <button type="submit" class="btn btn-primary">搜索</button>
+            <a href="{% url 'appointment_list' %}" class="btn btn-secondary">重置</a>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>预约编号</th>
+                    <th>箱号</th>
+                    <th>箱型</th>
+                    <th>货代</th>
+                    <th>船名/航次</th>
+                    <th>航线</th>
+                    <th>查验窗口</th>
+                    <th>预约时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for apt in appointments %}
+                <tr>
+                    <td><strong>{{ apt.appointment_no }}</strong></td>
+                    <td>{{ apt.container.container_no }}</td>
+                    <td>{{ apt.container.size }}</td>
+                    <td>{{ apt.forwarder.name }}</td>
+                    <td>{{ apt.container.vessel_name }} / {{ apt.container.voyage_no }}</td>
+                    <td>{{ apt.route }}</td>
+                    <td>{{ apt.inspection_window.name }}</td>
+                    <td>{{ apt.appointment_date|date:"Y-m-d" }} {{ apt.appointment_time|date:"H:i" }}</td>
+                    <td>
+                        {% if apt.status == 'draft' %}
+                        <span class="badge badge-secondary">草稿</span>
+                        {% elif apt.status == 'submitted' %}
+                        <span class="badge badge-primary">待查验</span>
+                        {% elif apt.status == 'in_inspection' %}
+                        <span class="badge badge-warning">查验中</span>
+                        {% elif apt.status == 'normal_release' %}
+                        <span class="badge badge-success">正常放行</span>
+                        {% elif apt.status == 'doc_missing' %}
+                        <span class="badge badge-danger">单证缺失</span>
+                        {% elif apt.status == 'rescheduled' %}
+                        <span class="badge badge-info">已改期</span>
+                        {% elif apt.status == 'pending_fee' %}
+                        <span class="badge badge-warning">待费用复核</span>
+                        {% elif apt.status == 'fee_confirmed' %}
+                        <span class="badge badge-success">费用已确认</span>
+                        {% elif apt.status == 'fee_disputed' %}
+                        <span class="badge badge-danger">费用异议</span>
+                        {% elif apt.status == 'archived' %}
+                        <span class="badge badge-secondary">已归档</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'appointment_detail' apt.pk %}" class="btn btn-sm btn-primary">详情</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align: center; color: #9ca3af; padding: 40px;">
+                        暂无预约记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">上一页</a>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="current">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <a href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+        {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

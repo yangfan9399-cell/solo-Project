@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 港口集装箱查验预约系统</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">🚢</div>
+            <h1 class="login-title">港口集装箱查验预约系统</h1>
+            <p class="login-subtitle">请登录您的账户</p>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-error">
+            用户名或密码错误，请重试。
+        </div>
+        {% endif %}
+
+        {% if next %}
+            {% if user.is_authenticated %}
+            <div class="alert alert-warning">
+                您的账户没有访问该页面的权限，请使用有权限的账户登录。
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                请登录以访问该页面。
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="id_username">用户名</label>
+                <input type="text" name="username" id="id_username" class="form-control" autofocus required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_password">密码</label>
+                <input type="password" name="password" id="id_password" class="form-control" required>
+            </div>
+            <div class="form-actions" style="justify-content: center; margin-top: 24px;">
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">登录</button>
+            </div>
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">演示账户：</p>
+            <div style="font-size: 12px; color: #9ca3af; line-height: 1.8;">
+                <div>货代经办人: forwarder / password123</div>
+                <div>场站人员: yard / password123</div>
+                <div>费用复核人: fee_auditor / password123</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

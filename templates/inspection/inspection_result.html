@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}登记查验结果 - {{ appointment.appointment_no }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">登记查验结果</h2>
+        <a href="{% url 'appointment_detail' appointment.pk %}" class="btn btn-sm btn-secondary">返回详情</a>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>预约信息：</strong>{{ appointment.appointment_no }} · {{ appointment.container.container_no }} · {{ appointment.inspection_window.name }}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label">查验结果说明</label>
+            <textarea name="inspection_result" rows="4" class="form-control" placeholder="请输入查验结果说明..."></textarea>
+        </div>
+
+        <div class="form-actions" style="justify-content: center; gap: 24px;">
+            <button type="submit" name="result_type" value="normal" class="btn btn-success btn-lg">
+                ✓ 正常放行
+            </button>
+            <button type="submit" name="result_type" value="doc_missing" class="btn btn-warning btn-lg">
+                ⚠ 单证缺失
+            </button>
+        </div>
+
+        <div style="margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">
+                <strong>当前单证状态：</strong>
+                {% if appointment.is_doc_complete %}
+                <span class="badge badge-success">✓ 单证齐全</span>
+                {% else %}
+                <span class="badge badge-danger">✗ 单证缺失</span>
+                {% endif %}
+            </p>
+            <ul style="font-size: 13px; color: #4b5563; padding-left: 20px;">
+                {% for doc in appointment.documents.all %}
+                <li>
+                    {% if doc.is_submitted %}
+                    <span style="color: #059669;">✓</span>
+                    {% else %}
+                    <span style="color: #dc2626;">✗</span>
+                    {% endif %}
+                    {{ doc.document_type.name }}
+                    {% if doc.document_type.is_required %}
+                    <span style="color: #dc2626;">(必备)</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% if not appointment.is_doc_complete %}
+            <p style="font-size: 12px; color: #dc2626; margin-top: 8px;">
+                注意：单证不齐将无法执行正常放行操作，系统将自动阻断。
+            </p>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}

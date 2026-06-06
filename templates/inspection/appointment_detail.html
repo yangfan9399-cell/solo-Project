@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ appointment.appointment_no }} - 查验预约详情{% endblock %}
+
+{% block content %}
+<div class="status-header">
+    <div>
+        <h1 style="font-size: 22px; font-weight: 700;">{{ appointment.appointment_no }}</h1>
+        <p style="color: #6b7280; margin-top: 4px;">
+            {{ appointment.container.container_no }} · {{ appointment.forwarder.name }}
+        </p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        {% if appointment.status == 'draft' %}
+        <span class="badge badge-secondary status-badge-large">草稿</span>
+        {% elif appointment.status == 'submitted' %}
+        <span class="badge badge-primary status-badge-large">待查验</span>
+        {% elif appointment.status == 'in_inspection' %}
+        <span class="badge badge-warning status-badge-large">查验中</span>
+        {% elif appointment.status == 'normal_release' %}
+        <span class="badge badge-success status-badge-large">正常放行</span>
+        {% elif appointment.status == 'doc_missing' %}
+        <span class="badge badge-danger status-badge-large">单证缺失</span>
+        {% elif appointment.status == 'rescheduled' %}
+        <span class="badge badge-info status-badge-large">已改期</span>
+        {% elif appointment.status == 'pending_fee' %}
+        <span class="badge badge-warning status-badge-large">待费用复核</span>
+        {% elif appointment.status == 'fee_confirmed' %}
+        <span class="badge badge-success status-badge-large">费用已确认</span>
+        {% elif appointment.status == 'fee_disputed' %}
+        <span class="badge badge-danger status-badge-large">费用异议</span>
+        {% elif appointment.status == 'archived' %}
+        <span class="badge badge-secondary status-badge-large">已归档</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">操作区</h2>
+    </div>
+    <div class="action-buttons">
+        {% if is_forwarder and appointment.status == 'draft' %}
+        <form method="post" action="{% url 'appointment_submit' appointment.pk %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">提交预约</button>
+        </form>
+        {% endif %}
+
+        {% if is_yard and appointment.status == 'submitted' or is_yard and appointment.status == 'rescheduled' %}
+        <form method="post" action="{% url 'inspection_start' appointment.pk %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning">开始查验</button>
+        </form>
+        {% endif %}
+
+        {% if is_yard and appointment.status == 'in_inspection' %}
+        <a href="{% url 'inspection_result' appointment.pk %}" class="btn btn-success">登记查验结果</a>
+        {% endif %}
+
+        {% if appointment.status == 'doc_missing' %}
+        <div class="alert alert-danger" style="flex: 1; margin-bottom: 0;">
+            <strong>⚠️ 单证缺失，已阻断放行</strong>
+            <p style="margin: 8px 0 0 0; font-size: 13px;">
+                缺失单证：
+                {% for doc in appointment.missing_documents %}
+                <span class="badge badge-danger" style="margin-left: 4px;">{{ doc.name }}</span>
+                {% empty %}
+                无
+                {% endfor %}
+            </p>
+            {% if is_yard and appointment.is_doc_complete %}
+            <form method="post" action="{% url 'release_after_doc' appointment.pk %}" style="margin-top: 12px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm">补证完成，执行放行</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if is_fee_auditor and appointment.status == 'pending_fee' or is_fee_auditor and appointment.status == 'fee_disputed' %}
+        <a href="{% url 'fee_review' appointment.pk %}" class="btn btn-success">费用复核</a>
+        {% endif %}
+
+        {% if is_fee_auditor and appointment.status == 'fee_confirmed' %}
+        <form method="post" action="{% url 'appointment_archive' appointment.pk %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary">归档</button>
+        </form>
+        {% endif %}
+
+        {% if appointment.status != 'archived' %}
+        <a href="{% url 'appointment_reschedule' appointment.pk %}" class="btn btn-outline" style="background: #fff; color: #2563eb; border: 1px solid #2563eb;">申请改期</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="tabs" id="detail-tabs">
+    <div class="tab active" onclick="switchTab('info')">基本信息</div>
+    <div class="tab" onclick="switchTab('documents')">单证管理</div>
+    <div class="tab" onclick="switchTab('fee')">费用明细</div>
+    <div class="tab" onclick="switchTab('history')">历史节点</div>
+</div>
+
+<div id="tab-info" class="tab-content active">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">集装箱信息</h2>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">箱号</span>
+                <span class="detail-value">{{ appointment.container.container_no }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">箱型</span>
+                <span class="detail-value">{{ appointment.container.size }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">船名</span>
+                <span class="detail-value">{{ appointment.container.vessel_name }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">航次</span>
+                <span class="detail-value">{{ appointment.container.voyage_no }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">提单号</span>
+                <span class="detail-value">{{ appointment.container.bl_no|default:"-" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">封条号</span>
+                <span class="detail-value">{{ appointment.container.seal_no|default:"-" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">毛重(吨)</span>
+                <span class="detail-value">{{ appointment.container.gross_weight|default:"-" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">船公司</span>
+                <span class="detail-value">{{ appointment.shipping_line.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">预约信息</h2>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">预约编号</span>
+                <span class="detail-value">{{ appointment.appointment_no }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">货代公司</span>
+                <span class="detail-value">{{ appointment.forwarder.name }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">航线</span>
+                <span class="detail-value">{{ appointment.route }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">查验窗口</span>
+                <span class="detail-value">{{ appointment.inspection_window.name }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">预约日期</span>
+                <span class="detail-value">{{ appointment.appointment_date|date:"Y-m-d" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">预约时间</span>
+                <span class="detail-value">{{ appointment.appointment_time|date:"H:i" }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">联系人</span>
+                <span class="detail-value">{{ appointment.contact_person }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">联系电话</span>
+                <span class="detail-value">{{ appointment.contact_phone }}</span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <span class="detail-label">查验原因</span>
+                <span class="detail-value">{{ appointment.inspection_reason|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if appointment.inspection_result %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">查验结果</h2>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">查验员</span>
+                <span class="detail-value">{{ appointment.inspector.get_full_name|default:appointment.inspector.username }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">查验完成时间</span>
+                <span class="detail-value">{{ appointment.inspection_completed_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <span class="detail-label">查验结果说明</span>
+                <span class="detail-value">{{ appointment.inspection_result }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">滞箱天数</span>
+                <span class="detail-value">{{ appointment.demurrage_days }} 天</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">滞箱费</span>
+                <span class="detail-value">¥ {{ appointment.demurrage_fee }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="tab-documents" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">单证清单</h2>
+            <div>
+                {% if appointment.is_doc_complete %}
+                <span class="badge badge-success">✓ 单证齐全</span>
+                {% else %}
+                <span class="badge badge-danger">✗ 单证缺失</span>
+                {% endif %}
+            </div>
+        </div>
+        <div id="documents-list">
+            {% for doc in appointment.documents.all %}
+            <div class="doc-item {% if not doc.is_submitted and doc.document_type.is_required %}missing{% endif %}">
+                <div class="doc-info">
+                    <div class="doc-status">
+                        {% if doc.is_submitted %}
+                        <span class="badge badge-success">已提交</span>
+                        {% elif doc.document_type.is_required %}
+                        <span class="badge badge-danger">缺失(必备)</span>
+                        {% else %}
+                        <span class="badge badge-secondary">未提交</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>{{ doc.document_type.name }}</strong>
+                        {% if doc.document_type.is_required %}
+                        <span style="color: #dc2626; font-size: 12px;"> *必备</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    {% if doc.is_submitted %}
+                    <span style="font-size: 12px; color: #6b7280;">
+                        {{ doc.submitted_at|date:"Y-m-d H:i" }} · {{ doc.submitted_by.get_full_name|default:doc.submitted_by.username }}
+                    </span>
+                    {% else %}
+                    <span style="font-size: 12px; color: #9ca3af;">
+                        {{ doc.document_type.description|default:"" }}
+                    </span>
+                    {% if is_forwarder or is_yard %}
+                    <form method="post"
+                          action="{% url 'document_submit' appointment.pk doc.pk %}"
+                          hx-post="{% url 'document_submit' appointment.pk doc.pk %}"
+                          hx-target="#documents-list"
+                          hx-swap="innerHTML"
+                          style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-primary">提交</button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: #9ca3af; text-align: center; padding: 20px;">暂无单证信息</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="tab-fee" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">费用明细</h2>
+        </div>
+        <table class="fee-table">
+            <thead>
+                <tr>
+                    <th>费用项目</th>
+                    <th>数量</th>
+                    <th>单价(元)</th>
+                    <th>金额(元)</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in appointment.fee_items.all %}
+                <tr>
+                    <td>
+                        {{ item.item_name }}
+                        {% if item.is_reduction %}
+                        <span class="badge badge-success">减免</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price }}</td>
+                    <td {% if item.is_reduction %}style="color: #059669;"{% endif %}>
+                        {{ item.amount }}
+                    </td>
+                    <td>{{ item.remark|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">
+                        暂无费用明细
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {% if appointment.fee_items.all %}
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 600;">滞箱费：</td>
+                    <td colspan="2">¥ {{ appointment.demurrage_fee }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 600;">减免金额：</td>
+                    <td colspan="2" style="color: #059669;">- ¥ {{ appointment.fee_reduction }}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-weight: 700; font-size: 16px;">最终费用：</td>
+                    <td colspan="2" class="fee-total">¥ {{ appointment.final_fee }}</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+
+    {% if appointment.fee_confirmed_by %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">费用确认信息</h2>
+        </div>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="detail-label">费用确认人</span>
+                <span class="detail-value">{{ appointment.fee_confirmed_by.get_full_name|default:appointment.fee_confirmed_by.username }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">确认时间</span>
+                <span class="detail-value">{{ appointment.fee_confirmed_at|date:"Y-m-d H:i" }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if appointment.fee_dispute_reason %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">费用异议</h2>
+        </div>
+        <div class="alert alert-danger">
+            <strong>异议原因：</strong>
+            <p style="margin-top: 8px;">{{ appointment.fee_dispute_reason }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="tab-history" class="tab-content">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">操作历史</h2>
+        </div>
+        <div class="timeline">
+            {% for record in appointment.history.all %}
+            <div class="timeline-item {% if record.status_to == 'normal_release' or record.status_to == 'fee_confirmed' or record.status_to == 'archived' %}success{% elif record.status_to == 'doc_missing' or record.status_to == 'fee_disputed' %}danger{% elif record.status_to == 'rescheduled' %}warning{% endif %}">
+                <div class="timeline-title">{{ record.action }}</div>
+                <div class="timeline-time">
+                    {{ record.operated_at|date:"Y-m-d H:i" }}
+                    · {{ record.operator.get_full_name|default:record.operator.username }}
+                </div>
+                {% if record.remark %}
+                <div class="timeline-remark">{{ record.remark }}</div>
+                {% endif %}
+                {% if record.status_from or record.status_to %}
+                <div class="timeline-remark" style="color: #6b7280; font-size: 12px; margin-top: 4px;">
+                    {% if record.status_from %}
+                    <span class="badge badge-secondary">{{ record.get_status_from_display }}</span>
+                    →
+                    {% endif %}
+                    {% if record.status_to %}
+                    <span class="badge badge-primary">{{ record.get_status_to_display }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p style="color: #9ca3af; text-align: center; padding: 20px;">暂无历史记录</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if appointment.reschedules.all %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">改期记录</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>原预约时间</th>
+                    <th>新预约时间</th>
+                    <th>改期原因</th>
+                    <th>操作人</th>
+                    <th>操作时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in appointment.reschedules.all %}
+                <tr>
+                    <td>{{ r.original_date|date:"Y-m-d" }} {{ r.original_time|date:"H:i" }}</td>
+                    <td>{{ r.new_date|date:"Y-m-d" }} {{ r.new_time|date:"H:i" }}</td>
+                    <td>{{ r.reason }}</td>
+                    <td>{{ r.operator.get_full_name|default:r.operator.username }}</td>
+                    <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabName).classList.add('active');
+}
+</script>
+{% endblock %}
