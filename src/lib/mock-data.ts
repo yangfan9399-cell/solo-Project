@@ -1,0 +1,779 @@
+export type UserRole = "inspector" | "operation_manager" | "maintenance_worker" | "reviewer";
+export type DefectStatus = "registered" | "assigned" | "processing" | "pending_review" | "awaiting_parts" | "accepted" | "rejected" | "false_positive";
+export type DefectLevel = "critical" | "major" | "minor" | "general";
+export type DeviceType = "pv_module" | "inverter" | "combiner_box" | "tracker" | "transformer" | "cable";
+export type SparePartStatus = "in_stock" | "out_of_stock" | "on_order";
+export type HistoryAction = "register" | "assign" | "start_processing" | "submit_result" | "request_parts" | "parts_arrived" | "accept" | "reject" | "mark_false_positive";
+
+export interface PowerStation {
+  id: number;
+  name: string;
+  location?: string;
+  capacity?: string;
+  commissionDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Device {
+  id: number;
+  stationId: number;
+  name: string;
+  deviceType: DeviceType;
+  model?: string;
+  array?: string;
+  position?: string;
+  ratedPower?: string;
+  manufacturer?: string;
+  installDate?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  name: string;
+  role: UserRole;
+  email?: string;
+  phone?: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SparePart {
+  id: number;
+  name: string;
+  partNumber?: string;
+  category?: string;
+  quantity: number;
+  unit?: string;
+  status: SparePartStatus;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Defect {
+  id: number;
+  defectNo: string;
+  stationId: number;
+  deviceId: number;
+  title: string;
+  description?: string;
+  defectLevel: DefectLevel;
+  deviceType: DeviceType;
+  status: DefectStatus;
+  affectedPower?: string;
+  photoUrls?: string[];
+  location?: string;
+  array?: string;
+  isFalsePositive: boolean;
+  inspectorId?: number;
+  assigneeId?: number;
+  reviewerId?: number;
+  partsNeeded?: { partId: number; partName: string; quantity: number }[];
+  processingResult?: string;
+  processingPhotos?: string[];
+  reviewComment?: string;
+  registeredAt?: string;
+  assignedAt?: string;
+  processingStartedAt?: string;
+  processingFinishedAt?: string;
+  reviewedAt?: string;
+  closedAt?: string;
+  resolutionDuration?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DefectHistory {
+  id: number;
+  defectId: number;
+  action: HistoryAction;
+  userId?: number;
+  userName?: string;
+  description?: string;
+  statusBefore?: DefectStatus;
+  statusAfter?: DefectStatus;
+  createdAt: string;
+}
+
+export interface DefectSparePart {
+  id: number;
+  defectId: number;
+  sparePartId: number;
+  quantity: number;
+  status: string;
+  createdAt: string;
+}
+
+const now = new Date();
+
+export const mockStations: PowerStation[] = [
+  {
+    id: 1,
+    name: "阳光光伏电站一期",
+    location: "青海省海西州",
+    capacity: "50.00",
+    commissionDate: "2020-06-15T00:00:00Z",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 2,
+    name: "戈壁滩光伏电站",
+    location: "甘肃省酒泉市",
+    capacity: "100.00",
+    commissionDate: "2021-03-20T00:00:00Z",
+    createdAt: "2020-06-01T00:00:00Z",
+    updatedAt: "2020-06-01T00:00:00Z",
+  },
+  {
+    id: 3,
+    name: "湖畔光伏电站",
+    location: "宁夏银川市",
+    capacity: "30.00",
+    commissionDate: "2022-09-10T00:00:00Z",
+    createdAt: "2022-01-01T00:00:00Z",
+    updatedAt: "2022-01-01T00:00:00Z",
+  },
+];
+
+export const mockDevices: Device[] = [
+  {
+    id: 1,
+    stationId: 1,
+    name: "A区1号方阵组件串",
+    deviceType: "pv_module",
+    model: "JKM395M-72HL4",
+    array: "A区1号方阵",
+    position: "第5排第12列",
+    ratedPower: "0.395",
+    manufacturer: "晶科能源",
+    installDate: "2020-05-10T00:00:00Z",
+    status: "normal",
+    createdAt: "2020-05-10T00:00:00Z",
+    updatedAt: "2020-05-10T00:00:00Z",
+  },
+  {
+    id: 2,
+    stationId: 1,
+    name: "1号逆变器",
+    deviceType: "inverter",
+    model: "SG110CX",
+    array: "A区",
+    position: "A区逆变器室",
+    ratedPower: "110.00",
+    manufacturer: "阳光电源",
+    installDate: "2020-05-15T00:00:00Z",
+    status: "fault",
+    createdAt: "2020-05-15T00:00:00Z",
+    updatedAt: "2020-05-15T00:00:00Z",
+  },
+  {
+    id: 3,
+    stationId: 1,
+    name: "A区3号方阵组件串",
+    deviceType: "pv_module",
+    model: "JKM395M-72HL4",
+    array: "A区3号方阵",
+    position: "第3排第8列",
+    ratedPower: "0.395",
+    manufacturer: "晶科能源",
+    installDate: "2020-05-10T00:00:00Z",
+    status: "normal",
+    createdAt: "2020-05-10T00:00:00Z",
+    updatedAt: "2020-05-10T00:00:00Z",
+  },
+  {
+    id: 4,
+    stationId: 2,
+    name: "B区5号方阵组件串",
+    deviceType: "pv_module",
+    model: "LR5-72HBD-450M",
+    array: "B区5号方阵",
+    position: "第10排第5列",
+    ratedPower: "0.450",
+    manufacturer: "隆基绿能",
+    installDate: "2021-02-20T00:00:00Z",
+    status: "normal",
+    createdAt: "2021-02-20T00:00:00Z",
+    updatedAt: "2021-02-20T00:00:00Z",
+  },
+  {
+    id: 5,
+    stationId: 2,
+    name: "3号逆变器",
+    deviceType: "inverter",
+    model: "SG125HV",
+    array: "B区",
+    position: "B区逆变器室",
+    ratedPower: "125.00",
+    manufacturer: "阳光电源",
+    installDate: "2021-03-01T00:00:00Z",
+    status: "normal",
+    createdAt: "2021-03-01T00:00:00Z",
+    updatedAt: "2021-03-01T00:00:00Z",
+  },
+  {
+    id: 6,
+    stationId: 3,
+    name: "C区2号方阵组件",
+    deviceType: "pv_module",
+    model: "Hi-MO 6",
+    array: "C区2号方阵",
+    position: "第7排第15列",
+    ratedPower: "0.580",
+    manufacturer: "隆基绿能",
+    installDate: "2022-08-15T00:00:00Z",
+    status: "normal",
+    createdAt: "2022-08-15T00:00:00Z",
+    updatedAt: "2022-08-15T00:00:00Z",
+  },
+];
+
+export const mockUsers: User[] = [
+  {
+    id: 1,
+    username: "inspector_zhang",
+    name: "张巡检",
+    role: "inspector",
+    email: "zhang@pvstation.com",
+    phone: "13800000001",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 2,
+    username: "inspector_li",
+    name: "李巡检",
+    role: "inspector",
+    email: "li@pvstation.com",
+    phone: "13800000002",
+    createdAt: "2020-03-01T00:00:00Z",
+    updatedAt: "2020-03-01T00:00:00Z",
+  },
+  {
+    id: 3,
+    username: "manager_wang",
+    name: "王主管",
+    role: "operation_manager",
+    email: "wang@pvstation.com",
+    phone: "13800000003",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 4,
+    username: "worker_chen",
+    name: "陈检修",
+    role: "maintenance_worker",
+    email: "chen@pvstation.com",
+    phone: "13800000004",
+    createdAt: "2020-02-01T00:00:00Z",
+    updatedAt: "2020-02-01T00:00:00Z",
+  },
+  {
+    id: 5,
+    username: "worker_liu",
+    name: "刘检修",
+    role: "maintenance_worker",
+    email: "liu@pvstation.com",
+    phone: "13800000005",
+    createdAt: "2020-04-01T00:00:00Z",
+    updatedAt: "2020-04-01T00:00:00Z",
+  },
+  {
+    id: 6,
+    username: "reviewer_zhao",
+    name: "赵复核",
+    role: "reviewer",
+    email: "zhao@pvstation.com",
+    phone: "13800000006",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+];
+
+export const mockSpareParts: SparePart[] = [
+  {
+    id: 1,
+    name: "光伏组件 JKM395M-72HL4",
+    partNumber: "JKM-395M",
+    category: "pv_module",
+    quantity: 50,
+    unit: "块",
+    status: "in_stock",
+    description: "晶科能源395W单晶组件",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 2,
+    name: "逆变器IGBT模块",
+    partNumber: "IGBT-1200V",
+    category: "inverter",
+    quantity: 5,
+    unit: "个",
+    status: "in_stock",
+    description: "1200V高压IGBT模块",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 3,
+    name: "逆变器控制板",
+    partNumber: "CTRL-BRD-V2",
+    category: "inverter",
+    quantity: 0,
+    unit: "块",
+    status: "out_of_stock",
+    description: "阳光电源逆变器控制板V2版本",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 4,
+    name: "MC4连接器",
+    partNumber: "MC4-STD",
+    category: "cable",
+    quantity: 200,
+    unit: "对",
+    status: "in_stock",
+    description: "标准MC4光伏连接器",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+  {
+    id: 5,
+    name: "直流汇流箱保险丝",
+    partNumber: "FUSE-DC-15A",
+    category: "combiner_box",
+    quantity: 0,
+    unit: "个",
+    status: "on_order",
+    description: "15A直流保险丝，已订货预计7天到货",
+    createdAt: "2020-01-01T00:00:00Z",
+    updatedAt: "2020-01-01T00:00:00Z",
+  },
+];
+
+export const mockDefects: Defect[] = [
+  {
+    id: 1,
+    defectNo: "DEF-20240601-001",
+    stationId: 1,
+    deviceId: 1,
+    title: "A区1号方阵组件热斑",
+    description: "红外检测发现第5排第12列组件存在明显热斑，温度比周围组件高15℃，疑似电池片隐裂。",
+    defectLevel: "major",
+    deviceType: "pv_module",
+    status: "registered",
+    affectedPower: "3.95",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=600&fit=crop",
+    ],
+    location: "A区1号方阵",
+    array: "A区1号方阵",
+    isFalsePositive: false,
+    inspectorId: 1,
+    registeredAt: "2024-06-01T09:30:00Z",
+    createdAt: "2024-06-01T09:30:00Z",
+    updatedAt: "2024-06-01T09:30:00Z",
+  },
+  {
+    id: 2,
+    defectNo: "DEF-20240602-002",
+    stationId: 1,
+    deviceId: 2,
+    title: "1号逆变器告警停机",
+    description: "逆变器报IGBT过温告警后停机，已尝试远程重启无效，需要现场检查。",
+    defectLevel: "critical",
+    deviceType: "inverter",
+    status: "assigned",
+    affectedPower: "110.00",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+    ],
+    location: "A区逆变器室",
+    array: "A区",
+    isFalsePositive: false,
+    inspectorId: 2,
+    assigneeId: 4,
+    registeredAt: "2024-06-02T14:20:00Z",
+    assignedAt: "2024-06-02T15:00:00Z",
+    createdAt: "2024-06-02T14:20:00Z",
+    updatedAt: "2024-06-02T15:00:00Z",
+  },
+  {
+    id: 3,
+    defectNo: "DEF-20240528-003",
+    stationId: 2,
+    deviceId: 4,
+    title: "B区5号方阵组件热斑",
+    description: "无人机巡检发现B区5号方阵第10排第5列组件热斑严重，已影响整个组串发电。",
+    defectLevel: "major",
+    deviceType: "pv_module",
+    status: "processing",
+    affectedPower: "4.50",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&h=600&fit=crop",
+    ],
+    location: "B区5号方阵",
+    array: "B区5号方阵",
+    isFalsePositive: false,
+    inspectorId: 1,
+    assigneeId: 5,
+    registeredAt: "2024-05-28T10:15:00Z",
+    assignedAt: "2024-05-28T11:00:00Z",
+    processingStartedAt: "2024-05-29T08:30:00Z",
+    partsNeeded: [{ partId: 1, partName: "光伏组件 JKM395M-72HL4", quantity: 2 }],
+    createdAt: "2024-05-28T10:15:00Z",
+    updatedAt: "2024-05-29T08:30:00Z",
+  },
+  {
+    id: 4,
+    defectNo: "DEF-20240525-004",
+    stationId: 1,
+    deviceId: 3,
+    title: "A区3号方阵组件异常",
+    description: "巡检时发现该组件外观正常，红外检测温度略高，初步判断可能为误报。",
+    defectLevel: "general",
+    deviceType: "pv_module",
+    status: "false_positive",
+    affectedPower: "0.00",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&h=600&fit=crop",
+    ],
+    location: "A区3号方阵",
+    array: "A区3号方阵",
+    isFalsePositive: true,
+    inspectorId: 2,
+    reviewerId: 6,
+    registeredAt: "2024-05-25T09:00:00Z",
+    reviewedAt: "2024-05-26T10:00:00Z",
+    closedAt: "2024-05-26T10:00:00Z",
+    reviewComment: "经核实，该组件温度升高是由于周围环境反射造成，属于正常现象，标记为误报。",
+    resolutionDuration: 1500,
+    createdAt: "2024-05-25T09:00:00Z",
+    updatedAt: "2024-05-26T10:00:00Z",
+  },
+  {
+    id: 5,
+    defectNo: "DEF-20240520-005",
+    stationId: 2,
+    deviceId: 5,
+    title: "3号逆变器控制板故障",
+    description: "逆变器通讯中断，检查发现控制板损坏，需要更换备件。目前备件缺货，已下单。",
+    defectLevel: "critical",
+    deviceType: "inverter",
+    status: "awaiting_parts",
+    affectedPower: "125.00",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop",
+    ],
+    location: "B区逆变器室",
+    array: "B区",
+    isFalsePositive: false,
+    inspectorId: 1,
+    assigneeId: 4,
+    partsNeeded: [{ partId: 3, partName: "逆变器控制板", quantity: 1 }],
+    registeredAt: "2024-05-20T08:00:00Z",
+    assignedAt: "2024-05-20T09:00:00Z",
+    processingStartedAt: "2024-05-21T08:00:00Z",
+    processingFinishedAt: "2024-05-22T11:00:00Z",
+    processingResult: "已确认控制板损坏，需要更换。但目前备件库存为0，已申请采购，预计7天后到货。",
+    createdAt: "2024-05-20T08:00:00Z",
+    updatedAt: "2024-05-22T11:00:00Z",
+  },
+  {
+    id: 6,
+    defectNo: "DEF-20240515-006",
+    stationId: 3,
+    deviceId: 6,
+    title: "C区2号方阵组件玻璃裂纹",
+    description: "巡检发现组件玻璃有裂纹，疑似冰雹造成，需要更换组件。",
+    defectLevel: "minor",
+    deviceType: "pv_module",
+    status: "pending_review",
+    affectedPower: "0.58",
+    photoUrls: [
+      "https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=800&h=600&fit=crop",
+    ],
+    location: "C区2号方阵",
+    array: "C区2号方阵",
+    isFalsePositive: false,
+    inspectorId: 2,
+    assigneeId: 5,
+    registeredAt: "2024-05-15T10:30:00Z",
+    assignedAt: "2024-05-15T11:00:00Z",
+    processingStartedAt: "2024-05-16T08:00:00Z",
+    processingFinishedAt: "2024-05-17T15:00:00Z",
+    processingResult: "已完成组件更换，使用新的Hi-MO 6组件替换。测试发电正常。",
+    processingPhotos: [
+      "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=600&fit=crop",
+    ],
+    createdAt: "2024-05-15T10:30:00Z",
+    updatedAt: "2024-05-17T15:00:00Z",
+  },
+  {
+    id: 7,
+    defectNo: "DEF-20240510-007",
+    stationId: 1,
+    deviceId: 1,
+    title: "A区1号方阵MC4连接器松动",
+    description: "组串电流不稳定，检查发现部分MC4连接器接触不良。",
+    defectLevel: "minor",
+    deviceType: "cable",
+    status: "accepted",
+    affectedPower: "1.20",
+    photoUrls: [],
+    location: "A区1号方阵",
+    array: "A区1号方阵",
+    isFalsePositive: false,
+    inspectorId: 1,
+    assigneeId: 4,
+    reviewerId: 6,
+    registeredAt: "2024-05-10T09:00:00Z",
+    assignedAt: "2024-05-10T10:00:00Z",
+    processingStartedAt: "2024-05-10T14:00:00Z",
+    processingFinishedAt: "2024-05-10T16:30:00Z",
+    reviewedAt: "2024-05-11T09:00:00Z",
+    closedAt: "2024-05-11T09:00:00Z",
+    processingResult: "已重新插拔并紧固所有连接器，测试电流稳定。",
+    reviewComment: "消缺质量合格，组串发电恢复正常。",
+    resolutionDuration: 1440,
+    createdAt: "2024-05-10T09:00:00Z",
+    updatedAt: "2024-05-11T09:00:00Z",
+  },
+];
+
+export const mockDefectHistories: DefectHistory[] = [
+  {
+    id: 1,
+    defectId: 1,
+    action: "register",
+    userId: 1,
+    userName: "张巡检",
+    description: "巡检发现组件热斑，登记缺陷",
+    statusAfter: "registered",
+    createdAt: "2024-06-01T09:30:00Z",
+  },
+  {
+    id: 2,
+    defectId: 2,
+    action: "register",
+    userId: 2,
+    userName: "李巡检",
+    description: "逆变器告警停机，登记缺陷",
+    statusAfter: "registered",
+    createdAt: "2024-06-02T14:20:00Z",
+  },
+  {
+    id: 3,
+    defectId: 2,
+    action: "assign",
+    userId: 3,
+    userName: "王主管",
+    description: "分派给陈检修处理",
+    statusBefore: "registered",
+    statusAfter: "assigned",
+    createdAt: "2024-06-02T15:00:00Z",
+  },
+  {
+    id: 4,
+    defectId: 3,
+    action: "register",
+    userId: 1,
+    userName: "张巡检",
+    description: "无人机巡检发现组件热斑",
+    statusAfter: "registered",
+    createdAt: "2024-05-28T10:15:00Z",
+  },
+  {
+    id: 5,
+    defectId: 3,
+    action: "assign",
+    userId: 3,
+    userName: "王主管",
+    description: "分派给刘检修处理",
+    statusBefore: "registered",
+    statusAfter: "assigned",
+    createdAt: "2024-05-28T11:00:00Z",
+  },
+  {
+    id: 6,
+    defectId: 3,
+    action: "start_processing",
+    userId: 5,
+    userName: "刘检修",
+    description: "开始现场检修",
+    statusBefore: "assigned",
+    statusAfter: "processing",
+    createdAt: "2024-05-29T08:30:00Z",
+  },
+  {
+    id: 7,
+    defectId: 4,
+    action: "register",
+    userId: 2,
+    userName: "李巡检",
+    description: "发现组件温度异常",
+    statusAfter: "registered",
+    createdAt: "2024-05-25T09:00:00Z",
+  },
+  {
+    id: 8,
+    defectId: 4,
+    action: "mark_false_positive",
+    userId: 6,
+    userName: "赵复核",
+    description: "经核实为误报，环境反射导致温度升高",
+    statusBefore: "registered",
+    statusAfter: "false_positive",
+    createdAt: "2024-05-26T10:00:00Z",
+  },
+  {
+    id: 9,
+    defectId: 5,
+    action: "register",
+    userId: 1,
+    userName: "张巡检",
+    description: "逆变器通讯中断",
+    statusAfter: "registered",
+    createdAt: "2024-05-20T08:00:00Z",
+  },
+  {
+    id: 10,
+    defectId: 5,
+    action: "assign",
+    userId: 3,
+    userName: "王主管",
+    description: "分派给陈检修处理",
+    statusBefore: "registered",
+    statusAfter: "assigned",
+    createdAt: "2024-05-20T09:00:00Z",
+  },
+  {
+    id: 11,
+    defectId: 5,
+    action: "start_processing",
+    userId: 4,
+    userName: "陈检修",
+    description: "开始检查逆变器",
+    statusBefore: "assigned",
+    statusAfter: "processing",
+    createdAt: "2024-05-21T08:00:00Z",
+  },
+  {
+    id: 12,
+    defectId: 5,
+    action: "request_parts",
+    userId: 4,
+    userName: "陈检修",
+    description: "确认控制板损坏，申请备件，目前缺货",
+    statusBefore: "processing",
+    statusAfter: "awaiting_parts",
+    createdAt: "2024-05-22T11:00:00Z",
+  },
+  {
+    id: 13,
+    defectId: 6,
+    action: "register",
+    userId: 2,
+    userName: "李巡检",
+    description: "发现组件玻璃裂纹",
+    statusAfter: "registered",
+    createdAt: "2024-05-15T10:30:00Z",
+  },
+  {
+    id: 14,
+    defectId: 6,
+    action: "assign",
+    userId: 3,
+    userName: "王主管",
+    description: "分派给刘检修处理",
+    statusBefore: "registered",
+    statusAfter: "assigned",
+    createdAt: "2024-05-15T11:00:00Z",
+  },
+  {
+    id: 15,
+    defectId: 6,
+    action: "start_processing",
+    userId: 5,
+    userName: "刘检修",
+    description: "开始更换组件",
+    statusBefore: "assigned",
+    statusAfter: "processing",
+    createdAt: "2024-05-16T08:00:00Z",
+  },
+  {
+    id: 16,
+    defectId: 6,
+    action: "submit_result",
+    userId: 5,
+    userName: "刘检修",
+    description: "组件更换完成，提交验收",
+    statusBefore: "processing",
+    statusAfter: "pending_review",
+    createdAt: "2024-05-17T15:00:00Z",
+  },
+  {
+    id: 17,
+    defectId: 7,
+    action: "register",
+    userId: 1,
+    userName: "张巡检",
+    description: "组串电流不稳定",
+    statusAfter: "registered",
+    createdAt: "2024-05-10T09:00:00Z",
+  },
+  {
+    id: 18,
+    defectId: 7,
+    action: "assign",
+    userId: 3,
+    userName: "王主管",
+    description: "分派给陈检修处理",
+    statusBefore: "registered",
+    statusAfter: "assigned",
+    createdAt: "2024-05-10T10:00:00Z",
+  },
+  {
+    id: 19,
+    defectId: 7,
+    action: "start_processing",
+    userId: 4,
+    userName: "陈检修",
+    description: "开始检查连接器",
+    statusBefore: "assigned",
+    statusAfter: "processing",
+    createdAt: "2024-05-10T14:00:00Z",
+  },
+  {
+    id: 20,
+    defectId: 7,
+    action: "submit_result",
+    userId: 4,
+    userName: "陈检修",
+    description: "连接器已重新紧固，提交验收",
+    statusBefore: "processing",
+    statusAfter: "pending_review",
+    createdAt: "2024-05-10T16:30:00Z",
+  },
+  {
+    id: 21,
+    defectId: 7,
+    action: "accept",
+    userId: 6,
+    userName: "赵复核",
+    description: "验收通过，消缺质量合格",
+    statusBefore: "pending_review",
+    statusAfter: "accepted",
+    createdAt: "2024-05-11T09:00:00Z",
+  },
+];
