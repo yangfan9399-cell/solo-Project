@@ -7,7 +7,7 @@ import { judgeDeviation, getShipments } from '@/lib/services'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useRole } from '@/context/RoleContext'
 import { Role, DeviationType, DeviationLevel, ShipmentStatus } from '@/lib/types'
-import { ClipboardCheck, AlertTriangle, Package, ChevronRight, Check } from 'lucide-react'
+import { ClipboardCheck, AlertTriangle, Package, ChevronRight, Check, Thermometer } from 'lucide-react'
 import type { ShipmentListItem } from '@/lib/services'
 
 export default function DeviationPage() {
@@ -27,9 +27,6 @@ export default function DeviationPage() {
     const loadData = async () => {
       try {
         const data = await getShipments()
-        const pendingShipments = data.filter(
-          (s) => s.status === ShipmentStatus.TEMPERATURE_COLLECTED || s.status === ShipmentStatus.REGISTERED
-        )
         setShipments(data)
       } catch (err) {
         setError('加载数据失败')
@@ -39,7 +36,7 @@ export default function DeviationPage() {
   }, [])
 
   const pendingShipments = shipments.filter(
-    (s) => s.status === ShipmentStatus.TEMPERATURE_COLLECTED || s.status === ShipmentStatus.REGISTERED
+    (s) => s.status === ShipmentStatus.TEMPERATURE_COLLECTED
   )
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +133,13 @@ export default function DeviationPage() {
             待判定批次
           </h2>
           {pendingShipments.length === 0 ? (
-            <p className="text-sm text-gray-500">暂无待判定批次</p>
+            <div className="text-center py-12">
+              <Thermometer className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">暂无待判定批次</p>
+              <p className="text-xs text-gray-500 mt-1">
+                请等待仓库经办人完成温度数据采集后再进行判定
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {pendingShipments.map((shipment) => (
