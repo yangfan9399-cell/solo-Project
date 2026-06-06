@@ -549,35 +549,28 @@ public class OperationsController : Controller
             MissingItems = missingItems,
             TotalMissingCount = missingItems.Sum(i => i.ExpectedQuantity - i.ActualQuantity),
             ReportedAt = activeAnomaly?.ReportedAt ?? set.UpdatedAt,
-            SupplyStaff = supplyStaffList
+            SupplyStaff = supplyStaffList,
+            CurrentStatus = set.Status,
+            CanCompleteReplenishment = true
         };
-
-        var hasWarning = false;
 
         if (set.Status != InstrumentSetStatus.MissingItems)
         {
-            ModelState.AddModelError(string.Empty,
+            viewModel.CanCompleteReplenishment = false;
+            viewModel.BlockReasons.Add(
                 $"当前器械包状态为「{GetStatusText(set.Status)}」，只有「缺件」状态的器械包才能执行补包操作。");
-            hasWarning = true;
         }
 
         if (!set.AnomalyRecords.Any(a => !a.Resolved && a.AnomalyType == AnomalyType.MissingItems))
         {
-            ModelState.AddModelError(string.Empty,
-                "未找到待处理的缺件异常记录。请先上报缺件异常后再进行补包。");
-            hasWarning = true;
+            viewModel.CanCompleteReplenishment = false;
+            viewModel.BlockReasons.Add("未找到待处理的缺件异常记录。请先上报缺件异常后再进行补包。");
         }
 
         if (!missingItems.Any())
         {
-            ModelState.AddModelError(string.Empty,
-                "器械包内所有器械数量均已齐全，无需执行补包操作。");
-            hasWarning = true;
-        }
-
-        if (hasWarning)
-        {
-            return View(viewModel);
+            viewModel.CanCompleteReplenishment = false;
+            viewModel.BlockReasons.Add("器械包内所有器械数量均已齐全，无需执行补包操作。");
         }
 
         return View(viewModel);

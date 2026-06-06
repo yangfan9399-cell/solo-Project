@@ -141,4 +141,10 @@ public class CompleteReplenishmentViewModel
     public string? ResolutionNotes { get; set; }
 
     public List<User>? SupplyStaff { get; set; }
+
+    public InstrumentSetStatus CurrentStatus { get; set; }
+
+    public bool CanCompleteReplenishment { get; set; }
+
+    public List<string> BlockReasons { get; set; } = new();
 }
