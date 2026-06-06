@@ -1,0 +1,419 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回列表", borrow_records_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900">借调详情 #<%= @borrow_record.id %></h1>
+      <span class="px-4 py-1.5 text-sm font-medium rounded-full <%= status_badge_class(@borrow_record.status) %>">
+        <%= @borrow_record.status_name %>
+      </span>
+    </div>
+    <div class="flex space-x-2">
+      <% if @borrow_record.pending? %>
+        <%= link_to "查看冲突", conflicts_borrow_record_path(@borrow_record), class: "px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200" %>
+        <%= button_to "确认借调", confirm_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700", onclick: "return confirm('确认借调该道具？');" %>
+      <% end %>
+      <% if @borrow_record.confirmed? %>
+        <%= button_to "出库", checkout_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+      <% end %>
+      <% if @borrow_record.checked_out? %>
+        <button onclick="document.getElementById('return-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          申请归还
+        </button>
+      <% end %>
+      <% if @borrow_record.returning? %>
+        <button onclick="document.getElementById('audit-form').classList.toggle('hidden')" class="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700">
+          审核归还
+        </button>
+      <% end %>
+      <% if @borrow_record.damaged? %>
+        <button onclick="document.getElementById('compensation-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+          启动赔付
+        </button>
+        <button onclick="document.getElementById('repair-form').classList.toggle('hidden')" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700">
+          启动维修
+        </button>
+      <% end %>
+      <% if @borrow_record.pending? || @borrow_record.confirmed? %>
+        <%= button_to "取消借调", cancel_borrow_record_path(@borrow_record), method: :patch, class: "px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50", onclick: "return confirm('确定取消该借调？');" %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @borrow_record.pending? && @borrow_record.has_conflict? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div class="flex items-start">
+        <span class="text-2xl mr-3">⚠️</span>
+        <div>
+          <h3 class="text-lg font-semibold text-red-800">借调冲突警告</h3>
+          <p class="text-red-700 mt-1">该道具在所选时间段内已有其他剧组的确认借调，无法确认出库。</p>
+          <%= link_to "查看冲突详情和可替代档期", conflicts_borrow_record_path(@borrow_record), class: "text-red-600 hover:text-red-800 font-medium mt-2 inline-block" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @borrow_record.checked_out? && @borrow_record.overdue? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <p class="text-red-700 font-medium">⚠️ 本借调已逾期 <%= (Date.today - @borrow_record.expected_end_date).to_i %> 天，请尽快归还。</p>
+    </div>
+  <% end %>
+
+  <div id="return-form" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-blue-800 mb-4">申请归还</h3>
+    <%= form_tag return_borrow_record_path(@borrow_record), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-700 mb-1">归还备注</label>
+        <textarea name="return_notes" rows="2" class="w-full border border-blue-300 rounded px-3 py-2" placeholder="请描述归还时的状态..."></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-700 mb-1">物品状况</label>
+        <%= select_tag :condition, options_for_select([['完好', 'good'], ['轻微瑕疵', 'minor_issue'], ['破损', 'damaged'], ['无法使用', 'unusable']]), class: "border border-blue-300 rounded px-3 py-2" %>
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "提交归还申请", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('return-form').classList.add('hidden')" class="px-4 py-2 border border-blue-300 text-blue-700 rounded hover:bg-blue-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div id="audit-form" class="hidden bg-amber-50 border border-amber-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-amber-800 mb-4">审核归还</h3>
+    <%= form_tag audit_return_borrow_record_path(@borrow_record), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-amber-700 mb-2">审核结果</label>
+        <div class="space-y-2">
+          <label class="flex items-center">
+            <input type="radio" name="result" value="returned" checked class="mr-2">
+            <span>正常归还，道具完好</span>
+          </label>
+          <label class="flex items-center">
+            <input type="radio" name="result" value="damaged" class="mr-2">
+            <span>发现破损，需处理</span>
+          </label>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-amber-700 mb-1">损坏类型</label>
+        <%= select_tag :damage_type, options_for_select([['轻微损坏', 'minor'], ['中度损坏', 'moderate'], ['严重损坏', 'severe'], ['完全损毁', 'total_loss']]), include_blank: "请选择", class: "border border-amber-300 rounded px-3 py-2" %>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-amber-700 mb-1">损坏描述</label>
+        <textarea name="damage_description" rows="3" class="w-full border border-amber-300 rounded px-3 py-2" placeholder="请详细描述损坏情况..."></textarea>
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "提交审核结果", class: "px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('audit-form').classList.add('hidden')" class="px-4 py-2 border border-amber-300 text-amber-700 rounded hover:bg-amber-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div id="compensation-form" class="hidden bg-red-50 border border-red-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-red-800 mb-4">启动赔付流程</h3>
+    <%= form_tag start_compensation_borrow_record_path(@borrow_record), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-red-700 mb-1">赔付金额（元）</label>
+        <input type="number" name="amount" step="0.01" class="border border-red-300 rounded px-3 py-2" placeholder="请输入赔付金额">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-red-700 mb-1">赔付依据</label>
+        <textarea name="basis" rows="3" class="w-full border border-red-300 rounded px-3 py-2" placeholder="请说明赔付依据和计算方式..."></textarea>
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "启动赔付", class: "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('compensation-form').classList.add('hidden')" class="px-4 py-2 border border-red-300 text-red-700 rounded hover:bg-red-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div id="repair-form" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-yellow-800 mb-4">启动维修流程</h3>
+    <%= form_tag start_repair_borrow_record_path(@borrow_record), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-yellow-700 mb-1">损坏描述</label>
+        <textarea name="damage_description" rows="3" class="w-full border border-yellow-300 rounded px-3 py-2" placeholder="请详细描述需要维修的内容..."></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-yellow-700 mb-1">预估费用（元）</label>
+        <input type="number" name="cost" step="0.01" class="border border-yellow-300 rounded px-3 py-2" placeholder="可选">
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "启动维修", class: "px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('repair-form').classList.add('hidden')" class="px-4 py-2 border border-yellow-300 text-yellow-700 rounded hover:bg-yellow-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">📋 借调信息</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">道具</p>
+            <div class="flex items-center">
+              <div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xl mr-3">
+                <%= prop_icon(@borrow_record.prop.category) %>
+              </div>
+              <div>
+                <p class="font-medium"><%= link_to @borrow_record.prop.name, prop_path(@borrow_record.prop), class: "text-amber-600 hover:text-amber-800" %></p>
+                <p class="text-sm text-gray-500"><%= @borrow_record.prop.code %></p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">剧组</p>
+            <p class="font-medium"><%= @borrow_record.crew.name %></p>
+            <p class="text-sm text-gray-500"><%= @borrow_record.crew.play_name %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">预计借出时间</p>
+            <p class="font-medium"><%= format_date(@borrow_record.expected_start_date) %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">预计归还时间</p>
+            <p class="font-medium"><%= format_date(@borrow_record.expected_end_date) %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">借调时长</p>
+            <p class="font-medium"><%= @borrow_record.duration_days %> 天</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">道具估值</p>
+            <p class="font-medium text-amber-600">¥ <%= @borrow_record.prop.value.to_i %></p>
+          </div>
+        </div>
+
+        <% if @borrow_record.purpose.present? %>
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <p class="text-sm text-gray-500 mb-1">使用用途</p>
+            <p class="text-gray-700"><%= @borrow_record.purpose %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">👥 责任人</h2>
+        <div class="grid grid-cols-3 gap-6">
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-500 mb-2">舞美经办人</p>
+            <p class="font-medium text-gray-900"><%= @borrow_record.applicant&.name || "待指派" %></p>
+            <% if @borrow_record.applicant&.phone.present? %>
+              <p class="text-xs text-gray-400 mt-1"><%= @borrow_record.applicant.phone %></p>
+            <% end %>
+            <p class="text-xs text-gray-400 mt-1">（申请人）</p>
+          </div>
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <p class="text-sm text-gray-500 mb-2">剧组负责人</p>
+            <p class="font-medium text-gray-900"><%= @borrow_record.confirmer&.name || "待确认" %></p>
+            <% if @borrow_record.confirmed_at.present? %>
+              <p class="text-xs text-gray-400 mt-1"><%= format_datetime(@borrow_record.confirmed_at) %></p>
+            <% end %>
+            <p class="text-xs text-gray-400 mt-1">（确认人）</p>
+          </div>
+          <div class="text-center p-4 bg-amber-50 rounded-lg">
+            <p class="text-sm text-gray-500 mb-2">资产复核人</p>
+            <p class="font-medium text-gray-900"><%= @borrow_record.auditor&.name || "待审核" %></p>
+            <% if @borrow_record.returned_at.present? %>
+              <p class="text-xs text-gray-400 mt-1"><%= format_datetime(@borrow_record.returned_at) %></p>
+            <% end %>
+            <p class="text-xs text-gray-400 mt-1">（审核人）</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">🔍 检查记录</h2>
+        <div class="space-y-4">
+          <% @inspection_records.each do |record| %>
+            <div class="flex items-start">
+              <div class="flex-shrink-0 w-24 text-right pr-4">
+                <p class="text-sm font-medium"><%= record.inspection_type_name %></p>
+                <p class="text-xs text-gray-400"><%= format_date(record.created_at) %></p>
+              </div>
+              <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-amber-500"></div>
+              <div class="flex-1 pl-4 pb-4 border-l-2 border-gray-200">
+                <div class="flex items-center mb-2">
+                  <span class="px-2 py-1 text-xs font-medium rounded-full <%= condition_badge_class(record.condition) %>">
+                    <%= record.condition_name %>
+                  </span>
+                  <span class="ml-3 text-sm text-gray-500">检查人：<%= record.inspector&.name || "未知" %></span>
+                </div>
+                <% if record.notes.present? %>
+                  <p class="text-sm text-gray-600"><%= record.notes %></p>
+                <% end %>
+                <% if record.issues_found.present? %>
+                  <p class="text-sm text-red-600 mt-1">问题：<%= record.issues_found %></p>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          <% if @inspection_records.empty? %>
+            <p class="text-gray-500 text-center py-4">暂无检查记录</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">📅 流转时间线</h3>
+        <div class="space-y-4">
+          <% if @borrow_record.created_at.present? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-gray-400 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-gray-900">申请提交</p>
+                <p class="text-sm text-gray-500"><%= format_datetime(@borrow_record.created_at) %></p>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_record.confirmed_at.present? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-blue-500 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-gray-900">借调确认</p>
+                <p class="text-sm text-gray-500"><%= format_datetime(@borrow_record.confirmed_at) %></p>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_record.checked_out_at.present? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-green-500 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-gray-900">道具出库</p>
+                <p class="text-sm text-gray-500"><%= format_datetime(@borrow_record.checked_out_at) %></p>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_record.returned_at.present? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-purple-500 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-gray-900">归还审核</p>
+                <p class="text-sm text-gray-500"><%= format_datetime(@borrow_record.returned_at) %></p>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_record.damaged? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-red-500 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-red-700">发现破损</p>
+                <% if @borrow_record.damage_type.present? %>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full <%= damage_type_badge_class(@borrow_record.damage_type) %>">
+                    <%= @borrow_record.damage_type_name %>
+                  </span>
+                <% end %>
+                <% if @borrow_record.damage_description.present? %>
+                  <p class="text-sm text-gray-600 mt-1"><%= @borrow_record.damage_description %></p>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_record.cancelled? %>
+            <div class="flex items-start">
+              <div class="w-3 h-3 mt-1.5 rounded-full bg-gray-400 mr-3 flex-shrink-0"></div>
+              <div>
+                <p class="font-medium text-gray-500">已取消</p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @compensation.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">💰 赔付信息</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">赔付状态</span>
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(@compensation.status) %>">
+                <%= @compensation.status_name %>
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">赔付金额</span>
+              <span class="text-xl font-bold text-red-600">¥ <%= @compensation.amount.to_i %></span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">处理人</span>
+              <span class="font-medium"><%= @compensation.handler&.name || "待处理" %></span>
+            </div>
+          </div>
+          <% if @compensation.basis.present? %>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <p class="text-sm font-medium text-gray-700 mb-1">赔付依据：</p>
+              <p class="text-sm text-gray-600"><%= @compensation.basis %></p>
+            </div>
+          <% end %>
+          <% if @compensation.dispute_reason.present? %>
+            <div class="mt-4 p-3 bg-red-50 rounded">
+              <p class="text-sm font-medium text-red-700 mb-1">⚠️ 争议原因：</p>
+              <p class="text-sm text-red-600"><%= @compensation.dispute_reason %></p>
+            </div>
+          <% end %>
+          <% if @compensation.resolution.present? %>
+            <div class="mt-4 p-3 bg-blue-50 rounded">
+              <p class="text-sm font-medium text-blue-700 mb-1">解决方案：</p>
+              <p class="text-sm text-blue-600"><%= @compensation.resolution %></p>
+            </div>
+          <% end %>
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <%= link_to "查看赔付详情", compensation_path(@compensation), class: "text-amber-600 hover:text-amber-800 text-sm font-medium" %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @repair_record.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">🔧 维修信息</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">维修状态</span>
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(@repair_record.status) %>">
+                <%= @repair_record.status_name %>
+              </span>
+            </div>
+            <% if @repair_record.cost.present? %>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">维修费用</span>
+                <span class="font-medium text-amber-600">¥ <%= @repair_record.cost.to_i %></span>
+              </div>
+            <% end %>
+            <% if @repair_record.start_date.present? %>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">开始日期</span>
+                <span class="font-medium"><%= format_date(@repair_record.start_date) %></span>
+              </div>
+            <% end %>
+            <% if @repair_record.finished_date.present? %>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-500">完成日期</span>
+                <span class="font-medium"><%= format_date(@repair_record.finished_date) %></span>
+              </div>
+            <% end %>
+          </div>
+          <% if @repair_record.damage_description.present? %>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <p class="text-sm font-medium text-gray-700 mb-1">损坏描述：</p>
+              <p class="text-sm text-gray-600"><%= @repair_record.damage_description %></p>
+            </div>
+          <% end %>
+          <% if @repair_record.repair_method.present? %>
+            <div class="mt-2">
+              <p class="text-sm font-medium text-gray-700 mb-1">维修方式：</p>
+              <p class="text-sm text-gray-600"><%= @repair_record.repair_method %></p>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @borrow_record.return_notes.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">📝 归还备注</h3>
+          <p class="text-gray-600"><%= @borrow_record.return_notes %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

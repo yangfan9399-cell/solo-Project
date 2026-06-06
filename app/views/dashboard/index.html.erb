@@ -1,0 +1,186 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-900">仪表盘</h1>
+    <p class="text-sm text-gray-500"><%= Time.now.strftime("%Y年%m月%d日") %></p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-amber-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">道具总数</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1"><%= @props_count %></p>
+        </div>
+        <div class="text-4xl">🎭</div>
+      </div>
+      <div class="mt-4 text-sm">
+        <span class="text-green-600"><%= @available_props %> 可用</span>
+        <span class="mx-2">·</span>
+        <span class="text-amber-600"><%= @borrowed_props %> 借出</span>
+        <span class="mx-2">·</span>
+        <span class="text-red-600"><%= @repairing_props %> 维修</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">活跃借调</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1"><%= @active_borrows %></p>
+        </div>
+        <div class="text-4xl">📋</div>
+      </div>
+      <div class="mt-4 text-sm">
+        <span class="text-red-600"><%= @overdue_borrows %> 逾期</span>
+        <%= link_to "查看全部", borrow_records_path, class: "text-blue-600 hover:underline ml-2" %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">剧组数量</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1"><%= @crews_count %></p>
+        </div>
+        <div class="text-4xl">🎬</div>
+      </div>
+      <div class="mt-4 text-sm">
+        <%= link_to "管理剧组", crews_path, class: "text-purple-600 hover:underline" %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">待处理事项</p>
+          <p class="text-3xl font-bold text-gray-900 mt-1"><%= @pending_confirmations.count + @pending_returns.count + @pending_compensations.count %></p>
+        </div>
+        <div class="text-4xl">⚠️</div>
+      </div>
+      <div class="mt-4 text-sm space-y-1">
+        <p><span class="text-amber-600"><%= @pending_confirmations.count %></span> 待确认借调</p>
+        <p><span class="text-blue-600"><%= @pending_returns.count %></span> 待审核归还</p>
+        <p><span class="text-red-600"><%= @pending_compensations.count %></span> 待处理赔付</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">最近借调记录</h2>
+      </div>
+      <div class="divide-y divide-gray-200">
+        <% @recent_borrows.each do |borrow| %>
+          <div class="px-6 py-4 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="font-medium text-gray-900"><%= borrow.prop.name %></p>
+                <p class="text-sm text-gray-500">
+                  <%= borrow.crew.name %> ·
+                  <%= borrow.expected_start_date.strftime("%m月%d日") %> - <%= borrow.expected_end_date.strftime("%m月%d日") %>
+                </p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(borrow.status) %>">
+                <%= borrow.status_name %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+        <% if @recent_borrows.empty? %>
+          <div class="px-6 py-8 text-center text-gray-500">
+            暂无借调记录
+          </div>
+        <% end %>
+      </div>
+      <div class="px-6 py-3 bg-gray-50 rounded-b-lg">
+        <%= link_to "查看全部借调", borrow_records_path, class: "text-sm text-blue-600 hover:underline" %>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <% if @pending_confirmations.any? %>
+        <div class="bg-white rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200 bg-amber-50">
+            <h2 class="text-lg font-semibold text-amber-800">⏳ 待确认借调</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @pending_confirmations.each do |borrow| %>
+              <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium"><%= borrow.prop.name %></p>
+                    <p class="text-sm text-gray-500">
+                      <%= borrow.crew.name %> ·
+                      <%= borrow.expected_start_date.strftime("%m月%d日") %> - <%= borrow.expected_end_date.strftime("%m月%d日") %>
+                    </p>
+                    <p class="text-xs text-gray-400">申请人：<%= borrow.applicant&.name %></p>
+                  </div>
+                  <%= link_to "处理", borrow_record_path(borrow), class: "px-4 py-2 text-sm bg-amber-500 text-white rounded hover:bg-amber-600" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @pending_returns.any? %>
+        <div class="bg-white rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+            <h2 class="text-lg font-semibold text-blue-800">🔄 待审核归还</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @pending_returns.each do |borrow| %>
+              <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium"><%= borrow.prop.name %></p>
+                    <p class="text-sm text-gray-500"><%= borrow.crew.name %></p>
+                    <% if borrow.return_notes.present? %>
+                      <p class="text-xs text-gray-400">备注：<%= borrow.return_notes %></p>
+                    <% end %>
+                  </div>
+                  <%= link_to "审核", borrow_record_path(borrow), class: "px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @pending_compensations.any? %>
+        <div class="bg-white rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <h2 class="text-lg font-semibold text-red-800">💰 待处理赔付</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @pending_compensations.each do |comp| %>
+              <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium"><%= comp.borrow_record.prop.name %></p>
+                    <p class="text-sm text-gray-500"><%= comp.borrow_record.crew.name %></p>
+                    <p class="text-lg font-bold text-red-600">¥ <%= comp.amount.to_i %></p>
+                  </div>
+                  <%= link_to "处理", compensation_path(comp), class: "px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">道具类别分布</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <% @props_by_category.each do |category, count| %>
+        <div class="p-4 bg-gray-50 rounded-lg text-center">
+          <p class="text-2xl font-bold text-amber-600"><%= count %></p>
+          <p class="text-sm text-gray-600"><%= category %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

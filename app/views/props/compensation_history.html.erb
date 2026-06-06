@@ -1,0 +1,56 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回道具详情", prop_path(@prop), class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @prop.name %> - 赔付记录</h1>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="divide-y divide-gray-200">
+      <% @compensations.each do |comp| %>
+        <div class="px-6 py-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-3">
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(comp.status) %>">
+                <%= comp.status_name %>
+              </span>
+              <span class="text-lg font-bold text-red-600">¥ <%= comp.amount.to_i %></span>
+            </div>
+            <span class="text-sm text-gray-500"><%= format_date(comp.created_at) %></span>
+          </div>
+          <p class="text-sm text-gray-600">
+            剧组：<%= comp.borrow_record.crew.name %>
+            · 处理人：<%= comp.handler&.name || "待处理" %>
+          </p>
+          <% if comp.basis.present? %>
+            <div class="mt-3">
+              <p class="text-sm font-medium text-gray-700">赔付依据：</p>
+              <p class="text-sm text-gray-600"><%= comp.basis %></p>
+            </div>
+          <% end %>
+          <% if comp.dispute_reason.present? %>
+            <div class="mt-3 p-3 bg-red-50 rounded">
+              <p class="text-sm font-medium text-red-700">争议原因：</p>
+              <p class="text-sm text-red-600"><%= comp.dispute_reason %></p>
+            </div>
+          <% end %>
+          <% if comp.resolution.present? %>
+            <div class="mt-3 p-3 bg-blue-50 rounded">
+              <p class="text-sm font-medium text-blue-700">解决方案：</p>
+              <p class="text-sm text-blue-600"><%= comp.resolution %></p>
+            </div>
+          <% end %>
+          <div class="mt-3 text-right">
+            <%= link_to "查看详情", compensation_path(comp), class: "text-sm text-amber-600 hover:text-amber-800" %>
+          </div>
+        </div>
+      <% end %>
+      <% if @compensations.empty? %>
+        <div class="px-6 py-12 text-center text-gray-500">
+          暂无赔付记录
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

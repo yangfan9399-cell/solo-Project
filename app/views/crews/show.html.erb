@@ -1,0 +1,120 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回列表", crews_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @crew.name %></h1>
+    </div>
+    <div class="flex space-x-2">
+      <%= link_to "编辑", edit_crew_path(@crew), class: "px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 space-y-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-center mb-6">
+          <div class="text-6xl mb-3">🎬</div>
+          <h2 class="text-xl font-bold text-gray-900"><%= @crew.name %></h2>
+          <% if @crew.play_name.present? %>
+            <p class="text-gray-500"><%= @crew.play_name %></p>
+          <% end %>
+        </div>
+        <div class="space-y-3">
+          <% if @crew.leader.present? %>
+            <div class="flex justify-between">
+              <span class="text-gray-500">剧组负责人</span>
+              <span class="font-medium"><%= @crew.leader.name %></span>
+            </div>
+          <% end %>
+          <% if @crew.start_date.present? %>
+            <div class="flex justify-between">
+              <span class="text-gray-500">开始日期</span>
+              <span class="font-medium"><%= format_date(@crew.start_date) %></span>
+            </div>
+          <% end %>
+          <% if @crew.end_date.present? %>
+            <div class="flex justify-between">
+              <span class="text-gray-500">结束日期</span>
+              <span class="font-medium"><%= format_date(@crew.end_date) %></span>
+            </div>
+          <% end %>
+          <div class="flex justify-between">
+            <span class="text-gray-500">活跃借调</span>
+            <span class="font-medium text-amber-600"><%= @active_borrows.count %> 件</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">历史借调</span>
+            <span class="font-medium"><%= @borrow_records.count %> 次</span>
+          </div>
+        </div>
+      </div>
+
+      <% if @crew.description.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">剧组介绍</h3>
+          <p class="text-gray-600"><%= @crew.description %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">进行中的借调</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @active_borrows.each do |borrow| %>
+            <div class="px-6 py-4 hover:bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xl mr-3">
+                    <%= prop_icon(borrow.prop.category) %>
+                  </div>
+                  <div>
+                    <p class="font-medium">
+                      <%= link_to borrow.prop.name, prop_path(borrow.prop), class: "hover:text-amber-600" %>
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      <%= format_date(borrow.expected_start_date) %> - <%= format_date(borrow.expected_end_date) %>
+                    </p>
+                  </div>
+                </div>
+                <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(borrow.status) %>">
+                  <%= borrow.status_name %>
+                </span>
+              </div>
+            </div>
+          <% end %>
+          <% if @active_borrows.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500">
+              暂无进行中的借调
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">历史借调记录</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @borrow_records.limit(10).each do |borrow| %>
+            <div class="px-6 py-3 hover:bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium"><%= borrow.prop.name %></p>
+                  <p class="text-sm text-gray-500">
+                    <%= format_date(borrow.expected_start_date) %> - <%= format_date(borrow.expected_end_date) %>
+                  </p>
+                </div>
+                <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge_class(borrow.status) %>">
+                  <%= borrow.status_name %>
+                </span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

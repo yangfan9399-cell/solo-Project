@@ -1,0 +1,143 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-900">📊 统计复盘</h1>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-lg shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-amber-100 text-sm">道具总数</p>
+          <p class="text-3xl font-bold mt-1"><%= @total_props %></p>
+        </div>
+        <div class="text-4xl opacity-80">🎭</div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-blue-100 text-sm">借调总数</p>
+          <p class="text-3xl font-bold mt-1"><%= @total_borrows %></p>
+        </div>
+        <div class="text-4xl opacity-80">📋</div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-lg shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-red-100 text-sm">损坏次数</p>
+          <p class="text-3xl font-bold mt-1"><%= @total_damaged %></p>
+        </div>
+        <div class="text-4xl opacity-80">💔</div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg shadow-lg p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-green-100 text-sm">赔付总额</p>
+          <p class="text-3xl font-bold mt-1">¥ <%= @total_compensation.to_i %></p>
+        </div>
+        <div class="text-4xl opacity-80">💰</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">道具状态分布</h2>
+      <div class="space-y-3">
+        <% @props_by_status.each do |status, count| %>
+          <div class="flex items-center">
+            <span class="w-24 text-sm text-gray-600"><%= I18n.t("prop_statuses.#{status}", default: status.humanize) %></span>
+            <div class="flex-1 mx-4">
+              <div class="w-full bg-gray-200 rounded-full h-4">
+                <% percent = @total_props > 0 ? (count.to_f / @total_props * 100).round : 0 %>
+                <div class="h-4 rounded-full
+                  <%= status == 'available' ? 'bg-green-500' : '' %>
+                  <%= status == 'borrowed' ? 'bg-blue-500' : '' %>
+                  <%= status == 'repairing' ? 'bg-yellow-500' : '' %>
+                  <%= status == 'scrapped' ? 'bg-gray-500' : '' %>"
+                  style="width: <%= percent %>%"></div>
+              </div>
+            </div>
+            <span class="w-12 text-right text-sm font-medium"><%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">道具类别分布</h2>
+      <div class="space-y-3">
+        <% @props_by_category.each do |category, count| %>
+          <div class="flex items-center">
+            <span class="w-24 text-sm text-gray-600"><%= category %></span>
+            <div class="flex-1 mx-4">
+              <div class="w-full bg-gray-200 rounded-full h-4">
+                <% percent = @total_props > 0 ? (count.to_f / @total_props * 100).round : 0 %>
+                <div class="h-4 rounded-full bg-amber-500" style="width: <%= percent %>%"></div>
+              </div>
+            </div>
+            <span class="w-12 text-right text-sm font-medium"><%= count %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <%= link_to by_category_statistics_path, class: "bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block" do %>
+      <div class="text-center">
+        <div class="text-3xl mb-2">🏷️</div>
+        <h3 class="font-semibold text-gray-900">按道具类别</h3>
+        <p class="text-sm text-gray-500 mt-1">各类别借调、损耗统计</p>
+      </div>
+    <% end %>
+
+    <%= link_to by_crew_statistics_path, class: "bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block" do %>
+      <div class="text-center">
+        <div class="text-3xl mb-2">🎬</div>
+        <h3 class="font-semibold text-gray-900">按剧组</h3>
+        <p class="text-sm text-gray-500 mt-1">各剧组借调、赔付统计</p>
+      </div>
+    <% end %>
+
+    <%= link_to by_damage_type_statistics_path, class: "bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block" do %>
+      <div class="text-center">
+        <div class="text-3xl mb-2">💔</div>
+        <h3 class="font-semibold text-gray-900">按损耗类型</h3>
+        <p class="text-sm text-gray-500 mt-1">各类型损坏统计</p>
+      </div>
+    <% end %>
+
+    <%= link_to compensation_amount_statistics_path, class: "bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow block" do %>
+      <div class="text-center">
+        <div class="text-3xl mb-2">💰</div>
+        <h3 class="font-semibold text-gray-900">赔付金额分析</h3>
+        <p class="text-sm text-gray-500 mt-1">按道具、剧组聚合</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">月度赔付金额趋势</h2>
+    <div class="h-64 flex items-end justify-around space-x-2">
+      <% if @total_compensation_by_month.any? %>
+        <% max_amount = @total_compensation_by_month.values.max || 1 %>
+        <% @total_compensation_by_month.each do |month, amount| %>
+          <div class="flex flex-col items-center flex-1">
+            <div class="w-full max-w-[40px] bg-gradient-to-t from-amber-500 to-orange-400 rounded-t-lg transition-all"
+              style="height: <%= (amount.to_f / max_amount * 200).round %>px; min-height: 4px;"></div>
+            <p class="text-xs text-gray-500 mt-2"><%= month %></p>
+            <p class="text-xs font-medium text-gray-700">¥<%= amount.to_i %></p>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="w-full text-center text-gray-500">暂无数据</div>
+      <% end %>
+    </div>
+  </div>
+</div>

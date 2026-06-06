@@ -1,0 +1,161 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回列表", compensations_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900">赔付详情 #<%= @compensation.id %></h1>
+      <span class="px-4 py-1.5 text-sm font-medium rounded-full <%= status_badge_class(@compensation.status) %>">
+        <%= @compensation.status_name %>
+      </span>
+    </div>
+    <div class="flex space-x-2">
+      <% if @compensation.pending? %>
+        <%= button_to "标记已赔付", pay_compensation_path(@compensation), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+      <% end %>
+      <% if @compensation.pending? %>
+        <button onclick="document.getElementById('dispute-form').classList.toggle('hidden')" class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200">
+          提出争议
+        </button>
+      <% end %>
+      <% if @compensation.disputed? %>
+        <button onclick="document.getElementById('resolve-form').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          解决争议
+        </button>
+      <% end %>
+      <% if @compensation.disputed? %>
+        <%= button_to "标记已赔付", pay_compensation_path(@compensation), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="dispute-form" class="hidden bg-red-50 border border-red-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-red-800 mb-4">提出赔付争议</h3>
+    <%= form_tag dispute_compensation_path(@compensation), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-red-700 mb-1">争议原因</label>
+        <textarea name="dispute_reason" rows="3" class="w-full border border-red-300 rounded px-3 py-2" placeholder="请说明争议原因..."></textarea>
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "提交争议", class: "px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('dispute-form').classList.add('hidden')" class="px-4 py-2 border border-red-300 text-red-700 rounded hover:bg-red-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div id="resolve-form" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-blue-800 mb-4">解决赔付争议</h3>
+    <%= form_tag resolve_compensation_path(@compensation), method: :patch do %>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-700 mb-1">调整后金额（元）</label>
+        <input type="number" name="new_amount" step="0.01" value="<%= @compensation.amount %>" class="border border-blue-300 rounded px-3 py-2">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-blue-700 mb-1">解决方案</label>
+        <textarea name="resolution" rows="3" class="w-full border border-blue-300 rounded px-3 py-2" placeholder="请说明解决方案..."></textarea>
+      </div>
+      <div class="flex space-x-3">
+        <%= submit_tag "确认解决", class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer" %>
+        <button type="button" onclick="document.getElementById('resolve-form').classList.add('hidden')" class="px-4 py-2 border border-blue-300 text-blue-700 rounded hover:bg-blue-100">取消</button>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">💰 赔付信息</h2>
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-500 mb-1">赔付金额</p>
+            <p class="text-3xl font-bold text-red-600">¥ <%= @compensation.amount.to_i %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">处理人</p>
+            <p class="text-lg font-medium"><%= @compensation.handler&.name || "待处理" %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500 mb-1">申请时间</p>
+            <p class="font-medium"><%= format_datetime(@compensation.created_at) %></p>
+          </div>
+          <% if @compensation.paid_at.present? %>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">赔付完成时间</p>
+              <p class="font-medium text-green-600"><%= format_datetime(@compensation.paid_at) %></p>
+            </div>
+          <% end %>
+          <% if @compensation.disputed_at.present? %>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">争议提出时间</p>
+              <p class="font-medium text-red-600"><%= format_datetime(@compensation.disputed_at) %></p>
+            </div>
+          <% end %>
+          <% if @compensation.resolved_at.present? %>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">争议解决时间</p>
+              <p class="font-medium text-blue-600"><%= format_datetime(@compensation.resolved_at) %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @compensation.basis.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">📋 赔付依据</h3>
+          <p class="text-gray-600 whitespace-pre-wrap"><%= @compensation.basis %></p>
+        </div>
+      <% end %>
+
+      <% if @compensation.dispute_reason.present? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-red-800 mb-3">⚠️ 争议原因</h3>
+          <p class="text-red-700 whitespace-pre-wrap"><%= @compensation.dispute_reason %></p>
+        </div>
+      <% end %>
+
+      <% if @compensation.resolution.present? %>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-blue-800 mb-3">✅ 解决方案</h3>
+          <p class="text-blue-700 whitespace-pre-wrap"><%= @compensation.resolution %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">关联借调</h3>
+        <div class="space-y-3">
+          <div>
+            <p class="text-sm text-gray-500">道具</p>
+            <p class="font-medium">
+              <%= link_to @compensation.borrow_record.prop.name, prop_path(@compensation.borrow_record.prop), class: "text-amber-600 hover:text-amber-800" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">剧组</p>
+            <p class="font-medium"><%= @compensation.borrow_record.crew.name %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">借调周期</p>
+            <p class="font-medium">
+              <%= format_date(@compensation.borrow_record.expected_start_date) %> - <%= format_date(@compensation.borrow_record.expected_end_date) %>
+            </p>
+          </div>
+          <div class="pt-3 border-t border-gray-100">
+            <%= link_to "查看借调详情", borrow_record_path(@compensation.borrow_record), class: "text-amber-600 hover:text-amber-800 text-sm font-medium" %>
+          </div>
+        </div>
+      </div>
+
+      <% if @compensation.borrow_record.damage_type.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">损坏情况</h3>
+          <span class="px-3 py-1.5 text-sm font-medium rounded-full <%= damage_type_badge_class(@compensation.borrow_record.damage_type) %>">
+            <%= @compensation.borrow_record.damage_type_name %>
+          </span>
+          <% if @compensation.borrow_record.damage_description.present? %>
+            <p class="text-sm text-gray-600 mt-3"><%= @compensation.borrow_record.damage_description %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

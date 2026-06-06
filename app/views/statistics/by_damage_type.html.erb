@@ -1,0 +1,110 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回统计", statistics_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900">💔 按损耗类型统计</h1>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-4 gap-4">
+    <% %w[minor moderate severe total_loss].each_with_index do |type, index| %>
+      <div class="bg-white rounded-lg shadow p-4">
+        <p class="text-sm text-gray-500"><%= I18n.t("damage_types.#{type}", default: type.humanize) %></p>
+        <p class="text-2xl font-bold
+          <%= type == 'minor' ? 'text-amber-600' : '' %>
+          <%= type == 'moderate' ? 'text-orange-600' : '' %>
+          <%= type == 'severe' ? 'text-red-600' : '' %>
+          <%= type == 'total_loss' ? 'text-gray-800' : '' %>">
+          <%= @damage_stats[type] || 0 %>
+        </p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">各类型损坏数量分布</h3>
+    <div class="flex items-end justify-around h-48">
+      <% if @damage_stats.any? %>
+        <% max_count = @damage_stats.values.max || 1 %>
+        <% %w[minor moderate severe total_loss].each do |type| %>
+          <% count = @damage_stats[type] || 0 %>
+          <% height = max_count > 0 ? (count.to_f / max_count * 160).round : 0 %>
+          <div class="flex flex-col items-center flex-1">
+            <div class="w-16 rounded-t-lg transition-all
+              <%= type == 'minor' ? 'bg-amber-500' : '' %>
+              <%= type == 'moderate' ? 'bg-orange-500' : '' %>
+              <%= type == 'severe' ? 'bg-red-500' : '' %>
+              <%= type == 'total_loss' ? 'bg-gray-700' : '' %>"
+              style="height: <%= height %>px; min-height: 4px;"></div>
+            <p class="text-sm text-gray-600 mt-2"><%= I18n.t("damage_types.#{type}", default: type.humanize) %></p>
+            <p class="text-sm font-medium text-gray-800"><%= count %> 次</p>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="w-full text-center text-gray-500">暂无数据</div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">各类型赔付金额</h3>
+    <div class="space-y-3">
+      <% %w[minor moderate severe total_loss].each do |type| %>
+        <% amount = @compensation_by_damage_type[type] || 0 %>
+        <div class="flex items-center">
+          <span class="w-24 text-sm text-gray-600"><%= I18n.t("damage_types.#{type}", default: type.humanize) %></span>
+          <div class="flex-1 mx-4">
+            <div class="w-full bg-gray-200 rounded-full h-5">
+              <% max_amount = @compensation_by_damage_type.values.max || 1 %>
+              <% percent = max_amount > 0 ? (amount.to_f / max_amount * 100).round : 0 %>
+              <div class="h-5 rounded-full
+                <%= type == 'minor' ? 'bg-amber-500' : '' %>
+                <%= type == 'moderate' ? 'bg-orange-500' : '' %>
+                <%= type == 'severe' ? 'bg-red-500' : '' %>
+                <%= type == 'total_loss' ? 'bg-gray-700' : '' %>"
+                style="width: <%= percent %>%;"></div>
+            </div>
+          </div>
+          <span class="w-24 text-right font-medium text-amber-600">¥ <%= amount.to_i %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">损坏详情列表</h3>
+    </div>
+    <div class="divide-y divide-gray-200">
+      <% @damage_details.each do |borrow| %>
+        <div class="px-6 py-4 hover:bg-gray-50">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium"><%= borrow.prop.name %></p>
+              <p class="text-sm text-gray-500">
+                <%= borrow.crew.name %> ·
+                <%= format_date(borrow.expected_start_date) %>
+              </p>
+              <% if borrow.damage_description.present? %>
+                <p class="text-sm text-gray-600 mt-1"><%= borrow.damage_description %></p>
+              <% end %>
+            </div>
+            <div class="text-right">
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= damage_type_badge_class(borrow.damage_type) %>">
+                <%= borrow.damage_type_name %>
+              </span>
+              <% if borrow.compensation.present? %>
+                <p class="text-sm text-amber-600 font-medium mt-1">¥ <%= borrow.compensation.amount.to_i %></p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      <% if @damage_details.empty? %>
+        <div class="px-6 py-8 text-center text-gray-500">
+          暂无损坏记录
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

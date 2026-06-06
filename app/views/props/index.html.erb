@@ -1,0 +1,80 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-gray-900">道具管理</h1>
+    <%= link_to "新增道具", new_prop_path, class: "px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-4">
+    <div class="flex flex-wrap gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">类别筛选</label>
+        <%= form_tag props_path, method: :get, class: "flex gap-2" do %>
+          <%= select_tag :category, options_for_select(@categories, params[:category]), include_blank: "全部类别", class: "border rounded px-3 py-2" %>
+          <%= select_tag :status, options_for_select(Prop.statuses.keys.map { |s| [I18n.t("prop_statuses.#{s}", default: s.humanize), s] }, params[:status]), include_blank: "全部状态", class: "border rounded px-3 py-2" %>
+          <%= submit_tag "筛选", class: "px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">道具</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类别</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">价值</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">借调次数</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">损坏次数</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% @props.each do |prop| %>
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-2xl mr-3">
+                  <%= prop_icon(prop.category) %>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900"><%= link_to prop.name, prop_path(prop), class: "hover:text-amber-600" %></p>
+                  <p class="text-sm text-gray-500"><%= prop.code %></p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">
+                <%= prop.category %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= prop_status_badge_class(prop.status) %>">
+                <%= I18n.t("prop_statuses.#{prop.status}", default: prop.status.humanize) %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              ¥ <%= prop.value.to_i %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <%= prop.total_borrow_count %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <%= prop.damage_count %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <%= link_to "查看", prop_path(prop), class: "text-amber-600 hover:text-amber-900" %>
+              <%= link_to "编辑", edit_prop_path(prop), class: "text-blue-600 hover:text-blue-900 ml-3" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @props.empty? %>
+      <div class="px-6 py-12 text-center text-gray-500">
+        暂无道具数据
+      </div>
+    <% end %>
+  </div>
+</div>

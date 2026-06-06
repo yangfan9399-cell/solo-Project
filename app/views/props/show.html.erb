@@ -1,0 +1,249 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回列表", props_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900"><%= @prop.name %></h1>
+      <span class="px-3 py-1 text-sm font-medium rounded-full <%= prop_status_badge_class(@prop.status) %>">
+        <%= I18n.t("prop_statuses.#{@prop.status}", default: @prop.status.humanize) %>
+      </span>
+    </div>
+    <div class="flex space-x-2">
+      <%= link_to "编辑", edit_prop_path(@prop), class: "px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" %>
+      <% if @prop.available? %>
+        <%= link_to "申请借调", new_borrow_record_path(prop_id: @prop.id), class: "px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-1 space-y-6">
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="h-64 bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-8xl mb-4"><%= prop_icon(@prop.category) %></div>
+            <p class="text-sm text-gray-500">道具照片</p>
+            <p class="text-xs text-gray-400 mt-1">（照片占位</p>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-500">道具编号</span>
+              <span class="font-medium"><%= @prop.code %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">类别</span>
+              <span class="font-medium"><%= @prop.category %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">估值</span>
+              <span class="font-medium text-amber-600">¥ <%= @prop.value.to_i %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">借调次数</span>
+              <span class="font-medium"><%= @prop.total_borrow_count %> 次</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">损坏次数</span>
+              <span class="font-medium <%= @prop.damage_count > 0 ? "text-red-600" : "" %>"><%= @prop.damage_count %> 次</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if @prop.notes.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">备注说明</h3>
+          <p class="text-gray-600"><%= @prop.notes %></p>
+        </div>
+      <% end %>
+
+      <% if @prop.description.present? %>
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">道具描述</h3>
+          <p class="text-gray-600"><%= @prop.description %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="lg:col-span-2 space-y-6">
+      <% if @current_borrow.present? %>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-amber-800 mb-4">📌 当前借调</h3>
+          <div class="bg-white rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <p class="font-medium text-gray-900"><%= @current_borrow.crew.name %></p>
+                <p class="text-sm text-gray-500"><%= @current_borrow.crew.play_name %></p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(@current_borrow.status) %>">
+                <%= @current_borrow.status_name %>
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-500">预计借出时间</p>
+                <p class="font-medium"><%= format_date(@current_borrow.expected_start_date) %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">预计归还时间</p>
+                <p class="font-medium"><%= format_date(@current_borrow.expected_end_date) %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">申请人</p>
+                <p class="font-medium"><%= @current_borrow.applicant&.name %></p>
+              </div>
+              <div>
+                <p class="text-gray-500">确认人</p>
+                <p class="font-medium"><%= @current_borrow.confirmer&.name || "待确认" %></p>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <%= link_to "查看详情", borrow_record_path(@current_borrow), class: "text-amber-600 hover:text-amber-800 text-sm font-medium" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">🕐 借调历史</h3>
+          <%= link_to "全部历史", borrow_history_prop_path(@prop), class: "text-sm text-amber-600 hover:text-amber-800" %>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @borrow_records.each do |borrow| %>
+            <div class="px-6 py-4 hover:bg-gray-50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium"><%= borrow.crew.name %></p>
+                  <p class="text-sm text-gray-500">
+                    <%= format_date(borrow.expected_start_date) %> - <%= format_date(borrow.expected_end_date) %>
+                  </p>
+                  <% if borrow.purpose.present? %>
+                    <p class="text-xs text-gray-400 mt-1"><%= borrow.purpose %></p>
+                  <% end %>
+                </div>
+                <div class="text-right">
+                  <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(borrow.status) %>">
+                    <%= borrow.status_name %>
+                  </span>
+                  <%= link_to "详情", borrow_record_path(borrow), class: "block mt-2 text-sm text-blue-600 hover:text-blue-800" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+          <% if @borrow_records.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500">
+              暂无借调记录
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">🔍 检查记录</h3>
+          <%= link_to "全部记录", inspection_history_prop_path(@prop), class: "text-sm text-amber-600 hover:text-amber-800" %>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @inspection_records.each do |record| %>
+            <div class="px-6 py-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-900"><%= record.inspection_type_name %></span>
+                <span class="px-2 py-1 text-xs font-medium rounded-full <%= condition_badge_class(record.condition) %>">
+                  <%= record.condition_name %>
+                </span>
+              </div>
+              <p class="text-sm text-gray-500">
+                检查人：<%= record.inspector&.name || "未知" %> ·
+                <%= format_datetime(record.created_at) %>
+              </p>
+              <% if record.notes.present? %>
+                <p class="text-sm text-gray-600 mt-2"><%= record.notes %></p>
+              <% end %>
+              <% if record.issues_found.present? %>
+                <p class="text-sm text-red-600 mt-1">发现问题：<%= record.issues_found %></p>
+              <% end %>
+            </div>
+          <% end %>
+          <% if @inspection_records.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500">
+              暂无检查记录
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">💰 赔付记录</h3>
+          <%= link_to "全部记录", compensation_history_prop_path(@prop), class: "text-sm text-amber-600 hover:text-amber-800" %>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @compensations.each do |comp| %>
+            <div class="px-6 py-4">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(comp.status) %>">
+                    <%= comp.status_name %>
+                  </span>
+                  <span class="ml-2 text-lg font-bold text-red-600">¥ <%= comp.amount.to_i %></span>
+                </div>
+                <span class="text-sm text-gray-500"><%= format_date(comp.created_at) %></span>
+              </div>
+              <% if comp.basis.present? %>
+                <div class="mt-2">
+                  <p class="text-sm font-medium text-gray-700">赔付依据：</p>
+                  <p class="text-sm text-gray-600"><%= comp.basis %></p>
+                </div>
+              <% end %>
+              <% if comp.dispute_reason.present? %>
+                <div class="mt-2 p-3 bg-red-50 rounded">
+                  <p class="text-sm font-medium text-red-700">争议原因：</p>
+                  <p class="text-sm text-red-600"><%= comp.dispute_reason %></p>
+                </div>
+              <% end %>
+              <div class="mt-2 text-sm text-gray-500">
+                处理人：<%= comp.handler&.name || "未知" %>
+              </div>
+            </div>
+          <% end %>
+          <% if @compensations.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500">
+              暂无赔付记录
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @repair_records.any? %>
+        <div class="bg-white rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">🔧 维修记录</h3>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @repair_records.each do |repair| %>
+              <div class="px-6 py-4">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="px-3 py-1 text-xs font-medium rounded-full <%= status_badge_class(repair.status) %>">
+                    <%= repair.status_name %>
+                  </span>
+                  <span class="text-sm text-gray-500">
+                    费用：¥ <%= repair.cost.to_i %>
+                  </span>
+                </div>
+                <p class="text-sm text-gray-600 mb-1"><%= repair.damage_description %></p>
+                <% if repair.repair_method.present? %>
+                  <p class="text-sm text-gray-500">维修方式：<%= repair.repair_method %></p>
+                <% end %>
+                <p class="text-xs text-gray-400 mt-2">
+                  <%= format_date(repair.start_date) %> - <%= format_date(repair.finished_date || repair.expected_finish_date) %>
+                </p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

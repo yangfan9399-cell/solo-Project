@@ -1,0 +1,62 @@
+zh-CN:
+  roles:
+    stage_manager: "舞美经办人"
+    crew_leader: "剧组负责人"
+    asset_auditor: "资产复核人"
+
+  borrow_statuses:
+    pending: "待确认"
+    confirmed: "已确认"
+    checked_out: "已出库"
+    returning: "待审核归还"
+    returned: "已归还"
+    damaged: "已破损"
+    compensating: "赔付中"
+    compensated: "已赔付"
+    repairing: "维修中"
+    cancelled: "已取消"
+
+  damage_types:
+    minor: "轻微损坏"
+    moderate: "中度损坏"
+    severe: "严重损坏"
+    total_loss: "完全损毁"
+
+  inspection_types:
+    checkout: "出库检查"
+    return: "归还检查"
+    periodic: "定期检查"
+    repair_check: "维修验收"
+
+  conditions:
+    good: "完好"
+    minor_issue: "轻微瑕疵"
+    damaged: "破损"
+    unusable: "无法使用"
+
+  compensation_statuses:
+    pending: "待赔付"
+    disputed: "有争议"
+    resolved: "已解决"
+    paid: "已赔付"
+
+  repair_statuses:
+    pending: "待维修"
+    in_progress: "维修中"
+    completed: "已完成"
+    cancelled: "已取消"
+
+  prop_statuses:
+    available: "可用"
+    borrowed: "借出中"
+    repairing: "维修中"
+    scrapped: "已报废"
+
+  date:
+    formats:
+      default: "%Y年%m月%d日"
+      short: "%m月%d日"
+  time:
+    formats:
+      default: "%Y年%m月%d日 %H:%M"
+      short: "%m月%d日 %H:%M"

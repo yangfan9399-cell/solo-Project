@@ -1,0 +1,113 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <%= link_to "← 返回统计", statistics_path, class: "text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-2xl font-bold text-gray-900">💰 赔付金额分析</h1>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-sm text-gray-500">赔付总额</p>
+      <p class="text-2xl font-bold text-red-600">¥ <%= @total_compensation.to_i %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-sm text-gray-500">已赔付</p>
+      <p class="text-2xl font-bold text-green-600">¥ <%= @paid_compensation.to_i %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-sm text-gray-500">待赔付</p>
+      <p class="text-2xl font-bold text-amber-600">¥ <%= @pending_compensation.to_i %></p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+      <p class="text-sm text-gray-500">争议中</p>
+      <p class="text-2xl font-bold text-red-500">¥ <%= @disputed_compensation.to_i %></p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">按道具聚合</h3>
+      <div class="space-y-3">
+        <% if @compensation_by_prop.any? %>
+          <% max_amount = @compensation_by_prop.map { |_, v| v }.max || 1 %>
+          <% @compensation_by_prop.first(10).each do |name, amount| %>
+            <div class="flex items-center">
+              <span class="w-28 text-sm text-gray-600 truncate"><%= name %></span>
+              <div class="flex-1 mx-3">
+                <div class="w-full bg-gray-200 rounded-full h-5">
+                  <% percent = max_amount > 0 ? (amount.to_f / max_amount * 100).round : 0 %>
+                  <div class="h-5 rounded-full bg-red-500" style="width: <%= percent %>%;"></div>
+                </div>
+              </div>
+              <span class="w-20 text-right font-medium text-red-600">¥<%= amount.to_i %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-gray-500 text-center py-4">暂无数据</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">按剧组聚合</h3>
+      <div class="space-y-3">
+        <% if @compensation_by_crew.any? %>
+          <% max_amount = @compensation_by_crew.map { |_, v| v }.max || 1 %>
+          <% @compensation_by_crew.each do |name, amount| %>
+            <div class="flex items-center">
+              <span class="w-28 text-sm text-gray-600 truncate"><%= name %></span>
+              <div class="flex-1 mx-3">
+                <div class="w-full bg-gray-200 rounded-full h-5">
+                  <% percent = max_amount > 0 ? (amount.to_f / max_amount * 100).round : 0 %>
+                  <div class="h-5 rounded-full bg-amber-500" style="width: <%= percent %>%;"></div>
+                </div>
+              </div>
+              <span class="w-20 text-right font-medium text-amber-600">¥<%= amount.to_i %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <p class="text-gray-500 text-center py-4">暂无数据</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">最近赔付记录</h3>
+    </div>
+    <div class="divide-y divide-gray-200">
+      <% @recent_compensations.each do |comp| %>
+        <div class="px-6 py-4 hover:bg-gray-50">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center">
+                <p class="font-medium"><%= comp.borrow_record.prop.name %></p>
+                <span class="ml-3 px-2 py-0.5 text-xs font-medium rounded-full <%= status_badge_class(comp.status) %>">
+                  <%= comp.status_name %>
+                </span>
+              </div>
+              <p class="text-sm text-gray-500">
+                <%= comp.borrow_record.crew.name %> ·
+                <%= format_date(comp.created_at) %>
+              </p>
+              <% if comp.basis.present? %>
+                <p class="text-sm text-gray-600 mt-1 line-clamp-1"><%= comp.basis %></p>
+              <% end %>
+            </div>
+            <div class="text-right">
+              <p class="text-xl font-bold text-red-600">¥ <%= comp.amount.to_i %></p>
+              <%= link_to "详情", compensation_path(comp), class: "text-sm text-amber-600 hover:text-amber-800" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      <% if @recent_compensations.empty? %>
+        <div class="px-6 py-8 text-center text-gray-500">
+          暂无赔付记录
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
