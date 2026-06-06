@@ -532,6 +532,44 @@ export async function getOverdueStatistics() {
   }));
 }
 
+export async function getOverdueStatisticsByCollege() {
+  const db = await getDb();
+  const now = Date.now();
+
+  const results = db.exec(
+    `SELECT u.college, COUNT(*) as overdue_count
+     FROM requisitions r
+     LEFT JOIN users u ON r.requester_id = u.id
+     WHERE r.status = 'overdue' AND r.expected_return_date < ?
+     GROUP BY u.college
+     ORDER BY overdue_count DESC`,
+    [now]
+  );
+
+  return mapRows<{ college: string; overdueCount: number }>(
+    results[0] || { columns: [], values: [] }
+  );
+}
+
+export async function getOverdueStatisticsByCategory() {
+  const db = await getDb();
+  const now = Date.now();
+
+  const results = db.exec(
+    `SELECT rg.category, COUNT(*) as overdue_count
+     FROM requisitions r
+     LEFT JOIN reagents rg ON r.reagent_id = rg.id
+     WHERE r.status = 'overdue' AND r.expected_return_date < ?
+     GROUP BY rg.category
+     ORDER BY overdue_count DESC`,
+    [now]
+  );
+
+  return mapRows<{ category: string; overdueCount: number }>(
+    results[0] || { columns: [], values: [] }
+  );
+}
+
 export async function getApprovalDurationStats() {
   const db = await getDb();
   const results = db.exec(

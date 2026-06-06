@@ -5,6 +5,8 @@ import {
   getStatisticsByCollege, 
   getStatisticsByCategory,
   getOverdueStatistics,
+  getOverdueStatisticsByCollege,
+  getOverdueStatisticsByCategory,
   getApprovalDurationStats
 } from "~/db/queries";
 
@@ -12,11 +14,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const userId = parseInt(url.searchParams.get("userId") || "1");
   
-  const [stats, byCollege, byCategory, overdue, approvalDuration] = await Promise.all([
+  const [stats, byCollege, byCategory, overdue, overdueByCollege, overdueByCategory, approvalDuration] = await Promise.all([
     getStatistics(),
     getStatisticsByCollege(),
     getStatisticsByCategory(),
     getOverdueStatistics(),
+    getOverdueStatisticsByCollege(),
+    getOverdueStatisticsByCategory(),
     getApprovalDurationStats(),
   ]);
   
@@ -24,14 +28,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     stats, 
     byCollege, 
     byCategory, 
-    overdue, 
+    overdue,
+    overdueByCollege,
+    overdueByCategory,
     approvalDuration,
     userId 
   });
 }
 
 export default function Statistics() {
-  const { stats, byCollege, byCategory, overdue, approvalDuration, userId } = useLoaderData<typeof loader>();
+  const { stats, byCollege, byCategory, overdue, overdueByCollege, overdueByCategory, approvalDuration, userId } = useLoaderData<typeof loader>();
 
   return (
     <div>
@@ -78,29 +84,37 @@ export default function Statistics() {
         <div className="card">
           <h2 className="section-title">按学院统计</h2>
           <div className="space-y-3">
-            {byCollege.map((item) => (
-              <div key={item.college}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>{item.college || "未知"}</span>
-                  <span className="font-semibold">{item.count} 次</span>
+            {byCollege.map((item) => {
+              const overdueItem = overdueByCollege.find((o) => o.college === item.college);
+              return (
+                <div key={item.college}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>{item.college || "未知"}</span>
+                    <span className="font-semibold">
+                      {item.count} 次领用
+                      {overdueItem && overdueItem.overdueCount > 0 && (
+                        <span className="badge badge-red ml-2">{overdueItem.overdueCount} 次逾期</span>
+                      )}
+                    </span>
+                  </div>
+                  <div style={{ 
+                    height: "8px", 
+                    background: "#e2e8f0", 
+                    borderRadius: "4px",
+                    overflow: "hidden"
+                  }}>
+                    <div 
+                      style={{ 
+                        width: `${(item.count / Math.max(...byCollege.map(c => c.count), 1)) * 100}%`, 
+                        height: "100%",
+                        background: "#3b82f6",
+                        borderRadius: "4px"
+                      }}
+                    />
+                  </div>
                 </div>
-                <div style={{ 
-                  height: "8px", 
-                  background: "#e2e8f0", 
-                  borderRadius: "4px",
-                  overflow: "hidden"
-                }}>
-                  <div 
-                    style={{ 
-                      width: `${(item.count / Math.max(...byCollege.map(c => c.count), 1)) * 100}%`, 
-                      height: "100%",
-                      background: "#3b82f6",
-                      borderRadius: "4px"
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {byCollege.length === 0 && (
               <p className="text-muted text-center py-4">暂无数据</p>
             )}
@@ -116,6 +130,7 @@ export default function Statistics() {
               <th>试剂类别</th>
               <th>领用次数</th>
               <th>累计用量</th>
+              <th>逾期次数</th>
               <th>占比</th>
             </tr>
           </thead>
@@ -123,11 +138,19 @@ export default function Statistics() {
             {byCategory.map((item) => {
               const maxCount = Math.max(...byCategory.map(c => c.count), 1);
               const percentage = ((item.count / maxCount) * 100).toFixed(1);
+              const overdueItem = overdueByCategory.find((o) => o.category === item.category);
               return (
                 <tr key={item.category}>
                   <td className="font-medium">{item.category || "未知"}</td>
                   <td>{item.count} 次</td>
                   <td>{item.totalQuantity?.toFixed(0) || 0}</td>
+                  <td>
+                    {overdueItem && overdueItem.overdueCount > 0 ? (
+                      <span className="badge badge-red">{overdueItem.overdueCount} 次</span>
+                    ) : (
+                      <span className="text-muted">0 次</span>
+                    )}
+                  </td>
                   <td style={{ width: "200px" }}>
                     <div className="flex items-center gap-2">
                       <div style={{ flex: 1, height: "8px", background: "#e2e8f0", borderRadius: "4px" }}>
@@ -148,7 +171,7 @@ export default function Statistics() {
             })}
             {byCategory.length === 0 && (
               <tr>
-                <td colSpan={4} className="text-center text-muted py-8">暂无数据</td>
+                <td colSpan={5} className="text-center text-muted py-8">暂无数据</td>
               </tr>
             )}
           </tbody>
