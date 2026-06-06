@@ -333,8 +333,9 @@ export async function reviewDisposal(input: ReviewDisposalInput): Promise<void> 
   const disposal = store.disposals.find((d) => d.shipmentId === input.shipmentId)
   if (!disposal) throw new Error('处置记录不存在')
 
-  const deviation = store.deviations.find((d) => d.shipmentId === input.shipmentId)
-  if (deviation?.type === DeviationType.PROBE_OFFLINE && input.action === DisposalAction.RELEASE) {
+  const temperatureReadings = store.temperatureReadings.filter((r) => r.shipmentId === input.shipmentId)
+  const hasOfflineReading = temperatureReadings.some((r) => r.isOffline)
+  if (hasOfflineReading && input.action === DisposalAction.RELEASE) {
     if (!input.evidenceUrl || input.evidenceUrl.trim() === '') {
       throw new Error('探头离线时禁止直接放行，必须上传人工复核证据')
     }

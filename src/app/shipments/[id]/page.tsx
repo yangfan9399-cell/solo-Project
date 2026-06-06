@@ -30,6 +30,8 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
 
   const latestDeviation = shipment.deviations[shipment.deviations.length - 1]
   const latestDisposal = shipment.disposals[shipment.disposals.length - 1]
+  const hasOfflineReadings = shipment.temperatureReadings.some((r) => r.isOffline)
+  const offlineReadingsCount = shipment.temperatureReadings.filter((r) => r.isOffline).length
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -58,10 +60,18 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Thermometer className="w-5 h-5 mr-2 text-blue-600" />
-              温度曲线
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Thermometer className="w-5 h-5 mr-2 text-blue-600" />
+                温度曲线
+              </h2>
+              {hasOfflineReadings && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  含 {offlineReadingsCount} 条离线记录
+                </span>
+              )}
+            </div>
             <TemperatureChart
               readings={shipment.temperatureReadings}
               minTemp={shipment.medicine.minTemp}
@@ -75,6 +85,11 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
               </span>
               <span>
                 数据点: {shipment.temperatureReadings.length} 个
+                {hasOfflineReadings && (
+                  <span className="text-red-600 ml-2">
+                    (含 {offlineReadingsCount} 条离线)
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -205,6 +220,19 @@ export default async function ShipmentDetailPage(props: { params: Promise<{ id: 
                   </span>
                 </dd>
               </div>
+              {hasOfflineReadings && (
+                <div className="pt-3 border-t border-gray-100">
+                  <div className="p-2 bg-red-50 rounded-md">
+                    <p className="text-xs font-medium text-red-700 flex items-center">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      温度记录含离线数据
+                    </p>
+                    <p className="text-xs text-red-600 mt-0.5">
+                      共 {offlineReadingsCount} 条离线记录，放行需人工复核
+                    </p>
+                  </div>
+                </div>
+              )}
             </dl>
           </div>
 

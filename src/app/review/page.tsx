@@ -49,9 +49,13 @@ export default function ReviewPage() {
     (s) => s.status === ShipmentStatus.DEVIATION_JUDGED
   )
 
-  const hasProbeOffline = selectedShipment?.deviations.some(
-    (d) => d.type === DeviationType.PROBE_OFFLINE
+  const hasProbeOffline = selectedShipment?.temperatureReadings.some(
+    (r) => r.isOffline
   )
+
+  const offlineReadingsCount = selectedShipment?.temperatureReadings.filter(
+    (r) => r.isOffline
+  ).length || 0
 
   const handleSelectShipment = async (shipment: ShipmentListItem) => {
     setLoadingDetail(true)
@@ -252,7 +256,8 @@ export default function ReviewPage() {
                     探头离线警告
                   </p>
                   <p className="text-xs text-red-600 mt-1">
-                    该批次存在探头离线情况，禁止直接放行，必须提供人工复核证据
+                    该批次温度记录中存在 <span className="font-medium">{offlineReadingsCount}</span> 条探头离线记录，
+                    禁止直接放行，必须提供人工复核证据
                   </p>
                 </div>
               )}
