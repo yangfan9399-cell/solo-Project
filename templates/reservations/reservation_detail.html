@@ -126,11 +126,53 @@
         <div class="card detail-section">
             <div class="card-header">
                 <h3>资格核验</h3>
+                {% if qualification_blocked %}
+                <span class="badge badge-danger">已阻断</span>
+                {% else %}
+                <span class="badge badge-success">已通过</span>
+                {% endif %}
             </div>
             <div class="card-body">
-                <div class="alert {% if '通过' in reservation.qualification_notes %}alert-success{% else %}alert-danger{% endif %}">
+                <div class="alert {% if qualification_blocked %}alert-danger{% else %}alert-success{% endif %}">
+                    <div class="alert-title">
+                        {% if qualification_blocked %}
+                        ✕ 资格核验未通过
+                        {% else %}
+                        ✓ 资格核验通过
+                        {% endif %}
+                    </div>
                     <div class="alert-body">{{ reservation.qualification_notes }}</div>
                 </div>
+                
+                {% if qualification_blocked and required_proofs %}
+                <div style="margin-top: 16px; padding: 16px; background: var(--color-surface-secondary); border-radius: 8px; border-left: 4px solid var(--color-warning);">
+                    <h4 style="font-size: 0.95rem; color: var(--color-text); margin-bottom: 10px;">📋 所需证明材料</h4>
+                    <ul style="margin: 0; padding-left: 24px; color: var(--color-text); font-size: 0.9rem; line-height: 1.8;">
+                        {% for proof in required_proofs %}
+                        <li>{{ proof }}</li>
+                        {% endfor %}
+                    </ul>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 12px; margin-bottom: 0;">
+                        请携带以上证明材料到馆办理，或联系工作人员咨询。
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if qualification_blocked and user.is_librarian %}
+                <div style="margin-top: 16px; padding: 12px; background: var(--color-danger-bg, #fef2f2); border: 1px solid var(--color-danger-border, #fecaca); border-radius: 6px;">
+                    <p style="font-size: 0.85rem; color: var(--color-danger); margin: 0;">
+                        ⚠️ 馆员提示：此预约因资格不足已被系统阻断，无法审核通过。请告知读者补充相关证明材料后重新预约。
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if qualification_blocked and user == reservation.user %}
+                <div style="margin-top: 16px; padding: 12px; background: var(--color-warning-bg, #fffbeb); border: 1px solid var(--color-warning-border, #fcd34d); border-radius: 6px;">
+                    <p style="font-size: 0.85rem; color: var(--color-warning-dark, #92400e); margin: 0;">
+                        💡 提示：您可以补充所需证明材料后重新提交预约申请。
+                    </p>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}

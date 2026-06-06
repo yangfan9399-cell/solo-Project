@@ -50,12 +50,14 @@ def reservation_detail(request, pk):
             if has_decision:
                 decision = assessment.decision
     
-    can_approve = request.user.is_librarian and reservation.status == Reservation.STATUS_PENDING
+    can_approve = request.user.is_librarian and reservation.can_be_approved()
     can_reject = request.user.is_librarian and reservation.status == Reservation.STATUS_PENDING
     can_cancel = request.user == reservation.user and reservation.status in [Reservation.STATUS_PENDING, Reservation.STATUS_APPROVED]
     can_checkout = request.user.is_librarian and reservation.status == Reservation.STATUS_APPROVED and not has_circulation
     can_assess = request.user.is_conservator and has_circulation and circulation.is_returned and not has_assessment
     can_decide = request.user.is_supervisor and has_assessment and not has_decision
+    
+    qualification_blocked = reservation.qualification_checked and not reservation.is_qualification_passed
     
     context = {
         'reservation': reservation,
@@ -72,6 +74,8 @@ def reservation_detail(request, pk):
         'can_checkout': can_checkout,
         'can_assess': can_assess,
         'can_decide': can_decide,
+        'qualification_blocked': qualification_blocked,
+        'required_proofs': reservation.required_proofs,
         'page_title': f'预约详情 - {reservation.book.title}',
     }
     return render(request, 'reservations/reservation_detail.html', context)
@@ -135,6 +139,17 @@ def reservation_approve(request, pk):
     if reservation.status != Reservation.STATUS_PENDING:
         messages.error(request, '该预约状态不支持审核操作。')
         return redirect('reservations:reservation_detail', pk=pk)
+    
+    if reservation.qualification_checked and not reservation.is_qualification_passed:
+        messages.error(request, '资格核验未通过，无法审核通过。请读者补充相关证明材料后重新预约。')
+        return redirect('reservations:reservation_detail', pk=pk)
+    
+    if not reservation.qualification_checked:
+        passed, issues = reservation.check_qualification()
+        if not passed:
+            reservation.save()
+            messages.error(request, '资格核验未通过：' + '; '.join(issues))
+            return redirect('reservations:reservation_detail', pk=pk)
     
     if reservation.has_time_conflict():
         conflicts = reservation.get_conflicting_reservations()

@@ -58,10 +58,32 @@ class Reservation(models.Model):
     def __str__(self):
         return f'{self.book.title} - {self.user.real_name}'
 
+    @property
+    def is_qualification_passed(self):
+        if not self.qualification_checked:
+            return None
+        return self.qualification_notes == '资格核验通过' or not self.qualification_notes
+
+    @property
+    def required_proofs(self):
+        proofs = []
+        if not self.qualification_checked:
+            return proofs
+        if not self.user.has_proof and self.book.category.rarity_level == 'precious':
+            proofs.append('有效身份证件')
+            proofs.append('研究单位介绍信')
+        if self.user.reader_type == 'undergrad' and self.book.category.rarity_level in ['rare', 'precious']:
+            proofs.append('所在学院出具的研究证明')
+        if self.user.reader_type == 'graduate' and self.book.category.rarity_level == 'precious':
+            proofs.append('导师推荐信')
+        return proofs
+
     def can_be_approved(self):
         if self.status != self.STATUS_PENDING:
             return False
         if self.has_time_conflict():
+            return False
+        if self.qualification_checked and not self.is_qualification_passed:
             return False
         return True
 
