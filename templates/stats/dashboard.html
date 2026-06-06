@@ -78,12 +78,21 @@
         </div>
     </div>
     
+    {% if has_processing_data %}
     <div class="chart-card">
         <h3>⏱️ 处理时长分布</h3>
         <div class="chart-container">
             <canvas id="processingTimeChart"></canvas>
         </div>
     </div>
+    {% else %}
+    <div class="chart-card">
+        <h3>⏱️ 处理时长分布</h3>
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: var(--color-text-muted); font-size: 0.9rem;">
+            暂无处理时长数据
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <div class="card" style="margin-top: 24px;">
@@ -438,6 +447,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 scales: {
                     x: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
                     y: { ticks: { color: '#6B5D4F' } }
+                }
+            }
+        });
+    }
+    
+    const processingTimeData = {{ processing_time_distribution|safe }};
+    if (processingTimeData && processingTimeData.some(d => d.count > 0)) {
+        const filteredData = processingTimeData.filter(d => d.count > 0);
+        new Chart(document.getElementById('processingTimeChart'), {
+            type: 'bar',
+            data: {
+                labels: filteredData.map(d => d.label),
+                datasets: [{
+                    label: '数量',
+                    data: filteredData.map(d => d.count),
+                    backgroundColor: goldColor,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: '#6B5D4F' } },
+                    x: { ticks: { color: '#6B5D4F', font: { size: 11 } } }
                 }
             }
         });
