@@ -2,7 +2,7 @@ class StatisticsController < ApplicationController
   def index
     @total_props = Prop.count
     @total_borrows = BorrowRecord.count
-    @total_damaged = BorrowRecord.damaged.count
+    @total_damaged = BorrowRecord.with_damage.count
     @total_compensation = Compensation.sum(:amount)
     @total_repairs = RepairRecord.count
 
@@ -19,13 +19,13 @@ class StatisticsController < ApplicationController
       [month.strftime("%Y年%m月"), amount]
     end.to_h
 
-    @damages_by_type = BorrowRecord.damaged.group(:damage_type).count
+    @damages_by_type = BorrowRecord.with_damage.where.not(damage_type: nil).group(:damage_type).count
   end
 
   def by_category
     @category_stats = Prop.all.map do |prop|
       borrow_count = prop.borrow_records.count
-      damage_count = prop.borrow_records.damaged.count
+      damage_count = prop.borrow_records.with_damage.count
       compensation_total = Compensation.joins(:borrow_record).where(borrow_records: { prop_id: prop.id }).sum(:amount)
       {
         prop: prop,
@@ -41,7 +41,7 @@ class StatisticsController < ApplicationController
   def by_crew
     @crew_stats = Crew.all.map do |crew|
       borrow_count = crew.borrow_records.count
-      damage_count = crew.borrow_records.damaged.count
+      damage_count = crew.borrow_records.with_damage.count
       compensation_total = Compensation.joins(:borrow_record).where(borrow_records: { crew_id: crew.id }).sum(:amount)
       {
         crew: crew,
@@ -54,12 +54,13 @@ class StatisticsController < ApplicationController
   end
 
   def by_damage_type
-    @damage_stats = BorrowRecord.damaged.group(:damage_type).count
-    @compensation_by_damage_type = BorrowRecord.damaged.joins(:compensation)
+    @damage_stats = BorrowRecord.with_damage.where.not(damage_type: nil).group(:damage_type).count
+    @compensation_by_damage_type = BorrowRecord.with_damage.joins(:compensation)
+      .where.not(borrow_records: { damage_type: nil })
       .group("borrow_records.damage_type")
       .sum("compensations.amount")
 
-    @damage_details = BorrowRecord.damaged.includes(:prop, :crew, :compensation).order(created_at: :desc)
+    @damage_details = BorrowRecord.with_damage.includes(:prop, :crew, :compensation).order(created_at: :desc)
   end
 
   def compensation_amount

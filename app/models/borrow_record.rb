@@ -45,6 +45,11 @@ class BorrowRecord < ApplicationRecord
   scope :by_crew, ->(crew_id) { where(crew_id: crew_id) if crew_id.present? }
   scope :by_prop, ->(prop_id) { where(prop_id: prop_id) if prop_id.present? }
   scope :overdue, -> { where("expected_end_date < ?", Date.today).where(status: [:checked_out, :returning]) }
+  scope :with_damage, -> {
+    left_joins(:compensation, :repair_record)
+      .where("damage_type IS NOT NULL OR compensations.id IS NOT NULL OR repair_records.id IS NOT NULL")
+      .distinct
+  }
 
   def status_name
     I18n.t("borrow_statuses.#{status}", default: status.humanize)

@@ -14,7 +14,7 @@ class DashboardController < ApplicationController
     @pending_compensations = Compensation.pending.order(created_at: :desc).includes(:borrow_record)
 
     @props_by_category = Prop.group(:category).count
-    @damaged_props_count = BorrowRecord.damaged.count
+    @damaged_props_count = BorrowRecord.with_damage.count
     @total_compensation = Compensation.sum(:amount)
   end
 end
