@@ -15,6 +15,7 @@ class ReviewsController < ApplicationController
     @review = @sample.all_reviews.build(review_params)
     @review.reviewer = current_user
     @review.sample_version = @sample_version
+    @review.issues = parse_issues(params[:review][:issues])
 
     if @review.save
       handle_review_verdict
@@ -27,6 +28,20 @@ class ReviewsController < ApplicationController
   end
 
   private
+
+  def parse_issues(issues_param)
+    return [] if issues_param.blank?
+
+    issues_array = Array.wrap(issues_param).reject(&:blank?)
+    issues_array.map do |issue|
+      type = if issue.respond_to?(:[]) && issue["type"].present?
+               issue["type"]
+             elsif issue.is_a?(String) && issue.present?
+               issue
+             end
+      type.present? ? { "type" => type } : nil
+    end.compact
+  end
 
   def set_sample
     @sample = Sample.find(params[:sample_id])
@@ -44,7 +59,7 @@ class ReviewsController < ApplicationController
       :verdict,
       :feedback,
       :sample_version_id,
-      issues: []
+      issues: [:type]
     )
   end
 
