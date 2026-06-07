@@ -187,6 +187,12 @@ function appReducer(state: AppState, action: Action): AppState {
 
     case 'PRINCIPAL_REVIEW': {
       const { id, decision, principal, remark } = action.payload;
+      const record = state.pickupRecords.find((r) => r.id === id);
+
+      if (!record || record.status !== 'PENDING_PRINCIPAL') {
+        return state;
+      }
+
       const now = new Date().toISOString();
 
       const updatedRecords = state.pickupRecords.map((r) =>

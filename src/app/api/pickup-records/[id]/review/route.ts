@@ -11,6 +11,24 @@ export async function POST(
     const body = await request.json();
     const { principalReviewBy, principalDecision, principalRemark } = body;
 
+    const existingRecord = await prisma.pickupRecord.findUnique({
+      where: { id },
+    }).catch(() => null);
+
+    if (!existingRecord) {
+      return NextResponse.json(
+        { error: '记录不存在' },
+        { status: 404 }
+      );
+    }
+
+    if (existingRecord.status !== 'PENDING_PRINCIPAL') {
+      return NextResponse.json(
+        { error: '仅待园长复核状态的记录可进行复核操作' },
+        { status: 400 }
+      );
+    }
+
     const updatedRecord = await prisma.pickupRecord.update({
       where: { id },
       data: {
