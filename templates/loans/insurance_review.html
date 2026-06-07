@@ -1,0 +1,185 @@
+{% extends "loans/base.html" %}
+
+{% block title %}保险复核{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> 保险复核</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">出借单基本信息</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 100px;">出借编号</td>
+                                <td><code>{{ loan.loan_number }}</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">展品名称</td>
+                                <td>{{ loan.exhibit.name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">文物级别</td>
+                                <td>{{ loan.exhibit.get_level_display }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 100px;">借展方</td>
+                                <td>{{ loan.borrower.name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">出借目的</td>
+                                <td>{{ loan.purpose|truncatechars:30 }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">当前状态</td>
+                                <td>
+                                    {% with loan.get_status_display_with_style as style %}
+                                    <span class="badge bg-{{ style.0 }}">{{ style.1 }}</span>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> 保额与估值对比
+                </h5>
+                {% if insurance_sufficient %}
+                <span class="badge bg-success">额度充足</span>
+                {% else %}
+                <span class="badge bg-danger">额度不足</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <small class="text-muted d-block mb-1">展品估值</small>
+                            <div class="fw-bold fs-4">¥{{ loan.exhibit.estimated_value|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <small class="text-muted d-block mb-1">累计保额</small>
+                            <div class="fw-bold fs-4">¥{{ total_insurance|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <small class="text-muted d-block mb-1">缺口</small>
+                            <div class="fw-bold fs-4 {% if insurance_gap > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ¥{{ insurance_gap|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if not insurance_sufficient %}
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>警告：</strong>当前累计保额低于展品估值，存在风险！请确认是否继续通过复核。
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if insurance_policies %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> 保险单列表</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>保单号</th>
+                                <th>保险公司</th>
+                                <th>保额</th>
+                                <th>险种</th>
+                                <th>有效期</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for policy in insurance_policies %}
+                            <tr>
+                                <td><code>{{ policy.policy_number }}</code></td>
+                                <td>{{ policy.insurance_company }}</td>
+                                <td>¥{{ policy.amount|floatformat:2 }}</td>
+                                <td>{{ policy.coverage_type|default:"-" }}</td>
+                                <td>{{ policy.start_date|date:"Y-m-d" }} ~ {{ policy.end_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if policy.status == 'approved' %}
+                                    <span class="badge bg-success">已通过</span>
+                                    {% elif policy.status == 'rejected' %}
+                                    <span class="badge bg-danger">已拒绝</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">待复核</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pencil-square"></i> 复核操作</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">复核意见</label>
+                        {{ form.review_notes }}
+                        {% if form.review_notes.errors %}
+                        <div class="text-danger small mt-1">{{ form.review_notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-secondary">取消</a>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> 拒绝
+                        </button>
+                        <button type="submit" name="action" value="approve" class="btn btn-success"
+                                {% if not insurance_sufficient %}disabled title="保险额度不足，无法通过"{% endif %}>
+                            <i class="bi bi-check-circle"></i> 通过
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (!input.classList.contains('form-check-input')) {
+            input.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

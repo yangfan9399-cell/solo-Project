@@ -1,0 +1,103 @@
+{% extends "loans/base.html" %}
+
+{% block title %}添加保险单{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-plus"></i> 添加保险单</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted">出借单编号：</span>
+                    <code>{{ loan.loan_number }}</code>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">保单号</label>
+                                {{ form.policy_number }}
+                                {% if form.policy_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.policy_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">保险公司</label>
+                                {{ form.insurance_company }}
+                                {% if form.insurance_company.errors %}
+                                <div class="text-danger small mt-1">{{ form.insurance_company.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">保额</label>
+                                {{ form.amount }}
+                                {% if form.amount.errors %}
+                                <div class="text-danger small mt-1">{{ form.amount.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">险种</label>
+                                {{ form.coverage_type }}
+                                {% if form.coverage_type.errors %}
+                                <div class="text-danger small mt-1">{{ form.coverage_type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">生效日期</label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">到期日期</label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.end_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-secondary">取消</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> 提交
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (!input.classList.contains('form-check-input')) {
+            input.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,505 @@
+{% extends "loans/base.html" %}
+
+{% block title %}{{ loan.loan_number }} - 出借详情{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>
+            <i class="bi bi-file-text"></i> 出借详情
+            {% with loan.get_status_display_with_style as style %}
+            <span class="badge bg-{{ style.0 }} fs-6 ms-2">{{ style.1 }}</span>
+            {% endwith %}
+        </h2>
+        <p class="text-muted mb-0">编号：{{ loan.loan_number }}</p>
+    </div>
+    <div>
+        <a href="{% url 'loans:loan_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">出借目的</td>
+                                <td>{{ loan.purpose|linebreaksbr }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">计划开始</td>
+                                <td>{{ loan.planned_start_date|date:"Y-m-d" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">计划结束</td>
+                                <td>{{ loan.planned_end_date|date:"Y-m-d" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">实际开始</td>
+                                <td>{{ loan.actual_start_date|date:"Y-m-d"|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">实际结束</td>
+                                <td>{{ loan.actual_end_date|date:"Y-m-d"|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 120px;">提交人</td>
+                                <td>{{ loan.submitted_by|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">提交时间</td>
+                                <td>{{ loan.submitted_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">创建时间</td>
+                                <td>{{ loan.created_at|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-truck"></i> 运输记录</h5>
+                {% if user.profile.is_transport_coordinator and loan.can_register_transport %}
+                <a href="{% url 'loans:transport_register' loan.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> 登记运输
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if transport_records %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>运输路线</th>
+                                <th>运输公司</th>
+                                <th>预计出发</th>
+                                <th>预计到达</th>
+                                <th>登记人</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transport_records %}
+                            <tr>
+                                <td>{{ t.route_from }} → {{ t.route_to }}</td>
+                                <td>{{ t.transport_company }}</td>
+                                <td>{{ t.estimated_departure|date:"Y-m-d H:i"|default:"-" }}</td>
+                                <td>{{ t.estimated_arrival|date:"Y-m-d H:i"|default:"-" }}</td>
+                                <td>{{ t.registered_by|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">暂无运输记录</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-shield-check"></i> 保险单
+                    {% if insurance_sufficient %}
+                    <span class="badge bg-success ms-2">额度充足</span>
+                    {% else %}
+                    <span class="badge bg-danger ms-2">额度不足</span>
+                    {% endif %}
+                </h5>
+                {% if user.profile.is_insurance_reviewer %}
+                <div>
+                    <a href="{% url 'loans:insurance_add' loan.pk %}" class="btn btn-sm btn-primary me-1">
+                        <i class="bi bi-plus"></i> 添加保险
+                    </a>
+                    {% if loan.can_approve_insurance %}
+                    <a href="{% url 'loans:insurance_review' loan.pk %}" class="btn btn-sm btn-warning">
+                        <i class="bi bi-check-circle"></i> 复核
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <small class="text-muted">展品估值</small>
+                            <div class="fw-bold">¥{{ loan.exhibit.estimated_value|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <small class="text-muted">累计保额</small>
+                            <div class="fw-bold">¥{{ total_insurance|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-2 bg-light rounded">
+                            <small class="text-muted">缺口</small>
+                            <div class="fw-bold {% if insurance_gap > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ¥{{ insurance_gap|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if insurance_policies %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>保单号</th>
+                                <th>保险公司</th>
+                                <th>保额</th>
+                                <th>有效期</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for policy in insurance_policies %}
+                            <tr>
+                                <td><code>{{ policy.policy_number }}</code></td>
+                                <td>{{ policy.insurance_company }}</td>
+                                <td>¥{{ policy.amount|floatformat:2 }}</td>
+                                <td>{{ policy.start_date|date:"Y-m-d" }} ~ {{ policy.end_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if policy.status == 'approved' %}
+                                    <span class="badge bg-success">已通过</span>
+                                    {% elif policy.status == 'rejected' %}
+                                    <span class="badge bg-danger">已拒绝</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">待复核</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">暂无保险单</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-thermometer-half"></i> 环境数据
+                    {% if loan.has_environment_anomaly %}
+                    <span class="badge bg-danger ms-2">存在异常</span>
+                    {% endif %}
+                </h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#envModal">
+                    <i class="bi bi-plus"></i> 录入数据
+                </button>
+            </div>
+            <div class="card-body">
+                {% if environment_data %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>记录时间</th>
+                                <th>温度</th>
+                                <th>湿度</th>
+                                <th>位置</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="env-data-tbody">
+                            {% for env in environment_data %}
+                            <tr {% if env.is_anomaly %}class="table-danger"{% endif %}>
+                                <td>{{ env.record_time|date:"Y-m-d H:i" }}</td>
+                                <td>{{ env.temperature }}°C</td>
+                                <td>{{ env.humidity }}%</td>
+                                <td>{{ env.location|default:"-" }}</td>
+                                <td>
+                                    {% if env.is_anomaly %}
+                                    <span class="badge bg-danger">{{ env.anomaly_type }}</span>
+                                    {% else %}
+                                    <span class="badge bg-success">正常</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">暂无环境数据</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> 归还鉴定</h5>
+            </div>
+            <div class="card-body">
+                {% if loan.return_inspection %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 100px;">归还日期</td>
+                                <td>{{ loan.return_inspection.return_date|date:"Y-m-d" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">归还状况</td>
+                                <td>
+                                    {% with loan.return_inspection.get_condition_display_with_style as style %}
+                                    <span class="badge bg-{{ style.0 }}">{{ style.1 }}</span>
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">鉴定人</td>
+                                <td>{{ loan.return_inspection.conservator|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">鉴定日期</td>
+                                <td>{{ loan.return_inspection.inspection_date|date:"Y-m-d"|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="text-muted mb-1">详细描述：</p>
+                        <p>{{ loan.return_inspection.description|linebreaksbr }}</p>
+                        {% if loan.return_inspection.recommendations %}
+                        <p class="text-muted mb-1 mt-3">处理建议：</p>
+                        <p>{{ loan.return_inspection.recommendations|linebreaksbr }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <p class="text-muted mb-0">暂无归还鉴定记录</p>
+                    {% if user.profile.is_conservator and loan.can_inspect_return %}
+                    <a href="{% url 'loans:return_inspection' loan.pk %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-pencil"></i> 进行鉴定
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> 展品信息</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">{{ loan.exhibit.name }}</h6>
+                <p class="text-muted small">登记号：{{ loan.exhibit.accession_number }}</p>
+                <span class="badge bg-secondary mb-2">{{ loan.exhibit.get_level_display }}</span>
+                <table class="table table-sm table-borderless">
+                    <tr><td class="text-muted" style="width: 90px;">类别</td><td>{{ loan.exhibit.category|default:"-" }}</td></tr>
+                    <tr><td class="text-muted">年代</td><td>{{ loan.exhibit.era|default:"-" }}</td></tr>
+                    <tr><td class="text-muted">估值</td><td>¥{{ loan.exhibit.estimated_value|floatformat:2 }}</td></tr>
+                    <tr><td class="text-muted">温度范围</td><td>{{ loan.exhibit.temperature_min }}°C ~ {{ loan.exhibit.temperature_max }}°C</td></tr>
+                    <tr><td class="text-muted">湿度范围</td><td>{{ loan.exhibit.humidity_min }}% ~ {{ loan.exhibit.humidity_max }}%</td></tr>
+                </table>
+                {% if loan.exhibit.description %}
+                <p class="small">{{ loan.exhibit.description|truncatechars:100 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-building"></i> 借展方</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">{{ loan.borrower.name }}</h6>
+                <span class="badge bg-info mb-2">{{ loan.borrower.get_type_display }}</span>
+                <table class="table table-sm table-borderless">
+                    <tr><td class="text-muted" style="width: 70px;">联系人</td><td>{{ loan.borrower.contact_person }}</td></tr>
+                    <tr><td class="text-muted">电话</td><td>{{ loan.borrower.contact_phone }}</td></tr>
+                    <tr><td class="text-muted">邮箱</td><td>{{ loan.borrower.contact_email|default:"-" }}</td></tr>
+                    <tr><td class="text-muted">信用</td><td>
+                        {% for i in "12345" %}
+                        {% if forloop.counter <= loan.borrower.credit_rating %}
+                        <i class="bi bi-star-fill text-warning"></i>
+                        {% else %}
+                        <i class="bi bi-star text-muted"></i>
+                        {% endif %}
+                        {% endfor %}
+                    </td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-collection-play"></i> 操作</h5>
+            </div>
+            <div class="card-body d-grid gap-2">
+                {% if loan.can_submit and user.profile.is_collection_clerk %}
+                <form method="post" action="{% url 'loans:loan_submit' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-send"></i> 提交出借申请
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if loan.can_release and user.profile.is_collection_clerk %}
+                <form method="post" action="{% url 'loans:loan_release' loan.pk %}"
+                      onsubmit="return confirm('确定展品出库吗？出库后展品状态将变更。');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100"
+                            {% if not insurance_sufficient %}disabled title="保险额度不足，禁止出库"{% endif %}>
+                        <i class="bi bi-box-arrow-up"></i> 展品出库
+                    </button>
+                </form>
+                {% if not insurance_sufficient %}
+                <div class="alert alert-danger small">
+                    <i class="bi bi-exclamation-triangle"></i> 保险额度不足，禁止出库
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if loan.status == 'out_of_storage' and user.profile.is_transport_coordinator %}
+                <form method="post" action="{% url 'loans:loan_mark_arrived' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info w-100">
+                        <i class="bi bi-geo-alt"></i> 标记到达
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if loan.status == 'arrived' or loan.status == 'on_display' %}
+                {% if user.profile.is_collection_clerk %}
+                <form method="post" action="{% url 'loans:loan_start_return' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-arrow-return-left"></i> 开始归还
+                    </button>
+                </form>
+                {% endif %}
+                {% endif %}
+
+                {% if loan.status == 'returning' and user.profile.is_transport_coordinator %}
+                <form method="post" action="{% url 'loans:loan_mark_returned' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info w-100">
+                        <i class="bi bi-box-arrow-in-down"></i> 标记已归还
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if loan.status == 'inspection_done' and user.profile.is_collection_clerk %}
+                <form method="post" action="{% url 'loans:loan_complete' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle"></i> 完成出借流程
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 状态历史</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="p-3">
+                    {% for history in status_history %}
+                    <div class="d-flex mb-2">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                 style="width: 30px; height: 30px; font-size: 12px;">
+                                {{ forloop.counter }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="small">
+                                <strong>{{ history.get_to_status_display }}</strong>
+                                {% if history.change_reason %}
+                                <span class="text-muted">（{{ history.change_reason }}）</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small">
+                                {{ history.changed_at|date:"Y-m-d H:i" }}
+                                {% if history.changed_by %}by {{ history.changed_by }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}
+                    <div class="border-start ms-3" style="height: 20px;"></div>
+                    {% endif %}
+                    {% empty %}
+                    <p class="text-muted small mb-0">暂无历史记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="envModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">录入环境数据</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'loans:environment_add' loan.pk %}"
+                  hx-post="{% url 'loans:environment_add' loan.pk %}"
+                  hx-target="#env-data-tbody"
+                  hx-swap="afterbegin">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">记录时间</label>
+                        <input type="datetime-local" name="record_time" class="form-control" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">温度 (°C)</label>
+                            <input type="number" step="0.1" name="temperature" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">湿度 (%)</label>
+                            <input type="number" step="0.1" name="humidity" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">位置</label>
+                        <input type="text" name="location" class="form-control" placeholder="如：运输车辆、展厅等">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

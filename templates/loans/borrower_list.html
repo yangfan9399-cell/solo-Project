@@ -1,0 +1,86 @@
+{% extends "loans/base.html" %}
+
+{% block title %}借展方管理 - 博物馆出借管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-building"></i> 借展方管理</h2>
+    {% if user.profile.is_collection_clerk %}
+    <a href="#" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新增借展方
+    </a>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">机构类型</label>
+                <select name="type" class="form-select">
+                    <option value="">全部类型</option>
+                    {% for value, label in type_choices %}
+                    <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">搜索</label>
+                <input type="text" name="search" class="form-control" placeholder="输入借展方名称或联系人" value="{{ search }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 筛选
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>名称</th>
+                        <th>机构类型</th>
+                        <th>联系人</th>
+                        <th>联系电话</th>
+                        <th>信用评级</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrower in borrowers %}
+                    <tr>
+                        <td>{{ borrower.name }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ borrower.get_type_display }}</span>
+                        </td>
+                        <td>{{ borrower.contact_person }}</td>
+                        <td>{{ borrower.contact_phone }}</td>
+                        <td>
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= borrower.credit_rating %}
+                                <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                <i class="bi bi-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> 详情
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">暂无借展方记录</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

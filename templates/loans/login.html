@@ -1,0 +1,56 @@
+{% extends "loans/base.html" %}
+
+{% block title %}登录 - 博物馆出借管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <h3><i class="bi bi-museum fs-1"></i></h3>
+                <h4 class="mb-0">博物馆展品出借管理系统</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            用户名或密码错误，请重试。
+                        </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">用户名</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label">密码</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" name="password" id="id_password" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i> 登录
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted text-center small">
+                <p class="mb-1">演示账号：</p>
+                <p class="mb-0">
+                    <span class="badge bg-info">馆藏经办人</span> clerk / 123456<br>
+                    <span class="badge bg-warning">运输协调人</span> transport / 123456<br>
+                    <span class="badge bg-success">保险复核人</span> insurance / 123456<br>
+                    <span class="badge bg-danger">文保人员</span> conservator / 123456<br>
+                    <span class="badge bg-secondary">管理员</span> admin / 123456
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

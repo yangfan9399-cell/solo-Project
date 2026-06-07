@@ -1,0 +1,81 @@
+{% extends "loans/base.html" %}
+
+{% block title %}归还鉴定{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> 归还鉴定</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted">出借单编号：</span>
+                    <code>{{ loan.loan_number }}</code>
+                    {% if loan.return_inspection %}
+                    <span class="badge bg-warning ms-2">编辑</span>
+                    {% endif %}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">归还日期</label>
+                        {{ form.return_date }}
+                        {% if form.return_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.return_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">归还状况</label>
+                        {{ form.condition }}
+                        {% if form.condition.errors %}
+                        <div class="text-danger small mt-1">{{ form.condition.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">详细描述</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">照片记录</label>
+                        {{ form.photos }}
+                        {% if form.photos.errors %}
+                        <div class="text-danger small mt-1">{{ form.photos.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">处理建议</label>
+                        {{ form.recommendations }}
+                        {% if form.recommendations.errors %}
+                        <div class="text-danger small mt-1">{{ form.recommendations.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-secondary">取消</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> 提交
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (!input.classList.contains('form-check-input')) {
+            input.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

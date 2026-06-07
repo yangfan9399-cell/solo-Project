@@ -1,0 +1,137 @@
+{% extends "loans/base.html" %}
+
+{% block title %}登记运输信息{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-truck"></i> 登记运输信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted">出借单编号：</span>
+                    <code>{{ loan.loan_number }}</code>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">出发地</label>
+                                {{ form.route_from }}
+                                {% if form.route_from.errors %}
+                                <div class="text-danger small mt-1">{{ form.route_from.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">目的地</label>
+                                {{ form.route_to }}
+                                {% if form.route_to.errors %}
+                                <div class="text-danger small mt-1">{{ form.route_to.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">运输公司</label>
+                                {{ form.transport_company }}
+                                {% if form.transport_company.errors %}
+                                <div class="text-danger small mt-1">{{ form.transport_company.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">车辆编号</label>
+                                {{ form.vehicle_number }}
+                                {% if form.vehicle_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.vehicle_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">司机姓名</label>
+                                {{ form.driver_name }}
+                                {% if form.driver_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.driver_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">司机电话</label>
+                                {{ form.driver_phone }}
+                                {% if form.driver_phone.errors %}
+                                <div class="text-danger small mt-1">{{ form.driver_phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">包装方式</label>
+                        {{ form.packing_method }}
+                        {% if form.packing_method.errors %}
+                        <div class="text-danger small mt-1">{{ form.packing_method.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">预计出发时间</label>
+                                {{ form.estimated_departure }}
+                                {% if form.estimated_departure.errors %}
+                                <div class="text-danger small mt-1">{{ form.estimated_departure.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">预计到达时间</label>
+                                {{ form.estimated_arrival }}
+                                {% if form.estimated_arrival.errors %}
+                                <div class="text-danger small mt-1">{{ form.estimated_arrival.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'loans:loan_detail' loan.pk %}" class="btn btn-secondary">取消</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> 提交
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        if (!input.classList.contains('form-check-input')) {
+            input.classList.add('form-control');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+<tr {% if env.is_anomaly %}class="table-danger"{% endif %}>
+    <td>{{ env.record_time|date:"Y-m-d H:i" }}</td>
+    <td>{{ env.temperature }}°C</td>
+    <td>{{ env.humidity }}%</td>
+    <td>{{ env.location|default:"-" }}</td>
+    <td>
+        {% if env.is_anomaly %}
+        <span class="badge bg-danger">{{ env.anomaly_type }}</span>
+        {% else %}
+        <span class="badge bg-success">正常</span>
+        {% endif %}
+    </td>
+</tr>
