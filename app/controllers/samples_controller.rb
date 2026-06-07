@@ -103,7 +103,7 @@ class SamplesController < ApplicationController
   def submit_for_review
     if @sample.pattern_making? && current_user.pattern_maker?
       @sample.update!(status: :review,
-                      current_owner_id: User.reviewer.first)
+                      current_owner_id: User.reviewer.first&.id)
       flash[:notice] = "已提交评审"
     end
     redirect_to @sample

@@ -17,16 +17,18 @@ class SampleVersionsController < ApplicationController
   end
 
   def create
+    size_chart = parse_size_chart(params[:sample_version][:size_chart])
     @sample_version = @sample.sample_versions.build(sample_version_params)
     @sample_version.created_by = current_user
     @sample_version.version_number = @sample.version_count + 1
+    @sample_version.size_chart = size_chart
 
     if @sample_version.save
       @sample.increment!(:version_count)
       @sample.update!(
         status: :review,
         fabric: @sample_version.fabric,
-        size_chart: @sample_version.size_chart,
+        size_chart: size_chart,
         current_owner_id: User.reviewer.first&.id
       )
       flash[:notice] = "新版本已创建，已提交评审"
@@ -37,6 +39,18 @@ class SampleVersionsController < ApplicationController
   end
 
   private
+
+  def parse_size_chart(size_chart_param)
+    return {} if size_chart_param.blank?
+    return size_chart_param if size_chart_param.is_a?(Hash)
+
+    begin
+      parsed = JSON.parse(size_chart_param)
+      parsed.is_a?(Hash) ? parsed : {}
+    rescue JSON::ParserError
+      {}
+    end
+  end
 
   def set_sample
     @sample = Sample.find(params[:sample_id])

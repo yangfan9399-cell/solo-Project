@@ -24,11 +24,12 @@
             <%= button_to "提交评审", submit_for_review_sample_path(@sample), method: :post, class: "px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700" %>
           <% end %>
 
-          <% if current_user_role?(:pattern_maker) && @sample.review? %>
-            <%= button_to "开始改版", start_revision_sample_path(@sample), method: :post, class: "px-3 py-1.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700" %>
+          <% if current_user_role?(:pattern_maker) && @sample.revision? %>
+            <%= link_to "新增版本", new_sample_sample_version_path(@sample), class: "px-3 py-1.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700" %>
           <% end %>
 
           <% if current_user_has_role?(:reviewer, :supervisor) && @sample.review? %>
+            <%= link_to "提交评审意见", new_sample_review_path(@sample), class: "px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700" %>
             <% if @sample.supervisor_confirmation_required? && !@sample.supervisor_confirmed? %>
               <button class="px-3 py-1.5 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed" disabled title="改版超次，需主管确认后才可定版">
                 定版
