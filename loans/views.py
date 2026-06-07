@@ -158,6 +158,7 @@ def loan_create(request):
 
 
 @login_required
+@require_POST
 def loan_submit(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -316,6 +317,7 @@ def insurance_review(request, pk):
 
 
 @login_required
+@require_POST
 def loan_release(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -420,6 +422,7 @@ def return_inspection(request, pk):
 
 
 @login_required
+@require_POST
 def loan_mark_arrived(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -450,6 +453,7 @@ def loan_mark_arrived(request, pk):
 
 
 @login_required
+@require_POST
 def loan_start_display(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -472,6 +476,7 @@ def loan_start_display(request, pk):
 
 
 @login_required
+@require_POST
 def loan_start_return(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -479,7 +484,7 @@ def loan_start_return(request, pk):
         messages.error(request, '您没有权限执行此操作')
         return redirect('loans:loan_detail', pk=pk)
 
-    if loan.status != 'on_display' and loan.status != 'arrived':
+    if loan.status != 'on_display':
         messages.error(request, '当前状态不能开始归还')
         return redirect('loans:loan_detail', pk=pk)
 
@@ -497,6 +502,7 @@ def loan_start_return(request, pk):
 
 
 @login_required
+@require_POST
 def loan_mark_returned(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
@@ -520,6 +526,7 @@ def loan_mark_returned(request, pk):
 
 
 @login_required
+@require_POST
 def loan_complete(request, pk):
     loan = get_object_or_404(LoanApplication, pk=pk)
 
