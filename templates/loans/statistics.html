@@ -37,10 +37,11 @@
     <div class="col-md-3">
         <div class="card bg-warning text-white">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="card-title">异常次数</h6>
-                        <h2 class="mb-0">{{ anomaly_count }}</h2>
+                        <h6 class="card-title">异常记录</h6>
+                        <h2 class="mb-1">{{ anomaly_count }}</h2>
+                        <small class="opacity-75">异常项总数 {{ anomaly_total }} 项</small>
                     </div>
                     <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
                 </div>
@@ -139,8 +140,9 @@
 <div class="row">
     <div class="col-md-6">
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-exclamation-circle"></i> 按异常类型统计</h5>
+                <span class="badge bg-danger">{{ anomaly_total }} 项</span>
             </div>
             <div class="card-body">
                 {% if anomaly_stats %}
@@ -158,7 +160,7 @@
                         </div>
                     </div>
                     {% endfor %}
-                    <small class="text-muted">注：单条环境记录可同时触发多项异常，按单项分别计数</small>
+                    <small class="text-muted">注：单条环境记录可同时触发多项异常，按单项分别统计</small>
                 {% else %}
                     <p class="text-muted mb-0">暂无异常数据</p>
                 {% endif %}
