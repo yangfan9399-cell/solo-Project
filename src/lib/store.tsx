@@ -120,11 +120,15 @@ function appReducer(state: AppState, action: Action): AppState {
       const { id, status, guard, exceptionReason, exceptionRemark } = action.payload;
       const now = new Date().toISOString();
 
+      const actualStatus = status === 'PENDING_PRINCIPAL' && exceptionReason === 'ID_MISMATCH'
+        ? 'BLOCKED'
+        : status;
+
       const updatedRecord = state.pickupRecords.map((r) =>
         r.id === id
           ? {
               ...r,
-              status,
+              status: actualStatus,
               guardVerifiedBy: guard,
               verifiedAt: now,
               exceptionReason: exceptionReason || r.exceptionReason,
@@ -137,10 +141,10 @@ function appReducer(state: AppState, action: Action): AppState {
       let nodeDescription = '';
       let nodeType = '';
 
-      if (status === 'VERIFIED') {
+      if (actualStatus === 'VERIFIED') {
         nodeDescription = '门岗核验通过，身份信息一致';
         nodeType = 'VERIFY';
-      } else if (status === 'BLOCKED') {
+      } else if (actualStatus === 'BLOCKED') {
         nodeDescription = `门岗核验异常：${exceptionReason ? getExceptionReasonText(exceptionReason) : '未知原因'}，已阻断放行`;
         nodeType = 'BLOCK';
       } else {
@@ -164,7 +168,7 @@ function appReducer(state: AppState, action: Action): AppState {
         pickupHistoryNodes: [...state.pickupHistoryNodes, newNode],
       };
 
-      if (status === 'BLOCKED' && exceptionReason === 'ID_MISMATCH') {
+      if (actualStatus === 'BLOCKED' && exceptionReason === 'ID_MISMATCH') {
         const child = state.children.find(
           (c) => c.id === (updatedRecord.find((r: PickupRecord) => r.id === id)?.childId || '')
         );

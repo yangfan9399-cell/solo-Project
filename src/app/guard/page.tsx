@@ -530,7 +530,7 @@ export default function GuardPage() {
                   onChange={(e) => setBlockReason(e.target.value as ExceptionReason)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
-                  {(['PARENT_DISPUTE', 'ID_MISMATCH', 'NO_AUTHORIZATION', 'EXPIRED_AUTHORIZATION', 'OTHER'] as ExceptionReason[]).map((reason) => (
+                  {(['PARENT_DISPUTE', 'NO_AUTHORIZATION', 'EXPIRED_AUTHORIZATION', 'OTHER'] as ExceptionReason[]).map((reason) => (
                     <option key={reason} value={reason}>
                       {ExceptionReasonMap[reason]}
                     </option>
