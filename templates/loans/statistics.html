@@ -151,13 +151,14 @@
                             <span class="fw-bold">{{ stat.count }} 次</span>
                         </div>
                         <div class="progress" style="height: 16px;">
-                            {% if anomaly_count > 0 %}
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: {% widthratio stat.count anomaly_count 100 %}%;">
+                            {% if anomaly_total > 0 %}
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {% widthratio stat.count anomaly_total 100 %}%;">
                             </div>
                             {% endif %}
                         </div>
                     </div>
                     {% endfor %}
+                    <small class="text-muted">注：单条环境记录可同时触发多项异常，按单项分别计数</small>
                 {% else %}
                     <p class="text-muted mb-0">暂无异常数据</p>
                 {% endif %}

@@ -603,18 +603,23 @@ def statistics(request):
             'count': item['count']
         })
 
-    anomaly_stats = EnvironmentData.objects.filter(is_anomaly=True).values(
-        'anomaly_type'
-    ).annotate(
-        count=Count('id')
-    ).order_by('-count')
+    anomaly_records = EnvironmentData.objects.filter(is_anomaly=True)
+    anomaly_counts = {}
+    for record in anomaly_records:
+        types = record.anomaly_type.split('、')
+        for t in types:
+            t = t.strip()
+            if t:
+                anomaly_counts[t] = anomaly_counts.get(t, 0) + 1
 
     anomaly_list = []
-    for item in anomaly_stats:
+    for atype, count in sorted(anomaly_counts.items(), key=lambda x: -x[1]):
         anomaly_list.append({
-            'type': item['anomaly_type'],
-            'count': item['count']
+            'type': atype,
+            'count': count
         })
+
+    anomaly_total = sum(item['count'] for item in anomaly_list)
 
     completed_loans_with_dates = LoanApplication.objects.filter(
         status='completed',
@@ -648,6 +653,7 @@ def statistics(request):
         'level_stats': level_stats,
         'borrower_stats': borrower_stats,
         'anomaly_stats': anomaly_list,
+        'anomaly_total': anomaly_total,
         'period_stats': period_stats,
     }
     return render(request, 'loans/statistics.html', context)
