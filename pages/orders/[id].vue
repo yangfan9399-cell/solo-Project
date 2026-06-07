@@ -806,7 +806,7 @@ const canCreateRework = computed(() => {
   return currentRole.value === 'inspector' && (
     orderDetail.value?.order.status === 'inspection_failed' ||
     orderDetail.value?.order.status === 'rework_timeout'
-  );
+  ) && !orderDetail.value?.compensation;
 });
 
 const canCreateCompensation = computed(() => {
