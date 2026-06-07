@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ClassName {
+  CLASS_A
+  CLASS_B
+  CLASS_C
+}
+
+enum AuthorizationType {
+  PRIMARY
+  TEMPORARY
+  EMERGENCY
+}
+
+enum PickupStatus {
+  PENDING
+  VERIFIED
+  BLOCKED
+  EXCEPTION_APPROVED
+  EXCEPTION_REJECTED
+  COMPLETED
+}
+
+enum ExceptionReason {
+  ID_MISMATCH
+  PARENT_DISPUTE
+  NO_AUTHORIZATION
+  EXPIRED_AUTHORIZATION
+  OTHER
+}
+
+enum Role {
+  TEACHER
+  GUARD
+  PRINCIPAL
+}
+
+model Child {
+  id           String   @id @default(cuid())
+  name         String
+  gender       String
+  birthDate    DateTime
+  className    ClassName
+  avatarUrl    String?
+  primaryGuardianName   String
+  primaryGuardianPhone  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  authorizations Authorization[]
+  pickupRecords  PickupRecord[]
+}
+
+model Authorization {
+  id          String   @id @default(cuid())
+  childId     String
+  name        String
+  idCardNumber String
+  phone       String
+  relation    String
+  type        AuthorizationType
+  avatarUrl   String?
+  validFrom   DateTime
+  validTo     DateTime?
+  isActive    Boolean  @default(true)
+  registeredBy String
+  registeredAt DateTime @default(now())
+  remark      String?
+
+  child       Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  pickupRecords PickupRecord[]
+  historyLogs AuthorizationHistory[]
+}
+
+model PickupRecord {
+  id              String   @id @default(cuid())
+  childId         String
+  authorizationId String?
+  pickupDate      DateTime
+  pickupTime      DateTime?
+  status          PickupStatus
+  guardVerifiedBy String?
+  verifiedAt      DateTime?
+  exceptionReason ExceptionReason?
+  exceptionRemark String?
+  principalReviewBy String?
+  principalReviewAt DateTime?
+  principalDecision PickupStatus?
+  principalRemark String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  authorization   Authorization? @relation(fields: [authorizationId], references: [id], onDelete: SetNull)
+  historyNodes    PickupHistoryNode[]
+}
+
+model PickupHistoryNode {
+  id             String   @id @default(cuid())
+  pickupRecordId String
+  nodeType       String
+  operator       String
+  operatorRole   Role
+  description    String
+  timestamp      DateTime @default(now())
+
+  pickupRecord   PickupRecord @relation(fields: [pickupRecordId], references: [id], onDelete: Cascade)
+}
+
+model AuthorizationHistory {
+  id              String   @id @default(cuid())
+  authorizationId String
+  action          String
+  operator        String
+  operatorRole    Role
+  description     String
+  timestamp       DateTime @default(now())
+
+  authorization   Authorization @relation(fields: [authorizationId], references: [id], onDelete: Cascade)
+}
