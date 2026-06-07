@@ -38,13 +38,17 @@
 
                         <div class="mb-3">
                             <label class="form-label">材料类型 <span class="text-danger">*</span></label>
-                            <select name="materialTypeId" class="form-select" required>
+                            <div th:if="${#lists.isEmpty(materialTypes)}" class="alert alert-info small">
+                                当前所有材料类型均已提交或审核通过，暂无可上传的新材料
+                            </div>
+                            <select th:if="${!#lists.isEmpty(materialTypes)}" name="materialTypeId" class="form-select" required>
                                 <option value="">请选择材料类型</option>
                                 <option th:each="mt : ${materialTypes}"
                                         th:value="${mt.id}"
                                         th:text="${mt.typeName + (mt.required ? ' (必备)' : '')}">
                                 </option>
                             </select>
+                            <div class="form-text">已提交或已通过的材料类型不在列表中，待补传材料可从右侧快速选择</div>
                         </div>
 
                         <div class="mb-3">
@@ -62,7 +66,8 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a th:href="@{/cases/{id}(id=${claimCase.id})}" class="btn btn-outline-secondary">返回</a>
-                            <button type="submit" class="btn btn-primary">提交</button>
+                            <button type="submit" class="btn btn-primary"
+                                    th:disabled="${#lists.isEmpty(materialTypes)}">提交</button>
                         </div>
                     </form>
                 </div>

@@ -67,6 +67,18 @@ public class MaterialService {
             claimCaseService.addHistory(caseId, "MATERIAL_RESUPPLY", uploaderId, operatorName,
                     "补传材料：" + material.getMaterialName());
         } else {
+            boolean hasSubmitted = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+                    caseId, materialTypeId, "SUBMITTED");
+            if (hasSubmitted) {
+                throw new IllegalStateException("该类型材料已提交，请勿重复上传");
+            }
+
+            boolean hasApproved = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+                    caseId, materialTypeId, "APPROVED");
+            if (hasApproved) {
+                throw new IllegalStateException("该类型材料已审核通过，无需重复上传");
+            }
+
             material = new ClaimMaterial();
             material.setClaimCaseId(caseId);
             material.setMaterialTypeId(materialTypeId);

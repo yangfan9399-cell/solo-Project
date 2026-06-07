@@ -21,13 +21,21 @@ public class MaterialController {
     public String uploadForm(@PathVariable Long caseId, Model model) {
         ClaimCase claimCase = claimCaseService.getCaseById(caseId);
         Policy policy = claimCaseService.getPolicyByCaseId(caseId);
-        var materialTypes = materialService.getMaterialTypesByInsuranceType(
+        var allMaterialTypes = materialService.getMaterialTypesByInsuranceType(
                 policy != null ? policy.getInsuranceType() : null);
         var missingMaterials = materialService.getMissingMaterials(caseId);
         var allMaterials = materialService.getMaterialsByCaseId(caseId);
 
+        java.util.Set<Long> excludedTypeIds = allMaterials.stream()
+                .filter(m -> "SUBMITTED".equals(m.getStatus()) || "APPROVED".equals(m.getStatus()))
+                .map(ClaimMaterial::getMaterialTypeId)
+                .collect(java.util.stream.Collectors.toSet());
+        var availableTypes = allMaterialTypes.stream()
+                .filter(mt -> !excludedTypeIds.contains(mt.getId()))
+                .collect(java.util.stream.Collectors.toList());
+
         model.addAttribute("claimCase", claimCase);
-        model.addAttribute("materialTypes", materialTypes);
+        model.addAttribute("materialTypes", availableTypes);
         model.addAttribute("missingMaterials", missingMaterials);
         model.addAttribute("allMaterials", allMaterials);
         return "materials/upload";
@@ -42,10 +50,13 @@ public class MaterialController {
             RedirectAttributes redirectAttributes) {
 
         SysUser uploader = sysUserService.getDefaultCustomer();
-        materialService.uploadMaterial(caseId, materialTypeId, materialName, fileName,
-                "/files/" + caseId + "/" + fileName, uploader.getId());
-
-        redirectAttributes.addFlashAttribute("message", "材料上传成功");
+        try {
+            materialService.uploadMaterial(caseId, materialTypeId, materialName, fileName,
+                    "/files/" + caseId + "/" + fileName, uploader.getId());
+            redirectAttributes.addFlashAttribute("message", "材料上传成功");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("warning", e.getMessage());
+        }
         return "redirect:/cases/" + caseId;
     }
 
