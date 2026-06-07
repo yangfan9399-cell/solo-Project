@@ -363,8 +363,11 @@
                             <input type="hidden" name="caseId" th:value="${claimCase.id}">
                             <div class="mb-2">
                                 <label class="form-label small">选择缺失材料</label>
-                                <div class="small" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px;">
-                                    <div th:each="mt : ${materialTypes}" class="form-check">
+                                <div th:if="${#lists.isEmpty(availableSupplementTypes)}" class="small text-muted">
+                                    所有材料类型均已提交或通过，暂无可新增的缺失材料
+                                </div>
+                                <div th:unless="${#lists.isEmpty(availableSupplementTypes)}" class="small" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px;">
+                                    <div th:each="mt : ${availableSupplementTypes}" class="form-check">
                                         <input type="checkbox" name="materialTypeIds" th:value="${mt.id}"
                                                class="form-check-input" th:id="'mt_' + ${mt.id}">
                                         <label class="form-check-label small" th:for="'mt_' + ${mt.id}"
@@ -372,13 +375,14 @@
                                         </label>
                                     </div>
                                 </div>
-                                <div class="form-text">勾选需要客户补传的材料类型</div>
+                                <div class="form-text">勾选需要客户补传的材料类型（已提交/已通过/已在缺项的不在列表中）</div>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label small">备注说明</label>
                                 <textarea name="remark" class="form-control form-control-sm" rows="2" placeholder="可选：补充说明要求"></textarea>
                             </div>
-                            <button type="submit" class="btn btn-warning btn-sm w-100">发送补正通知</button>
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
+                                    th:disabled="${#lists.isEmpty(availableSupplementTypes)}">发送补正通知</button>
                         </form>
                     </div>
                 </div>

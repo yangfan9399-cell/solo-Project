@@ -46,7 +46,7 @@ public class ClaimCaseController {
         List<ClaimHistory> history = claimCaseService.getHistory(id);
         ClaimReview latestReview = reviewService.getLatestReview(id);
         List<ClaimCase> relatedCases = claimCaseService.getRelatedCases(id);
-        List<MaterialType> materialTypes = materialService.getMaterialTypesByInsuranceType(
+        List<MaterialType> allMaterialTypes = materialService.getMaterialTypesByInsuranceType(
                 policy != null ? policy.getInsuranceType() : null);
 
         java.util.List<ClaimMaterial> missingMaterials = materials.stream()
@@ -62,6 +62,16 @@ public class ClaimCaseController {
                 .filter(m -> "REJECTED".equals(m.getStatus()))
                 .collect(java.util.stream.Collectors.toList());
 
+        java.util.Set<Long> occupiedTypeIds = materials.stream()
+                .filter(m -> "MISSING".equals(m.getStatus())
+                        || "SUBMITTED".equals(m.getStatus())
+                        || "APPROVED".equals(m.getStatus()))
+                .map(ClaimMaterial::getMaterialTypeId)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.List<MaterialType> availableSupplementTypes = allMaterialTypes.stream()
+                .filter(mt -> !occupiedTypeIds.contains(mt.getId()))
+                .collect(java.util.stream.Collectors.toList());
+
         model.addAttribute("claimCase", claimCase);
         model.addAttribute("accidentInfo", accidentInfo);
         model.addAttribute("policy", policy);
@@ -73,7 +83,8 @@ public class ClaimCaseController {
         model.addAttribute("history", history);
         model.addAttribute("latestReview", latestReview);
         model.addAttribute("relatedCases", relatedCases);
-        model.addAttribute("materialTypes", materialTypes);
+        model.addAttribute("materialTypes", allMaterialTypes);
+        model.addAttribute("availableSupplementTypes", availableSupplementTypes);
         return "cases/detail";
     }
 

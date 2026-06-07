@@ -62,10 +62,14 @@ public class MaterialController {
         }
 
         SysUser reviewer = sysUserService.getDefaultReviewer();
-        materialService.requestMaterialSupplement(caseId, materialTypeIds, remark,
+        int addedCount = materialService.requestMaterialSupplement(caseId, materialTypeIds, remark,
                 reviewer.getId(), reviewer.getRealName());
 
-        redirectAttributes.addFlashAttribute("message", "已发送材料补正通知，共 " + materialTypeIds.size() + " 项材料待补传");
+        if (addedCount == 0) {
+            redirectAttributes.addFlashAttribute("warning", "所选材料均已存在或已提交，未新增待补传项");
+        } else {
+            redirectAttributes.addFlashAttribute("message", "已发送材料补正通知，共 " + addedCount + " 项材料待补传");
+        }
         return "redirect:/cases/" + caseId;
     }
 }

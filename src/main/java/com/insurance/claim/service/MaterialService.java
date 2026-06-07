@@ -107,7 +107,7 @@ public class MaterialService {
     }
 
     @Transactional
-    public void requestMaterialSupplement(Long caseId, List<Long> materialTypeIds, String remark,
+    public int requestMaterialSupplement(Long caseId, List<Long> materialTypeIds, String remark,
                                           Long reviewerId, String reviewerName) {
         ClaimCase claimCase = claimCaseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("案件不存在"));
@@ -117,9 +117,17 @@ public class MaterialService {
             MaterialType materialType = materialTypeRepository.findById(typeId).orElse(null);
             if (materialType == null) continue;
 
-            boolean exists = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+            boolean hasMissing = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
                     caseId, typeId, "MISSING");
-            if (exists) continue;
+            if (hasMissing) continue;
+
+            boolean hasSubmitted = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+                    caseId, typeId, "SUBMITTED");
+            if (hasSubmitted) continue;
+
+            boolean hasApproved = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+                    caseId, typeId, "APPROVED");
+            if (hasApproved) continue;
 
             ClaimMaterial missingMaterial = new ClaimMaterial();
             missingMaterial.setClaimCaseId(caseId);
@@ -133,6 +141,10 @@ public class MaterialService {
             missingNames.add(materialType.getTypeName());
         }
 
+        if (missingNames.isEmpty()) {
+            return 0;
+        }
+
         claimCase.setStatus("MATERIAL_MISSING");
         claimCaseRepository.save(claimCase);
 
@@ -142,6 +154,8 @@ public class MaterialService {
             historyRemark += "；备注：" + remark;
         }
         claimCaseService.addHistory(caseId, "MATERIAL_REQUEST", reviewerId, reviewerName, historyRemark);
+
+        return missingNames.size();
     }
 
     public long countMissingMaterials(Long caseId) {
