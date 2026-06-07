@@ -190,37 +190,101 @@
                     <a th:href="@{/materials/upload/{caseId}(caseId=${claimCase.id})}" class="btn btn-sm btn-primary">上传材料</a>
                 </div>
                 <div class="card-body">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                        <tr>
-                            <th>材料名称</th>
-                            <th>状态</th>
-                            <th>上传时间</th>
-                            <th>审核意见</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="material : ${materials}">
-                            <td th:text="${material.materialName}"></td>
-                            <td>
-                                <span class="badge" th:class="${material.status == 'SUBMITTED'} ? 'bg-info' :
-                                                              (${material.status == 'APPROVED'} ? 'bg-success' :
-                                                              (${material.status == 'REJECTED'} ? 'bg-danger' :
-                                                              (${material.status == 'MISSING'} ? 'bg-warning text-dark' : 'bg-secondary')))"
-                                      th:text="${material.status == 'SUBMITTED'} ? '已提交' :
-                                               (${material.status == 'APPROVED'} ? '审核通过' :
-                                               (${material.status == 'REJECTED'} ? '审核不通过' :
-                                               (${material.status == 'MISSING'} ? '缺失' : material.status)))}">
-                                </span>
-                            </td>
-                            <td th:text="${#temporals.format(material.uploadTime, 'yyyy-MM-dd HH:mm')}"></td>
-                            <td th:text="${material.reviewRemark}"></td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(materials)}">
-                            <td colspan="4" class="text-center text-muted py-3">暂无上传材料</td>
-                        </tr>
-                        </tbody>
-                    </table>
+                    <div th:if="${!#lists.isEmpty(missingMaterials)}" class="mb-4">
+                        <h6 class="text-warning"><i class="bi bi-exclamation-triangle"></i> ⚠️ 待补传（缺失）</h6>
+                        <table class="table table-sm table-warning">
+                            <thead>
+                            <tr>
+                                <th>材料名称</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="material : ${missingMaterials}">
+                                <td th:text="${material.materialName}"></td>
+                                <td><span class="badge bg-warning text-dark">缺失</span></td>
+                                <td>
+                                    <a th:href="@{/materials/upload/{caseId}(caseId=${claimCase.id})}"
+                                       class="btn btn-sm btn-outline-warning">补传</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(submittedMaterials)}" class="mb-4">
+                        <h6 class="text-info">📤 待审核（已提交/补传）</h6>
+                        <table class="table table-sm table-info">
+                            <thead>
+                            <tr>
+                                <th>材料名称</th>
+                                <th>文件名</th>
+                                <th>上传时间</th>
+                                <th>状态</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="material : ${submittedMaterials}">
+                                <td th:text="${material.materialName}"></td>
+                                <td th:text="${material.fileName}"></td>
+                                <td th:text="${#temporals.format(material.uploadTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td><span class="badge bg-info">已提交</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(approvedMaterials)}" class="mb-4">
+                        <h6 class="text-success">✅ 已通过</h6>
+                        <table class="table table-sm table-success">
+                            <thead>
+                            <tr>
+                                <th>材料名称</th>
+                                <th>文件名</th>
+                                <th>审核时间</th>
+                                <th>审核意见</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="material : ${approvedMaterials}">
+                                <td th:text="${material.materialName}"></td>
+                                <td th:text="${material.fileName}"></td>
+                                <td th:text="${#temporals.format(material.uploadTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${material.reviewRemark} ?: '—'"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(rejectedMaterials)}" class="mb-2">
+                        <h6 class="text-danger">❌ 不通过</h6>
+                        <table class="table table-sm table-danger">
+                            <thead>
+                            <tr>
+                                <th>材料名称</th>
+                                <th>文件名</th>
+                                <th>审核意见</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="material : ${rejectedMaterials}">
+                                <td th:text="${material.materialName}"></td>
+                                <td th:text="${material.fileName}"></td>
+                                <td th:text="${material.reviewRemark}"></td>
+                                <td>
+                                    <a th:href="@{/materials/upload/{caseId}(caseId=${claimCase.id})}"
+                                       class="btn btn-sm btn-outline-danger">重新上传</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(materials)}" class="text-center text-muted py-4">
+                        暂无材料记录
+                    </div>
                 </div>
             </div>
 
@@ -298,10 +362,23 @@
                         <form th:action="@{/materials/request-supplement}" method="post">
                             <input type="hidden" name="caseId" th:value="${claimCase.id}">
                             <div class="mb-2">
-                                <label class="form-label small">缺失材料说明</label>
-                                <textarea name="missingMaterials" class="form-control form-control-sm" rows="2" placeholder="请输入缺失的材料..."></textarea>
+                                <label class="form-label small">选择缺失材料</label>
+                                <div class="small" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px;">
+                                    <div th:each="mt : ${materialTypes}" class="form-check">
+                                        <input type="checkbox" name="materialTypeIds" th:value="${mt.id}"
+                                               class="form-check-input" th:id="'mt_' + ${mt.id}">
+                                        <label class="form-check-label small" th:for="'mt_' + ${mt.id}"
+                                               th:text="${mt.typeName + (mt.required ? ' *' : '')}">
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-text">勾选需要客户补传的材料类型</div>
                             </div>
-                            <button type="submit" class="btn btn-warning btn-sm w-10">发送通知</button>
+                            <div class="mb-2">
+                                <label class="form-label small">备注说明</label>
+                                <textarea name="remark" class="form-control form-control-sm" rows="2" placeholder="可选：补充说明要求"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-sm w-100">发送补正通知</button>
                         </form>
                     </div>
                 </div>
@@ -315,13 +392,15 @@
                             <div class="fw-semibold" th:text="${h.operationType == 'REGISTER'} ? '案件登记' :
                                                         (${h.operationType == 'SUBMIT_REVIEW'} ? '提交核赔' :
                                                         (${h.operationType == 'MATERIAL_UPLOAD'} ? '材料上传' :
+                                                        (${h.operationType == 'MATERIAL_RESUPPLY'} ? '材料补传' :
+                                                        (${h.operationType == 'MATERIAL_RESUPPLY_COMPLETE'} ? '补传完成' :
+                                                        (${h.operationType == 'MATERIAL_RESUPPLY_PARTIAL'} ? '部分补传' :
                                                         (${h.operationType == 'MATERIAL_REQUEST'} ? '材料补正通知' :
-                                                        (${h.operationType == 'MATERIAL_RESUPPLY'} ? '材料补正完成' :
                                                         (${h.operationType == 'APPROVE'} ? '核赔通过' :
                                                         (${h.operationType == 'REJECT'} ? '拒赔' :
                                                         (${h.operationType == 'RETURN'} ? '退回案件' :
                                                         (${h.operationType == 'FREEZE'} ? '案件冻结' :
-                                                        (${h.operationType == 'UNFREEZE'} ? '解除冻结' : h.operationType)))))))))}">
+                                                        (${h.operationType == 'UNFREEZE'} ? '解除冻结' : h.operationType)))))))))))}">
                             </div>
                             <div class="small text-muted">
                                 <span th:text="${h.operatorName}"></span> ·

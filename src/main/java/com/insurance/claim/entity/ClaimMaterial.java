@@ -39,9 +39,13 @@ public class ClaimMaterial {
     @Column(name = "upload_time", nullable = false)
     private LocalDateTime uploadTime;
 
+    @Column(name = "is_supplement", nullable = false)
+    private Boolean isSupplement;
+
     @PrePersist
     protected void onCreate() {
         uploadTime = LocalDateTime.now();
         if (status == null) status = "SUBMITTED";
+        if (isSupplement == null) isSupplement = false;
     }
 }

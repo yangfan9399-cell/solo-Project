@@ -23,9 +23,13 @@ public class MaterialController {
         Policy policy = claimCaseService.getPolicyByCaseId(caseId);
         var materialTypes = materialService.getMaterialTypesByInsuranceType(
                 policy != null ? policy.getInsuranceType() : null);
+        var missingMaterials = materialService.getMissingMaterials(caseId);
+        var allMaterials = materialService.getMaterialsByCaseId(caseId);
 
         model.addAttribute("claimCase", claimCase);
         model.addAttribute("materialTypes", materialTypes);
+        model.addAttribute("missingMaterials", missingMaterials);
+        model.addAttribute("allMaterials", allMaterials);
         return "materials/upload";
     }
 
@@ -48,14 +52,20 @@ public class MaterialController {
     @PostMapping("/request-supplement")
     public String requestSupplement(
             @RequestParam Long caseId,
-            @RequestParam String missingMaterials,
+            @RequestParam(required = false) List<Long> materialTypeIds,
+            @RequestParam(required = false) String remark,
             RedirectAttributes redirectAttributes) {
 
+        if (materialTypeIds == null || materialTypeIds.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "请至少选择一项缺失材料");
+            return "redirect:/cases/" + caseId;
+        }
+
         SysUser reviewer = sysUserService.getDefaultReviewer();
-        materialService.requestMaterialSupplement(caseId, missingMaterials,
+        materialService.requestMaterialSupplement(caseId, materialTypeIds, remark,
                 reviewer.getId(), reviewer.getRealName());
 
-        redirectAttributes.addFlashAttribute("message", "已发送材料补正通知");
+        redirectAttributes.addFlashAttribute("message", "已发送材料补正通知，共 " + materialTypeIds.size() + " 项材料待补传");
         return "redirect:/cases/" + caseId;
     }
 }

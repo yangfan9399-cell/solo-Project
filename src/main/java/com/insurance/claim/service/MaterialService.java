@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,6 +32,10 @@ public class MaterialService {
         return materialRepository.findByClaimCaseIdOrderByUploadTimeDesc(caseId);
     }
 
+    public List<ClaimMaterial> getMissingMaterials(Long caseId) {
+        return materialRepository.findByClaimCaseIdAndStatus(caseId, "MISSING");
+    }
+
     @Transactional
     public ClaimMaterial uploadMaterial(Long caseId, Long materialTypeId, String materialName,
                                          String fileName, String filePath, Long uploaderId) {
@@ -39,30 +45,56 @@ public class MaterialService {
         MaterialType materialType = materialTypeRepository.findById(materialTypeId)
                 .orElseThrow(() -> new RuntimeException("材料类型不存在"));
 
-        ClaimMaterial material = new ClaimMaterial();
-        material.setClaimCaseId(caseId);
-        material.setMaterialTypeId(materialTypeId);
-        material.setMaterialName(materialName != null ? materialName : materialType.getTypeName());
-        material.setFileName(fileName);
-        material.setFilePath(filePath);
-        material.setStatus("SUBMITTED");
-        material.setUploadedBy(uploaderId);
-
-        ClaimMaterial saved = materialRepository.save(material);
-
         String operatorName = sysUserRepository.findById(uploaderId)
                 .map(SysUser::getRealName).orElse("客户");
-        claimCaseService.addHistory(caseId, "MATERIAL_UPLOAD", uploaderId, operatorName,
-                "上传材料：" + material.getMaterialName());
 
-        if ("MATERIAL_MISSING".equals(claimCase.getStatus())) {
-            claimCase.setStatus("PENDING_REVIEW");
-            claimCaseRepository.save(claimCase);
+        ClaimMaterial material = materialRepository
+                .findFirstByClaimCaseIdAndMaterialTypeIdAndStatus(caseId, materialTypeId, "MISSING")
+                .orElse(null);
+
+        boolean isResupply = false;
+        if (material != null) {
+            isResupply = true;
+            material.setMaterialName(materialName != null ? materialName : materialType.getTypeName());
+            material.setFileName(fileName);
+            material.setFilePath(filePath);
+            material.setStatus("SUBMITTED");
+            material.setUploadedBy(uploaderId);
+            material.setUploadTime(LocalDateTime.now());
+            material.setReviewRemark(null);
+            materialRepository.save(material);
+
             claimCaseService.addHistory(caseId, "MATERIAL_RESUPPLY", uploaderId, operatorName,
-                    "材料补正完成，重新提交核赔");
+                    "补传材料：" + material.getMaterialName());
+        } else {
+            material = new ClaimMaterial();
+            material.setClaimCaseId(caseId);
+            material.setMaterialTypeId(materialTypeId);
+            material.setMaterialName(materialName != null ? materialName : materialType.getTypeName());
+            material.setFileName(fileName);
+            material.setFilePath(filePath);
+            material.setStatus("SUBMITTED");
+            material.setUploadedBy(uploaderId);
+            materialRepository.save(material);
+
+            claimCaseService.addHistory(caseId, "MATERIAL_UPLOAD", uploaderId, operatorName,
+                    "上传材料：" + material.getMaterialName());
         }
 
-        return saved;
+        if ("MATERIAL_MISSING".equals(claimCase.getStatus())) {
+            long remainingMissing = materialRepository.findByClaimCaseIdAndStatus(caseId, "MISSING").size();
+            if (remainingMissing == 0) {
+                claimCase.setStatus("PENDING_REVIEW");
+                claimCaseRepository.save(claimCase);
+                claimCaseService.addHistory(caseId, "MATERIAL_RESUPPLY_COMPLETE", uploaderId, operatorName,
+                        "全部材料补正完成，重新提交核赔");
+            } else if (isResupply) {
+                claimCaseService.addHistory(caseId, "MATERIAL_RESUPPLY_PARTIAL", uploaderId, operatorName,
+                        "部分材料补正完成，仍缺 " + remainingMissing + " 项材料");
+            }
+        }
+
+        return material;
     }
 
     @Transactional
@@ -75,14 +107,41 @@ public class MaterialService {
     }
 
     @Transactional
-    public void requestMaterialSupplement(Long caseId, String missingMaterials, Long reviewerId, String reviewerName) {
+    public void requestMaterialSupplement(Long caseId, List<Long> materialTypeIds, String remark,
+                                          Long reviewerId, String reviewerName) {
         ClaimCase claimCase = claimCaseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("案件不存在"));
+
+        List<String> missingNames = new ArrayList<>();
+        for (Long typeId : materialTypeIds) {
+            MaterialType materialType = materialTypeRepository.findById(typeId).orElse(null);
+            if (materialType == null) continue;
+
+            boolean exists = materialRepository.existsByClaimCaseIdAndMaterialTypeIdAndStatus(
+                    caseId, typeId, "MISSING");
+            if (exists) continue;
+
+            ClaimMaterial missingMaterial = new ClaimMaterial();
+            missingMaterial.setClaimCaseId(caseId);
+            missingMaterial.setMaterialTypeId(typeId);
+            missingMaterial.setMaterialName(materialType.getTypeName());
+            missingMaterial.setStatus("MISSING");
+            missingMaterial.setUploadedBy(reviewerId);
+            missingMaterial.setIsSupplement(true);
+            materialRepository.save(missingMaterial);
+
+            missingNames.add(materialType.getTypeName());
+        }
+
         claimCase.setStatus("MATERIAL_MISSING");
         claimCaseRepository.save(claimCase);
 
-        claimCaseService.addHistory(caseId, "MATERIAL_REQUEST", reviewerId, reviewerName,
-                "材料补正通知，缺失材料：" + missingMaterials);
+        String missingStr = String.join("、", missingNames);
+        String historyRemark = "材料补正通知，缺失材料：" + missingStr;
+        if (remark != null && !remark.isEmpty()) {
+            historyRemark += "；备注：" + remark;
+        }
+        claimCaseService.addHistory(caseId, "MATERIAL_REQUEST", reviewerId, reviewerName, historyRemark);
     }
 
     public long countMissingMaterials(Long caseId) {

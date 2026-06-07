@@ -77,8 +77,8 @@ public class StatisticsService {
 
     public Map<String, Long> getMissingMaterialStats() {
         Map<String, Long> stats = new LinkedHashMap<>();
-        List<ClaimMaterial> missingMaterials = materialRepository.findAll().stream()
-                .filter(m -> "MISSING".equals(m.getStatus()))
+        List<ClaimMaterial> supplementMaterials = materialRepository.findAll().stream()
+                .filter(m -> Boolean.TRUE.equals(m.getIsSupplement()))
                 .collect(Collectors.toList());
 
         Map<Long, String> materialTypeMap = new HashMap<>();
@@ -86,7 +86,7 @@ public class StatisticsService {
             materialTypeMap.put(mt.getId(), mt.getTypeName());
         }
 
-        Map<String, Long> grouped = missingMaterials.stream()
+        Map<String, Long> grouped = supplementMaterials.stream()
                 .collect(Collectors.groupingBy(
                         m -> materialTypeMap.getOrDefault(m.getMaterialTypeId(), "其他"),
                         Collectors.counting()

@@ -8,4 +8,8 @@ public interface ClaimMaterialRepository extends JpaRepository<ClaimMaterial, Lo
     List<ClaimMaterial> findByClaimCaseIdOrderByUploadTimeDesc(Long claimCaseId);
 
     List<ClaimMaterial> findByClaimCaseIdAndStatus(Long claimCaseId, String status);
+
+    Optional<ClaimMaterial> findFirstByClaimCaseIdAndMaterialTypeIdAndStatus(Long claimCaseId, Long materialTypeId, String status);
+
+    boolean existsByClaimCaseIdAndMaterialTypeIdAndStatus(Long claimCaseId, Long materialTypeId, String status);
 }

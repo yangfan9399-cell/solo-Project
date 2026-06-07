@@ -80,7 +80,8 @@ CREATE TABLE claim_material (
     status VARCHAR(20) NOT NULL DEFAULT 'SUBMITTED',
     review_remark VARCHAR(200),
     uploaded_by BIGINT REFERENCES sys_user(id),
-    upload_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    upload_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_supplement BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- 核赔记录表

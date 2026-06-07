@@ -60,10 +60,12 @@ VALUES ('CL202511200002', 2, '李华', '13800138002', '2025-11-15', '疾病医�
 INSERT INTO accident_info (claim_case_id, diagnosis_result, hospital_name, treatment_cost)
 VALUES (2, '甲状腺乳头状癌', '上海肿瘤医院', 85000.00);
 
-INSERT INTO claim_material (claim_case_id, material_type_id, material_name, file_path, file_name, status, uploaded_by, upload_time)
-VALUES (2, 1, '身份证扫描件', '/files/2/id_card.jpg', '身份证扫描件.jpg', 'SUBMITTED', 3, '2025-11-20 14:05:00'),
-       (2, 2, '保单凭证', '/files/2/policy.pdf', '保单凭证.pdf', 'SUBMITTED', 3, '2025-11-20 14:06:00'),
-       (2, 4, '病理报告', '/files/2/pathology.pdf', '病理报告.pdf', 'SUBMITTED', 3, '2025-11-20 14:07:00');
+INSERT INTO claim_material (claim_case_id, material_type_id, material_name, file_path, file_name, status, review_remark, uploaded_by, upload_time, is_supplement)
+VALUES (2, 1, '身份证扫描件', '/files/2/id_card.jpg', '身份证扫描件.jpg', 'APPROVED', '材料有效', 3, '2025-11-20 14:05:00', false),
+       (2, 2, '保单凭证', '/files/2/policy.pdf', '保单凭证.pdf', 'APPROVED', '材料有效', 3, '2025-11-20 14:06:00', false),
+       (2, 4, '病理报告', '/files/2/pathology.pdf', '病理报告.pdf', 'SUBMITTED', NULL, 3, '2025-11-20 14:07:00', false),
+       (2, 5, '医疗费用发票', NULL, NULL, 'MISSING', NULL, 2, '2025-11-22 10:30:00', true),
+       (2, 6, '出院小结', NULL, NULL, 'MISSING', NULL, 2, '2025-11-22 10:30:00', true);
 
 INSERT INTO claim_history (claim_case_id, operation_type, operator_id, operator_name, remark, operation_time)
 VALUES (2, 'REGISTER', 1, '张经理', '案件登记完成，案件号：CL202511200002', '2025-11-20 14:00:00'),
@@ -71,7 +73,7 @@ VALUES (2, 'REGISTER', 1, '张经理', '案件登记完成，案件号：CL20251
        (2, 'MATERIAL_UPLOAD', 3, '王客户', '上传材料：保单凭证', '2025-11-20 14:06:00'),
        (2, 'MATERIAL_UPLOAD', 3, '王客户', '上传材料：病理报告', '2025-11-20 14:07:00'),
        (2, 'SUBMIT_REVIEW', 1, '张经理', '提交核赔', '2025-11-21 09:00:00'),
-       (2, 'MATERIAL_REQUEST', 2, '李核赔', '材料补正通知，缺失材料：诊断证明书原件、住院费用明细清单、医保结算单', '2025-11-22 10:30:00');
+       (2, 'MATERIAL_REQUEST', 2, '李核赔', '材料补正通知，缺失材料：医疗费用发票、出院小结；备注：请提供完整的住院费用明细及医保结算单', '2025-11-22 10:30:00');
 
 -- 案件3：保单责任不符（财产险 - 已拒赔）
 INSERT INTO claim_case (case_no, policy_id, reporter_name, reporter_phone, accident_date, accident_type, accident_description, claim_amount, status, is_duplicate, frozen, handler_id, reviewer_id, register_time)
