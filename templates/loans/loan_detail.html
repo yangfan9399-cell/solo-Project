@@ -388,7 +388,16 @@
                 </form>
                 {% endif %}
 
-                {% if loan.status == 'arrived' or loan.status == 'on_display' %}
+                {% if loan.can_start_display and user.profile.is_collection_clerk %}
+                <form method="post" action="{% url 'loans:loan_start_display' loan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-play-circle"></i> 开始展出
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if loan.status == 'on_display' %}
                 {% if user.profile.is_collection_clerk %}
                 <form method="post" action="{% url 'loans:loan_start_return' loan.pk %}">
                     {% csrf_token %}

@@ -139,7 +139,7 @@ def loan_detail(request, pk):
 def loan_create(request):
     if not request.user.profile.is_collection_clerk():
         messages.error(request, '您没有权限创建出借申请')
-        return redirect('loan_list')
+        return redirect('loans:loan_list')
 
     if request.method == 'POST':
         form = LoanApplicationForm(request.POST)
@@ -149,7 +149,7 @@ def loan_create(request):
             loan.save()
             _add_status_history(loan, '', 'draft', request.user, '创建出借申请')
             messages.success(request, '出借申请创建成功')
-            return redirect('loan_detail', pk=loan.pk)
+            return redirect('loans:loan_detail', pk=loan.pk)
     else:
         form = LoanApplicationForm()
 
@@ -163,11 +163,11 @@ def loan_submit(request, pk):
 
     if not request.user.profile.is_collection_clerk():
         messages.error(request, '您没有权限提交出借申请')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.can_submit():
         messages.error(request, '当前状态不能提交')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'submitted'
@@ -180,7 +180,7 @@ def loan_submit(request, pk):
     if request.headers.get('HX-Request'):
         return render(request, 'loans/partials/loan_status_badge.html', {'loan': loan})
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required
@@ -189,11 +189,11 @@ def transport_register(request, pk):
 
     if not request.user.profile.is_transport_coordinator():
         messages.error(request, '您没有权限登记运输信息')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.can_register_transport():
         messages.error(request, '当前状态不能登记运输信息')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if request.method == 'POST':
         form = TransportRecordForm(request.POST)
@@ -209,7 +209,7 @@ def transport_register(request, pk):
             _add_status_history(loan, old_status, 'transport_registered', request.user, '运输信息已登记')
 
             messages.success(request, '运输信息登记成功')
-            return redirect('loan_detail', pk=pk)
+            return redirect('loans:loan_detail', pk=pk)
     else:
         form = TransportRecordForm()
 
@@ -223,7 +223,7 @@ def insurance_add(request, pk):
 
     if not request.user.profile.is_insurance_reviewer():
         messages.error(request, '您没有权限添加保险单')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if request.method == 'POST':
         form = InsurancePolicyForm(request.POST)
@@ -240,7 +240,7 @@ def insurance_add(request, pk):
                 _add_status_history(loan, old_status, 'insurance_pending', request.user, '已添加保险单，待复核')
 
             messages.success(request, '保险单添加成功')
-            return redirect('loan_detail', pk=pk)
+            return redirect('loans:loan_detail', pk=pk)
     else:
         form = InsurancePolicyForm()
 
@@ -254,11 +254,11 @@ def insurance_review(request, pk):
 
     if not request.user.profile.is_insurance_reviewer():
         messages.error(request, '您没有权限复核保险')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.can_approve_insurance():
         messages.error(request, '当前状态不能复核保险')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     total_insurance = loan.get_total_insurance_amount()
     is_sufficient = loan.is_insurance_sufficient()
@@ -269,7 +269,7 @@ def insurance_review(request, pk):
         if action == 'approve':
             if not is_sufficient:
                 messages.error(request, '保险额度不足，不能通过复核！')
-                return redirect('loan_detail', pk=pk)
+                return redirect('loans:loan_detail', pk=pk)
 
             old_status = loan.status
             loan.status = 'insurance_approved'
@@ -301,7 +301,7 @@ def insurance_review(request, pk):
             _add_status_history(loan, old_status, 'insurance_rejected', request.user, '保险复核未通过')
             messages.warning(request, '保险复核未通过')
 
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
     else:
         form = InsuranceReviewForm()
 
@@ -321,15 +321,15 @@ def loan_release(request, pk):
 
     if not request.user.profile.is_collection_clerk():
         messages.error(request, '您没有权限执行出库操作')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.can_release():
         messages.error(request, '当前状态不能出库')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.is_insurance_sufficient():
         messages.error(request, '保险额度不足，禁止出库！')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'out_of_storage'
@@ -342,7 +342,7 @@ def loan_release(request, pk):
     _add_status_history(loan, old_status, 'out_of_storage', request.user, '展品已出库')
     messages.success(request, '展品已出库')
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required
@@ -366,7 +366,7 @@ def environment_add(request, pk):
             if request.headers.get('HX-Request'):
                 return render(request, 'loans/partials/environment_item.html', {'env': env_data})
 
-            return redirect('loan_detail', pk=pk)
+            return redirect('loans:loan_detail', pk=pk)
     else:
         form = EnvironmentDataForm()
 
@@ -380,11 +380,11 @@ def return_inspection(request, pk):
 
     if not request.user.profile.is_conservator():
         messages.error(request, '您没有权限进行归还鉴定')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if not loan.can_inspect_return():
         messages.error(request, '当前状态不能进行归还鉴定')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     existing = hasattr(loan, 'return_inspection')
 
@@ -408,7 +408,7 @@ def return_inspection(request, pk):
             _add_status_history(loan, old_status, 'inspection_done', request.user, '归还鉴定完成')
 
             messages.success(request, '归还鉴定完成')
-            return redirect('loan_detail', pk=pk)
+            return redirect('loans:loan_detail', pk=pk)
     else:
         if existing:
             form = ReturnInspectionForm(instance=loan.return_inspection)
@@ -425,11 +425,11 @@ def loan_mark_arrived(request, pk):
 
     if not request.user.profile.is_transport_coordinator():
         messages.error(request, '您没有权限执行此操作')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if loan.status not in ['out_of_storage', 'in_transit']:
         messages.error(request, '当前状态不能标记到达')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'arrived'
@@ -446,7 +446,29 @@ def loan_mark_arrived(request, pk):
     _add_status_history(loan, old_status, 'arrived', request.user, '展品已到达')
     messages.success(request, '已标记展品到达')
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
+
+
+@login_required
+def loan_start_display(request, pk):
+    loan = get_object_or_404(LoanApplication, pk=pk)
+
+    if not request.user.profile.is_collection_clerk():
+        messages.error(request, '您没有权限执行此操作')
+        return redirect('loans:loan_detail', pk=pk)
+
+    if not loan.can_start_display():
+        messages.error(request, '当前状态不能开始展出')
+        return redirect('loans:loan_detail', pk=pk)
+
+    old_status = loan.status
+    loan.status = 'on_display'
+    loan.save()
+
+    _add_status_history(loan, old_status, 'on_display', request.user, '展品开始展出')
+    messages.success(request, '已开始展出')
+
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required
@@ -455,11 +477,11 @@ def loan_start_return(request, pk):
 
     if not request.user.profile.is_collection_clerk():
         messages.error(request, '您没有权限执行此操作')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if loan.status != 'on_display' and loan.status != 'arrived':
         messages.error(request, '当前状态不能开始归还')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'returning'
@@ -471,7 +493,7 @@ def loan_start_return(request, pk):
     _add_status_history(loan, old_status, 'returning', request.user, '开始归还')
     messages.success(request, '已开始归还流程')
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required
@@ -480,11 +502,11 @@ def loan_mark_returned(request, pk):
 
     if not request.user.profile.is_transport_coordinator():
         messages.error(request, '您没有权限执行此操作')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if loan.status != 'returning':
         messages.error(request, '当前状态不能标记归还')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'inspection_pending'
@@ -494,7 +516,7 @@ def loan_mark_returned(request, pk):
     _add_status_history(loan, old_status, 'inspection_pending', request.user, '展品已归还，待鉴定')
     messages.success(request, '已标记归还，等待鉴定')
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required
@@ -503,11 +525,11 @@ def loan_complete(request, pk):
 
     if not request.user.profile.is_collection_clerk():
         messages.error(request, '您没有权限执行此操作')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     if loan.status != 'inspection_done':
         messages.error(request, '当前状态不能完成')
-        return redirect('loan_detail', pk=pk)
+        return redirect('loans:loan_detail', pk=pk)
 
     old_status = loan.status
     loan.status = 'completed'
@@ -519,7 +541,7 @@ def loan_complete(request, pk):
     _add_status_history(loan, old_status, 'completed', request.user, '出借流程完成')
     messages.success(request, '出借流程已完成')
 
-    return redirect('loan_detail', pk=pk)
+    return redirect('loans:loan_detail', pk=pk)
 
 
 @login_required

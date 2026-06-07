@@ -11,6 +11,7 @@ urlpatterns = [
     path('loans/<int:pk>/submit/', views.loan_submit, name='loan_submit'),
     path('loans/<int:pk>/release/', views.loan_release, name='loan_release'),
     path('loans/<int:pk>/arrived/', views.loan_mark_arrived, name='loan_mark_arrived'),
+    path('loans/<int:pk>/start-display/', views.loan_start_display, name='loan_start_display'),
     path('loans/<int:pk>/start-return/', views.loan_start_return, name='loan_start_return'),
     path('loans/<int:pk>/returned/', views.loan_mark_returned, name='loan_mark_returned'),
     path('loans/<int:pk>/complete/', views.loan_complete, name='loan_complete'),

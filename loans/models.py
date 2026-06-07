@@ -150,6 +150,9 @@ class LoanApplication(models.Model):
     def can_release(self):
         return self.status == 'insurance_approved'
 
+    def can_start_display(self):
+        return self.status == 'arrived'
+
     def can_inspect_return(self):
         return self.status in ['returned', 'inspection_pending']
 
