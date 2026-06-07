@@ -77,6 +77,7 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-3">问题类型</label>
+          <% selected_issue_types = @review.issues.to_a.map { |i| i.is_a?(Hash) ? i["type"] : i.to_s }.compact_blank %>
           <% if @issue_types.any? %>
             <div class="space-y-4">
               <% @issue_types.each do |category, types| %>
@@ -85,7 +86,7 @@
                   <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                     <% types.each do |issue_type| %>
                       <label class="flex items-center space-x-2 cursor-pointer">
-                        <%= check_box_tag "review[issues][][type]", issue_type.name, false, class: "rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
+                        <%= check_box_tag "review[issues][][type]", issue_type.name, selected_issue_types.include?(issue_type.name), class: "rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
                         <span class="text-sm text-gray-700"><%= issue_type.name %></span>
                       </label>
                     <% end %>
@@ -93,8 +94,17 @@
                 </div>
               <% end %>
             </div>
+            <% if selected_issue_types.any? %>
+              <p class="mt-2 text-xs text-gray-500">已选择 <%= selected_issue_types.count %> 个问题类型</p>
+            <% end %>
           <% else %>
-            <p class="text-sm text-gray-500">暂无问题类型，请联系管理员添加</p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">暂无问题类型</h3>
+              <p class="mt-1 text-sm text-gray-500">系统尚未配置问题类型选项，请联系管理员添加后再进行评审。</p>
+            </div>
           <% end %>
         </div>
       </div>
