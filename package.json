@@ -1,0 +1,30 @@
+{
+  "name": "cleaning-order-system",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "prepare": "nuxt prepare",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx server/db/seed.ts"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "6.12.2",
+    "drizzle-orm": "0.33.0",
+    "nuxt": "3.12.4",
+    "pg": "8.13.0",
+    "vue": "3.4.38",
+    "vue-router": "4.4.3"
+  },
+  "devDependencies": {
+    "@rollup/wasm-node": "^4.61.1",
+    "@types/pg": "8.11.10",
+    "drizzle-kit": "0.24.2",
+    "tsx": "4.19.1",
+    "typescript": "5.5.4"
+  }
+}
