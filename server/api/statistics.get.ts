@@ -28,12 +28,15 @@ export default defineEventHandler(async () => {
   const totalCompensation = validCompensations.reduce((sum, c) => sum + parseFloat(c.amount as string), 0);
   const compensationCount = validCompensations.length;
 
-  const byServiceType: Record<string, { count: number; totalPrice: string; reworkCount: number }> = {};
-  const byCity: Record<string, { count: number; totalPrice: string }> = {};
+  const orderMap = new Map(allOrders.map(o => [o.id, o]));
+  const reworkMap = new Map(allReworks.map(r => [r.orderId, r]));
+
+  const byServiceType: Record<string, { count: number; totalPrice: string; reworkCount: number; compensationAmount: string; compensationCount: number }> = {};
+  const byCity: Record<string, { count: number; totalPrice: string; compensationAmount: string; compensationCount: number }> = {};
 
   allOrders.forEach(order => {
     if (!byServiceType[order.serviceType]) {
-      byServiceType[order.serviceType] = { count: 0, totalPrice: '0.00', reworkCount: 0 };
+      byServiceType[order.serviceType] = { count: 0, totalPrice: '0.00', reworkCount: 0, compensationAmount: '0.00', compensationCount: 0 };
     }
     byServiceType[order.serviceType].count++;
     byServiceType[order.serviceType].totalPrice = (
@@ -45,7 +48,7 @@ export default defineEventHandler(async () => {
     }
 
     if (!byCity[order.city]) {
-      byCity[order.city] = { count: 0, totalPrice: '0.00' };
+      byCity[order.city] = { count: 0, totalPrice: '0.00', compensationAmount: '0.00', compensationCount: 0 };
     }
     byCity[order.city].count++;
     byCity[order.city].totalPrice = (
@@ -53,12 +56,49 @@ export default defineEventHandler(async () => {
     ).toFixed(2);
   });
 
-  const byReworkReason: Record<string, number> = {};
+  validCompensations.forEach(compensation => {
+    const order = orderMap.get(compensation.orderId);
+    if (order) {
+      if (byServiceType[order.serviceType]) {
+        byServiceType[order.serviceType].compensationAmount = (
+          parseFloat(byServiceType[order.serviceType].compensationAmount) + parseFloat(compensation.amount as string)
+        ).toFixed(2);
+        byServiceType[order.serviceType].compensationCount++;
+      }
+      if (byCity[order.city]) {
+        byCity[order.city].compensationAmount = (
+          parseFloat(byCity[order.city].compensationAmount) + parseFloat(compensation.amount as string)
+        ).toFixed(2);
+        byCity[order.city].compensationCount++;
+      }
+    }
+  });
+
+  const byReworkReason: Record<string, { count: number; compensationAmount: string; compensationCount: number }> = {};
   allReworks.forEach(rework => {
     if (!byReworkReason[rework.reason]) {
-      byReworkReason[rework.reason] = 0;
+      byReworkReason[rework.reason] = { count: 0, compensationAmount: '0.00', compensationCount: 0 };
     }
-    byReworkReason[rework.reason]++;
+    byReworkReason[rework.reason].count++;
+
+    const compensation = validCompensations.find(c => c.orderId === rework.orderId);
+    if (compensation) {
+      byReworkReason[rework.reason].compensationAmount = (
+        parseFloat(byReworkReason[rework.reason].compensationAmount) + parseFloat(compensation.amount as string)
+      ).toFixed(2);
+      byReworkReason[rework.reason].compensationCount++;
+    }
+  });
+
+  const byCompensationRuleType: Record<string, { count: number; totalAmount: string }> = {};
+  validCompensations.forEach(compensation => {
+    if (!byCompensationRuleType[compensation.ruleType]) {
+      byCompensationRuleType[compensation.ruleType] = { count: 0, totalAmount: '0.00' };
+    }
+    byCompensationRuleType[compensation.ruleType].count++;
+    byCompensationRuleType[compensation.ruleType].totalAmount = (
+      parseFloat(byCompensationRuleType[compensation.ruleType].totalAmount) + parseFloat(compensation.amount as string)
+    ).toFixed(2);
   });
 
   return {
@@ -74,6 +114,7 @@ export default defineEventHandler(async () => {
       byServiceType,
       byCity,
       byReworkReason,
+      byCompensationRuleType,
     },
   };
 });

@@ -46,6 +46,10 @@
                 返工：{{ item.reworkCount }} 单
               </span>
             </div>
+            <div v-if="item.compensationCount > 0" class="flex justify-between text-sm text-red-600 mt-2">
+              <span>赔付：{{ item.compensationCount }} 单</span>
+              <span>¥{{ item.compensationAmount }}</span>
+            </div>
             <div class="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 class="h-full bg-blue-500 rounded-full transition-all"
@@ -74,6 +78,10 @@
             <div class="text-sm text-gray-600">
               订单数：{{ item.count }} 单
             </div>
+            <div v-if="item.compensationCount > 0" class="flex justify-between text-sm text-red-600 mt-2">
+              <span>赔付：{{ item.compensationCount }} 单</span>
+              <span>¥{{ item.compensationAmount }}</span>
+            </div>
             <div class="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
                 class="h-full bg-green-500 rounded-full transition-all"
@@ -91,13 +99,17 @@
         </h3>
         <div class="space-y-4">
           <div
-            v-for="(count, reason) in stats?.byReworkReason || {}"
+            v-for="(item, reason) in stats?.byReworkReason || {}"
             :key="reason"
             class="p-4 bg-gray-50 rounded-lg"
           >
             <div class="flex justify-between items-center mb-2">
               <span class="font-medium text-gray-900">{{ getReworkReasonLabel(reason) }}</span>
-              <span class="text-orange-600 font-bold">{{ count }} 单</span>
+              <span class="text-orange-600 font-bold">{{ item.count }} 单</span>
+            </div>
+            <div v-if="item.compensationCount > 0" class="flex justify-between text-sm text-red-600 mb-2">
+              <span>赔付：{{ item.compensationCount }} 单</span>
+              <span>¥{{ item.compensationAmount }}</span>
             </div>
             <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
@@ -117,29 +129,27 @@
           <span class="w-1 h-5 bg-red-500 rounded mr-2"></span>
           赔付金额统计
         </h3>
-        <div class="text-center py-6">
+        <div class="text-center py-4">
           <p class="text-sm text-gray-500 mb-2">累计赔付金额</p>
           <p class="text-4xl font-bold text-red-600">¥{{ stats?.totalCompensation || '0.00' }}</p>
           <p class="text-sm text-gray-500 mt-3">赔付单数：{{ stats?.compensationCount || 0 }} 单</p>
         </div>
         <div class="mt-6 pt-6 border-t border-gray-100">
-          <h4 class="text-sm font-medium text-gray-700 mb-3">赔付规则说明</h4>
-          <div class="space-y-2 text-xs text-gray-500">
-            <div class="flex justify-between">
-              <span>物品损坏赔付</span>
-              <span class="text-red-600">基础 ¥200/起</span>
+          <h4 class="text-sm font-medium text-gray-700 mb-3">赔付类型分布</h4>
+          <div class="space-y-3">
+            <div
+              v-for="(item, type) in stats?.byCompensationRuleType || {}"
+              :key="type"
+              class="flex justify-between items-center text-sm"
+            >
+              <span class="text-gray-600">{{ getCompensationRuleTypeLabel(type) }}</span>
+              <div class="flex items-center space-x-3">
+                <span class="text-gray-500">{{ item.count }} 单</span>
+                <span class="text-red-600 font-medium">¥{{ item.totalAmount }}</span>
+              </div>
             </div>
-            <div class="flex justify-between">
-              <span>返工超时赔付</span>
-              <span class="text-red-600">¥50/小时</span>
-            </div>
-            <div class="flex justify-between">
-              <span>客户投诉赔付</span>
-              <span class="text-red-600">基础 ¥100/起</span>
-            </div>
-            <div class="flex justify-between">
-              <span>照片缺失处罚</span>
-              <span class="text-red-600">¥30/次</span>
+            <div v-if="Object.keys(stats?.byCompensationRuleType || {}).length === 0" class="text-center py-2">
+              <p class="text-gray-400 text-xs">暂无赔付记录</p>
             </div>
           </div>
         </div>
@@ -176,7 +186,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { Statistics } from '~/types';
-import { getServiceTypeLabel, getReworkReasonLabel } from '~/utils/format';
+import { getServiceTypeLabel, getReworkReasonLabel, getCompensationRuleTypeLabel } from '~/utils/format';
 
 const { data } = await useFetch('/api/statistics');
 
@@ -220,9 +230,9 @@ function getCityPercentage(city: string): number {
 
 function getReworkPercentage(reason: string): number {
   if (!stats.value) return 0;
-  const total = Object.values(stats.value.byReworkReason).reduce((sum, n) => sum + n, 0);
+  const total = Object.values(stats.value.byReworkReason).reduce((sum, item) => sum + item.count, 0);
   if (total === 0) return 0;
-  const count = stats.value.byReworkReason[reason] || 0;
+  const count = stats.value.byReworkReason[reason]?.count || 0;
   return Math.round((count / total) * 100);
 }
 </script>

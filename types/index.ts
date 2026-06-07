@@ -131,7 +131,8 @@ export interface Statistics {
   totalRevenue: string;
   totalCompensation: string;
   compensationCount: number;
-  byServiceType: Record<string, { count: number; totalPrice: string; reworkCount: number }>;
-  byCity: Record<string, { count: number; totalPrice: string }>;
-  byReworkReason: Record<string, number>;
+  byServiceType: Record<string, { count: number; totalPrice: string; reworkCount: number; compensationAmount: string; compensationCount: number }>;
+  byCity: Record<string, { count: number; totalPrice: string; compensationAmount: string; compensationCount: number }>;
+  byReworkReason: Record<string, { count: number; compensationAmount: string; compensationCount: number }>;
+  byCompensationRuleType: Record<string, { count: number; totalAmount: string }>;
 }
