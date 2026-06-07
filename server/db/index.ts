@@ -1,15 +1,16 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
 import * as schema from './schema';
 
-const runtimeConfig = useRuntimeConfig();
+const { Pool } = pg;
 
 let db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-export function useDb() {
+export function useDb(databaseUrl?: string) {
   if (!db) {
-    const queryClient = postgres(runtimeConfig.databaseUrl);
-    db = drizzle(queryClient, { schema });
+    const url = databaseUrl || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/cleaning_db';
+    const pool = new Pool({ connectionString: url });
+    db = drizzle(pool, { schema });
   }
   return db;
 }

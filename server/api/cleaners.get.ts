@@ -1,14 +1,22 @@
-import { getCleaners } from '../db/mockData';
+import { useDb } from '../db';
+import { cleaners } from '../db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const city = query.city as string;
-  let cleaners = getCleaners();
+
+  const db = useDb();
+
+  let result;
   if (city) {
-    cleaners = cleaners.filter(c => c.city === city);
+    result = await db.select().from(cleaners).where(eq(cleaners.city, city)).orderBy(cleaners.id);
+  } else {
+    result = await db.select().from(cleaners).orderBy(cleaners.id);
   }
+
   return {
     success: true,
-    data: cleaners,
+    data: result,
   };
 });
