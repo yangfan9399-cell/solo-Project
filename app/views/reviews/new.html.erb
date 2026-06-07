@@ -1,0 +1,108 @@
+<% content_for :title, "新建评审 - #{@sample.style_number}" %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="mb-6">
+    <%= link_to "← 返回样衣详情", sample_path(@sample), class: "text-sm text-gray-600 hover:text-gray-900" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-gray-900">新建评审</h1>
+    </div>
+
+    <%= form_with model: [@sample, @review], local: true do |form| %>
+      <div class="px-6 py-6 space-y-6">
+        <% if @review.errors.any? %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h2 class="text-sm font-medium text-red-800 mb-2">
+              <%= pluralize(@review.errors.count, "个错误") %> 导致无法保存：
+            </h2>
+            <ul class="text-sm text-red-600 space-y-1">
+              <% @review.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">样衣款号</label>
+            <div class="w-full rounded-lg border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 border">
+              <%= @sample.style_number %>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">当前版本</label>
+            <div class="w-full rounded-lg border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 border">
+              v<%= @sample_version&.version_number %>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :verdict, "评审结论", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <div class="grid grid-cols-3 gap-3">
+            <%= form.hidden_field :sample_version_id, value: @sample_version&.id %>
+            <label class="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 focus:outline-none has-[:checked]:border-indigo-500 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500 has-[:checked]:ring-opacity-50">
+              <%= form.radio_button :verdict, "pass", class: "sr-only" %>
+              <div class="flex flex-col items-center text-center w-full">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2">通过</span>
+                <span class="text-sm text-gray-600">样衣符合要求，通过评审</span>
+              </div>
+            </label>
+            <label class="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 focus:outline-none has-[:checked]:border-indigo-500 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500 has-[:checked]:ring-opacity-50">
+              <%= form.radio_button :verdict, "revise", class: "sr-only" %>
+              <div class="flex flex-col items-center text-center w-full">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mb-2">修改</span>
+                <span class="text-sm text-gray-600">需要修改后重新评审</span>
+              </div>
+            </label>
+            <label class="relative flex cursor-pointer rounded-lg border border-gray-300 bg-white p-4 focus:outline-none has-[:checked]:border-indigo-500 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500 has-[:checked]:ring-opacity-50">
+              <%= form.radio_button :verdict, "finalize", class: "sr-only" %>
+              <div class="flex flex-col items-center text-center w-full">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">定版</span>
+                <span class="text-sm text-gray-600">样衣确定，正式定版</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :feedback, "评审反馈", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.text_area :feedback, rows: 5, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "请详细描述评审意见和修改建议" %>
+          <p class="mt-1 text-xs text-gray-500">选择"修改"或"定版"时必填</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3">问题类型</label>
+          <% if @issue_types.any? %>
+            <div class="space-y-4">
+              <% @issue_types.each do |category, types| %>
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <h3 class="text-sm font-medium text-gray-900 mb-3"><%= category %></h3>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <% types.each do |issue_type| %>
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <%= check_box_tag "review[issues][][type]", issue_type.name, false, class: "rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" %>
+                        <span class="text-sm text-gray-700"><%= issue_type.name %></span>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-500">暂无问题类型，请联系管理员添加</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+        <%= link_to "取消", sample_path(@sample), class: "px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+        <%= form.submit "提交评审", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+      </div>
+    <% end %>
+  </div>
+</div>

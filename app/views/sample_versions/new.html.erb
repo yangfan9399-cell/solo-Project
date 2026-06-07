@@ -1,0 +1,67 @@
+<% content_for :title, "新建版本 - #{@sample.style_number}" %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="mb-6">
+    <%= link_to "← 返回样衣详情", sample_path(@sample), class: "text-sm text-gray-600 hover:text-gray-900" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-gray-900">新建版本</h1>
+    </div>
+
+    <%= form_with model: [@sample, @sample_version], local: true do |form| %>
+      <div class="px-6 py-6 space-y-6">
+        <% if @sample_version.errors.any? %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h2 class="text-sm font-medium text-red-800 mb-2">
+              <%= pluralize(@sample_version.errors.count, "个错误") %> 导致无法保存：
+            </h2>
+            <ul class="text-sm text-red-600 space-y-1">
+              <% @sample_version.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">样衣款号</label>
+            <div class="w-full rounded-lg border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 border">
+              <%= @sample.style_number %>
+            </div>
+          </div>
+
+          <div>
+            <%= form.label :version_number, "版本号", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <div class="w-full rounded-lg border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 border">
+              v<%= @sample_version.version_number %>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :description, "修改说明", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.text_area :description, rows: 4, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "请描述本次版本的修改内容" %>
+        </div>
+
+        <div>
+          <%= form.label :fabric, "面料", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.text_area :fabric, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500", placeholder: "例如：100%纯棉、真丝雪纺" %>
+        </div>
+
+        <div>
+          <%= form.label :size_chart, "尺码表 (JSON 格式)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.text_area :size_chart, rows: 10, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-mono text-sm", value: display_json(@sample_version.size_chart), placeholder: "{\"S\": {\"胸围\": 88, \"腰围\": 68, \"臀围\": 92}, \"M\": {\"胸围\": 92, \"腰围\": 72, \"臀围\": 96}}" %>
+          <p class="mt-1 text-xs text-gray-500">请输入 JSON 格式的尺码数据，例如包含各尺码的具体尺寸</p>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+        <%= link_to "取消", sample_path(@sample), class: "px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+        <%= form.submit "提交", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+      </div>
+    <% end %>
+  </div>
+</div>

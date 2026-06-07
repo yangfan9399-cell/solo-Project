@@ -1,0 +1,45 @@
+<% content_for :title, "编辑问题类型" %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="mb-6">
+    <%= link_to "← 返回列表", issue_types_path, class: "text-sm text-gray-600 hover:text-gray-900" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-gray-900">编辑问题类型</h1>
+    </div>
+
+    <%= form_with model: @issue_type, local: true do |form| %>
+      <div class="px-6 py-6 space-y-6">
+        <% if @issue_type.errors.any? %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h2 class="text-sm font-medium text-red-800 mb-2">
+              <%= pluralize(@issue_type.errors.count, "个错误") %> 导致无法保存：
+            </h2>
+            <ul class="text-sm text-red-600 space-y-1">
+              <% @issue_type.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div>
+          <%= form.label :name, "名称", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.text_field :name, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+        </div>
+
+        <div>
+          <%= form.label :category, "类别", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= form.select :category, options_for_select(IssueType::CATEGORIES, @issue_type.category), include_blank: "请选择类别", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+        <%= link_to "取消", issue_types_path, class: "px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+        <%= form.submit "更新", class: "px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" %>
+      </div>
+    <% end %>
+  </div>
+</div>
