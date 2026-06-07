@@ -16,7 +16,7 @@ export default function PrincipalPage() {
 
   const pendingRecords = useMemo(() => 
     state.pickupRecords
-      .filter(r => r.status === 'PENDING_PRINCIPAL' || r.status === 'BLOCKED')
+      .filter(r => r.status === 'PENDING_PRINCIPAL')
       .map(r => ({
         ...r,
         child: getChildById(r.childId),
@@ -53,7 +53,7 @@ export default function PrincipalPage() {
   }, [selectedRecord, state.pickupRecords, getChildById, getAuthorizationById, getHistoryNodesByRecordId]);
 
   const needsReview = (status: PickupStatus) => {
-    return status === 'PENDING_PRINCIPAL' || status === 'BLOCKED';
+    return status === 'PENDING_PRINCIPAL';
   };
 
   const handleReview = (decision: 'approve' | 'reject') => {
