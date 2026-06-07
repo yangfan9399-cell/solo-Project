@@ -79,7 +79,7 @@
                     <div class="d-flex flex-column gap-2">
                         <button type="button" th:each="m : ${missingMaterials}"
                                 class="btn btn-sm btn-outline-warning text-start"
-                                th:attr="data-typeid="${m.materialTypeId}"
+                                th:data-typeid="${m.materialTypeId}"
                                 th:text="'🔴 ' + ${m.materialName}"
                                 onclick="selectMaterialType(this.dataset.typeid)">
                         </button>
@@ -95,14 +95,15 @@
                     </div>
                     <div th:each="m : ${allMaterials}" class="d-flex justify-content-between align-items-center py-1 border-bottom small">
                         <span th:text="${m.materialName}"></span>
-                        <span class="badge" th:class="${m.status == 'SUBMITTED' ? 'bg-info' :
-                                                    (${m.status == 'APPROVED' ? 'bg-success' :
-                                                    (${m.status == 'REJECTED' ? 'bg-danger' :
-                                                    (${m.status == 'MISSING' ? 'bg-warning text-dark' : 'bg-secondary')}))"
+                        <span class="badge"
+                              th:class="${m.status == 'SUBMITTED' ? 'bg-info' :
+                                       m.status == 'APPROVED' ? 'bg-success' :
+                                       m.status == 'REJECTED' ? 'bg-danger' :
+                                       m.status == 'MISSING' ? 'bg-warning text-dark' : 'bg-secondary'}"
                               th:text="${m.status == 'SUBMITTED' ? '已提交' :
-                                       (${m.status == 'APPROVED' ? '已通过' :
-                                       (${m.status == 'REJECTED' ? '不通过' :
-                                       (${m.status == 'MISSING' ? '缺失' : m.status)})}">
+                                       m.status == 'APPROVED' ? '已通过' :
+                                       m.status == 'REJECTED' ? '不通过' :
+                                       m.status == 'MISSING' ? '缺失' : m.status}">
                         </span>
                     </div>
                 </div>
