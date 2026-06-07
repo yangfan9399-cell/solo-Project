@@ -1,7 +1,15 @@
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
+const databaseUrl =
+  process.env.DATABASE_URL?.startsWith('postgresql://') ||
+  process.env.DATABASE_URL?.startsWith('postgres://')
+    ? process.env.DATABASE_URL
+    : 'postgresql://postgres:postgres@localhost:5432/kindergarten_pickup?schema=public'
+
 const prismaClientSingleton = () => {
-  return new PrismaClient()
+  const adapter = new PrismaPg({ connectionString: databaseUrl })
+  return new PrismaClient({ adapter })
 }
 
 declare const globalThis: {

@@ -1,17 +1,15 @@
+'use client';
+
 import Link from 'next/link';
-import { mockPickupRecords, mockChildren, mockAuthorizations } from '@/lib/mockData';
+import { useApp } from '@/lib/store';
 import { PickupStatusMap, ExceptionReasonMap } from '@/types';
 
 export default function Home() {
-  const todayRecords = mockPickupRecords.filter(r => {
-    const recordDate = new Date(r.pickupDate).toDateString();
-    const today = new Date('2025-06-07').toDateString();
-    return recordDate === today;
-  });
+  const { state, getChildById, resetState } = useApp();
 
-  const pendingCount = mockPickupRecords.filter(r => r.status === 'PENDING').length;
-  const blockedCount = mockPickupRecords.filter(r => r.status === 'BLOCKED').length;
-  const exceptionCount = mockPickupRecords.filter(
+  const pendingCount = state.pickupRecords.filter(r => r.status === 'PENDING' || r.status === 'PENDING_PRINCIPAL').length;
+  const blockedCount = state.pickupRecords.filter(r => r.status === 'BLOCKED').length;
+  const exceptionCount = state.pickupRecords.filter(
     r => r.status === 'EXCEPTION_APPROVED' || r.status === 'EXCEPTION_REJECTED'
   ).length;
 
@@ -53,19 +51,51 @@ export default function Home() {
     },
   ];
 
-  const recentRecords = mockPickupRecords
+  const recentRecords = state.pickupRecords
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'VERIFIED':
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-700';
+      case 'BLOCKED':
+        return 'bg-red-100 text-red-700';
+      case 'EXCEPTION_APPROVED':
+        return 'bg-orange-100 text-orange-700';
+      case 'EXCEPTION_REJECTED':
+        return 'bg-gray-100 text-gray-700';
+      case 'PENDING_PRINCIPAL':
+        return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-yellow-100 text-yellow-700';
+    }
+  };
+
+  const handleReset = () => {
+    if (confirm('确定要重置所有数据吗？所有操作记录将恢复到初始状态。')) {
+      resetState();
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          幼儿园接送管理系统
-        </h1>
-        <p className="text-gray-600">
-          授权变更 · 身份核验 · 异常放行 · 全程追溯
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            幼儿园接送管理系统
+          </h1>
+          <p className="text-gray-600">
+            授权变更 · 身份核验 · 异常放行 · 全程追溯
+          </p>
+        </div>
+        <button
+          onClick={handleReset}
+          className="px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          🔄 重置数据
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -73,7 +103,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">在园幼儿</p>
-              <p className="text-3xl font-bold text-gray-900">{mockChildren.length}</p>
+              <p className="text-3xl font-bold text-gray-900">{state.children.length}</p>
             </div>
             <div className="text-4xl">👶</div>
           </div>
@@ -82,7 +112,7 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">授权人数</p>
-              <p className="text-3xl font-bold text-gray-900">{mockAuthorizations.length}</p>
+              <p className="text-3xl font-bold text-gray-900">{state.authorizations.length}</p>
             </div>
             <div className="text-4xl">👤</div>
           </div>
@@ -90,7 +120,7 @@ export default function Home() {
         <div className="bg-yellow-50 rounded-xl shadow-sm p-6 border border-yellow-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-yellow-700">待核验</p>
+              <p className="text-sm text-yellow-700">待处理</p>
               <p className="text-3xl font-bold text-yellow-800">{pendingCount}</p>
             </div>
             <div className="text-4xl">⏳</div>
@@ -130,41 +160,38 @@ export default function Home() {
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">最近接送记录</h2>
           <div className="space-y-3">
-            {recentRecords.map((record) => {
-              const child = mockChildren.find(c => c.id === record.childId);
-              return (
-                <Link
-                  key={record.id}
-                  href={`/records/${record.id}`}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-lg">👶</span>
+            {recentRecords.length > 0 ? (
+              recentRecords.map((record) => {
+                const child = getChildById(record.childId);
+                return (
+                  <Link
+                    key={record.id}
+                    href={`/records/${record.id}`}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-lg">👶</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{child?.name || '未知'}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(record.pickupDate).toLocaleDateString('zh-CN')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{child?.name || '未知'}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(record.pickupDate).toLocaleDateString('zh-CN')}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    record.status === 'VERIFIED' || record.status === 'COMPLETED'
-                      ? 'bg-green-100 text-green-700'
-                      : record.status === 'BLOCKED'
-                      ? 'bg-red-100 text-red-700'
-                      : record.status === 'EXCEPTION_APPROVED'
-                      ? 'bg-orange-100 text-orange-700'
-                      : record.status === 'EXCEPTION_REJECTED'
-                      ? 'bg-gray-100 text-gray-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {PickupStatusMap[record.status]}
-                  </span>
-                </Link>
-              );
-            })}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(record.status)}`}>
+                      {PickupStatusMap[record.status as keyof typeof PickupStatusMap] || record.status}
+                    </span>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-3xl mb-2">📝</p>
+                <p>暂无记录</p>
+              </div>
+            )}
           </div>
           <Link
             href="/records"

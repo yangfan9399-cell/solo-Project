@@ -1,29 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { mockPickupRecords, mockChildren, getPickupRecordWithDetails } from '@/lib/mockData';
+import { useState, useMemo } from 'react';
+import { useApp } from '@/lib/store';
 import { PickupStatusMap, ClassNameMap, ExceptionReasonMap } from '@/types';
 import type { PickupStatus, ClassName } from '@/types';
 import Link from 'next/link';
 
 export default function RecordsPage() {
+  const { state, getChildById, getAuthorizationById } = useApp();
+
   const [statusFilter, setStatusFilter] = useState<PickupStatus | 'all'>('all');
   const [classFilter, setClassFilter] = useState<ClassName | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const records = mockPickupRecords
-    .map(record => {
-      const detail = getPickupRecordWithDetails(record.id);
-      return detail;
-    })
-    .filter((record): record is NonNullable<typeof record> => record !== undefined)
-    .filter(record => {
-      if (statusFilter !== 'all' && record.status !== statusFilter) return false;
-      if (classFilter !== 'all' && record.child?.className !== classFilter) return false;
-      if (searchQuery && !record.child?.name.includes(searchQuery) && !record.id.includes(searchQuery)) return false;
-      return true;
-    })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const records = useMemo(() => 
+    state.pickupRecords
+      .map(record => {
+        const child = getChildById(record.childId);
+        const authorization = record.authorizationId ? getAuthorizationById(record.authorizationId) : undefined;
+        return { ...record, child, authorization };
+      })
+      .filter(record => {
+        if (statusFilter !== 'all' && record.status !== statusFilter) return false;
+        if (classFilter !== 'all' && record.child?.className !== classFilter) return false;
+        if (searchQuery && !record.child?.name.includes(searchQuery) && !record.id.includes(searchQuery)) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [state.pickupRecords, getChildById, getAuthorizationById, statusFilter, classFilter, searchQuery]
+  );
 
   const getStatusStyle = (status: PickupStatus) => {
     switch (status) {
@@ -36,6 +41,8 @@ export default function RecordsPage() {
         return 'bg-orange-100 text-orange-700';
       case 'EXCEPTION_REJECTED':
         return 'bg-gray-100 text-gray-700';
+      case 'PENDING_PRINCIPAL':
+        return 'bg-purple-100 text-purple-700';
       default:
         return 'bg-yellow-100 text-yellow-700';
     }
@@ -79,6 +86,7 @@ export default function RecordsPage() {
               <option value="PENDING">待核验</option>
               <option value="VERIFIED">核验通过</option>
               <option value="BLOCKED">已阻断</option>
+              <option value="PENDING_PRINCIPAL">待园长复核</option>
               <option value="EXCEPTION_APPROVED">异常放行</option>
               <option value="EXCEPTION_REJECTED">异常驳回</option>
               <option value="COMPLETED">已完成</option>

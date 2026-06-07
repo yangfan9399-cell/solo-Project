@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum ClassName {
@@ -26,6 +25,7 @@ enum PickupStatus {
   PENDING
   VERIFIED
   BLOCKED
+  PENDING_PRINCIPAL
   EXCEPTION_APPROVED
   EXCEPTION_REJECTED
   COMPLETED

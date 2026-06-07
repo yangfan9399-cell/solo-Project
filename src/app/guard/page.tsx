@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { mockChildren, mockAuthorizations, mockPickupRecords, getAuthorizationsByChildId, getPickupRecordWithDetails } from '@/lib/mockData';
+import { useState, useMemo } from 'react';
+import { useApp } from '@/lib/store';
 import { PickupStatusMap, AuthorizationTypeMap, ExceptionReasonMap, ClassNameMap } from '@/types';
-import type { PickupStatus, ExceptionReason } from '@/types';
+import type { ExceptionReason } from '@/types';
 import Link from 'next/link';
 
 export default function GuardPage() {
+  const { state, getChildById, getAuthorizationById, verifyPickup, getHistoryNodesByRecordId } = useApp();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<string | null>(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -14,57 +16,83 @@ export default function GuardPage() {
   const [blockReason, setBlockReason] = useState<ExceptionReason>('ID_MISMATCH');
   const [blockRemark, setBlockRemark] = useState('');
 
-  const pendingRecords = mockPickupRecords
-    .filter(r => r.status === 'PENDING')
-    .map(r => ({
-      ...r,
-      child: mockChildren.find(c => c.id === r.childId),
-    }));
+  const pendingRecords = useMemo(() => 
+    state.pickupRecords
+      .filter(r => r.status === 'PENDING')
+      .map(r => ({
+        ...r,
+        child: getChildById(r.childId),
+      })),
+    [state.pickupRecords, getChildById]
+  );
 
-  const todayAllRecords = mockPickupRecords
-    .filter(r => {
-      const recordDate = new Date(r.pickupDate).toDateString();
-      const today = new Date('2025-06-07').toDateString();
-      return recordDate === today;
-    })
-    .map(r => ({
-      ...r,
-      child: mockChildren.find(c => c.id === r.childId),
-    }))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const todayAllRecords = useMemo(() => 
+    state.pickupRecords
+      .map(r => ({
+        ...r,
+        child: getChildById(r.childId),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [state.pickupRecords, getChildById]
+  );
 
-  const filteredRecords = searchQuery
-    ? todayAllRecords.filter(r => 
-        r.child?.name.includes(searchQuery) ||
-        r.id.includes(searchQuery)
-      )
-    : todayAllRecords;
+  const filteredRecords = useMemo(() => 
+    searchQuery
+      ? todayAllRecords.filter(r => 
+          r.child?.name.includes(searchQuery) ||
+          r.id.includes(searchQuery)
+        )
+      : todayAllRecords,
+    [searchQuery, todayAllRecords]
+  );
 
-  const selectedRecordData = selectedRecord 
-    ? getPickupRecordWithDetails(selectedRecord)
-    : null;
+  const selectedRecordData = useMemo(() => {
+    if (!selectedRecord) return null;
+    const record = state.pickupRecords.find(r => r.id === selectedRecord);
+    if (!record) return null;
+    return {
+      ...record,
+      child: getChildById(record.childId),
+      authorization: record.authorizationId ? getAuthorizationById(record.authorizationId) : undefined,
+      historyNodes: getHistoryNodesByRecordId(record.id),
+    };
+  }, [selectedRecord, state.pickupRecords, getChildById, getAuthorizationById, getHistoryNodesByRecordId]);
 
   const handleVerifyPass = () => {
-    alert('核验通过，已放行！');
+    if (!selectedRecord) return;
+    verifyPickup(selectedRecord, 'VERIFIED', '张门卫');
     setSelectedRecord(null);
   };
 
   const handleBlock = () => {
+    setBlockReason('ID_MISMATCH');
+    setBlockRemark('');
     setShowBlockModal(true);
   };
 
   const confirmBlock = () => {
-    alert(`已阻断放行，原因：${ExceptionReasonMap[blockReason]}\n请联系主监护人。`);
+    if (!selectedRecord) return;
+    
+    if (blockReason === 'ID_MISMATCH') {
+      const remark = blockRemark || '来人出示的身份证照片与系统登记照片不符，疑似冒用证件';
+      verifyPickup(selectedRecord, 'BLOCKED', '张门卫', 'ID_MISMATCH', remark);
+    } else {
+      verifyPickup(selectedRecord, 'BLOCKED', '张门卫', blockReason, blockRemark);
+    }
+    
     setShowBlockModal(false);
     setSelectedRecord(null);
   };
 
   const handleReportException = () => {
+    setBlockReason('PARENT_DISPUTE');
+    setBlockRemark('');
     setShowExceptionModal(true);
   };
 
   const confirmException = () => {
-    alert('已上报园长，请等待复核。');
+    if (!selectedRecord) return;
+    verifyPickup(selectedRecord, 'PENDING_PRINCIPAL', '张门卫', blockReason, blockRemark || '需园长复核处理');
     setShowExceptionModal(false);
     setSelectedRecord(null);
   };
@@ -140,7 +168,7 @@ export default function GuardPage() {
 
             <div className="border-t border-gray-100 pt-4">
               <h2 className="font-semibold text-gray-900 mb-2">
-                今日记录
+                全部记录 ({todayAllRecords.length})
               </h2>
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {filteredRecords.map((record) => (
@@ -169,6 +197,8 @@ export default function GuardPage() {
                           ? 'bg-orange-100 text-orange-700'
                           : record.status === 'EXCEPTION_REJECTED'
                           ? 'bg-gray-100 text-gray-700'
+                          : record.status === 'PENDING_PRINCIPAL'
+                          ? 'bg-purple-100 text-purple-700'
                           : 'bg-yellow-100 text-yellow-700'
                       }`}>
                         {PickupStatusMap[record.status]}
@@ -204,6 +234,8 @@ export default function GuardPage() {
                       ? 'bg-orange-100 text-orange-700'
                       : selectedRecordData.status === 'EXCEPTION_REJECTED'
                       ? 'bg-gray-100 text-gray-700'
+                      : selectedRecordData.status === 'PENDING_PRINCIPAL'
+                      ? 'bg-purple-100 text-purple-700'
                       : 'bg-yellow-100 text-yellow-700'
                   }`}>
                     {PickupStatusMap[selectedRecordData.status]}
@@ -319,15 +351,30 @@ export default function GuardPage() {
               )}
 
               {selectedRecordData.exceptionReason && (
-                <div className="bg-orange-50 rounded-xl border border-orange-200 p-6">
-                  <h3 className="font-semibold text-orange-900 mb-2">异常说明</h3>
-                  <p className="text-orange-700 font-medium mb-1">
+                <div className={`rounded-xl border p-6 ${
+                  selectedRecordData.status === 'BLOCKED' 
+                    ? 'bg-red-50 border-red-200' 
+                    : 'bg-orange-50 border-orange-200'
+                }`}>
+                  <h3 className="font-semibold text-gray-900 mb-2">异常说明</h3>
+                  <p className={`font-medium mb-1 ${
+                    selectedRecordData.status === 'BLOCKED' ? 'text-red-700' : 'text-orange-700'
+                  }`}>
                     异常原因：{ExceptionReasonMap[selectedRecordData.exceptionReason]}
                   </p>
                   {selectedRecordData.exceptionRemark && (
-                    <p className="text-orange-600 text-sm">
+                    <p className={`text-sm ${
+                      selectedRecordData.status === 'BLOCKED' ? 'text-red-600' : 'text-orange-600'
+                    }`}>
                       详细说明：{selectedRecordData.exceptionRemark}
                     </p>
+                  )}
+                  {selectedRecordData.status === 'BLOCKED' && selectedRecordData.exceptionReason === 'ID_MISMATCH' && (
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-red-200">
+                      <p className="text-sm text-red-700 font-medium">
+                        🚫 证件不符，已阻断放行。请联系主监护人 {selectedRecordData.child?.primaryGuardianName}（{selectedRecordData.child?.primaryGuardianPhone}）核实。
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
@@ -483,7 +530,7 @@ export default function GuardPage() {
                   onChange={(e) => setBlockReason(e.target.value as ExceptionReason)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
-                  {(['ID_MISMATCH', 'PARENT_DISPUTE', 'NO_AUTHORIZATION', 'EXPIRED_AUTHORIZATION', 'OTHER'] as ExceptionReason[]).map((reason) => (
+                  {(['PARENT_DISPUTE', 'ID_MISMATCH', 'NO_AUTHORIZATION', 'EXPIRED_AUTHORIZATION', 'OTHER'] as ExceptionReason[]).map((reason) => (
                     <option key={reason} value={reason}>
                       {ExceptionReasonMap[reason]}
                     </option>

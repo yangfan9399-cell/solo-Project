@@ -1,48 +1,79 @@
 'use client';
 
-import { useState } from 'react';
-import { mockChildren, getPickupRecordWithDetails } from '@/lib/mockData';
+import { useState, useMemo } from 'react';
+import { useApp } from '@/lib/store';
 import { PickupStatusMap, ExceptionReasonMap, AuthorizationTypeMap, ClassNameMap, RoleMap } from '@/types';
 import type { PickupStatus } from '@/types';
 import Link from 'next/link';
 
 export default function PrincipalPage() {
+  const { state, getChildById, getAuthorizationById, getHistoryNodesByRecordId, principalReview } = useApp();
+
   const [selectedRecord, setSelectedRecord] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewDecision, setReviewDecision] = useState<'approve' | 'reject'>('approve');
   const [reviewRemark, setReviewRemark] = useState('');
 
-  const pendingRecords = [
-    { id: 'record-007', status: 'BLOCKED' as PickupStatus, exceptionReason: 'NO_AUTHORIZATION' as const },
-  ].map(r => {
-    const detail = getPickupRecordWithDetails(r.id);
-    return detail;
-  }).filter(Boolean) as Array<ReturnType<typeof getPickupRecordWithDetails> & {}>;
+  const pendingRecords = useMemo(() => 
+    state.pickupRecords
+      .filter(r => r.status === 'PENDING_PRINCIPAL' || r.status === 'BLOCKED')
+      .map(r => ({
+        ...r,
+        child: getChildById(r.childId),
+        authorization: r.authorizationId ? getAuthorizationById(r.authorizationId) : undefined,
+        historyNodes: getHistoryNodesByRecordId(r.id),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [state.pickupRecords, getChildById, getAuthorizationById, getHistoryNodesByRecordId]
+  );
 
-  const allExceptionRecords = [
-    'record-003',
-    'record-004',
-    'record-007',
-  ].map(id => getPickupRecordWithDetails(id)).filter(Boolean) as Array<ReturnType<typeof getPickupRecordWithDetails> & {}>;
+  const allExceptionRecords = useMemo(() => 
+    state.pickupRecords
+      .filter(r => r.exceptionReason)
+      .map(r => ({
+        ...r,
+        child: getChildById(r.childId),
+        authorization: r.authorizationId ? getAuthorizationById(r.authorizationId) : undefined,
+        historyNodes: getHistoryNodesByRecordId(r.id),
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [state.pickupRecords, getChildById, getAuthorizationById, getHistoryNodesByRecordId]
+  );
 
-  const selectedRecordData = selectedRecord 
-    ? getPickupRecordWithDetails(selectedRecord)
-    : null;
+  const selectedRecordData = useMemo(() => {
+    if (!selectedRecord) return null;
+    const record = state.pickupRecords.find(r => r.id === selectedRecord);
+    if (!record) return null;
+    return {
+      ...record,
+      child: getChildById(record.childId),
+      authorization: record.authorizationId ? getAuthorizationById(record.authorizationId) : undefined,
+      historyNodes: getHistoryNodesByRecordId(record.id),
+    };
+  }, [selectedRecord, state.pickupRecords, getChildById, getAuthorizationById, getHistoryNodesByRecordId]);
 
   const needsReview = (status: PickupStatus) => {
-    return status === 'BLOCKED' || status === 'PENDING';
+    return status === 'PENDING_PRINCIPAL' || status === 'BLOCKED';
   };
 
-  const handleReview = () => {
+  const handleReview = (decision: 'approve' | 'reject') => {
+    setReviewDecision(decision);
+    setReviewRemark('');
     setShowReviewModal(true);
   };
 
   const confirmReview = () => {
-    const action = reviewDecision === 'approve' ? '同意放行' : '驳回申请';
-    alert(`已${action}！\n备注：${reviewRemark || '无'}`);
+    if (!selectedRecord) return;
+    
+    const decision = reviewDecision === 'approve' ? 'EXCEPTION_APPROVED' : 'EXCEPTION_REJECTED';
+    principalReview(selectedRecord, decision, '李园长', reviewRemark || (reviewDecision === 'approve' ? '经核实，同意异常放行' : '不予放行，请联系主监护人'));
+    
     setShowReviewModal(false);
     setSelectedRecord(null);
   };
+
+  const approvedCount = allExceptionRecords.filter(r => r.status === 'EXCEPTION_APPROVED').length;
+  const rejectedCount = allExceptionRecords.filter(r => r.status === 'EXCEPTION_REJECTED').length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -70,7 +101,7 @@ export default function PrincipalPage() {
             <div>
               <p className="text-sm text-gray-500">已放行</p>
               <p className="text-2xl font-bold text-green-600">
-                {allExceptionRecords.filter(r => r.status === 'EXCEPTION_APPROVED').length}
+                {approvedCount}
               </p>
             </div>
             <div className="text-3xl">✅</div>
@@ -81,7 +112,7 @@ export default function PrincipalPage() {
             <div>
               <p className="text-sm text-gray-500">已驳回</p>
               <p className="text-2xl font-bold text-red-600">
-                {allExceptionRecords.filter(r => r.status === 'EXCEPTION_REJECTED').length}
+                {rejectedCount}
               </p>
             </div>
             <div className="text-3xl">🚫</div>
@@ -173,6 +204,8 @@ export default function PrincipalPage() {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       record.status === 'EXCEPTION_APPROVED'
                         ? 'bg-green-100 text-green-700'
+                        : record.status === 'BLOCKED'
+                        ? 'bg-red-100 text-red-700'
                         : 'bg-gray-100 text-gray-700'
                     }`}>
                       {PickupStatusMap[record.status]}
@@ -376,10 +409,7 @@ export default function PrincipalPage() {
                   <h3 className="font-semibold text-gray-900 mb-4">园长复核操作</h3>
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <button
-                      onClick={() => {
-                        setReviewDecision('approve');
-                        handleReview();
-                      }}
+                      onClick={() => handleReview('approve')}
                       className="p-5 bg-green-50 border-2 border-green-200 rounded-xl hover:bg-green-100 hover:border-green-300 transition-colors text-center"
                     >
                       <div className="text-3xl mb-2">✅</div>
@@ -387,10 +417,7 @@ export default function PrincipalPage() {
                       <p className="text-sm text-green-600">经核实后同意异常放行</p>
                     </button>
                     <button
-                      onClick={() => {
-                        setReviewDecision('reject');
-                        handleReview();
-                      }}
+                      onClick={() => handleReview('reject')}
                       className="p-5 bg-red-50 border-2 border-red-200 rounded-xl hover:bg-red-100 hover:border-red-300 transition-colors text-center"
                     >
                       <div className="text-3xl mb-2">🚫</div>

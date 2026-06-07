@@ -1,27 +1,83 @@
 'use client';
 
 import { useState } from 'react';
-import { mockChildren, mockAuthorizations, getAuthorizationsByChildId } from '@/lib/mockData';
+import { useApp } from '@/lib/store';
 import { AuthorizationTypeMap, ClassNameMap } from '@/types';
 import type { AuthorizationType, ClassName } from '@/types';
-import Link from 'next/link';
 
 export default function TeacherPage() {
+  const { state, getAuthorizationsByChildId, addAuthorization, deactivateAuthorization } = useApp();
+  
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [classFilter, setClassFilter] = useState<ClassName | 'all'>('all');
+  const [formData, setFormData] = useState({
+    name: '',
+    idCardNumber: '',
+    phone: '',
+    relation: '',
+    type: 'TEMPORARY' as AuthorizationType,
+    validFrom: new Date().toISOString().split('T')[0],
+    validTo: '',
+    remark: '',
+  });
+  const [showConfirm, setShowConfirm] = useState<string | null>(null);
 
   const filteredChildren = classFilter === 'all' 
-    ? mockChildren 
-    : mockChildren.filter(c => c.className === classFilter);
+    ? state.children 
+    : state.children.filter(c => c.className === classFilter);
 
   const selectedChildData = selectedChild 
-    ? mockChildren.find(c => c.id === selectedChild) 
+    ? state.children.find(c => c.id === selectedChild) 
     : null;
 
   const selectedAuthorizations = selectedChild 
     ? getAuthorizationsByChildId(selectedChild) 
     : [];
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = () => {
+    if (!selectedChildData) return;
+    if (!formData.name || !formData.idCardNumber || !formData.phone || !formData.relation) {
+      alert('请填写必填字段');
+      return;
+    }
+
+    addAuthorization({
+      childId: selectedChildData.id,
+      name: formData.name,
+      relation: formData.relation,
+      idCardNumber: formData.idCardNumber,
+      phone: formData.phone,
+      type: formData.type,
+      isActive: true,
+      validFrom: new Date(formData.validFrom).toISOString(),
+      validTo: formData.validTo ? new Date(formData.validTo).toISOString() : undefined,
+      registeredBy: '王老师',
+      remark: formData.remark || undefined,
+    });
+
+    setShowAddModal(false);
+    setFormData({
+      name: '',
+      idCardNumber: '',
+      phone: '',
+      relation: '',
+      type: 'TEMPORARY',
+      validFrom: new Date().toISOString().split('T')[0],
+      validTo: '',
+      remark: '',
+    });
+  };
+
+  const handleDeactivate = (authId: string) => {
+    deactivateAuthorization(authId, '王老师');
+    setShowConfirm(null);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -109,7 +165,12 @@ export default function TeacherPage() {
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">授权人列表</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">
+                  授权人列表 
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    （共 {selectedAuthorizations.length} 条）
+                  </span>
+                </h3>
                 {selectedAuthorizations.length > 0 ? (
                   <div className="space-y-4">
                     {selectedAuthorizations.map((auth) => (
@@ -127,7 +188,7 @@ export default function TeacherPage() {
                               <span className="text-xl">👤</span>
                             </div>
                             <div>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2 flex-wrap gap-1">
                                 <p className="font-medium text-gray-900">{auth.name}</p>
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                                   auth.type === 'PRIMARY'
@@ -152,7 +213,10 @@ export default function TeacherPage() {
                             </div>
                           </div>
                           {auth.isActive && (
-                            <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                            <button
+                              onClick={() => setShowConfirm(auth.id)}
+                              className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            >
                               停用授权
                             </button>
                           )}
@@ -185,6 +249,28 @@ export default function TeacherPage() {
                         {auth.remark && (
                           <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-600">
                             备注：{auth.remark}
+                          </div>
+                        )}
+
+                        {showConfirm === auth.id && (
+                          <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                            <p className="text-sm text-red-700 mb-3">
+                              ⚠️ 确认要停用 {auth.name} 的接送授权吗？停用后该授权人将无法接送幼儿。
+                            </p>
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={() => handleDeactivate(auth.id)}
+                                className="px-4 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                              >
+                                确认停用
+                              </button>
+                              <button
+                                onClick={() => setShowConfirm(null)}
+                                className="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                              >
+                                取消
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -239,6 +325,9 @@ export default function TeacherPage() {
                 </label>
                 <input
                   type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
                   placeholder="请输入授权人姓名"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -249,6 +338,9 @@ export default function TeacherPage() {
                 </label>
                 <input
                   type="text"
+                  name="idCardNumber"
+                  value={formData.idCardNumber}
+                  onChange={handleInputChange}
                   placeholder="请输入18位身份证号"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -259,6 +351,9 @@ export default function TeacherPage() {
                 </label>
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
                   placeholder="请输入手机号码"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -267,7 +362,12 @@ export default function TeacherPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   与幼儿关系 *
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select
+                  name="relation"
+                  value={formData.relation}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
                   <option value="">请选择关系</option>
                   <option value="父亲">父亲</option>
                   <option value="母亲">母亲</option>
@@ -277,6 +377,8 @@ export default function TeacherPage() {
                   <option value="外婆">外婆</option>
                   <option value="叔叔">叔叔</option>
                   <option value="阿姨">阿姨</option>
+                  <option value="舅舅">舅舅</option>
+                  <option value="舅妈">舅妈</option>
                   <option value="其他">其他</option>
                 </select>
               </div>
@@ -284,7 +386,12 @@ export default function TeacherPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   授权类型 *
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
                   <option value="PRIMARY">主授权</option>
                   <option value="TEMPORARY">临时授权</option>
                   <option value="EMERGENCY">紧急授权</option>
@@ -297,6 +404,9 @@ export default function TeacherPage() {
                   </label>
                   <input
                     type="date"
+                    name="validFrom"
+                    value={formData.validFrom}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -306,6 +416,9 @@ export default function TeacherPage() {
                   </label>
                   <input
                     type="date"
+                    name="validTo"
+                    value={formData.validTo}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -315,7 +428,10 @@ export default function TeacherPage() {
                   备注说明
                 </label>
                 <textarea
+                  name="remark"
                   rows={3}
+                  value={formData.remark}
+                  onChange={handleInputChange}
                   placeholder="请输入备注说明（选填）"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                 />
@@ -329,7 +445,7 @@ export default function TeacherPage() {
                 取消
               </button>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={handleSubmit}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 确认登记

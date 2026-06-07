@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mockPickupRecords, getPickupRecordWithDetails } from '@/lib/mockData';
 import prisma from '@/lib/prisma';
+import type { PickupStatus } from '@/types';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,9 +9,9 @@ export async function GET(request: Request) {
   const status = searchParams.get('status');
 
   try {
-    const where: any = {};
+    const where: { childId?: string; status?: PickupStatus } = {};
     if (childId) where.childId = childId;
-    if (status) where.status = status;
+    if (status) where.status = status as PickupStatus;
 
     const records = await prisma.pickupRecord.findMany({
       where,

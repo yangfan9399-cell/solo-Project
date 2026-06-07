@@ -6,6 +6,7 @@ export type PickupStatus =
   | 'PENDING' 
   | 'VERIFIED' 
   | 'BLOCKED' 
+  | 'PENDING_PRINCIPAL'
   | 'EXCEPTION_APPROVED' 
   | 'EXCEPTION_REJECTED' 
   | 'COMPLETED';
@@ -107,6 +108,7 @@ export const PickupStatusMap: Record<PickupStatus, string> = {
   PENDING: '待核验',
   VERIFIED: '核验通过',
   BLOCKED: '已阻断',
+  PENDING_PRINCIPAL: '待园长复核',
   EXCEPTION_APPROVED: '异常放行',
   EXCEPTION_REJECTED: '异常驳回',
   COMPLETED: '已完成',
