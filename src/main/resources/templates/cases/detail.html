@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案件详情 - 保险理赔系统</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">保险理赔材料补正与核赔复核系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/cases">案件管理</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases/register">案件登记</a></li>
+                <li class="nav-item"><a class="nav-link" href="/statistics">复盘统计</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${warning}" class="alert alert-warning alert-dismissible fade show" role="alert">
+        <span th:text="${warning}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <span th:if="${claimCase.frozen}" class="badge bg-purple me-2" style="background-color:#6f42c1">已冻结</span>
+                <span th:if="${claimCase.isDuplicate}" class="badge bg-secondary me-2">重复报案</span>
+                案件详情
+            </h2>
+            <div class="text-muted">案件号：<span th:text="${claimCase.caseNo}"></span></div>
+        </div>
+        <div>
+            <a href="/cases" class="btn btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+
+    <div th:if="${claimCase.frozen}" class="alert alert-warning mb-4">
+        <strong>⚠️ 案件已冻结</strong>：<span th:text="${claimCase.freezeReason}"></span>
+        <form th:action="@{'/cases/' + ${claimCase.id} + '/unfreeze'}" method="post" class="d-inline ms-3">
+            <button type="submit" class="btn btn-sm btn-warning">解除冻结</button>
+        </form>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(relatedCases)}" class="card mb-4 border-warning">
+        <div class="card-header bg-warning bg-opacity-10">
+            <strong>🔗 关联案件（重复报案）</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm mb-0">
+                <thead>
+                <tr>
+                    <th>案件号</th>
+                    <th>报案人</th>
+                    <th>出险日期</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="related : ${relatedCases}">
+                    <td th:text="${related.caseNo}"></td>
+                    <td th:text="${related.reporterName}"></td>
+                    <td th:text="${related.accidentDate}"></td>
+                    <td>
+                        <span class="status-badge" th:class="'status-badge status-' + ${related.status}"
+                              th:text="${related.status == 'REGISTERED'} ? '已登记' :
+                                       (${related.status == 'PENDING_REVIEW'} ? '待核赔' :
+                                       (${related.status == 'MATERIAL_MISSING'} ? '材料缺失' :
+                                       (${related.status == 'APPROVED'} ? '已赔付' :
+                                       (${related.status == 'REJECTED'} ? '已拒赔' :
+                                       (${related.status == 'RETURNED'} ? '已退回' : related.status))))))">
+                        </span>
+                    </td>
+                    <td><a th:href="@{/cases/{id}(id=${related.id})}" class="btn btn-sm btn-outline-primary">查看</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">保单信息</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-label">保单号</div>
+                            <div class="info-value" th:text="${policy.policyNo}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">险种</div>
+                            <div class="info-value" th:text="${policy.insuranceType}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">产品名称</div>
+                            <div class="info-value" th:text="${policy.productName}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">保险金额</div>
+                            <div class="info-value" th:text="'¥' + ${#numbers.formatDecimal(policy.sumInsured, 1, 'COMMA', 2, 'DEFAULT')}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">投保人</div>
+                            <div class="info-value" th:text="${policy.policyholder}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">被保险人</div>
+                            <div class="info-value" th:text="${policy.insuredPerson}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">保险期间</div>
+                            <div class="info-value" th:text="${policy.startDate + ' 至 ' + policy.endDate}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">保单状态</div>
+                            <div class="info-value" th:text="${policy.status == 'EFFECTIVE'} ? '有效' : policy.status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">出险信息</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-label">报案人</div>
+                            <div class="info-value" th:text="${claimCase.reporterName}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">联系电话</div>
+                            <div class="info-value" th:text="${claimCase.reporterPhone}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">出险日期</div>
+                            <div class="info-value" th:text="${claimCase.accidentDate}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">事故类型</div>
+                            <div class="info-value" th:text="${claimCase.accidentType}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3" th:if="${accidentInfo != null and accidentInfo.accidentLocation != null}">
+                            <div class="info-label">出险地点</div>
+                            <div class="info-value" th:text="${accidentInfo.accidentLocation}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3" th:if="${accidentInfo != null and accidentInfo.hospitalName != null}">
+                            <div class="info-label">就诊医院</div>
+                            <div class="info-value" th:text="${accidentInfo.hospitalName}"></div>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <div class="info-label">事故经过</div>
+                            <div class="info-value" th:text="${claimCase.accidentDescription}"></div>
+                        </div>
+                        <div class="col-md-12 mt-3" th:if="${accidentInfo != null and accidentInfo.diagnosisResult != null}">
+                            <div class="info-label">诊断结果</div>
+                            <div class="info-value" th:text="${accidentInfo.diagnosisResult}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <div class="info-label">索赔金额</div>
+                            <div class="info-value text-primary fs-4" th:text="'¥' + ${#numbers.formatDecimal(claimCase.claimAmount, 1, 'COMMA', 2, 'DEFAULT')}"></div>
+                        </div>
+                        <div class="col-md-6 mt-3" th:if="${latestReview != null and latestReview.approvedAmount != null}">
+                            <div class="info-label">赔付金额</div>
+                            <div class="info-value text-success fs-4" th:text="'¥' + ${#numbers.formatDecimal(latestReview.approvedAmount, 1, 'COMMA', 2, 'DEFAULT')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>材料清单</span>
+                    <a th:href="@{/materials/upload/{caseId}(caseId=${claimCase.id})}" class="btn btn-sm btn-primary">上传材料</a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                        <tr>
+                            <th>材料名称</th>
+                            <th>状态</th>
+                            <th>上传时间</th>
+                            <th>审核意见</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="material : ${materials}">
+                            <td th:text="${material.materialName}"></td>
+                            <td>
+                                <span class="badge" th:class="${material.status == 'SUBMITTED'} ? 'bg-info' :
+                                                              (${material.status == 'APPROVED'} ? 'bg-success' :
+                                                              (${material.status == 'REJECTED'} ? 'bg-danger' :
+                                                              (${material.status == 'MISSING'} ? 'bg-warning text-dark' : 'bg-secondary')))"
+                                      th:text="${material.status == 'SUBMITTED'} ? '已提交' :
+                                               (${material.status == 'APPROVED'} ? '审核通过' :
+                                               (${material.status == 'REJECTED'} ? '审核不通过' :
+                                               (${material.status == 'MISSING'} ? '缺失' : material.status)))}">
+                                </span>
+                            </td>
+                            <td th:text="${#temporals.format(material.uploadTime, 'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${material.reviewRemark}"></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(materials)}">
+                            <td colspan="4" class="text-center text-muted py-3">暂无上传材料</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4" th:if="${latestReview != null}">
+                <div class="card-header">责任判断与核赔结论</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="info-label">核赔结果</div>
+                            <div class="info-value">
+                                <span class="badge" th:class="${latestReview.reviewResult == 'APPROVED'} ? 'bg-success' :
+                                                              (${latestReview.reviewResult == 'REJECTED'} ? 'bg-danger' : 'bg-secondary')"
+                                      th:text="${latestReview.reviewResult == 'APPROVED'} ? '同意赔付' :
+                                               (${latestReview.reviewResult == 'REJECTED'} ? '拒赔' :
+                                               (${latestReview.reviewResult == 'RETURNED'} ? '退回' : latestReview.reviewResult))}">
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${latestReview.rejectReason != null}">
+                            <div class="info-label">拒赔/退回原因</div>
+                            <div class="info-value text-danger" th:text="${latestReview.rejectReason}"></div>
+                        </div>
+                        <div class="col-md-12 mb-3" th:if="${latestReview.liabilityJudgment != null}">
+                            <div class="info-label">责任判断</div>
+                            <div class="info-value" th:text="${latestReview.liabilityJudgment}"></div>
+                        </div>
+                        <div class="col-md-12" th:if="${latestReview.reviewRemark != null}">
+                            <div class="info-label">核赔备注</div>
+                            <div class="info-value" th:text="${latestReview.reviewRemark}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">案件状态</div>
+                <div class="card-body text-center">
+                    <span class="status-badge fs-6" th:class="'status-badge status-' + ${claimCase.status}"
+                          th:text="${claimCase.status == 'REGISTERED'} ? '已登记' :
+                                   (${claimCase.status == 'PENDING_REVIEW'} ? '待核赔' :
+                                   (${claimCase.status == 'MATERIAL_MISSING'} ? '材料缺失' :
+                                   (${claimCase.status == 'APPROVED'} ? '已赔付' :
+                                   (${claimCase.status == 'REJECTED'} ? '已拒赔' :
+                                   (${claimCase.status == 'RETURNED'} ? '已退回' : claimCase.status))))))">
+                    </span>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">操作</div>
+                <div class="card-body">
+                    <div th:if="${claimCase.status == 'REGISTERED' and !claimCase.frozen}">
+                        <form th:action="@{'/cases/' + ${claimCase.id} + '/submit-review'}" method="post">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">提交核赔</button>
+                        </form>
+                    </div>
+
+                    <div th:if="${claimCase.status == 'PENDING_REVIEW' and !claimCase.frozen}">
+                        <a th:href="@{/review/{caseId}(caseId=${claimCase.id})}" class="btn btn-success w-100 mb-2">核赔处理</a>
+                    </div>
+
+                    <div th:if="${claimCase.status == 'MATERIAL_MISSING'}">
+                        <a th:href="@{/materials/upload/{caseId}(caseId=${claimCase.id})}" class="btn btn-info w-100 mb-2">补传材料</a>
+                    </div>
+
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#supplementForm">
+                            发送材料补正通知
+                        </button>
+                    </div>
+                    <div id="supplementForm" class="collapse mt-3">
+                        <form th:action="@{/materials/request-supplement}" method="post">
+                            <input type="hidden" name="caseId" th:value="${claimCase.id}">
+                            <div class="mb-2">
+                                <label class="form-label small">缺失材料说明</label>
+                                <textarea name="missingMaterials" class="form-control form-control-sm" rows="2" placeholder="请输入缺失的材料..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-sm w-10">发送通知</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">历史节点</div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item" th:each="h : ${history}">
+                            <div class="fw-semibold" th:text="${h.operationType == 'REGISTER'} ? '案件登记' :
+                                                        (${h.operationType == 'SUBMIT_REVIEW'} ? '提交核赔' :
+                                                        (${h.operationType == 'MATERIAL_UPLOAD'} ? '材料上传' :
+                                                        (${h.operationType == 'MATERIAL_REQUEST'} ? '材料补正通知' :
+                                                        (${h.operationType == 'MATERIAL_RESUPPLY'} ? '材料补正完成' :
+                                                        (${h.operationType == 'APPROVE'} ? '核赔通过' :
+                                                        (${h.operationType == 'REJECT'} ? '拒赔' :
+                                                        (${h.operationType == 'RETURN'} ? '退回案件' :
+                                                        (${h.operationType == 'FREEZE'} ? '案件冻结' :
+                                                        (${h.operationType == 'UNFREEZE'} ? '解除冻结' : h.operationType)))))))))}">
+                            </div>
+                            <div class="small text-muted">
+                                <span th:text="${h.operatorName}"></span> ·
+                                <span th:text="${#temporals.format(h.operationTime, 'MM-dd HH:mm')}"></span>
+                            </div>
+                            <div class="small mt-1" th:text="${h.remark}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案件登记 - 保险理赔系统</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">保险理赔材料补正与核赔复核系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases">案件管理</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/cases/register">案件登记</a></li>
+                <li class="nav-item"><a class="nav-link" href="/statistics">复盘统计</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4">理赔案件登记</h2>
+
+    <form th:action="@{/cases/register}" method="post">
+        <div class="card mb-4">
+            <div class="card-header">保单信息</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">选择保单 <span class="text-danger">*</span></label>
+                        <select name="policyId" class="form-select" required>
+                            <option value="">请选择保单</option>
+                            <option th:each="policy : ${policies}"
+                                    th:value="${policy.id}"
+                                    th:text="${policy.policyNo + ' - ' + policy.productName + ' (' + policy.insuredPerson + ')'}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">报案信息</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">报案人姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="reporterName" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">联系电话 <span class="text-danger">*</span></label>
+                        <input type="tel" name="reporterPhone" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">出险日期 <span class="text-danger">*</span></label>
+                        <input type="date" name="accidentDate" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">事故类型 <span class="text-danger">*</span></label>
+                        <select name="accidentType" class="form-select" required>
+                            <option value="">请选择事故类型</option>
+                            <option th:each="type : ${accidentTypes}" th:value="${type}" th:text="${type}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">出险地点</label>
+                        <input type="text" name="accidentLocation" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">索赔金额（元） <span class="text-danger">*</span></label>
+                        <input type="number" name="claimAmount" step="0.01" min="0" class="form-control" required>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label">事故经过描述 <span class="text-danger">*</span></label>
+                        <textarea name="accidentDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">损失详情</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">受伤情况描述</label>
+                        <textarea name="injuryDescription" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">诊断结果</label>
+                        <textarea name="diagnosisResult" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">就诊医院</label>
+                        <input type="text" name="hospitalName" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">治疗费用（元）</label>
+                        <input type="number" name="treatmentCost" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">财产损失（元）</label>
+                        <input type="number" name="propertyLoss" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">其他信息</label>
+                        <textarea name="otherInfo" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="/cases" class="btn btn-outline-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">提交登记</button>
+        </div>
+    </form>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

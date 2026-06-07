@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复盘统计 - 保险理赔系统</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-bar {
+            height: 24px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            background-color: #0d6efd;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">保险理赔材料补正与核赔复核系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases">案件管理</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases/register">案件登记</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/statistics">复盘统计</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4">理赔复盘统计分析</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number" th:text="${statusStats['已登记']}">0</div>
+                <div class="stat-label">已登记</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-warning" th:text="${statusStats['待核赔']}">0</div>
+                <div class="stat-label">待核赔</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-info" th:text="${statusStats['材料缺失']}">0</div>
+                <div class="stat-label">材料缺失</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-success" th:text="${statusStats['已赔付']}">0</div>
+                <div class="stat-label">已赔付</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-danger" th:text="${statusStats['已拒赔']}">0</div>
+                <div class="stat-label">已拒赔</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number" style="color:#6f42c1" th:text="${statusStats['已冻结']}">0</div>
+                <div class="stat-label">已冻结</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">按险种统计</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>险种</th>
+                            <th>案件数</th>
+                            <th>赔付数</th>
+                            <th>拒赔数</th>
+                            <th>索赔总额</th>
+                            <th>赔付总额</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="entry, stat : ${insuranceTypeStats}">
+                            <td th:text="${entry.key}"></td>
+                            <td th:text="${entry.value.totalCount}"></td>
+                            <td class="text-success" th:text="${entry.value.approvedCount}"></td>
+                            <td class="text-danger" th:text="${entry.value.rejectedCount}"></td>
+                            <td th:text="'¥' + ${#numbers.formatDecimal(entry.value.totalClaimAmount, 1, 'COMMA', 0, 'DEFAULT')}"></td>
+                            <td th:text="'¥' + ${#numbers.formatDecimal(entry.value.totalApprovedAmount, 1, 'COMMA', 0, 'DEFAULT')}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(insuranceTypeStats)}">
+                            <td colspan="6" class="text-center text-muted py-3">暂无数据</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">缺失材料统计</div>
+                <div class="card-body">
+                    <div th:if="${!#maps.isEmpty(missingMaterialStats)}">
+                        <div th:each="entry, stat : ${missingMaterialStats}" class="mb-2">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span th:text="${entry.key}"></span>
+                                <span th:text="${entry.value + ' 次'}"></span>
+                            </div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill"
+                                     th:style="'width: ' + ${entry.value * 100 / T(java.util.Collections).max(missingMaterialStats.values())} + '%'">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(missingMaterialStats)}" class="text-center text-muted py-3">
+                        暂无缺失材料数据
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">拒赔原因统计</div>
+                <div class="card-body">
+                    <div th:if="${!#maps.isEmpty(rejectReasonStats)}">
+                        <div th:each="entry, stat : ${rejectReasonStats}" class="mb-2">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span th:text="${entry.key}"></span>
+                                <span th:text="${entry.value + ' 件'}"></span>
+                            </div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill bg-danger"
+                                     th:style="'width: ' + ${entry.value * 100 / T(java.util.Collections).max(rejectReasonStats.values())} + '%'">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(rejectReasonStats)}" class="text-center text-muted py-3">
+                        暂无拒赔数据
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">核赔时长统计</div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-4 text-center">
+                            <div class="fs-4 fw-bold text-primary" th:text="${durationStats.avgHours} + 'h'">0h</div>
+                            <div class="small text-muted">平均时长</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="fs-4 fw-bold text-success" th:text="${durationStats.minHours} + 'h'">0h</div>
+                            <div class="small text-muted">最短时长</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="fs-4 fw-bold text-warning" th:text="${durationStats.maxHours} + 'h'">0h</div>
+                            <div class="small text-muted">最长时长</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3">时长分布</h6>
+                    <div th:each="entry, stat : ${durationStats.distribution}" class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span th:text="${entry.key}"></span>
+                            <span th:text="${entry.value + ' 件'}"></span>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill bg-info"
+                                 th:style="'width: ' + ${entry.value * 100 / durationStats.count} + '%'">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">统计说明</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <h6>📊 按险种统计</h6>
+                    <p class="small text-muted">按险种类别汇总案件数量、赔付/拒赔数量及金额</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>📋 缺失材料统计</h6>
+                    <p class="small text-muted">统计各类缺失材料出现的频次，指导材料清单优化</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>❌ 拒赔原因统计</h6>
+                    <p class="small text-muted">分析主要拒赔原因分布，优化风险管控</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>⏱️ 核赔时长统计</h6>
+                    <p class="small text-muted">从案件登记到核赔结论的处理时长分析</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

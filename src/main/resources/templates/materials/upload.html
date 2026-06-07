@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>材料上传 - 保险理赔系统</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">保险理赔材料补正与核赔复核系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases">案件管理</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases/register">案件登记</a></li>
+                <li class="nav-item"><a class="nav-link" href="/statistics">复盘统计</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2 class="mb-4">
+        材料上传
+        <small class="text-muted fs-6" th:text="'案件号：' + ${claimCase.caseNo}"></small>
+    </h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">上传理赔材料</div>
+                <div class="card-body">
+                    <form th:action="@{/materials/upload}" method="post">
+                        <input type="hidden" name="caseId" th:value="${claimCase.id}">
+
+                        <div class="mb-3">
+                            <label class="form-label">材料类型 <span class="text-danger">*</span></label>
+                            <select name="materialTypeId" class="form-select" required>
+                                <option value="">请选择材料类型</option>
+                                <option th:each="mt : ${materialTypes}"
+                                        th:value="${mt.id}"
+                                        th:text="${mt.typeName + (mt.required ? ' (必备)' : '')}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">材料名称</label>
+                            <input type="text" name="materialName" class="form-control" placeholder="留空则使用材料类型名称">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">文件上传</label>
+                            <div class="alert alert-info small">
+                                演示模式：请输入文件名以模拟上传操作
+                            </div>
+                            <input type="text" name="fileName" class="form-control" placeholder="例如：身份证扫描件.jpg">
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a th:href="@{/cases/{id}(id=${claimCase.id})}" class="btn btn-outline-secondary">返回</a>
+                            <button type="submit" class="btn btn-primary">提交</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">材料清单</div>
+                <div class="card-body">
+                    <p class="small text-muted">请根据险种要求准备相应的理赔材料：</p>
+                    <ul class="small">
+                        <li>身份证明材料</li>
+                        <li>保单凭证</li>
+                        <li>事故证明材料</li>
+                        <li>医疗费用凭证</li>
+                        <li>损失清单及凭证</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

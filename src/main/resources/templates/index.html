@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 保险理赔系统</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">保险理赔材料补正与核赔复核系统</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases">案件管理</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cases/register">案件登记</a></li>
+                <li class="nav-item"><a class="nav-link" href="/statistics">复盘统计</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <h2 class="mb-4">理赔概览</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number" th:text="${statusStats['已登记']}">0</div>
+                <div class="stat-label">已登记</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-warning" th:text="${statusStats['待核赔']}">0</div>
+                <div class="stat-label">待核赔</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-info" th:text="${statusStats['材料缺失']}">0</div>
+                <div class="stat-label">材料缺失</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-success" th:text="${statusStats['已赔付']}">0</div>
+                <div class="stat-label">已赔付</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-danger" th:text="${statusStats['已拒赔']}">0</div>
+                <div class="stat-label">已拒赔</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card">
+                <div class="stat-number text-purple" th:text="${statusStats['已冻结']}" style="color:#6f42c1">0</div>
+                <div class="stat-label">已冻结</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">快速操作</div>
+                <div class="card-body">
+                    <a href="/cases/register" class="btn btn-primary btn-lg w-100 mb-3">登记新案件</a>
+                    <a href="/cases?status=PENDING_REVIEW" class="btn btn-warning w-100 mb-3">待核赔案件</a>
+                    <a href="/cases?status=MATERIAL_MISSING" class="btn btn-info w-100 mb-3">材料缺失案件</a>
+                    <a href="/statistics" class="btn btn-secondary w-100">查看统计分析</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">系统说明</div>
+                <div class="card-body">
+                    <h5>业务流程</h5>
+                    <ol>
+                        <li><strong>案件登记</strong>：理赔经办人录入报案信息</li>
+                        <li><strong>材料审核</strong>：核赔人审核理赔材料</li>
+                        <li><strong>材料补正</strong>：客户补充缺失材料</li>
+                        <li><strong>核赔决定</strong>：赔付、拒赔或退回</li>
+                        <li><strong>重复报案</strong>：自动检测并冻结案件</li>
+                    </ol>
+                    <hr>
+                    <h5>预置样本</h5>
+                    <ul>
+                        <li>正常赔付案件</li>
+                        <li>材料缺失案件</li>
+                        <li>保单责任不符案件</li>
+                        <li>重复报案案件</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
