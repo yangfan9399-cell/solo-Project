@@ -132,6 +132,25 @@
           </div>
         </div>
 
+        <div v-if="orderDetail.rework || reworkPhotos.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <span class="w-1 h-5 bg-teal-500 rounded mr-2"></span>
+            返工照片
+          </h3>
+          <div v-if="reworkPhotos.length > 0" class="grid grid-cols-3 gap-3">
+            <div
+              v-for="photo in reworkPhotos"
+              :key="photo.id"
+              class="aspect-video bg-gray-100 rounded-lg overflow-hidden"
+            >
+              <img :src="photo.url" alt="返工照片" class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div v-else class="text-center py-8 bg-gray-50 rounded-lg">
+            <p class="text-gray-400 text-sm">暂无返工照片</p>
+          </div>
+        </div>
+
         <div v-if="orderDetail.complaint" class="bg-white rounded-lg shadow-sm border border-red-200 p-6">
           <h3 class="text-lg font-semibold text-red-600 mb-4 flex items-center">
             <span class="w-1 h-5 bg-red-500 rounded mr-2"></span>
@@ -276,15 +295,24 @@
               </button>
             </div>
 
+            <div v-if="canReworkComplete">
+              <button
+                @click="showReworkCompleteModal = true; tempPhotos = []"
+                class="w-full py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              >
+                提交返工完成
+              </button>
+            </div>
+
             <div v-if="canInspect">
               <button
                 @click="showInspectModal = true"
                 class="w-full py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
               >
-                验收复核
+                {{ orderDetail?.order.status === 'rework_completed' ? '返工验收' : '验收复核' }}
               </button>
-              <p v-if="completionPhotos.length === 0" class="text-xs text-red-500 mt-1">
-                ⚠ 完成照片缺失，不能通过验收
+              <p v-if="currentInspectPhotos.length === 0" class="text-xs text-red-500 mt-1">
+                ⚠ {{ orderDetail?.order.status === 'rework_completed' ? '返工照片缺失，不能通过验收' : '完成照片缺失，不能通过验收' }}
               </p>
             </div>
 
@@ -431,12 +459,60 @@
       </div>
     </div>
 
+    <div v-if="showReworkCompleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">提交返工完成</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">上传返工完成照片</label>
+            <div class="grid grid-cols-3 gap-2 mb-2">
+              <div
+                v-for="(photo, idx) in tempPhotos"
+                :key="idx"
+                class="aspect-square bg-gray-100 rounded-lg relative overflow-hidden"
+              >
+                <img :src="photo" alt="照片预览" class="w-full h-full object-cover" />
+                <button
+                  @click="removePhoto(idx)"
+                  class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs"
+                >
+                  ×
+                </button>
+              </div>
+              <button
+                v-if="tempPhotos.length < 6"
+                @click="addPhoto"
+                class="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400 hover:border-teal-500 hover:text-teal-500 transition-colors"
+              >
+                + 添加
+              </button>
+            </div>
+            <p class="text-xs text-gray-500">提示：请上传至少1张返工完成照片，否则无法通过验收</p>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+          <button
+            @click="showReworkCompleteModal = false"
+            class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            取消
+          </button>
+          <button
+            @click="handleReworkComplete"
+            class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            提交返工完成
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="showInspectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">验收复核</h3>
-        <div v-if="completionPhotos.length === 0" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p class="text-red-700 text-sm font-medium">⚠ 完成照片缺失</p>
-          <p class="text-red-600 text-xs mt-1">根据规定，无完成照片不能通过验收</p>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ orderDetail?.order.status === 'rework_completed' ? '返工验收' : '验收复核' }}</h3>
+        <div v-if="currentInspectPhotos.length === 0" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-red-700 text-sm font-medium">⚠ {{ orderDetail?.order.status === 'rework_completed' ? '返工照片缺失' : '完成照片缺失' }}</p>
+          <p class="text-red-600 text-xs mt-1">根据规定，无照片不能通过验收</p>
         </div>
         <div class="space-y-4">
           <div>
@@ -447,10 +523,10 @@
                   type="radio"
                   v-model="inspectResult"
                   :value="true"
-                  :disabled="completionPhotos.length === 0"
+                  :disabled="currentInspectPhotos.length === 0"
                   class="mr-2"
                 />
-                <span :class="completionPhotos.length === 0 ? 'text-gray-400' : ''">通过</span>
+                <span :class="currentInspectPhotos.length === 0 ? 'text-gray-400' : ''">通过</span>
               </label>
               <label class="flex items-center">
                 <input type="radio" v-model="inspectResult" :value="false" class="mr-2" />
@@ -664,6 +740,7 @@ const showAssignModal = ref(false);
 const showCompleteModal = ref(false);
 const showInspectModal = ref(false);
 const showReworkModal = ref(false);
+const showReworkCompleteModal = ref(false);
 const showCompensationModal = ref(false);
 const showRejectModal = ref(false);
 
@@ -691,6 +768,16 @@ const completionPhotos = computed(() => {
   return orderDetail.value.photos.filter(p => p.type === 'completion');
 });
 
+const reworkPhotos = computed(() => {
+  if (!orderDetail.value) return [];
+  return orderDetail.value.photos.filter(p => p.type === 'rework');
+});
+
+const currentInspectPhotos = computed(() => {
+  if (!orderDetail.value) return [];
+  return orderDetail.value.order.status === 'rework_completed' ? reworkPhotos.value : completionPhotos.value;
+});
+
 const isReworkTimeout = computed(() => {
   if (!orderDetail.value?.rework) return false;
   return new Date(orderDetail.value.rework.deadline) < new Date();
@@ -704,8 +791,15 @@ const canComplete = computed(() => {
   return currentRole.value === 'cleaner' && orderDetail.value?.order.status === 'assigned';
 });
 
+const canReworkComplete = computed(() => {
+  return currentRole.value === 'cleaner' && orderDetail.value?.order.status === 'rework';
+});
+
 const canInspect = computed(() => {
-  return currentRole.value === 'inspector' && orderDetail.value?.order.status === 'completed';
+  return currentRole.value === 'inspector' && (
+    orderDetail.value?.order.status === 'completed' ||
+    orderDetail.value?.order.status === 'rework_completed'
+  );
 });
 
 const canCreateRework = computed(() => {
@@ -727,7 +821,7 @@ const canReviewCompensation = computed(() => {
 });
 
 const hasAnyAction = computed(() => {
-  return canAssign.value || canComplete.value || canInspect.value ||
+  return canAssign.value || canComplete.value || canReworkComplete.value || canInspect.value ||
     canCreateRework.value || canCreateCompensation.value || canReviewCompensation.value;
 });
 
@@ -778,14 +872,36 @@ async function handleComplete() {
   }
 }
 
+async function handleReworkComplete() {
+  if (tempPhotos.value.length === 0) {
+    alert('请上传至少一张返工完成照片');
+    return;
+  }
+
+  try {
+    const res = await $fetch(`/api/orders/${orderId.value}/rework-complete`, {
+      method: 'POST',
+      body: { photos: tempPhotos.value },
+    });
+    if (res.success) {
+      showReworkCompleteModal.value = false;
+      tempPhotos.value = [];
+      await refreshOrder();
+    }
+  } catch (e: any) {
+    alert(e.data?.statusMessage || '操作失败');
+  }
+}
+
 async function handleInspect() {
   if (inspectResult.value === null) {
     alert('请选择验收结果');
     return;
   }
 
-  if (inspectResult.value && completionPhotos.value.length === 0) {
-    alert('完成照片缺失，不能通过验收！');
+  if (inspectResult.value && currentInspectPhotos.value.length === 0) {
+    const isRework = orderDetail.value?.order.status === 'rework_completed';
+    alert(isRework ? '返工照片缺失，不能通过验收！' : '完成照片缺失，不能通过验收！');
     return;
   }
 

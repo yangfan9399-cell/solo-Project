@@ -461,6 +461,8 @@ async function seed() {
     { orderId: order8.id, url: 'https://picsum.photos/seed/clean8/400/300', type: 'completion', uploadedBy: user6.id, createdAt: daysAgo(7) },
     { orderId: order9.id, url: 'https://picsum.photos/seed/clean9/400/300', type: 'completion', uploadedBy: user7.id, createdAt: daysAgo(10) },
     { orderId: order10.id, url: 'https://picsum.photos/seed/clean10/400/300', type: 'completion', uploadedBy: user2.id, createdAt: daysAgo(2) },
+    { orderId: order4.id, url: 'https://picsum.photos/seed/rework1/400/300', type: 'rework', uploadedBy: user7.id, createdAt: hoursAgo(8) },
+    { orderId: order4.id, url: 'https://picsum.photos/seed/rework2/400/300', type: 'rework', uploadedBy: user7.id, createdAt: hoursAgo(8) },
   ]);
 
   console.log('  → Inserting complaints...');
