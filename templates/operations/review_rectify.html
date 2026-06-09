@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}确认整改完成{% endblock %}
+
+{% block content %}
+<h2 class="page-title">确认整改完成</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem;">
+        <h4>复核记录 - {{ review.assignment.route.code }}</h4>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+            复核人：{{ review.reviewer.profile.real_name|default:review.reviewer.username }}<br>
+            复核时间：{{ review.reviewed_at|date:"Y-m-d H:i" }}
+            {% if review.rectification_deadline %}
+            <br>整改期限：{{ review.rectification_deadline|date:"Y-m-d H:i" }}
+            {% endif %}
+        </p>
+        <p style="color: #333; margin-top: 0.5rem;"><strong>复核意见：</strong>{{ review.review_notes }}</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>整改说明 *</label>
+            <textarea name="rectification_notes" rows="4" required placeholder="请详细描述整改措施和结果..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-success">确认整改完成</button>
+            <a href="{% url 'operations:review_detail' review.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

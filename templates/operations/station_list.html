@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}站点管理 - 环卫车辆清运管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">站点管理</h2>
+
+<div class="card">
+    {% if stations %}
+    <table>
+        <thead>
+            <tr>
+                <th>路线</th>
+                <th>顺序</th>
+                <th>站点名称</th>
+                <th>地址</th>
+                <th>垃圾桶数量</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for station in stations %}
+            <tr>
+                <td>{{ station.route.code }}</td>
+                <td>{{ station.order }}</td>
+                <td>{{ station.name }}</td>
+                <td>{{ station.address }}</td>
+                <td>{{ station.bin_count }} 个</td>
+                <td>
+                    <a href="{% url 'operations:station_detail' station.pk %}" class="btn btn-sm btn-primary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无站点数据</p>
+    {% endif %}
+</div>
+{% endblock %}

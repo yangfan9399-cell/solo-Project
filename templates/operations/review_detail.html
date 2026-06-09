@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}复核详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">复核详情</h2>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0;">复核记录</h3>
+        <span class="badge badge-{% if review.review_result == 'pass' %}completed{% elif review.review_result == 'needs_rectification' %}suspended{% else %}in-progress{% endif %}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+            {{ review.get_review_result_display }}
+        </span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">关联任务</div>
+            <div class="value">
+                <a href="{% url 'operations:assignment_detail' review.assignment.pk %}">
+                    {{ review.assignment.route.code }} - {{ review.assignment.assigned_date|date:"Y-m-d" }}
+                </a>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">复核人</div>
+            <div class="value">{{ review.reviewer.profile.real_name|default:review.reviewer.username }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">复核时间</div>
+            <div class="value">{{ review.reviewed_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        {% if review.rectification_deadline %}
+        <div class="detail-item">
+            <div class="label">整改期限</div>
+            <div class="value" style="color: #e67e22;">{{ review.rectification_deadline|date:"Y-m-d H:i" }}</div>
+        </div>
+        {% endif %}
+        {% if review.rectification_completed_at %}
+        <div class="detail-item">
+            <div class="label">整改完成时间</div>
+            <div class="value" style="color: #27ae60;">{{ review.rectification_completed_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">整改耗时</div>
+            <div class="value">{{ review.rectification_duration_hours|default:"-" }} 小时</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-item">
+        <div class="label">复核意见</div>
+        <div class="value">{{ review.review_notes }}</div>
+    </div>
+
+    {% if review.rectification_notes %}
+    <div class="detail-item">
+        <div class="label">整改说明</div>
+        <div class="value">{{ review.rectification_notes }}</div>
+    </div>
+    {% endif %}
+
+    {% if review.complaint %}
+    <div class="detail-item">
+        <div class="label">关联投诉</div>
+        <div class="value">
+            <a href="{% url 'operations:complaint_detail' review.complaint.pk %}">
+                {{ review.complaint.get_complaint_type_display }} - {{ review.complaint.station.name }}
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_supervisor or user.is_staff %}
+    {% if review.review_result == 'needs_rectification' %}
+    <div class="card">
+        <h3>整改操作</h3>
+        <div class="action-bar">
+            <a href="{% url 'operations:review_rectify' review.pk %}" class="btn btn-success">✅ 确认整改完成</a>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

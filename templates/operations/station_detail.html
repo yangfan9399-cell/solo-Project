@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{{ station.name }} - 站点详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">{{ station.name }}</h2>
+
+<div class="card">
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">站点名称</div>
+            <div class="value">{{ station.name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">所属路线</div>
+            <div class="value">
+                <a href="{% url 'operations:route_detail' station.route.pk %}">
+                    {{ station.route.code }} - {{ station.route.name }}
+                </a>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">站点顺序</div>
+            <div class="value">第 {{ station.order }} 站</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">地址</div>
+            <div class="value">{{ station.address }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">垃圾桶数量</div>
+            <div class="value">{{ station.bin_count }} 个</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">单桶容量</div>
+            <div class="value">{{ station.bin_capacity }} L</div>
+        </div>
+    </div>
+    {% if station.remarks %}
+    <div class="detail-item">
+        <div class="label">备注</div>
+        <div class="value">{{ station.remarks }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>最近签到记录</h3>
+    {% if recent_checkins %}
+    <table>
+        <thead>
+            <tr>
+                <th>签到时间</th>
+                <th>司机</th>
+                <th>状态</th>
+                <th>清运重量</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for checkin in recent_checkins %}
+            <tr>
+                <td>{{ checkin.check_in_time|date:"Y-m-d H:i" }}</td>
+                <td>{{ checkin.driver.profile.real_name|default:checkin.driver.username }}</td>
+                <td>
+                    <span class="badge badge-{{ checkin.status }}">
+                        {{ checkin.get_status_display }}
+                    </span>
+                </td>
+                <td>{{ checkin.waste_weight|default:"-" }} kg</td>
+                <td>
+                    <a href="{% url 'operations:checkin_detail' checkin.pk %}" class="btn btn-sm btn-secondary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无签到记录</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>投诉记录</h3>
+    {% if recent_complaints %}
+    {% for complaint in recent_complaints %}
+    <div style="border: 1px solid #f0f0f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-{{ complaint.complaint_type }}">
+                {{ complaint.get_complaint_type_display }}
+            </span>
+            <span class="badge badge-{{ complaint.status }}">
+                {{ complaint.get_status_display }}
+            </span>
+        </div>
+        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+            {{ complaint.reported_at|date:"Y-m-d H:i" }}
+        </div>
+        <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+            {{ complaint.description }}
+        </div>
+        <div style="margin-top: 0.5rem; text-align: right;">
+            <a href="{% url 'operations:complaint_detail' complaint.pk %}" class="btn btn-sm btn-secondary">详情</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无投诉记录</p>
+    {% endif %}
+</div>
+{% endblock %}

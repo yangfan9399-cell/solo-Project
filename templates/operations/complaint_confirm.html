@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}投诉核实{% endblock %}
+
+{% block content %}
+<h2 class="page-title">投诉核实处理</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem;">
+        <h4>{{ complaint.get_complaint_type_display }} - {{ complaint.station.name }}</h4>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+            投诉人：{{ complaint.complainant }} ({{ complaint.complainant_phone }})<br>
+            投诉时间：{{ complaint.reported_at|date:"Y-m-d H:i" }}
+        </p>
+        <p style="color: #333; margin-top: 0.5rem;">{{ complaint.description }}</p>
+        {% if complaint.photo_evidence %}
+        <img src="{{ complaint.photo_evidence }}" alt="投诉照片" style="max-width: 300px; max-height: 200px; border-radius: 6px; margin-top: 0.5rem;">
+        {% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>核实结果 *</label>
+            <select name="confirmed" required>
+                <option value="">请选择</option>
+                <option value="yes">投诉属实</option>
+                <option value="no">投诉不属实</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>核实意见 *</label>
+            <textarea name="confirmed_notes" rows="4" required placeholder="请详细描述核实情况和处理意见..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">提交核实结果</button>
+            <a href="{% url 'operations:complaint_detail' complaint.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

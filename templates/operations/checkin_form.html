@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}站点签到 - {{ station.name }}{% endblock %}
+
+{% block content %}
+<h2 class="page-title">站点签到</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 0.5rem;">{{ station.name }}</h3>
+        <p style="color: #666; font-size: 0.9rem;">
+            地址：{{ station.address }}<br>
+            垃圾桶数量：{{ station.bin_count }} 个 &nbsp;|&nbsp; 单桶容量：{{ station.bin_capacity }}L
+        </p>
+        <p style="color: #999; font-size: 0.85rem; margin-top: 0.5rem;">
+            所属路线：{{ assignment.route.code }} - {{ assignment.route.name }}
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>签到状态 *</label>
+            <select name="status" required>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if value == 'normal' %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>清运重量 (kg)</label>
+                <input type="number" name="waste_weight" step="0.1" placeholder="请输入清运重量">
+            </div>
+            <div class="form-group">
+                <label>签到时间</label>
+                <input type="text" value="系统自动记录" readonly style="background: #f5f5f5;">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>现场照片URL</label>
+            <input type="url" name="photo_url" placeholder="https://...">
+        </div>
+        <div class="form-group">
+            <label>备注</label>
+            <textarea name="notes" rows="3" placeholder="请输入备注信息..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">确认签到</button>
+            <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

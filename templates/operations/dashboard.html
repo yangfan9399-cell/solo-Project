@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}仪表盘 - 环卫车辆清运管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">仪表盘</h2>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ pending_count }}</div>
+        <div class="label">今日待出发</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" style="color: #f39c12;">{{ in_progress_count }}</div>
+        <div class="label">进行中</div>
+    </div>
+    <div class="stat-card success">
+        <div class="number">{{ completed_count }}</div>
+        <div class="label">已完成</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="number">{{ suspended_count }}</div>
+        <div class="label">已暂停</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="number">{{ pending_complaints }}</div>
+        <div class="label">待处理投诉</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="number">{{ open_faults }}</div>
+        <div class="label">进行中故障</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>今日任务</h3>
+    {% if today_assignments %}
+    <table>
+        <thead>
+            <tr>
+                <th>路线</th>
+                <th>车辆</th>
+                <th>司机</th>
+                <th>调度员</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in today_assignments %}
+            <tr>
+                <td>{{ assignment.route.code }} - {{ assignment.route.name }}</td>
+                <td>{{ assignment.vehicle.plate_number }}</td>
+                <td>{{ assignment.driver.profile.real_name|default:assignment.driver.username }}</td>
+                <td>{{ assignment.dispatcher.profile.real_name|default:assignment.dispatcher.username }}</td>
+                <td>
+                    <span class="badge badge-{{ assignment.status }}">
+                        {{ assignment.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-sm btn-primary">查看详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999; text-align: center; padding: 2rem;">今日暂无任务</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>快捷操作</h3>
+    <div class="action-bar">
+        {% if is_dispatcher or user.is_staff %}
+        <a href="{% url 'operations:assignment_create' %}" class="btn btn-primary">➕ 新建派车任务</a>
+        {% endif %}
+        <a href="{% url 'operations:assignment_list' %}" class="btn btn-secondary">📋 查看全部任务</a>
+        <a href="{% url 'operations:complaint_list' %}" class="btn btn-warning">📣 投诉管理</a>
+        <a href="{% url 'operations:analytics' %}" class="btn btn-success">📈 复盘统计</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}上报车辆故障{% endblock %}
+
+{% block content %}
+<h2 class="page-title">上报车辆故障</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #fff5f5; border-radius: 6px; border-left: 4px solid #e74c3c;">
+        <p style="font-weight: 500;">⚠️ 上报故障后，车辆状态将变为"故障"，当前任务将自动暂停。</p>
+        <p style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+            车辆：{{ assignment.vehicle.plate_number }} - {{ assignment.vehicle.vehicle_type }}
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>故障类型 *</label>
+                <select name="fault_type" required>
+                    <option value="">请选择故障类型</option>
+                    <option value="发动机故障">发动机故障</option>
+                    <option value="轮胎故障">轮胎故障</option>
+                    <option value="液压系统故障">液压系统故障</option>
+                    <option value="电气系统故障">电气系统故障</option>
+                    <option value="制动系统故障">制动系统故障</option>
+                    <option value="其他故障">其他故障</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>严重程度 *</label>
+                <select name="severity" required>
+                    {% for value, label in severity_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>故障描述 *</label>
+            <textarea name="description" rows="5" required placeholder="请详细描述故障情况..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('确定上报故障？任务将自动暂停。')">确认上报</button>
+            <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

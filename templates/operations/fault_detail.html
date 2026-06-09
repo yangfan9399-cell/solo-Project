@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ fault.fault_type }} - 故障详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">故障详情</h2>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0;">{{ fault.fault_type }}</h3>
+        <span class="badge badge-{% if fault.status == 'resolved' %}completed{% elif fault.status == 'being_repaired' %}in-progress{% else %}suspended{% endif %}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+            {{ fault.get_status_display }}
+        </span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">车辆</div>
+            <div class="value">
+                <a href="{% url 'operations:vehicle_detail' fault.vehicle.pk %}">
+                    {{ fault.vehicle.plate_number }} - {{ fault.vehicle.vehicle_type }}
+                </a>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">严重程度</div>
+            <div class="value">
+                {% if fault.severity == 'severe' %}
+                <span style="color: #e74c3c; font-weight: 500;">{{ fault.get_severity_display }}</span>
+                {% elif fault.severity == 'moderate' %}
+                <span style="color: #f39c12; font-weight: 500;">{{ fault.get_severity_display }}</span>
+                {% else %}
+                {{ fault.get_severity_display }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">上报人</div>
+            <div class="value">{{ fault.reporter.profile.real_name|default:fault.reporter.username }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">上报时间</div>
+            <div class="value">{{ fault.reported_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        {% if fault.resolved_at %}
+        <div class="detail-item">
+            <div class="label">解决时间</div>
+            <div class="value">{{ fault.resolved_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        {% endif %}
+        {% if fault.assignment %}
+        <div class="detail-item">
+            <div class="label">关联任务</div>
+            <div class="value">
+                <a href="{% url 'operations:assignment_detail' fault.assignment.pk %}">
+                    {{ fault.assignment.route.code }} - {{ fault.assignment.assigned_date|date:"Y-m-d" }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-item">
+        <div class="label">故障描述</div>
+        <div class="value">{{ fault.description }}</div>
+    </div>
+
+    {% if fault.resolution_notes %}
+    <div class="detail-item">
+        <div class="label">处理说明</div>
+        <div class="value">{{ fault.resolution_notes }}</div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_dispatcher or user.is_staff %}
+    {% if fault.status != 'resolved' %}
+    <div class="card">
+        <h3>处理操作</h3>
+        <div class="action-bar">
+            {% if fault.status == 'reported' %}
+            <span class="badge badge-in-progress" style="padding: 0.5rem 1rem;">维修中</span>
+            {% endif %}
+            <a href="{% url 'operations:fault_resolve' fault.pk %}" class="btn btn-success">✅ 标记已解决</a>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

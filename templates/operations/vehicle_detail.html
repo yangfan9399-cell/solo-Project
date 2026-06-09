@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ vehicle.plate_number }} - 车辆详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">{{ vehicle.plate_number }}</h2>
+
+<div class="card">
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">车牌号</div>
+            <div class="value">{{ vehicle.plate_number }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">车型</div>
+            <div class="value">{{ vehicle.vehicle_type }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">载重</div>
+            <div class="value">{{ vehicle.capacity }} 吨</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">状态</div>
+            <div class="value">
+                <span class="badge badge-{{ vehicle.status }}">
+                    {{ vehicle.get_status_display }}
+                </span>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">所属片区</div>
+            <div class="value">{{ vehicle.district.name|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">固定司机</div>
+            <div class="value">{{ vehicle.driver.profile.real_name|default:vehicle.driver.username|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">上次维保日期</div>
+            <div class="value">{{ vehicle.last_maintenance_date|date:"Y-m-d"|default:"-" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>最近任务</h3>
+    {% if recent_assignments %}
+    <table>
+        <thead>
+            <tr>
+                <th>派车日期</th>
+                <th>路线</th>
+                <th>司机</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in recent_assignments %}
+            <tr>
+                <td>{{ assignment.assigned_date|date:"Y-m-d" }}</td>
+                <td>{{ assignment.route.code }} - {{ assignment.route.name }}</td>
+                <td>{{ assignment.driver.profile.real_name|default:assignment.driver.username }}</td>
+                <td>
+                    <span class="badge badge-{{ assignment.status }}">
+                        {{ assignment.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-sm btn-primary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无任务数据</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>最近故障</h3>
+    {% if recent_faults %}
+    {% for fault in recent_faults %}
+    <div style="border: 1px solid #f0f0f0; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>{{ fault.fault_type }}</strong>
+            <span class="badge badge-{{ fault.status }}">{{ fault.get_status_display }}</span>
+        </div>
+        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+            {{ fault.reported_at|date:"Y-m-d H:i" }} &nbsp;|&nbsp; 严重程度：{{ fault.get_severity_display }}
+        </div>
+        <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+            {{ fault.description }}
+        </div>
+        <div style="margin-top: 0.5rem; text-align: right;">
+            <a href="{% url 'operations:fault_detail' fault.pk %}" class="btn btn-sm btn-secondary">详情</a>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无故障记录</p>
+    {% endif %}
+</div>
+{% endblock %}

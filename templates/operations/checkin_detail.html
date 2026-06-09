@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}签到详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">签到详情</h2>
+
+<div class="card">
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">站点</div>
+            <div class="value">
+                <a href="{% url 'operations:station_detail' checkin.station.pk %}">
+                    {{ checkin.station.name }}
+                </a>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">签到时间</div>
+            <div class="value">{{ checkin.check_in_time|date:"Y-m-d H:i" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">签到司机</div>
+            <div class="value">{{ checkin.driver.profile.real_name|default:checkin.driver.username }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">签到状态</div>
+            <div class="value">
+                <span class="badge badge-{{ checkin.status }}">
+                    {{ checkin.get_status_display }}
+                </span>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">清运重量</div>
+            <div class="value">{{ checkin.waste_weight|default:"-" }} kg</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">所属任务</div>
+            <div class="value">
+                <a href="{% url 'operations:assignment_detail' checkin.assignment.pk %}">
+                    {{ checkin.assignment.route.code }} - {{ checkin.assignment.assigned_date|date:"Y-m-d" }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if checkin.photo_url %}
+    <div class="detail-item">
+        <div class="label">现场照片</div>
+        <div class="value">
+            <img src="{{ checkin.photo_url }}" alt="现场照片" style="max-width: 400px; max-height: 300px; border-radius: 6px; border: 1px solid #eee;">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if checkin.notes %}
+    <div class="detail-item">
+        <div class="label">备注</div>
+        <div class="value">{{ checkin.notes }}</div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

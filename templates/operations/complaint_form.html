@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}提交投诉{% endblock %}
+
+{% block content %}
+<h2 class="page-title">提交投诉</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>站点 *</label>
+                <select name="station" required>
+                    <option value="">请选择站点</option>
+                    {% for station in stations %}
+                    <option value="{{ station.id }}">{{ station.order }}. {{ station.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>投诉类型 *</label>
+                <select name="complaint_type" required>
+                    {% for value, label in type_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>投诉人姓名 *</label>
+                <input type="text" name="complainant" required placeholder="请输入姓名">
+            </div>
+            <div class="form-group">
+                <label>联系电话 *</label>
+                <input type="tel" name="complainant_phone" required placeholder="请输入联系电话">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>投诉描述 *</label>
+            <textarea name="description" rows="4" required placeholder="请详细描述投诉内容..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>证据照片URL</label>
+            <input type="url" name="photo_evidence" placeholder="https://...">
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">提交投诉</button>
+            <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

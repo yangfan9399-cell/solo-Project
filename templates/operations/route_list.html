@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}路线管理 - 环卫车辆清运管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">路线管理</h2>
+
+<div class="card">
+    {% if routes %}
+    <table>
+        <thead>
+            <tr>
+                <th>路线编码</th>
+                <th>路线名称</th>
+                <th>所属片区</th>
+                <th>站点数</th>
+                <th>预计时长</th>
+                <th>里程</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for route in routes %}
+            <tr>
+                <td><strong>{{ route.code }}</strong></td>
+                <td>{{ route.name }}</td>
+                <td>{{ route.district.name }}</td>
+                <td>{{ route.station_count }} 站</td>
+                <td>{{ route.estimated_duration }}</td>
+                <td>{{ route.distance_km }} km</td>
+                <td>
+                    {% if route.is_active %}
+                    <span class="badge badge-completed">启用</span>
+                    {% else %}
+                    <span class="badge badge-suspended">停用</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'operations:route_detail' route.pk %}" class="btn btn-sm btn-primary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">暂无路线数据</p>
+    {% endif %}
+</div>
+{% endblock %}

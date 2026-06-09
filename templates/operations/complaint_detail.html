@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}投诉详情{% endblock %}
+
+{% block content %}
+<h2 class="page-title">投诉详情</h2>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span class="badge badge-{{ complaint.complaint_type }}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+            {{ complaint.get_complaint_type_display }}
+        </span>
+        <span class="badge badge-{% if complaint.status == 'resolved' or complaint.status == 'closed' %}completed{% elif complaint.status == 'pending' %}suspended{% else %}in-progress{% endif %}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+            {{ complaint.get_status_display }}
+        </span>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">站点</div>
+            <div class="value">
+                <a href="{% url 'operations:station_detail' complaint.station.pk %}">
+                    {{ complaint.station.name }}
+                </a>
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">投诉时间</div>
+            <div class="value">{{ complaint.reported_at|date:"Y-m-d H:i" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">投诉人</div>
+            <div class="value">{{ complaint.complainant }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">联系电话</div>
+            <div class="value">{{ complaint.complainant_phone }}</div>
+        </div>
+        {% if complaint.assignment %}
+        <div class="detail-item">
+            <div class="label">关联任务</div>
+            <div class="value">
+                <a href="{% url 'operations:assignment_detail' complaint.assignment.pk %}">
+                    {{ complaint.assignment.route.code }} - {{ complaint.assignment.assigned_date|date:"Y-m-d" }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        {% if complaint.inspector %}
+        <div class="detail-item">
+            <div class="label">处理巡检员</div>
+            <div class="value">{{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-item">
+        <div class="label">投诉描述</div>
+        <div class="value">{{ complaint.description }}</div>
+    </div>
+
+    {% if complaint.photo_evidence %}
+    <div class="detail-item">
+        <div class="label">证据照片</div>
+        <div class="value">
+            <img src="{{ complaint.photo_evidence }}" alt="投诉照片" style="max-width: 400px; max-height: 300px; border-radius: 6px; border: 1px solid #eee;">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if complaint.confirmed_notes %}
+    <div class="detail-item">
+        <div class="label">确认意见</div>
+        <div class="value">{{ complaint.confirmed_notes }}</div>
+        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+            {{ complaint.confirmed_at|date:"Y-m-d H:i" }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if complaint.resolution_notes %}
+    <div class="detail-item">
+        <div class="label">解决说明</div>
+        <div class="value">{{ complaint.resolution_notes }}</div>
+        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+            {{ complaint.resolved_at|date:"Y-m-d H:i" }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_inspector or user.is_staff %}
+<div class="card">
+    <h3>处理操作</h3>
+    <div class="action-bar">
+        {% if complaint.status == 'pending' %}
+        <a href="{% url 'operations:complaint_confirm' complaint.pk %}" class="btn btn-primary">核实处理</a>
+        {% endif %}
+        {% if complaint.status == 'confirmed' or complaint.status == 'in_progress' %}
+        <a href="{% url 'operations:complaint_resolve' complaint.pk %}" class="btn btn-success">标记已解决</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

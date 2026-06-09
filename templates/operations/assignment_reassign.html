@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}车辆改派{% endblock %}
+
+{% block content %}
+<h2 class="page-title">车辆改派</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #fff8e6; border-radius: 6px; border-left: 4px solid #f39c12;">
+        <p style="font-weight: 500;">⚠️ 当前任务：{{ assignment.route.code }} - {{ assignment.route.name }}</p>
+        <p style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+            原车辆：{{ assignment.vehicle.plate_number }} - {{ assignment.vehicle.vehicle_type }}
+            &nbsp;|&nbsp;
+            原司机：{{ assignment.driver.profile.real_name|default:assignment.driver.username }}
+        </p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>新车辆 *</label>
+                <select name="vehicle" required>
+                    <option value="">请选择车辆</option>
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}">
+                        {{ vehicle.plate_number }} - {{ vehicle.vehicle_type }} ({{ vehicle.capacity }}吨)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>新司机 *</label>
+                <select name="driver" required>
+                    <option value="">请选择司机</option>
+                    {% for driver in drivers %}
+                    <option value="{{ driver.id }}">
+                        {{ driver.profile.real_name|default:driver.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>改派原因</label>
+            <textarea name="reason" rows="3" placeholder="请输入改派原因..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">确认改派</button>
+            <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

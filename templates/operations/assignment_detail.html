@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}{{ assignment.route.code }} 任务详情 - 环卫车辆清运管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2 class="page-title" style="margin-bottom: 0.5rem;">
+            {{ assignment.route.code }} - {{ assignment.route.name }}
+        </h2>
+        <span class="badge badge-{{ assignment.status }}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+            {{ assignment.get_status_display }}
+        </span>
+    </div>
+    <div class="action-bar" style="margin: 0;">
+        {% if is_driver and assignment.driver == user and assignment.status == 'pending' %}
+        <a href="{% url 'operations:assignment_start' assignment.pk %}" class="btn btn-success">▶️ 开始作业</a>
+        {% endif %}
+        {% if is_driver and assignment.driver == user and assignment.status == 'in_progress' %}
+        <a href="{% url 'operations:assignment_complete' assignment.pk %}" class="btn btn-success" onclick="return confirm('确定完成任务？')">✅ 完成任务</a>
+        <a href="{% url 'operations:fault_create_for_assignment' assignment.pk %}" class="btn btn-danger">⚠️ 上报故障</a>
+        {% endif %}
+        {% if is_dispatcher or user.is_staff %}
+            {% if assignment.status == 'in_progress' %}
+            <a href="{% url 'operations:assignment_suspend' assignment.pk %}" class="btn btn-warning" onclick="return confirm('确定暂停任务？')">⏸️ 暂停任务</a>
+            {% endif %}
+            {% if assignment.status == 'suspended' %}
+            <a href="{% url 'operations:assignment_resume' assignment.pk %}" class="btn btn-success">▶️ 恢复任务</a>
+            <a href="{% url 'operations:assignment_reassign' assignment.pk %}" class="btn btn-warning">🔄 改派车辆</a>
+            {% endif %}
+        {% endif %}
+        {% if is_supervisor or user.is_staff %}
+        <a href="{% url 'operations:review_create' assignment.pk %}" class="btn btn-primary">📝 主管复核</a>
+        {% endif %}
+        <a href="{% url 'operations:complaint_create' assignment.pk %}" class="btn btn-warning">📣 提交投诉</a>
+    </div>
+</div>
+
+{% if assignment.status == 'suspended' and faults %}
+<div style="background: #fff5f5; border: 1px solid #f8d7da; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.5rem;">⚠️</span>
+        <div>
+            <strong style="color: #721c24;">任务因车辆故障已暂停</strong>
+            <p style="color: #721c24; margin: 0.25rem 0 0 0; font-size: 0.9rem;">
+                请调度员选择 <strong>改派车辆</strong> 或 <strong>等待维修后恢复</strong>
+            </p>
+        </div>
+        {% if is_dispatcher or user.is_staff %}
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <a href="{% url 'operations:assignment_reassign' assignment.pk %}" class="btn btn-warning">🔄 立即改派</a>
+            <a href="{% url 'operations:fault_list' %}" class="btn btn-secondary">查看故障</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ assignment.checked_in_stations }}/{{ assignment.total_stations }}</div>
+        <div class="label">已完成站点</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="number">{{ missed_stations|length }}</div>
+        <div class="label">未签到站点</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ complaints|length }}</div>
+        <div class="label">投诉数量</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ reviews|length }}</div>
+        <div class="label">复核次数</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+    <div class="card">
+        <h3>车辆信息</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">车牌号</div>
+                <div class="value">{{ assignment.vehicle.plate_number }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">车型</div>
+                <div class="value">{{ assignment.vehicle.vehicle_type }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">载重</div>
+                <div class="value">{{ assignment.vehicle.capacity }} 吨</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">车辆状态</div>
+                <div class="value">
+                    <span class="badge badge-{{ assignment.vehicle.status }}">
+                        {{ assignment.vehicle.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>人员信息</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">司机</div>
+                <div class="value">{{ assignment.driver.profile.real_name|default:assignment.driver.username }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">联系电话</div>
+                <div class="value">{{ assignment.driver.profile.phone|default:"-" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">调度员</div>
+                <div class="value">{{ assignment.dispatcher.profile.real_name|default:assignment.dispatcher.username }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">派车日期</div>
+                <div class="value">{{ assignment.assigned_date|date:"Y-m-d" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div>
+        <div class="card">
+            <h3>站点签到情况</h3>
+            <div style="max-height: 500px; overflow-y: auto;" id="station-list">
+            {% for station in assignment.route.stations.all %}
+                {% with checkin=station.check_ins.all %}
+                    {% if checkin.0 %}
+                        <div class="station-item checked" id="station-{{ station.id }}">
+                            <div>
+                                <strong style="color: #27ae60;">✓ {{ station.order }}. {{ station.name }}</strong>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">
+                                    签到时间：{{ checkin.0.check_in_time|date:"Y-m-d H:i" }}
+                                    &nbsp;|&nbsp;
+                                    状态：
+                                    <span class="badge badge-{{ checkin.0.status }}">
+                                        {{ checkin.0.get_status_display }}
+                                    </span>
+                                </div>
+                                {% if checkin.0.waste_weight %}
+                                <div style="font-size: 0.85rem; color: #666;">
+                                    清运重量：{{ checkin.0.waste_weight }} kg
+                                </div>
+                                {% endif %}
+                                {% if checkin.0.notes %}
+                                <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+                                    备注：{{ checkin.0.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'operations:checkin_detail' checkin.0.pk %}" class="btn btn-sm btn-secondary">详情</a>
+                        </div>
+                    {% else %}
+                        <div class="station-item missed" id="station-{{ station.id }}">
+                            <div>
+                                <strong style="color: #e74c3c;">○ {{ station.order }}. {{ station.name }}</strong>
+                                <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+                                    {{ station.address }}
+                                </div>
+                            </div>
+                            {% if is_driver and assignment.driver == user and assignment.status == 'in_progress' %}
+                            <button class="btn btn-sm btn-primary"
+                                    hx-get="{% url 'operations:checkin_create' assignment.pk station.pk %}"
+                                    hx-target="#station-{{ station.id }}"
+                                    hx-swap="outerHTML">
+                                签到
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+            </div>
+        </div>
+
+        {% if complaints %}
+        <div class="card">
+            <h3>投诉记录 ({{ complaints|length }})</h3>
+            {% for complaint in complaints %}
+            <div style="border: 1px solid #f0f0f0; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <div>
+                        <span class="badge badge-{{ complaint.complaint_type }}">
+                            {{ complaint.get_complaint_type_display }}
+                        </span>
+                        <span style="font-size: 0.85rem; color: #999; margin-left: 0.5rem;">
+                            {{ complaint.reported_at|date:"Y-m-d H:i" }}
+                        </span>
+                    </div>
+                    <span class="badge badge-{{ complaint.status }}">
+                        {{ complaint.get_status_display }}
+                    </span>
+                </div>
+                <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>站点：</strong>{{ complaint.station.name }}
+                </div>
+                <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                    <strong>投诉人：</strong>{{ complaint.complainant }} ({{ complaint.complainant_phone }})
+                </div>
+                <div style="font-size: 0.9rem; color: #666;">
+                    {{ complaint.description }}
+                </div>
+                {% if complaint.photo_evidence %}
+                <div style="margin-top: 0.5rem;">
+                    <img src="{{ complaint.photo_evidence }}" alt="投诉照片" style="max-width: 200px; max-height: 150px; border-radius: 4px;">
+                </div>
+                {% endif %}
+                {% if complaint.confirmed_notes %}
+                <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; font-size: 0.85rem; color: #666;">
+                    <strong>巡检员确认：</strong>{{ complaint.confirmed_notes }}
+                    <span style="color: #999;">- {{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}</span>
+                </div>
+                {% endif %}
+                <div style="margin-top: 0.5rem; text-align: right;">
+                    <a href="{% url 'operations:complaint_detail' complaint.pk %}" class="btn btn-sm btn-secondary">查看详情</a>
+                    {% if is_inspector and complaint.status == 'pending' %}
+                    <a href="{% url 'operations:complaint_confirm' complaint.pk %}" class="btn btn-sm btn-primary">核实处理</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if reviews %}
+        <div class="card">
+            <h3>复核记录 ({{ reviews|length }})</h3>
+            {% for review in reviews %}
+            <div style="border: 1px solid #f0f0f0; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span class="badge badge-{% if review.review_result == 'pass' %}completed{% elif review.review_result == 'needs_rectification' %}suspended{% else %}in-progress{% endif %}">
+                        {{ review.get_review_result_display }}
+                    </span>
+                    <span style="font-size: 0.85rem; color: #999;">
+                        {{ review.reviewed_at|date:"Y-m-d H:i" }}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">
+                    复核人：{{ review.reviewer.profile.real_name|default:review.reviewer.username }}
+                </div>
+                <div style="font-size: 0.9rem; color: #333; margin-bottom: 0.5rem;">
+                    {{ review.review_notes }}
+                </div>
+                {% if review.rectification_deadline %}
+                <div style="font-size: 0.85rem; color: #e67e22;">
+                    整改期限：{{ review.rectification_deadline|date:"Y-m-d H:i" }}
+                </div>
+                {% endif %}
+                {% if review.rectification_notes %}
+                <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; font-size: 0.85rem; color: #27ae60;">
+                    <strong>整改说明：</strong>{{ review.rectification_notes }}
+                </div>
+                {% endif %}
+                <div style="margin-top: 0.5rem; text-align: right;">
+                    <a href="{% url 'operations:review_detail' review.pk %}" class="btn btn-sm btn-secondary">查看详情</a>
+                    {% if is_supervisor and review.review_result == 'needs_rectification' %}
+                    <a href="{% url 'operations:review_rectify' review.pk %}" class="btn btn-sm btn-success">确认整改</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <div class="card">
+            <h3>任务时间轴</h3>
+            <div class="timeline">
+                {% for event in events %}
+                <div class="timeline-item">
+                    <div class="time">{{ event.created_at|date:"Y-m-d H:i" }}</div>
+                    <div class="event-type">{{ event.get_event_type_display }}</div>
+                    <div class="description">{{ event.description }}</div>
+                    <div class="operator">
+                        操作人：{{ event.created_by.profile.real_name|default:event.created_by.username }}
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color: #999; text-align: center; padding: 1rem;">暂无事件记录</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if faults %}
+        <div class="card">
+            <h3>故障记录 ({{ faults|length }})</h3>
+            {% for fault in faults %}
+            <div style="border: 1px solid #f8d7da; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; background: #fff5f5;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <strong style="color: #e74c3c;">{{ fault.fault_type }}</strong>
+                    <span class="badge badge-{{ fault.status }}">
+                        {{ fault.get_status_display }}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">
+                    {{ fault.reported_at|date:"Y-m-d H:i" }}
+                </div>
+                <div style="font-size: 0.9rem;">{{ fault.description }}</div>
+                <div style="margin-top: 0.5rem; text-align: right;">
+                    <a href="{% url 'operations:fault_detail' fault.pk %}" class="btn btn-sm btn-secondary">详情</a>
+                    {% if is_dispatcher and fault.status != 'resolved' %}
+                    <a href="{% url 'operations:assignment_reassign' assignment.pk %}" class="btn btn-sm btn-warning">改派</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h3>路线信息</h3>
+            <div class="detail-item">
+                <div class="label">路线编码</div>
+                <div class="value">{{ assignment.route.code }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">路线名称</div>
+                <div class="value">{{ assignment.route.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">所属片区</div>
+                <div class="value">{{ assignment.route.district.name }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">站点数量</div>
+                <div class="value">{{ assignment.route.station_count }} 站</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">预计时长</div>
+                <div class="value">{{ assignment.route.estimated_duration }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">里程</div>
+                <div class="value">{{ assignment.route.distance_km }} 公里</div>
+            </div>
+            {% if assignment.notes %}
+            <div class="detail-item">
+                <div class="label">任务备注</div>
+                <div class="value">{{ assignment.notes }}</div>
+            </div>
+            {% endif %}
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'operations:route_detail' assignment.route.pk %}" class="btn btn-sm btn-secondary">查看路线详情</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

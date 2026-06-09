@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}故障解决{% endblock %}
+
+{% block content %}
+<h2 class="page-title">标记故障已解决</h2>
+
+<div class="card">
+    <div style="margin-bottom: 1.5rem;">
+        <h4>{{ fault.fault_type }} - {{ fault.vehicle.plate_number }}</h4>
+        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+            严重程度：{{ fault.get_severity_display }}<br>
+            上报时间：{{ fault.reported_at|date:"Y-m-d H:i" }}
+        </p>
+        <p style="color: #333; margin-top: 0.5rem;">{{ fault.description }}</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>处理说明 *</label>
+            <textarea name="resolution_notes" rows="4" required placeholder="请详细描述故障处理过程和结果..."></textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-success">确认已解决</button>
+            <a href="{% url 'operations:fault_detail' fault.pk %}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
