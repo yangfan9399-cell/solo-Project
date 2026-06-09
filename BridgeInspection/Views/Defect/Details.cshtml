@@ -241,8 +241,24 @@
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">📡 传感器监测数据</h5>
+                <div>
+                    @{
+                        var onlineCount = Model.Sensors.Count(s => s.Status == SensorStatus.Online);
+                        var offlineCount = Model.Sensors.Count(s => s.Status == SensorStatus.Offline);
+                        var faultyCount = Model.Sensors.Count(s => s.Status == SensorStatus.Faulty);
+                    }
+                    <span class="badge bg-success me-1">在线 @onlineCount</span>
+                    @if (offlineCount > 0)
+                    {
+                        <span class="badge bg-danger me-1">离线 @offlineCount</span>
+                    }
+                    @if (faultyCount > 0)
+                    {
+                        <span class="badge bg-warning">故障 @faultyCount</span>
+                    }
+                </div>
             </div>
             <div class="card-body p-0">
                 @if (Model.SensorReadings.Any())
@@ -253,6 +269,7 @@
                                 <tr>
                                     <th>传感器编号</th>
                                     <th>传感器类型</th>
+                                    <th>状态</th>
                                     <th>监测值</th>
                                     <th>单位</th>
                                     <th>采集时间</th>
@@ -261,21 +278,76 @@
                             <tbody>
                                 @foreach (var reading in Model.SensorReadings.Take(20))
                                 {
-                                    <tr>
-                                        <td>@reading.Sensor?.SensorCode</td>
+                                    var isOffline = reading.Sensor?.Status == SensorStatus.Offline;
+                                    var isFaulty = reading.Sensor?.Status == SensorStatus.Faulty;
+                                    var rowClass = isOffline ? "table-danger" : (isFaulty ? "table-warning" : "");
+                                    var statusText = reading.Sensor?.Status switch
+                                    {
+                                        SensorStatus.Online => "在线",
+                                        SensorStatus.Offline => "离线",
+                                        SensorStatus.Faulty => "故障",
+                                        _ => "未知"
+                                    };
+                                    var statusBadgeClass = reading.Sensor?.Status switch
+                                    {
+                                        SensorStatus.Online => "bg-success",
+                                        SensorStatus.Offline => "bg-danger",
+                                        SensorStatus.Faulty => "bg-warning text-dark",
+                                        _ => "bg-secondary"
+                                    };
+                                    <tr class="@rowClass">
+                                        <td>
+                                            <strong>@reading.Sensor?.SensorCode</strong>
+                                            @if (isOffline)
+                                            {
+                                                <span class="text-danger ms-1">⚠️</span>
+                                            }
+                                        </td>
                                         <td>@reading.Sensor?.SensorType</td>
+                                        <td>
+                                            <span class="badge @statusBadgeClass">
+                                                @if (isOffline)
+                                                {
+                                                    <span>📴 </span>
+                                                }
+                                                else if (isFaulty)
+                                                {
+                                                    <span>⚠️ </span>
+                                                }
+                                                @statusText
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="fw-bold @(reading.Value > 1.0 ? "text-danger" : "text-success")">
                                                 @reading.Value?.ToString("F3")
                                             </span>
                                         </td>
                                         <td>@reading.Unit</td>
-                                        <td>@reading.ReadingTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            @reading.ReadingTime.ToString("yyyy-MM-dd HH:mm")
+                                            @if (isOffline && reading.Sensor?.LastOnlineTime.HasValue == true)
+                                            {
+                                                <br />
+                                                <small class="text-muted">
+                                                    最后在线：@reading.Sensor.LastOnlineTime.Value.ToString("MM-dd HH:mm")
+                                                </small>
+                                            }
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
+                    
+                    @if (offlineCount > 0)
+                    {
+                        <div class="alert alert-warning m-3 mb-0">
+                            <small>
+                                <strong>⚠️ 注意：</strong>存在 @offlineCount 个离线传感器，请及时检查设备状态。
+                                离线传感器的最新读数可能不代表当前真实情况。
+                            </small>
+                        </div>
+                    }
                 }
                 else
                 {
