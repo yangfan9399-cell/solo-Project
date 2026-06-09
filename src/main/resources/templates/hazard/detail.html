@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('隐患详情')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container mt-4">
+    <div class="alert alert-success alert-dismissible fade show" th:if="${message}" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">首页</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/hazards}">隐患列表</a></li>
+            <li class="breadcrumb-item active" aria-current="page">隐患详情</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2>
+                <span th:text="'#' + ${hazard.id} + ' '"></span>
+                <span th:text="${hazard.title}">隐患标题</span>
+            </h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a th:href="@{/hazards}" class="btn btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📝 基本信息</h5>
+                    <span class="badge fs-6"
+                          th:classappend="${hazard.status.name() == 'ACCEPTED' ? 'bg-success' :
+                                          (hazard.status.name() == 'OVERDUE' ? 'bg-danger' :
+                                          (hazard.status.name() == 'RECTIFIED' ? 'bg-info' :
+                                          (hazard.status.name() == 'REJECTED' ? 'bg-warning text-dark' :
+                                          (hazard.status.name() == 'RECTIFYING' ? 'bg-primary' : 'bg-secondary'))))}"
+                          th:text="${hazard.status.displayName}">
+                        状态
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">隐患等级</label>
+                            <div>
+                                <span class="status-badge"
+                                      th:classappend="'level-' + ${hazard.level.name().toLowerCase()}"
+                                      th:text="${hazard.level.displayName}">
+                                    等级
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">隐患类别</label>
+                            <div th:text="${hazard.category.displayName}">类别</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">是否升级</label>
+                            <div>
+                                <span th:if="${hazard.escalated}" class="badge bg-danger">已升级 ⚠️</span>
+                                <span th:unless="${hazard.escalated}" class="text-muted">否</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">楼栋</label>
+                            <div th:text="${hazard.building != null ? hazard.building : '-'}">楼栋</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">楼层</label>
+                            <div th:text="${hazard.floor != null ? hazard.floor : '-'}">楼层</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">具体位置</label>
+                            <div th:text="${hazard.location != null ? hazard.location : '-'}">位置</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">隐患描述</label>
+                        <p class="card-text" th:text="${hazard.description != null ? hazard.description : '暂无描述'}">描述</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">巡查照片</label>
+                        <div class="photo-placeholder">
+                            <span th:if="${hazard.photoUrl != null}">📷 已上传照片</span>
+                            <span th:unless="${hazard.photoUrl}">📷 照片占位</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${hazard.remark != null}" class="mb-3">
+                        <label class="form-label text-muted">备注</label>
+                        <p class="card-text" th:text="${hazard.remark}">备注</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🔧 整改信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">责任部门</label>
+                            <div th:text="${hazard.responsibleDepartment != null ? hazard.responsibleDepartment : '未分配'}">责任部门</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">责任人</label>
+                            <div th:text="${hazard.responsibleDepartmentHead != null ? hazard.responsibleDepartmentHead.realName : '未分配'}">责任人</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">整改截止时间</label>
+                            <div>
+                                <span th:if="${hazard.deadline != null}"
+                                      th:classappend="${isOverdue ? 'overdue-text' : ''}"
+                                      th:text="${#temporals.format(hazard.deadline, 'yyyy-MM-dd HH:mm')}">
+                                    截止时间
+                                </span>
+                                <span th:if="${hazard.deadline == null}" class="text-muted">未设置</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">剩余天数</label>
+                            <div>
+                                <span th:if="${hazard.deadline != null and hazard.status.name() != 'ACCEPTED'}"
+                                      th:classappend="${isOverdue ? 'overdue-text' : 'text-primary'}"
+                                      th:text="${isOverdue ? '已超期 ' + (0 - remainingDays) + ' 天' : remainingDays + ' 天'}">
+                                    剩余天数
+                                </span>
+                                <span th:if="${hazard.status.name() == 'ACCEPTED'}" class="text-success">已销项</span>
+                                <span th:if="${hazard.deadline == null}" class="text-muted">未设置</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">登记时间</label>
+                            <div th:text="${#temporals.format(hazard.createdAt, 'yyyy-MM-dd HH:mm')}">登记时间</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">巡查员</label>
+                            <div th:text="${hazard.inspector != null ? hazard.inspector.realName : '-'}">巡查员</div>
+                        </div>
+                    </div>
+
+                    <div th:if="${hazard.rectifiedAt != null}" class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">提交整改时间</label>
+                            <div th:text="${#temporals.format(hazard.rectifiedAt, 'yyyy-MM-dd HH:mm')}">整改时间</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">销项时间</label>
+                            <div>
+                                <span th:if="${hazard.acceptedAt != null}" th:text="${#temporals.format(hazard.acceptedAt, 'yyyy-MM-dd HH:mm')}">销项时间</span>
+                                <span th:unless="${hazard.acceptedAt}" class="text-muted">未销项</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${not #lists.isEmpty(rectifications)}">
+                        <label class="form-label text-muted">整改记录</label>
+                        <div th:each="rect : ${rectifications}" class="border rounded p-3 mb-2 bg-light">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong th:text="${rect.rectifier != null ? rect.rectifier.realName : '未知'}">整改人</strong>
+                                <small class="text-muted" th:text="${#temporals.format(rect.rectifiedAt, 'yyyy-MM-dd HH:mm')}">时间</small>
+                            </div>
+                            <p class="mb-2" th:text="${rect.description}">整改描述</p>
+                            <div class="photo-placeholder" style="height: 120px; font-size: 2rem;">
+                                <span th:if="${rect.rectificationPhotoUrl != null}">📷 整改照片</span>
+                                <span th:unless="${rect.rectificationPhotoUrl}">📷 整改照片占位</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📜 历史节点</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div th:each="h : ${history}" class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>
+                                    <span class="badge"
+                                          th:classappend="${h.toStatus.name() == 'ACCEPTED' ? 'bg-success' :
+                                                          (h.toStatus.name() == 'OVERDUE' ? 'bg-danger' :
+                                                          (h.toStatus.name() == 'RECTIFIED' ? 'bg-info' :
+                                                          (h.toStatus.name() == 'REJECTED' ? 'bg-warning text-dark' :
+                                                          (h.toStatus.name() == 'RECTIFYING' ? 'bg-primary' : 'bg-secondary'))))}"
+                                          th:text="${h.toStatus.displayName}">
+                                        状态
+                                    </span>
+                                </strong>
+                                <small class="text-muted" th:text="${#temporals.format(h.createdAt, 'yyyy-MM-dd HH:mm')}">时间</small>
+                            </div>
+                            <p class="mt-2 mb-0" th:text="${h.remark}">备注</p>
+                            <small class="text-muted" th:if="${h.operator != null}" th:text="'操作人：' + ${h.operator.realName}">操作人</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⚡ 操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a th:if="${hazard.status.name() == 'REGISTERED'}"
+                           th:href="@{/hazards/{id}/assign(id=${hazard.id})}"
+                           class="btn btn-primary">
+                            📤 分配责任部门
+                        </a>
+
+                        <a th:if="${hazard.status.name() == 'RECTIFYING' or hazard.status.name() == 'REJECTED' or hazard.status.name() == 'OVERDUE'}"
+                           th:href="@{/hazards/{id}/rectify(id=${hazard.id})}"
+                           class="btn btn-warning">
+                            🔧 提交整改
+                        </a>
+
+                        <a th:if="${hazard.status.name() == 'RECTIFIED'}"
+                           th:href="@{/hazards/{id}/accept(id=${hazard.id})}"
+                           class="btn btn-success">
+                            ✅ 验收销项
+                        </a>
+
+                        <button th:if="${hazard.status.name() == 'RECTIFIED'}"
+                                type="button" class="btn btn-outline-danger"
+                                data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            ❌ 验收退回
+                        </button>
+
+                        <form th:if="${isOverdue and hazard.status.name() != 'OVERDUE' and hazard.status.name() != 'ACCEPTED'}"
+                              th:action="@{/hazards/{id}/escalate(id=${hazard.id})}" method="post"
+                              onsubmit="return confirm('确认升级该超期隐患吗？');">
+                            <input type="hidden" name="operatorId" value="1">
+                            <button type="submit" class="btn btn-danger w-100">
+                                ⚠️ 升级超期隐患
+                            </button>
+                        </form>
+
+                        <hr>
+                        <a th:href="@{/hazards}" class="btn btn-outline-secondary">返回列表</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📌 状态说明</h5>
+                </div>
+                <div class="card-body small">
+                    <p><span class="badge bg-secondary">待整改</span> 已登记，等待分配</p>
+                    <p><span class="badge bg-primary">整改中</span> 责任部门正在整改</p>
+                    <p><span class="badge bg-info">待验收</span> 整改完成，等待验收</p>
+                    <p><span class="badge bg-warning text-dark">验收退回</span> 验收不通过，需重新整改</p>
+                    <p><span class="badge bg-success">已销项</span> 验收通过，隐患消除</p>
+                    <p><span class="badge bg-danger">整改超期</span> 超过截止时间，已升级</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/hazards/{id}/reject(id=${hazard.id})}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">验收退回</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">退回原因</label>
+                        <textarea name="rejectReason" class="form-control" rows="3" required placeholder="请输入退回原因..."></textarea>
+                    </div>
+                    <input type="hidden" name="directorId" value="3">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认退回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

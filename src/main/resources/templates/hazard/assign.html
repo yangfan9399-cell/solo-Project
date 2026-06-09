@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('分配责任部门')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">首页</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/hazards}">隐患列表</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/hazards/{id}(id=${hazard.id})}" th:text="'#' + ${hazard.id}">隐患详情</a></li>
+            <li class="breadcrumb-item active">分配责任部门</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4">📤 分配责任部门</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0" th:text="${hazard.title}">隐患标题</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/hazards/{id}/assign(id=${hazard.id})}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">责任部门 <span class="text-danger">*</span></label>
+                            <input type="text" name="department" class="form-control" required placeholder="如：物业部、安保部等">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">部门负责人 <span class="text-danger">*</span></label>
+                            <select name="departmentHeadId" class="form-select" required>
+                                <option value="">请选择负责人</option>
+                                <option th:each="user : ${departmentHeads}"
+                                        th:value="${user.id}"
+                                        th:text="${user.realName + ' - ' + user.department}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">整改截止时间 <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="deadline" class="form-control" required>
+                            <div class="form-text">请设定合理的整改期限</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a th:href="@{/hazards/{id}(id=${hazard.id})}" class="btn btn-outline-secondary">取消</a>
+                            <button type="submit" class="btn btn-primary">确认分配</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📌 隐患信息</h5>
+                </div>
+                <div class="card-body small">
+                    <p><strong>等级：</strong>
+                        <span class="status-badge"
+                              th:classappend="'level-' + ${hazard.level.name().toLowerCase()}"
+                              th:text="${hazard.level.displayName}">
+                        </span>
+                    </p>
+                    <p><strong>类别：</strong> <span th:text="${hazard.category.displayName}"></span></p>
+                    <p><strong>位置：</strong> <span th:text="${hazard.building + ' ' + (hazard.floor != null ? hazard.floor : '')}"></span></p>
+                    <p><strong>描述：</strong> <span th:text="${hazard.description}"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

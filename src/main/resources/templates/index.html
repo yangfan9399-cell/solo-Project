@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('首页')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container mt-4">
+    <div class="alert alert-info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">📊 概览</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card stat-card total">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">隐患总数</h5>
+                    <h2 class="card-text" th:text="${totalCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card pending">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">待处理</h5>
+                    <h2 class="card-text text-warning" th:text="${totalCount - acceptedCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card accepted">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">已销项</h5>
+                    <h2 class="card-text text-success" th:text="${acceptedCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card overdue">
+                <div class="card-body">
+                    <h5 class="card-title text-muted">超期</h5>
+                    <h2 class="card-text text-danger" th:text="${overdueCount}">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 状态分布</h5>
+                </div>
+                <div class="card-body">
+                    <div th:each="entry : ${statusStats}" class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span th:text="${entry.key}">状态</span>
+                            <span class="badge bg-primary rounded-pill" th:text="${entry.value}">0</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar"
+                                 th:style="'width:' + (totalCount > 0 ? entry.value * 100 / totalCount : 0) + '%'"
+                                 th:aria-valuenow="${entry.value}" aria-valuemin="0" th:aria-valuemax="${totalCount}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⚡ 快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/hazards/register}" class="btn btn-primary btn-lg">➕ 登记新隐患</a>
+                        <a th:href="@{/hazards}" class="btn btn-outline-primary">📋 查看隐患列表</a>
+                        <a th:href="@{/hazards/statistics}" class="btn btn-outline-success">📊 复盘统计</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">📌 业务流程</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li><strong>巡查员</strong> 登记消防隐患</li>
+                        <li><strong>责任部门</strong> 接收并整改</li>
+                        <li><strong>安全主管</strong> 验收销项或退回</li>
+                        <li>超期隐患自动升级并标红</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

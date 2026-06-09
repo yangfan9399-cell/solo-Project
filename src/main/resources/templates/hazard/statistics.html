@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('复盘统计')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container mt-4">
+    <div class="alert alert-success alert-dismissible fade show" th:if="${message}" role="alert">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <h2 class="mb-4">📊 复盘统计</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card total">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">隐患总数</h6>
+                    <h2 class="card-text" th:text="${totalCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card accepted">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">已销项</h6>
+                    <h2 class="card-text text-success" th:text="${acceptedCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card pending">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">整改中</h6>
+                    <h2 class="card-text text-warning" th:text="${totalCount - acceptedCount - overdueCount}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card overdue">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-muted">超期</h6>
+                    <h2 class="card-text text-danger" th:text="${overdueCount}">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🏢 按楼栋统计</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #maps.isEmpty(buildingStats)}">
+                        <div th:each="entry, iterStat : ${buildingStats}" class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span th:text="${entry.key}">楼栋</span>
+                                <strong th:text="${entry.value}">0</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                     th:style="'width:' + (totalCount > 0 ? entry.value * 100 / totalCount : 0) + '%'"
+                                     th:aria-valuenow="${entry.value}" aria-valuemin="0" th:aria-valuemax="${totalCount}">
+                                    <span th:text="${entry.value}" class="small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(buildingStats)}" class="text-center text-muted py-4">
+                        暂无数据
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 按隐患类别统计</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #maps.isEmpty(categoryStats)}">
+                        <div th:each="entry, iterStat : ${categoryStats}" class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span th:text="${entry.key}">类别</span>
+                                <strong th:text="${entry.value}">0</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                     th:style="'width:' + (totalCount > 0 ? entry.value * 100 / totalCount : 0) + '%'"
+                                     th:aria-valuenow="${entry.value}" aria-valuemin="0" th:aria-valuemax="${totalCount}">
+                                    <span th:text="${entry.value}" class="small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(categoryStats)}" class="text-center text-muted py-4">
+                        暂无数据
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">👥 按责任部门统计</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #maps.isEmpty(departmentStats)}">
+                        <div th:each="entry, iterStat : ${departmentStats}" class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span th:text="${entry.key}">部门</span>
+                                <strong th:text="${entry.value}">0</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-info" role="progressbar"
+                                     th:style="'width:' + (totalCount > 0 ? entry.value * 100 / totalCount : 0) + '%'"
+                                     th:aria-valuenow="${entry.value}" aria-valuemin="0" th:aria-valuemax="${totalCount}">
+                                    <span th:text="${entry.value}" class="small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(departmentStats)}" class="text-center text-muted py-4">
+                        暂无数据
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⚡ 按等级统计</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${not #maps.isEmpty(levelStats)}">
+                        <div th:each="entry, iterStat : ${levelStats}" class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span th:text="${entry.key}">等级</span>
+                                <strong th:text="${entry.value}">0</strong>
+</div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                     th:style="'width:' + (totalCount > 0 ? entry.value * 100 / totalCount : 0) + '%'"
+                                     th:aria-valuenow="${entry.value}" aria-valuemin="0" th:aria-valuemax="${totalCount}">
+                                    <span th:text="${entry.value}" class="small"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#maps.isEmpty(levelStats)}" class="text-center text-muted py-4">
+                        暂无数据
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⏱️ 整改耗时统计</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">已完成整改数</h6>
+                                <h3 class="text-primary" th:text="${rectificationTimeStats.totalCount}">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">平均耗时</h6>
+                                <h3 class="text-success" th:text="${rectificationTimeStats.avgDays + ' 天'}">0 天</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">最短耗时</h6>
+                                <h3 class="text-info" th:text="${rectificationTimeStats.minDays + ' 天'}">0 天</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h6 class="text-muted">最长耗时</h6>
+                                <h3 class="text-warning" th:text="${rectificationTimeStats.maxDays + ' 天'}">0 天</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3">耗时分布</h6>
+                    <div class="row">
+                        <div th:each="entry : ${rectificationTimeStats.distribution}" class="col-md-2">
+                            <div class="text-center border rounded p-2">
+                                <div class="text-muted small" th:text="${entry.key}">区间</div>
+                                <div class="h5 mt-1" th:text="${entry.value}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 状态分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div th:each="entry : ${statusStats}" class="col-md-2 mb-3">
+                            <div class="text-center border rounded p-3">
+                                <div class="text-muted small" th:text="${entry.key}">状态</div>
+                                <div class="h4 mt-1" th:text="${entry.value}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

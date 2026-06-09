@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - 消防设施巡查隐患整改平台'">消防设施巡查隐患整改平台</title>
+    <link th:href="@{/webjars/bootstrap/5.3.2/css/bootstrap.min.css}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #dc3545 !important;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .level-critical { background-color: #dc3545; color: white; }
+        .level-high { background-color: #fd7e14; color: white; }
+        .level-medium { background-color: #ffc107; color: #212529; }
+        .level-low { background-color: #198754; color: white; }
+        .overdue-text {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #0d6efd;
+        }
+        .photo-placeholder {
+            background-color: #e9ecef;
+            border: 2px dashed #adb5bd;
+            border-radius: 8px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 3rem;
+        }
+        .stat-card {
+            border-left: 4px solid;
+        }
+        .stat-card.total { border-left-color: #0d6efd; }
+        .stat-card.pending { border-left-color: #ffc107; }
+        .stat-card.accepted { border-left-color: #198754; }
+        .stat-card.overdue { border-left-color: #dc3545; }
+    </style>
+</head>
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            🚨 消防隐患整改平台
+        </a>
+        <div class="navbar-nav">
+            <a class="nav-link" th:href="@{/}" th:text="首页">首页</a>
+            <a class="nav-link" th:href="@{/hazards}" th:text="隐患列表">隐患列表</a>
+            <a class="nav-link" th:href="@{/hazards/register}" th:text="登记隐患">登记隐患</a>
+            <a class="nav-link" th:href="@{/hazards/statistics}" th:text="复盘统计">复盘统计</a>
+        </div>
+    </div>
+</nav>
+
+<div th:fragment="footer" class="container mt-5 mb-3">
+    <hr>
+    <p class="text-center text-muted small">
+        © 2024 消防设施巡查隐患整改与销项验收平台
+    </p>
+</div>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('登记隐患')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">首页</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/hazards}">隐患列表</a></li>
+            <li class="breadcrumb-item active" aria-current="page">登记隐患</li>
+        </ol>
+    </nav>
+
+    <h2 class="mb-4">➕ 登记消防隐患</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/hazards/register}" method="post" th:object="${hazard}">
+                        <div class="mb-3">
+                            <label class="form-label">隐患标题 <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{title}" class="form-control" required placeholder="请输入隐患标题">
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">隐患等级 <span class="text-danger">*</span></label>
+                                <select th:field="*{level}" class="form-select" required>
+                                    <option value="">请选择等级</option>
+                                    <option th:each="level : ${levels}"
+                                            th:value="${level.name()}"
+                                            th:text="${level.displayName}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">隐患类别 <span class="text-danger">*</span></label>
+                                <select th:field="*{category}" class="form-select" required>
+                                    <option value="">请选择类别</option>
+                                    <option th:each="cat : ${categories}"
+                                            th:value="${cat.name()}"
+                                            th:text="${cat.displayName}">
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">楼栋</label>
+                                <input type="text" th:field="*{building}" class="form-control" placeholder="如：A栋">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">楼层</label>
+                                <input type="text" th:field="*{floor}" class="form-control" placeholder="如：3楼">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">具体位置</label>
+                                <input type="text" th:field="*{location}" class="form-control" placeholder="如：楼梯口">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">隐患描述</label>
+                            <textarea th:field="*{description}" class="form-control" rows="4" placeholder="请详细描述隐患情况..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">巡查照片（占位）</label>
+                            <input type="text" th:field="*{photoUrl}" class="form-control" placeholder="照片URL（可留空作为占位）">
+                            <div class="form-text">当前为占位功能，实际项目中可替换为文件上传</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">巡查员 <span class="text-danger">*</span></label>
+                            <select name="inspectorId" class="form-select" required>
+                                <option value="">请选择巡查员</option>
+                                <option th:each="user : ${inspectors}"
+                                        th:value="${user.id}"
+                                        th:text="${user.realName + ' - ' + user.department}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a th:href="@{/hazards}" class="btn btn-outline-secondary">取消</a>
+                            <button type="submit" class="btn btn-primary">提交登记</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📌 填写说明</h5>
+                </div>
+                <div class="card-body small">
+                    <p><strong>隐患等级：</strong></p>
+                    <ul>
+                        <li><span class="badge level-low">低</span> 轻微问题，不影响使用</li>
+                        <li><span class="badge level-medium">中</span> 需要整改，但不紧急</li>
+                        <li><span class="badge level-high">高</span> 存在较大风险，需尽快整改</li>
+                        <li><span class="badge level-critical">重大</span> 严重安全隐患，需立即处理</li>
+                    </ul>
+                    <hr>
+                    <p><strong>隐患类别：</strong></p>
+                    <ul>
+                        <li>消防器材、消防栓</li>
+                        <li>应急照明、疏散指示</li>
+                        <li>防火门、通道占用</li>
+                        <li>电气隐患、其他</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/webjars/bootstrap/5.3.2/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
