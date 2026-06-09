@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>申请详情 - 银行对公开户尽调平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/layout :: header('申请详情')}"></div>
+
+            <div class="content">
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 18px; font-weight: 600;" th:text="${application.applicationNo}"></span>
+                            <span style="margin-left: 12px;" class="badge"
+                                  th:class="'badge ' + (
+                                      application.status.name() == 'APPROVED' ? 'badge-success' :
+                                      application.status.name() == 'REJECTED' ? 'badge-danger' :
+                                      (application.status.name() == 'MATERIAL_DEFICIENT' || application.status.name() == 'ADDRESS_VERIFICATION_FAILED' || application.status.name() == 'HIGH_RISK') ? 'badge-danger' :
+                                      'badge-warning')"
+                                  th:text="${application.status.description}"></span>
+                        </div>
+                        <div>
+                            <a th:href="@{/applications}" class="btn btn-small">返回列表</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('basic')">基本信息</div>
+                    <div class="tab" onclick="switchTab('material')">材料清单</div>
+                    <div class="tab" onclick="switchTab('risk')">风险信息</div>
+                    <div class="tab" onclick="switchTab('history')">历史节点</div>
+                </div>
+
+                <div id="tab-basic" class="tab-content">
+                    <div class="section-grid">
+                        <div class="card">
+                            <div class="card-title">企业信息</div>
+                            <div class="info-row">
+                                <span class="info-label">企业名称</span>
+                                <span class="info-value" th:text="${application.enterprise.enterpriseName}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">统一社会信用代码</span>
+                                <span class="info-value" th:text="${application.enterprise.unifiedSocialCreditCode}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">行业</span>
+                                <span class="info-value" th:text="${application.enterprise.industry}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">行业类别</span>
+                                <span class="info-value" th:text="${application.enterprise.industryCategory}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">企业类型</span>
+                                <span class="info-value" th:text="${application.enterprise.enterpriseType}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">注册资本</span>
+                                <span class="info-value" th:text="${application.enterprise.registeredCapital + ' 万元'}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">成立日期</span>
+                                <span class="info-value" th:text="${application.enterprise.establishmentDate}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">联系电话</span>
+                                <span class="info-value" th:text="${application.enterprise.contactPhone}"></span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">申请信息</div>
+                            <div class="info-row">
+                                <span class="info-label">账户类型</span>
+                                <span class="info-value" th:text="${application.accountType}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">所属支行</span>
+                                <span class="info-value" th:text="${application.branch.branchName}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">客户经理</span>
+                                <span class="info-value" th:text="${application.customerManagerName}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">运营核验人</span>
+                                <span class="info-value" th:text="${application.operationStaffName != null ? application.operationStaffName : '-'}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">风控复核人</span>
+                                <span class="info-value" th:text="${application.riskControlName != null ? application.riskControlName : '-'}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">主管审批人</span>
+                                <span class="info-value" th:text="${application.supervisorName != null ? application.supervisorName : '-'}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">提交时间</span>
+                                <span class="info-value" th:text="${application.submitTime != null ? #temporals.format(application.submitTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">审批时间</span>
+                                <span class="info-value" th:text="${application.approvalTime != null ? #temporals.format(application.approvalTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-grid">
+                        <div class="card">
+                            <div class="card-title">法人信息</div>
+                            <div th:each="lp : ${legalPersons}">
+                                <div class="info-row">
+                                    <span class="info-label">姓名</span>
+                                    <span class="info-value" th:text="${lp.name}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">证件类型</span>
+                                    <span class="info-value" th:text="${lp.idType}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">证件号码</span>
+                                    <span class="info-value" th:text="${lp.idNumber}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">联系电话</span>
+                                    <span class="info-value" th:text="${lp.phone}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">职务</span>
+                                    <span class="info-value" th:text="${lp.position}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">是否实际控制人</span>
+                                    <span class="info-value" th:text="${lp.isActualController ? '是' : '否'}"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">受益所有人</div>
+                            <div th:each="bo, iterStat : ${beneficialOwners}" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #ebeef5;" th:unless="${iterStat.last}">
+                                <div class="info-row">
+                                    <span class="info-label">姓名</span>
+                                    <span class="info-value" th:text="${bo.name}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">持股比例</span>
+                                    <span class="info-value" th:text="${bo.shareholdingRatio + '%'}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">关系</span>
+                                    <span class="info-value" th:text="${bo.relationship}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">证件号码</span>
+                                    <span class="info-value" th:text="${bo.idNumber}"></span>
+                                </div>
+                            </div>
+                            <div th:each="bo, iterStat : ${beneficialOwners}" th:if="${iterStat.last}">
+                                <div class="info-row">
+                                    <span class="info-label">姓名</span>
+                                    <span class="info-value" th:text="${bo.name}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">持股比例</span>
+                                    <span class="info-value" th:text="${bo.shareholdingRatio + '%'}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">关系</span>
+                                    <span class="info-value" th:text="${bo.relationship}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">证件号码</span>
+                                    <span class="info-value" th:text="${bo.idNumber}"></span>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(beneficialOwners)}" style="color: #909399; text-align: center; padding: 20px;">
+                                暂无受益人信息
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">经营地址</div>
+                        <div class="section-grid-3">
+                            <div th:each="addr : ${addresses}" style="border: 1px solid #ebeef5; border-radius: 6px; padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <span style="font-weight: 600;" th:text="${addr.addressType}"></span>
+                                    <span class="badge"
+                                          th:class="'badge ' + (addr.isVerified ? 'badge-success' : 'badge-danger')"
+                                          th:text="${addr.isVerified ? '已核验' : '未核验'}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">地址</span>
+                                    <span class="info-value" th:text="${addr.province + addr.city + addr.district + addr.detailAddress}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">电话</span>
+                                    <span class="info-value" th:text="${addr.phone != null ? addr.phone : '-'}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">核验结果</span>
+                                    <span class="info-value" th:text="${addr.verificationResult != null ? addr.verificationResult : '暂无'}"></span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">核验人</span>
+                                    <span class="info-value" th:text="${addr.verifier != null ? addr.verifier : '-'}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}" style="margin-top: 16px; padding: 12px; background: #fef0f0; border-radius: 4px; color: #f56c6c;">
+                            ⚠ 地址核验失败，必须阻断开户流程，需重新开展尽调
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-material" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-title">材料清单</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>材料类型</th>
+                                    <th>材料名称</th>
+                                    <th>状态</th>
+                                    <th>缺失原因</th>
+                                    <th>提交人</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="m : ${materials}">
+                                    <td th:text="${m.materialType.description}"></td>
+                                    <td th:text="${m.materialName}"></td>
+                                    <td>
+                                        <span class="badge"
+                                              th:class="'badge ' + (
+                                                  m.status.name() == 'VERIFIED' ? 'badge-success' :
+                                                  m.status.name() == 'DEFICIENT' ? 'badge-danger' :
+                                                  m.status.name() == 'SUBMITTED' ? 'badge-warning' :
+                                                  'badge-info')"
+                                              th:text="${m.status.description}"></span>
+                                    </td>
+                                    <td th:text="${m.deficiencyReason != null ? m.deficiencyReason : '-'}"></td>
+                                    <td th:text="${m.submitter != null ? m.submitter : '-'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div th:if="${application.returnReason != null && application.status.name() == 'MATERIAL_DEFICIENT'}" style="margin-top: 16px; padding: 12px; background: #fdf6ec; border-radius: 4px; color: #e6a23c;">
+                            <strong>退回原因：</strong><span th:text="${application.returnReason}"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-risk" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-title">风险信息</div>
+
+                        <div th:if="${application.riskLevel != null}" style="margin-bottom: 20px; padding: 16px; background: #f5f7fa; border-radius: 6px;">
+                            <div style="margin-bottom: 8px;">
+                                <span style="color: #606266;">风险等级：</span>
+                                <span class="risk-tag"
+                                      th:class="'risk-tag ' + (
+                                          application.riskLevel.name() == 'HIGH' ? 'high' :
+                                          application.riskLevel.name() == 'MEDIUM' ? 'medium' :
+                                          'low')"
+                                      th:text="${application.riskLevel.description}"></span>
+                            </div>
+                            <div>
+                                <span style="color: #606266;">风险说明：</span>
+                                <span th:text="${application.riskComment != null ? application.riskComment : '暂无'}"></span>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-bottom: 12px; color: #606266;">风险标签</h4>
+                        <div>
+                            <span th:each="tag : ${riskTags}" class="risk-tag"
+                                  th:class="'risk-tag ' + (
+                                      tag.riskLevel.name() == 'HIGH' ? 'high' :
+                                      tag.riskLevel.name() == 'MEDIUM' ? 'medium' :
+                                      'low')"
+                                  th:text="${tag.tagName + ' - ' + tag.description}"></span>
+                        </div>
+                        <div th:if="${#lists.isEmpty(riskTags)}" style="color: #909399; text-align: center; padding: 20px;">
+                            暂无风险标签
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-history" class="tab-content" style="display: none;">
+                    <div class="card">
+                        <div class="card-title">历史节点</div>
+                        <div class="timeline">
+                            <div th:each="h : ${histories}" class="timeline-item"
+                                 th:class="'timeline-item ' + (
+                                     h.toStatus.name() == 'APPROVED' ? 'success' :
+                                     h.toStatus.name() == 'REJECTED' || h.toStatus.name() == 'MATERIAL_DEFICIENT' || h.toStatus.name() == 'ADDRESS_VERIFICATION_FAILED' || h.toStatus.name() == 'RETURNED' ? 'danger' :
+                                     'warning')">
+                                <div class="timeline-title" th:text="${h.action}"></div>
+                                <div class="timeline-meta">
+                                    <span th:text="${h.operatorName}"></span>
+                                    <span>（</span><span th:text="${h.operatorRole}"></span><span>）</span>
+                                    <span> · </span>
+                                    <span th:text="${#temporals.format(h.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                                </div>
+                                <div class="timeline-content">
+                                    <div>
+                                        <span th:text="${h.fromStatus.description}"></span>
+                                        <span style="margin: 0 8px;">→</span>
+                                        <span th:text="${h.toStatus.description}"></span>
+                                    </div>
+                                    <div style="margin-top: 6px;" th:if="${h.comment != null}" th:text="'备注：' + ${h.comment}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">操作</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+
+                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
+                            <form th:action="@{/applications/{id}/submit(id=${application.id})}" method="post"
+                                  th:if="${application.status.name() == 'DRAFT' || application.status.name() == 'MATERIAL_DEFICIENT'}">
+                                <button type="submit" class="btn btn-primary">提交申请</button>
+                            </form>
+                        </div>
+
+                        <div sec:authorize="hasRole('OPERATION_STAFF')">
+                            <form th:action="@{/applications/{id}/operation-pass(id=${application.id})}" method="post"
+                                  th:if="${application.status.name() == 'PENDING_OPERATION'}">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('确认材料核验通过？')">核验通过</button>
+                            </form>
+                        </div>
+
+                        <div sec:authorize="hasRole('OPERATION_STAFF')">
+                            <button type="button" class="btn btn-warning"
+                                    th:if="${application.status.name() == 'PENDING_OPERATION'}"
+                                    onclick="openModal('operationFailModal')">退回补正</button>
+                        </div>
+
+                        <div sec:authorize="hasRole('RISK_CONTROL')">
+                            <button type="button" class="btn btn-success"
+                                    th:if="${application.status.name() == 'PENDING_RISK'}"
+                                    onclick="openModal('riskReviewModal')">风险复核</button>
+                        </div>
+
+                        <div sec:authorize="hasRole('SUPERVISOR')">
+                            <form th:action="@{/applications/{id}/approve(id=${application.id})}" method="post"
+                                  th:if="${application.status.name() == 'PENDING_APPROVAL' || application.status.name() == 'HIGH_RISK'}">
+                                <button type="submit" class="btn btn-success" onclick="return confirm('确认批准开户？地址核验状态将被检查。')">批准开户</button>
+                            </form>
+                        </div>
+
+                        <div sec:authorize="hasRole('SUPERVISOR')">
+                            <button type="button" class="btn btn-warning"
+                                    th:if="${application.status.name() == 'PENDING_APPROVAL' || application.status.name() == 'HIGH_RISK'}"
+                                    onclick="openModal('returnModal')">退回</button>
+                        </div>
+
+                        <div sec:authorize="hasRole('SUPERVISOR')">
+                            <button type="button" class="btn btn-danger"
+                                    th:if="${application.status.name() == 'PENDING_APPROVAL' || application.status.name() == 'HIGH_RISK'}"
+                                    onclick="openModal('rejectModal')">拒绝开户</button>
+                        </div>
+
+                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
+                            <form th:action="@{/applications/{id}/resubmit(id=${application.id})}" method="post"
+                                  th:if="${application.status.name() == 'MATERIAL_DEFICIENT'}">
+                                <button type="submit" class="btn btn-primary" onclick="return confirm('确认材料补正后重新提交？')">补正后重提</button>
+                            </form>
+                        </div>
+
+                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
+                            <form th:action="@{/applications/{id}/redue-diligence(id=${application.id})}" method="post"
+                                  th:if="${application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}">
+                                <button type="submit" class="btn btn-warning" onclick="return confirm('确认发起重新尽调？')">重新尽调</button>
+                            </form>
+                        </div>
+
+                        <div th:if="${application.status.name() == 'APPROVED'}" style="color: #67c23a; padding: 8px 0;">
+                            ✓ 该申请已完成开户审批
+                        </div>
+
+                        <div th:if="${application.status.name() == 'REJECTED'}" style="color: #f56c6c; padding: 8px 0;">
+                            ✗ 该申请已被拒绝
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="operationFailModal" class="modal-overlay" onclick="closeModal('operationFailModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">退回补正</div>
+            <form th:action="@{/applications/{id}/operation-fail(id=${application.id})}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">退回原因</label>
+                        <select name="returnReason" class="form-select" required>
+                            <option value="">请选择</option>
+                            <option value="受益人材料缺失">受益人材料缺失</option>
+                            <option value="法人证件不清晰">法人证件不清晰</option>
+                            <option value="营业执照过期">营业执照过期</option>
+                            <option value="地址证明材料不全">地址证明材料不全</option>
+                            <option value="公司章程缺失">公司章程缺失</option>
+                            <option value="其他材料缺失">其他材料缺失</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注说明</label>
+                        <textarea name="comment" class="form-textarea" placeholder="请输入详细说明"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('operationFailModal')">取消</button>
+                    <button type="submit" class="btn btn-warning">确认退回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="riskReviewModal" class="modal-overlay" onclick="closeModal('riskReviewModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">风险复核</div>
+            <form th:action="@{/applications/{id}/risk-review(id=${application.id})}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">风险等级</label>
+                        <select name="riskLevel" class="form-select" required>
+                            <option value="LOW">低风险</option>
+                            <option value="MEDIUM">中风险</option>
+                            <option value="HIGH">高风险</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">风险说明</label>
+                        <textarea name="riskComment" class="form-textarea" placeholder="请输入风险评估说明"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注</label>
+                        <textarea name="comment" class="form-textarea" placeholder="备注信息"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('riskReviewModal')">取消</button>
+                    <button type="submit" class="btn btn-primary">确认复核</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="returnModal" class="modal-overlay" onclick="closeModal('returnModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">退回申请</div>
+            <form th:action="@{/applications/{id}/return(id=${application.id})}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">退回原因</label>
+                        <select name="returnReason" class="form-select" required>
+                            <option value="">请选择</option>
+                            <option value="材料需进一步补充">材料需进一步补充</option>
+                            <option value="风险评估不充分">风险评估不充分</option>
+                            <option value="信息需核实">信息需核实</option>
+                            <option value="其他原因">其他原因</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注说明</label>
+                        <textarea name="comment" class="form-textarea" placeholder="请输入详细说明"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('returnModal')">取消</button>
+                    <button type="submit" class="btn btn-warning">确认退回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal-overlay" onclick="closeModal('rejectModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">拒绝开户</div>
+            <form th:action="@{/applications/{id}/reject(id=${application.id})}" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">拒绝原因</label>
+                        <select name="rejectReason" class="form-select" required>
+                            <option value="">请选择</option>
+                            <option value="高风险客户">高风险客户</option>
+                            <option value="材料造假">材料造假</option>
+                            <option value="身份无法核实">身份无法核实</option>
+                            <option value="涉及违法违规">涉及违法违规</option>
+                            <option value="其他原因">其他原因</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注说明</label>
+                        <textarea name="comment" class="form-textarea" placeholder="请输入详细说明"></textarea>
+                    </div>
+                    <div style="color: #f56c6c; font-size: 12px; margin-top: 8px;">
+                        ⚠ 拒绝开户为终态操作，确认后不可撤销
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('rejectModal')">取消</button>
+                    <button type="submit" class="btn btn-danger">确认拒绝</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).style.display = 'block';
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id, event) {
+            if (event && event.target && event.target.id !== id && event.target.tagName !== 'BUTTON') return;
+            document.getElementById(id).classList.remove('active');
+        }
+    </script>
+</body>
+</html>

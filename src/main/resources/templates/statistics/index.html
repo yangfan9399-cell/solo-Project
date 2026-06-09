@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计分析 - 银行对公开户尽调平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/layout :: header('统计分析')}"></div>
+
+            <div class="content">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">申请总数</div>
+                        <div class="stat-card-value info" th:text="${summary.totalApplications}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">已开户</div>
+                        <div class="stat-card-value success" th:text="${summary.approved}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">已拒绝</div>
+                        <div class="stat-card-value danger" th:text="${summary.rejected}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">通过率</div>
+                        <div class="stat-card-value success" th:text="${summary.approvalRate + '%'}">0%</div>
+                    </div>
+                </div>
+
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-title">按支行统计</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>支行名称</th>
+                                    <th>申请数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${branchStats}">
+                                    <td th:text="${stat.branchName}"></td>
+                                    <td th:text="${stat.count}"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(branchStats)}">
+                                    <td colspan="2" style="text-align: center; color: #909399;">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">按行业统计</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>行业</th>
+                                    <th>申请数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${industryStats}">
+                                    <td th:text="${stat.industry}"></td>
+                                    <td th:text="${stat.count}"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(industryStats)}">
+                                    <td colspan="2" style="text-align: center; color: #909399;">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-title">按状态统计</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>状态</th>
+                                    <th>数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${statusStats}">
+                                    <td>
+                                        <span class="badge"
+                                              th:class="'badge ' + (
+                                                  stat.status == 'APPROVED' ? 'badge-success' :
+                                                  stat.status == 'REJECTED' ? 'badge-danger' :
+                                                  (stat.status == 'MATERIAL_DEFICIENT' || stat.status == 'ADDRESS_VERIFICATION_FAILED' || stat.status == 'HIGH_RISK') ? 'badge-danger' :
+                                                  'badge-warning')"
+                                              th:text="${stat.statusName}"></span>
+                                    </td>
+                                    <td th:text="${stat.count}"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(statusStats)}">
+                                    <td colspan="2" style="text-align: center; color: #909399;">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">退回原因统计</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>原因</th>
+                                    <th>数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${returnReasonStats}">
+                                    <td th:text="${stat.reason}"></td>
+                                    <td th:text="${stat.count}"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(returnReasonStats)}">
+                                    <td colspan="2" style="text-align: center; color: #909399;">暂无数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">开户周期统计</div>
+                    <div class="section-grid-3" style="margin-bottom: 20px;">
+                        <div style="text-align: center; padding: 20px; background: #f5f7fa; border-radius: 6px;">
+                            <div style="font-size: 12px; color: #909399; margin-bottom: 8px;">平均周期</div>
+                            <div style="font-size: 28px; font-weight: 600; color: #409eff;" th:text="${cycleStats.avgDays + ' 天'}">-</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f5f7fa; border-radius: 6px;">
+                            <div style="font-size: 12px; color: #909399; margin-bottom: 8px;">最短周期</div>
+                            <div style="font-size: 28px; font-weight: 600; color: #67c23a;" th:text="${cycleStats.minDays + ' 天'}">-</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: #f5f7fa; border-radius: 6px;">
+                            <div style="font-size: 12px; color: #909399; margin-bottom: 8px;">最长周期</div>
+                            <div style="font-size: 28px; font-weight: 600; color: #e6a23c;" th:text="${cycleStats.maxDays + ' 天'}">-</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 13px; color: #606266; margin-bottom: 12px;">
+                        统计样本：<span style="font-weight: 600; color: #303133;" th:text="${cycleStats.totalApproved}"></span> 笔已开户申请
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>申请编号</th>
+                                <th>企业名称</th>
+                                <th>提交时间</th>
+                                <th>审批时间</th>
+                                <th>开户周期（天）</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="detail : ${cycleStats.cycleDetails}">
+                                <td th:text="${detail.applicationNo}"></td>
+                                <td th:text="${detail.enterpriseName}"></td>
+                                <td th:text="${#temporals.format(detail.submitTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${#temporals.format(detail.approvalTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <span class="badge badge-info" th:text="${detail.days + ' 天'}"></span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(cycleStats.cycleDetails)}">
+                                <td colspan="5" style="text-align: center; color: #909399;">暂无数据</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

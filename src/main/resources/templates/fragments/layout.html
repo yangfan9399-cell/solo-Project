@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <div th:fragment="sidebar" class="sidebar">
+        <div class="sidebar-logo">对公开户尽调平台</div>
+        <ul class="sidebar-menu">
+            <li><a th:href="@{/}" th:classappend="${#request.requestURI == '/' ? 'active' : ''}">首页概览</a></li>
+            <li><a th:href="@{/applications}" th:classappend="${#request.requestURI.startsWith('/applications') ? 'active' : ''}">开户申请</a></li>
+            <li sec:authorize="hasRole('SUPERVISOR')">
+                <a th:href="@{/statistics}" th:classappend="${#request.requestURI.startsWith('/statistics') ? 'active' : ''}">统计分析</a>
+            </li>
+        </ul>
+    </div>
+
+    <div th:fragment="header(title)" class="header">
+        <div class="header-title" th:text="${title}">标题</div>
+        <div class="header-right">
+            <span sec:authentication="name" style="color: #606266;">用户</span>
+            <span style="color: #909399;">|</span>
+            <span style="color: #606266; font-size: 12px;">
+                <span sec:authorize="hasRole('CUSTOMER_MANAGER')">客户经理</span>
+                <span sec:authorize="hasRole('OPERATION_STAFF')">运营人员</span>
+                <span sec:authorize="hasRole('RISK_CONTROL')">风控人员</span>
+                <span sec:authorize="hasRole('SUPERVISOR')">主管</span>
+            </span>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-small">退出登录</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

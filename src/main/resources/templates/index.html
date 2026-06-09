@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 银行对公开户尽调平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/layout :: header('首页概览')}"></div>
+
+            <div class="content">
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">申请总数</div>
+                        <div class="stat-card-value info" th:text="${dashboard.totalApplications}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">待运营核验</div>
+                        <div class="stat-card-value warning" th:text="${dashboard.pendingOperation}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">待风险复核</div>
+                        <div class="stat-card-value warning" th:text="${dashboard.pendingRisk}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">已开户</div>
+                        <div class="stat-card-value success" th:text="${dashboard.approved}">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-title">已拒绝</div>
+                        <div class="stat-card-value danger" th:text="${dashboard.rejected}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">材料待补正</div>
+                        <div class="stat-card-value warning" th:text="${dashboard.materialDeficient}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">地址核验失败</div>
+                        <div class="stat-card-value danger" th:text="${dashboard.addressVerificationFailed}">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">开户通过率</div>
+                        <div class="stat-card-value success" th:text="${dashboard.approvalRate + '%'}">0%</div>
+                    </div>
+                </div>
+
+                <div class="section-grid">
+                    <div class="card">
+                        <div class="card-title">快捷入口</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <a th:href="@{/applications(status='PENDING_OPERATION')}" class="btn btn-warning btn-small">待运营核验</a>
+                            <a th:href="@{/applications(status='PENDING_RISK')}" class="btn btn-warning btn-small">待风险复核</a>
+                            <a th:href="@{/applications(status='MATERIAL_DEFICIENT')}" class="btn btn-danger btn-small">材料待补正</a>
+                            <a th:href="@{/applications(status='ADDRESS_VERIFICATION_FAILED')}" class="btn btn-danger btn-small">地址核验失败</a>
+                            <a th:href="@{/applications(status='HIGH_RISK')}" class="btn btn-danger btn-small">高风险待处理</a>
+                            <a th:href="@{/applications(status='APPROVED')}" class="btn btn-success btn-small">已开户</a>
+                            <a th:href="@{/applications}" class="btn btn-primary btn-small">全部申请</a>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">业务流程说明</div>
+                        <div style="font-size: 13px; color: #606266; line-height: 1.8;">
+                            <div>1. 客户经理登记开户申请并提交</div>
+                            <div>2. 运营人员核验材料，通过或退回补正</div>
+                            <div style="color: #f56c6c;">   ⚠ 地址核验失败必须阻断，重新尽调</div>
+                            <div>3. 风控人员复核风险等级</div>
+                            <div>4. 主管审批：开户、退回或拒绝</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div sec:authorize="hasRole('SUPERVISOR')" class="card">
+                    <div class="card-title">统计入口</div>
+                    <a th:href="@{/statistics}" class="btn btn-primary">查看完整统计报表</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

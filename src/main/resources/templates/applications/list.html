@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开户申请列表 - 银行对公开户尽调平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="layout">
+        <div th:replace="~{fragments/layout :: sidebar}"></div>
+
+        <div class="main-content">
+            <div th:replace="~{fragments/layout :: header('开户申请列表')}"></div>
+
+            <div class="content">
+                <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <div class="card">
+                    <div class="filter-bar">
+                        <span style="color: #606266;">状态筛选：</span>
+                        <select class="form-select" onchange="location.href=this.value ? '/applications?status=' + this.value : '/applications'">
+                            <option value="">全部状态</option>
+                            <option th:each="status : ${statuses}"
+                                    th:value="${status.name()}"
+                                    th:text="${status.description}"
+                                    th:selected="${status.name() == selectedStatus}"></option>
+                        </select>
+                        <span style="margin-left: auto; color: #909399;">
+                            共 <span style="color: #409eff; font-weight: 600;" th:text="${#lists.size(applications)}">0</span> 条记录
+                        </span>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>申请编号</th>
+                                <th>企业名称</th>
+                                <th>所属支行</th>
+                                <th>行业</th>
+                                <th>账户类型</th>
+                                <th>状态</th>
+                                <th>客户经理</th>
+                                <th>申请时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="app : ${applications}">
+                                <td th:text="${app.applicationNo}"></td>
+                                <td th:text="${app.enterprise.enterpriseName}"></td>
+                                <td th:text="${app.branch.branchName}"></td>
+                                <td th:text="${app.enterprise.industry}"></td>
+                                <td th:text="${app.accountType}"></td>
+                                <td>
+                                    <span class="badge"
+                                          th:class="'badge ' + (
+                                              app.status.name() == 'APPROVED' ? 'badge-success' :
+                                              app.status.name() == 'REJECTED' ? 'badge-danger' :
+                                              (app.status.name() == 'MATERIAL_DEFICIENT' || app.status.name() == 'ADDRESS_VERIFICATION_FAILED' || app.status.name() == 'HIGH_RISK') ? 'badge-danger' :
+                                              'badge-warning')"
+                                          th:text="${app.status.description}"></span>
+                                </td>
+                                <td th:text="${app.customerManagerName}"></td>
+                                <td th:text="${#temporals.format(app.submitTime, 'yyyy-MM-dd HH:mm')}" th:if="${app.submitTime != null}">-</td>
+                                <td th:if="${app.submitTime == null}">-</td>
+                                <td>
+                                    <a th:href="@{/applications/{id}(id=${app.id})}" class="btn btn-small btn-primary">查看详情</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(applications)}">
+                                <td colspan="9" style="text-align: center; color: #909399; padding: 40px;">暂无数据</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

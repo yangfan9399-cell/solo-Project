@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: account-opening-due-diligence
+  profiles:
+    active: h2
+
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+
+logging:
+  level:
+    com.bank: DEBUG
+    org.springframework.security: INFO
