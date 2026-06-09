@@ -28,13 +28,18 @@ public class StatisticsController : Controller
         var routeStats = allDefects
             .Where(d => d.Bridge != null && !string.IsNullOrEmpty(d.Bridge.RouteName))
             .GroupBy(d => d.Bridge!.RouteName!)
-            .Select(g => new RouteStat
+            .Select(g => 
             {
-                RouteName = g.Key,
-                DefectCount = g.Count(),
-                ClosedCount = g.Count(d => d.Status == DefectStatus.Closed),
-                AverageDurationHours = g.Where(d => d.MaintenanceDurationHours.HasValue)
-                    .Average(d => d.MaintenanceDurationHours ?? 0)
+                var durations = g.Where(d => d.MaintenanceDurationHours.HasValue)
+                                .Select(d => d.MaintenanceDurationHours!.Value)
+                                .ToList();
+                return new RouteStat
+                {
+                    RouteName = g.Key,
+                    DefectCount = g.Count(),
+                    ClosedCount = g.Count(d => d.Status == DefectStatus.Closed),
+                    AverageDurationHours = durations.Any() ? durations.Average() : 0
+                };
             })
             .OrderByDescending(r => r.DefectCount)
             .ToList();

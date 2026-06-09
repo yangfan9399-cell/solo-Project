@@ -298,9 +298,9 @@ public static class DbInitializer
             {
                 BridgeId = bridge3.Id,
                 Title = "主塔底部裂缝",
-                Description = "主塔底部发现水平裂缝，需重点监测",
+                Description = "主塔底部发现水平裂缝，需重点监测，工程师正在评定中",
                 LocationOnBridge = "南主塔底部",
-                Severity = DefectSeverity.Structural,
+                Severity = null,
                 Status = DefectStatus.Assessing,
                 CrackLength = 2.5,
                 CrackWidth = 0.8,
@@ -310,10 +310,38 @@ public static class DbInitializer
                 ReportedAt = DateTime.Now.AddDays(-5),
                 AssessorId = engineer1.Id,
                 AssessedAt = null,
+                IsUpgraded = false,
+                RequiresStructuralReview = false
+            };
+            defects.Add(defect7);
+
+            var defect8 = new Defect
+            {
+                BridgeId = bridge4!.Id,
+                Title = "桥台加固维修延期",
+                Description = "桥台混凝土剥落露筋病害，原计划10天完成维修，因材料供应不足导致延期",
+                LocationOnBridge = "南桥台",
+                Severity = DefectSeverity.Severe,
+                Status = DefectStatus.MaintenanceInProgress,
+                CrackLength = 3.0,
+                CrackWidth = 0.5,
+                CrackDepth = 0.15,
+                CrackDirection = "斜向",
+                ReporterId = inspector2.Id,
+                ReportedAt = DateTime.Now.AddDays(-45),
+                AssessorId = engineer2!.Id,
+                AssessedAt = DateTime.Now.AddDays(-42),
+                AssessmentComment = "严重病害，需立即进行加固维修，预计维修工期72小时",
+                MaintenanceUnitId = maint1.Id,
+                MaintenanceStartedAt = DateTime.Now.AddDays(-30),
+                MaintenanceCompletedAt = null,
+                MaintenanceDurationHours = null,
+                MaintenancePlan = "1. 表面清理 2. 钢筋除锈 3. 修补混凝土 4. 粘贴碳纤维布加固 5. 养护",
+                MaintenanceResult = null,
                 IsUpgraded = true,
                 RequiresStructuralReview = true
             };
-            defects.Add(defect7);
+            defects.Add(defect8);
 
             await context.Defects.AddRangeAsync(defects);
             await context.SaveChangesAsync();
@@ -332,16 +360,29 @@ public static class DbInitializer
                     Remark = "病害登记"
                 });
 
-                if (defect.Severity.HasValue && defect.AssessorId != null)
+                if (defect.Severity.HasValue && defect.AssessorId != null && defect.AssessedAt.HasValue)
                 {
                     histories.Add(new DefectHistory
                     {
                         DefectId = defect.Id,
                         ActionType = DefectStatus.PendingMaintenance,
-                        Description = $"工程师评定为{GetSeverityName(defect.Severity.Value)}等级，{defect.AssessmentComment}",
+                        Description = $"工程师评定为{GetSeverityName(defect.Severity.Value)}等级。{defect.AssessmentComment}",
                         OperatorId = defect.AssessorId,
-                        OperatedAt = defect.AssessedAt!.Value,
+                        OperatedAt = defect.AssessedAt.Value,
                         Remark = defect.IsUpgraded ? "已升级处理" : "正常评定"
+                    });
+                }
+
+                if (defect.Status == DefectStatus.Assessing && defect.AssessorId != null)
+                {
+                    histories.Add(new DefectHistory
+                    {
+                        DefectId = defect.Id,
+                        ActionType = DefectStatus.Assessing,
+                        Description = "工程师正在评定中",
+                        OperatorId = defect.AssessorId,
+                        OperatedAt = defect.ReportedAt.AddHours(2),
+                        Remark = "评定进行中"
                     });
                 }
 

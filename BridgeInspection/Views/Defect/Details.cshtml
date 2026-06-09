@@ -186,23 +186,50 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label class="form-label text-muted">位置描述</label>
-                        <p class="mb-0">@defect.LocationOnBridge</p>
+                        <p class="mb-0">@(defect.LocationOnBridge ?? "未记录")</p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label text-muted">裂缝长度</label>
-                        <p class="mb-0 fw-bold text-primary">@defect.CrackLength 米</p>
+                        <p class="mb-0 fw-bold text-primary">
+                            @if (defect.CrackLength.HasValue)
+                            {
+                                @defect.CrackLength 米
+                            }
+                            else
+                            {
+                                <span class="text-muted">待测量</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label text-muted">裂缝宽度</label>
-                        <p class="mb-0 fw-bold text-warning">@defect.CrackWidth 毫米</p>
+                        <p class="mb-0 fw-bold text-warning">
+                            @if (defect.CrackWidth.HasValue)
+                            {
+                                @defect.CrackWidth 毫米
+                            }
+                            else
+                            {
+                                <span class="text-muted">待测量</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label text-muted">裂缝深度</label>
-                        <p class="mb-0 fw-bold text-danger">@defect.CrackDepth 米</p>
+                        <p class="mb-0 fw-bold text-danger">
+                            @if (defect.CrackDepth.HasValue)
+                            {
+                                @defect.CrackDepth 米
+                            }
+                            else
+                            {
+                                <span class="text-muted">待测量</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted">裂缝走向</label>
-                        <p class="mb-0">@defect.CrackDirection</p>
+                        <p class="mb-0">@(defect.CrackDirection ?? "未记录")</p>
                     </div>
                 </div>
                 <hr />
@@ -345,7 +372,7 @@
                     }
 
                     @if (!defect.IsUpgraded && !defect.RequiresStructuralReview 
-                         && defect.Severity < DefectSeverity.Structural
+                         && defect.Severity.HasValue && defect.Severity.Value < DefectSeverity.Structural
                          && (User.IsInRole("Engineer") || User.IsInRole("Admin")))
                     {
                         <form asp-controller="Defect" asp-action="Upgrade" method="post">
