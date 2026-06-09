@@ -16,7 +16,7 @@
     <div>
         <h2>🌉 @Model.Name</h2>
         <p class="text-muted mb-0">
-            @Model.RouteName | 
+            @(string.IsNullOrEmpty(Model.RouteName) ? "未记录路线" : Model.RouteName) | 
             @(Model.BridgeType switch
             {
                 BridgeType.BeamBridge => "梁桥",
@@ -102,27 +102,81 @@
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">所属路线</label>
-                        <p class="mb-0">@Model.RouteName</p>
+                        <p class="mb-0">
+                            @if (string.IsNullOrEmpty(Model.RouteName))
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                            else
+                            {
+                                @Model.RouteName
+                            }
+                        </p>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">位置</label>
-                        <p class="mb-0">@Model.Location</p>
+                        <p class="mb-0">
+                            @if (string.IsNullOrEmpty(Model.Location))
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                            else
+                            {
+                                @Model.Location
+                            }
+                        </p>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">桥梁长度</label>
-                        <p class="mb-0">@Model.Length 米</p>
+                        <p class="mb-0">
+                            @if (Model.Length.HasValue)
+                            {
+                                @(Model.Length + " 米")
+                            }
+                            else
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">桥梁宽度</label>
-                        <p class="mb-0">@Model.Width 米</p>
+                        <p class="mb-0">
+                            @if (Model.Width.HasValue)
+                            {
+                                @(Model.Width + " 米")
+                            }
+                            else
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">建成年份</label>
-                        <p class="mb-0">@Model.BuildYear 年</p>
+                        <p class="mb-0">
+                            @if (Model.BuildYear.HasValue)
+                            {
+                                @(Model.BuildYear + " 年")
+                            }
+                            else
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                        </p>
                     </div>
                     <div class="col-6 mb-3">
                         <label class="text-muted">管理单位</label>
-                        <p class="mb-0">@Model.ManagementUnit</p>
+                        <p class="mb-0">
+                            @if (string.IsNullOrEmpty(Model.ManagementUnit))
+                            {
+                                <span class="text-muted">未记录</span>
+                            }
+                            else
+                            {
+                                @Model.ManagementUnit
+                            }
+                        </p>
                     </div>
                 </div>
             </div>

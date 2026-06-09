@@ -18,10 +18,13 @@ public class DefectReportViewModel
     [StringLength(200)]
     public string? LocationOnBridge { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "裂缝长度不能为负数")]
     public double? CrackLength { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "裂缝宽度不能为负数")]
     public double? CrackWidth { get; set; }
 
+    [Range(0, double.MaxValue, ErrorMessage = "裂缝深度不能为负数")]
     public double? CrackDepth { get; set; }
 
     [StringLength(50)]
@@ -62,6 +65,7 @@ public class MaintenanceSubmitViewModel
 
     public DateTime? MaintenanceCompletedAt { get; set; }
 
+    [Range(0, int.MaxValue, ErrorMessage = "维修耗时不能为负数")]
     public int? MaintenanceDurationHours { get; set; }
 }
 

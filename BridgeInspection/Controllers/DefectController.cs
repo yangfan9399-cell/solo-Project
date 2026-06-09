@@ -29,6 +29,19 @@ public class DefectController : Controller
         int page = 1,
         int pageSize = 20)
     {
+        if (page < 1)
+        {
+            page = 1;
+        }
+        if (pageSize < 1)
+        {
+            pageSize = 20;
+        }
+        if (pageSize > 100)
+        {
+            pageSize = 100;
+        }
+
         var query = _context.Defects
             .Include(d => d.Bridge)
             .Include(d => d.Reporter)
@@ -600,6 +613,21 @@ public class DefectController : Controller
         if (defect == null)
         {
             return NotFound();
+        }
+
+        if (defect.IsUpgraded || defect.RequiresStructuralReview)
+        {
+            return BadRequest("病害已是升级状态，无需重复升级");
+        }
+
+        if (!defect.Severity.HasValue)
+        {
+            return BadRequest("未评定的病害无法升级，请先进行评定");
+        }
+
+        if (defect.Status == DefectStatus.Closed)
+        {
+            return BadRequest("已销项的病害无法升级");
         }
 
         var user = await _userManager.GetUserAsync(User);
