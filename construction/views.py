@@ -261,6 +261,7 @@ def safety_review(request, pk):
     current_weather = plan.current_weather
     plan_workers = PlanWorker.objects.filter(plan=plan).select_related('worker')
     has_high_altitude_worker = any(pw.worker.has_valid_high_altitude_cert for pw in plan_workers)
+    safety_risks = plan.get_safety_risks()
 
     if request.method == 'POST':
         form = AuditForm(request.POST)
@@ -268,7 +269,6 @@ def safety_review(request, pk):
 
         if form.is_valid():
             if action == 'approve':
-                safety_risks = plan.get_safety_risks()
                 if safety_risks:
                     risk_msg = '；'.join(safety_risks)
                     messages.error(request, f'存在安全风险，无法通过审核：{risk_msg}')
@@ -309,6 +309,7 @@ def safety_review(request, pk):
         'current_weather': current_weather,
         'has_high_altitude_worker': has_high_altitude_worker,
         'plan_workers': plan_workers,
+        'safety_risks': safety_risks,
     }
     return render(request, 'construction/partials/safety_review_form.html', context)
 
