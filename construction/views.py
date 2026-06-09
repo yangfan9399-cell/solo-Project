@@ -210,6 +210,10 @@ def pm_review(request, pk):
         messages.error(request, '只有项目经理可以审核')
         return redirect('construction:plan_detail', pk=pk)
 
+    if plan.status != 'submitted':
+        messages.error(request, f'当前状态为「{plan.get_status_display()}」，不可进行材料审核')
+        return redirect('construction:plan_detail', pk=pk)
+
     if request.method == 'POST':
         form = AuditForm(request.POST)
         action = request.POST.get('action', '')
@@ -256,6 +260,10 @@ def safety_review(request, pk):
 
     if request.user.role != 'safety_officer':
         messages.error(request, '只有安全员可以审核')
+        return redirect('construction:plan_detail', pk=pk)
+
+    if plan.status != 'pm_approved':
+        messages.error(request, f'当前状态为「{plan.get_status_display()}」，不可进行安全审核')
         return redirect('construction:plan_detail', pk=pk)
 
     current_weather = plan.current_weather
@@ -384,6 +392,10 @@ def acceptance(request, pk):
         messages.error(request, '只有验收人可以验收')
         return redirect('construction:plan_detail', pk=pk)
 
+    if plan.status != 'completed':
+        messages.error(request, f'当前状态为「{plan.get_status_display()}」，不可进行验收')
+        return redirect('construction:plan_detail', pk=pk)
+
     if request.method == 'POST':
         form = AuditForm(request.POST)
         action = request.POST.get('action', '')
@@ -437,6 +449,10 @@ def delay_apply(request, pk):
 
     if request.user.role != 'constructor' or request.user != plan.constructor_team:
         messages.error(request, '只有施工队可以申请延期')
+        return redirect('construction:plan_detail', pk=pk)
+
+    if plan.status != 'in_progress':
+        messages.error(request, f'当前状态为「{plan.get_status_display()}」，不可申请延期')
         return redirect('construction:plan_detail', pk=pk)
 
     if request.method == 'POST':
