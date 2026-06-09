@@ -1,0 +1,161 @@
+@model StatisticsViewModel
+@{
+    ViewData["Title"] = "统计复盘";
+}
+
+<h1 class="page-title">📊 统计复盘</h1>
+
+<div class="action-bar">
+    <div class="status-filter">
+        <span style="margin-right: 1rem;">年份：</span>
+        @for (int year = DateTime.Now.Year; year >= DateTime.Now.Year - 5; year--)
+        {
+            <a href="/Statistics?year=@year" class="btn btn-sm @(Model.Year == year ? "btn-primary" : "btn-outline")">@year</a>
+        }
+    </div>
+</div>
+
+<div class="section">
+    <h2>🚢 按船舶统计</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>船名</th>
+                    <th>申请笔数</th>
+                    <th>计划总量(吨)</th>
+                    <th>实加总量(吨)</th>
+                    <th>总金额(元)</th>
+                    <th>平均差异(吨)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ShipStatistics)
+                {
+                    <tr>
+                        <td><strong>@item.ShipName</strong></td>
+                        <td>@item.ApplicationCount</td>
+                        <td>@item.TotalPlannedQuantity.ToString("N2")</td>
+                        <td>@item.TotalActualQuantity.ToString("N2")</td>
+                        <td class="text-primary">¥@item.TotalAmount.ToString("N2")</td>
+                        <td class="@(item.AverageDiscrepancy > 5 ? "text-danger" : "text-warning")">
+                            @item.AverageDiscrepancy.ToString("N2")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.ShipStatistics.Any())
+    {
+        <div class="empty-state"><p>暂无数据</p></div>
+    }
+</div>
+
+<div class="section">
+    <h2>🏭 按供应商统计</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>供应商</th>
+                    <th>申请笔数</th>
+                    <th>实加总量(吨)</th>
+                    <th>总金额(元)</th>
+                    <th>延误次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.SupplierStatistics)
+                {
+                    <tr>
+                        <td><strong>@item.SupplierName</strong></td>
+                        <td>@item.ApplicationCount</td>
+                        <td>@item.TotalActualQuantity.ToString("N2")</td>
+                        <td class="text-primary">¥@item.TotalAmount.ToString("N2")</td>
+                        <td class="@(item.DelayedCount > 0 ? "text-danger" : "")">
+                            @if (item.DelayedCount > 0)
+                            {
+                                <span class="badge badge-danger">@item.DelayedCount 次</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-success">0</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.SupplierStatistics.Any())
+    {
+        <div class="empty-state"><p>暂无数据</p></div>
+    }
+</div>
+
+<div class="section">
+    <h2>📉 差异原因统计</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>差异原因</th>
+                    <th>出现次数</th>
+                    <th>总差异量(吨)</th>
+                    <th>平均差异量(吨)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.DiscrepancyStatistics)
+                {
+                    <tr>
+                        <td><strong>@item.Reason</strong></td>
+                        <td>
+                            <span class="badge badge-warning">@item.Count 次</span>
+                        </td>
+                        <td class="text-warning">@item.TotalDiscrepancyQuantity.ToString("N2")</td>
+                        <td>@item.AverageDiscrepancy.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.DiscrepancyStatistics.Any())
+    {
+        <div class="empty-state"><p>暂无差异数据</p></div>
+    }
+</div>
+
+<div class="section">
+    <h2>💵 结算周期统计</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>月份</th>
+                    <th>结算笔数</th>
+                    <th>总油量(吨)</th>
+                    <th>总金额(元)</th>
+                    <th>平均单价(元/吨)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.SettlementStatistics)
+                {
+                    <tr>
+                        <td><strong>@item.Period</strong></td>
+                        <td>@item.ApplicationCount</td>
+                        <td>@item.TotalQuantity.ToString("N2")</td>
+                        <td class="text-primary">¥@item.TotalAmount.ToString("N2")</td>
+                        <td>¥@item.AverageUnitPrice.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (!Model.SettlementStatistics.Any())
+    {
+        <div class="empty-state"><p>暂无结算数据</p></div>
+    }
+</div>

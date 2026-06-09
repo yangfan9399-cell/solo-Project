@@ -1,0 +1,27 @@
+@model FuelApplication
+@{
+    ViewData["Title"] = "开始加注 - " + Model.ApplicationNumber;
+}
+
+<h1 class="page-title">⛽ 开始加注作业</h1>
+
+<div class="form-card">
+    <div class="info-bar">
+        <p><strong>申请编号：</strong>@Model.ApplicationNumber</p>
+        <p><strong>船名：</strong>@Model.Ship?.Name</p>
+        <p><strong>燃油类型：</strong>@Model.FuelType</p>
+        <p><strong>计划量：</strong>@Model.PlannedQuantity 吨</p>
+    </div>
+
+    <form asp-action="StartBunkering">
+        <div class="form-group">
+            <label class="form-label">操作员姓名</label>
+            <input name="operatorName" class="form-control" placeholder="请输入操作员姓名" required />
+        </div>
+
+        <div class="form-actions">
+            <a href="/FuelApplications/Details/@Model.Id" class="btn btn-outline">取消</a>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('确认开始加注作业？')">开始加注</button>
+        </div>
+    </form>
+</div>

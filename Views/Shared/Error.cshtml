@@ -1,0 +1,15 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "错误";
+}
+
+<h1 class="page-title">错误</h1>
+
+<div class="alert alert-danger">
+    <h3>抱歉，处理您的请求时出错。</h3>
+    <p>请求 ID: <code>@Model.RequestId</code></p>
+</div>
+
+<div class="form-actions" style="justify-content: flex-start;">
+    <a href="/" class="btn btn-primary">返回首页</a>
+</div>

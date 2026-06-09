@@ -1,0 +1,186 @@
+@model IEnumerable<FuelApplication>
+@{
+    ViewData["Title"] = "首页";
+}
+
+<h1 class="page-title">📊 系统概览</h1>
+
+<div class="stats-grid">
+    <div class="stat-card stat-card-primary">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+            <h3>总申请数</h3>
+            <p class="stat-number">@ViewData["TotalApplications"]</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-warning">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+            <h3>待审批</h3>
+            <p class="stat-number">@ViewData["PendingApproval"]</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-info">
+        <div class="stat-icon">⛽</div>
+        <div class="stat-content">
+            <h3>加注中</h3>
+            <p class="stat-number">@ViewData["BunkeringInProgress"]</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-danger">
+        <div class="stat-icon">🧪</div>
+        <div class="stat-content">
+            <h3>待油样确认</h3>
+            <p class="stat-number">@ViewData["SamplePending"]</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-secondary">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+            <h3>待结算</h3>
+            <p class="stat-number">@ViewData["SettlementPending"]</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+            <h3>已结算</h3>
+            <p class="stat-number">@ViewData["Settled"]</p>
+        </div>
+    </div>
+</div>
+
+<div class="stats-grid" style="margin-top: 2rem;">
+    <div class="stat-card stat-card-large stat-card-primary">
+        <div class="stat-icon">💵</div>
+        <div class="stat-content">
+            <h3>累计结算金额</h3>
+            <p class="stat-number">¥ @(((decimal)ViewData["TotalAmount"]!).ToString("N2"))</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-large stat-card-danger">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-content">
+            <h3>油样未封存</h3>
+            <p class="stat-number">@ViewData["UnsealedCount"] 笔</p>
+            <small class="stat-desc">油样未封存将禁止结算</small>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-header">
+        <h2>🕒 最近申请</h2>
+        <a href="/FuelApplications" class="btn btn-outline">查看全部 →</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>申请编号</th>
+                    <th>船名</th>
+                    <th>燃油类型</th>
+                    <th>计划量(吨)</th>
+                    <th>状态</th>
+                    <th>申请时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var app in Model)
+                {
+                    <tr>
+                        <td><strong>@app.ApplicationNumber</strong></td>
+                        <td>@app.Ship?.Name</td>
+                        <td>@app.FuelType</td>
+                        <td>@app.PlannedQuantity</td>
+                        <td>
+                            <span class="badge badge-@GetStatusBadgeClass(app.Status)">
+                                @GetStatusDisplayName(app.Status)
+                            </span>
+                        </td>
+                        <td>@app.ApplicationDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <a href="/FuelApplications/Details/@app.Id" class="btn btn-sm btn-primary">详情</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-header">
+        <h2>🔄 业务流程</h2>
+    </div>
+    <div class="workflow">
+        <div class="workflow-step">
+            <div class="step-icon">📝</div>
+            <h4>提交申请</h4>
+            <p>船务经办人提交燃油加注需求</p>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+            <div class="step-icon">✅</div>
+            <h4>审批</h4>
+            <p>主管审批加油申请</p>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+            <div class="step-icon">⛽</div>
+            <h4>加注作业</h4>
+            <p>港口供应商登记加注</p>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+            <div class="step-icon">🧪</div>
+            <h4>油样封存</h4>
+            <p>轮机长确认油样封存</p>
+        </div>
+        <div class="workflow-arrow">→</div>
+        <div class="workflow-step">
+            <div class="step-icon">💰</div>
+            <h4>财务结算</h4>
+            <p>财务复核结算</p>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "warning",
+            ApplicationStatus.Approved => "info",
+            ApplicationStatus.Rejected => "danger",
+            ApplicationStatus.BunkeringInProgress => "primary",
+            ApplicationStatus.BunkeringCompleted => "info",
+            ApplicationStatus.SamplePending => "warning",
+            ApplicationStatus.SampleConfirmed => "success",
+            ApplicationStatus.SettlementPending => "secondary",
+            ApplicationStatus.Settled => "success",
+            ApplicationStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusDisplayName(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "待审批",
+            ApplicationStatus.Approved => "已审批",
+            ApplicationStatus.Rejected => "已拒绝",
+            ApplicationStatus.BunkeringInProgress => "加注中",
+            ApplicationStatus.BunkeringCompleted => "加注完成",
+            ApplicationStatus.SamplePending => "待油样确认",
+            ApplicationStatus.SampleConfirmed => "油样已确认",
+            ApplicationStatus.SettlementPending => "待结算",
+            ApplicationStatus.Settled => "已结算",
+            ApplicationStatus.Cancelled => "已取消",
+            _ => status.ToString()
+        };
+    }
+}

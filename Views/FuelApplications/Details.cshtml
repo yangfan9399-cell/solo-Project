@@ -1,0 +1,337 @@
+@model FuelApplication
+@{
+    ViewData["Title"] = "申请详情 - " + Model.ApplicationNumber;
+    var canSettle = (bool?)ViewData["CanSettle"] ?? false;
+}
+
+<div class="detail-header">
+    <div>
+        <h1 class="page-title">📋 申请详情</h1>
+        <p class="detail-subtitle">申请编号：<strong>@Model.ApplicationNumber</strong></p>
+    </div>
+    <div>
+        <span class="badge badge-large badge-@GetStatusBadgeClass(Model.Status)">
+            @GetStatusDisplayName(Model.Status)
+        </span>
+    </div>
+</div>
+
+@if (!Model.IsSampleSealed && Model.Status >= ApplicationStatus.BunkeringCompleted)
+{
+    <div class="alert alert-danger">
+        ⚠️ <strong>注意：</strong>油样未封存，禁止进行财务结算
+    </div>
+}
+
+<div class="detail-grid">
+    <div class="detail-card">
+        <h3 class="card-title">🚢 船舶信息</h3>
+        <div class="detail-item">
+            <span class="detail-label">船名</span>
+            <span class="detail-value">@Model.Ship?.Name</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">IMO编号</span>
+            <span class="detail-value">@Model.Ship?.ImoNumber</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">船旗</span>
+            <span class="detail-value">@Model.Ship?.Flag</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">载重吨</span>
+            <span class="detail-value">@(Model.Ship?.Deadweight) DWT</span>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3 class="card-title">🏭 供应商信息</h3>
+        <div class="detail-item">
+            <span class="detail-label">供应商</span>
+            <span class="detail-value">@Model.Supplier?.Name</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">联系人</span>
+            <span class="detail-value">@Model.Supplier?.ContactPerson</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">电话</span>
+            <span class="detail-value">@Model.Supplier?.Phone</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">邮箱</span>
+            <span class="detail-value">@Model.Supplier?.Email</span>
+        </div>
+    </div>
+
+    <div class="detail-card detail-card-wide">
+        <h3 class="card-title">⛽ 燃油信息</h3>
+        <div class="fuel-info-grid">
+            <div class="detail-item">
+                <span class="detail-label">燃油类型</span>
+                <span class="detail-value badge badge-info">@Model.FuelType</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">港口</span>
+                <span class="detail-value">@Model.Port</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">计划加注量</span>
+                <span class="detail-value highlight">@Model.PlannedQuantity 吨</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">实际加注量</span>
+                <span class="detail-value highlight @(Model.ActualQuantity.HasValue && Model.ActualQuantity < Model.PlannedQuantity ? "text-danger" : "text-success")">
+                    @(Model.ActualQuantity.HasValue ? $"{Model.ActualQuantity} 吨" : "-")
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">单价</span>
+                <span class="detail-value">¥@Model.UnitPrice / 吨</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">总金额</span>
+                <span class="detail-value highlight text-primary">
+                    @(Model.TotalAmount.HasValue ? $"¥{Model.TotalAmount.Value:N2}" : "-")
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">油样编号</span>
+                <span class="detail-value">
+                    @if (!string.IsNullOrEmpty(Model.SampleNumber))
+                    {
+                        <span class="badge badge-success">@Model.SampleNumber</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">未封存</span>
+                    }
+                </span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">油样状态</span>
+                <span class="detail-value">
+                    @if (Model.IsSampleSealed)
+                    {
+                        <span class="badge badge-success">✓ 已封存</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-danger">✗ 未封存</span>
+                    }
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3 class="card-title">📅 时间节点</h3>
+        <div class="detail-item">
+            <span class="detail-label">申请时间</span>
+            <span class="detail-value">@Model.ApplicationDate.ToString("yyyy-MM-dd HH:mm")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">计划加注日期</span>
+            <span class="detail-value">@Model.PlannedBunkeringDate.ToString("yyyy-MM-dd")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">实际加注日期</span>
+            <span class="detail-value">@(Model.ActualBunkeringDate.HasValue ? Model.ActualBunkeringDate.Value.ToString("yyyy-MM-dd HH:mm") : "-")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">加注完成时间</span>
+            <span class="detail-value">@(Model.BunkeringCompleteTime.HasValue ? Model.BunkeringCompleteTime.Value.ToString("yyyy-MM-dd HH:mm") : "-")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">油样确认时间</span>
+            <span class="detail-value">@(Model.SampleConfirmTime.HasValue ? Model.SampleConfirmTime.Value.ToString("yyyy-MM-dd HH:mm") : "-")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">结算时间</span>
+            <span class="detail-value">@(Model.SettlementTime.HasValue ? Model.SettlementTime.Value.ToString("yyyy-MM-dd HH:mm") : "-")</span>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <h3 class="card-title">👥 操作人员</h3>
+        <div class="detail-item">
+            <span class="detail-label">船务经办人</span>
+            <span class="detail-value">@Model.ApplicantName</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">加注操作员</span>
+            <span class="detail-value">@(Model.BunkeringOperator ?? "-")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">轮机长</span>
+            <span class="detail-value">@(Model.ChiefEngineerName ?? "-")</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">财务复核</span>
+            <span class="detail-value">@(Model.FinanceVerifierName ?? "-")</span>
+        </div>
+    </div>
+
+    <div class="detail-card detail-card-wide">
+        <h3 class="card-title">📝 差异与备注</h3>
+        <div class="detail-item">
+            <span class="detail-label">差异原因</span>
+            <span class="detail-value">@GetDiscrepancyReasonDisplay(Model.DiscrepancyReason)</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">差异量</span>
+            <span class="detail-value @(Math.Abs(Model.PlannedQuantity - (Model.ActualQuantity ?? 0)) > 0 ? "text-warning" : "")">
+                @if (Model.ActualQuantity.HasValue)
+                {
+                    var diff = Model.PlannedQuantity - Model.ActualQuantity.Value;
+                    @(diff > 0 ? $"-{diff:F2} 吨" : $"+{Math.Abs(diff):F2} 吨")
+                }
+                else
+                {
+                    @("-")
+                }
+            </span>
+        </div>
+        <div class="detail-item detail-item-full">
+            <span class="detail-label">备注</span>
+            <span class="detail-value">@(Model.Remarks ?? "无")</span>
+        </div>
+    </div>
+</div>
+
+<div class="action-bar">
+    <a href="/FuelApplications" class="btn btn-outline">← 返回列表</a>
+    <div class="btn-group">
+        @if (Model.Status == ApplicationStatus.PendingApproval)
+        {
+            <form method="post" action="/FuelApplications/Approve/@Model.Id" style="display: inline;">
+                <button type="submit" class="btn btn-success" onclick="return confirm('确定审批通过？')">✓ 审批通过</button>
+            </form>
+            <button type="button" class="btn btn-danger" onclick="showRejectModal()">✗ 拒绝</button>
+        }
+        @if (Model.Status == ApplicationStatus.Approved)
+        {
+            <a href="/FuelApplications/StartBunkering/@Model.Id" class="btn btn-primary">⛽ 开始加注</a>
+        }
+        @if (Model.Status == ApplicationStatus.BunkeringInProgress)
+        {
+            <a href="/FuelApplications/CompleteBunkering/@Model.Id" class="btn btn-primary">✓ 完成加注</a>
+        }
+        @if (Model.Status == ApplicationStatus.SamplePending)
+        {
+            <a href="/FuelApplications/ConfirmSample/@Model.Id" class="btn btn-warning">🧪 确认油样封存</a>
+        }
+        @if (Model.Status == ApplicationStatus.SettlementPending && canSettle)
+        {
+            <a href="/FuelApplications/Settle/@Model.Id" class="btn btn-success">💰 财务结算</a>
+        }
+        @if (Model.Status == ApplicationStatus.SettlementPending && !canSettle)
+        {
+            <button type="button" class="btn btn-secondary" disabled title="油样未封存，禁止结算">💰 财务结算 (不可用)</button>
+        }
+    </div>
+</div>
+
+<div class="section">
+    <h2>📜 历史节点</h2>
+    <div class="timeline">
+        @foreach (var log in Model.AuditLogs.OrderBy(l => l.CreatedAt))
+        {
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="timeline-status badge badge-@GetStatusBadgeClass(log.ToStatus)">
+                            @GetStatusDisplayName(log.ToStatus)
+                        </span>
+                        <span class="timeline-time">@log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                    </div>
+                    <p class="timeline-remarks">@log.Remarks</p>
+                    <div class="timeline-operator">
+                        <span>操作人：@log.OperatorName</span>
+                        <span class="timeline-role">(@log.OperatorRole)</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div id="rejectModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>拒绝申请</h3>
+        <form method="post" action="/FuelApplications/Reject/@Model.Id">
+            <div class="form-group">
+                <label>拒绝原因</label>
+                <textarea name="reason" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="hideRejectModal()">取消</button>
+                <button type="submit" class="btn btn-danger">确认拒绝</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showRejectModal() {
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+        function hideRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "warning",
+            ApplicationStatus.Approved => "info",
+            ApplicationStatus.Rejected => "danger",
+            ApplicationStatus.BunkeringInProgress => "primary",
+            ApplicationStatus.BunkeringCompleted => "info",
+            ApplicationStatus.SamplePending => "warning",
+            ApplicationStatus.SampleConfirmed => "success",
+            ApplicationStatus.SettlementPending => "secondary",
+            ApplicationStatus.Settled => "success",
+            ApplicationStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusDisplayName(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "待审批",
+            ApplicationStatus.Approved => "已审批",
+            ApplicationStatus.Rejected => "已拒绝",
+            ApplicationStatus.BunkeringInProgress => "加注中",
+            ApplicationStatus.BunkeringCompleted => "加注完成",
+            ApplicationStatus.SamplePending => "待油样确认",
+            ApplicationStatus.SampleConfirmed => "油样已确认",
+            ApplicationStatus.SettlementPending => "待结算",
+            ApplicationStatus.Settled => "已结算",
+            ApplicationStatus.Cancelled => "已取消",
+            _ => status.ToString()
+        };
+    }
+
+    string GetDiscrepancyReasonDisplay(DiscrepancyReason reason)
+    {
+        return reason switch
+        {
+            DiscrepancyReason.None => "无差异",
+            DiscrepancyReason.TemperatureDifference => "温度差异",
+            DiscrepancyReason.MeasurementError => "计量误差",
+            DiscrepancyReason.SupplyShortage => "供油短缺",
+            DiscrepancyReason.Leakage => "泄漏损耗",
+            DiscrepancyReason.Other => "其他原因",
+            _ => reason.ToString()
+        };
+    }
+}

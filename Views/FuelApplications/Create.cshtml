@@ -1,0 +1,71 @@
+@model FuelApplication
+@{
+    ViewData["Title"] = "新建燃油申请";
+}
+
+<h1 class="page-title">📝 新建燃油申请</h1>
+
+<div class="form-card">
+    <form asp-action="Create">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">船舶</label>
+                <select asp-for="ShipId" class="form-control" asp-items="ViewBag.ShipId">
+                    <option value="">请选择船舶</option>
+                </select>
+                <span asp-validation-for="ShipId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">供应商</label>
+                <select asp-for="SupplierId" class="form-control" asp-items="ViewBag.SupplierId">
+                    <option value="">请选择供应商</option>
+                </select>
+                <span asp-validation-for="SupplierId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">燃油类型</label>
+                <select asp-for="FuelType" class="form-control" asp-items="ViewBag.FuelTypes"></select>
+                <span asp-validation-for="FuelType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">计划加注量 (吨)</label>
+                <input asp-for="PlannedQuantity" class="form-control" type="number" step="0.01" min="0" />
+                <span asp-validation-for="PlannedQuantity" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">单价 (元/吨)</label>
+                <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" min="0" />
+                <span asp-validation-for="UnitPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">港口</label>
+                <input asp-for="Port" class="form-control" placeholder="例如：新加坡、上海" />
+                <span asp-validation-for="Port" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">计划加注日期</label>
+                <input asp-for="PlannedBunkeringDate" class="form-control" type="datetime-local" />
+                <span asp-validation-for="PlannedBunkeringDate" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="可选填写备注信息"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/FuelApplications" class="btn btn-outline">取消</a>
+            <button type="submit" class="btn btn-primary">提交申请</button>
+        </div>
+    </form>
+</div>

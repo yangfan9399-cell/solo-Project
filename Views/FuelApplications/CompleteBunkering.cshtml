@@ -1,0 +1,45 @@
+@model FuelApplication
+@{
+    ViewData["Title"] = "完成加注 - " + Model.ApplicationNumber;
+}
+
+<h1 class="page-title">✅ 完成加注作业</h1>
+
+<div class="form-card">
+    <div class="info-bar">
+        <p><strong>申请编号：</strong>@Model.ApplicationNumber</p>
+        <p><strong>船名：</strong>@Model.Ship?.Name</p>
+        <p><strong>燃油类型：</strong>@Model.FuelType</p>
+        <p><strong>计划量：</strong>@Model.PlannedQuantity 吨</p>
+        <p><strong>单价：</strong>¥@Model.UnitPrice / 吨</p>
+    </div>
+
+    <form asp-action="CompleteBunkering">
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">操作员姓名</label>
+                <input name="operatorName" class="form-control" placeholder="请输入操作员姓名" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">实际加注量 (吨)</label>
+                <input name="actualQuantity" class="form-control" type="number" step="0.01" min="0" value="@Model.PlannedQuantity" required />
+                <small class="form-text text-muted">计划量：@Model.PlannedQuantity 吨</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">差异原因</label>
+            <select name="discrepancyReason" class="form-control" asp-items="ViewBag.DiscrepancyReasons"></select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">备注</label>
+            <textarea name="remarks" class="form-control" rows="3" placeholder="请填写加注相关备注"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <a href="/FuelApplications/Details/@Model.Id" class="btn btn-outline">取消</a>
+            <button type="submit" class="btn btn-success" onclick="return confirm('确认完成加注作业？提交后状态将变更为待油样确认')">确认完成加注</button>
+        </div>
+    </form>
+</div>

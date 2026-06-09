@@ -1,0 +1,51 @@
+@model FuelApplication
+@{
+    ViewData["Title"] = "财务结算 - " + Model.ApplicationNumber;
+    var canSettle = Model.IsSampleSealed && Model.Status == ApplicationStatus.SettlementPending;
+}
+
+<h1 class="page-title">💰 财务结算</h1>
+
+<div class="form-card">
+    <div class="info-bar">
+        <p><strong>申请编号：</strong>@Model.ApplicationNumber</p>
+        <p><strong>船名：</strong>@Model.Ship?.Name</p>
+        <p><strong>供应商：</strong>@Model.Supplier?.Name</p>
+        <p><strong>燃油类型：</strong>@Model.FuelType</p>
+        <p><strong>实加量：</strong>@Model.ActualQuantity 吨</p>
+        <p><strong>单价：</strong>¥@Model.UnitPrice / 吨</p>
+        <p><strong class="text-primary">结算金额：¥@(Model.TotalAmount?.ToString("N2"))</strong></p>
+    </div>
+
+    <div class="alert @(canSettle ? "alert-success" : "alert-danger")">
+        @if (canSettle)
+        {
+            <text>✓ 油样已封存（编号：@Model.SampleNumber），可以进行结算</text>
+        }
+        else
+        {
+            <text>⚠️ 油样未封存，禁止进行财务结算！</text>
+        }
+    </div>
+
+    @if (canSettle)
+    {
+        <form asp-action="Settle">
+            <div class="form-group">
+                <label class="form-label">财务复核人姓名</label>
+                <input name="financeVerifierName" class="form-control" placeholder="请输入财务复核人姓名" required />
+            </div>
+
+            <div class="form-actions">
+                <a href="/FuelApplications/Details/@Model.Id" class="btn btn-outline">取消</a>
+                <button type="submit" class="btn btn-success" onclick="return confirm('确认结算？此操作不可撤销。')">确认结算</button>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="form-actions">
+            <a href="/FuelApplications/Details/@Model.Id" class="btn btn-primary">返回详情</a>
+        </div>
+    }
+</div>

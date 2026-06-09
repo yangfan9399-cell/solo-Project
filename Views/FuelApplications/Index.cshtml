@@ -1,0 +1,127 @@
+@model IEnumerable<FuelApplication>
+@{
+    ViewData["Title"] = "燃油申请列表";
+    var currentStatus = ViewData["CurrentStatus"] as ApplicationStatus?;
+}
+
+<h1 class="page-title">📋 燃油申请列表</h1>
+
+<div class="action-bar">
+    <div class="status-filter">
+        <a href="/FuelApplications" class="btn btn-sm @(!currentStatus.HasValue ? "btn-primary" : "btn-outline")">全部</a>
+        <a href="/FuelApplications?status=PendingApproval" class="btn btn-sm @(currentStatus == ApplicationStatus.PendingApproval ? "btn-primary" : "btn-outline")">待审批</a>
+        <a href="/FuelApplications?status=Approved" class="btn btn-sm @(currentStatus == ApplicationStatus.Approved ? "btn-primary" : "btn-outline")">已审批</a>
+        <a href="/FuelApplications?status=BunkeringInProgress" class="btn btn-sm @(currentStatus == ApplicationStatus.BunkeringInProgress ? "btn-primary" : "btn-outline")">加注中</a>
+        <a href="/FuelApplications?status=SamplePending" class="btn btn-sm @(currentStatus == ApplicationStatus.SamplePending ? "btn-primary" : "btn-outline")">待油样</a>
+        <a href="/FuelApplications?status=SettlementPending" class="btn btn-sm @(currentStatus == ApplicationStatus.SettlementPending ? "btn-primary" : "btn-outline")">待结算</a>
+        <a href="/FuelApplications?status=Settled" class="btn btn-sm @(currentStatus == ApplicationStatus.Settled ? "btn-primary" : "btn-outline")">已结算</a>
+    </div>
+    <a href="/FuelApplications/Create" class="btn btn-primary">+ 新建申请</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>申请编号</th>
+                <th>船名</th>
+                <th>供应商</th>
+                <th>燃油类型</th>
+                <th>计划量(吨)</th>
+                <th>实加量(吨)</th>
+                <th>港口</th>
+                <th>状态</th>
+                <th>申请时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var app in Model)
+            {
+                <tr>
+                    <td><strong>@app.ApplicationNumber</strong></td>
+                    <td>@app.Ship?.Name</td>
+                    <td>@app.Supplier?.Name</td>
+                    <td>@app.FuelType</td>
+                    <td>@app.PlannedQuantity</td>
+                    <td>@(app.ActualQuantity.HasValue ? app.ActualQuantity.Value.ToString() : "-")</td>
+                    <td>@app.Port</td>
+                    <td>
+                        <span class="badge badge-@GetStatusBadgeClass(app.Status)">
+                            @GetStatusDisplayName(app.Status)
+                        </span>
+                        @if (!app.IsSampleSealed && app.Status >= ApplicationStatus.BunkeringCompleted)
+                        {
+                            <br /><small class="text-danger">油样未封存</small>
+                        }
+                    </td>
+                    <td>@app.ApplicationDate.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="/FuelApplications/Details/@app.Id" class="btn btn-sm btn-primary">详情</a>
+                            @if (app.Status == ApplicationStatus.PendingApproval)
+                            {
+                                <form method="post" action="/FuelApplications/Approve/@app.Id" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('确定审批通过？')">通过</button>
+                                </form>
+                            }
+                            @if (app.Status == ApplicationStatus.BunkeringInProgress)
+                            {
+                                <a href="/FuelApplications/CompleteBunkering/@app.Id" class="btn btn-sm btn-info">完成加注</a>
+                            }
+                            @if (app.Status == ApplicationStatus.SamplePending)
+                            {
+                                <a href="/FuelApplications/ConfirmSample/@app.Id" class="btn btn-sm btn-warning">确认油样</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <p>暂无申请记录</p>
+    </div>
+}
+
+@functions {
+    string GetStatusBadgeClass(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "warning",
+            ApplicationStatus.Approved => "info",
+            ApplicationStatus.Rejected => "danger",
+            ApplicationStatus.BunkeringInProgress => "primary",
+            ApplicationStatus.BunkeringCompleted => "info",
+            ApplicationStatus.SamplePending => "warning",
+            ApplicationStatus.SampleConfirmed => "success",
+            ApplicationStatus.SettlementPending => "secondary",
+            ApplicationStatus.Settled => "success",
+            ApplicationStatus.Cancelled => "danger",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusDisplayName(ApplicationStatus status)
+    {
+        return status switch
+        {
+            ApplicationStatus.PendingApproval => "待审批",
+            ApplicationStatus.Approved => "已审批",
+            ApplicationStatus.Rejected => "已拒绝",
+            ApplicationStatus.BunkeringInProgress => "加注中",
+            ApplicationStatus.BunkeringCompleted => "加注完成",
+            ApplicationStatus.SamplePending => "待油样确认",
+            ApplicationStatus.SampleConfirmed => "油样已确认",
+            ApplicationStatus.SettlementPending => "待结算",
+            ApplicationStatus.Settled => "已结算",
+            ApplicationStatus.Cancelled => "已取消",
+            _ => status.ToString()
+        };
+    }
+}
