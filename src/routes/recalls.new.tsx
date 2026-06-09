@@ -56,6 +56,10 @@ function NewRecallPage() {
       alert('请先选择当前用户（质量经办人）')
       return
     }
+    if (currentUser.role !== 'QUALITY_MANAGER') {
+      alert('只有质量经办人可以发布召回')
+      return
+    }
     if (formData.selectedBatchIds.length === 0) {
       alert('请选择至少一个批次')
       return
@@ -75,7 +79,7 @@ function NewRecallPage() {
           description: formData.description,
           reason: formData.reason,
           level: formData.level,
-          publisherId: 'mock-publisher-id',
+          publisherId: currentUser.id,
           batchIds: formData.selectedBatchIds,
           storeIds: formData.selectedStoreIds,
           expectedQuantity: formData.expectedQuantity,

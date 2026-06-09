@@ -80,7 +80,7 @@ function RecallDetailPage() {
         body: JSON.stringify({
           storeId,
           action,
-          confirmedById: 'mock-user-id',
+          confirmedById: currentUser.id,
           ...extraData,
         }),
       })
@@ -103,10 +103,10 @@ function RecallDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status,
-          closerId: 'mock-user-id',
+          closerId: currentUser.id,
           closeNote,
           action: status === 'CLOSED' ? '关闭召回' : '启动追责',
-          actorId: 'mock-user-id',
+          actorId: currentUser.id,
           detail: closeNote,
         }),
       })
@@ -136,7 +136,7 @@ function RecallDetailPage() {
         body: JSON.stringify({
           storeId: selectedStore.storeId,
           ...recoveryData,
-          notedById: 'mock-user-id',
+          notedById: currentUser.id,
         }),
       })
       if (res.ok) {

@@ -5,16 +5,61 @@ export const Route = createRootRoute({
   component: RootComponent,
 })
 
+const roleLabelMap: Record<string, string> = {
+  QUALITY_MANAGER: '质量经办人',
+  STORE_PHARMACIST: '门店药师',
+  LOGISTICS_STAFF: '物流人员',
+  REVIEWER: '复核人',
+}
+
 function RootComponent() {
   const location = useLocation()
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser')
     if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser))
+      try {
+        const parsed = JSON.parse(savedUser)
+        setCurrentUser(parsed)
+      } catch (e) {
+        console.error('Failed to parse saved user', e)
+      }
     }
   }, [])
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const res = await fetch('/api/users')
+      const data = await res.json()
+      setUsers(data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const userId = e.target.value
+    if (!userId) {
+      localStorage.removeItem('currentUser')
+      setCurrentUser(null)
+      return
+    }
+    const user = users.find(u => u.id === userId)
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user))
+      setCurrentUser(user)
+    }
+  }
 
   const navItems = [
     { to: '/', label: '召回列表' },
@@ -47,7 +92,12 @@ function RootComponent() {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <UserRoleSelector currentUser={currentUser} onUserChange={setCurrentUser} />
+              <UserRoleSelector
+                currentUser={currentUser}
+                users={users}
+                loading={loadingUsers}
+                onUserChange={handleUserChange}
+              />
             </div>
           </div>
         </div>
@@ -59,38 +109,51 @@ function RootComponent() {
   )
 }
 
-function UserRoleSelector({ currentUser, onUserChange }: { currentUser: any; onUserChange: (user: any) => void }) {
-  const users = [
-    { id: 'qm', name: '张质量', role: 'QUALITY_MANAGER', roleLabel: '质量经办人' },
-    { id: 'rv', name: '李复核', role: 'REVIEWER', roleLabel: '复核人' },
-    { id: 'ls', name: '王物流', role: 'LOGISTICS_STAFF', roleLabel: '物流人员' },
-    { id: 'sp', name: '陈药师', role: 'STORE_PHARMACIST', roleLabel: '门店药师' },
-  ]
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const userId = e.target.value
-    const user = users.find(u => u.id === userId)
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user))
-      onUserChange(user)
+function UserRoleSelector({
+  currentUser,
+  users,
+  loading,
+  onUserChange,
+}: {
+  currentUser: any
+  users: any[]
+  loading: boolean
+  onUserChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+}) {
+  const groupedUsers = users.reduce((acc: Record<string, any[]>, user) => {
+    if (!acc[user.role]) {
+      acc[user.role] = []
     }
-  }
+    acc[user.role].push(user)
+    return acc
+  }, {})
 
   return (
     <div className="flex items-center space-x-2">
       <span className="text-sm text-gray-500">当前用户:</span>
       <select
         value={currentUser?.id || ''}
-        onChange={handleChange}
-        className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white"
+        onChange={onUserChange}
+        className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white min-w-[180px]"
+        disabled={loading}
       >
         <option value="">选择用户</option>
-        {users.map((user) => (
-          <option key={user.id} value={user.id}>
-            {user.name} ({user.roleLabel})
-          </option>
+        {Object.entries(groupedUsers).map(([role, roleUsers]) => (
+          <optgroup key={role} label={roleLabelMap[role] || role}>
+            {roleUsers.map((user: any) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+                {user.store ? `（${user.store.name}）` : ''}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
+      {currentUser && (
+        <span className="text-xs text-gray-400">
+          {roleLabelMap[currentUser.role]}
+        </span>
+      )}
     </div>
   )
 }

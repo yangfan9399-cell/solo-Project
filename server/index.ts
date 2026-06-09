@@ -377,7 +377,7 @@ app.get('/api/analytics', async (req, res) => {
   const recalls = await prisma.recall.findMany({
     where: {
       status: {
-        in: ['CLOSED', 'INVESTIGATING', 'RECOVERING', 'IN_PROGRESS'],
+        in: ['CLOSED', 'INVESTIGATING', 'RECOVERING', 'IN_PROGRESS', 'PUBLISHED'],
       },
     },
     include: {
@@ -395,116 +395,133 @@ app.get('/api/analytics', async (req, res) => {
     },
   })
 
-  const byRegion: Record<string, any> = {}
-  const byCategory: Record<string, any> = {}
-  const touchTimeData: any[] = []
-  const differenceData: any[] = []
+  // 1. 汇总统计
+  const summary = {
+    total: recalls.length,
+    closed: recalls.filter((r: any) => r.status === 'CLOSED').length,
+    inProgress: recalls.filter((r: any) => r.status === 'IN_PROGRESS' || r.status === 'PUBLISHED').length,
+    recovering: recalls.filter((r: any) => r.status === 'RECOVERING').length,
+    investigating: recalls.filter((r: any) => r.status === 'INVESTIGATING').length,
+  }
 
+  // 2. 按区域统计（召回涉及门店的区域分布）
+  const regionMap: Record<string, number> = {}
   recalls.forEach((recall: any) => {
-    recall.stores.forEach((storeRecall: any) => {
-      const region = storeRecall.store.region
-
-      if (!byRegion[region]) {
-        byRegion[region] = {
-          region,
-          totalRecalls: 0,
-          totalStores: 0,
-          unreadCount: 0,
-          mismatchCount: 0,
-          avgTouchHours: 0,
-          totalTouchHours: 0,
-          touchCount: 0,
-        }
-      }
-      byRegion[region].totalStores++
-      if (storeRecall.status === 'UNREAD') byRegion[region].unreadCount++
-      if (storeRecall.status === 'BATCH_MISMATCH') byRegion[region].mismatchCount++
-
-      if (storeRecall.readAt) {
-        const touchHours = (new Date(storeRecall.readAt).getTime() - new Date(recall.createdAt).getTime()) / (1000 * 60 * 60)
-        byRegion[region].totalTouchHours += touchHours
-        byRegion[region].touchCount++
-      }
+    const regions = new Set(recall.stores.map((s: any) => s.store.region))
+    regions.forEach((region: any) => {
+      regionMap[region] = (regionMap[region] || 0) + 1
     })
+  })
+  const byRegion = Object.entries(regionMap).map(([region, count]) => ({ region, count }))
 
+  // 3. 按药品类别统计
+  const categoryMap: Record<string, number> = {}
+  recalls.forEach((recall: any) => {
     const categories = new Set(recall.batches.map((b: any) => b.drugBatch.drug.category))
     categories.forEach((cat: any) => {
-      if (!byCategory[cat]) {
-        byCategory[cat] = {
-          category: cat,
-          recallCount: 0,
-          totalBatches: 0,
-        }
-      }
-      byCategory[cat].recallCount++
-      byCategory[cat].totalBatches += recall.batches.filter(
-        (b: any) => b.drugBatch.drug.category === cat
-      ).length
+      categoryMap[cat] = (categoryMap[cat] || 0) + 1
     })
+  })
+  const byCategory = Object.entries(categoryMap).map(([category, count]) => ({ category, count }))
 
+  // 4. 触达时长分布（从发布到门店首次读取的时间，按小时分桶）
+  const touchHoursList: number[] = []
+  recalls.forEach((recall: any) => {
     recall.stores.forEach((storeRecall: any) => {
       if (storeRecall.readAt) {
         const touchHours = (new Date(storeRecall.readAt).getTime() - new Date(recall.createdAt).getTime()) / (1000 * 60 * 60)
-        touchTimeData.push({
-          recallId: recall.id,
-          recallTitle: recall.title,
-          store: storeRecall.store.name,
-          region: storeRecall.store.region,
-          touchHours: Math.round(touchHours * 10) / 10,
-        })
-      }
-    })
-
-    recall.recoveries.forEach((recovery: any) => {
-      if (recovery.difference !== 0) {
-        differenceData.push({
-          recallId: recall.id,
-          recallTitle: recall.title,
-          storeId: recovery.storeId,
-          expectedQty: recovery.expectedQty,
-          actualQty: recovery.actualQty,
-          difference: recovery.difference,
-          note: recovery.note,
-        })
+        touchHoursList.push(touchHours)
       }
     })
   })
 
-  Object.keys(byRegion).forEach((region) => {
-    if (byRegion[region].touchCount > 0) {
-      byRegion[region].avgTouchHours = Math.round(
-        (byRegion[region].totalTouchHours / byRegion[region].touchCount) * 10
-      ) / 10
-    }
-    byRegion[region].totalRecalls = recalls.filter((r: any) =>
-      r.stores.some((s: any) => s.store.region === region)
-    ).length
-  })
-
-  const summary = {
-    totalRecalls: recalls.length,
-    closedRecalls: recalls.filter((r: any) => r.status === 'CLOSED').length,
-    inProgressRecalls: recalls.filter((r: any) => r.status === 'IN_PROGRESS').length,
-    recoveringRecalls: recalls.filter((r: any) => r.status === 'RECOVERING').length,
-    investigatingRecalls: recalls.filter((r: any) => r.status === 'INVESTIGATING').length,
-    totalStores: recalls.reduce((sum: number, r: any) => sum + r.stores.length, 0),
-    totalRecoveries: recalls.reduce((sum: number, r: any) => sum + r.recoveries.length, 0),
-    totalDifferenceQty: recalls.reduce(
-      (sum: number, r: any) => sum + r.recoveries.reduce((s: number, rec: any) => s + Math.abs(rec.difference), 0),
-      0
-    ),
+  function bucketTouchHours(hours: number): string {
+    if (hours < 1) return '0-1小时'
+    if (hours < 4) return '1-4小时'
+    if (hours < 12) return '4-12小时'
+    if (hours < 24) return '12-24小时'
+    if (hours < 48) return '24-48小时'
+    return '48小时以上'
   }
+
+  const touchBucketMap: Record<string, number> = {}
+  touchHoursList.forEach((h) => {
+    const bucket = bucketTouchHours(h)
+    touchBucketMap[bucket] = (touchBucketMap[bucket] || 0) + 1
+  })
+  const touchBuckets = ['0-1小时', '1-4小时', '4-12小时', '12-24小时', '24-48小时', '48小时以上']
+  const reachDuration = touchBuckets.map((bucket) => ({
+    bucket,
+    count: touchBucketMap[bucket] || 0,
+  }))
+
+  const avgReachDuration = touchHoursList.length > 0
+    ? touchHoursList.reduce((a, b) => a + b, 0) / touchHoursList.length
+    : 0
+
+  // 5. 回收数量差异分布
+  function bucketDiffQty(diff: number): string {
+    const absDiff = Math.abs(diff)
+    if (absDiff === 0) return '无差异'
+    if (absDiff <= 5) return '轻微差异(1-5盒)'
+    if (absDiff <= 20) return '中等差异(6-20盒)'
+    return '严重差异(20盒以上)'
+  }
+
+  const diffBucketMap: Record<string, number> = {}
+  let totalDifference = 0
+  recalls.forEach((recall: any) => {
+    recall.recoveries.forEach((recovery: any) => {
+      const bucket = bucketDiffQty(recovery.difference)
+      diffBucketMap[bucket] = (diffBucketMap[bucket] || 0) + 1
+      totalDifference += recovery.difference
+    })
+  })
+  const diffBuckets = ['无差异', '轻微差异(1-5盒)', '中等差异(6-20盒)', '严重差异(20盒以上)']
+  const quantityDifference = diffBuckets.map((bucket) => ({
+    bucket,
+    count: diffBucketMap[bucket] || 0,
+  }))
+
+  // 6. 按召回级别统计
+  const levelMap: Record<string, number> = {}
+  recalls.forEach((recall: any) => {
+    levelMap[recall.level] = (levelMap[recall.level] || 0) + 1
+  })
+  const byLevel = Object.entries(levelMap).map(([level, count]) => ({ level, count }))
 
   res.json({
     summary,
-    byRegion: Object.values(byRegion),
-    byCategory: Object.values(byCategory),
-    touchTimeData: touchTimeData.sort((a, b) => b.touchHours - a.touchHours),
-    differenceData: differenceData.sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference)),
+    byRegion,
+    byCategory,
+    reachDuration,
+    quantityDifference,
+    byLevel,
+    avgReachDuration,
+    totalDifference,
   })
 })
 
-// 健康检查
+// GET /api/users - 用户列表
+app.get('/api/users', async (req, res) => {
+  const role = req.query.role as string
+  const where: any = {}
+  if (role) {
+    where.role = role
+  }
+  const users = await prisma.user.findMany({
+    where,
+    include: {
+      store: {
+        select: { name: true, code: true, region: true }
+      }
+    },
+    orderBy: { name: 'asc' },
+  })
+  res.json(users)
+})
+
+// GET /api/health - 健康检查
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })
 })
