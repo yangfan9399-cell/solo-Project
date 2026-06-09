@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复盘统计 - 加油站油罐计量差异与盘点复核平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>加油站油罐计量差异与盘点复核平台</h1>
+        <div class="nav">
+            <a href="/inventory">盘点管理</a>
+            <a href="/summary" class="active">复盘统计</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>复盘聚合统计</h2>
+
+            <div class="section-title">按差异原因分布</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>差异类型</th>
+                        <th>记录数</th>
+                        <th>差异总量 (L)</th>
+                        <th>占比</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item, iter : ${byDiscrepancyType}">
+                        <td>
+                            <span class="badge"
+                                  th:class="'badge-' + ${item[0].name() == 'NORMAL' ? 'success' :
+                                                       item[0].name() == 'GAUGE_ERROR' ? 'danger' :
+                                                       item[0].name() == 'DELIVERY_MISMATCH' ? 'warning' : 'info'}"
+                                  th:text="${item[0].description}"></span>
+                        </td>
+                        <td th:text="${item[1]}"></td>
+                        <td class="text-right" th:text="${item[2] != null ? #numbers.formatDecimal(item[2], 1, 2) : '-'}"></td>
+                        <td th:text="'-'"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">按站点汇总</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>站点名称</th>
+                        <th>盘点次数</th>
+                        <th>累计差异量 (L)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${byStation}">
+                        <td th:text="${item[0]}"></td>
+                        <td th:text="${item[1]}"></td>
+                        <td class="text-right"></td>
+                            <span th:if="${item[2] == null}">-</span>
+                            <span th:else
+                                  th:class="${item[2].signum() >= 0 ? 'text-success' : 'text-danger'}"
+                                  th:text="${#numbers.formatDecimal(item[2], 1, 2)}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">按油品汇总</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>油品名称</th>
+                        <th>盘点次数</th>
+                        <th>累计差异量 (L)</th>
+                        <th>平均损耗率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${byProduct}">
+                        <td th:text="${item[0]}"></td>
+                        <td th:text="${item[1]}"></td>
+                        <td class="text-right"></td>
+                            <span th:if="${item[2] == null}">-</span>
+                            <span th:else
+                                  th:class="${item[2].signum() >= 0 ? 'text-success' : 'text-danger'}"
+                                  th:text="${#numbers.formatDecimal(item[2], 1, 2)}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${item[3] == null}">-</span>
+                            <span th:else
+                                  th:class="${item[3].compareTo(new java.math.BigDecimal('0.003')) > 0 ? 'text-danger' : 'text-success'}"
+                                  th:text="${#numbers.formatPercent(item[3], 1, 2)}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>损耗率预警</h2>
+            <p class="text-muted">损耗率阈值：0.3%，超过阈值标记为异常</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">总盘点次数</div>
+                    <div class="stat-value" th:text="${totalCount}"></div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">盘点正常</div>
+                    <div class="stat-value" th:text="${discrepancyCount['NORMAL']}"></div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-label">液位仪异常</div>
+                    <div class="stat-value" th:text="${discrepancyCount['GAUGE_ERROR']}"></div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-label">配送量不符</div>
+                    <div class="stat-value" th:text="${discrepancyCount['DELIVERY_MISMATCH']}"></div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-label">损耗超标</div>
+                    <div class="stat-value" th:text="${discrepancyCount['EXCESS_LOSS']}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

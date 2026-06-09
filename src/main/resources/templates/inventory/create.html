@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登记盘点 - 加油站油罐计量差异与盘点复核平台</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <h1>加油站油罐计量差异与盘点复核平台</h1>
+        <div class="nav">
+            <a href="/inventory" class="active">盘点管理</a>
+            <a href="/summary">复盘统计</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="card">
+            <h2>登记日盘点</h2>
+
+            <form method="post" action="/inventory/create">
+                <div class="section-title">基本信息</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>盘点日期</label>
+                        <input type="date" name="inventoryDate" th:value="${today}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>油罐</label>
+                        <select name="tank.id" id="tankSelect" required onchange="onTankChange()">
+                            <option value="">请选择油罐</option>
+                            <option th:each="t : ${tanks}"
+                                    th:value="${t.id}"
+                                    th:data-gauge="${t.gaugeStatus}"
+                                    th:data-product="${t.oilProduct.productName}"
+                                    th:text="${t.station.stationName + ' - ' + t.tankCode + ' ' + t.tankName + ' (' + t.oilProduct.productName + ')'}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>液位仪状态</label>
+                        <input type="text" id="gaugeStatusDisplay" readonly placeholder="选择油罐后自动显示">
+                    </div>
+                </div>
+
+                <div class="section-title">库存数据</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>期初库存 (L)</label>
+                        <input type="number" step="0.01" name="openingVolume" placeholder="请输入期初库存" required>
+                    </div>
+                    <div class="form-group">
+                        <label>本期配送量 (L)</label>
+                        <input type="number" step="0.01" name="deliveryVolume" value="0" placeholder="请输入配送量">
+                    </div>
+                    <div class="form-group">
+                        <label>本期销售量 (L)</label>
+                        <input type="number" step="0.01" name="salesVolume" placeholder="请输入销售量" required>
+                    </div>
+                </div>
+
+                <div class="section-title">液位仪数据</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>液位仪读数 (L)</label>
+                        <input type="number" step="0.01" name="gaugeVolume" placeholder="请输入液位仪读数" required>
+                    </div>
+                    <div class="form-group">
+                        <label>水位 (mm)</label>
+                        <input type="number" step="0.1" name="waterLevel" placeholder="请输入水位">
+                    </div>
+                    <div class="form-group">
+                        <label>温度 (℃)</label>
+                        <input type="number" step="0.1" name="temperature" placeholder="请输入温度">
+                    </div>
+                </div>
+
+                <div class="section-title">备注</div>
+                <div class="form-group">
+                    <label>站长备注</label>
+                    <textarea name="stationRemark" rows="3" placeholder="请输入备注信息..."></textarea>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                    <button type="submit" class="btn btn-primary">提交盘点</button>
+                    <a href="/inventory" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function onTankChange() {
+            var select = document.getElementById('tankSelect');
+            var option = select.options[select.selectedIndex];
+            var gaugeDisplay = document.getElementById('gaugeStatusDisplay');
+
+            if (option && option.value) {
+                var gaugeNormal = option.getAttribute('data-gauge');
+                gaugeDisplay.value = gaugeNormal === 'true' ? '正常' : '异常';
+                gaugeDisplay.style.color = gaugeNormal === 'true' ? '#059669' : '#dc2626';
+            } else {
+                gaugeDisplay.value = '';
+                gaugeDisplay.style.color = '';
+            }
+        }
+    </script>
+</body>
+</html>
