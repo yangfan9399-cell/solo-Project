@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}复盘分析 - 航空餐食批次追踪系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📊 复盘分析</h1>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-body">
+        <form method="get" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+            <div style="display:flex;gap:12px;align-items:flex-end;">
+                <div>
+                    <label style="font-size:12px;color:#6c757d;font-weight:500;margin-bottom:4px;display:block;">起始日期</label>
+                    <input type="date" name="date_from" value="{{ date_from }}"
+                           style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                </div>
+                <div>
+                    <label style="font-size:12px;color:#6c757d;font-weight:500;margin-bottom:4px;display:block;">结束日期</label>
+                    <input type="date" name="date_to" value="{{ date_to }}"
+                           style="padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary" style="background:#1a1a2e;">筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="summary-stats">
+    <div class="summary-item">
+        <div class="summary-number">{{ total_batches }}</div>
+        <div class="summary-label">总批次</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-number">{{ total_anomaly }}</div>
+        <div class="summary-label">异常批次</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-number">{{ anomaly_rate }}%</div>
+        <div class="summary-label">异常率</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-number">{{ avg_handle_hours }}h</div>
+        <div class="summary-label">平均处置耗时</div>
+    </div>
+</div>
+
+<div class="review-grid">
+    <div class="review-card">
+        <div class="review-card-header">
+            <span class="review-card-title">✈️ 按航空公司统计</span>
+        </div>
+        <div class="review-card-body">
+            <table class="review-table">
+                <thead>
+                    <tr>
+                        <th>航空公司</th>
+                        <th>批次</th>
+                        <th>异常数</th>
+                        <th>已装机</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in by_airline %}
+                    <tr>
+                        <td style="font-weight:500;">{{ item.airline_code }} - {{ item.airline_name }}</td>
+                        <td>{{ item.total }}</td>
+                        <td>
+                            {% if item.anomaly_count > 0 %}
+                            <span style="color:#e94560;font-weight:500;">{{ item.anomaly_count }}</span>
+                            {% else %}
+                            {{ item.anomaly_count }}
+                            {% endif %}
+                        </td>
+                        <td>{{ item.loaded }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align:center;color:#adb5bd;padding:20px;">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-header">
+            <span class="review-card-title">🍱 按餐食类别统计</span>
+        </div>
+        <div class="review-card-body">
+            <table class="review-table">
+                <thead>
+                    <tr>
+                        <th>餐食类别</th>
+                        <th>批次</th>
+                        <th>异常数</th>
+                        <th>异常率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in by_category %}
+                    <tr>
+                        <td style="font-weight:500;">{{ item.category_name }}</td>
+                        <td>{{ item.total }}</td>
+                        <td>
+                            {% if item.anomaly_count > 0 %}
+                            <span style="color:#e94560;font-weight:500;">{{ item.anomaly_count }}</span>
+                            {% else %}
+                            0
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total > 0 %}
+                            {{ item.anomaly_count|default:0|floatformat:1 }}%
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align:center;color:#adb5bd;padding:20px;">暂无数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-header">
+            <span class="review-card-title">⚠️ 异常原因分布</span>
+        </div>
+        <div class="review-card-body">
+            {% if by_anomaly %}
+            <div class="bar-chart">
+                {% with max_count=by_anomaly.0.count %}
+                {% for item in by_anomaly %}
+                <div class="bar-item">
+                    <div class="bar-label">{{ item.anomaly_type_display }}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:{% widthratio item.count max_count 100 %}%;"></div>
+                    </div>
+                    <div class="bar-value">{{ item.count }}</div>
+                </div>
+                {% endfor %}
+                {% endwith %}
+            </div>
+            {% else %}
+            <p style="text-align:center;color:#adb5bd;padding:20px;">暂无异常数据</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="review-card">
+        <div class="review-card-header">
+            <span class="review-card-title">⏱️ 异常处置耗时</span>
+        </div>
+        <div class="review-card-body">
+            <table class="review-table">
+                <thead>
+                    <tr>
+                        <th>异常类型</th>
+                        <th>召回次数</th>
+                        <th>平均处置耗时</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recall_by_anomaly %}
+                    <tr>
+                        <td style="font-weight:500;">{{ item.anomaly_type_display }}</td>
+                        <td>{{ item.count }}</td>
+                        <td>
+                            <span style="color:#e94560;font-weight:500;">{{ item.avg_hours }} 小时</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" style="text-align:center;color:#adb5bd;padding:20px;">暂无召回数据</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if total_recalls > 0 %}
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
+                <div style="display:flex;justify-content:space-between;font-size:14px;">
+                    <span style="color:#6c757d;">已解决召回总数</span>
+                    <span style="font-weight:600;">{{ total_recalls }} 次</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;margin-top:6px;">
+                    <span style="color:#6c757d;">整体平均处置耗时</span>
+                    <span style="font-weight:600;color:#e94560;">{{ avg_handle_hours }} 小时</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

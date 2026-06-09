@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'batch_detail' batch.pk %}" class="back-link">← 返回批次详情</a>
+
+<div class="card" style="max-width:500px;margin:0 auto;">
+    <div class="card-header">
+        <span class="card-title">✈️ {{ title }}</span>
+    </div>
+    <div class="card-body">
+        {% if not batch.can_load %}
+        <div class="alert-box alert-danger">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>无法装机</strong>
+                <div style="margin-top:4px;font-size:13px;">
+                    {% if not batch.allergen_label_verified %}过敏源标识未复核<br>{% endif %}
+                    {% if batch.allergen_label_missing %}过敏源标识缺失<br>{% endif %}
+                    {% if batch.is_cold_storage_overtime %}冷藏超时<br>{% endif %}
+                    {% if batch.status != 'qc_passed' %}未通过品控<br>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert-box alert-info">
+            <span class="alert-icon">✅</span>
+            <div>
+                <strong>装机条件已满足</strong>
+                <div style="margin-top:4px;font-size:13px;">品控通过 · 过敏源标识完整 · 冷藏正常</div>
+            </div>
+        </div>
+
+        <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:20px;">
+            <p style="font-size:14px;margin-bottom:6px;"><strong>批次：</strong>{{ batch.batch_number }}</p>
+            <p style="font-size:14px;margin-bottom:6px;"><strong>餐食：</strong>{{ batch.meal_category.name }} · {{ batch.quantity }} 份</p>
+            <p style="font-size:14px;"><strong>航班：</strong>{{ batch.flight.flight_number }}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>装机前温度检测（℃）</label>
+                <input type="number" name="temperature" step="0.1" required
+                       style="width:100%;padding:10px 12px;border:1px solid #ced4da;border-radius:6px;">
+            </div>
+            <div class="form-group">
+                <label>装机备注</label>
+                <textarea name="remarks" rows="2"
+                          style="width:100%;padding:10px 12px;border:1px solid #ced4da;border-radius:6px;"></textarea>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button type="submit" class="btn btn-success" style="flex:1;">
+                    确认装机
+                </button>
+                <a href="{% url 'batch_detail' batch.pk %}" class="btn btn-outline" style="flex:1;text-align:center;">
+                    取消
+                </a>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

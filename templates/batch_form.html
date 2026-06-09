@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 航空餐食批次追踪系统{% endblock %}
+
+{% block content %}
+<a href="{% url 'dashboard' %}" class="back-link">← 返回批次列表</a>
+
+<div class="card" style="max-width:700px;margin:0 auto;">
+    <div class="card-header">
+        <span class="card-title">{{ title }}</span>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="checkbox-list">
+                        {{ field }}
+                    </div>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.help_text %}
+                <small style="color:#6c757d;">{{ field.help_text }}</small>
+                {% endif %}
+                {% if field.errors %}
+                <div style="color:#dc3545;font-size:13px;margin-top:4px;">
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="background:#1a1a2e;flex:1;">提交</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline" style="flex:1;text-align:center;">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

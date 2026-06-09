@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}批次列表 - 航空餐食批次追踪系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">餐食批次管理</h1>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total }}</div>
+        <div class="stat-label">总批次</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-number">{{ stats.pending_qc }}</div>
+        <div class="stat-label">待品控复核</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-number">{{ stats.loaded }}</div>
+        <div class="stat-label">已装机</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-number">{{ stats.anomaly }}</div>
+        <div class="stat-label">异常批次</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-number">{{ stats.recalls }}</div>
+        <div class="stat-label">待处理召回</div>
+    </div>
+</div>
+
+<div class="filter-bar" id="filter-bar">
+    <form method="get" hx-get="{% url 'dashboard' %}" hx-trigger="change" hx-target="#batch-list" hx-push-url="true">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+            <div class="filter-group">
+                <label>状态</label>
+                {{ form.status }}
+            </div>
+            <div class="filter-group">
+                <label>异常类型</label>
+                {{ form.anomaly_type }}
+            </div>
+            <div class="filter-group">
+                <label>关键词</label>
+                {{ form.keyword }}
+            </div>
+            <div class="filter-group">
+                <label>起始日期</label>
+                {{ form.date_from }}
+            </div>
+            <div class="filter-group">
+                <label>结束日期</label>
+                {{ form.date_to }}
+            </div>
+            <button type="submit" class="filter-btn">筛选</button>
+        </div>
+    </form>
+</div>
+
+<div id="batch-list">
+    {% include 'partials/batch_list.html' %}
+</div>
+{% endblock %}

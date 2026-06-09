@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ batch.batch_number }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'batch_detail' batch.pk %}" class="back-link">← 返回批次详情</a>
+
+<div class="card" style="max-width:550px;margin:0 auto;">
+    <div class="card-header">
+        <span class="card-title">🚨 {{ title }}</span>
+    </div>
+    <div class="card-body">
+        <div class="alert-box alert-danger" style="margin-bottom:20px;">
+            <span class="alert-icon">⚠️</span>
+            <div>
+                <strong>即将发起召回</strong>
+                <div style="margin-top:4px;font-size:13px;">
+                    批次 <strong>{{ batch.batch_number }}</strong> 将被标记为召回状态
+                </div>
+            </div>
+        </div>
+
+        <div style="background:#f8f9fa;padding:14px 16px;border-radius:8px;margin-bottom:20px;">
+            <p style="font-size:14px;margin-bottom:4px;"><strong>批次：</strong>{{ batch.batch_number }}</p>
+            <p style="font-size:14px;margin-bottom:4px;"><strong>餐食：</strong>{{ batch.meal_category.name }} · {{ batch.quantity }} 份</p>
+            <p style="font-size:14px;"><strong>航班：</strong>{{ batch.flight.flight_number }}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>异常类型</label>
+                <select name="anomaly_type" style="width:100%;padding:10px 12px;border:1px solid #ced4da;border-radius:6px;">
+                    {% for value, label in form.fields.anomaly_type.choices %}
+                    <option value="{{ value }}" {% if form.initial.anomaly_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>召回原因</label>
+                <textarea name="reason" rows="4" required
+                          style="width:100%;padding:10px 12px;border:1px solid #ced4da;border-radius:6px;">{{ form.reason.value|default:'' }}</textarea>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button type="submit" class="btn btn-danger" style="flex:1;">
+                    确认发起召回
+                </button>
+                <a href="{% url 'batch_detail' batch.pk %}" class="btn btn-outline" style="flex:1;text-align:center;">
+                    取消
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

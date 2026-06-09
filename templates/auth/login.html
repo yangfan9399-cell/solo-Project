@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 航空餐食批次追踪系统</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-icon">✈️</div>
+            <h1 class="login-title">航空餐食批次追踪</h1>
+            <p class="login-subtitle">批次追踪 · 过敏源复核 · 全流程管理</p>
+
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message message-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">登 录</button>
+            </form>
+
+            <div class="login-hint">
+                <p><strong>测试账号：</strong></p>
+                <p>配餐经办人 / catering1 / 密码: test1234</p>
+                <p>品控员 / qc1 / 密码: test1234</p>
+                <p>机供人员 / cabin1 / 密码: test1234</p>
+                <p>值班经理 / manager1 / 密码: test1234</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

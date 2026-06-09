@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ batch.batch_number }} - 批次详情{% endblock %}
+
+{% block content %}
+<a href="{% url 'dashboard' %}" class="back-link">← 返回批次列表</a>
+
+<div id="batch-detail-main">
+    {% include 'partials/batch_detail_main.html' %}
+</div>
+{% endblock %}

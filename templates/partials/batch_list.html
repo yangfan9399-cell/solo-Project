@@ -1,0 +1,63 @@
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">批次列表</span>
+        <span style="font-size:13px;color:#6c757d;">共 {{ batches|length }} 条</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="batch-table">
+            <thead>
+                <tr>
+                    <th>批次号</th>
+                    <th>航班</th>
+                    <th>餐食类别</th>
+                    <th>数量</th>
+                    <th>状态</th>
+                    <th>异常类型</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td>
+                        <a href="{% url 'batch_detail' batch.pk %}">{{ batch.batch_number }}</a>
+                    </td>
+                    <td>
+                        <div style="font-weight:500;">{{ batch.flight.flight_number }}</div>
+                        <div style="font-size:12px;color:#6c757d;">
+                            {{ batch.flight.departure }} → {{ batch.flight.destination }}
+                        </div>
+                    </td>
+                    <td>{{ batch.meal_category.name }}</td>
+                    <td>{{ batch.quantity }} 份</td>
+                    <td>
+                        <span class="status-badge status-{{ batch.status }}">
+                            {{ batch.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if batch.anomaly_type == 'none' %}
+                        <span class="anomaly-badge anomaly-none">正常</span>
+                        {% else %}
+                        <span class="anomaly-badge">{{ batch.get_anomaly_type_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13px;color:#6c757d;">
+                        {{ batch.created_at|date:"m-d H:i" }}
+                    </td>
+                    <td>
+                        <a href="{% url 'batch_detail' batch.pk %}" style="font-size:13px;">详情</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:40px;color:#adb5bd;">
+                        暂无数据
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

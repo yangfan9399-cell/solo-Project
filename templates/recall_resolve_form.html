@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ recall.batch.batch_number }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'batch_detail' recall.batch.pk %}" class="back-link">← 返回批次详情</a>
+
+<div class="card" style="max-width:550px;margin:0 auto;">
+    <div class="card-header">
+        <span class="card-title">🛠️ {{ title }}</span>
+    </div>
+    <div class="card-body">
+        <div style="background:#fff5f5;padding:14px 16px;border-radius:8px;margin-bottom:20px;">
+            <p style="font-size:14px;margin-bottom:6px;">
+                <strong>批次：</strong>{{ recall.batch.batch_number }}
+            </p>
+            <p style="font-size:14px;margin-bottom:6px;">
+                <strong>异常类型：</strong>
+                <span class="anomaly-badge">{{ recall.get_anomaly_type_display }}</span>
+            </p>
+            <p style="font-size:14px;margin-bottom:6px;"><strong>召回原因：</strong>{{ recall.reason }}</p>
+            <p style="font-size:13px;color:#6c757d;">
+                发起人：{{ recall.initiated_by.username|default:"-" }} · {{ recall.initiated_at|date:"Y-m-d H:i" }}
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>处理结果</label>
+                <textarea name="resolution" rows="4" required
+                          style="width:100%;padding:10px 12px;border:1px solid #ced4da;border-radius:6px;"></textarea>
+            </div>
+
+            <div class="form-group" style="background:#f0fdf4;padding:12px 16px;border-radius:8px;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="return_to_inventory" name="return_to_inventory">
+                    <label for="return_to_inventory" style="font-weight:500;">
+                        ♻️ 退回仓库重新安排（状态改为待品控）
+                    </label>
+                </div>
+                <p style="font-size:12px;color:#6c757d;margin-left:26px;margin-top:4px;">
+                    如不勾选，批次将被标记为"已退回/报废"
+                </p>
+            </div>
+
+            <div style="display:flex;gap:12px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="background:#1a1a2e;flex:1;">
+                    完成处理
+                </button>
+                <a href="{% url 'batch_detail' recall.batch.pk %}" class="btn btn-outline" style="flex:1;text-align:center;">
+                    取消
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

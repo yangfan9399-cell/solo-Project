@@ -1,0 +1,364 @@
+<div class="page-header">
+    <h1 class="page-title">{{ batch.batch_number }}</h1>
+    <div>
+        <span class="status-badge status-{{ batch.status }}" style="font-size:14px;padding:6px 14px;">
+            {{ batch.get_status_display }}
+        </span>
+        {% if batch.anomaly_type != 'none' %}
+        <span class="anomaly-badge" style="margin-left:8px;font-size:13px;">
+            {{ batch.get_anomaly_type_display }}
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+{% if batch.anomaly_type != 'none' or batch.allergen_label_missing %}
+<div class="alert-box alert-danger">
+    <span class="alert-icon">⚠️</span>
+    <div>
+        <strong>异常提醒</strong>
+        <div style="margin-top:4px;font-size:13px;">
+            {% if batch.allergen_label_missing %}过敏源标识缺失，禁止装机。{% endif %}
+            {% if batch.anomaly_type == 'cold_storage_timeout' %}冷藏超时，需品控确认。{% endif %}
+            {% if batch.anomaly_type == 'flight_meal_change' %}航班临时换餐，需重新安排。{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not batch.can_load and batch.status == 'qc_passed' %}
+<div class="alert-box alert-warning">
+    <span class="alert-icon">⚠️</span>
+    <div>
+        <strong>不可装机</strong>
+        <div style="margin-top:4px;font-size:13px;">
+            {% if not batch.allergen_label_verified %}过敏源标识未复核。{% endif %}
+            {% if batch.allergen_label_missing %}过敏源标识缺失。{% endif %}
+            {% if batch.is_cold_storage_overtime %}冷藏超时。{% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="action-buttons">
+    {% if user.role == 'catering_clerk' or user.role == 'duty_manager' %}
+        {% if not batch.cold_storage_start and batch.status == 'qc_pending' %}
+        <a href="{% url 'start_cold_storage' batch.pk %}" class="btn btn-secondary">
+            🧊 入库冷藏
+        </a>
+        {% endif %}
+        {% if batch.cold_storage_start and not batch.cold_storage_end and batch.status == 'in_cold_storage' %}
+        <a href="{% url 'end_cold_storage' batch.pk %}" class="btn btn-warning">
+            📦 出库（送品控）
+        </a>
+        {% endif %}
+    {% endif %}
+
+    {% if user.role == 'qc_officer' or user.role == 'duty_manager' %}
+        {% if batch.status == 'qc_pending' or batch.status == 'qc_failed' %}
+        <a href="{% url 'batch_qc' batch.pk %}" class="btn btn-primary" style="background:#1a1a2e;">
+            🔍 品控复核
+        </a>
+        {% endif %}
+    {% endif %}
+
+    {% if user.role == 'cabin_crew' or user.role == 'duty_manager' %}
+        {% if batch.status == 'qc_passed' %}
+            {% if batch.can_load %}
+            <a href="{% url 'batch_load' batch.pk %}" class="btn btn-success">
+                ✅ 确认装机
+            </a>
+            {% else %}
+            <button class="btn btn-success" disabled title="不满足装机条件">
+                ✅ 确认装机
+            </button>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {% if user.role == 'duty_manager' %}
+        {% if batch.status in 'loaded,loading,qc_passed' %}
+        <a href="{% url 'batch_recall' batch.pk %}" class="btn btn-danger">
+            🚨 发起召回
+        </a>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="detail-grid">
+    <div class="detail-main">
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">📋 基本信息</span>
+            </div>
+            <div class="detail-section-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">批次号</span>
+                        <span class="info-value">{{ batch.batch_number }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">餐食类别</span>
+                        <span class="info-value">{{ batch.meal_category.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">数量</span>
+                        <span class="info-value">{{ batch.quantity }} 份</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">保质期</span>
+                        <span class="info-value">{{ batch.shelf_life_hours }} 小时</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">生产时间</span>
+                        <span class="info-value">{{ batch.production_time|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">创建时间</span>
+                        <span class="info-value">{{ batch.created_at|date:"Y-m-d H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">✈️ 航班信息</span>
+            </div>
+            <div class="detail-section-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">航班号</span>
+                        <span class="info-value" style="font-size:18px;font-weight:700;">{{ batch.flight.flight_number }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">航空公司</span>
+                        <span class="info-value">{{ batch.flight.airline.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">航线</span>
+                        <span class="info-value">{{ batch.flight.departure }} → {{ batch.flight.destination }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">计划起飞</span>
+                        <span class="info-value">{{ batch.flight.departure_time|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">机型</span>
+                        <span class="info-value">{{ batch.flight.aircraft_type|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">载客量</span>
+                        <span class="info-value">{{ batch.flight.passenger_count }} 人</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">🌡️ 温度记录</span>
+            </div>
+            <div class="detail-section-body">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div>
+                        <span style="font-size:13px;color:#6c757d;">当前温度：</span>
+                        {% if batch.current_temperature %}
+                        <span style="font-size:20px;font-weight:700;color:#00838f;">{{ batch.current_temperature }}℃</span>
+                        {% else %}
+                        <span style="color:#adb5bd;">暂无记录</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="temperature-records">
+                    {% include 'partials/temperature_records.html' %}
+                </div>
+
+                <form method="post" action="{% url 'add_temperature' batch.pk %}"
+                      hx-post="{% url 'add_temperature' batch.pk %}"
+                      hx-target="#temperature-records"
+                      hx-swap="outerHTML"
+                      style="margin-top:16px;padding-top:16px;border-top:1px solid #eee;">
+                    {% csrf_token %}
+                    <div style="display:flex;gap:10px;align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;color:#6c757d;margin-bottom:4px;display:block;">温度（℃）</label>
+                            <input type="number" name="temperature" step="0.1" required
+                                   style="width:100%;padding:8px 12px;border:1px solid #ced4da;border-radius:6px;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;color:#6c757d;margin-bottom:4px;display:block;">位置</label>
+                            <input type="text" name="location"
+                                   style="width:100%;padding:8px 12px;border:1px solid #ced4da;border-radius:6px;">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline">添加记录</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-sidebar">
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">🥜 过敏源信息</span>
+            </div>
+            <div class="detail-section-body">
+                <div style="margin-bottom:12px;">
+                    <span class="info-label">标识复核状态</span>
+                    <div style="margin-top:4px;">
+                        {% if batch.allergen_label_verified %}
+                        <span class="status-badge status-qc_passed">已复核</span>
+                        {% else %}
+                        <span class="status-badge status-qc_pending">待复核</span>
+                        {% endif %}
+                        {% if batch.allergen_label_missing %}
+                        <span class="anomaly-badge" style="margin-left:6px;">标识缺失</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <span class="info-label">所含过敏源</span>
+                </div>
+                {% if batch.allergens.all %}
+                <div class="allergen-tags">
+                    {% for allergen in batch.allergens.all %}
+                    <span class="allergen-tag">{{ allergen.name }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:#adb5bd;font-size:13px;">无（或未标注）</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">🧊 冷藏记录</span>
+            </div>
+            <div class="detail-section-body">
+                <div class="info-grid" style="grid-template-columns:1fr;">
+                    <div class="info-item">
+                        <span class="info-label">入库时间</span>
+                        <span class="info-value">{{ batch.cold_storage_start|date:"Y-m-d H:i"|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">出库时间</span>
+                        <span class="info-value">{{ batch.cold_storage_end|date:"Y-m-d H:i"|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">冷藏时长</span>
+                        <span class="info-value {% if batch.is_cold_storage_overtime %}" style="color:#e94560;font-weight:600;"{% else %}"{% endif %}>
+                            {% if batch.cold_storage_start and batch.cold_storage_end %}
+                                {% with duration=batch.cold_storage_end|timeuntil:batch.cold_storage_start %}
+                                {{ duration }}
+                                {% endwith %}
+                                {% if batch.is_cold_storage_overtime %}（超时）{% endif %}
+                            {% elif batch.cold_storage_start %}
+                                进行中
+                            {% else %}
+                                -
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">👤 责任人</span>
+            </div>
+            <div class="detail-section-body">
+                <div class="info-grid" style="grid-template-columns:1fr;gap:12px;">
+                    <div class="info-item">
+                        <span class="info-label">配餐经办人</span>
+                        <span class="info-value">{{ batch.created_by.username|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">品控员</span>
+                        <span class="info-value">{{ batch.qc_officer.username|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">装机确认人</span>
+                        <span class="info-value">{{ batch.loaded_by.username|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if batch.remarks %}
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">📝 备注</span>
+            </div>
+            <div class="detail-section-body">
+                <p style="font-size:14px;color:#495057;line-height:1.6;">{{ batch.remarks }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">📜 操作历史</span>
+            </div>
+            <div class="detail-section-body">
+                <div class="timeline">
+                    {% for record in batch.history.all %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-action">{{ record.action }}</div>
+                        <div class="timeline-time">{{ record.timestamp|date:"m-d H:i:s" }}</div>
+                        {% if record.description %}
+                        <div class="timeline-desc">{{ record.description }}</div>
+                        {% endif %}
+                        {% if record.user %}
+                        <div class="timeline-user">{{ record.user.get_role_display }} · {{ record.user.username }}</div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p style="color:#adb5bd;font-size:13px;">暂无历史记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if batch.recalls.all %}
+        <div class="detail-section">
+            <div class="detail-section-header">
+                <span class="detail-section-title">🚨 召回记录</span>
+            </div>
+            <div class="detail-section-body">
+                {% for recall in batch.recalls.all %}
+                <div style="padding:12px;background:#fff5f5;border-radius:8px;margin-bottom:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-weight:600;color:#c53030;font-size:14px;">
+                            {{ recall.get_anomaly_type_display }}
+                        </span>
+                        {% if recall.is_resolved %}
+                        <span class="status-badge status-qc_passed" style="font-size:11px;">已解决</span>
+                        {% else %}
+                        <span class="status-badge status-qc_pending" style="font-size:11px;">处理中</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size:13px;color:#495057;margin-bottom:6px;"><strong>原因：</strong>{{ recall.reason }}</p>
+                    <p style="font-size:12px;color:#6c757d;">发起人：{{ recall.initiated_by.username|default:"-" }} · {{ recall.initiated_at|date:"m-d H:i" }}</p>
+                    {% if recall.is_resolved %}
+                    <hr style="margin:8px 0;border:none;border-top:1px solid #fed7d7;">
+                    <p style="font-size:13px;color:#495057;"><strong>处理结果：</strong>{{ recall.resolution }}</p>
+                    <p style="font-size:12px;color:#6c757d;margin-top:4px;">处理人：{{ recall.handled_by.username|default:"-" }} · {{ recall.resolved_at|date:"m-d H:i" }}</p>
+                    {% endif %}
+
+                    {% if user.role == 'duty_manager' and not recall.is_resolved %}
+                    <a href="{% url 'recall_resolve' recall.pk %}" class="btn btn-sm btn-danger" style="margin-top:8px;">
+                        处理召回
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

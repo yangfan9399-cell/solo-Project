@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}航空餐食批次追踪系统{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% if user.is_authenticated %}
+    <nav class="navbar">
+        <div class="nav-brand">✈️ 航空餐食批次追踪</div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">批次列表</a>
+            {% if user.role == 'duty_manager' %}
+            <a href="{% url 'review' %}" class="nav-link {% if request.resolver_match.url_name == 'review' %}active{% endif %}">复盘分析</a>
+            {% endif %}
+            {% if user.role in 'catering_clerk,duty_manager' %}
+            <a href="{% url 'batch_create' %}" class="nav-link btn-primary">+ 新建批次</a>
+            {% endif %}
+        </div>
+        <div class="nav-user">
+            <span class="user-badge">{{ user.get_role_display }}</span>
+            <span>{{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="logout-btn">退出</a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="main-content">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
