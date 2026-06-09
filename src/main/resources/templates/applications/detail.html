@@ -218,17 +218,37 @@
                                     <span class="info-label">核验人</span>
                                     <span class="info-value" th:text="${addr.verifier != null ? addr.verifier : '-'}"></span>
                                 </div>
+                                <div sec:authorize="hasRole('OPERATION_STAFF')" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ebeef5;">
+                                    <button type="button" class="btn btn-small btn-success"
+                                            th:if="${application.status.name() == 'PENDING_OPERATION' || application.status.name() == 'DRAFT'}"
+                                            th:on="'openAddressVerifyModal(' + ${addr.id} + ', true)'">
+                                        核验通过
+                                    </button>
+                                    <button type="button" class="btn btn-small btn-danger"
+                                            th:if="${application.status.name() == 'PENDING_OPERATION' || application.status.name() == 'DRAFT'}"
+                                            th:on="'openAddressVerifyModal(' + ${addr.id} + ', false)'">
+                                        核验不通过
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div th:if="${application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}" style="margin-top: 16px; padding: 12px; background: #fef0f0; border-radius: 4px; color: #f56c6c;">
-                            ⚠ 地址核验失败，必须阻断开户流程，需重新开展尽调
+                            ⚠ 地址核验失败，必须阻断开户流程，需重新开展尽调。客户经理可发起"重新尽调"后，由运营人员重新核验地址。
+                        </div>
+                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')" th:if="${application.status.name() == 'DRAFT' || application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}" style="margin-top: 12px; font-size: 12px; color: #909399;">
+                            💡 提示：重新尽调后，地址核验状态可由运营人员重新更新
                         </div>
                     </div>
                 </div>
 
                 <div id="tab-material" class="tab-content" style="display: none;">
                     <div class="card">
-                        <div class="card-title">材料清单</div>
+                        <div class="card-title">
+                            材料清单
+                            <span style="float: right; font-weight: normal; font-size: 12px; color: #909399;">
+                                共 <span th:text="${#lists.size(materials)}"></span> 份材料
+                            </span>
+                        </div>
                         <table>
                             <thead>
                                 <tr>
@@ -237,6 +257,7 @@
                                     <th>状态</th>
                                     <th>缺失原因</th>
                                     <th>提交人</th>
+                                    <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -254,12 +275,43 @@
                                     </td>
                                     <td th:text="${m.deficiencyReason != null ? m.deficiencyReason : '-'}"></td>
                                     <td th:text="${m.submitter != null ? m.submitter : '-'}"></td>
+                                    <td>
+                                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
+                                            <form th:action="@{/materials/{id}/update-status(id=${m.id})}" method="post" style="display: inline;">
+                                                <input type="hidden" name="status" value="SUBMITTED">
+                                                <button type="submit" class="btn btn-small"
+                                                        th:disabled="${m.status.name() == 'VERIFIED' || m.status.name() == 'SUBMITTED'}"
+                                                        th:if="${application.status.name() == 'DRAFT' || application.status.name() == 'MATERIAL_DEFICIENT' || application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}">
+                                                    标记已提交
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div sec:authorize="hasRole('OPERATION_STAFF')">
+                                            <form th:action="@{/materials/{id}/update-status(id=${m.id})}" method="post" style="display: inline;">
+                                                <input type="hidden" name="status" value="VERIFIED">
+                                                <button type="submit" class="btn btn-small btn-success"
+                                                        th:if="${application.status.name() == 'PENDING_OPERATION' && m.status.name() != 'VERIFIED'}"
+                                                        onclick="return confirm('确认核验通过？')">
+                                                    核验通过
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-small btn-danger"
+                                                    th:if="${application.status.name() == 'PENDING_OPERATION'}"
+                                                    th:on="'openMaterialDeficientModal(' + ${m.id} + ')'">
+                                                标记缺失
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
 
                         <div th:if="${application.returnReason != null && application.status.name() == 'MATERIAL_DEFICIENT'}" style="margin-top: 16px; padding: 12px; background: #fdf6ec; border-radius: 4px; color: #e6a23c;">
                             <strong>退回原因：</strong><span th:text="${application.returnReason}"></span>
+                        </div>
+
+                        <div style="margin-top: 16px; padding: 12px; background: #ecf5ff; border-radius: 4px; color: #409eff; font-size: 13px;">
+                            <strong>提示：</strong>所有材料状态为"已核验"后，运营人员方可点击"核验通过"进入风险复核环节
                         </div>
                     </div>
                 </div>
@@ -524,6 +576,49 @@
         </div>
     </div>
 
+    <div id="materialDeficientModal" class="modal-overlay" onclick="closeModal('materialDeficientModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">标记材料缺失</div>
+            <form id="materialDeficientForm" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">缺失原因</label>
+                        <textarea name="deficiencyReason" class="form-textarea" placeholder="请说明材料缺失的具体情况" required></textarea>
+                    </div>
+                    <input type="hidden" name="status" value="DEFICIENT">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('materialDeficientModal')">取消</button>
+                    <button type="submit" class="btn btn-danger">确认标记缺失</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="addressVerifyModal" class="modal-overlay" onclick="closeModal('addressVerifyModal', event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">地址核验</div>
+            <form id="addressVerifyForm" method="post">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">核验结果</label>
+                        <div id="addressVerifyResult" style="font-weight: 600; margin-bottom: 8px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">核验说明</label>
+                        <textarea name="verificationResult" class="form-textarea" placeholder="请输入核验说明" required></textarea>
+                    </div>
+                    <input type="hidden" name="isVerified" id="addressIsVerified">
+                    <input type="hidden" name="applicationId" th:value="${application.id}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeModal('addressVerifyModal')">取消</button>
+                    <button type="submit" class="btn btn-primary" id="addressVerifyBtn">确认提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -539,6 +634,30 @@
         function closeModal(id, event) {
             if (event && event.target && event.target.id !== id && event.target.tagName !== 'BUTTON') return;
             document.getElementById(id).classList.remove('active');
+        }
+
+        function openMaterialDeficientModal(materialId) {
+            var form = document.getElementById('materialDeficientForm');
+            form.action = '/materials/' + materialId + '/update-status';
+            openModal('materialDeficientModal');
+        }
+
+        function openAddressVerifyModal(addressId, isVerified) {
+            var form = document.getElementById('addressVerifyForm');
+            form.action = '/addresses/' + addressId + '/verify';
+            document.getElementById('addressIsVerified').value = isVerified;
+            var resultEl = document.getElementById('addressVerifyResult');
+            var btnEl = document.getElementById('addressVerifyBtn');
+            if (isVerified) {
+                resultEl.innerHTML = '<span class="badge badge-success">核验通过</span>';
+                btnEl.className = 'btn btn-success';
+                btnEl.textContent = '确认通过';
+            } else {
+                resultEl.innerHTML = '<span class="badge badge-danger">核验不通过</span>';
+                btnEl.className = 'btn btn-danger';
+                btnEl.textContent = '确认不通过';
+            }
+            openModal('addressVerifyModal');
         }
     </script>
 </body>

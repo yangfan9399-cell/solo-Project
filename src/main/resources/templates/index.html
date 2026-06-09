@@ -59,13 +59,16 @@
                     <div class="card">
                         <div class="card-title">快捷入口</div>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
+                                <a th:href="@{/applications/new}" class="btn btn-primary btn-small">+ 新建开户申请</a>
+                            </div>
                             <a th:href="@{/applications(status='PENDING_OPERATION')}" class="btn btn-warning btn-small">待运营核验</a>
                             <a th:href="@{/applications(status='PENDING_RISK')}" class="btn btn-warning btn-small">待风险复核</a>
                             <a th:href="@{/applications(status='MATERIAL_DEFICIENT')}" class="btn btn-danger btn-small">材料待补正</a>
                             <a th:href="@{/applications(status='ADDRESS_VERIFICATION_FAILED')}" class="btn btn-danger btn-small">地址核验失败</a>
                             <a th:href="@{/applications(status='HIGH_RISK')}" class="btn btn-danger btn-small">高风险待处理</a>
                             <a th:href="@{/applications(status='APPROVED')}" class="btn btn-success btn-small">已开户</a>
-                            <a th:href="@{/applications}" class="btn btn-primary btn-small">全部申请</a>
+                            <a th:href="@{/applications}" class="btn btn-small">全部申请</a>
                         </div>
                     </div>
 

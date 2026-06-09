@@ -26,6 +26,8 @@ public class AccountApplicationServiceImpl implements AccountApplicationService 
     private final BranchRepository branchRepository;
     private final MaterialRepository materialRepository;
     private final BusinessAddressRepository addressRepository;
+    private final LegalPersonRepository legalPersonRepository;
+    private final BeneficialOwnerRepository beneficialOwnerRepository;
 
     private final AtomicInteger counter = new AtomicInteger(0);
 
@@ -117,6 +119,16 @@ public class AccountApplicationServiceImpl implements AccountApplicationService 
 
         if (fromStatus != ApplicationStatus.PENDING_OPERATION) {
             throw new IllegalStateException("当前状态不允许运营核验通过: " + fromStatus.getDescription());
+        }
+
+        List<Material> materials = materialRepository.findByApplicationId(id);
+        long verifiedCount = materials.stream()
+                .filter(m -> m.getStatus() == MaterialStatus.VERIFIED)
+                .count();
+        long totalMaterials = materials.size();
+
+        if (verifiedCount < totalMaterials) {
+            throw new IllegalStateException("存在 " + (totalMaterials - verifiedCount) + " 份材料未完成核验，请先逐个核验材料状态后再通过");
         }
 
         List<BusinessAddress> addresses = addressRepository.findByEnterpriseId(app.getEnterprise().getId());
@@ -347,5 +359,143 @@ public class AccountApplicationServiceImpl implements AccountApplicationService 
         String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         int seq = counter.incrementAndGet();
         return String.format("KH%s%04d", date, seq);
+    }
+
+    @Override
+    @Transactional
+    public AccountApplication createNewApplication(Enterprise enterprise, LegalPerson legalPerson,
+                                                    List<BeneficialOwner> beneficialOwners,
+                                                    BusinessAddress address,
+                                                    String accountType, Long branchId, String operatorName) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new EntityNotFoundException("支行不存在"));
+
+        enterprise.setBranch(branch);
+        enterprise.setEnterpriseCode(generateEnterpriseCode());
+        Enterprise savedEnterprise = enterpriseRepository.save(enterprise);
+
+        legalPerson.setEnterprise(savedEnterprise);
+        legalPersonRepository.save(legalPerson);
+
+        if (beneficialOwners != null) {
+            for (BeneficialOwner bo : beneficialOwners) {
+                bo.setEnterprise(savedEnterprise);
+                beneficialOwnerRepository.save(bo);
+            }
+        }
+
+        address.setEnterprise(savedEnterprise);
+        address.setAddressType("注册地址");
+        addressRepository.save(address);
+
+        AccountApplication application = new AccountApplication();
+        application.setApplicationNo(generateApplicationNo());
+        application.setEnterprise(savedEnterprise);
+        application.setBranch(branch);
+        application.setStatus(ApplicationStatus.DRAFT);
+        application.setAccountType(accountType);
+        application.setCustomerManagerName(operatorName);
+        AccountApplication savedApp = applicationRepository.save(application);
+
+        initDefaultMaterials(savedApp, operatorName);
+
+        addHistory(savedApp, ApplicationStatus.DRAFT, ApplicationStatus.DRAFT,
+                "创建申请", operatorName, RoleType.CUSTOMER_MANAGER,
+                "新建开户申请");
+
+        log.info("新建开户申请: {}", savedApp.getApplicationNo());
+        return savedApp;
+    }
+
+    private void initDefaultMaterials(AccountApplication application, String operatorName) {
+        MaterialType[] defaultTypes = {
+                MaterialType.BUSINESS_LICENSE,
+                MaterialType.LEGAL_ID_CARD,
+                MaterialType.LEGAL_ID_CARD_BACK,
+                MaterialType.BENEFICIARY_ID_CARD,
+                MaterialType.BENEFICIARY_PROOF,
+                MaterialType.ADDRESS_PROOF,
+                MaterialType.ARTICLES_OF_ASSOCIATION,
+                MaterialType.ORG_CODE_CERT,
+                MaterialType.TAX_REG_CERT
+        };
+
+        for (MaterialType type : defaultTypes) {
+            Material material = new Material();
+            material.setApplication(application);
+            material.setMaterialType(type);
+            material.setMaterialName(type.getDescription());
+            material.setStatus(MaterialStatus.NOT_SUBMITTED);
+            material.setSubmitter(operatorName);
+            materialRepository.save(material);
+        }
+    }
+
+    private String generateEnterpriseCode() {
+        long count = enterpriseRepository.count();
+        return String.format("ENT%04d", count + 1);
+    }
+
+    @Override
+    @Transactional
+    public Material updateMaterialStatus(Long materialId, MaterialStatus status, String deficiencyReason, String operatorName) {
+        Material material = materialRepository.findById(materialId)
+                .orElseThrow(() -> new EntityNotFoundException("材料不存在"));
+
+        material.setStatus(status);
+        if (status == MaterialStatus.DEFICIENT) {
+            material.setDeficiencyReason(deficiencyReason);
+        } else if (status == MaterialStatus.SUBMITTED || status == MaterialStatus.VERIFIED) {
+            material.setDeficiencyReason(null);
+        }
+
+        Material saved = materialRepository.save(material);
+
+        AccountApplication app = saved.getApplication();
+        addHistory(app, app.getStatus(), app.getStatus(),
+                "更新材料状态", operatorName, null,
+                saved.getMaterialName() + " → " + status.getDescription());
+
+        log.info("材料状态更新: {} -> {}", saved.getMaterialName(), status);
+        return saved;
+    }
+
+    @Override
+    @Transactional
+    public BusinessAddress verifyAddress(Long addressId, Boolean isVerified, String verificationResult, String operatorName) {
+        BusinessAddress address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new EntityNotFoundException("地址不存在"));
+
+        address.setIsVerified(isVerified);
+        address.setVerificationResult(verificationResult);
+        address.setVerifier(operatorName);
+        address.setVerifyTime(LocalDateTime.now());
+
+        BusinessAddress saved = addressRepository.save(address);
+
+        List<AccountApplication> applications = applicationRepository.findByEnterpriseId(address.getEnterprise().getId());
+        for (AccountApplication app : applications) {
+            addHistory(app, app.getStatus(), app.getStatus(),
+                    "地址核验", operatorName, null,
+                    address.getAddress() + " → " + (isVerified ? "核验通过" : "核验不通过") + "，" + verificationResult);
+        }
+
+        log.info("地址核验: {} -> {}", isVerified ? "通过" : "不通过", verificationResult);
+        return saved;
+    }
+
+    @Override
+    public List<Material> getMaterialsByApplicationId(Long applicationId) {
+        return materialRepository.findByApplicationId(applicationId);
+    }
+
+    @Override
+    public List<Branch> findAllBranches() {
+        return branchRepository.findAll();
+    }
+
+    @Override
+    public List<Enterprise> findAllEnterprises() {
+        return enterpriseRepository.findAll();
     }
 }

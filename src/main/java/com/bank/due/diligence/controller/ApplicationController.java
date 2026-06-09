@@ -205,4 +205,85 @@ public class ApplicationController {
         }
         return "redirect:/applications/" + id;
     }
+
+    @GetMapping("/applications/new")
+    public String newApplicationForm(Model model) {
+        List<Branch> branches = applicationService.findAllBranches();
+        model.addAttribute("branches", branches);
+        model.addAttribute("enterprise", new Enterprise());
+        model.addAttribute("legalPerson", new LegalPerson());
+        model.addAttribute("beneficialOwner", new BeneficialOwner());
+        model.addAttribute("address", new BusinessAddress());
+        return "applications/new";
+    }
+
+    @PostMapping("/applications/new")
+    public String createNewApplication(@ModelAttribute Enterprise enterprise,
+                                        @ModelAttribute LegalPerson legalPerson,
+                                        @ModelAttribute BeneficialOwner beneficialOwner,
+                                        @ModelAttribute BusinessAddress address,
+                                        @RequestParam String accountType,
+                                        @RequestParam Long branchId,
+                                        Authentication authentication,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            java.util.List<BeneficialOwner> owners = new java.util.ArrayList<>();
+            if (beneficialOwner.getName() != null && !beneficialOwner.getName().isEmpty()) {
+                owners.add(beneficialOwner);
+            }
+            if (legalPerson.getName() != null && !legalPerson.getName().isEmpty()) {
+                BeneficialOwner boFromLegal = new BeneficialOwner();
+                boFromLegal.setName(legalPerson.getName());
+                boFromLegal.setIdType(legalPerson.getIdType());
+                boFromLegal.setIdNumber(legalPerson.getIdNumber());
+                boFromLegal.setPhone(legalPerson.getPhone());
+                boFromLegal.setAddress(legalPerson.getAddress());
+                boFromLegal.setRelationship("法人");
+                if (owners.stream().noneMatch(o -> o.getName().equals(legalPerson.getName()))) {
+                    owners.add(0, boFromLegal);
+                }
+            }
+
+            AccountApplication app = applicationService.createNewApplication(
+                    enterprise, legalPerson, owners, address, accountType, branchId, authentication.getName()
+            );
+            redirectAttributes.addFlashAttribute("success", "开户申请创建成功");
+            return "redirect:/applications/" + app.getId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "创建失败: " + e.getMessage());
+            return "redirect:/applications/new";
+        }
+    }
+
+    @PostMapping("/materials/{id}/update-status")
+    public String updateMaterialStatus(@PathVariable Long id,
+                                       @RequestParam MaterialStatus status,
+                                       @RequestParam(required = false) String deficiencyReason,
+                                       Authentication authentication,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            Material material = applicationService.updateMaterialStatus(id, status, deficiencyReason, authentication.getName());
+            redirectAttributes.addFlashAttribute("success", "材料状态更新成功");
+            return "redirect:/applications/" + material.getApplication().getId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "更新失败: " + e.getMessage());
+            return "redirect:/applications";
+        }
+    }
+
+    @PostMapping("/addresses/{id}/verify")
+    public String verifyAddress(@PathVariable Long id,
+                                @RequestParam Boolean isVerified,
+                                @RequestParam String verificationResult,
+                                @RequestParam Long applicationId,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            applicationService.verifyAddress(id, isVerified, verificationResult, authentication.getName());
+            redirectAttributes.addFlashAttribute("success", "地址核验结果已更新");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "核验失败: " + e.getMessage());
+        }
+        return "redirect:/applications/" + applicationId;
+    }
 }

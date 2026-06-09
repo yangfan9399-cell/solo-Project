@@ -27,9 +27,12 @@
                                     th:text="${status.description}"
                                     th:selected="${status.name() == selectedStatus}"></option>
                         </select>
-                        <span style="margin-left: auto; color: #909399;">
+                        <div sec:authorize="hasRole('CUSTOMER_MANAGER')" style="margin-left: auto;">
+                            <a th:href="@{/applications/new}" class="btn btn-primary btn-small">+ 新建开户申请</a>
+                        </div>
+                        <div sec:authorize="!hasRole('CUSTOMER_MANAGER')" style="margin-left: auto; color: #909399;">
                             共 <span style="color: #409eff; font-weight: 600;" th:text="${#lists.size(applications)}">0</span> 条记录
-                        </span>
+                        </div>
                     </div>
 
                     <table>

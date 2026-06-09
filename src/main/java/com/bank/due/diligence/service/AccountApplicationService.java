@@ -1,8 +1,8 @@
 package com.bank.due.diligence.service;
 
-import com.bank.due.diligence.entity.AccountApplication;
-import com.bank.due.diligence.entity.ApplicationHistory;
+import com.bank.due.diligence.entity.*;
 import com.bank.due.diligence.enums.ApplicationStatus;
+import com.bank.due.diligence.enums.MaterialStatus;
 
 import java.util.List;
 
@@ -22,6 +22,11 @@ public interface AccountApplicationService {
 
     AccountApplication createApplication(AccountApplication application, Long enterpriseId, Long branchId);
 
+    AccountApplication createNewApplication(Enterprise enterprise, LegalPerson legalPerson,
+                                            List<BeneficialOwner> beneficialOwners,
+                                            BusinessAddress address,
+                                            String accountType, Long branchId, String operatorName);
+
     AccountApplication submitApplication(Long id, String operatorName);
 
     AccountApplication operationVerifyPass(Long id, String operatorName, String comment);
@@ -39,4 +44,14 @@ public interface AccountApplicationService {
     AccountApplication resubmitAfterSupplement(Long id, String operatorName, String comment);
 
     AccountApplication reDueDiligence(Long id, String operatorName, String comment);
+
+    Material updateMaterialStatus(Long materialId, MaterialStatus status, String deficiencyReason, String operatorName);
+
+    BusinessAddress verifyAddress(Long addressId, Boolean isVerified, String verificationResult, String operatorName);
+
+    List<Material> getMaterialsByApplicationId(Long applicationId);
+
+    List<Branch> findAllBranches();
+
+    List<Enterprise> findAllEnterprises();
 }
