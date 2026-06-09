@@ -15,9 +15,10 @@ export const dynamic = "force-dynamic";
 export default async function HospitalizationDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const hospitalization = await getHospitalizationById(params.id);
+  const resolvedParams = await params;
+  const hospitalization = await getHospitalizationById(resolvedParams.id);
 
   if (!hospitalization) {
     notFound();

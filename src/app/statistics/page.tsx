@@ -1,7 +1,6 @@
 import { getStatistics } from "../../lib/api";
 import { formatCurrency } from "../../lib/utils";
-import { AnomalyType } from "../../types/enums";
-import { anomalyTypeLabels } from "../../types/enums";
+import { AnomalyType, AnomalyTypeLabels } from "../../types/enums";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +120,7 @@ export default async function StatisticsPage() {
           <div className="grid grid-cols-2 gap-4">
             {stats.byAnomalyType.map((item) => {
               const type = item.name as AnomalyType;
-              const label = anomalyTypeLabels[type] || item.name;
+              const label = AnomalyTypeLabels[type as AnomalyType] || item.name;
               const colorMap: Record<string, string> = {
                 [AnomalyType.NONE]: "bg-success-100 text-success-700",
                 [AnomalyType.MEDICATION_MISSED]: "bg-warning-100 text-warning-700",

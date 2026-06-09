@@ -1,23 +1,5 @@
-import {
-  hospitalizations,
-  pets,
-  owners,
-  departments,
-  staffList,
-  medicalOrders,
-  nursingRecords,
-  feeItems,
-  feeReviews,
-  type Hospitalization,
-  type Pet,
-  type Owner,
-  type Department,
-  type Staff,
-  type MedicalOrder,
-  type NursingRecord,
-  type FeeItem,
-  type FeeReview,
-} from "../data/mockData";
+import { store } from "../data/store";
+import type { Hospitalization, Pet, Owner, Department, Staff, MedicalOrder, NursingRecord, FeeItem, FeeReview } from "../data/mockData";
 import { HospitalizationStatus, AnomalyType, OrderStatus, FeeStatus } from "../types/enums";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,8 +22,8 @@ export async function getHospitalizations(
   status?: string,
   anomalyType?: string
 ): Promise<HospitalizationListItem[]> {
-  await delay(100);
-  let list = [...hospitalizations];
+  await delay(50);
+  let list = store.getHospitalizations();
 
   if (status && status !== "ALL") {
     list = list.filter((h) => h.status === status);
@@ -53,85 +35,55 @@ export async function getHospitalizations(
   return list.map((h) => ({
     ...h,
     pet: {
-      ...pets.find((p) => p.id === h.petId)!,
-      owner: owners.find((o) => o.id === pets.find((p) => p.id === h.petId)!.ownerId)!,
+      ...store.getPetById(h.petId)!,
+      owner: store.getOwnerById(store.getPetById(h.petId)!.ownerId)!,
     },
-    department: departments.find((d) => d.id === h.departmentId)!,
+    department: store.getDepartments().find((d) => d.id === h.departmentId)!,
   }));
 }
 
 export async function getHospitalizationById(
   id: string
 ): Promise<HospitalizationDetail | null> {
-  await delay(100);
-  const hosp = hospitalizations.find((h) => h.id === id);
+  await delay(50);
+  const hosp = store.getHospitalizationById(id);
   if (!hosp) return null;
 
-  const pet = pets.find((p) => p.id === hosp.petId)!;
-  const owner = owners.find((o) => o.id === pet.ownerId)!;
-  const department = departments.find((d) => d.id === hosp.departmentId)!;
+  const pet = store.getPetById(hosp.petId)!;
+  const owner = store.getOwnerById(pet.ownerId)!;
+  const department = store.getDepartments().find((d) => d.id === hosp.departmentId)!;
 
   return {
     ...hosp,
     pet: { ...pet, owner },
     department,
-    medicalOrders: medicalOrders
-      .filter((o) => o.hospitalizationId === id)
-      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
-    nursingRecords: nursingRecords
-      .filter((r) => r.hospitalizationId === id)
-      .sort((a, b) => b.recordTime.getTime() - a.recordTime.getTime()),
-    feeItems: feeItems
-      .filter((f) => f.hospitalizationId === id)
-      .sort((a, b) => b.recordDate.getTime() - a.recordDate.getTime()),
-    feeReviews: feeReviews
-      .filter((r) => r.hospitalizationId === id)
-      .sort((a, b) => b.reviewedAt.getTime() - a.reviewedAt.getTime()),
+    medicalOrders: store.getMedicalOrdersByHospitalization(id),
+    nursingRecords: store.getNursingRecordsByHospitalization(id),
+    feeItems: store.getFeeItemsByHospitalization(id),
+    feeReviews: store.getFeeReviewsByHospitalization(id),
   };
 }
 
 export async function checkDischargeAllowed(
   hospitalizationId: string
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const detail = await getHospitalizationById(hospitalizationId);
-  if (!detail) return { allowed: false, reason: "住院记录不存在" };
-
-  const pendingOrders = detail.medicalOrders.filter(
-    (o) => o.status === OrderStatus.PENDING
-  );
-  if (pendingOrders.length > 0) {
-    return {
-      allowed: false,
-      reason: `存在 ${pendingOrders.length} 条待确认医嘱，请兽医确认后再办理出院`,
-    };
-  }
-
-  const disputedFees = detail.feeItems.filter(
-    (f) => f.status === FeeStatus.DISPUTED
-  );
-  if (disputedFees.length > 0) {
-    return {
-      allowed: false,
-      reason: `存在 ${disputedFees.length} 项费用争议，请先解决费用问题再办理出院`,
-    };
-  }
-
-  return { allowed: true };
+  const result = store.canDischarge(hospitalizationId);
+  return result;
 }
 
 export async function getDepartments(): Promise<Department[]> {
-  await delay(50);
-  return departments;
+  await delay(30);
+  return store.getDepartments();
 }
 
 export async function getStaffByRole(role: string): Promise<Staff[]> {
-  await delay(50);
-  return staffList.filter((s) => s.role === role);
+  await delay(30);
+  return store.getStaffList().filter((s) => s.role === role);
 }
 
-export async function getStaffById(id: string): Promise<Staff | undefined> {
-  await delay(50);
-  return staffList.find((s) => s.id === id);
+export async function getStaffById(id: string): Promise<Staff | null> {
+  await delay(30);
+  return store.getStaffById(id);
 }
 
 export interface StatisticsData {
@@ -147,8 +99,9 @@ export interface StatisticsData {
 }
 
 export async function getStatistics(): Promise<StatisticsData> {
-  await delay(100);
+  await delay(50);
 
+  const hospitalizations = store.getHospitalizations();
   const total = hospitalizations.length;
   const inTreatment = hospitalizations.filter(
     (h) => h.status === HospitalizationStatus.IN_TREATMENT
@@ -157,15 +110,20 @@ export async function getStatistics(): Promise<StatisticsData> {
     (h) => h.status === HospitalizationStatus.DISCHARGED
   ).length;
 
+  const feeItems = store.getFeeItemsByHospitalization("hosp_1").concat(
+    store.getFeeItemsByHospitalization("hosp_5")
+  );
   const totalRevenue = feeItems
     .filter((f) => f.status === FeeStatus.SETTLED)
     .reduce((sum, f) => sum + f.totalPrice, 0);
 
+  const departments = store.getDepartments();
   const deptMap = new Map<string, { count: number; revenue: number }>();
   for (const h of hospitalizations) {
     const dept = departments.find((d) => d.id === h.departmentId)?.name || h.departmentId;
-    const rev = feeItems
-      .filter((f) => f.hospitalizationId === h.id && f.status === FeeStatus.SETTLED)
+    const fees = store.getFeeItemsByHospitalization(h.id);
+    const rev = fees
+      .filter((f) => f.status === FeeStatus.SETTLED)
       .reduce((sum, f) => sum + f.totalPrice, 0);
     const current = deptMap.get(dept) || { count: 0, revenue: 0 };
     deptMap.set(dept, { count: current.count + 1, revenue: current.revenue + rev });

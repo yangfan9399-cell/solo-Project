@@ -9,10 +9,11 @@ export const dynamic = "force-dynamic";
 export default async function HospitalizationsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; anomaly?: string };
+  searchParams: Promise<{ status?: string; anomaly?: string }>;
 }) {
-  const status = searchParams.status || "ALL";
-  const anomaly = searchParams.anomaly || "ALL";
+  const params = await searchParams;
+  const status = params.status || "ALL";
+  const anomaly = params.anomaly || "ALL";
   const hospitalizations = await getHospitalizations(status, anomaly);
 
   return (
@@ -23,17 +24,13 @@ export default async function HospitalizationsPage({
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-        <div className="flex flex-wrap gap-4">
+        <form className="flex flex-wrap gap-4 items-end">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">状态筛选:</label>
             <select
+              name="status"
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               defaultValue={status}
-              onChange={(e) => {
-                const params = new URLSearchParams(window.location.search);
-                params.set("status", e.target.value);
-                window.location.search = params.toString();
-              }}
             >
               <option value="ALL">全部</option>
               <option value={HospitalizationStatus.ADMITTED}>已入院</option>
@@ -46,13 +43,9 @@ export default async function HospitalizationsPage({
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">异常类型:</label>
             <select
+              name="anomaly"
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               defaultValue={anomaly}
-              onChange={(e) => {
-                const params = new URLSearchParams(window.location.search);
-                params.set("anomaly", e.target.value);
-                window.location.search = params.toString();
-              }}
             >
               <option value="ALL">全部</option>
               <option value={AnomalyType.NONE}>正常</option>
@@ -62,6 +55,13 @@ export default async function HospitalizationsPage({
             </select>
           </div>
 
+          <button
+            type="submit"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+          >
+            筛选
+          </button>
+
           <div className="ml-auto">
             <Link
               href="/admission"
@@ -70,7 +70,7 @@ export default async function HospitalizationsPage({
               + 入院登记
             </Link>
           </div>
-        </div>
+        </form>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

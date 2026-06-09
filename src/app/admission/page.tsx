@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { getDepartments, getStaffByRole } from "../../lib/api";
-import { StaffRole } from "../../types/enums";
+import { getDepartments } from "../../lib/api";
+import { createAdmission } from "../../lib/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdmissionPage() {
   const departments = await getDepartments();
-  const veterinarians = await getStaffByRole(StaffRole.VETERINARIAN);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -19,7 +18,7 @@ export default async function AdmissionPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <form className="space-y-6">
+        <form action={createAdmission} className="space-y-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
               主人信息
@@ -31,6 +30,8 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="ownerName"
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入主人姓名"
                 />
@@ -41,6 +42,8 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="tel"
+                  name="ownerPhone"
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入联系电话"
                 />
@@ -51,6 +54,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="ownerIdCard"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入身份证号"
                 />
@@ -61,6 +65,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="ownerAddress"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入家庭住址"
                 />
@@ -79,6 +84,8 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="petName"
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入宠物名字"
                 />
@@ -87,7 +94,11 @@ export default async function AdmissionPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   宠物类型 <span className="text-danger-500">*</span>
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select
+                  name="petType"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
                   <option value="">请选择</option>
                   <option value="DOG">犬</option>
                   <option value="CAT">猫</option>
@@ -102,6 +113,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="petBreed"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入品种"
                 />
@@ -110,7 +122,10 @@ export default async function AdmissionPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   性别
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select
+                  name="petGender"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
                   <option value="">请选择</option>
                   <option value="公">公</option>
                   <option value="母">母</option>
@@ -124,6 +139,7 @@ export default async function AdmissionPage() {
                 <input
                   type="number"
                   step="0.1"
+                  name="petAge"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入年龄"
                 />
@@ -135,6 +151,7 @@ export default async function AdmissionPage() {
                 <input
                   type="number"
                   step="0.01"
+                  name="petWeight"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入体重"
                 />
@@ -151,7 +168,11 @@ export default async function AdmissionPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   收治科室 <span className="text-danger-500">*</span>
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <select
+                  name="departmentId"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
                   <option value="">请选择科室</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
@@ -162,23 +183,11 @@ export default async function AdmissionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  主治兽医
-                </label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <option value="">请选择兽医</option>
-                  {veterinarians.map((vet) => (
-                    <option key={vet.id} value={vet.id}>
-                      {vet.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   病房/病区
                 </label>
                 <input
                   type="text"
+                  name="ward"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="如：内科A区"
                 />
@@ -189,6 +198,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="cageNumber"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="如：A-101"
                 />
@@ -199,6 +209,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="text"
+                  name="primaryDiagnosis"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="请输入初步诊断"
                 />
@@ -209,6 +220,7 @@ export default async function AdmissionPage() {
                 </label>
                 <input
                   type="date"
+                  name="admissionDate"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
@@ -218,6 +230,7 @@ export default async function AdmissionPage() {
                 </label>
                 <textarea
                   rows={3}
+                  name="chiefComplaint"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   placeholder="请输入宠物主人描述的症状和情况"
                 />
@@ -233,20 +246,13 @@ export default async function AdmissionPage() {
               取消
             </Link>
             <button
-              type="button"
+              type="submit"
               className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
             >
               提交入院登记
             </button>
           </div>
         </form>
-
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
-            <span className="font-medium">提示：</span>
-            当前为演示模式，入院登记功能展示表单UI。在真实环境中可通过 Prisma 操作数据库保存数据。
-          </p>
-        </div>
       </div>
     </div>
   );
