@@ -175,10 +175,29 @@ public class InventoryService {
         record.setSupervisorRemark(remark);
         record.setStatus(InventoryStatus.ADJUSTED);
 
-        addHistory(record, InventoryStatus.ADJUSTED, operator, UserRole.REGIONAL_SUPERVISOR,
-                "区域主管调整库存，调整量：" + adjustedVolume + "L，备注：" + remark);
+        String historyRemark = buildAdjustHistory(record, adjustedVolume, remark);
+        addHistory(record, InventoryStatus.ADJUSTED, operator, UserRole.REGIONAL_SUPERVISOR, historyRemark);
 
         return inventoryRecordRepository.save(record);
+    }
+
+    private String buildAdjustHistory(InventoryRecord record, BigDecimal adjustedVolume, String remark) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("区域主管调整库存");
+
+        if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            sb.append("（损耗超标处置）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            sb.append("（配送量不符处置）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.NORMAL) {
+            sb.append("（正常盘点微调）");
+        }
+
+        sb.append("，调整量：").append(adjustedVolume).append("L");
+        if (remark != null && !remark.isEmpty()) {
+            sb.append("，说明：").append(remark);
+        }
+        return sb.toString();
     }
 
     @Transactional
@@ -192,10 +211,28 @@ public class InventoryService {
         record.setSupervisorRemark(remark);
         record.setStatus(InventoryStatus.INVESTIGATING);
 
-        addHistory(record, InventoryStatus.INVESTIGATING, operator, UserRole.REGIONAL_SUPERVISOR,
-                "区域主管决定追查，备注：" + remark);
+        String historyRemark = buildInvestigateHistory(record, remark);
+        addHistory(record, InventoryStatus.INVESTIGATING, operator, UserRole.REGIONAL_SUPERVISOR, historyRemark);
 
         return inventoryRecordRepository.save(record);
+    }
+
+    private String buildInvestigateHistory(InventoryRecord record, String remark) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("区域主管启动追查");
+
+        if (record.getDiscrepancyType() == DiscrepancyType.GAUGE_ERROR) {
+            sb.append("（液位仪异常，需安排检修）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            sb.append("（损耗超标，需查明原因）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            sb.append("（配送量不符，需与承运方核实）");
+        }
+
+        if (remark != null && !remark.isEmpty()) {
+            sb.append("，说明：").append(remark);
+        }
+        return sb.toString();
     }
 
     @Transactional
@@ -209,10 +246,30 @@ public class InventoryService {
         record.setSupervisorRemark(remark);
         record.setStatus(InventoryStatus.ARCHIVED);
 
-        addHistory(record, InventoryStatus.ARCHIVED, operator, UserRole.REGIONAL_SUPERVISOR,
-                "区域主管归档，备注：" + remark);
+        String historyRemark = buildArchiveHistory(record, remark);
+        addHistory(record, InventoryStatus.ARCHIVED, operator, UserRole.REGIONAL_SUPERVISOR, historyRemark);
 
         return inventoryRecordRepository.save(record);
+    }
+
+    private String buildArchiveHistory(InventoryRecord record, String remark) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("区域主管归档");
+
+        if (record.getDiscrepancyType() == DiscrepancyType.GAUGE_ERROR) {
+            sb.append("（液位仪异常待修复，暂归档）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            sb.append("（损耗超标处置完毕）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            sb.append("（配送量不符已处理）");
+        } else if (record.getDiscrepancyType() == DiscrepancyType.NORMAL) {
+            sb.append("（正常盘点）");
+        }
+
+        if (remark != null && !remark.isEmpty()) {
+            sb.append("，说明：").append(remark);
+        }
+        return sb.toString();
     }
 
     private void addHistory(InventoryRecord record, InventoryStatus actionType,

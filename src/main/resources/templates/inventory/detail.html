@@ -202,8 +202,19 @@
             </div>
 
             <div style="margin-top: 2rem;">
-                <div th:if="${canDispose and not canAdjust}" class="alert alert-warning mb-2">
-                    <strong>⚠️ 液位仪异常：</strong>当前油罐液位仪状态异常，禁止直接调整库存。建议先启动追查，待液位仪修复后再进行库存调整。
+                <div th:if="${canDispose and record.discrepancyType.name() == 'GAUGE_ERROR'}" class="alert alert-warning mb-2">
+                    <strong>⚠️ 液位仪异常：</strong>当前油罐液位仪状态异常，无法直接调整库存。
+                    <br>建议：先启动追查并安排检修，待液位仪修复后再进行库存调整。
+                </div>
+
+                <div th:if="${canDispose and record.discrepancyType.name() == 'DELIVERY_MISMATCH'}" class="alert alert-warning mb-2">
+                    <strong>📦 配送量不符：</strong>配送量差异超出正常范围，请优先与承运方核实后再处置。
+                    <br>可选择：启动追查（核实配送）、调整库存（按实收调整）或直接归档。
+                </div>
+
+                <div th:if="${canDispose and record.discrepancyType.name() == 'EXCESS_LOSS'}" class="alert alert-warning mb-2">
+                    <strong>📉 损耗超标：</strong>损耗率超过 0.3% 阈值，请排查是否存在渗漏、计量偏差等问题。
+                    <br>可选择：调整库存、启动追查（查明原因）或直接归档。
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
@@ -215,9 +226,12 @@
                     </div>
 
                     <div th:if="${canDispose}">
-                        <button th:if="${canAdjust}" class="btn btn-primary" onclick="showAdjustModal()">调整库存</button>
-                        <button th:unless="${canAdjust}" class="btn btn-primary" disabled title="液位仪异常时禁止调整库存">调整库存</button>
-                        <button class="btn btn-warning" onclick="showInvestigateModal()">启动追查</button>
+                        <button th:if="${record.discrepancyType.name() != 'GAUGE_ERROR'}"
+                                class="btn btn-primary" onclick="showAdjustModal()">调整库存</button>
+                        <button class="btn btn-warning" onclick="showInvestigateModal()">
+                            <span th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}">安排检修</span>
+                            <span th:unless="${record.discrepancyType.name() == 'GAUGE_ERROR'}">启动追查</span>
+                        </button>
                         <button class="btn btn-secondary" onclick="showArchiveModal()">归档</button>
                     </div>
 
@@ -251,13 +265,24 @@
     <div class="modal-overlay" id="adjustModal">
         <div class="modal">
             <h3>调整库存</h3>
+
+            <div th:if="${record.discrepancyType.name() == 'EXCESS_LOSS'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>📉 损耗超标：</strong>本次调整用于核销损耗差异。建议先查明损耗原因，避免常态化损耗。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'DELIVERY_MISMATCH'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>📦 配送量不符：</strong>请按实际验收量调整库存。建议同步联系承运方核实配送差异。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'NORMAL'}" class="alert alert-info mb-2" style="margin-bottom: 1rem;">
+                <strong>ℹ️ 正常盘点微调：</strong>损耗率在正常范围内，可直接微调账目以贴合实际库存。
+            </div>
+
             <form method="post" th:action="@{'/inventory/' + ${record.id} + '/adjust'}" id="adjustForm">
                 <div class="form-group">
                     <label>调整量 (L)</label>
                     <input type="number" step="0.01" name="adjustedVolume"
                            th:value="${record.differenceVolume}"
                            placeholder="请输入调整量" required>
-                    <small class="text-muted">正为调增，负为调减</small>
+                    <small class="text-muted">正为调增，负为调减，建议参考差异量</small>
                 </div>
                 <div class="form-group">
                     <label>调整说明</label>
@@ -274,15 +299,37 @@
     <!-- 追查弹窗 -->
     <div class="modal-overlay" id="investigateModal">
         <div class="modal">
-            <h3>启动追查</h3>
+            <h3 id="investigateTitle">
+                <span th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}">安排检修</span>
+                <span th:unless="${record.discrepancyType.name() == 'GAUGE_ERROR'}">启动追查</span>
+            </h3>
+
+            <div th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>⚠️ 液位仪异常：</strong>请安排技术人员检修液位仪设备，待设备恢复正常后再重新盘点。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'EXCESS_LOSS'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>📉 损耗超标：</strong>建议排查方向：油罐渗漏、管道损耗、计量偏差、温度影响等。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'DELIVERY_MISMATCH'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>📦 配送量不符：</strong>建议核实：配送单量、实收量、罐容表偏差、运输损耗等，必要时联系承运方。
+            </div>
+
             <form method="post" th:action="@{'/inventory/' + ${record.id} + '/investigate'}" id="investigateForm">
                 <div class="form-group">
-                    <label>追查说明</label>
-                    <textarea name="remark" rows="4" placeholder="请输入追查原因和方向..." required></textarea>
+                    <label>
+                        <span th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}">检修安排说明</span>
+                        <span th:unless="${record.discrepancyType.name() == 'GAUGE_ERROR'}">追查说明</span>
+                    </label>
+                    <textarea name="remark" rows="4"
+                              th:placeholder="${record.discrepancyType.name() == 'GAUGE_ERROR'} ? '请输入检修人员、预计完成时间等安排...' : '请输入追查原因和方向...'"
+                              required></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('investigateModal')">取消</button>
-                    <button type="submit" class="btn btn-warning">确认追查</button>
+                    <button type="submit" class="btn btn-warning" id="investigateSubmitBtn">
+                        <span th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}">确认检修</span>
+                        <span th:unless="${record.discrepancyType.name() == 'GAUGE_ERROR'}">确认追查</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -292,6 +339,20 @@
     <div class="modal-overlay" id="archiveModal">
         <div class="modal">
             <h3>归档确认</h3>
+
+            <div th:if="${record.discrepancyType.name() == 'GAUGE_ERROR'}" class="alert alert-warning mb-2" style="margin-bottom: 1rem;">
+                <strong>⚠️ 液位仪异常归档：</strong>归档后仍需跟进液位仪检修进度，待修复后重新盘点并调整库存。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'EXCESS_LOSS'}" class="alert alert-info mb-2" style="margin-bottom: 1rem;">
+                <strong>ℹ️ 损耗超标归档：</strong>请确保已完成原因分析和整改措施后再归档，便于后续复盘追溯。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'DELIVERY_MISMATCH'}" class="alert alert-info mb-2" style="margin-bottom: 1rem;">
+                <strong>ℹ️ 配送量不符归档：</strong>归档前请确认已与承运方核实完毕，或已完成相关调整。
+            </div>
+            <div th:if="${record.discrepancyType.name() == 'NORMAL'}" class="alert alert-success mb-2" style="margin-bottom: 1rem;">
+                <strong>✅ 正常盘点归档：</strong>盘点数据正常，归档后完成本次盘点流程。
+            </div>
+
             <form method="post" th:action="@{'/inventory/' + ${record.id} + '/archive'}" id="archiveForm">
                 <div class="form-group">
                     <label>归档备注</label>

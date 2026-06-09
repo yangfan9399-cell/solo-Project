@@ -238,7 +238,7 @@ public class DataInitializer implements CommandLineRunner {
         addHistoryRecord(record, InventoryStatus.PENDING_DISPOSAL, "李四", UserRole.GAUGER,
                 "计量员复核通过，提交待处置", LocalDateTime.now().minusDays(3).plusHours(2));
         addHistoryRecord(record, InventoryStatus.ARCHIVED, "王五", UserRole.REGIONAL_SUPERVISOR,
-                "区域主管归档，备注：正常归档", LocalDateTime.now().minusDays(2));
+                "区域主管归档（正常盘点），说明：数据正常，完成盘点", LocalDateTime.now().minusDays(2));
 
         logger.info("创建盘点正常样本: {}", recordNo);
     }
@@ -282,7 +282,7 @@ public class DataInitializer implements CommandLineRunner {
         addHistoryRecord(record, InventoryStatus.PENDING_REVIEW, "张三", UserRole.STATION_MANAGER,
                 "站长登记盘点，提交待复核", LocalDateTime.now().minusDays(2));
         addHistoryRecord(record, InventoryStatus.PENDING_DISPOSAL, "李四", UserRole.GAUGER,
-                "计量员复核通过，提交待处置，损耗超标", LocalDateTime.now().minusDays(1));
+                "计量员复核通过（损耗超标），提交待处置，损耗率0.55%，超阈值0.3%", LocalDateTime.now().minusDays(1));
 
         logger.info("创建损耗超标样本: {}", recordNo);
     }
@@ -326,11 +326,11 @@ public class DataInitializer implements CommandLineRunner {
         inventoryRecordRepository.save(record);
 
         addHistoryRecord(record, InventoryStatus.PENDING_REVIEW, "张三", UserRole.STATION_MANAGER,
-                "站长登记盘点，提交待复核", LocalDateTime.now().minusDays(1));
+                "站长登记盘点（液位仪异常），提交待复核", LocalDateTime.now().minusDays(1));
         addHistoryRecord(record, InventoryStatus.PENDING_DISPOSAL, "李四", UserRole.GAUGER,
-                "计量员复核，液位仪异常，提交处置", LocalDateTime.now().minusDays(1).plusHours(3));
+                "计量员复核，液位仪故障，数据仅供参考，建议检修", LocalDateTime.now().minusDays(1).plusHours(3));
         addHistoryRecord(record, InventoryStatus.INVESTIGATING, "王五", UserRole.REGIONAL_SUPERVISOR,
-                "区域主管决定追查，已安排维修", LocalDateTime.now().minusHours(12));
+                "区域主管启动追查（液位仪异常，需安排检修），说明：已联系设备厂家安排维修", LocalDateTime.now().minusHours(12));
 
         logger.info("创建液位仪异常样本: {}", recordNo);
     }
@@ -419,7 +419,7 @@ public class DataInitializer implements CommandLineRunner {
         addHistoryRecord(record, InventoryStatus.PENDING_DISPOSAL, "钱七", UserRole.GAUGER,
                 "计量员复核通过", LocalDateTime.now().minusDays(2).plusHours(2));
         addHistoryRecord(record, InventoryStatus.ADJUSTED, "王五", UserRole.REGIONAL_SUPERVISOR,
-                "区域主管调整库存，调整量：-50L", LocalDateTime.now().minusDays(1));
+                "区域主管调整库存（正常盘点微调），调整量：-50L，说明：正常损耗微调", LocalDateTime.now().minusDays(1));
 
         logger.info("创建已调整正常样本: {}", recordNo);
     }
