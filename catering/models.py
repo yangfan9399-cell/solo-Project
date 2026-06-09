@@ -158,6 +158,24 @@ class MealBatch(models.Model):
             not self.is_cold_storage_overtime
         )
 
+    @property
+    def latest_recall(self):
+        return self.recalls.first()
+
+    @property
+    def is_returned_for_qc(self):
+        if self.status != BatchStatus.QC_PENDING:
+            return False
+        latest_history = self.history.first()
+        return latest_history and latest_history.action == '退回待重新品控'
+
+    @property
+    def is_scrapped(self):
+        if self.status != BatchStatus.RETURNED:
+            return False
+        latest_history = self.history.first()
+        return latest_history and latest_history.action == '退回报废'
+
     def add_history(self, action, user, description=''):
         BatchHistory.objects.create(
             batch=self,

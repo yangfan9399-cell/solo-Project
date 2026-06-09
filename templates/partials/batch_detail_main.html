@@ -2,9 +2,19 @@
     <h1 class="page-title">{{ batch.batch_number }}</h1>
     <div style="text-align:right;">
         <div>
+            {% if batch.is_returned_for_qc %}
+            <span class="status-badge status-recalled" style="font-size:14px;padding:6px 14px;">
+                退回待重新品控
+            </span>
+            {% elif batch.is_scrapped %}
+            <span class="status-badge status-returned" style="font-size:14px;padding:6px 14px;">
+                退回报废
+            </span>
+            {% else %}
             <span class="status-badge status-{{ batch.status }}" style="font-size:14px;padding:6px 14px;">
                 {{ batch.get_status_display }}
             </span>
+            {% endif %}
             {% if batch.anomaly_type != 'none' %}
             <span class="anomaly-badge" style="margin-left:8px;font-size:13px;">
                 {{ batch.get_anomaly_type_display }}
@@ -12,7 +22,11 @@
             {% endif %}
         </div>
         <div style="font-size:12px;color:#6c757d;margin-top:6px;">
-            {% if batch.status == 'qc_pending' and batch.cold_storage_end %}
+            {% if batch.is_returned_for_qc %}
+                召回退回，待品控重新复核
+            {% elif batch.is_scrapped %}
+                退回报废，流程终止
+            {% elif batch.status == 'qc_pending' and batch.cold_storage_end %}
                 冷藏已出库，待品控复核
             {% elif batch.status == 'qc_pending' %}
                 已创建，待品控复核
@@ -305,20 +319,18 @@
                         <span class="info-label">装机确认人</span>
                         <span class="info-value">{{ batch.loaded_by.username|default:"-" }}</span>
                     </div>
-                    {% with latest_recall=batch.recalls.all|first %}
-                    {% if latest_recall %}
-                    <div class="info-item">
+                    {% if batch.latest_recall %}
+                    <div class="info-item" style="padding-top:8px;border-top:1px dashed #e9ecef;">
                         <span class="info-label">召回发起人</span>
-                        <span class="info-value">{{ latest_recall.initiated_by.username|default:"-" }}</span>
+                        <span class="info-value">{{ batch.latest_recall.initiated_by.username|default:"-" }}</span>
                     </div>
-                    {% if latest_recall.is_resolved %}
+                    {% if batch.latest_recall.is_resolved %}
                     <div class="info-item">
                         <span class="info-label">召回处理人</span>
-                        <span class="info-value">{{ latest_recall.handled_by.username|default:"-" }}</span>
+                        <span class="info-value" style="font-weight:600;">{{ batch.latest_recall.handled_by.username|default:"-" }}</span>
                     </div>
                     {% endif %}
                     {% endif %}
-                    {% endwith %}
                 </div>
             </div>
         </div>

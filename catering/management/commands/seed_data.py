@@ -224,6 +224,34 @@ class Command(BaseCommand):
         )
         self.stdout.write('  🧊 创建样本: 冷藏中批次')
 
+        self._create_returned_for_qc_batch(
+            batch_number='BATCH-MU2345-007',
+            meal_category=biz_meal,
+            flight=flight_mu2345,
+            quantity=25,
+            allergens=[peanut, wheat],
+            created_by=catering_clerk,
+            qc_officer=qc_officer,
+            loaded_by=cabin_crew,
+            manager=manager,
+            now=now,
+        )
+        self.stdout.write('  🔙 创建样本: 退回待重新品控批次')
+
+        self._create_scrapped_batch(
+            batch_number='BATCH-CZ3456-008',
+            meal_category=snack_meal,
+            flight=flight_cz3456,
+            quantity=50,
+            allergens=[wheat, milk],
+            created_by=catering_clerk,
+            qc_officer=qc_officer,
+            loaded_by=cabin_crew,
+            manager=manager,
+            now=now,
+        )
+        self.stdout.write('  🗑️ 创建样本: 退回报废批次')
+
     def _create_normal_batch(self, **kwargs):
         now = kwargs['now']
         batch = MealBatch.objects.create(
@@ -521,4 +549,162 @@ class Command(BaseCommand):
             batch=batch, action='入库冷藏', user=kwargs['created_by'],
             description='开始冷藏',
             timestamp=now - timedelta(hours=2.5),
+        )
+
+    def _create_returned_for_qc_batch(self, **kwargs):
+        now = kwargs['now']
+        batch = MealBatch.objects.create(
+            batch_number=kwargs['batch_number'],
+            meal_category=kwargs['meal_category'],
+            flight=kwargs['flight'],
+            quantity=kwargs['quantity'],
+            production_time=now - timedelta(hours=8),
+            shelf_life_hours=24,
+            status=BatchStatus.QC_PENDING,
+            anomaly_type=AnomalyType.TEMPERATURE_ABNORMAL,
+            allergen_label_verified=True,
+            allergen_label_missing=False,
+            created_by=kwargs['created_by'],
+            qc_officer=kwargs['qc_officer'],
+            loaded_by=kwargs['loaded_by'],
+            cold_storage_start=now - timedelta(hours=7),
+            cold_storage_end=now - timedelta(hours=5),
+            remarks='装机前检测温度异常，召回后退回待重新品控',
+        )
+        batch.allergens.set(kwargs['allergens'])
+
+        recall = RecallRecord.objects.create(
+            batch=batch,
+            reason='装机前温度抽检发现 6.5℃，超出冷藏标准，需重新确认品质',
+            anomaly_type=AnomalyType.TEMPERATURE_ABNORMAL,
+            initiated_by=kwargs['manager'],
+            handled_by=kwargs['manager'],
+            initiated_at=now - timedelta(hours=4),
+            resolved_at=now - timedelta(hours=3.5),
+            resolution='退回仓库，待品控重新检测温度和品质，确认安全后可再次装机',
+            is_resolved=True,
+        )
+
+        for hours_ago, temp in [(7, 3.8), (6, 4.0), (5, 4.2), (4, 6.5), (3.5, 5.0)]:
+            TemperatureRecord.objects.create(
+                batch=batch,
+                temperature=temp,
+                recorded_at=now - timedelta(hours=hours_ago),
+                recorded_by=kwargs['qc_officer'] if hours_ago <= 4 else kwargs['created_by'],
+                location='召回后检测' if hours_ago == 3.5 else ('装机前抽检' if hours_ago == 4 else '冷藏巡检'),
+            )
+
+        BatchHistory.objects.create(
+            batch=batch, action='创建批次', user=kwargs['created_by'],
+            description=f'批次 {batch.batch_number} 创建完成',
+            timestamp=now - timedelta(hours=8),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='入库冷藏', user=kwargs['created_by'],
+            description='开始冷藏',
+            timestamp=now - timedelta(hours=7),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='品控通过', user=kwargs['qc_officer'],
+            description='品控复核通过，温度正常，过敏源标识完整',
+            timestamp=now - timedelta(hours=5),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='出库', user=kwargs['created_by'],
+            description='冷藏结束，准备装机',
+            timestamp=now - timedelta(hours=5),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='已装机', user=kwargs['loaded_by'],
+            description='装机完成',
+            timestamp=now - timedelta(hours=4.5),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='发起召回', user=kwargs['manager'],
+            description='召回原因：装机前温度抽检发现 6.5℃，超出冷藏标准',
+            timestamp=now - timedelta(hours=4),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='退回待重新品控', user=kwargs['manager'],
+            description='退回仓库，待品控重新检测温度和品质',
+            timestamp=now - timedelta(hours=3.5),
+        )
+
+    def _create_scrapped_batch(self, **kwargs):
+        now = kwargs['now']
+        batch = MealBatch.objects.create(
+            batch_number=kwargs['batch_number'],
+            meal_category=kwargs['meal_category'],
+            flight=kwargs['flight'],
+            quantity=kwargs['quantity'],
+            production_time=now - timedelta(hours=20),
+            shelf_life_hours=24,
+            status=BatchStatus.RETURNED,
+            anomaly_type=AnomalyType.ALLERGEN_MISSING,
+            allergen_label_verified=False,
+            allergen_label_missing=True,
+            created_by=kwargs['created_by'],
+            qc_officer=kwargs['qc_officer'],
+            loaded_by=kwargs['loaded_by'],
+            cold_storage_start=now - timedelta(hours=19),
+            cold_storage_end=now - timedelta(hours=6),
+            remarks='装机前发现过敏源标识缺失，已退回报废处理',
+        )
+        batch.allergens.set(kwargs['allergens'])
+
+        recall = RecallRecord.objects.create(
+            batch=batch,
+            reason='装机前复核发现花生过敏源标识缺失，存在安全风险',
+            anomaly_type=AnomalyType.ALLERGEN_MISSING,
+            initiated_by=kwargs['manager'],
+            handled_by=kwargs['manager'],
+            initiated_at=now - timedelta(hours=5),
+            resolved_at=now - timedelta(hours=4.5),
+            resolution='过敏源标识缺失且无法补标，为保障航空食品安全，作报废处理，已通知配餐部紧急补产',
+            is_resolved=True,
+        )
+
+        for hours_ago, temp in [(19, 3.6), (12, 3.9), (6, 4.1), (5, 4.0), (4.5, 3.8)]:
+            TemperatureRecord.objects.create(
+                batch=batch,
+                temperature=temp,
+                recorded_at=now - timedelta(hours=hours_ago),
+                recorded_by=kwargs['qc_officer'] if hours_ago <= 6 else kwargs['created_by'],
+                location='报废前复核' if hours_ago == 4.5 else ('出库检测' if hours_ago == 6 else '冷藏巡检'),
+            )
+
+        BatchHistory.objects.create(
+            batch=batch, action='创建批次', user=kwargs['created_by'],
+            description=f'批次 {batch.batch_number} 创建完成',
+            timestamp=now - timedelta(hours=20),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='入库冷藏', user=kwargs['created_by'],
+            description='开始冷藏',
+            timestamp=now - timedelta(hours=19),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='品控通过', user=kwargs['qc_officer'],
+            description='品控复核通过（注：后复核发现过敏源标识漏检）',
+            timestamp=now - timedelta(hours=18),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='出库', user=kwargs['created_by'],
+            description='冷藏结束，准备装机',
+            timestamp=now - timedelta(hours=6),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='已装机', user=kwargs['loaded_by'],
+            description='装机完成',
+            timestamp=now - timedelta(hours=5.5),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='发起召回', user=kwargs['manager'],
+            description='召回原因：装机前复核发现花生过敏源标识缺失',
+            timestamp=now - timedelta(hours=5),
+        )
+        BatchHistory.objects.create(
+            batch=batch, action='退回报废', user=kwargs['manager'],
+            description='过敏源标识缺失且无法补标，作报废处理',
+            timestamp=now - timedelta(hours=4.5),
         )
