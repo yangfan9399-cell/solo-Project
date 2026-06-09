@@ -32,9 +32,9 @@
             <% end %>
             <div class="hidden md:block ml-10">
               <div class="flex items-baseline space-x-4">
-                <%= link_to "首页", root_path, class: "text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
-                <%= link_to "用印申请", seal_applications_path, class: "text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
-                <%= link_to "复盘统计", dashboard_review_path, class: "text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "首页", root_path, class: "#{current_page?(root_path) ? 'bg-slate-900 text-white' : 'text-gray-300 hover:bg-slate-700 hover:text-white' } px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "用印申请", seal_applications_path, class: "#{current_page?(seal_applications_path) || controller_name == 'seal_applications' && action_name == 'show' ? 'bg-slate-900 text-white' : 'text-gray-300 hover:bg-slate-700 hover:text-white' } px-3 py-2 rounded-md text-sm font-medium" %>
+                <%= link_to "复盘统计", dashboard_review_path, class: "#{current_page?(dashboard_review_path) ? 'bg-slate-900 text-white' : 'text-gray-300 hover:bg-slate-700 hover:text-white' } px-3 py-2 rounded-md text-sm font-medium" %>
               </div>
             </div>
           </div>

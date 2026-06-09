@@ -36,7 +36,7 @@
           </div>
           <div class="mt-4">
             <%= form_with url: resolve_version_seal_application_path(@seal_application), method: :post, class: "flex items-center space-x-3" do |f| %>
-              <%= f.select :contract_id, options_from_collection_for_select(@seal_application.contract.version_history, :id, ->(c) { "#{c.version} - #{c.title}" }), {}, class: "rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" %>
+              <%= f.select :contract_id, options_from_collection_for_select(@seal_application.contract.version_history, :id, ->(c) { "#{c.version} - #{c.title}" }, @seal_application.contract.latest_version? ? nil : @seal_application.contract.version_history.first.id), {}, class: "rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" %>
               <%= f.submit "重新提交", class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
             <% end %>
           </div>
@@ -118,12 +118,12 @@
         </div>
       </div>
 
-      <% if @seal_application.archive.present? %>
-        <div class="bg-white rounded-lg shadow">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">归档文件</h2>
-          </div>
-          <div class="p-6">
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">归档文件</h2>
+        </div>
+        <div class="p-6">
+          <% if @seal_application.archive.present? %>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-sm font-medium text-gray-500">文件名</label>
@@ -175,9 +175,19 @@
                 <% end %>
               </div>
             <% end %>
-          </div>
+          <% else %>
+            <div class="text-center text-gray-400 text-sm py-8">
+              <div class="mb-2">
+                <svg class="w-12 h-12 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 0a2 2 0 100-4h-6a2 2 0 000 4h6z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              暂未归档
+            </div>
+          <% end %>
         </div>
-      <% end %>
+      </div>
     </div>
 
     <div class="space-y-6">
@@ -186,11 +196,15 @@
           <h2 class="text-lg font-semibold text-gray-900">审批操作</h2>
         </div>
         <div class="p-6 space-y-3">
+          <% has_action = false %>
+
           <% if @seal_application.draft? %>
+            <% has_action = true %>
             <%= button_to "提交申请", submit_seal_application_path(@seal_application), method: :post, class: "w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
           <% end %>
 
           <% if @seal_application.pending_legal? %>
+            <% has_action = true %>
             <%= form_with url: legal_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
               <%= f.text_area :comment, placeholder: "审核意见（可选）", rows: 2, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
               <div class="flex space-x-2">
@@ -201,6 +215,7 @@
           <% end %>
 
           <% if @seal_application.pending_seal? %>
+            <% has_action = true %>
             <%= form_with url: seal_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
               <%= f.text_area :comment, placeholder: "用印备注（可选）", rows: 2, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
               <div class="flex space-x-2">
@@ -212,10 +227,12 @@
           <% end %>
 
           <% if @seal_application.approver_absent? %>
+            <% has_action = true %>
             <%= button_to "恢复流程", resume_absence_seal_application_path(@seal_application), method: :post, class: "w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
           <% end %>
 
           <% if @seal_application.pending_archive? %>
+            <% has_action = true %>
             <%= form_with url: archive_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
               <div>
                 <%= f.label :file_name, "归档文件名", class: "block text-xs font-medium text-gray-700" %>
@@ -234,6 +251,12 @@
               <%= f.submit "提交归档审核", class: "w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
             <% end %>
           <% end %>
+
+          <% unless has_action %>
+            <div class="text-center text-gray-400 text-sm py-4">
+              当前状态无需操作
+            </div>
+          <% end %>
         </div>
       </div>
 
@@ -242,39 +265,45 @@
           <h2 class="text-lg font-semibold text-gray-900">审批链</h2>
         </div>
         <div class="p-6">
-          <ol class="relative border-l-2 border-gray-200 ml-3">
-            <% @approval_chain.each do |node| %>
-              <li class="mb-6 ml-6">
-                <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -left-[11px] ring-4 ring-white
-                  <%= node.approved? ? 'bg-green-500' : node.rejected? ? 'bg-red-500' : node.skipped? ? 'bg-yellow-500' : 'bg-gray-300' %>">
-                  <% if node.approved? %>
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                    </svg>
-                  <% elsif node.rejected? || node.skipped? %>
-                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
+          <% if @approval_chain.present? %>
+            <ol class="relative border-l-2 border-gray-200 ml-3">
+              <% @approval_chain.each do |node| %>
+                <li class="mb-6 ml-6">
+                  <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -left-[11px] ring-4 ring-white
+                    <%= node.approved? ? 'bg-green-500' : node.rejected? ? 'bg-red-500' : node.skipped? ? 'bg-yellow-500' : 'bg-gray-300' %>">
+                    <% if node.approved? %>
+                      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    <% elsif node.rejected? || node.skipped? %>
+                      <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    <% end %>
+                  </span>
+                  <h3 class="flex items-center text-sm font-medium text-gray-900">
+                    <%= node.role_name %>
+                    <% if node.user.present? %>
+                      <span class="ml-2 text-xs text-gray-500"><%= node.user.name %></span>
+                    <% end %>
+                  </h3>
+                  <time class="block mb-1 text-xs text-gray-400">
+                    <%= node.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
+                  </time>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full <%= status_badge_class(node.status) %>">
+                    <%= node.status_name %>
+                  </span>
+                  <% if node.comment.present? %>
+                    <p class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"><%= node.comment %></p>
                   <% end %>
-                </span>
-                <h3 class="flex items-center text-sm font-medium text-gray-900">
-                  <%= node.role_name %>
-                  <% if node.user.present? %>
-                    <span class="ml-2 text-xs text-gray-500"><%= node.user.name %></span>
-                  <% end %>
-                </h3>
-                <time class="block mb-1 text-xs text-gray-400">
-                  <%= node.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
-                </time>
-                <span class="px-2 py-0.5 text-xs font-medium rounded-full <%= status_badge_class(node.status) %>">
-                  <%= node.status_name %>
-                </span>
-                <% if node.comment.present? %>
-                  <p class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"><%= node.comment %></p>
-                <% end %>
-              </li>
-            <% end %>
-          </ol>
+                </li>
+              <% end %>
+            </ol>
+          <% else %>
+            <div class="text-center text-gray-400 text-sm py-8">
+              暂无审批记录
+            </div>
+          <% end %>
         </div>
       </div>
 
