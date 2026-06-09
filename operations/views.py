@@ -716,6 +716,18 @@ def complaint_resolve(request, pk):
     if not _is_inspector(request.user) and not request.user.is_staff:
         return HttpResponseForbidden('无权限操作')
 
+    if complaint.status != Complaint.Status.IN_PROGRESS:
+        if complaint.status == Complaint.Status.PENDING:
+            error_msg = '该投诉尚未核实，请先由巡检员核实后再进行整改'
+        elif complaint.status == Complaint.Status.RESOLVED:
+            error_msg = '该投诉已完成整改，无需重复提交'
+        elif complaint.status == Complaint.Status.CLOSED:
+            error_msg = '该投诉已结案，无法再提交整改'
+        else:
+            error_msg = '当前投诉状态不允许提交整改'
+        messages.error(request, error_msg)
+        return redirect('operations:complaint_detail', pk=pk)
+
     if request.method == 'POST':
         resolution_notes = request.POST.get('resolution_notes', '')
 
@@ -804,13 +816,25 @@ def review_create(request, assignment_pk):
         rectification_deadline = request.POST.get('rectification_deadline')
         complaint_id = request.POST.get('complaint')
 
+        complaint = None
+        if complaint_id:
+            try:
+                complaint = Complaint.objects.get(
+                    pk=complaint_id,
+                    assignment=assignment,
+                    status=Complaint.Status.RESOLVED
+                )
+            except Complaint.DoesNotExist:
+                messages.error(request, '只能关联已整改完成、待结案的投诉')
+                return redirect('operations:review_create', assignment_pk=assignment_pk)
+
         review = ReviewRecord.objects.create(
             assignment=assignment,
             reviewer=request.user,
             review_result=review_result,
             review_notes=review_notes,
             rectification_deadline=rectification_deadline if has_deadline and rectification_deadline else None,
-            complaint_id=complaint_id if complaint_id else None
+            complaint=complaint
         )
 
         _add_event(
@@ -823,7 +847,7 @@ def review_create(request, assignment_pk):
         messages.success(request, '复核记录已创建')
         return redirect('operations:review_detail', pk=review.pk)
 
-    complaints = assignment.complaints.exclude(status=Complaint.Status.CLOSED)
+    complaints = assignment.complaints.filter(status=Complaint.Status.RESOLVED)
     preselected_complaint = request.GET.get('complaint', '')
 
     context = {

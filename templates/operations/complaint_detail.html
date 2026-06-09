@@ -163,13 +163,13 @@
                     <div class="description">{{ complaint.complaint_type }}</div>
                 </div>
                 {% if complaint.confirmed_at %}
-                <div class="timeline-item" style="border-color: #3498db;">
+                <div class="timeline-item" style="border-color: {% if complaint.resolved_at or complaint.status == 'in_progress' or complaint.status == 'resolved' %}#3498db{% else %}#95a5a6{% endif %};">
                     <div class="time">{{ complaint.confirmed_at|date:"Y-m-d H:i" }}</div>
-                    <div class="event-type" style="color: #2980b9;">
-                        {% if complaint.status == 'closed' and complaint.confirmed_at %}
-                            核实不属实
-                        {% else %}
+                    <div class="event-type" style="color: {% if complaint.resolved_at or complaint.status == 'in_progress' or complaint.status == 'resolved' %}#2980b9{% else %}#7f8c8d{% endif %};">
+                        {% if complaint.resolved_at or complaint.status == 'in_progress' or complaint.status == 'resolved' %}
                             核实属实
+                        {% else %}
+                            核实不属实
                         {% endif %}
                     </div>
                     <div class="operator">
@@ -177,7 +177,7 @@
                     </div>
                 </div>
                 {% endif %}
-                {% if complaint.status == 'in_progress' %}
+                {% if complaint.status == 'in_progress' and not complaint.resolved_at %}
                 <div class="timeline-item" style="border-color: #f39c12;">
                     <div class="time">进行中</div>
                     <div class="event-type" style="color: #e67e22;">整改中</div>
@@ -189,7 +189,7 @@
                     <div class="event-type" style="color: #27ae60;">整改完成</div>
                 </div>
                 {% endif %}
-                {% if complaint.status == 'closed' and complaint.resolved_at %}
+                {% if complaint.status == 'closed' %}
                 <div class="timeline-item" style="border-color: #95a5a6;">
                     <div class="time">已结案</div>
                     <div class="event-type" style="color: #7f8c8d;">已结案</div>
