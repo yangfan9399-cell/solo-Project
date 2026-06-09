@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}仪表盘 - 科研采购验收系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3><i class="bi bi-speedometer2"></i> 仪表盘</h3>
+    <p class="text-muted">欢迎回来，{{ user.username }}（{{ user.get_role_display }}）</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number">{{ total_count }}</div>
+            <div class="stat-label"><i class="bi bi-file-earmark-text"></i> 采购申请总数</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-warning">{{ pending_count }}</div>
+            <div class="stat-label"><i class="bi bi-clock-history"></i> 待处理</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-danger">{{ exception_count }}</div>
+            <div class="stat-label"><i class="bi bi-exclamation-triangle"></i> 异常采购</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-success">{{ reimbursed_count }}</div>
+            <div class="stat-label"><i class="bi bi-check-circle"></i> 已核销</div>
+        </div>
+    </div>
+</div>
+
+{% if avg_duration %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>平均核销时长</h5>
+                <h2 class="text-primary">{{ avg_duration }} <small class="text-muted fs-6">天</small></h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-list-task"></i> 待办采购</span>
+                <a href="{% url 'procurement_list' %}" class="btn btn-sm btn-outline-primary">查看全部</a>
+            </div>
+            <div class="card-body">
+                {% if my_procurements %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>采购编号</th>
+                                <th>采购标题</th>
+                                <th>所属课题</th>
+                                <th>金额</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in my_procurements %}
+                            <tr>
+                                <td><code>{{ p.procurement_no }}</code></td>
+                                <td>{{ p.title }}</td>
+                                <td>{{ p.project.name|truncatechars:20 }}</td>
+                                <td>¥{{ p.amount }}</td>
+                                <td>
+                                    <span class="badge status-{{ p.status }}">{{ p.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'procurement_detail' p.pk %}" class="btn btn-sm btn-outline-primary">
+                                        详情
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-2">暂无待办采购</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning"></i> 快捷操作
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if user.role == 'researcher' %}
+                    <a href="{% url 'procurement_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 新建采购申请
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'procurement_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-list"></i> 查看采购列表
+                    </a>
+                    <a href="{% url 'kanban' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-bar-chart"></i> 数据看板
+                    </a>
+                    <a href="{% url 'project_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-folder"></i> 课题管理
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> 流程说明
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">步骤 1</div>
+                        <div class="timeline-title">创建并提交采购</div>
+                        <div class="timeline-desc">课题组经办人提交采购申请</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">步骤 2</div>
+                        <div class="timeline-title">预算冻结</div>
+                        <div class="timeline-desc">学院管理员审核并冻结预算</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">步骤 3</div>
+                        <div class="timeline-title">设备验收</div>
+                        <div class="timeline-desc">资产人员验收设备参数</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">步骤 4</div>
+                        <div class="timeline-title">财务核销</div>
+                        <div class="timeline-desc">财务复核发票并完成核销</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

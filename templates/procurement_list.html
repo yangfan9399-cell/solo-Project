@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}采购申请列表 - 科研采购验收系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-list-task"></i> 采购申请列表</h3>
+    {% if user.role == 'researcher' %}
+    <a href="{% url 'procurement_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> 新建采购申请
+    </a>
+    {% endif %}
+</div>
+
+<div class="filter-bar mb-4" id="filter-bar">
+    <form hx-get="{% url 'procurement_list' %}" hx-target="#procurement-table" hx-trigger="change, keyup delay:300ms">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">状态筛选</label>
+                <select name="status" class="form-select">
+                    <option value="">全部状态</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">异常原因</label>
+                <select name="exception" class="form-select">
+                    <option value="">全部</option>
+                    {% for val, label in exception_choices %}
+                    <option value="{{ val }}" {% if selected_exception == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">学院</label>
+                <select name="college" class="form-select">
+                    <option value="">全部学院</option>
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}" {% if selected_college == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">搜索</label>
+                <input type="text" name="search" class="form-control" placeholder="搜索标题/编号/课题" value="{{ search }}">
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="procurement-table">
+    {% include 'partials/procurement_list.html' %}
+</div>
+{% endblock %}

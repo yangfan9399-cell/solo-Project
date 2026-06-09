@@ -1,0 +1,63 @@
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>采购编号</th>
+                        <th>采购标题</th>
+                        <th>所属课题</th>
+                        <th>预算科目</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                        <th>异常</th>
+                        <th>申请人</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in procurements %}
+                    <tr>
+                        <td><code>{{ p.procurement_no }}</code></td>
+                        <td>{{ p.title }}</td>
+                        <td>{{ p.project.name|truncatechars:20 }}</td>
+                        <td>{{ p.budget_subject.name }}</td>
+                        <td><strong>¥{{ p.amount }}</strong></td>
+                        <td>
+                            {% include 'partials/procurement_status_badge.html' with procurement=p %}
+                        </td>
+                        <td>
+                            {% if p.exception_reason != 'none' %}
+                            <span class="exception-tag exception-{{ p.exception_reason }}">
+                                {{ p.get_exception_reason_display }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">无</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.applicant.username }}</td>
+                        <td>{{ p.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'procurement_detail' p.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> 详情
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">暂无采购申请</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="text-muted mt-2">
+    共 {{ procurements|length }} 条记录
+</div>

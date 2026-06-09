@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}数据看板 - 科研采购验收系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3><i class="bi bi-kanban"></i> 数据看板</h3>
+    <p class="text-muted">采购验收数据多维度聚合展示</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number">{{ total_procurement }}</div>
+            <div class="stat-label"><i class="bi bi-file-earmark-text"></i> 采购总数</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-success">¥{{ total_amount|floatformat:0 }}</div>
+            <div class="stat-label"><i class="bi bi-cash"></i> 总金额</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-danger">{{ exception_labels|length }}</div>
+            <div class="stat-label"><i class="bi bi-exclamation-triangle"></i> 异常种类</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card">
+            <div class="stat-number text-info">
+                {% if avg_duration %}{{ avg_duration }}{% else %}-{% endif %}
+            </div>
+            <div class="stat-label"><i class="bi bi-clock"></i> 平均核销天数</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> 状态分布</h5>
+            </div>
+            <div class="card-body">
+                <div class="kanban-chart">
+                    {% for label in status_labels %}
+                    <div class="kanban-bar">
+                        <div class="bar-value">{{ status_counts|dictsortreversed:"count"|slice:forloop.counter|last|default:"0" }}</div>
+                        <div class="bar" style="height: {% widthratio forloop.counter status_labels|length 200 %}px;"></div>
+                        <div class="bar-label">{{ label|truncatechars:6 }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-muted w-100 text-center">暂无数据</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 异常原因分布</h5>
+            </div>
+            <div class="card-body">
+                {% if exception_labels %}
+                <div class="kanban-chart">
+                    {% for label in exception_labels %}
+                    <div class="kanban-bar">
+                        <div class="bar-value">{{ exception_counts|dictsortreversed:"count"|slice:forloop.counter|last|default:"0" }}</div>
+                        <div class="bar" style="height: {% widthratio forloop.counter exception_labels|length 200 %}px; background: linear-gradient(180deg, #dc3545, #fd7e14);"></div>
+                        <div class="bar-label">{{ label|truncatechars:8 }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-check-circle" style="font-size: 3rem; color: #198754;"></i>
+                    <p class="mt-2">暂无异常采购</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-building"></i> 按学院统计</h5>
+            </div>
+            <div class="card-body">
+                {% if by_college %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>学院</th>
+                                <th class="text-center">采购数</th>
+                                <th class="text-end">总金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in by_college %}
+                            <tr>
+                                <td>{{ item.project__college__name|default:"未分类" }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ item.count }}</span>
+                                </td>
+                                <td class="text-end">¥{{ item.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">暂无数据</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 核销时长分布</h5>
+            </div>
+            <div class="card-body">
+                {% if duration_data %}
+                <div class="kanban-chart">
+                    {% for item in duration_data %}
+                    <div class="kanban-bar">
+                        <div class="bar-value">{{ item.count }}</div>
+                        <div class="bar" style="height: {% widthratio item.count 50 200 %}px; background: linear-gradient(180deg, #20c997, #0dcaf0);"></div>
+                        <div class="bar-label">{{ item.label }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-clock" style="font-size: 3rem;"></i>
+                    <p class="mt-2">暂无核销数据</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-folder"></i> 课题采购排行 Top 10</h5>
+            </div>
+            <div class="card-body">
+                {% if by_project %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>课题编号</th>
+                                <th>课题名称</th>
+                                <th class="text-center">采购数</th>
+                                <th class="text-end">总金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in by_project %}
+                            <tr>
+                                <td>
+                                    {% if forloop.counter <= 3 %}
+                                    <span class="badge bg-warning text-dark">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% else %}🥉{% endif %} 第{{ forloop.counter }}名</span>
+                                    {% else %}
+                                    <span class="text-muted">第{{ forloop.counter }}名</span>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ item.project__project_no }}</code></td>
+                                <td>{{ item.project__name }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ item.count }}</span>
+                                </td>
+                                <td class="text-end"><strong>¥{{ item.total_amount|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">暂无数据</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

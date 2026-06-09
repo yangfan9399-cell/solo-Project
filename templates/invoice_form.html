@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - 科研采购验收系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">采购信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">采购标题：</span>
+                        <span class="detail-value">{{ procurement.title }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">采购编号：</span>
+                        <span class="detail-value"><code>{{ procurement.procurement_no }}</code></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">采购金额：</span>
+                        <span class="detail-value text-primary"><strong>¥{{ procurement.amount }}</strong></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">供应商：</span>
+                        <span class="detail-value">{{ procurement.supplier.name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-receipt"></i> {{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="text-danger">
+                            {% for error in field.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> 提交发票
+                        </button>
+                        <a href="{% url 'procurement_detail' procurement.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x"></i> 取消
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

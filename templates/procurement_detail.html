@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ procurement.title }} - 采购详情{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h3><i class="bi bi-file-earmark-text"></i> {{ procurement.title }}</h3>
+        <p class="text-muted mb-0">
+            采购编号：<code>{{ procurement.procurement_no }}</code>
+            <span class="mx-2">|</span>
+            {% include 'partials/procurement_status_badge.html' with procurement=procurement %}
+        </p>
+        {% if procurement.exception_reason != 'none' %}
+        <div class="mt-2">
+            <span class="exception-tag exception-{{ procurement.exception_reason }}">
+                <i class="bi bi-exclamation-triangle"></i> {{ procurement.get_exception_reason_display }}
+            </span>
+            {% if procurement.exception_note %}
+            <small class="text-muted ms-2">{{ procurement.exception_note }}</small>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="action-buttons">
+        {% if user.role == 'researcher' and procurement.status == 'draft' %}
+        <button hx-post="{% url 'procurement_submit' procurement.pk %}" 
+                hx-target="body"
+                class="btn btn-success">
+            <i class="bi bi-send"></i> 提交采购
+        </button>
+        {% endif %}
+        
+        {% if user.role == 'college_admin' and procurement.status == 'submitted' %}
+        <button hx-post="{% url 'budget_freeze' procurement.pk %}" 
+                hx-target="body"
+                class="btn btn-warning">
+            <i class="bi bi-lock"></i> 冻结预算
+        </button>
+        {% endif %}
+        
+        {% if user.role == 'asset_staff' and procurement.status == 'budget_frozen' %}
+        <a href="{% url 'acceptance_create' procurement.pk %}" class="btn btn-info">
+            <i class="bi bi-check2-circle"></i> 设备验收
+        </a>
+        {% endif %}
+        
+        {% if user.role == 'researcher' and procurement.status == 'accepted' %}
+        <a href="{% url 'invoice_create' procurement.pk %}" class="btn btn-primary">
+            <i class="bi bi-receipt"></i> 提交发票
+        </a>
+        {% endif %}
+        
+        {% if user.role == 'finance_staff' and procurement.status == 'finance_review' %}
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#verifyModal">
+            <i class="bi bi-check-square"></i> 财务复核
+        </button>
+        {% endif %}
+        
+        <a href="{% url 'procurement_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">采购标题：</span>
+                            <span class="detail-value">{{ procurement.title }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">采购编号：</span>
+                            <span class="detail-value"><code>{{ procurement.procurement_no }}</code></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">采购金额：</span>
+                            <span class="detail-value text-primary"><strong>¥{{ procurement.amount }}</strong></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">申请人：</span>
+                            <span class="detail-value">{{ procurement.applicant.username }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">创建时间：</span>
+                            <span class="detail-value">{{ procurement.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">当前状态：</span>
+                            <span class="detail-value">
+                                {% include 'partials/procurement_status_badge.html' with procurement=procurement %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">课题信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">课题编号：</span>
+                            <span class="detail-value"><code>{{ procurement.project.project_no }}</code></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">课题名称：</span>
+                            <span class="detail-value">{{ procurement.project.name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">所属学院：</span>
+                            <span class="detail-value">{{ procurement.project.college.name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">课题负责人：</span>
+                            <span class="detail-value">{{ procurement.project.principal.username }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">预算科目：</span>
+                            <span class="detail-value">{{ procurement.budget_subject.name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">课题总预算：</span>
+                            <span class="detail-value">¥{{ procurement.project.total_budget }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">设备信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">设备名称：</span>
+                            <span class="detail-value">{{ procurement.equipment_name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">设备型号：</span>
+                            <span class="detail-value">{{ procurement.equipment_model }}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="detail-label mb-1">设备参数要求：</div>
+                        <div class="detail-value bg-light p-3 rounded">{{ procurement.equipment_params|linebreaks }}</div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="detail-label mb-1">采购用途：</div>
+                        <div class="detail-value bg-light p-3 rounded">{{ procurement.purpose|linebreaks }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">供应商信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">供应商名称：</span>
+                            <span class="detail-value">{{ procurement.supplier.name }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">税号：</span>
+                            <span class="detail-value">{{ procurement.supplier.tax_no }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">联系人：</span>
+                            <span class="detail-value">{{ procurement.supplier.contact_person }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">联系电话：</span>
+                            <span class="detail-value">{{ procurement.supplier.phone }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">地址：</span>
+                            <span class="detail-value">{{ procurement.supplier.address }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">银行账号：</span>
+                            <span class="detail-value">{{ procurement.supplier.bank_account }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if procurement.acceptance %}
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">验收信息</h5>
+                    <span class="badge {% if procurement.acceptance.passed %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ procurement.acceptance.passed|yesno:"验收通过,验收未通过" }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">验收人员：</span>
+                            <span class="detail-value">{{ procurement.acceptance.asset_staff.username }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">验收日期：</span>
+                            <span class="detail-value">{{ procurement.acceptance.acceptance_date|date:"Y-m-d" }}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="detail-label mb-1">实际设备参数：</div>
+                        <div class="detail-value bg-light p-3 rounded">{{ procurement.acceptance.actual_params|linebreaks }}</div>
+                    </div>
+                    {% if procurement.acceptance.remarks %}
+                    <div class="mt-3">
+                        <div class="detail-label mb-1">验收备注：</div>
+                        <div class="detail-value bg-light p-3 rounded">{{ procurement.acceptance.remarks|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if procurement.invoice %}
+        <div class="detail-section">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">发票信息</h5>
+                    <span class="badge {% if procurement.invoice.verified %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ procurement.invoice.verified|yesno:"已复核,待复核" }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">发票号码：</span>
+                            <span class="detail-value"><code>{{ procurement.invoice.invoice_no }}</code></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">开票日期：</span>
+                            <span class="detail-value">{{ procurement.invoice.invoice_date|date:"Y-m-d" }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">发票抬头：</span>
+                            <span class="detail-value">{{ procurement.invoice.title }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">发票金额：</span>
+                            <span class="detail-value">¥{{ procurement.invoice.amount }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">税额：</span>
+                            <span class="detail-value">¥{{ procurement.invoice.tax_amount }}</span>
+                        </div>
+                        {% if procurement.invoice.finance_staff %}
+                        <div class="detail-item">
+                            <span class="detail-label">复核人员：</span>
+                            <span class="detail-value">{{ procurement.invoice.finance_staff.username }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if procurement.invoice.verification_note %}
+                    <div class="mt-3">
+                        <div class="detail-label mb-1">复核备注：</div>
+                        <div class="detail-value bg-light p-3 rounded">{{ procurement.invoice.verification_note|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 流程历史</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for node in history_nodes %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">{{ node.created_at|date:"Y-m-d H:i" }}</div>
+                        <div class="timeline-title">
+                            <span class="badge status-{{ node.status }}">{{ node.get_status_display }}</span>
+                        </div>
+                        <div class="timeline-desc">
+                            <strong>{{ node.operator.username|default:"系统" }}</strong> - {{ node.action }}
+                            {% if node.remark %}
+                            <br><small>{{ node.remark }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3 text-muted">
+                        暂无历史记录
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if procurement.reimbursement_duration is not None %}
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <h6>核销耗时</h6>
+                <h2 class="text-primary">{{ procurement.reimbursement_duration }} <small class="text-muted fs-6">天</small></h2>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if user.role == 'finance_staff' and procurement.status == 'finance_review' %}
+<div class="modal fade" id="verifyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">财务复核</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'invoice_verify' procurement.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">复核结果</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="passed" value="true" id="passRadio" checked>
+                            <label class="form-check-label text-success" for="passRadio">
+                                <i class="bi bi-check-circle"></i> 复核通过，完成核销
+                            </label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="passed" value="false" id="rejectRadio">
+                            <label class="form-check-label text-danger" for="rejectRadio">
+                                <i class="bi bi-x-circle"></i> 复核不通过
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">正确抬头（如发票抬头错误）</label>
+                        <input type="text" name="correct_title" class="form-control" placeholder="请输入正确的发票抬头">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">备注说明</label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="请输入复核说明"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">确认复核</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
