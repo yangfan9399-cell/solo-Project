@@ -84,6 +84,7 @@ public class FireHazardController {
         model.addAttribute("rectifications", rectifications);
         model.addAttribute("remainingDays", remainingDays);
         model.addAttribute("isOverdue", isOverdue);
+        model.addAttribute("directors", userService.findByRole(UserRole.SAFETY_DIRECTOR));
 
         return "hazard/detail";
     }

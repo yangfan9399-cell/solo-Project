@@ -98,10 +98,19 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">退回原因</label>
+                        <label class="form-label">安全主管 <span class="text-danger">*</span></label>
+                        <select name="directorId" class="form-select" required>
+                            <option value="">请选择安全主管</option>
+                            <option th:each="user : ${directors}"
+                                    th:value="${user.id}"
+                                    th:text="${user.realName + ' - ' + user.department}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">退回原因 <span class="text-danger">*</span></label>
                         <textarea name="rejectReason" class="form-control" rows="3" required placeholder="请输入退回原因..."></textarea>
                     </div>
-                    <input type="hidden" name="directorId" value="3">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
