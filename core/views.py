@@ -185,16 +185,13 @@ def procurement_submit(request, pk):
         return redirect('procurement_detail', pk=pk)
 
     with transaction.atomic():
-        budget.frozen_amount += procurement.amount
-        budget.save()
-
         procurement.status = ProcurementStatus.SUBMITTED
         procurement.submitted_at = timezone.now()
         procurement.exception_reason = ExceptionReason.NONE
         procurement.exception_note = ''
         procurement.save()
-        add_history_node(procurement, ProcurementStatus.SUBMITTED, request.user, '提交采购申请')
-        messages.success(request, '采购申请已提交')
+        add_history_node(procurement, ProcurementStatus.SUBMITTED, request.user, '提交采购申请', '提交至学院管理员审核冻结预算')
+        messages.success(request, '采购申请已提交，等待学院管理员审核冻结预算')
 
     if request.headers.get('HX-Request'):
         return render(request, 'partials/procurement_status_badge.html', {'procurement': procurement})
@@ -212,11 +209,24 @@ def budget_freeze(request, pk):
         messages.error(request, '当前状态不可冻结预算')
         return redirect('procurement_detail', pk=pk)
 
+    try:
+        budget = ProjectBudget.objects.get(project=procurement.project, subject=procurement.budget_subject)
+    except ProjectBudget.DoesNotExist:
+        messages.error(request, '该课题下无对应预算科目')
+        return redirect('procurement_detail', pk=pk)
+
+    if budget.available_amount < procurement.amount:
+        messages.error(request, f'预算不足！可用预算：{budget.available_amount} 元，申请金额：{procurement.amount} 元')
+        return redirect('procurement_detail', pk=pk)
+
     with transaction.atomic():
+        budget.frozen_amount += procurement.amount
+        budget.save()
+
         procurement.status = ProcurementStatus.BUDGET_FROZEN
         procurement.budget_frozen_at = timezone.now()
         procurement.save()
-        add_history_node(procurement, ProcurementStatus.BUDGET_FROZEN, request.user, '冻结预算')
+        add_history_node(procurement, ProcurementStatus.BUDGET_FROZEN, request.user, '冻结预算', f'冻结{procurement.budget_subject.name}预算 {procurement.amount} 元')
         messages.success(request, '预算已冻结')
 
     if request.headers.get('HX-Request'):
@@ -412,23 +422,29 @@ def kanban(request):
             )
             duration_data.append({'label': label, 'count': count})
 
-    status_stats = Procurement.objects.values('status').annotate(
-        count=Count('id')
-    ).order_by('status')
-
     status_dict = {s[0]: s[1] for s in ProcurementStatus.choices}
-    status_labels = []
-    status_counts = []
-    for stat in status_stats:
-        status_labels.append(status_dict.get(stat['status'], stat['status']))
-        status_counts.append(stat['count'])
+    status_raw = Procurement.objects.values('status').annotate(
+        count=Count('id')
+    )
+    status_data = []
+    for stat in status_raw:
+        status_data.append({
+            'label': status_dict.get(stat['status'], stat['status']),
+            'count': stat['count'],
+            'value': stat['status'],
+        })
+    status_data.sort(key=lambda x: -x['count'])
+    max_status_count = max((item['count'] for item in status_data), default=1)
 
     exception_dict = {e[0]: e[1] for e in ExceptionReason.choices}
-    exception_labels = []
-    exception_counts = []
+    exception_data = []
     for exc in by_exception:
-        exception_labels.append(exception_dict.get(exc['exception_reason'], exc['exception_reason']))
-        exception_counts.append(exc['count'])
+        exception_data.append({
+            'label': exception_dict.get(exc['exception_reason'], exc['exception_reason']),
+            'count': exc['count'],
+            'value': exc['exception_reason'],
+        })
+    max_exception_count = max((item['count'] for item in exception_data), default=1)
 
     avg_duration = None
     if reimbursed_procurements.exists():
@@ -439,11 +455,11 @@ def kanban(request):
         'by_college': by_college,
         'by_project': by_project,
         'by_exception': by_exception,
-        'exception_labels': exception_labels,
-        'exception_counts': exception_counts,
+        'exception_data': exception_data,
+        'max_exception_count': max_exception_count,
         'duration_data': duration_data,
-        'status_labels': status_labels,
-        'status_counts': status_counts,
+        'status_data': status_data,
+        'max_status_count': max_status_count,
         'avg_duration': avg_duration,
         'total_procurement': Procurement.objects.count(),
         'total_amount': Procurement.objects.aggregate(total=Sum('amount'))['total'] or 0,

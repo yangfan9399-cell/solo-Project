@@ -74,7 +74,13 @@ class ResearchProject(models.Model):
 
     @property
     def used_budget(self):
-        return self.budget_items.aggregate(total=models.Sum('frozen_amount'))['total'] or Decimal('0')
+        result = self.budget_items.aggregate(
+            total_used=models.Sum('used_amount'),
+            total_frozen=models.Sum('frozen_amount')
+        )
+        total_used = result['total_used'] or Decimal('0')
+        total_frozen = result['total_frozen'] or Decimal('0')
+        return total_used + total_frozen
 
     @property
     def available_budget(self):

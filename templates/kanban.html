@@ -46,11 +46,11 @@
             </div>
             <div class="card-body">
                 <div class="kanban-chart">
-                    {% for label in status_labels %}
+                    {% for item in status_data %}
                     <div class="kanban-bar">
-                        <div class="bar-value">{{ status_counts|dictsortreversed:"count"|slice:forloop.counter|last|default:"0" }}</div>
-                        <div class="bar" style="height: {% widthratio forloop.counter status_labels|length 200 %}px;"></div>
-                        <div class="bar-label">{{ label|truncatechars:6 }}</div>
+                        <div class="bar-value">{{ item.count }}</div>
+                        <div class="bar" style="height: {% widthratio item.count max_status_count 180 %}px;"></div>
+                        <div class="bar-label">{{ item.label|truncatechars:6 }}</div>
                     </div>
                     {% empty %}
                     <div class="text-muted w-100 text-center">暂无数据</div>
@@ -66,13 +66,13 @@
                 <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 异常原因分布</h5>
             </div>
             <div class="card-body">
-                {% if exception_labels %}
+                {% if exception_data %}
                 <div class="kanban-chart">
-                    {% for label in exception_labels %}
+                    {% for item in exception_data %}
                     <div class="kanban-bar">
-                        <div class="bar-value">{{ exception_counts|dictsortreversed:"count"|slice:forloop.counter|last|default:"0" }}</div>
-                        <div class="bar" style="height: {% widthratio forloop.counter exception_labels|length 200 %}px; background: linear-gradient(180deg, #dc3545, #fd7e14);"></div>
-                        <div class="bar-label">{{ label|truncatechars:8 }}</div>
+                        <div class="bar-value">{{ item.count }}</div>
+                        <div class="bar" style="height: {% widthratio item.count max_exception_count 180 %}px; background: linear-gradient(180deg, #dc3545, #fd7e14);"></div>
+                        <div class="bar-label">{{ item.label|truncatechars:8 }}</div>
                     </div>
                     {% endfor %}
                 </div>

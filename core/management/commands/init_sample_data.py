@@ -307,7 +307,6 @@ class Command(BaseCommand):
             reimbursed_at=now - timedelta(days=3),
         )
 
-        budget.frozen_amount += procurement.amount
         budget.used_amount += procurement.amount
         budget.save()
 
