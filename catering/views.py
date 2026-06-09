@@ -378,7 +378,7 @@ def review_page(request):
             qs = qs.filter(created_at__date__lte=d)
             recall_qs = recall_qs.filter(initiated_at__date__lte=d)
 
-    by_airline = qs.values(
+    by_airline_qs = qs.values(
         airline_code=F('flight__airline__code'),
         airline_name=F('flight__airline__name')
     ).annotate(
@@ -387,12 +387,26 @@ def review_page(request):
         loaded=Count('id', filter=Q(status=BatchStatus.LOADED)),
     ).order_by('-total')
 
-    by_category = qs.values(
+    by_airline = list(by_airline_qs)
+    for item in by_airline:
+        if item['total'] > 0:
+            item['anomaly_rate'] = round(item['anomaly_count'] / item['total'] * 100, 2)
+        else:
+            item['anomaly_rate'] = 0
+
+    by_category_qs = qs.values(
         category_name=F('meal_category__name')
     ).annotate(
         total=Count('id'),
         anomaly_count=Count('id', filter=~Q(anomaly_type=AnomalyType.NONE)),
     ).order_by('-total')
+
+    by_category = list(by_category_qs)
+    for item in by_category:
+        if item['total'] > 0:
+            item['anomaly_rate'] = round(item['anomaly_count'] / item['total'] * 100, 2)
+        else:
+            item['anomaly_rate'] = 0
 
     by_anomaly = qs.exclude(anomaly_type=AnomalyType.NONE).values(
         'anomaly_type'

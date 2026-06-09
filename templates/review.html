@@ -58,6 +58,7 @@
                         <th>航空公司</th>
                         <th>批次</th>
                         <th>异常数</th>
+                        <th>异常率</th>
                         <th>已装机</th>
                     </tr>
                 </thead>
@@ -70,13 +71,20 @@
                             {% if item.anomaly_count > 0 %}
                             <span style="color:#e94560;font-weight:500;">{{ item.anomaly_count }}</span>
                             {% else %}
-                            {{ item.anomaly_count }}
+                            0
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.total > 0 %}
+                            <span style="{% if item.anomaly_rate > 0 %}color:#e94560;font-weight:500;{% endif %}">{{ item.anomaly_rate }}%</span>
+                            {% else %}
+                            -
                             {% endif %}
                         </td>
                         <td>{{ item.loaded }}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" style="text-align:center;color:#adb5bd;padding:20px;">暂无数据</td></tr>
+                    <tr><td colspan="5" style="text-align:center;color:#adb5bd;padding:20px;">暂无数据</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -111,7 +119,7 @@
                         </td>
                         <td>
                             {% if item.total > 0 %}
-                            {{ item.anomaly_count|default:0|floatformat:1 }}%
+                            <span style="{% if item.anomaly_rate > 0 %}color:#e94560;font-weight:500;{% endif %}">{{ item.anomaly_rate }}%</span>
                             {% else %}
                             -
                             {% endif %}
