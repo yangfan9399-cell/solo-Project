@@ -2,6 +2,7 @@ package com.bank.due.diligence.controller;
 
 import com.bank.due.diligence.entity.*;
 import com.bank.due.diligence.enums.*;
+import com.bank.due.diligence.form.ApplicationForm;
 import com.bank.due.diligence.repository.*;
 import com.bank.due.diligence.service.AccountApplicationService;
 import com.bank.due.diligence.service.StatisticsService;
@@ -210,28 +211,27 @@ public class ApplicationController {
     public String newApplicationForm(Model model) {
         List<Branch> branches = applicationService.findAllBranches();
         model.addAttribute("branches", branches);
-        model.addAttribute("enterprise", new Enterprise());
-        model.addAttribute("legalPerson", new LegalPerson());
-        model.addAttribute("beneficialOwner", new BeneficialOwner());
-        model.addAttribute("address", new BusinessAddress());
+        model.addAttribute("applicationForm", new ApplicationForm());
         return "applications/new";
     }
 
     @PostMapping("/applications/new")
-    public String createNewApplication(@ModelAttribute Enterprise enterprise,
-                                        @ModelAttribute LegalPerson legalPerson,
-                                        @ModelAttribute BeneficialOwner beneficialOwner,
-                                        @ModelAttribute BusinessAddress address,
-                                        @RequestParam String accountType,
-                                        @RequestParam Long branchId,
+    public String createNewApplication(@ModelAttribute ApplicationForm applicationForm,
                                         Authentication authentication,
                                         RedirectAttributes redirectAttributes) {
         try {
+            Enterprise enterprise = applicationForm.getEnterprise();
+            LegalPerson legalPerson = applicationForm.getLegalPerson();
+            BeneficialOwner beneficialOwner = applicationForm.getBeneficialOwner();
+            BusinessAddress address = applicationForm.getAddress();
+            String accountType = applicationForm.getAccountType();
+            Long branchId = applicationForm.getBranchId();
+
             java.util.List<BeneficialOwner> owners = new java.util.ArrayList<>();
-            if (beneficialOwner.getName() != null && !beneficialOwner.getName().isEmpty()) {
+            if (beneficialOwner != null && beneficialOwner.getName() != null && !beneficialOwner.getName().isEmpty()) {
                 owners.add(beneficialOwner);
             }
-            if (legalPerson.getName() != null && !legalPerson.getName().isEmpty()) {
+            if (legalPerson != null && legalPerson.getName() != null && !legalPerson.getName().isEmpty()) {
                 BeneficialOwner boFromLegal = new BeneficialOwner();
                 boFromLegal.setName(legalPerson.getName());
                 boFromLegal.setIdType(legalPerson.getIdType());

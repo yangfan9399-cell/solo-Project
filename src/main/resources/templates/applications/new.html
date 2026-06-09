@@ -16,20 +16,20 @@
             <div class="content">
                 <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
-                <form th:action="@{/applications/new}" method="post" id="newAppForm">
+                <form th:action="@{/applications/new}" method="post" id="newAppForm" th:object="${applicationForm}">
                     <div class="card">
                         <div class="card-title">基本信息</div>
                         <div class="section-grid">
                             <div class="form-group">
                                 <label class="form-label">所属支行 <span style="color: #f56c6c;">*</span></label>
-                                <select name="branchId" class="form-select" required>
+                                <select th:field="*{branchId}" class="form-select" required>
                                     <option value="">请选择支行</option>
                                     <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.branchName}"></option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">账户类型 <span style="color: #f56c6c;">*</span></label>
-                                <select name="accountType" class="form-select" required>
+                                <select th:field="*{accountType}" class="form-select" required>
                                     <option value="">请选择</option>
                                     <option value="基本存款账户">基本存款账户</option>
                                     <option value="一般存款账户">一般存款账户</option>
@@ -45,23 +45,23 @@
                         <div class="section-grid">
                             <div class="form-group">
                                 <label class="form-label">企业名称 <span style="color: #f56c6c;">*</span></label>
-                                <input type="text" name="enterpriseName" class="form-input" placeholder="请输入企业全称" required>
+                                <input type="text" th:field="*{enterprise.enterpriseName}" class="form-input" placeholder="请输入企业全称" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">统一社会信用代码 <span style="color: #f56c6c;">*</span></label>
-                                <input type="text" name="unifiedSocialCreditCode" class="form-input" placeholder="18位统一社会信用代码" required>
+                                <input type="text" th:field="*{enterprise.unifiedSocialCreditCode}" class="form-input" placeholder="18位统一社会信用代码" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">行业</label>
-                                <input type="text" name="industry" class="form-input" placeholder="如：信息技术、制造业等">
+                                <input type="text" th:field="*{enterprise.industry}" class="form-input" placeholder="如：信息技术、制造业等">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">行业类别</label>
-                                <input type="text" name="industryCategory" class="form-input" placeholder="如：软件和信息技术服务业">
+                                <input type="text" th:field="*{enterprise.industryCategory}" class="form-input" placeholder="如：软件和信息技术服务业">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">企业类型</label>
-                                <select name="enterpriseType" class="form-select">
+                                <select th:field="*{enterprise.enterpriseType}" class="form-select">
                                     <option value="">请选择</option>
                                     <option value="有限责任公司">有限责任公司</option>
                                     <option value="股份有限公司">股份有限公司</option>
@@ -73,20 +73,20 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">注册资本（万元）</label>
-                                <input type="number" step="0.01" name="registeredCapital" class="form-input" placeholder="请输入注册资本">
+                                <input type="number" step="0.01" th:field="*{enterprise.registeredCapital}" class="form-input" placeholder="请输入注册资本">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">成立日期</label>
-                                <input type="date" name="establishmentDate" class="form-input">
+                                <input type="text" th:field="*{enterprise.establishmentDate}" class="form-input" placeholder="如：2023-01-01">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">联系电话</label>
-                                <input type="text" name="contactPhone" class="form-input" placeholder="企业联系电话">
+                                <input type="text" th:field="*{enterprise.contactPhone}" class="form-input" placeholder="企业联系电话">
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">经营范围</label>
-                            <textarea name="businessScope" class="form-textarea" placeholder="请输入经营范围"></textarea>
+                            <textarea th:field="*{enterprise.businessScope}" class="form-textarea" placeholder="请输入经营范围"></textarea>
                         </div>
                     </div>
 
@@ -95,11 +95,11 @@
                         <div class="section-grid">
                             <div class="form-group">
                                 <label class="form-label">姓名 <span style="color: #f56c6c;">*</span></label>
-                                <input type="text" name="legalPerson.name" class="form-input" placeholder="法定代表人姓名" required>
+                                <input type="text" th:field="*{legalPerson.name}" class="form-input" placeholder="法定代表人姓名" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">证件类型</label>
-                                <select name="legalPerson.idType" class="form-select">
+                                <select th:field="*{legalPerson.idType}" class="form-select">
                                     <option value="居民身份证">居民身份证</option>
                                     <option value="护照">护照</option>
                                     <option value="港澳居民来往内地通行证">港澳居民来往内地通行证</option>
@@ -108,19 +108,19 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">证件号码</label>
-                                <input type="text" name="legalPerson.idNumber" class="form-input" placeholder="证件号码">
+                                <input type="text" th:field="*{legalPerson.idNumber}" class="form-input" placeholder="证件号码">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">联系电话</label>
-                                <input type="text" name="legalPerson.phone" class="form-input" placeholder="联系电话">
+                                <input type="text" th:field="*{legalPerson.phone}" class="form-input" placeholder="联系电话">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">职务</label>
-                                <input type="text" name="legalPerson.position" class="form-input" placeholder="如：执行董事、总经理">
+                                <input type="text" th:field="*{legalPerson.position}" class="form-input" placeholder="如：执行董事、总经理">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">是否实际控制人</label>
-                                <select name="legalPerson.actualController" class="form-select">
+                                <select th:field="*{legalPerson.isActualController}" class="form-select">
                                     <option value="true">是</option>
                                     <option value="false">否</option>
                                 </select>
@@ -128,7 +128,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">住址</label>
-                            <input type="text" name="legalPerson.address" class="form-input" placeholder="法定代表人住址">
+                            <input type="text" th:field="*{legalPerson.address}" class="form-input" placeholder="法定代表人住址">
                         </div>
                     </div>
 
@@ -137,15 +137,15 @@
                         <div class="section-grid">
                             <div class="form-group">
                                 <label class="form-label">姓名</label>
-                                <input type="text" name="beneficialOwner.name" class="form-input" placeholder="受益所有人姓名">
+                                <input type="text" th:field="*{beneficialOwner.name}" class="form-input" placeholder="受益所有人姓名">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">持股比例（%）</label>
-                                <input type="number" step="0.01" name="beneficialOwner.shareholdingRatio" class="form-input" placeholder="如：50">
+                                <input type="number" step="0.01" th:field="*{beneficialOwner.shareholdingRatio}" class="form-input" placeholder="如：50">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">证件类型</label>
-                                <select name="beneficialOwner.idType" class="form-select">
+                                <select th:field="*{beneficialOwner.idType}" class="form-select">
                                     <option value="居民身份证">居民身份证</option>
                                     <option value="护照">护照</option>
                                     <option value="其他">其他</option>
@@ -153,15 +153,15 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">证件号码</label>
-                                <input type="text" name="beneficialOwner.idNumber" class="form-input" placeholder="证件号码">
+                                <input type="text" th:field="*{beneficialOwner.idNumber}" class="form-input" placeholder="证件号码">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">关系</label>
-                                <input type="text" name="beneficialOwner.relationship" class="form-input" placeholder="如：股东、法人、实际控制人">
+                                <input type="text" th:field="*{beneficialOwner.relationship}" class="form-input" placeholder="如：股东、法人、实际控制人">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">联系电话</label>
-                                <input type="text" name="beneficialOwner.phone" class="form-input" placeholder="联系电话">
+                                <input type="text" th:field="*{beneficialOwner.phone}" class="form-input" placeholder="联系电话">
                             </div>
                         </div>
                     </div>
@@ -171,24 +171,24 @@
                         <div class="section-grid">
                             <div class="form-group">
                                 <label class="form-label">省份 <span style="color: #f56c6c;">*</span></label>
-                                <input type="text" name="address.province" class="form-input" placeholder="如：北京市" required>
+                                <input type="text" th:field="*{address.province}" class="form-input" placeholder="如：北京市" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">城市</label>
-                                <input type="text" name="address.city" class="form-input" placeholder="如：北京市">
+                                <input type="text" th:field="*{address.city}" class="form-input" placeholder="如：北京市">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">区县</label>
-                                <input type="text" name="address.district" class="form-input" placeholder="如：朝阳区">
+                                <input type="text" th:field="*{address.district}" class="form-input" placeholder="如：朝阳区">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">联系电话</label>
-                                <input type="text" name="address.phone" class="form-input" placeholder="地址联系电话">
+                                <input type="text" th:field="*{address.phone}" class="form-input" placeholder="地址联系电话">
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">详细地址 <span style="color: #f56c6c;">*</span></label>
-                            <input type="text" name="address.detailAddress" class="form-input" placeholder="详细地址" required>
+                            <input type="text" th:field="*{address.detailAddress}" class="form-input" placeholder="详细地址" required>
                         </div>
                     </div>
 
