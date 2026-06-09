@@ -1,0 +1,289 @@
+@model BridgeInspection.Models.Bridge
+@{
+    ViewData["Title"] = "桥梁详情 - " + Model.Name;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Bridge" asp-action="Index">桥梁信息</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="mb-4 d-flex justify-content-between align-items-start">
+    <div>
+        <h2>🌉 @Model.Name</h2>
+        <p class="text-muted mb-0">
+            @Model.RouteName | 
+            @(Model.BridgeType switch
+            {
+                BridgeType.BeamBridge => "梁桥",
+                BridgeType.ArchBridge => "拱桥",
+                BridgeType.CableStayedBridge => "斜拉桥",
+                BridgeType.SuspensionBridge => "悬索桥",
+                BridgeType.TrussBridge => "桁架桥",
+                BridgeType.BoxGirderBridge => "箱梁桥",
+                _ => "未知"
+            })
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Defect" asp-action="Create" asp-route-bridgeId="@Model.Id" class="btn btn-primary">
+            ➕ 登记病害
+        </a>
+        <a asp-controller="Defect" asp-action="Index" asp-route-bridgeId="@Model.Id" class="btn btn-outline-primary">
+            查看病害
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">病害总数</h6>
+                <h3 class="mb-0">@ViewBag.DefectCount</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">待处理</h6>
+                <h3 class="mb-0">@ViewBag.PendingDefects</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">结构性病害</h6>
+                <h3 class="mb-0">@ViewBag.StructuralDefects</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">在线传感器</h6>
+                <h3 class="mb-0">@ViewBag.OnlineSensors / @Model.Sensors.Count</h3>
+                <small class="text-white-50">离线：@ViewBag.OfflineSensors</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">📋 桥梁信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">桥梁名称</label>
+                        <p class="fw-bold mb-0">@Model.Name</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">桥型</label>
+                        <p class="mb-0">@(Model.BridgeType switch
+                        {
+                            BridgeType.BeamBridge => "梁桥",
+                            BridgeType.ArchBridge => "拱桥",
+                            BridgeType.CableStayedBridge => "斜拉桥",
+                            BridgeType.SuspensionBridge => "悬索桥",
+                            BridgeType.TrussBridge => "桁架桥",
+                            BridgeType.BoxGirderBridge => "箱梁桥",
+                            _ => "未知"
+                        })</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">所属路线</label>
+                        <p class="mb-0">@Model.RouteName</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">位置</label>
+                        <p class="mb-0">@Model.Location</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">桥梁长度</label>
+                        <p class="mb-0">@Model.Length 米</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">桥梁宽度</label>
+                        <p class="mb-0">@Model.Width 米</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">建成年份</label>
+                        <p class="mb-0">@Model.BuildYear 年</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="text-muted">管理单位</label>
+                        <p class="mb-0">@Model.ManagementUnit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">📡 传感器列表</h5>
+                <span class="badge bg-secondary">共 @Model.Sensors.Count 个</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>传感器编号</th>
+                                <th>类型</th>
+                                <th>位置</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sensor in Model.Sensors)
+                            {
+                                <tr>
+                                    <td>@sensor.SensorCode</td>
+                                    <td>@sensor.SensorType</td>
+                                    <td>@sensor.Location</td>
+                                    <td>
+                                        @{
+                                            var statusText = sensor.Status switch
+                                            {
+                                                SensorStatus.Online => "在线",
+                                                SensorStatus.Offline => "离线",
+                                                SensorStatus.Faulty => "故障",
+                                                _ => "未知"
+                                            };
+                                            var statusClass = sensor.Status switch
+                                            {
+                                                SensorStatus.Online => "bg-success",
+                                                SensorStatus.Offline => "bg-danger",
+                                                SensorStatus.Faulty => "bg-warning",
+                                                _ => "bg-secondary"
+                                            };
+                                            <span class="badge @statusClass">@statusText</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📝 病害列表</h5>
+        <a asp-controller="Defect" asp-action="Index" asp-route-bridgeId="@Model.Id" class="btn btn-sm btn-outline-primary">查看全部</a>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Defects.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>编号</th>
+                            <th>标题</th>
+                            <th>位置</th>
+                            <th>等级</th>
+                            <th>状态</th>
+                            <th>登记时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var defect in Model.Defects.Take(10))
+                        {
+                            <tr>
+                                <td>#@defect.Id</td>
+                                <td>@defect.Title</td>
+                                <td>@defect.LocationOnBridge</td>
+                                <td>
+                                    @if (defect.Severity.HasValue)
+                                    {
+                                        var severityText = defect.Severity.Value switch
+                                        {
+                                            DefectSeverity.Slight => "轻微",
+                                            DefectSeverity.Moderate => "一般",
+                                            DefectSeverity.Severe => "严重",
+                                            DefectSeverity.Structural => "结构性",
+                                            _ => "未知"
+                                        };
+                                        var severityClass = defect.Severity.Value switch
+                                        {
+                                            DefectSeverity.Slight => "bg-success",
+                                            DefectSeverity.Moderate => "bg-warning",
+                                            DefectSeverity.Severe => "bg-danger",
+                                            DefectSeverity.Structural => "bg-dark",
+                                            _ => "bg-secondary"
+                                        };
+                                        <span class="badge @severityClass">
+                                            @if (defect.IsUpgraded)
+                                            {
+                                                <span>⬆️ </span>
+                                            }
+                                            @severityText
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">待评定</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var statusText = defect.Status switch
+                                        {
+                                            DefectStatus.PendingAssessment => "待评定",
+                                            DefectStatus.Assessing => "评定中",
+                                            DefectStatus.PendingMaintenance => "待维修",
+                                            DefectStatus.MaintenanceInProgress => "维修中",
+                                            DefectStatus.PendingAcceptance => "待验收",
+                                            DefectStatus.Closed => "已销项",
+                                            DefectStatus.Returned => "已退回",
+                                            _ => "未知"
+                                        };
+                                        var statusClass = defect.Status switch
+                                        {
+                                            DefectStatus.PendingAssessment => "bg-secondary",
+                                            DefectStatus.Assessing => "bg-info",
+                                            DefectStatus.PendingMaintenance => "bg-warning",
+                                            DefectStatus.MaintenanceInProgress => "bg-primary",
+                                            DefectStatus.PendingAcceptance => "bg-info",
+                                            DefectStatus.Closed => "bg-success",
+                                            DefectStatus.Returned => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                        <span class="badge @statusClass">@statusText</span>
+                                    }
+                                </td>
+                                <td>@defect.ReportedAt.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <a asp-controller="Defect" asp-action="Details" asp-route-id="@defect.Id" class="btn btn-sm btn-outline-primary">
+                                        详情
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-center text-muted py-4 mb-0">暂无病害记录</p>
+        }
+    </div>
+</div>

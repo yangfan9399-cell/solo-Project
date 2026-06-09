@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "登录";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">🌉 桥梁巡检系统登录</h4>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">邮箱</label>
+                        <input asp-for="Email" class="form-control" placeholder="请输入邮箱" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">密码</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="请输入密码" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">记住我</label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <p class="mb-0 small text-muted">
+                    <strong>测试账号：</strong><br />
+                    巡检员：inspector1@bridge.com / Ins@123456<br />
+                    工程师：engineer1@bridge.com / Eng@123456<br />
+                    养护单位：maint1@bridge.com / Mai@123456<br />
+                    验收人：acceptor1@bridge.com / Acc@123456
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

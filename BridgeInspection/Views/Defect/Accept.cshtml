@@ -1,0 +1,116 @@
+@model BridgeInspection.ViewModels.AcceptanceViewModel
+@{
+    ViewData["Title"] = "病害验收";
+    var defect = ViewBag.Defect as BridgeInspection.Models.Defect;
+    var isStructural = ViewBag.IsStructural as bool?;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Defect" asp-action="Index">病害管理</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Defect" asp-action="Details" asp-route-id="@Model.DefectId">病害详情</a></li>
+            <li class="breadcrumb-item active" aria-current="page">病害验收</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        @if (isStructural == true && !User.IsInRole("Engineer") && !User.IsInRole("Admin"))
+        {
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">⚠️ 结构性病害</h4>
+                <p>此病害为<strong>结构性病害</strong>，必须由工程师或以上级别人员进行验收销项。</p>
+                <hr>
+                <p class="mb-0">您当前权限不足，请联系工程师或管理员进行验收。</p>
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">✅ 病害验收</h5>
+                </div>
+                <div class="card-body">
+                    @if (isStructural == true)
+                    {
+                        <div class="alert alert-warning">
+                            <strong>⚠️ 注意：</strong>此为<strong>结构性病害</strong>，您正在以工程师权限进行验收，请谨慎评估。
+                        </div>
+                    }
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">📋 病害信息</h6>
+                        <p class="mb-1"><strong>编号：</strong>#@defect?.Id</p>
+                        <p class="mb-1"><strong>标题：</strong>@defect?.Title</p>
+                        <p class="mb-1"><strong>桥梁：</strong>@defect?.Bridge?.Name</p>
+                        <p class="mb-1">
+                            <strong>等级：</strong>
+                            @if (defect?.Severity.HasValue == true)
+                            {
+                                var severityText = defect.Severity.Value switch
+                                {
+                                    DefectSeverity.Slight => "轻微",
+                                    DefectSeverity.Moderate => "一般",
+                                    DefectSeverity.Severe => "严重",
+                                    DefectSeverity.Structural => "结构性",
+                                    _ => "未知"
+                                };
+                                @severityText
+                            }
+                        </p>
+                        <p class="mb-0">
+                            <strong>维修单位：</strong>@defect?.MaintenanceUnit?.FullName
+                        </p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(defect?.MaintenanceResult))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label"><strong>维修结果</strong></label>
+                            <div class="bg-light p-3 rounded">
+                                @Html.Raw(defect.MaintenanceResult.Replace("\n", "<br/>"))
+                            </div>
+                        </div>
+                    }
+
+                    <form asp-controller="Defect" asp-action="Accept" method="post">
+                        <input type="hidden" asp-for="DefectId" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">验收结论 <span class="text-danger">*</span></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="IsApproved" id="approve" value="true" checked>
+                                <label class="form-check-label text-success fw-bold" for="approve">
+                                    ✅ 验收通过，同意销项
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="IsApproved" id="reject" value="false">
+                                <label class="form-check-label text-danger fw-bold" for="reject">
+                                    ❌ 验收不通过，退回重维
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AcceptanceComment" class="form-label">验收意见</label>
+                            <textarea asp-for="AcceptanceComment" class="form-control" rows="4" placeholder="请输入验收意见..."></textarea>
+                            <span asp-validation-for="AcceptanceComment" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-controller="Defect" asp-action="Details" asp-route-id="@Model.DefectId" class="btn btn-secondary">取消</a>
+                            <button type="submit" class="btn btn-primary" 
+                                    onclick="return confirm('确定提交验收结论吗？此操作将更新病害状态。')">
+                                提交验收
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,508 @@
+@model BridgeInspection.ViewModels.DefectDetailViewModel
+@{
+    ViewData["Title"] = "病害详情 - #" + Model.Defect.Id;
+    var defect = Model.Defect;
+    var bridge = Model.Bridge;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Defect" asp-action="Index">病害管理</a></li>
+            <li class="breadcrumb-item active" aria-current="page">病害详情 #@defect.Id</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2>
+            @if (defect.IsUpgraded || defect.RequiresStructuralReview)
+            {
+                <span class="badge bg-danger me-2">⬆️ 已升级</span>
+            }
+            @defect.Title
+        </h2>
+        <p class="text-muted mb-0">
+            编号：#@defect.Id | 
+            桥梁：@bridge.Name | 
+            位置：@defect.LocationOnBridge
+        </p>
+    </div>
+    <div>
+        @if (defect.Severity.HasValue)
+        {
+            var severityText = defect.Severity.Value switch
+            {
+                DefectSeverity.Slight => "轻微",
+                DefectSeverity.Moderate => "一般",
+                DefectSeverity.Severe => "严重",
+                DefectSeverity.Structural => "结构性",
+                _ => "未知"
+            };
+            var severityClass = defect.Severity.Value switch
+            {
+                DefectSeverity.Slight => "bg-success",
+                DefectSeverity.Moderate => "bg-warning",
+                DefectSeverity.Severe => "bg-danger",
+                DefectSeverity.Structural => "bg-dark",
+                _ => "bg-secondary"
+            };
+            <span class="badge fs-6 @severityClass p-2">@severityText病害</span>
+        }
+        else
+        {
+            <span class="badge fs-6 bg-secondary p-2">待评定</span>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">📌 病害状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3">
+                    @{
+                        var statusText = defect.Status switch
+                        {
+                            DefectStatus.PendingAssessment => "待评定",
+                            DefectStatus.Assessing => "评定中",
+                            DefectStatus.PendingMaintenance => "待维修",
+                            DefectStatus.MaintenanceInProgress => "维修中",
+                            DefectStatus.PendingAcceptance => "待验收",
+                            DefectStatus.Closed => "已销项",
+                            DefectStatus.Returned => "已退回",
+                            _ => "未知"
+                        };
+                        var statusClass = defect.Status switch
+                        {
+                            DefectStatus.PendingAssessment => "bg-secondary",
+                            DefectStatus.Assessing => "bg-info",
+                            DefectStatus.PendingMaintenance => "bg-warning",
+                            DefectStatus.MaintenanceInProgress => "bg-primary",
+                            DefectStatus.PendingAcceptance => "bg-info",
+                            DefectStatus.Closed => "bg-success",
+                            DefectStatus.Returned => "bg-danger",
+                            _ => "bg-secondary"
+                        };
+                        <span class="badge fs-5 @statusClass p-2">@statusText</span>
+                    }
+
+                    <div class="flex-grow-1">
+                        <div class="progress" style="height: 8px;">
+                            @{
+                                int progress = defect.Status switch
+                                {
+                                    DefectStatus.PendingAssessment => 0,
+                                    DefectStatus.Assessing => 25,
+                                    DefectStatus.PendingMaintenance => 50,
+                                    DefectStatus.MaintenanceInProgress => 75,
+                                    DefectStatus.PendingAcceptance => 90,
+                                    DefectStatus.Closed => 100,
+                                    DefectStatus.Returned => 75,
+                                    _ => 0
+                                };
+                                <div class="progress-bar" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+                            }
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted mt-1">
+                            <span>登记</span>
+                            <span>评定</span>
+                            <span>维修</span>
+                            <span>验收</span>
+                            <span>销项</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (defect.RequiresStructuralReview)
+                {
+                    <div class="alert alert-danger mt-3 mb-0">
+                        <strong>⚠️ 结构性病害提示：</strong>此病害为结构性病害，必须由工程师或以上级别人员进行验收销项，普通验收人员无权直接销项。
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">🏗️ 桥梁信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">桥梁名称</label>
+                        <p class="mb-0 fw-bold">@bridge.Name</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">所属路线</label>
+                        <p class="mb-0">@bridge.RouteName</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">桥型</label>
+                        <p class="mb-0">@(bridge.BridgeType switch
+                        {
+                            BridgeType.BeamBridge => "梁桥",
+                            BridgeType.ArchBridge => "拱桥",
+                            BridgeType.CableStayedBridge => "斜拉桥",
+                            BridgeType.SuspensionBridge => "悬索桥",
+                            BridgeType.TrussBridge => "桁架桥",
+                            BridgeType.BoxGirderBridge => "箱梁桥",
+                            _ => "未知"
+                        })</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">位置</label>
+                        <p class="mb-0">@bridge.Location</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">桥梁长度</label>
+                        <p class="mb-0">@bridge.Length 米</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label text-muted">桥梁宽度</label>
+                        <p class="mb-0">@bridge.Width 米</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted">建成年份</label>
+                        <p class="mb-0">@bridge.BuildYear 年</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted">管理单位</label>
+                        <p class="mb-0">@bridge.ManagementUnit</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">📐 裂缝参数</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted">位置描述</label>
+                        <p class="mb-0">@defect.LocationOnBridge</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted">裂缝长度</label>
+                        <p class="mb-0 fw-bold text-primary">@defect.CrackLength 米</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted">裂缝宽度</label>
+                        <p class="mb-0 fw-bold text-warning">@defect.CrackWidth 毫米</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label text-muted">裂缝深度</label>
+                        <p class="mb-0 fw-bold text-danger">@defect.CrackDepth 米</p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted">裂缝走向</label>
+                        <p class="mb-0">@defect.CrackDirection</p>
+                    </div>
+                </div>
+                <hr />
+                <div class="mb-0">
+                    <label class="form-label text-muted">病害描述</label>
+                    <p class="mb-0">@defect.Description</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">📡 传感器监测数据</h5>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.SensorReadings.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>传感器编号</th>
+                                    <th>传感器类型</th>
+                                    <th>监测值</th>
+                                    <th>单位</th>
+                                    <th>采集时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var reading in Model.SensorReadings.Take(20))
+                                {
+                                    <tr>
+                                        <td>@reading.Sensor?.SensorCode</td>
+                                        <td>@reading.Sensor?.SensorType</td>
+                                        <td>
+                                            <span class="fw-bold @(reading.Value > 1.0 ? "text-danger" : "text-success")">
+                                                @reading.Value?.ToString("F3")
+                                            </span>
+                                        </td>
+                                        <td>@reading.Unit</td>
+                                        <td>@reading.ReadingTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-center text-muted py-4 mb-0">暂无传感器数据</p>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(defect.MaintenancePlan) || !string.IsNullOrEmpty(defect.MaintenanceResult))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🔧 维修方案与结果</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(defect.MaintenancePlan))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-muted">维修方案</label>
+                            <div class="bg-light p-3 rounded">
+                                @Html.Raw(defect.MaintenancePlan.Replace("\n", "<br/>"))
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(defect.MaintenanceResult))
+                    {
+                        <div>
+                            <label class="form-label text-muted">维修结果</label>
+                            <div class="bg-light p-3 rounded">
+                                @Html.Raw(defect.MaintenanceResult.Replace("\n", "<br/>"))
+                            </div>
+                        </div>
+                    }
+                    @if (defect.MaintenanceDurationHours.HasValue)
+                    {
+                        <div class="mt-3">
+                            <span class="badge bg-info">维修耗时：@defect.MaintenanceDurationHours 小时</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">⚡ 操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    @if ((defect.Status == DefectStatus.PendingAssessment || defect.Status == DefectStatus.Assessing) 
+                         && (User.IsInRole("Engineer") || User.IsInRole("Admin")))
+                    {
+                        <a asp-controller="Defect" asp-action="Assess" asp-route-id="@defect.Id" class="btn btn-primary">
+                            📝 病害评定
+                        </a>
+                    }
+
+                    @if (defect.Status == DefectStatus.PendingMaintenance 
+                         && (User.IsInRole("MaintenanceUnit") || User.IsInRole("Admin")))
+                    {
+                        <form asp-controller="Defect" asp-action="StartMaintenance" method="post">
+                            <input type="hidden" name="id" value="@defect.Id" />
+                            <button type="submit" class="btn btn-success w-100">
+                                🔧 开始维修
+                            </button>
+                        </form>
+                    }
+
+                    @if ((defect.Status == DefectStatus.MaintenanceInProgress || defect.Status == DefectStatus.Returned)
+                         && (User.IsInRole("MaintenanceUnit") || User.IsInRole("Admin")))
+                    {
+                        <a asp-controller="Defect" asp-action="SubmitMaintenance" asp-route-id="@defect.Id" class="btn btn-info text-white">
+                            ✅ 提交维修结果
+                        </a>
+                    }
+
+                    @if (defect.Status == DefectStatus.PendingAcceptance 
+                         && (User.IsInRole("Acceptor") || User.IsInRole("Admin")))
+                    {
+                        if (defect.RequiresStructuralReview && !User.IsInRole("Engineer") && !User.IsInRole("Admin"))
+                        {
+                            <button type="button" class="btn btn-secondary" disabled>
+                                ⚠️ 结构性病害需工程师验收
+                            </button>
+                        }
+                        else
+                        {
+                            <a asp-controller="Defect" asp-action="Accept" asp-route-id="@defect.Id" class="btn btn-success">
+                                ✅ 验收销项/退回
+                            </a>
+                        }
+                    }
+
+                    @if (!defect.IsUpgraded && !defect.RequiresStructuralReview 
+                         && defect.Severity < DefectSeverity.Structural
+                         && (User.IsInRole("Engineer") || User.IsInRole("Admin")))
+                    {
+                        <form asp-controller="Defect" asp-action="Upgrade" method="post">
+                            <input type="hidden" name="id" value="@defect.Id" />
+                            <button type="submit" class="btn btn-warning w-100" 
+                                    onclick="return confirm('确定要将此病害升级为结构性病害吗？升级后将需要高级别人员验收。')">
+                                ⬆️ 升级病害
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">👤 相关人员</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <span class="text-muted">巡检员：</span>
+                        <span class="fw-bold">@defect.Reporter?.FullName</span>
+                        <span class="badge bg-secondary ms-1">巡检员</span>
+                    </li>
+                    @if (defect.Assessor != null)
+                    {
+                        <li class="mb-2">
+                            <span class="text-muted">工程师：</span>
+                            <span class="fw-bold">@defect.Assessor.FullName</span>
+                            <span class="badge bg-info ms-1">工程师</span>
+                        </li>
+                    }
+                    @if (defect.MaintenanceUnit != null)
+                    {
+                        <li class="mb-2">
+                            <span class="text-muted">养护单位：</span>
+                            <span class="fw-bold">@defect.MaintenanceUnit.FullName</span>
+                            <span class="badge bg-warning ms-1">养护</span>
+                        </li>
+                    }
+                    @if (defect.Acceptor != null)
+                    {
+                        <li>
+                            <span class="text-muted">验收人：</span>
+                            <span class="fw-bold">@defect.Acceptor.FullName</span>
+                            <span class="badge bg-success ms-1">验收</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">📅 时间节点</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <span class="text-muted">登记时间：</span>
+                        <br />
+                        <span class="fw-bold">@defect.ReportedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                    </li>
+                    @if (defect.AssessedAt.HasValue)
+                    {
+                        <li class="mb-2">
+                            <span class="text-muted">评定时间：</span>
+                            <br />
+                            <span class="fw-bold">@defect.AssessedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                        </li>
+                    }
+                    @if (defect.MaintenanceStartedAt.HasValue)
+                    {
+                        <li class="mb-2">
+                            <span class="text-muted">维修开始：</span>
+                            <br />
+                            <span class="fw-bold">@defect.MaintenanceStartedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                        </li>
+                    }
+                    @if (defect.MaintenanceCompletedAt.HasValue)
+                    {
+                        <li class="mb-2">
+                            <span class="text-muted">维修完成：</span>
+                            <br />
+                            <span class="fw-bold">@defect.MaintenanceCompletedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                        </li>
+                    }
+                    @if (defect.AcceptedAt.HasValue)
+                    {
+                        <li>
+                            <span class="text-muted">验收时间：</span>
+                            <br />
+                            <span class="fw-bold">@defect.AcceptedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">📜 历史节点</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.Histories.Any())
+        {
+            <div class="timeline">
+                @foreach (var history in Model.Histories)
+                {
+                    var statusIcon = history.ActionType switch
+                    {
+                        DefectStatus.PendingAssessment => "📝",
+                        DefectStatus.Assessing => "🔍",
+                        DefectStatus.PendingMaintenance => "📋",
+                        DefectStatus.MaintenanceInProgress => "🔧",
+                        DefectStatus.PendingAcceptance => "📨",
+                        DefectStatus.Closed => "✅",
+                        DefectStatus.Returned => "↩️",
+                        _ => "📌"
+                    };
+                    var statusBg = history.ActionType switch
+                    {
+                        DefectStatus.PendingAssessment => "bg-secondary",
+                        DefectStatus.Assessing => "bg-info",
+                        DefectStatus.PendingMaintenance => "bg-warning",
+                        DefectStatus.MaintenanceInProgress => "bg-primary",
+                        DefectStatus.PendingAcceptance => "bg-info",
+                        DefectStatus.Closed => "bg-success",
+                        DefectStatus.Returned => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker @statusBg">
+                            @statusIcon
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="mb-1">@history.Operator?.FullName</h6>
+                                <small class="text-muted">@history.OperatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                            </div>
+                            <p class="mb-1">@history.Description</p>
+                            @if (!string.IsNullOrEmpty(history.Remark))
+                            {
+                                <span class="badge bg-light text-dark">@history.Remark</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-center text-muted mb-0">暂无历史记录</p>
+        }
+    </div>
+</div>

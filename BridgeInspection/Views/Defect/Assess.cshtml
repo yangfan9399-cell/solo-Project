@@ -1,0 +1,85 @@
+@model BridgeInspection.ViewModels.DefectAssessmentViewModel
+@{
+    ViewData["Title"] = "病害评定";
+    var defect = ViewBag.Defect as BridgeInspection.Models.Defect;
+}
+
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Defect" asp-action="Index">病害管理</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Defect" asp-action="Details" asp-route-id="@Model.DefectId">病害详情</a></li>
+            <li class="breadcrumb-item active" aria-current="page">病害评定</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🔍 病害评定</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">📋 病害信息</h6>
+                    <p class="mb-1"><strong>编号：</strong>#@defect?.Id</p>
+                    <p class="mb-1"><strong>标题：</strong>@defect?.Title</p>
+                    <p class="mb-1"><strong>桥梁：</strong>@defect?.Bridge?.Name</p>
+                    <p class="mb-0"><strong>位置：</strong>@defect?.LocationOnBridge</p>
+                </div>
+
+                <form asp-controller="Defect" asp-action="Assess" method="post">
+                    <input type="hidden" asp-for="DefectId" />
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Severity" class="form-label">病害等级 <span class="text-danger">*</span></label>
+                        <select asp-for="Severity" class="form-select">
+                            <option value="1">轻微 - 表面细小裂缝，不影响结构安全</option>
+                            <option value="2">一般 - 裂缝较明显，需观察或简单处理</option>
+                            <option value="3">严重 - 裂缝较大较深，影响结构安全</option>
+                            <option value="4">结构性 - 结构性裂缝，存在重大安全隐患</option>
+                        </select>
+                        <span asp-validation-for="Severity" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="IsUpgraded" class="form-check-input" />
+                        <label asp-for="IsUpgraded" class="form-check-label">
+                            <strong class="text-warning">升级为重点关注病害</strong>
+                            <small class="text-muted d-block">升级后将需要更高权限人员验收销项</small>
+                        </label>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <small>💡 <strong>提示：</strong>评定为"结构性"等级的病害将自动升级，必须由工程师或以上级别人员验收销项。</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="AssessmentComment" class="form-label">评定意见</label>
+                        <textarea asp-for="AssessmentComment" class="form-control" rows="4" placeholder="请输入评定意见..."></textarea>
+                        <span asp-validation-for="AssessmentComment" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MaintenanceUnitId" class="form-label">指派养护单位</label>
+                        <select asp-for="MaintenanceUnitId" class="form-select">
+                            <option value="">暂不指派</option>
+                            @foreach (var unit in Model.MaintenanceUnits!)
+                            {
+                                <option value="@unit.Id">@unit.FullName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="MaintenanceUnitId" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a asp-controller="Defect" asp-action="Details" asp-route-id="@Model.DefectId" class="btn btn-secondary">取消</a>
+                        <button type="submit" class="btn btn-primary">提交评定</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
