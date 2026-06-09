@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CONSULTANT
+  CLIENT
+  AGENT
+  SUPERVISOR
+}
+
+enum TrademarkStatus {
+  DRAFT
+  PENDING_UPLOAD
+  MATERIALS_UPLOADED
+  MATERIALS_DEFICIENT
+  AGENT_APPROVED
+  SUBMITTED
+  SUPERVISOR_REVIEW
+  ARCHIVED
+  ABANDONED
+  EXPEDITED
+}
+
+enum DocumentType {
+  TRADEMARK_CERTIFICATE
+  IDENTITY_PROOF
+  POWER_OF_ATTORNEY
+  RENEWAL_APPLICATION
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultantTrademarks  Trademark[] @relation("ConsultantTrademarks")
+  clientTrademarks      Trademark[] @relation("ClientTrademarks")
+  agentReviews          Trademark[] @relation("AgentReviews")
+  supervisorReviews     Trademark[] @relation("SupervisorReviews")
+  uploadedDocuments     Document[]  @relation("UploadedDocuments")
+  reviewHistories       ReviewHistory[]
+}
+
+model Trademark {
+  id             String   @id @default(cuid())
+  trademarkNo    String
+  trademarkName  String
+  category       Int
+  categoryName   String
+  registrationDate DateTime
+  expiryDate     DateTime
+  status         TrademarkStatus @default(DRAFT)
+  isExpedited    Boolean  @default(false)
+  expeditedReason String?
+  notes          String?
+
+  consultantId   String
+  clientId       String
+  agentId        String?
+  supervisorId   String?
+
+  consultant     User     @relation("ConsultantTrademarks", fields: [consultantId], references: [id])
+  client         User     @relation("ClientTrademarks", fields: [clientId], references: [id])
+  agent          User?    @relation("AgentReviews", fields: [agentId], references: [id])
+  supervisor     User?    @relation("SupervisorReviews", fields: [supervisorId], references: [id])
+
+  documents      Document[]
+  reviewHistories ReviewHistory[]
+  materialIssues MaterialIssue[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([expiryDate])
+  @@index([clientId])
+  @@index([category])
+}
+
+model Document {
+  id             String   @id @default(cuid())
+  type           DocumentType
+  name           String
+  fileUrl        String
+  status         DocumentStatus @default(PENDING)
+  rejectionReason String?
+  uploadedById   String
+  trademarkId    String
+
+  uploadedBy     User     @relation("UploadedDocuments", fields: [uploadedById], references: [id])
+  trademark      Trademark @relation(fields: [trademarkId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ReviewHistory {
+  id             String   @id @default(cuid())
+  action         String
+  comment        String?
+  status         TrademarkStatus
+  trademarkId    String
+  userId         String
+
+  trademark      Trademark @relation(fields: [trademarkId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
+
+  createdAt      DateTime @default(now())
+}
+
+model MaterialIssue {
+  id             String   @id @default(cuid())
+  issueType      String
+  description    String
+  resolved       Boolean  @default(false)
+  trademarkId    String
+
+  trademark      Trademark @relation(fields: [trademarkId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
