@@ -294,6 +294,8 @@ class RouteEvent(models.Model):
         FAULT_REPORTED = 'fault_reported', '故障上报'
         COMPLAINT_RECEIVED = 'complaint_received', '收到投诉'
         COMPLAINT_CONFIRMED = 'complaint_confirmed', '投诉确认'
+        COMPLAINT_RESOLVED = 'complaint_resolved', '投诉整改完成'
+        COMPLAINT_CLOSED = 'complaint_closed', '投诉结案'
         REVIEW = 'review', '复核记录'
         REASSIGNED = 'reassigned', '车辆改派'
         SUSPENDED = 'suspended', '任务暂停'

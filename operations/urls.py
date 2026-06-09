@@ -29,6 +29,7 @@ urlpatterns = [
     path('complaints/create/assignment/<int:assignment_pk>/', views.complaint_create, name='complaint_create'),
     path('complaints/<int:pk>/confirm/', views.complaint_confirm, name='complaint_confirm'),
     path('complaints/<int:pk>/resolve/', views.complaint_resolve, name='complaint_resolve'),
+    path('complaints/<int:pk>/close/', views.complaint_close, name='complaint_close'),
 
     path('reviews/', views.review_list, name='review_list'),
     path('reviews/<int:pk>/', views.review_detail, name='review_detail'),

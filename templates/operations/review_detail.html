@@ -61,12 +61,37 @@
     {% endif %}
 
     {% if review.complaint %}
-    <div class="detail-item">
-        <div class="label">关联投诉</div>
-        <div class="value">
-            <a href="{% url 'operations:complaint_detail' review.complaint.pk %}">
-                {{ review.complaint.get_complaint_type_display }} - {{ review.complaint.station.name }}
-            </a>
+    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed #ddd;">
+        <h4 style="margin-bottom: 1rem;">📣 关联投诉整改结果</h4>
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <strong>
+                    <a href="{% url 'operations:complaint_detail' review.complaint.pk %}">
+                        {{ review.complaint.get_complaint_type_display }} - {{ review.complaint.station.name }}
+                    </a>
+                </strong>
+                <span class="badge badge-{% if review.complaint.status == 'resolved' or review.complaint.status == 'closed' %}completed{% elif review.complaint.status == 'pending' %}suspended{% else %}in-progress{% endif %}">
+                    {{ review.complaint.get_status_display }}
+                </span>
+            </div>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 0.5rem;">
+                {{ review.complaint.description }}
+            </p>
+            {% if review.complaint.photo_evidence %}
+            <div style="margin-bottom: 0.75rem;">
+                <img src="{{ review.complaint.photo_evidence }}" alt="投诉证据"
+                     style="max-width: 200px; max-height: 150px; border-radius: 4px; border: 1px solid #eee;">
+            </div>
+            {% endif %}
+            {% if review.complaint.resolution_notes %}
+            <div style="padding-top: 0.5rem; border-top: 1px dashed #ccc; font-size: 0.9rem;">
+                <strong style="color: #27ae60;">整改说明：</strong>
+                <span>{{ review.complaint.resolution_notes }}</span>
+                <span style="color: #999; font-size: 0.85rem; margin-left: 0.5rem;">
+                    ({{ review.complaint.resolved_at|date:"Y-m-d H:i" }})
+                </span>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endif %}

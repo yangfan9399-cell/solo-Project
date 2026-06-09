@@ -686,8 +686,8 @@ def complaint_confirm(request, pk):
         complaint.confirmed_notes = confirmed_notes
 
         if confirmed:
-            complaint.status = Complaint.Status.CONFIRMED
-            event_desc = f'巡检员确认投诉属实：{confirmed_notes}'
+            complaint.status = Complaint.Status.IN_PROGRESS
+            event_desc = f'巡检员确认投诉属实，进入整改：{confirmed_notes}'
         else:
             complaint.status = Complaint.Status.CLOSED
             event_desc = f'巡检员核实投诉不属实：{confirmed_notes}'
@@ -724,11 +724,45 @@ def complaint_resolve(request, pk):
         complaint.resolution_notes = resolution_notes
         complaint.save()
 
+        if complaint.assignment:
+            _add_event(
+                complaint.assignment,
+                RouteEvent.Type.COMPLAINT_RESOLVED,
+                f'投诉整改完成：{resolution_notes}',
+                request.user
+            )
+
         messages.success(request, '投诉已解决')
         return redirect('operations:complaint_detail', pk=pk)
 
     context = {'complaint': complaint}
     return render(request, 'operations/complaint_resolve.html', context)
+
+
+@login_required
+def complaint_close(request, pk):
+    complaint = get_object_or_404(Complaint, pk=pk)
+
+    if not _is_supervisor(request.user) and not request.user.is_staff:
+        return HttpResponseForbidden('无权限操作')
+
+    if complaint.status != Complaint.Status.RESOLVED:
+        messages.error(request, '只有已解决的投诉才能结案')
+        return redirect('operations:complaint_detail', pk=pk)
+
+    complaint.status = Complaint.Status.CLOSED
+    complaint.save()
+
+    if complaint.assignment:
+        _add_event(
+            complaint.assignment,
+            RouteEvent.Type.COMPLAINT_CLOSED,
+            f'主管结案：{complaint.get_complaint_type_display()}',
+            request.user
+        )
+
+    messages.success(request, '投诉已结案')
+    return redirect('operations:complaint_detail', pk=pk)
 
 
 @login_required
@@ -768,13 +802,15 @@ def review_create(request, assignment_pk):
         review_notes = request.POST.get('review_notes', '')
         has_deadline = request.POST.get('has_deadline') == 'yes'
         rectification_deadline = request.POST.get('rectification_deadline')
+        complaint_id = request.POST.get('complaint')
 
         review = ReviewRecord.objects.create(
             assignment=assignment,
             reviewer=request.user,
             review_result=review_result,
             review_notes=review_notes,
-            rectification_deadline=rectification_deadline if has_deadline and rectification_deadline else None
+            rectification_deadline=rectification_deadline if has_deadline and rectification_deadline else None,
+            complaint_id=complaint_id if complaint_id else None
         )
 
         _add_event(
@@ -787,9 +823,14 @@ def review_create(request, assignment_pk):
         messages.success(request, '复核记录已创建')
         return redirect('operations:review_detail', pk=review.pk)
 
+    complaints = assignment.complaints.exclude(status=Complaint.Status.CLOSED)
+    preselected_complaint = request.GET.get('complaint', '')
+
     context = {
         'assignment': assignment,
         'result_choices': ReviewRecord.Result.choices,
+        'complaints': complaints,
+        'preselected_complaint': preselected_complaint,
     }
     return render(request, 'operations/review_form.html', context)
 

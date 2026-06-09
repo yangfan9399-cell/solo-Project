@@ -3,103 +3,248 @@
 {% block title %}投诉详情{% endblock %}
 
 {% block content %}
-<h2 class="page-title">投诉详情</h2>
-
-<div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2 class="page-title" style="margin-bottom: 0.5rem;">投诉详情</h2>
         <span class="badge badge-{{ complaint.complaint_type }}" style="font-size: 1rem; padding: 0.4rem 1rem;">
             {{ complaint.get_complaint_type_display }}
         </span>
-        <span class="badge badge-{% if complaint.status == 'resolved' or complaint.status == 'closed' %}completed{% elif complaint.status == 'pending' %}suspended{% else %}in-progress{% endif %}" style="font-size: 1rem; padding: 0.4rem 1rem;">
+        <span class="badge badge-{% if complaint.status == 'resolved' or complaint.status == 'closed' %}completed{% elif complaint.status == 'pending' %}suspended{% else %}in-progress{% endif %}" style="font-size: 1rem; padding: 0.4rem 1rem; margin-left: 0.5rem;">
             {{ complaint.get_status_display }}
         </span>
     </div>
-
-    <div class="detail-grid">
-        <div class="detail-item">
-            <div class="label">站点</div>
-            <div class="value">
-                <a href="{% url 'operations:station_detail' complaint.station.pk %}">
-                    {{ complaint.station.name }}
-                </a>
-            </div>
-        </div>
-        <div class="detail-item">
-            <div class="label">投诉时间</div>
-            <div class="value">{{ complaint.reported_at|date:"Y-m-d H:i" }}</div>
-        </div>
-        <div class="detail-item">
-            <div class="label">投诉人</div>
-            <div class="value">{{ complaint.complainant }}</div>
-        </div>
-        <div class="detail-item">
-            <div class="label">联系电话</div>
-            <div class="value">{{ complaint.complainant_phone }}</div>
-        </div>
+    <div class="action-bar" style="margin: 0;">
         {% if complaint.assignment %}
-        <div class="detail-item">
-            <div class="label">关联任务</div>
-            <div class="value">
-                <a href="{% url 'operations:assignment_detail' complaint.assignment.pk %}">
-                    {{ complaint.assignment.route.code }} - {{ complaint.assignment.assigned_date|date:"Y-m-d" }}
-                </a>
+        <a href="{% url 'operations:assignment_detail' complaint.assignment.pk %}" class="btn btn-secondary">返回任务</a>
+        {% endif %}
+        <a href="{% url 'operations:complaint_list' %}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div>
+        <div class="card">
+            <h3>投诉信息</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="label">站点</div>
+                    <div class="value">
+                        <a href="{% url 'operations:station_detail' complaint.station.pk %}">
+                            {{ complaint.station.name }}
+                        </a>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">投诉时间</div>
+                    <div class="value">{{ complaint.reported_at|date:"Y-m-d H:i" }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">投诉人</div>
+                    <div class="value">{{ complaint.complainant }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="label">联系电话</div>
+                    <div class="value">{{ complaint.complainant_phone }}</div>
+                </div>
+                {% if complaint.assignment %}
+                <div class="detail-item">
+                    <div class="label">关联任务</div>
+                    <div class="value">
+                        <a href="{% url 'operations:assignment_detail' complaint.assignment.pk %}">
+                            {{ complaint.assignment.route.code }} - {{ complaint.assignment.assigned_date|date:"Y-m-d" }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                {% if complaint.inspector %}
+                <div class="detail-item">
+                    <div class="label">处理巡检员</div>
+                    <div class="value">{{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="detail-item">
+                <div class="label">投诉描述</div>
+                <div class="value" style="line-height: 1.6;">{{ complaint.description }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>投诉证据</h3>
+            {% if complaint.photo_evidence %}
+            <div style="text-align: center;">
+                <img src="{{ complaint.photo_evidence }}" alt="投诉证据照片"
+                     style="max-width: 100%; max-height: 400px; border-radius: 8px; border: 2px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #999; padding: 2rem;">暂无照片证据</p>
+            {% endif %}
+        </div>
+
+        {% if complaint.confirmed_notes %}
+        <div class="card" style="border-left: 4px solid #3498db;">
+            <h3 style="color: #2980b9;">巡检核实</h3>
+            <div class="detail-item">
+                <div class="label">核实意见</div>
+                <div class="value" style="line-height: 1.6;">{{ complaint.confirmed_notes }}</div>
+            </div>
+            <div style="font-size: 0.85rem; color: #999; margin-top: 0.5rem; text-align: right;">
+                核实时间：{{ complaint.confirmed_at|date:"Y-m-d H:i" }}
+                &nbsp;·&nbsp;
+                核实人：{{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}
             </div>
         </div>
         {% endif %}
-        {% if complaint.inspector %}
-        <div class="detail-item">
-            <div class="label">处理巡检员</div>
-            <div class="value">{{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}</div>
+
+        {% if complaint.resolution_notes %}
+        <div class="card" style="border-left: 4px solid #27ae60;">
+            <h3 style="color: #27ae60;">整改完成</h3>
+            <div class="detail-item">
+                <div class="label">整改说明</div>
+                <div class="value" style="line-height: 1.6;">{{ complaint.resolution_notes }}</div>
+            </div>
+            <div style="font-size: 0.85rem; color: #999; margin-top: 0.5rem; text-align: right;">
+                完成时间：{{ complaint.resolved_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if complaint.reviews.all %}
+        <div class="card">
+            <h3>主管复核记录 ({{ complaint.reviews.count }})</h3>
+            {% for review in complaint.reviews.all %}
+            <div style="border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span class="badge badge-{% if review.review_result == 'pass' %}completed{% elif review.review_result == 'needs_rectification' %}suspended{% else %}in-progress{% endif %}">
+                        {{ review.get_review_result_display }}
+                    </span>
+                    <span style="font-size: 0.85rem; color: #999;">
+                        {{ review.reviewed_at|date:"Y-m-d H:i" }}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">
+                    复核人：{{ review.reviewer.profile.real_name|default:review.reviewer.username }}
+                </div>
+                <div style="font-size: 0.9rem; color: #333; margin-bottom: 0.5rem;">
+                    {{ review.review_notes }}
+                </div>
+                {% if review.rectification_deadline %}
+                <div style="font-size: 0.85rem; color: #e67e22;">
+                    整改期限：{{ review.rectification_deadline|date:"Y-m-d H:i" }}
+                </div>
+                {% endif %}
+                {% if review.rectification_notes %}
+                <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #ddd; font-size: 0.85rem; color: #27ae60;">
+                    <strong>整改说明：</strong>{{ review.rectification_notes }}
+                    {% if review.rectification_completed_at %}
+                    <span style="color: #999; margin-left: 0.5rem;">
+                        ({{ review.rectification_completed_at|date:"Y-m-d H:i" }})
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div style="margin-top: 0.5rem; text-align: right;">
+                    <a href="{% url 'operations:review_detail' review.pk %}" class="btn btn-sm btn-secondary">查看复核详情</a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% endif %}
     </div>
 
-    <div class="detail-item">
-        <div class="label">投诉描述</div>
-        <div class="value">{{ complaint.description }}</div>
-    </div>
-
-    {% if complaint.photo_evidence %}
-    <div class="detail-item">
-        <div class="label">证据照片</div>
-        <div class="value">
-            <img src="{{ complaint.photo_evidence }}" alt="投诉照片" style="max-width: 400px; max-height: 300px; border-radius: 6px; border: 1px solid #eee;">
+    <div>
+        <div class="card">
+            <h3>处理进度</h3>
+            <div class="timeline">
+                <div class="timeline-item" style="border-color: #27ae60;">
+                    <div class="time">{{ complaint.reported_at|date:"Y-m-d H:i" }}</div>
+                    <div class="event-type" style="color: #27ae60;">投诉提交</div>
+                    <div class="description">{{ complaint.complaint_type }}</div>
+                </div>
+                {% if complaint.confirmed_at %}
+                <div class="timeline-item" style="border-color: #3498db;">
+                    <div class="time">{{ complaint.confirmed_at|date:"Y-m-d H:i" }}</div>
+                    <div class="event-type" style="color: #2980b9;">
+                        {% if complaint.status == 'closed' and complaint.confirmed_at %}
+                            核实不属实
+                        {% else %}
+                            核实属实
+                        {% endif %}
+                    </div>
+                    <div class="operator">
+                        {{ complaint.inspector.profile.real_name|default:complaint.inspector.username }}
+                    </div>
+                </div>
+                {% endif %}
+                {% if complaint.status == 'in_progress' %}
+                <div class="timeline-item" style="border-color: #f39c12;">
+                    <div class="time">进行中</div>
+                    <div class="event-type" style="color: #e67e22;">整改中</div>
+                </div>
+                {% endif %}
+                {% if complaint.resolved_at %}
+                <div class="timeline-item" style="border-color: #27ae60;">
+                    <div class="time">{{ complaint.resolved_at|date:"Y-m-d H:i" }}</div>
+                    <div class="event-type" style="color: #27ae60;">整改完成</div>
+                </div>
+                {% endif %}
+                {% if complaint.status == 'closed' and complaint.resolved_at %}
+                <div class="timeline-item" style="border-color: #95a5a6;">
+                    <div class="time">已结案</div>
+                    <div class="event-type" style="color: #7f8c8d;">已结案</div>
+                </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
-    {% endif %}
 
-    {% if complaint.confirmed_notes %}
-    <div class="detail-item">
-        <div class="label">确认意见</div>
-        <div class="value">{{ complaint.confirmed_notes }}</div>
-        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
-            {{ complaint.confirmed_at|date:"Y-m-d H:i" }}
+        {% if is_inspector or user.is_staff %}
+        <div class="card">
+            <h3>操作</h3>
+            <div class="action-bar" style="flex-direction: column; gap: 0.5rem;">
+                {% if complaint.status == 'pending' %}
+                <a href="{% url 'operations:complaint_confirm' complaint.pk %}" class="btn btn-primary" style="width: 100%; text-align: center;">
+                    🔍 核实处理
+                </a>
+                {% endif %}
+                {% if complaint.status == 'in_progress' %}
+                <a href="{% url 'operations:complaint_resolve' complaint.pk %}" class="btn btn-success" style="width: 100%; text-align: center;">
+                    ✅ 标记整改完成
+                </a>
+                {% endif %}
+                {% if complaint.status == 'resolved' %}
+                <div style="padding: 0.75rem; background: #d4edda; border-radius: 6px; text-align: center; color: #155724; font-size: 0.9rem;">
+                    ✅ 投诉已解决，等待主管复核结案
+                </div>
+                {% endif %}
+                {% if complaint.status == 'closed' %}
+                <div style="padding: 0.75rem; background: #e2e3e5; border-radius: 6px; text-align: center; color: #383d41; font-size: 0.9rem;">
+                    📁 投诉已结案
+                </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {% if complaint.resolution_notes %}
-    <div class="detail-item">
-        <div class="label">解决说明</div>
-        <div class="value">{{ complaint.resolution_notes }}</div>
-        <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
-            {{ complaint.resolved_at|date:"Y-m-d H:i" }}
+        {% if is_supervisor or user.is_staff %}
+        <div class="card">
+            <h3>主管操作</h3>
+            <div class="action-bar" style="flex-direction: column; gap: 0.5rem;">
+                {% if complaint.assignment %}
+                <a href="{% url 'operations:review_create' complaint.assignment.pk %}?complaint={{ complaint.pk }}"
+                   class="btn btn-primary" style="width: 100%; text-align: center;">
+                    📝 发起复核
+                </a>
+                {% endif %}
+                {% if complaint.status == 'resolved' %}
+                <button class="btn btn-success" style="width: 100%;"
+                        onclick="if(confirm('确定结案此投诉？')) { window.location.href='{% url 'operations:complaint_close' complaint.pk %}'; }">
+                    📁 结案
+                </button>
+                {% endif %}
+            </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
-
-{% if is_inspector or user.is_staff %}
-<div class="card">
-    <h3>处理操作</h3>
-    <div class="action-bar">
-        {% if complaint.status == 'pending' %}
-        <a href="{% url 'operations:complaint_confirm' complaint.pk %}" class="btn btn-primary">核实处理</a>
-        {% endif %}
-        {% if complaint.status == 'confirmed' or complaint.status == 'in_progress' %}
-        <a href="{% url 'operations:complaint_resolve' complaint.pk %}" class="btn btn-success">标记已解决</a>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
 {% endblock %}

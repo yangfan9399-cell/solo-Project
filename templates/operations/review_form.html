@@ -22,6 +22,22 @@
 
     <form method="post">
         {% csrf_token %}
+        {% if complaints %}
+        <div class="form-group">
+            <label>关联投诉</label>
+            <select name="complaint">
+                <option value="">不关联投诉</option>
+                {% for c in complaints %}
+                <option value="{{ c.pk }}" {% if preselected_complaint == c.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ c.get_complaint_type_display }} - {{ c.station.name }} ({{ c.get_status_display }})
+                </option>
+                {% endfor %}
+            </select>
+            <div style="font-size: 0.8rem; color: #999; margin-top: 0.25rem;">
+                选择关联的投诉，复核结果将同步显示在投诉详情页
+            </div>
+        </div>
+        {% endif %}
         <div class="form-group">
             <label>复核结果 *</label>
             <select name="review_result" required>
