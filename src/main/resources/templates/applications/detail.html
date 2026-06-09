@@ -221,12 +221,12 @@
                                 <div sec:authorize="hasRole('OPERATION_STAFF')" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #ebeef5;">
                                     <button type="button" class="btn btn-small btn-success"
                                             th:if="${application.status.name() == 'PENDING_OPERATION' || application.status.name() == 'DRAFT'}"
-                                            th:on="'openAddressVerifyModal(' + ${addr.id} + ', true)'">
+                                            th:onclick="'openAddressVerifyModal(' + ${addr.id} + ', true)'">
                                         核验通过
                                     </button>
                                     <button type="button" class="btn btn-small btn-danger"
                                             th:if="${application.status.name() == 'PENDING_OPERATION' || application.status.name() == 'DRAFT'}"
-                                            th:on="'openAddressVerifyModal(' + ${addr.id} + ', false)'">
+                                            th:onclick="'openAddressVerifyModal(' + ${addr.id} + ', false)'">
                                         核验不通过
                                     </button>
                                 </div>
@@ -279,6 +279,7 @@
                                         <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
                                             <form th:action="@{/materials/{id}/update-status(id=${m.id})}" method="post" style="display: inline;">
                                                 <input type="hidden" name="status" value="SUBMITTED">
+                                                <input type="hidden" name="applicationId" th:value="${application.id}">
                                                 <button type="submit" class="btn btn-small"
                                                         th:disabled="${m.status.name() == 'VERIFIED' || m.status.name() == 'SUBMITTED'}"
                                                         th:if="${application.status.name() == 'DRAFT' || application.status.name() == 'MATERIAL_DEFICIENT' || application.status.name() == 'ADDRESS_VERIFICATION_FAILED'}">
@@ -289,6 +290,7 @@
                                         <div sec:authorize="hasRole('OPERATION_STAFF')">
                                             <form th:action="@{/materials/{id}/update-status(id=${m.id})}" method="post" style="display: inline;">
                                                 <input type="hidden" name="status" value="VERIFIED">
+                                                <input type="hidden" name="applicationId" th:value="${application.id}">
                                                 <button type="submit" class="btn btn-small btn-success"
                                                         th:if="${application.status.name() == 'PENDING_OPERATION' && m.status.name() != 'VERIFIED'}"
                                                         onclick="return confirm('确认核验通过？')">
@@ -297,7 +299,7 @@
                                             </form>
                                             <button type="button" class="btn btn-small btn-danger"
                                                     th:if="${application.status.name() == 'PENDING_OPERATION'}"
-                                                    th:on="'openMaterialDeficientModal(' + ${m.id} + ')'">
+                                                    th:onclick="'openMaterialDeficientModal(' + ${m.id} + ', ' + ${application.id} + ')'">
                                                 标记缺失
                                             </button>
                                         </div>
@@ -586,6 +588,7 @@
                         <textarea name="deficiencyReason" class="form-textarea" placeholder="请说明材料缺失的具体情况" required></textarea>
                     </div>
                     <input type="hidden" name="status" value="DEFICIENT">
+                    <input type="hidden" name="applicationId" id="materialDefAppId">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn" onclick="closeModal('materialDeficientModal')">取消</button>
@@ -636,9 +639,10 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        function openMaterialDeficientModal(materialId) {
+        function openMaterialDeficientModal(materialId, applicationId) {
             var form = document.getElementById('materialDeficientForm');
             form.action = '/materials/' + materialId + '/update-status';
+            document.getElementById('materialDefAppId').value = applicationId;
             openModal('materialDeficientModal');
         }
 

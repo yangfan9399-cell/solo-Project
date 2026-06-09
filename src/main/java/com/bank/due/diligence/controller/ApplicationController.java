@@ -259,12 +259,13 @@ public class ApplicationController {
     public String updateMaterialStatus(@PathVariable Long id,
                                        @RequestParam MaterialStatus status,
                                        @RequestParam(required = false) String deficiencyReason,
+                                       @RequestParam Long applicationId,
                                        Authentication authentication,
                                        RedirectAttributes redirectAttributes) {
         try {
-            Material material = applicationService.updateMaterialStatus(id, status, deficiencyReason, authentication.getName());
+            applicationService.updateMaterialStatus(id, status, deficiencyReason, authentication.getName());
             redirectAttributes.addFlashAttribute("success", "材料状态更新成功");
-            return "redirect:/applications/" + material.getApplication().getId();
+            return "redirect:/applications/" + applicationId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "更新失败: " + e.getMessage());
             return "redirect:/applications";
