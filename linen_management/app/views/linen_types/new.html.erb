@@ -1,0 +1,40 @@
+<% content_for :title, "新增布草类型" %>
+
+<div class="page-header">
+  <h1 class="page-title">新增布草类型</h1>
+  <%= link_to "返回列表", linen_types_path, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <% if @linen_type.errors.any? %>
+    <div class="form-errors">
+      <h4>表单有以下错误：</h4>
+      <ul>
+        <% @linen_type.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: @linen_type do |form| %>
+    <div class="form-group">
+      <%= form.label :name, "名称", class: "form-label" %>
+      <%= form.text_field :name, class: "form-control" %>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :category, "类别", class: "form-label" %>
+        <%= form.select :category, options_for_select(LinenType::CATEGORIES.map { |c| [I18n.t("linen_categories.#{c}", default: c.humanize), c] }), { include_blank: "请选择类别" }, class: "form-select" %>
+      </div>
+      <div class="form-group">
+        <%= form.label :unit_price, "单价（元）", class: "form-label" %>
+        <%= form.number_field :unit_price, class: "form-control", min: 0, step: "0.01" %>
+      </div>
+    </div>
+    <div class="btn-group">
+      <%= form.submit "保存", class: "btn btn-primary" %>
+      <%= link_to "取消", linen_types_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

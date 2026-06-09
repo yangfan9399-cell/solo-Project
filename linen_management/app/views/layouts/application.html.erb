@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "酒店布草洗涤管理系统" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Linen Management">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="navbar-container">
+        <div class="navbar-brand">
+          <%= link_to "布草洗涤管理系统", root_path, class: "brand-link" %>
+        </div>
+        <div class="navbar-menu">
+          <%= link_to "首页", root_path, class: "nav-link" %>
+          <%= link_to "批次管理", linen_batches_path, class: "nav-link" %>
+          <%= link_to "统计分析", statistics_path, class: "nav-link" %>
+          <div class="nav-dropdown">
+            <span class="nav-link dropdown-toggle">基础数据 ▾</span>
+            <div class="dropdown-menu">
+              <%= link_to "酒店管理", hotels_path, class: "dropdown-item" %>
+              <%= link_to "布草类型", linen_types_path, class: "dropdown-item" %>
+              <%= link_to "用户管理", users_path, class: "dropdown-item" %>
+            </div>
+          </div>
+        </div>
+        <div class="navbar-user">
+          <span class="user-label">当前用户:</span>
+          <% if current_user %>
+            <span class="user-name"><%= current_user.name %></span>
+            <span class="user-role">(<%= current_user.role_name %>)</span>
+          <% end %>
+          <%= select_tag "user_switch",
+              options_from_collection_for_select(all_users, :id, :name, current_user&.id),
+              class: "user-select",
+              onchange: "window.location.href = '/?user_id=' + this.value",
+              prompt: "切换用户" %>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-container">
+      <% if notice %>
+        <div class="alert alert-notice"><%= notice %></div>
+      <% end %>
+      <% if alert %>
+        <div class="alert alert-alert"><%= alert %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-container">
+        <p>&copy; <%= Date.today.year %> 酒店布草洗涤交接与赔损核算系统</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+<% content_for :title, "#{@user.name} - 用户详情" %>
+
+<div class="page-header">
+  <h1 class="page-title">用户详情</h1>
+  <div class="btn-group">
+    <%= link_to "返回列表", users_path, class: "btn btn-secondary" %>
+    <%= link_to "编辑", edit_user_path(@user), class: "btn btn-outline" %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="detail-item">
+    <div class="detail-label">用户名</div>
+    <div class="detail-value"><%= @user.name %></div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">角色</div>
+    <div class="detail-value"><span class="badge badge-info"><%= @user.role_name %></span></div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">交接批次</div>
+    <div class="detail-value"><%= @user.handover_batches.count %> 个</div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">返还登记</div>
+    <div class="detail-value"><%= @user.return_batches.count %> 个</div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">质检次数</div>
+    <div class="detail-value"><%= @user.inspected_batches.count %> 次</div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">结算次数</div>
+    <div class="detail-value"><%= @user.settled_batches.count %> 次</div>
+  </div>
+</div>

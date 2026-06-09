@@ -1,0 +1,77 @@
+<% content_for :title, "#{@hotel.name} - 酒店详情" %>
+
+<div class="page-header">
+  <h1 class="page-title">酒店详情</h1>
+  <div class="btn-group">
+    <%= link_to "返回列表", hotels_path, class: "btn btn-secondary" %>
+    <%= link_to "编辑", edit_hotel_path(@hotel), class: "btn btn-outline" %>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="detail-item">
+      <div class="detail-label">酒店名称</div>
+      <div class="detail-value"><%= @hotel.name %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">地址</div>
+      <div class="detail-value"><%= @hotel.address %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">联系人</div>
+      <div class="detail-value"><%= @hotel.contact_person %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">联系电话</div>
+      <div class="detail-value"><%= @hotel.phone %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">批次总数</div>
+      <div class="detail-value"><%= @hotel.batch_count %> 个</div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">累计赔损</div>
+      <div class="detail-value amount-negative">¥<%= number_with_precision @hotel.total_damage_amount, precision: 2 %></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">最近批次</div>
+<div class="card">
+  <% if @linen_batches.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>批次号</th>
+            <th>状态</th>
+            <th>交接数量</th>
+            <th>赔损金额</th>
+            <th>创建时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @linen_batches.each do |batch| %>
+            <tr>
+              <td><%= link_to batch.batch_number, batch %></td>
+              <td><span class="badge badge-<%= batch.status %>"><%= batch.status_name %></span></td>
+              <td><%= batch.total_quantity_handed %></td>
+              <td class="amount-negative">¥<%= number_with_precision batch.total_damage_amount, precision: 2 %></td>
+              <td><%= batch.created_at.strftime('%Y-%m-%d %H:%M') %></td>
+              <td>
+                <%= link_to "查看", batch, class: "btn btn-outline btn-sm" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>暂无批次记录</p>
+    </div>
+  <% end %>
+</div>

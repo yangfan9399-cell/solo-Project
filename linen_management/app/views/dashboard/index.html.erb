@@ -1,0 +1,110 @@
+<% content_for :title, "首页 - 布草洗涤管理系统" %>
+
+<div class="page-header">
+  <h1 class="page-title">控制台概览</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value"><%= @stats[:total_batches] %></div>
+    <div class="stat-label">总批次数</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-value"><%= @stats[:settled] %></div>
+    <div class="stat-label">已完成结算</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-value"><%= @stats[:washing_batches] %></div>
+    <div class="stat-label">洗涤中</div>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-value"><%= @stats[:quality_checking] %></div>
+    <div class="stat-label">待质检</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-value"><%= @stats[:disputed] %></div>
+    <div class="stat-label">有争议</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">¥<%= number_with_precision @stats[:total_damage_amount], precision: 2 %></div>
+    <div class="stat-label">累计赔损金额</div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="card">
+    <div class="card-header">最近批次</div>
+    <% if @recent_batches.any? %>
+      <table>
+        <thead>
+          <tr>
+            <th>批次号</th>
+            <th>酒店</th>
+            <th>状态</th>
+            <th>创建时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_batches.each do |batch| %>
+            <tr>
+              <td><%= link_to batch.batch_number, batch %></td>
+              <td><%= batch.hotel.name %></td>
+              <td><span class="badge badge-<%= batch.status %>"><%= batch.status_name %></span></td>
+              <td><%= batch.created_at.strftime('%m-%d %H:%M') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <p>暂无批次记录</p>
+      </div>
+    <% end %>
+    <div style="margin-top: 15px; text-align: right;">
+      <%= link_to "查看全部批次", linen_batches_path, class: "btn btn-outline btn-sm" %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">待处理争议</div>
+    <% if @disputed_batches.any? %>
+      <% @disputed_batches.each do |batch| %>
+        <div class="detail-item">
+          <div class="detail-label">批次号</div>
+          <div class="detail-value"><%= link_to batch.batch_number, batch %></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">酒店</div>
+          <div class="detail-value"><%= batch.hotel.name %></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">短少数量</div>
+          <div class="detail-value amount-negative"><%= batch.total_quantity_short %> 件</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">确认状态</div>
+          <div class="detail-value">
+            酒店: <%= batch.discrepancy_confirmed_by_hotel? ? "✓" : "待确认" %>
+            洗涤厂: <%= batch.discrepancy_confirmed_by_laundry? ? "✓" : "待确认" %>
+          </div>
+        </div>
+        <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+      <% end %>
+    <% else %>
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <p>暂无待处理争议</p>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">快捷操作</div>
+  <div class="btn-group">
+    <%= link_to "新建批次", new_linen_batch_path, class: "btn btn-primary" %>
+    <%= link_to "批次列表", linen_batches_path, class: "btn btn-secondary" %>
+    <%= link_to "统计分析", statistics_path, class: "btn btn-success" %>
+  </div>
+</div>

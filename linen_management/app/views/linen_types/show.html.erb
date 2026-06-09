@@ -1,0 +1,28 @@
+<% content_for :title, "#{@linen_type.name} - 布草类型详情" %>
+
+<div class="page-header">
+  <h1 class="page-title">布草类型详情</h1>
+  <div class="btn-group">
+    <%= link_to "返回列表", linen_types_path, class: "btn btn-secondary" %>
+    <%= link_to "编辑", edit_linen_type_path(@linen_type), class: "btn btn-outline" %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="detail-item">
+    <div class="detail-label">名称</div>
+    <div class="detail-value"><%= @linen_type.name %></div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">类别</div>
+    <div class="detail-value"><%= @linen_type.category_name %></div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">单价</div>
+    <div class="detail-value">¥<%= number_with_precision @linen_type.unit_price, precision: 2 %></div>
+  </div>
+  <div class="detail-item">
+    <div class="detail-label">使用次数</div>
+    <div class="detail-value"><%= @linen_type.linen_items.count %> 次</div>
+  </div>
+</div>

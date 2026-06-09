@@ -1,0 +1,171 @@
+<% content_for :title, "统计分析 - 布草洗涤管理系统" %>
+
+<div class="page-header">
+  <h1 class="page-title">统计分析</h1>
+</div>
+
+<div class="filter-bar">
+  <%= form_tag statistics_path, method: :get do %>
+    <div class="filter-item">
+      <label class="form-label">开始日期</label>
+      <%= date_field_tag :date_from, @date_from, class: "form-control" %>
+    </div>
+    <div class="filter-item">
+      <label class="form-label">结束日期</label>
+      <%= date_field_tag :date_to, @date_to, class: "form-control" %>
+    </div>
+    <div class="filter-item">
+      <label class="form-label">酒店</label>
+      <%= select_tag :hotel_id, options_from_collection_for_select(Hotel.all.order(:name), :id, :name, params[:hotel_id]), include_blank: "全部酒店", class: "form-select" %>
+    </div>
+    <div class="filter-item" style="align-self: end;">
+      <%= submit_tag "查询", class: "btn btn-primary" %>
+      <%= link_to "重置", statistics_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value"><%= @totals[:total_batches] %></div>
+    <div class="stat-label">总批次数</div>
+  </div>
+  <div class="stat-card warning">
+    <div class="stat-value"><%= @totals[:total_claims] %></div>
+    <div class="stat-label">赔损记录数</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-value"><%= @totals[:confirmed_claims] %></div>
+    <div class="stat-label">已确认赔损</div>
+  </div>
+  <div class="stat-card info">
+    <div class="stat-value"><%= @totals[:total_quantity] %></div>
+    <div class="stat-label">问题布草总数</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-value">¥<%= number_with_precision @totals[:total_confirmed_amount], precision: 2 %></div>
+    <div class="stat-label">已确认赔损金额</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">¥<%= number_with_precision @totals[:total_pending_amount], precision: 2 %></div>
+    <div class="stat-label">待确认赔损金额</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">按酒店统计</div>
+  <% if @stats_by_hotel.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>酒店名称</th>
+            <th>批次数量</th>
+            <th>赔损记录数</th>
+            <th>已确认赔损金额</th>
+            <th>待确认赔损金额</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @stats_by_hotel.each do |hotel| %>
+            <tr>
+              <td><%= hotel.name %></td>
+              <td><%= hotel.batch_count %></td>
+              <td><%= hotel.claim_count %></td>
+              <td class="amount-negative">¥<%= number_with_precision hotel.confirmed_damage_amount, precision: 2 %></td>
+              <td>¥<%= number_with_precision hotel.pending_damage_amount, precision: 2 %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>暂无统计数据</p>
+    </div>
+  <% end %>
+</div>
+
+<div class="detail-grid">
+  <div class="card">
+    <div class="card-header">按问题类型统计</div>
+    <% if @stats_by_problem_type.any? %>
+      <% @stats_by_problem_type.each do |stat| %>
+        <div class="detail-item">
+          <div class="detail-label">
+            <span class="badge badge-<%= stat.reason == 'damaged' || stat.reason == 'shortage' ? 'danger' : 'warning' %>">
+              <%= I18n.t("damage_reasons.#{stat.reason}", default: stat.reason.humanize) %>
+            </span>
+          </div>
+          <div class="detail-value">
+            <%= stat.claim_count %> 条记录 / <%= stat.total_quantity %> 件
+            <br>
+            <span class="amount-negative">¥<%= number_with_precision stat.confirmed_amount, precision: 2 %></span>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="empty-state">
+        <p>暂无统计数据</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <div class="card-header">赔损金额分布</div>
+    <div class="detail-item">
+      <div class="detail-label">有赔损批次</div>
+      <div class="detail-value"><%= @stats_by_damage_amount[:total_batches_with_damage] %> 个</div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">最低赔损</div>
+      <div class="detail-value">¥<%= number_with_precision @stats_by_damage_amount[:min_amount], precision: 2 %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">最高赔损</div>
+      <div class="detail-value amount-negative">¥<%= number_with_precision @stats_by_damage_amount[:max_amount], precision: 2 %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">平均赔损</div>
+      <div class="detail-value">¥<%= number_with_precision @stats_by_damage_amount[:avg_amount], precision: 2 %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">赔损总额</div>
+      <div class="detail-value amount-negative">¥<%= number_with_precision @stats_by_damage_amount[:total_amount], precision: 2 %></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">按布草类别统计</div>
+  <% if @stats_by_category.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>布草名称</th>
+            <th>类别</th>
+            <th>问题数量</th>
+            <th>赔损记录</th>
+            <th>赔损总金额</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @stats_by_category.each do |item| %>
+            <tr>
+              <td><%= item.name %></td>
+              <td><%= item.category_name %></td>
+              <td><%= item.total_quantity %> 件</td>
+              <td><%= item.claim_count %> 条</td>
+              <td class="amount-negative">¥<%= number_with_precision item.total_amount, precision: 2 %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <p>暂无统计数据</p>
+    </div>
+  <% end %>
+</div>

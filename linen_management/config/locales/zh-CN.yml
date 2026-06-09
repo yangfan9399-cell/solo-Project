@@ -1,0 +1,54 @@
+zh-CN:
+  roles:
+    handover_staff: "客房经办人"
+    laundry_staff: "洗涤厂人员"
+    inspector: "质检员"
+    finance_staff: "财务人员"
+
+  batch_statuses:
+    pending: "待交接"
+    collected: "已交接"
+    washed: "已洗涤"
+    returned: "已返还"
+    inspected: "已质检"
+    disputed: "有争议"
+    settled: "已结算"
+
+  linen_categories:
+    bedding: "床上用品"
+    towel: "毛巾类"
+    bathrobe: "浴袍"
+    tablecloth: "台布类"
+    other: "其他"
+
+  damage_reasons:
+    stained: "污渍未净"
+    damaged: "布草破损"
+    shortage: "数量短少"
+    other: "其他原因"
+
+  event_types:
+    created: "创建批次"
+    collected: "交接布草"
+    washed: "完成洗涤"
+    returned: "登记返还"
+    inspected: "完成质检"
+    disputed: "进入争议"
+    discrepancy_confirmed_hotel: "酒店确认差异"
+    discrepancy_confirmed_laundry: "洗涤厂确认差异"
+    discrepancy_resolved: "差异已解决"
+    claim_created: "生成赔损"
+    claim_confirmed: "确认赔损"
+    settled: "完成结算"
+
+  date:
+    formats:
+      default: "%Y-%m-%d"
+      short: "%m-%d"
+      long: "%Y年%m月%d日"
+
+  time:
+    formats:
+      default: "%Y-%m-%d %H:%M:%S"
+      short: "%m-%d %H:%M"
+      long: "%Y年%m月%d日 %H时%M分"

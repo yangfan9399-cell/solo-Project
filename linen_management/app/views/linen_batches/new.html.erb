@@ -1,0 +1,40 @@
+<% content_for :title, "新建批次 - 布草洗涤管理系统" %>
+
+<div class="page-header">
+  <h1 class="page-title">新建布草批次</h1>
+  <%= link_to "返回列表", linen_batches_path, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <% if @linen_batch.errors.any? %>
+    <div class="form-errors">
+      <h4>表单有以下错误：</h4>
+      <ul>
+        <% @linen_batch.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: @linen_batch do |form| %>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :hotel_id, "酒店", class: "form-label" %>
+        <%= form.select :hotel_id, options_from_collection_for_select(@hotels, :id, :name), { include_blank: "请选择酒店" }, class: "form-select" %>
+      </div>
+      <div class="form-group">
+        <%= form.label :batch_number, "批次号（留空自动生成）", class: "form-label" %>
+        <%= form.text_field :batch_number, class: "form-control", placeholder: "如不填写将自动生成" %>
+      </div>
+    </div>
+    <div class="form-group">
+      <%= form.label :notes, "备注", class: "form-label" %>
+      <%= form.text_area :notes, class: "form-textarea", rows: 3 %>
+    </div>
+    <div class="btn-group">
+      <%= form.submit "创建批次", class: "btn btn-primary" %>
+      <%= link_to "取消", linen_batches_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

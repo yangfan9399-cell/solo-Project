@@ -1,0 +1,56 @@
+<% content_for :title, "编辑布草明细" %>
+
+<div class="page-header">
+  <h1 class="page-title">编辑布草明细</h1>
+  <%= link_to "返回批次", @linen_batch, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <% if @linen_item.errors.any? %>
+    <div class="form-errors">
+      <h4>表单有以下错误：</h4>
+      <ul>
+        <% @linen_item.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: [@linen_batch, @linen_item] do |form| %>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :linen_type_id, "布草类型", class: "form-label" %>
+        <%= form.select :linen_type_id, options_from_collection_for_select(@linen_types, :id, :name, @linen_item.linen_type_id), { include_blank: "请选择布草类型" }, class: "form-select" %>
+      </div>
+      <div class="form-group">
+        <%= form.label :quantity_handed, "交接数量", class: "form-label" %>
+        <%= form.number_field :quantity_handed, class: "form-control", min: 0 %>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :quantity_returned, "返还数量", class: "form-label" %>
+        <%= form.number_field :quantity_returned, class: "form-control", min: 0 %>
+      </div>
+      <div class="form-group">
+        <%= form.label :quantity_clean, "洁净数量", class: "form-label" %>
+        <%= form.number_field :quantity_clean, class: "form-control", min: 0 %>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :quantity_stained, "污渍数量", class: "form-label" %>
+        <%= form.number_field :quantity_stained, class: "form-control", min: 0 %>
+      </div>
+      <div class="form-group">
+        <%= form.label :quantity_damaged, "破损数量", class: "form-label" %>
+        <%= form.number_field :quantity_damaged, class: "form-control", min: 0 %>
+      </div>
+    </div>
+    <div class="btn-group">
+      <%= form.submit "保存修改", class: "btn btn-primary" %>
+      <%= link_to "取消", @linen_batch, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

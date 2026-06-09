@@ -1,0 +1,319 @@
+<% content_for :title, "#{@linen_batch.batch_number} - 批次详情" %>
+
+<div class="page-header">
+  <h1 class="page-title">
+    批次详情
+    <span class="badge badge-<%= @linen_batch.status %>" style="font-size: 0.9rem; margin-left: 10px;"><%= @linen_batch.status_name %></span>
+  </h1>
+  <div class="btn-group">
+    <%= link_to "返回列表", linen_batches_path, class: "btn btn-secondary" %>
+    <%= link_to "编辑", edit_linen_batch_path(@linen_batch), class: "btn btn-outline" %>
+  </div>
+</div>
+
+<% if @linen_batch.disputed? %>
+  <div class="discrepancy-warning">
+    <h4>⚠️ 数量差异待确认</h4>
+    <p>本批次存在数量短少问题，需要双方确认差异后才能进入结算流程。</p>
+    <div style="margin-top: 10px;">
+      <span>酒店确认：<%= @linen_batch.discrepancy_confirmed_by_hotel? ? "✅ 已确认" : "⏳ 待确认" %></span>
+      <span style="margin-left: 20px;">洗涤厂确认：<%= @linen_batch.discrepancy_confirmed_by_laundry? ? "✅ 已确认" : "⏳ 待确认" %></span>
+    </div>
+    <% if @linen_batch.disputed? %>
+      <div style="margin-top: 10px; display: flex; gap: 10px;">
+        <% unless @linen_batch.discrepancy_confirmed_by_hotel? %>
+          <%= button_to "酒店确认差异", confirm_discrepancy_linen_batch_path(@linen_batch, side: 'hotel'), method: :post, class: "btn btn-warning btn-sm" %>
+        <% end %>
+        <% unless @linen_batch.discrepancy_confirmed_by_laundry? %>
+          <%= button_to "洗涤厂确认差异", confirm_discrepancy_linen_batch_path(@linen_batch, side: 'laundry'), method: :post, class: "btn btn-warning btn-sm" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="action-bar">
+  <% if @linen_batch.pending? %>
+    <%= button_to "交接布草", collect_linen_batch_path(@linen_batch), method: :post, class: "btn btn-primary" %>
+  <% end %>
+  <% if @linen_batch.collected? %>
+    <%= button_to "完成洗涤", wash_complete_linen_batch_path(@linen_batch), method: :post, class: "btn btn-info" %>
+  <% end %>
+  <% if @linen_batch.washed? %>
+    <%= button_to "登记返还", return_batch_linen_batch_path(@linen_batch), method: :post, class: "btn btn-success" %>
+  <% end %>
+  <% if @linen_batch.returned? || @linen_batch.disputed? %>
+    <button type="button" class="btn btn-warning" onclick="document.getElementById('inspection-form').style.display = 'block'">
+      质量检验
+    </button>
+  <% end %>
+  <% if @linen_batch.inspected? && @linen_batch.can_settle? %>
+    <%= button_to "确认结算", settle_linen_batch_path(@linen_batch), method: :post, class: "btn btn-success", data: { confirm: "确定要完成结算吗？" } %>
+  <% end %>
+  <% if @linen_batch.inspected? && !@linen_batch.can_settle? %>
+    <span class="text-muted" style="align-self: center; color: #999;">
+      <% if @linen_batch.has_shortage? %>请先确认数量差异<% elsif !@linen_batch.all_claims_confirmed? %>请先确认所有赔损<% end %>
+    </span>
+  <% end %>
+</div>
+
+<% if @linen_batch.returned? || @linen_batch.disputed? %>
+  <div id="inspection-form" class="card" style="display: none;">
+    <div class="card-header">质量检验</div>
+    <%= form_tag inspect_linen_batch_path(@linen_batch), method: :post do %>
+      <div class="inspection-form">
+        <div class="inspection-item" style="font-weight: 600; color: #2c3e50;">
+          <div>布草类型</div>
+          <div>交接数量</div>
+          <div>返还数量</div>
+          <div>洁净数量</div>
+          <div>污渍数量</div>
+          <div>破损数量</div>
+        </div>
+        <% @linen_items.each do |item| %>
+          <div class="inspection-item">
+            <div class="inspection-label"><%= item.linen_type.name %></div>
+            <div><%= item.quantity_handed %></div>
+            <div>
+              <input type="number" name="linen_items[<%= item.id %>][quantity_returned]" value="<%= item.quantity_returned %>" class="inspection-input" min="0">
+            </div>
+            <div>
+              <input type="number" name="linen_items[<%= item.id %>][quantity_clean]" value="<%= item.quantity_clean %>" class="inspection-input" min="0">
+            </div>
+            <div>
+              <input type="number" name="linen_items[<%= item.id %>][quantity_stained]" value="<%= item.quantity_stained %>" class="inspection-input" min="0">
+            </div>
+            <div>
+              <input type="number" name="linen_items[<%= item.id %>][quantity_damaged]" value="<%= item.quantity_damaged %>" class="inspection-input" min="0">
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <div style="text-align: right;">
+        <%= submit_tag "提交质检", class: "btn btn-warning" %>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('inspection-form').style.display = 'none'">取消</button>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="detail-grid">
+  <div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="detail-item">
+      <div class="detail-label">批次号</div>
+      <div class="detail-value"><%= @linen_batch.batch_number %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">酒店</div>
+      <div class="detail-value"><%= @linen_batch.hotel.name %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">状态</div>
+      <div class="detail-value"><span class="badge badge-<%= @linen_batch.status %>"><%= @linen_batch.status_name %></span></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">客房经办人</div>
+      <div class="detail-value"><%= @linen_batch.handover_user&.name || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">交接时间</div>
+      <div class="detail-value"><%= @linen_batch.handover_at&.strftime('%Y-%m-%d %H:%M') || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">返还登记人</div>
+      <div class="detail-value"><%= @linen_batch.return_user&.name || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">返还时间</div>
+      <div class="detail-value"><%= @linen_batch.return_at&.strftime('%Y-%m-%d %H:%M') || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">质检员</div>
+      <div class="detail-value"><%= @linen_batch.inspector&.name || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">质检时间</div>
+      <div class="detail-value"><%= @linen_batch.inspected_at&.strftime('%Y-%m-%d %H:%M') || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">财务确认</div>
+      <div class="detail-value"><%= @linen_batch.finance_user&.name || '-' %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">结算时间</div>
+      <div class="detail-value"><%= @linen_batch.settled_at&.strftime('%Y-%m-%d %H:%M') || '-' %></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">数量统计</div>
+    <div class="detail-item">
+      <div class="detail-label">总交接数量</div>
+      <div class="detail-value"><%= @linen_batch.total_quantity_handed %> 件</div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">总返还数量</div>
+      <div class="detail-value"><%= @linen_batch.total_quantity_returned %> 件</div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">洁净数量</div>
+      <div class="detail-value amount-positive"><%= @linen_batch.total_quantity_clean %> 件</div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">污渍未净</div>
+      <div class="detail-value <%= 'amount-negative' if @linen_batch.total_quantity_stained > 0 %>">
+        <%= @linen_batch.total_quantity_stained %> 件
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">布草破损</div>
+      <div class="detail-value <%= 'amount-negative' if @linen_batch.total_quantity_damaged > 0 %>">
+        <%= @linen_batch.total_quantity_damaged %> 件
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">数量短少</div>
+      <div class="detail-value <%= 'amount-negative' if @linen_batch.total_quantity_short > 0 %>">
+        <%= @linen_batch.total_quantity_short %> 件
+      </div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">赔损金额</div>
+      <div class="detail-value amount-negative">¥<%= number_with_precision @linen_batch.total_damage_amount, precision: 2 %></div>
+    </div>
+    <div class="detail-item">
+      <div class="detail-label">已确认赔损</div>
+      <div class="detail-value">¥<%= number_with_precision @linen_batch.confirmed_damage_amount, precision: 2 %></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">布草明细</div>
+<div class="card">
+  <%= link_to "添加布草明细", new_linen_batch_linen_item_path(@linen_batch), class: "btn btn-outline btn-sm", style: "margin-bottom: 15px;" %>
+  <% if @linen_items.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>布草类型</th>
+            <th>类别</th>
+            <th>交接数量</th>
+            <th>返还数量</th>
+            <th>洁净</th>
+            <th>污渍</th>
+            <th>破损</th>
+            <th>短少</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @linen_items.each do |item| %>
+            <tr>
+              <td><%= item.linen_type.name %></td>
+              <td><%= item.linen_type.category_name %></td>
+              <td><%= item.quantity_handed %></td>
+              <td><%= item.quantity_returned %></td>
+              <td class="amount-positive"><%= item.quantity_clean %></td>
+              <td class="<%= 'amount-negative' if item.quantity_stained > 0 %>"><%= item.quantity_stained %></td>
+              <td class="<%= 'amount-negative' if item.quantity_damaged > 0 %>"><%= item.quantity_damaged %></td>
+              <td class="<%= 'amount-negative' if item.quantity_short > 0 %>"><%= item.quantity_short %></td>
+              <td>
+                <%= link_to "编辑", edit_linen_batch_linen_item_path(@linen_batch, item), class: "btn btn-outline btn-sm" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <div class="empty-state-icon">🧺</div>
+      <p>暂无布草明细</p>
+    </div>
+  <% end %>
+</div>
+
+<div class="section-title">赔损记录</div>
+<div class="card">
+  <% if @linen_batch.inspected? || @linen_batch.disputed? || @linen_batch.settled? %>
+    <%= link_to "添加赔损", new_linen_batch_damage_claim_path(@linen_batch), class: "btn btn-outline btn-sm", style: "margin-bottom: 15px;" %>
+  <% end %>
+  <% if @damage_claims.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>布草类型</th>
+            <th>问题类型</th>
+            <th>数量</th>
+            <th>单价</th>
+            <th>总金额</th>
+            <th>状态</th>
+            <th>确认人</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @damage_claims.each do |claim| %>
+            <tr>
+              <td><%= claim.linen_type.name %></td>
+              <td><span class="badge badge-<%= claim.reason == 'damaged' || claim.reason == 'shortage' ? 'danger' : 'warning' %>"><%= claim.reason_name %></span></td>
+              <td><%= claim.quantity %></td>
+              <td>¥<%= number_with_precision claim.unit_price, precision: 2 %></td>
+              <td class="amount-negative">¥<%= number_with_precision claim.total_amount, precision: 2 %></td>
+              <td>
+                <span class="claim-status">
+                  <span class="claim-status-dot <%= claim.confirmed? ? 'confirmed' : 'pending' %>"></span>
+                  <%= claim.confirmed? ? "已确认" : "待确认" %>
+                </span>
+              </td>
+              <td><%= claim.confirmed_by&.name || '-' %></td>
+              <td>
+                <div class="btn-group">
+                  <% unless claim.confirmed? %>
+                    <%= button_to "确认", confirm_linen_batch_damage_claim_path(@linen_batch, claim), method: :post, class: "btn btn-success btn-sm" %>
+                  <% end %>
+                  <%= link_to "编辑", edit_linen_batch_damage_claim_path(@linen_batch, claim), class: "btn btn-outline btn-sm" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <div class="empty-state-icon">💰</div>
+      <p>暂无赔损记录</p>
+    </div>
+  <% end %>
+</div>
+
+<div class="section-title">历史节点</div>
+<div class="card">
+  <% if @events.any? %>
+    <div class="timeline">
+      <% @events.each do |event| %>
+        <div class="timeline-item">
+          <div class="timeline-time"><%= event.created_at.strftime('%Y-%m-%d %H:%M:%S') %></div>
+          <div class="timeline-event"><%= event.description %></div>
+          <div class="timeline-user">操作人：<%= event.user.name %> (<%= event.user.role_name %>)</div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="empty-state">
+      <div class="empty-state-icon">📜</div>
+      <p>暂无历史记录</p>
+    </div>
+  <% end %>
+</div>
+
+<% if @linen_batch.notes.present? %>
+  <div class="section-title">备注</div>
+  <div class="card">
+    <p><%= @linen_batch.notes %></p>
+  </div>
+<% end %>

@@ -1,0 +1,44 @@
+<% content_for :title, "编辑批次 - #{@linen_batch.batch_number}" %>
+
+<div class="page-header">
+  <h1 class="page-title">编辑布草批次</h1>
+  <%= link_to "返回详情", @linen_batch, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <% if @linen_batch.errors.any? %>
+    <div class="form-errors">
+      <h4>表单有以下错误：</h4>
+      <ul>
+        <% @linen_batch.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: @linen_batch do |form| %>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :hotel_id, "酒店", class: "form-label" %>
+        <%= form.select :hotel_id, options_from_collection_for_select(@hotels, :id, :name, @linen_batch.hotel_id), { include_blank: "请选择酒店" }, class: "form-select" %>
+      </div>
+      <div class="form-group">
+        <%= form.label :batch_number, "批次号", class: "form-label" %>
+        <%= form.text_field :batch_number, class: "form-control" %>
+      </div>
+    </div>
+    <div class="form-group">
+      <%= form.label :status, "状态", class: "form-label" %>
+      <%= form.select :status, options_for_select(LinenBatch::STATUSES.map { |s| [I18n.t("batch_statuses.#{s}", default: s.humanize), s] }, @linen_batch.status), {}, class: "form-select" %>
+    </div>
+    <div class="form-group">
+      <%= form.label :notes, "备注", class: "form-label" %>
+      <%= form.text_area :notes, class: "form-textarea", rows: 3 %>
+    </div>
+    <div class="btn-group">
+      <%= form.submit "保存修改", class: "btn btn-primary" %>
+      <%= link_to "取消", @linen_batch, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>

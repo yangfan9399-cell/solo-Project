@@ -1,0 +1,51 @@
+<% content_for :title, "添加赔损记录" %>
+
+<div class="page-header">
+  <h1 class="page-title">添加赔损记录</h1>
+  <%= link_to "返回批次", @linen_batch, class: "btn btn-secondary" %>
+</div>
+
+<div class="card">
+  <% if @damage_claim.errors.any? %>
+    <div class="form-errors">
+      <h4>表单有以下错误：</h4>
+      <ul>
+        <% @damage_claim.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: [@linen_batch, @damage_claim] do |form| %>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :linen_type_id, "布草类型", class: "form-label" %>
+        <%= form.select :linen_type_id, options_from_collection_for_select(@linen_types, :id, :name), { include_blank: "请选择布草类型" }, class: "form-select" %>
+      </div>
+      <div class="form-group">
+        <%= form.label :reason, "问题类型", class: "form-label" %>
+        <%= form.select :reason, options_for_select(DamageClaim::REASONS.map { |r| [I18n.t("damage_reasons.#{r}", default: r.humanize), r] }), { include_blank: "请选择问题类型" }, class: "form-select" %>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <%= form.label :quantity, "数量", class: "form-label" %>
+        <%= form.number_field :quantity, class: "form-control", min: 1 %>
+      </div>
+      <div class="form-group">
+        <%= form.label :unit_price, "单价（元）", class: "form-label" %>
+        <%= form.number_field :unit_price, class: "form-control", min: 0, step: "0.01" %>
+      </div>
+    </div>
+    <div class="form-group">
+      <%= form.label :total_amount, "总金额（元）", class: "form-label" %>
+      <%= form.number_field :total_amount, class: "form-control", min: 0, step: "0.01" %>
+      <small style="color: #999;">系统将自动计算，您也可以手动调整</small>
+    </div>
+    <div class="btn-group">
+      <%= form.submit "保存", class: "btn btn-primary" %>
+      <%= link_to "取消", @linen_batch, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
