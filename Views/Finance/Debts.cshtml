@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "应收账款";
+}
+
+@model IEnumerable<Debt>
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">应收账款管理</h2>
+
+@{
+    var totalDebt = Model.Sum(d => d.Amount);
+    var overdueDebts = Model.Where(d => d.IsOverdue).ToList();
+    var overdueAmount = overdueDebts.Sum(d => d.Amount);
+    var normalDebts = Model.Where(d => !d.IsOverdue).ToList();
+}
+
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <div class="stat-label">未结清总额</div>
+        <div class="stat-value">@totalDebt.ToString("C0")</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">逾期金额</div>
+        <div class="stat-value">@overdueAmount.ToString("C0")</div>
+        <div class="stat-sub">@overdueDebts.Count 笔</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">正常金额</div>
+        <div class="stat-value">@normalDebts.Sum(d => d.Amount).ToString("C0")</div>
+        <div class="stat-sub">@normalDebts.Count 笔</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">经销商数</div>
+        <div class="stat-value">@Model.Select(d => d.DealerId).Distinct().Count()</div>
+        <div class="stat-sub">有欠款</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title" style="margin-bottom:15px;">欠款明细</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>经销商</th>
+                <th>区域</th>
+                <th>欠款描述</th>
+                <th class="text-right">金额</th>
+                <th>到期日</th>
+                <th>状态</th>
+                <th>逾期天数</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var debt in Model.OrderByDescending(d => d.IsOverdue).ThenBy(d => d.DueDate))
+            {
+                <tr class="@(debt.IsOverdue ? "debt-overdue" : "")">
+                    <td><strong>@debt.Dealer.Name</strong></td>
+                    <td>@debt.Dealer.Region</td>
+                    <td>@debt.Description</td>
+                    <td class="text-right">@debt.Amount.ToString("C0")</td>
+                    <td>@debt.DueDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (debt.IsOverdue)
+                        {
+                            <span class="badge badge-exception">已逾期</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-frozen">未到期</span>
+                        }
+                    </td>
+                    <td>
+                        @if (debt.IsOverdue)
+                        {
+                            <span style="color:#dc3545; font-weight:600;">@debt.OverdueDays 天</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">@((debt.DueDate - DateTime.Today).Days) 天后到期</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "授信额度";
+}
+
+@model IEnumerable<Dealer>
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">授信额度一览</h2>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>经销商</th>
+                <th>区域</th>
+                <th>等级</th>
+                <th class="text-right">总额度</th>
+                <th class="text-right">已用额度</th>
+                <th class="text-right">冻结额度</th>
+                <th class="text-right">可用额度</th>
+                <th>使用率</th>
+                <th>账期</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dealer in Model)
+            {
+                var credit = dealer.CreditLimit;
+                var used = credit.UsedCredit + credit.FrozenCredit;
+                var available = credit.TotalCredit - used;
+                var usagePercent = credit.TotalCredit > 0 ? (double)used / (double)credit.TotalCredit * 100 : 0;
+                var usageClass = usagePercent > 80 ? "danger" : usagePercent > 60 ? "warning" : "success";
+
+                <tr>
+                    <td><strong>@dealer.Name</strong></td>
+                    <td>@dealer.Region</td>
+                    <td>
+                        <span class="badge badge-level-@dealer.Level.ToString().ToLower()">@dealer.Level级</span>
+                    </td>
+                    <td class="text-right">@credit.TotalCredit.ToString("C0")</td>
+                    <td class="text-right">@credit.UsedCredit.ToString("C0")</td>
+                    <td class="text-right" style="color:#fd7e14;">@credit.FrozenCredit.ToString("C0")</td>
+                    <td class="text-right">
+                        <span style="font-weight:600; color:@(available < 0 ? "#dc3545" : "#28a745");">
+                            @available.ToString("C0")
+                        </span>
+                    </td>
+                    <td style="min-width:150px;">
+                        <div class="amount-bar">
+                            <div class="amount-bar-fill @usageClass" style="width:@Math.Min(usagePercent, 100)%"></div>
+                        </div>
+                        <div style="font-size:12px; text-align:right; margin-top:2px;">
+                            @usagePercent.ToString("F1")%
+                        </div>
+                    </td>
+                    <td>@credit.PaymentDays 天</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

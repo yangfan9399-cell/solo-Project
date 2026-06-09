@@ -1,0 +1,549 @@
+@{
+    ViewData["Title"] = "订单详情";
+}
+
+@model Order
+
+@{
+    var applicablePolicies = ViewBag.ApplicablePolicies as List<PricePolicy>;
+    var overdueDebts = ViewBag.OverdueDebts as List<Debt>;
+    var totalOverdue = (decimal)(ViewBag.TotalOverdueAmount ?? 0);
+    var creditLimit = Model.Dealer.CreditLimit;
+    var availableCredit = creditLimit.TotalCredit - creditLimit.UsedCredit - creditLimit.FrozenCredit;
+    var creditUsagePercent = creditLimit.TotalCredit > 0 ? (double)(creditLimit.UsedCredit + creditLimit.FrozenCredit) / (double)creditLimit.TotalCredit * 100 : 0;
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="color:#1a1a2e;">
+        订单详情
+        <span class="badge badge-@Model.Status.ToString().ToLower()" style="margin-left:10px;">@GetStatusText(Model.Status)</span>
+    </h2>
+    <div class="action-buttons">
+        <a href="@Url.Action("Index")" class="btn btn-secondary btn-sm">返回列表</a>
+        @if (Model.Status == OrderStatus.Submitted)
+        {
+            <form asp-action="FreezeCredit" asp-controller="Finance" method="post" style="display:inline;">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('确认冻结该订单的授信额度？')">财务冻结额度</button>
+            </form>
+        }
+        @if (Model.Status == OrderStatus.CreditFrozen)
+        {
+            <form asp-action="ConfirmShip" asp-controller="Warehouse" method="post" style="display:inline;">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('确认发货？')">仓库确认发货</button>
+            </form>
+        }
+        @if (Model.Status == OrderStatus.Shipped)
+        {
+            <form asp-action="CompleteOrder" asp-controller="Warehouse" method="post" style="display:inline;">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success btn-sm">标记完成</button>
+            </form>
+        }
+        @if (Model.Status == OrderStatus.Exception)
+        {
+            <a href="@Url.Action("Review", "Risk", new { id = Model.Id })" class="btn btn-warning btn-sm">风控复核</a>
+        }
+    </div>
+</div>
+
+@if (Model.Status == OrderStatus.Exception && !string.IsNullOrEmpty(Model.ExceptionReason))
+{
+    <div class="alert alert-danger">
+        <strong>⚠️ 异常原因：</strong>@GetExceptionText(Model.ExceptionType) - @Model.ExceptionReason
+    </div>
+}
+
+@if (Model.Status == OrderStatus.Exception && Model.ExceptionType == ExceptionType.InsufficientCredit)
+{
+    <div class="suggestion-card">
+        <h5>💡 额度不足处理建议</h5>
+        <p>可用授信额度不足，订单金额 <strong>@Model.FinalAmount.ToString("C0")</strong>，可用额度仅 <strong>@availableCredit.ToString("C0")</strong>，差额 <strong style="color:#dc3545;">@(Model.FinalAmount - availableCredit).ToString("C0")</strong>。建议采取以下措施：</p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #28a745;">
+                <strong>方案一：回款补足</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">经销商先回款 @(Model.FinalAmount - availableCredit).ToString("C0")，财务确认到账后释放额度，订单可继续发货。</p>
+                <span class="badge badge-completed">推荐方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #fd7e14;">
+                <strong>方案二：缩单发货</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">减少订单商品数量或金额，使订单总额在可用额度 @availableCredit.ToString("C0") 以内，部分发货。</p>
+                <span class="badge badge-frozen">备选方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #6f42c1;">
+                <strong>方案三：临时提额</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">风控审核通过后，临时增加经销商授信额度，订单可继续发货。</p>
+                <span class="badge badge-submitted">特殊方案</span>
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <a href="@Url.Action("Review", "Risk", new { id = Model.Id })" class="btn btn-warning btn-sm">前往风控复核 →</a>
+        </div>
+    </div>
+}
+
+@if (Model.Status == OrderStatus.Exception && Model.ExceptionType == ExceptionType.OverdueDebt)
+{
+    var overdueAmount = Model.Dealer.Debts.Where(d => d.IsOverdue && !d.IsPaid).Sum(d => d.Amount);
+    var overdueCount = Model.Dealer.Debts.Count(d => d.IsOverdue && !d.IsPaid);
+    var maxOverdueDays = Model.Dealer.Debts.Where(d => d.IsOverdue && !d.IsPaid).Max(d => d.OverdueDays);
+    <div class="suggestion-card" style="border-left-color: #dc3545; background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);">
+        <h5 style="color:#dc3545;">⚠️ 逾期欠款处理建议</h5>
+        <p>经销商存在 <strong>@overdueCount</strong> 笔逾期欠款，总额 <strong style="color:#dc3545;">@overdueAmount.ToString("C0")</strong>，最长逾期 <strong>@maxOverdueDays</strong> 天。需先处理逾期欠款方可继续发货：</p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #28a745;">
+                <strong>方案一：全额结清</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">经销商全额结清逾期欠款 @overdueAmount.ToString("C0")，财务确认到账后订单可继续处理。</p>
+                <span class="badge badge-completed">推荐方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #fd7e14;">
+                <strong>方案二：部分回款</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">经销商归还部分逾期欠款，风控审批通过后可部分发货或临时放行。</p>
+                <span class="badge badge-frozen">备选方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #6f42c1;">
+                <strong>方案三：特殊审批</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">如为优质经销商或特殊情况，可提交风控特批，暂缓逾期要求先行发货。</p>
+                <span class="badge badge-submitted">特殊方案</span>
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <a href="@Url.Action("Review", "Risk", new { id = Model.Id })" class="btn btn-danger btn-sm">前往风控复核 →</a>
+        </div>
+    </div>
+}
+
+@if (Model.Status == OrderStatus.Exception && Model.ExceptionType == ExceptionType.PricePolicyConflict)
+{
+    <div class="suggestion-card" style="border-left-color: #6f42c1; background: linear-gradient(135deg, #f5f0ff 0%, #ebe0ff 100%);">
+        <h5 style="color:#6f42c1;">💡 价格政策冲突处理建议</h5>
+        <p>订单存在价格政策冲突：<strong>@Model.ExceptionReason</strong>。建议采取以下措施：</p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #28a745;">
+                <strong>方案一：按标准价执行</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">取消优惠价格，所有商品按标准价执行，订单无需满足政策起订要求。</p>
+                <span class="badge badge-completed">最简方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #fd7e14;">
+                <strong>方案二：增购达标</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">增加对应品类商品数量，使订单金额满足价格政策最低起订金额要求。</p>
+                <span class="badge badge-frozen">推荐方案</span>
+            </div>
+            <div style="background:white; padding:12px; border-radius:6px; border-left:3px solid #6f42c1;">
+                <strong>方案三：政策例外</strong>
+                <p style="margin:6px 0; font-size:13px; color:#666;">特殊情况下，可申请价格政策例外审批，按优惠价执行但不满足起订量。</p>
+                <span class="badge badge-submitted">特殊方案</span>
+            </div>
+        </div>
+        <div style="margin-top:12px;">
+            <a href="@Url.Action("Review", "Risk", new { id = Model.Id })" class="btn btn-warning btn-sm">前往风控复核 →</a>
+        </div>
+    </div>
+}
+
+@if (overdueDebts != null && overdueDebts.Any())
+{
+    <div class="alert alert-warning">
+        <strong>⚠️ 注意：</strong>该经销商存在 @overdueDebts.Count 笔逾期欠款，总额 @totalOverdue.ToString("C0")
+    </div>
+}
+
+<div class="order-detail-grid">
+    <div class="card">
+        <div class="info-group">
+            <h4>基本信息</h4>
+            <div class="info-item">
+                <span class="info-label">订单号：</span>
+                <span class="info-value">@Model.OrderNo</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">订单状态：</span>
+                <span class="badge badge-@Model.Status.ToString().ToLower()">@GetStatusText(Model.Status)</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">异常类型：</span>
+                <span class="info-value">
+                    @if (Model.ExceptionType != ExceptionType.None)
+                    {
+                        <span class="badge badge-exception">@GetExceptionText(Model.ExceptionType)</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">无</span>
+                    }
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">销售员：</span>
+                <span class="info-value">@Model.SalesPerson</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">财务员：</span>
+                <span class="info-value">@(Model.FinanceOperator ?? "-")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">仓管员：</span>
+                <span class="info-value">@(Model.WarehouseOperator ?? "-")</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="info-group">
+            <h4>金额信息</h4>
+            <div class="info-item">
+                <span class="info-label">订单总额：</span>
+                <span class="info-value">@Model.TotalAmount.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">优惠金额：</span>
+                <span class="info-value success">-@Model.DiscountAmount.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">最终金额：</span>
+                <span class="info-value highlight">@Model.FinalAmount.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">已用额度：</span>
+                <span class="info-value">@Model.CreditUsed.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">冻结额度：</span>
+                <span class="info-value warning">@Model.CreditFrozen.ToString("C0")</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="info-group">
+            <h4>经销商信息</h4>
+            <div class="info-item">
+                <span class="info-label">经销商名称：</span>
+                <span class="info-value">@Model.Dealer.Name</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">经销商等级：</span>
+                <span class="badge badge-level-@Model.Dealer.Level.ToString().ToLower()">@Model.Dealer.Level级</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">所属区域：</span>
+                <span class="info-value">@Model.Dealer.Region</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">联系人：</span>
+                <span class="info-value">@Model.Dealer.ContactPerson</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">联系电话：</span>
+                <span class="info-value">@Model.Dealer.Phone</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">地址：</span>
+                <span class="info-value">@Model.Dealer.Address</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="info-group">
+            <h4>授信额度</h4>
+            <div class="info-item">
+                <span class="info-label">总额度：</span>
+                <span class="info-value">@creditLimit.TotalCredit.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">已用额度：</span>
+                <span class="info-value">@creditLimit.UsedCredit.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">冻结额度：</span>
+                <span class="info-value warning">@creditLimit.FrozenCredit.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">可用额度：</span>
+                <span class="info-value @(availableCredit < Model.FinalAmount ? "danger" : "success")">@availableCredit.ToString("C0")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">账期：</span>
+                <span class="info-value">@creditLimit.PaymentDays 天</span>
+            </div>
+            <div class="amount-bar">
+                <div class="amount-bar-fill @(creditUsagePercent > 80 ? "danger" : creditUsagePercent > 60 ? "warning" : "")" style="width:@creditUsagePercent%"></div>
+            </div>
+            <div style="font-size:12px; color:#999; margin-top:4px;">
+                额度使用率：@creditUsagePercent.ToString("F1")%
+            </div>
+        </div>
+    </div>
+
+    <div class="card full-width">
+        <div class="info-group">
+            <h4>订单商品明细</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>商品名称</th>
+                        <th>SKU</th>
+                        <th>分类</th>
+                        <th class="text-right">标准价</th>
+                        <th class="text-right">优惠价</th>
+                        <th class="text-right">数量</th>
+                        <th class="text-right">金额</th>
+                        <th>适用政策</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><strong>@item.Product.Name</strong></td>
+                            <td>@item.Product.Sku</td>
+                            <td>@item.Product.Category</td>
+                            <td class="text-right">@item.UnitPrice.ToString("C0")</td>
+                            <td class="text-right" style="color:#e94560;">@item.DiscountPrice.ToString("C0")</td>
+                            <td class="text-right">@item.Quantity</td>
+                            <td class="text-right"><strong>@item.Amount.ToString("C0")</strong></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.PricePolicyName))
+                                {
+                                    <span class="badge badge-frozen">@item.PricePolicyName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">标准价</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:600; background:#f8f9fa;">
+                        <td colspan="6" class="text-right">合计：</td>
+                        <td class="text-right" style="color:#e94560; font-size:16px;">@Model.FinalAmount.ToString("C0")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="card full-width">
+        <div class="info-group">
+            <h4>适用价格政策</h4>
+            @if (applicablePolicies != null && applicablePolicies.Any())
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>政策名称</th>
+                            <th>商品分类</th>
+                            <th>适用等级</th>
+                            <th class="text-right">最低起订</th>
+                            <th class="text-right">折扣率</th>
+                            <th class="text-right">最大优惠</th>
+                            <th>有效期</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var policy in applicablePolicies)
+                        {
+                            <tr>
+                                <td><strong>@policy.PolicyName</strong></td>
+                                <td>@policy.ProductCategory</td>
+                                <td>@policy.ApplicableLevel级</td>
+                                <td class="text-right">@policy.MinOrderAmount.ToString("C0")</td>
+                                <td class="text-right">@((policy.DiscountRate * 100).ToString("F0"))%</td>
+                                <td class="text-right">@(policy.MaxDiscountAmount?.ToString("C0") ?? "无限制")</td>
+                                <td>@policy.StartDate.ToString("yyyy-MM-dd") ~ @policy.EndDate.ToString("yyyy-MM-dd")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">暂无适用的价格政策</p>
+            }
+        </div>
+    </div>
+
+    <div class="card full-width">
+        <div class="info-group">
+            <h4>欠款明细</h4>
+            @if (Model.Dealer.Debts != null && Model.Dealer.Debts.Any())
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>欠款描述</th>
+                            <th class="text-right">金额</th>
+                            <th>到期日</th>
+                            <th>状态</th>
+                            <th>逾期天数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var debt in Model.Dealer.Debts.OrderByDescending(d => d.DueDate))
+                        {
+                            <tr class="@(debt.IsOverdue ? "debt-overdue" : "")">
+                                <td>@debt.Description</td>
+                                <td class="text-right">@debt.Amount.ToString("C0")</td>
+                                <td>@debt.DueDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    @if (debt.IsPaid)
+                                    {
+                                        <span class="badge badge-completed">已结清</span>
+                                    }
+                                    else if (debt.IsOverdue)
+                                    {
+                                        <span class="badge badge-exception">已逾期</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-frozen">未到期</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (debt.IsOverdue)
+                                    {
+                                        <span style="color:#dc3545; font-weight:600;">@debt.OverdueDays 天</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">暂无欠款记录</p>
+            }
+        </div>
+    </div>
+
+    <div class="card full-width">
+        <div class="info-group">
+            <h4>流程历史节点</h4>
+            <div class="timeline">
+                @foreach (var history in Model.Histories.OrderBy(h => h.OperatedAt))
+                {
+                    var itemClass = history.ToStatus switch
+                    {
+                        OrderStatus.Completed or OrderStatus.Shipped => "success",
+                        OrderStatus.Exception or OrderStatus.Rejected => "danger",
+                        OrderStatus.CreditFrozen => "warning",
+                        _ => ""
+                    };
+
+                    <div class="timeline-item @itemClass">
+                        <div class="timeline-title">
+                            @GetStatusText(history.ToStatus)
+                            <span class="timeline-role">@GetRoleText(history.OperationRole)</span>
+                        </div>
+                        <div class="timeline-time">@history.OperatedAt.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                        <div class="timeline-desc">
+                            操作人：@history.Operator
+                            @if (!string.IsNullOrEmpty(history.Remark))
+                            {
+                                <br />
+                                备注：@history.Remark
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ReviewRecord != null)
+    {
+        <div class="card full-width">
+            <div class="info-group">
+                <h4>风控复核记录</h4>
+                <div class="info-item">
+                    <span class="info-label">异常类型：</span>
+                    <span class="badge badge-exception">@GetExceptionText(Model.ReviewRecord.ExceptionType)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">复核状态：</span>
+                    <span class="badge badge-@(Model.ReviewRecord.Status == ReviewStatus.Pending ? "submitted" : Model.ReviewRecord.Status == ReviewStatus.Approved ? "completed" : "rejected")">
+                        @GetReviewStatusText(Model.ReviewRecord.Status)
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">复核人：</span>
+                    <span class="info-value">@(string.IsNullOrEmpty(Model.ReviewRecord.Reviewer) ? "待复核" : Model.ReviewRecord.Reviewer)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">复核意见：</span>
+                    <span class="info-value">@(Model.ReviewRecord.ReviewComment ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">处理方案：</span>
+                    <span class="info-value">@(Model.ReviewRecord.Resolution ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">复核时间：</span>
+                    <span class="info-value">@(Model.ReviewRecord.ReviewedAt?.ToString("yyyy-MM-dd HH:mm") ?? "待定")</span>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusText(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Draft => "草稿",
+            OrderStatus.Submitted => "已提交",
+            OrderStatus.CreditFrozen => "额度已冻结",
+            OrderStatus.Shipped => "已发货",
+            OrderStatus.Completed => "已完成",
+            OrderStatus.Rejected => "已驳回",
+            OrderStatus.Exception => "异常",
+            _ => status.ToString()
+        };
+    }
+
+    string GetExceptionText(ExceptionType type)
+    {
+        return type switch
+        {
+            ExceptionType.None => "无",
+            ExceptionType.InsufficientCredit => "额度不足",
+            ExceptionType.OverdueDebt => "逾期欠款",
+            ExceptionType.PricePolicyConflict => "价格政策冲突",
+            _ => type.ToString()
+        };
+    }
+
+    string GetRoleText(OperationRole role)
+    {
+        return role switch
+        {
+            OperationRole.Sales => "销售",
+            OperationRole.Finance => "财务",
+            OperationRole.Warehouse => "仓库",
+            OperationRole.RiskControl => "风控",
+            _ => role.ToString()
+        };
+    }
+
+    string GetReviewStatusText(ReviewStatus status)
+    {
+        return status switch
+        {
+            ReviewStatus.Pending => "待复核",
+            ReviewStatus.Approved => "复核通过",
+            ReviewStatus.Rejected => "复核驳回",
+            _ => status.ToString()
+        };
+    }
+}

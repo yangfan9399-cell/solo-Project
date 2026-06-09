@@ -1,0 +1,250 @@
+@{
+    ViewData["Title"] = "数据复盘";
+}
+
+@model ReportViewModel
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">数据复盘 - 异常订单与额度分析</h2>
+
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card blue">
+        <div class="stat-label">总订单数</div>
+        <div class="stat-value">@ViewBag.TotalOrders</div>
+        <div class="stat-sub">已完成 @ViewBag.CompletedOrders / 发货中 @ViewBag.ShippedOrders</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">异常订单数</div>
+        <div class="stat-value">@ViewBag.TotalExceptionCount</div>
+        <div class="stat-sub">异常率 @(((double)ViewBag.ExceptionRate!).ToString("F1"))%</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">异常总金额</div>
+        <div class="stat-value">@(((decimal)ViewBag.TotalExceptionAmount!).ToString("C0"))</div>
+        <div class="stat-sub">冻结金额 @(((decimal)ViewBag.TotalFrozenAmount!).ToString("C0"))</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">待复核订单</div>
+        <div class="stat-value">@ViewBag.PendingReviewCount</div>
+        <div class="stat-sub">需风控处理</div>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-top:10px;">
+    <div class="stat-card teal">
+        <div class="stat-label">总授信额度</div>
+        <div class="stat-value">@(((decimal)ViewBag.TotalCredit!).ToString("C0"))</div>
+        <div class="stat-sub">已用 @(((decimal)ViewBag.UsedCredit!).ToString("C0"))</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">冻结额度</div>
+        <div class="stat-value">@(((decimal)ViewBag.FrozenCredit!).ToString("C0"))</div>
+        <div class="stat-sub">可用 @(((decimal)ViewBag.AvailableCredit!).ToString("C0"))</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">应收账款</div>
+        <div class="stat-value">@(((decimal)ViewBag.TotalDebt!).ToString("C0"))</div>
+        <div class="stat-sub">逾期 @(((decimal)ViewBag.OverdueDebt!).ToString("C0"))</div>
+    </div>
+</div>
+
+<div class="report-grid">
+    <div class="report-card">
+        <h3>📊 按区域分布</h3>
+        @if (Model.ByRegion.Any())
+        {
+            var maxCount = Model.ByRegion.Max(x => x.ExceptionCount);
+            foreach (var item in Model.ByRegion)
+            {
+                var percent = maxCount > 0 ? (double)item.ExceptionCount / maxCount * 100 : 0;
+                <div class="report-bar">
+                    <div class="report-bar-label">@item.Region</div>
+                    <div class="report-bar-track">
+                        <div class="report-bar-fill" style="width:@percent%"></div>
+                        <span class="report-bar-text">@item.TotalAmount.ToString("C0")</span>
+                    </div>
+                    <div class="report-bar-count">@item.ExceptionCount 笔</div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted">暂无数据</p>
+        }
+    </div>
+
+    <div class="report-card">
+        <h3>🏆 按经销商等级</h3>
+        @if (Model.ByLevel.Any())
+        {
+            var maxCount = Model.ByLevel.Max(x => x.ExceptionCount);
+            var colors = new[] { "red", "orange", "green", "purple" };
+            var colorIndex = 0;
+            foreach (var item in Model.ByLevel.OrderByDescending(x => x.ExceptionCount))
+            {
+                var percent = maxCount > 0 ? (double)item.ExceptionCount / maxCount * 100 : 0;
+                var colorClass = colors[colorIndex % colors.Length];
+                colorIndex++;
+                <div class="report-bar">
+                    <div class="report-bar-label">@item.Level级</div>
+                    <div class="report-bar-track">
+                        <div class="report-bar-fill @colorClass" style="width:@percent%"></div>
+                        <span class="report-bar-text">@item.TotalAmount.ToString("C0")</span>
+                    </div>
+                    <div class="report-bar-count">@item.ExceptionCount 笔</div>
+                </div>
+                <div style="font-size:11px; color:#999; margin-left:80px; margin-bottom:8px;">
+                    涉及 @item.DealerCount 家经销商 · 平均 @item.AvgAmount.ToString("C0")/单
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted">暂无数据</p>
+        }
+    </div>
+
+    <div class="report-card">
+        <h3>⚠️ 按异常原因</h3>
+        @if (Model.ByExceptionType.Any())
+        {
+            var maxCount = Model.ByExceptionType.Max(x => x.Count);
+            var colorMap = new Dictionary<ExceptionType, string>
+            {
+                { ExceptionType.InsufficientCredit, "red" },
+                { ExceptionType.OverdueDebt, "orange" },
+                { ExceptionType.PricePolicyConflict, "purple" }
+            };
+            foreach (var item in Model.ByExceptionType)
+            {
+                var percent = maxCount > 0 ? (double)item.Count / maxCount * 100 : 0;
+                var colorClass = colorMap.ContainsKey(item.ExceptionType) ? colorMap[item.ExceptionType] : "green";
+                <div class="report-bar">
+                    <div class="report-bar-label">@GetExceptionText(item.ExceptionType)</div>
+                    <div class="report-bar-track">
+                        <div class="report-bar-fill @colorClass" style="width:@percent%"></div>
+                        <span class="report-bar-text">@item.TotalAmount.ToString("C0")</span>
+                    </div>
+                    <div class="report-bar-count">@item.Count 笔</div>
+                </div>
+                <div style="font-size:11px; color:#999; margin-left:80px; margin-bottom:8px;">
+                    待复核 @item.PendingReviewCount · 已通过 @item.ApprovedCount · 已驳回 @item.RejectedCount
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted">暂无数据</p>
+        }
+    </div>
+
+    <div class="report-card">
+        <h3>💰 按金额区间</h3>
+        @if (Model.ByAmountRange.Any(x => x.Count > 0))
+        {
+            var maxCount = Model.ByAmountRange.Max(x => x.Count);
+            foreach (var item in Model.ByAmountRange)
+            {
+                var percent = maxCount > 0 ? (double)item.Count / maxCount * 100 : 0;
+                var colorClass = item.Range switch
+                {
+                    "0-10万" => "green",
+                    "10-30万" => "purple",
+                    "30-50万" => "orange",
+                    "50万以上" => "red",
+                    _ => ""
+                };
+                <div class="report-bar">
+                    <div class="report-bar-label">@item.Range</div>
+                    <div class="report-bar-track">
+                        <div class="report-bar-fill @colorClass" style="width:@percent%"></div>
+                        <span class="report-bar-text">@item.TotalAmount.ToString("C0")</span>
+                    </div>
+                    <div class="report-bar-count">@item.Count 笔</div>
+                </div>
+                if (item.FrozenAmount > 0)
+                {
+                    <div style="font-size:11px; color:#999; margin-left:80px; margin-bottom:8px;">
+                        冻结金额 @item.FrozenAmount.ToString("C0")
+                    </div>
+                }
+            }
+        }
+        else
+        {
+            <p class="text-muted">暂无数据</p>
+        }
+    </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <h3 class="card-title" style="margin-bottom:15px;">📋 区域异常明细</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>区域</th>
+                <th>异常订单数</th>
+                <th class="text-right">异常总金额</th>
+                <th class="text-right">平均金额</th>
+                <th class="text-right">冻结金额</th>
+                <th>额度不足</th>
+                <th>逾期欠款</th>
+                <th>价格政策</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.ByRegion)
+            {
+                <tr>
+                    <td><strong>@item.Region</strong></td>
+                    <td>@item.ExceptionCount 笔</td>
+                    <td class="text-right">@item.TotalAmount.ToString("C0")</td>
+                    <td class="text-right">@item.AvgAmount.ToString("C0")</td>
+                    <td class="text-right" style="color:#fd7e14; font-weight:600;">@item.FrozenAmount.ToString("C0")</td>
+                    <td><span class="badge badge-exception">@item.InsufficientCreditCount</span></td>
+                    <td><span class="badge badge-frozen">@item.OverdueDebtCount</span></td>
+                    <td><span class="badge badge-submitted">@item.PricePolicyConflictCount</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <h3 class="card-title" style="margin-bottom:15px;">📈 复盘结论与建议</h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+        <div class="suggestion-card" style="margin-bottom:0;">
+            <h5>🎯 重点关注区域</h5>
+            @if (Model.ByRegion.Any())
+            {
+                var topRegion = Model.ByRegion.OrderByDescending(x => x.ExceptionCount).First();
+                <p><strong>@topRegion.Region</strong> 区域异常订单最多，共 @topRegion.ExceptionCount 笔，金额 @topRegion.TotalAmount.ToString("C0")，占异常总额 @(topRegion.TotalAmount / (Model.ByRegion.Sum(x => x.TotalAmount) > 0 ? Model.ByRegion.Sum(x => x.TotalAmount) : 1) * 100).ToString("F1")%</p>
+            }
+        </div>
+        <div class="suggestion-card" style="margin-bottom:0;">
+            <h5>⚠️ 主要异常原因</h5>
+            @if (Model.ByExceptionType.Any())
+            {
+                var topException = Model.ByExceptionType.OrderByDescending(x => x.Count).First();
+                <p><strong>@GetExceptionText(topException.ExceptionType)</strong> 是最主要异常原因，共 @topException.Count 笔，占异常订单 @(topException.Count / (Model.ByExceptionType.Sum(x => x.Count) > 0 ? Model.ByExceptionType.Sum(x => x.Count) : 1) * 100).ToString("F1")%</p>
+            }
+        </div>
+        <div class="suggestion-card" style="margin-bottom:0;">
+            <h5>💡 改进建议</h5>
+            <p>加强高风险区域经销商的信用评估，优化价格政策规则，建立预警机制，降低异常订单发生率</p>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetExceptionText(ExceptionType type)
+    {
+        return type switch
+        {
+            ExceptionType.None => "无",
+            ExceptionType.InsufficientCredit => "额度不足",
+            ExceptionType.OverdueDebt => "逾期欠款",
+            ExceptionType.PricePolicyConflict => "价格政策冲突",
+            _ => type.ToString()
+        };
+    }
+}

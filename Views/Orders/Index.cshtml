@@ -1,0 +1,140 @@
+@{
+    ViewData["Title"] = "订单列表";
+}
+
+@model IEnumerable<Order>
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">
+    订单管理
+    <a href="@Url.Action("Create")" class="btn btn-primary btn-sm" style="margin-left:15px; font-size:14px;">+ 新建订单</a>
+</h2>
+
+<div class="filter-bar">
+    <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <div>
+            <label>订单状态:</label>
+            <select name="status" onchange="this.form.submit()">
+                <option value="all" @(ViewBag.Status == "all" ? "selected" : "")>全部</option>
+                <option value="Draft" @(ViewBag.Status == "Draft" ? "selected" : "")>草稿</option>
+                <option value="Submitted" @(ViewBag.Status == "Submitted" ? "selected" : "")>已提交</option>
+                <option value="CreditFrozen" @(ViewBag.Status == "CreditFrozen" ? "selected" : "")>额度已冻结</option>
+                <option value="Shipped" @(ViewBag.Status == "Shipped" ? "selected" : "")>已发货</option>
+                <option value="Completed" @(ViewBag.Status == "Completed" ? "selected" : "")>已完成</option>
+                <option value="Exception" @(ViewBag.Status == "Exception" ? "selected" : "")>异常</option>
+                <option value="Rejected" @(ViewBag.Status == "Rejected" ? "selected" : "")>已驳回</option>
+            </select>
+        </div>
+        <div>
+            <label>异常类型:</label>
+            <select name="exceptionType" onchange="this.form.submit()">
+                <option value="all" @(ViewBag.ExceptionType == "all" ? "selected" : "")>全部</option>
+                <option value="None" @(ViewBag.ExceptionType == "None" ? "selected" : "")>无异常</option>
+                <option value="InsufficientCredit" @(ViewBag.ExceptionType == "InsufficientCredit" ? "selected" : "")>额度不足</option>
+                <option value="OverdueDebt" @(ViewBag.ExceptionType == "OverdueDebt" ? "selected" : "")>逾期欠款</option>
+                <option value="PricePolicyConflict" @(ViewBag.ExceptionType == "PricePolicyConflict" ? "selected" : "")>价格政策冲突</option>
+            </select>
+        </div>
+        <div>
+            <label>搜索:</label>
+            <input type="text" name="search" value="@ViewBag.Search" placeholder="订单号/经销商名称" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">搜索</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">订单列表</h3>
+        <span class="text-muted">共 @ViewBag.TotalCount 条记录</span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>经销商</th>
+                <th>区域</th>
+                <th>订单金额</th>
+                <th>状态</th>
+                <th>异常类型</th>
+                <th>销售</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td><strong>@order.OrderNo</strong></td>
+                    <td>@order.Dealer.Name</td>
+                    <td>@order.Dealer.Region</td>
+                    <td>@order.FinalAmount.ToString("C0")</td>
+                    <td>
+                        <span class="badge badge-@order.Status.ToString().ToLower()">@GetStatusText(order.Status)</span>
+                    </td>
+                    <td>
+                        @if (order.ExceptionType != ExceptionType.None)
+                        {
+                            <span class="badge badge-exception">@GetExceptionText(order.ExceptionType)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>@order.SalesPerson</td>
+                    <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a href="@Url.Action("Details", new { id = order.Id })" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="pagination">
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                if (i == ViewBag.Page)
+                {
+                    <span class="active">@i</span>
+                }
+                else
+                {
+                    <a href="@Url.Action("Index", new { status = ViewBag.Status, exceptionType = ViewBag.ExceptionType, search = ViewBag.Search, page = i, pageSize = ViewBag.PageSize })">@i</a>
+                }
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusText(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Draft => "草稿",
+            OrderStatus.Submitted => "已提交",
+            OrderStatus.CreditFrozen => "额度已冻结",
+            OrderStatus.Shipped => "已发货",
+            OrderStatus.Completed => "已完成",
+            OrderStatus.Rejected => "已驳回",
+            OrderStatus.Exception => "异常",
+            _ => status.ToString()
+        };
+    }
+
+    string GetExceptionText(ExceptionType type)
+    {
+        return type switch
+        {
+            ExceptionType.None => "无",
+            ExceptionType.InsufficientCredit => "额度不足",
+            ExceptionType.OverdueDebt => "逾期欠款",
+            ExceptionType.PricePolicyConflict => "价格政策冲突",
+            _ => type.ToString()
+        };
+    }
+}

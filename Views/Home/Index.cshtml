@@ -1,0 +1,153 @@
+@{
+    ViewData["Title"] = "首页";
+}
+
+@model IEnumerable<Order>
+
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-label">总订单数</div>
+        <div class="stat-value">@ViewData["TotalOrders"]</div>
+        <div class="stat-sub">全部订单</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">待处理订单</div>
+        <div class="stat-value">@ViewData["PendingOrders"]</div>
+        <div class="stat-sub">需审核/发货</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">异常订单</div>
+        <div class="stat-value">@ViewData["ExceptionOrders"]</div>
+        <div class="stat-sub">需风控复核</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">经销商总数</div>
+        <div class="stat-value">@ViewData["TotalDealers"]</div>
+        <div class="stat-sub">活跃经销商</div>
+    </div>
+    <div class="stat-card teal">
+        <div class="stat-label">总授信额度</div>
+        <div class="stat-value">@(((decimal)ViewData["TotalCredit"]!).ToString("C0"))</div>
+        <div class="stat-sub">已授信总额</div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-label">已用额度</div>
+        <div class="stat-value">@(((decimal)ViewData["UsedCredit"]!).ToString("C0"))</div>
+        <div class="stat-sub">含冻结额度</div>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:24px;">
+    <div class="stat-card">
+        <div class="stat-label">逾期欠款总额</div>
+        <div class="stat-value" style="color:#dc3545;">@(((decimal)ViewData["OverdueDebts"]!).ToString("C0"))</div>
+        <div class="stat-sub">需重点关注</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">本月完成订单</div>
+        <div class="stat-value">@ViewData["CompletedOrders"]</div>
+        <div class="stat-sub">已完成发货</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">待复核异常</div>
+        <div class="stat-value">@ViewData["PendingReview"]</div>
+        <div class="stat-sub">风控待处理</div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:16px; margin-bottom:24px;">
+    <a href="@Url.Action("Index", "Orders")" class="card" style="text-decoration:none; color:inherit; display:block; border-left:4px solid #0f3460;">
+        <h3 class="card-title" style="color:#0f3460; font-size:15px;">📋 订单管理</h3>
+        <p class="text-muted" style="font-size:13px; margin:0;">查看所有订单，新建销售订单</p>
+    </a>
+    <a href="@Url.Action("Index", "Finance")" class="card" style="text-decoration:none; color:inherit; display:block; border-left:4px solid #fd7e14;">
+        <h3 class="card-title" style="color:#fd7e14; font-size:15px;">💰 财务审核</h3>
+        <p class="text-muted" style="font-size:13px; margin:0;">冻结授信额度，管理应收账款</p>
+    </a>
+    <a href="@Url.Action("Index", "Warehouse")" class="card" style="text-decoration:none; color:inherit; display:block; border-left:4px solid #28a745;">
+        <h3 class="card-title" style="color:#28a745; font-size:15px;">📦 仓库发货</h3>
+        <p class="text-muted" style="font-size:13px; margin:0;">确认发货，核销授信额度</p>
+    </a>
+    <a href="@Url.Action("Index", "Risk")" class="card" style="text-decoration:none; color:inherit; display:block; border-left:4px solid #dc3545;">
+        <h3 class="card-title" style="color:#dc3545; font-size:15px;">⚠️ 风控复核</h3>
+        <p class="text-muted" style="font-size:13px; margin:0;">处理异常订单，风险评估审批</p>
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">最近订单</h2>
+        <a href="@Url.Action("Index", "Orders")" class="btn btn-primary btn-sm">查看全部 →</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>经销商</th>
+                <th>区域</th>
+                <th>订单金额</th>
+                <th>状态</th>
+                <th>异常类型</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td><strong>@order.OrderNo</strong></td>
+                    <td>@order.Dealer.Name</td>
+                    <td>@order.Dealer.Region</td>
+                    <td>@order.FinalAmount.ToString("C0")</td>
+                    <td>
+                        <span class="badge badge-@order.Status.ToString().ToLower()">@GetStatusText(order.Status)</span>
+                    </td>
+                    <td>
+                        @if (order.ExceptionType != ExceptionType.None)
+                        {
+                            <span class="badge badge-exception">@GetExceptionText(order.ExceptionType)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a href="@Url.Action("Details", "Orders", new { id = order.Id })" class="btn btn-secondary btn-sm">详情</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    string GetStatusText(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.Draft => "草稿",
+            OrderStatus.Submitted => "已提交",
+            OrderStatus.CreditFrozen => "额度已冻结",
+            OrderStatus.Shipped => "已发货",
+            OrderStatus.Completed => "已完成",
+            OrderStatus.Rejected => "已驳回",
+            OrderStatus.Exception => "异常",
+            _ => status.ToString()
+        };
+    }
+
+    string GetExceptionText(ExceptionType type)
+    {
+        return type switch
+        {
+            ExceptionType.None => "无",
+            ExceptionType.InsufficientCredit => "额度不足",
+            ExceptionType.OverdueDebt => "逾期欠款",
+            ExceptionType.PricePolicyConflict => "价格政策冲突",
+            _ => type.ToString()
+        };
+    }
+}

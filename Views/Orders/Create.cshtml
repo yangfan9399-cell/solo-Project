@@ -1,0 +1,240 @@
+@{
+    ViewData["Title"] = "新建订单";
+}
+
+@{
+    var dealers = ViewBag.Dealers as List<Dealer>;
+    var products = ViewBag.Products as List<Product>;
+    var pricePolicies = ViewBag.PricePolicies as List<PricePolicy>;
+}
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">新建订单 - 销售提交</h2>
+
+<div class="alert alert-info">
+    <strong>💡 提示：</strong>请选择经销商和商品，系统将自动计算价格和优惠。提交后订单将进入财务审核流程。
+</div>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom:15px;">1. 选择经销商</h3>
+        <div class="form-group">
+            <label>经销商</label>
+            <select name="dealerId" id="dealerSelect" required onchange="updateDealerInfo()">
+                <option value="">请选择经销商</option>
+                @foreach (var dealer in dealers)
+                {
+                    var credit = dealer.CreditLimit;
+                    var available = credit.TotalCredit - credit.UsedCredit - credit.FrozenCredit;
+                    <option value="@dealer.Id"
+                            data-level="@dealer.Level"
+                            data-region="@dealer.Region"
+                            data-credit="@credit.TotalCredit"
+                            data-available="@available"
+                            data-paymentdays="@credit.PaymentDays">
+                        @dealer.Name (@dealer.Level级) - 可用额度 @available.ToString("C0")
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div id="dealerInfo" style="display:none; background:#f8f9fa; padding:15px; border-radius:8px;">
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px;">
+                <div>
+                    <div style="font-size:12px; color:#999;">经销商等级</div>
+                    <div id="dealerLevel" style="font-weight:600;"></div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#999;">所属区域</div>
+                    <div id="dealerRegion" style="font-weight:600;"></div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#999;">可用额度</div>
+                    <div id="dealerAvailable" style="font-weight:600; color:#28a745;"></div>
+                </div>
+                <div>
+                    <div style="font-size:12px; color:#999;">账期</div>
+                    <div id="dealerPayment" style="font-weight:600;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom:15px;">2. 选择商品</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px;"></th>
+                    <th>商品名称</th>
+                    <th>分类</th>
+                    <th class="text-right">标准价</th>
+                    <th class="text-right">库存</th>
+                    <th style="width:120px;">数量</th>
+                    <th class="text-right">小计</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < products.Count; i++)
+                {
+                    var product = products[i];
+                    <tr class="product-row" data-productid="@product.Id" data-price="@product.StandardPrice" data-category="@product.Category">
+                        <td>
+                            <input type="checkbox" class="product-checkbox" name="productIds" value="@product.Id" onchange="toggleQuantity(this)" />
+                        </td>
+                        <td><strong>@product.Name</strong></td>
+                        <td>@product.Category</td>
+                        <td class="text-right">@product.StandardPrice.ToString("C0")</td>
+                        <td class="text-right">@product.Stock</td>
+                        <td>
+                            <input type="number" class="quantity-input" name="quantities" value="0" min="0" max="@product.Stock"
+                                   disabled oninput="calculateAmount(this)" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px;" />
+                        </td>
+                        <td class="text-right">
+                            <span class="item-amount" style="font-weight:600;">¥0.00</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom:15px;">3. 订单汇总</h3>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+            <div>
+                <div class="info-item">
+                    <span class="info-label">商品种类：</span>
+                    <span class="info-value" id="productCount">0 种</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">商品总数：</span>
+                    <span class="info-value" id="totalQuantity">0 件</span>
+                </div>
+            </div>
+            <div style="background:#f8f9fa; padding:20px; border-radius:8px;">
+                <div class="info-item">
+                    <span class="info-label">订单总额：</span>
+                    <span class="info-value" id="totalAmount">¥0.00</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">优惠金额：</span>
+                    <span class="info-value success" id="discountAmount">-¥0.00</span>
+                </div>
+                <hr style="margin:10px 0;" />
+                <div class="info-item">
+                    <span class="info-label">应付金额：</span>
+                    <span class="info-value highlight" id="finalAmount" style="font-size:20px;">¥0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <a href="@Url.Action("Index")" class="btn btn-secondary">取消</a>
+        <button type="submit" class="btn btn-primary" onclick="return validateForm()">提交订单</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function updateDealerInfo() {
+            var select = document.getElementById('dealerSelect');
+            var option = select.options[select.selectedIndex];
+            var infoDiv = document.getElementById('dealerInfo');
+
+            if (select.value) {
+                document.getElementById('dealerLevel').textContent = option.dataset.level + '级';
+                document.getElementById('dealerRegion').textContent = option.dataset.region;
+                document.getElementById('dealerAvailable').textContent = '¥' + parseFloat(option.dataset.available).toLocaleString('zh-CN', {minimumFractionDigits: 2});
+                document.getElementById('dealerPayment').textContent = option.dataset.paymentdays + '天';
+                infoDiv.style.display = 'block';
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        }
+
+        function toggleQuantity(checkbox) {
+            var row = checkbox.closest('.product-row');
+            var qtyInput = row.querySelector('.quantity-input');
+
+            if (checkbox.checked) {
+                qtyInput.disabled = false;
+                qtyInput.value = 1;
+                calculateAmount(qtyInput);
+            } else {
+                qtyInput.disabled = true;
+                qtyInput.value = 0;
+                row.querySelector('.item-amount').textContent = '¥0.00';
+            }
+
+            updateTotals();
+        }
+
+        function calculateAmount(input) {
+            var row = input.closest('.product-row');
+            var price = parseFloat(row.dataset.price);
+            var qty = parseInt(input.value) || 0;
+            var amount = price * qty;
+
+            row.querySelector('.item-amount').textContent = '¥' + amount.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+            updateTotals();
+        }
+
+        function updateTotals() {
+            var rows = document.querySelectorAll('.product-row');
+            var productCount = 0;
+            var totalQty = 0;
+            var totalAmount = 0;
+
+            rows.forEach(function(row) {
+                var checkbox = row.querySelector('.product-checkbox');
+                if (checkbox.checked) {
+                    var qty = parseInt(row.querySelector('.quantity-input').value) || 0;
+                    if (qty > 0) {
+                        productCount++;
+                        totalQty += qty;
+                        var price = parseFloat(row.dataset.price);
+                        totalAmount += price * qty;
+                    }
+                }
+            });
+
+            document.getElementById('productCount').textContent = productCount + ' 种';
+            document.getElementById('totalQuantity').textContent = totalQty + ' 件';
+            document.getElementById('totalAmount').textContent = '¥' + totalAmount.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+            document.getElementById('finalAmount').textContent = '¥' + totalAmount.toLocaleString('zh-CN', {minimumFractionDigits: 2});
+        }
+
+        function validateForm() {
+            var dealerId = document.getElementById('dealerSelect').value;
+            if (!dealerId) {
+                alert('请选择经销商');
+                return false;
+            }
+
+            var checkedProducts = document.querySelectorAll('.product-checkbox:checked');
+            if (checkedProducts.length === 0) {
+                alert('请至少选择一个商品');
+                return false;
+            }
+
+            var hasValidQuantity = false;
+            checkedProducts.forEach(function(cb) {
+                var row = cb.closest('.product-row');
+                var qty = parseInt(row.querySelector('.quantity-input').value) || 0;
+                if (qty > 0) {
+                    hasValidQuantity = true;
+                }
+            });
+
+            if (!hasValidQuantity) {
+                alert('请输入商品数量');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 酒类经销商授信订单管理系统</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a class="navbar-brand" href="@Url.Action("Index", "Home")">
+                    <span class="brand-icon">🍷</span>
+                    酒类经销商授信订单管理系统
+                </a>
+                <ul class="nav-menu">
+                    <li><a href="@Url.Action("Index", "Home")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "active" : "")">首页</a></li>
+                    <li><a href="@Url.Action("Index", "Orders")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Orders" ? "active" : "")">订单管理</a></li>
+                    <li><a href="@Url.Action("Index", "Finance")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Finance" ? "active" : "")">财务审核</a></li>
+                    <li><a href="@Url.Action("Index", "Warehouse")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Warehouse" ? "active" : "")">仓库发货</a></li>
+                    <li><a href="@Url.Action("Index", "Risk")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Risk" ? "active" : "")">风控复核</a></li>
+                    <li><a href="@Url.Action("Index", "Reports")" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">数据复盘</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 酒类经销商授信订单管理系统 - 额度冻结复核系统</p>
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

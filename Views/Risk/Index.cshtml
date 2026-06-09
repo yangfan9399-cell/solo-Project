@@ -1,0 +1,113 @@
+@{
+    ViewData["Title"] = "风控复核";
+}
+
+@model IEnumerable<Order>
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">风控复核 - 异常订单</h2>
+
+<div class="alert alert-warning">
+    <strong>⚠️ 提示：</strong>以下订单因各种异常原因需要风控部门复核处理，请根据实际情况决定是否放行或驳回。
+</div>
+
+@{
+    var pendingCount = Model.Count(o => o.ReviewRecord?.Status == ReviewStatus.Pending);
+    var approvedCount = Model.Count(o => o.ReviewRecord?.Status == ReviewStatus.Approved);
+    var rejectedCount = Model.Count(o => o.ReviewRecord?.Status == ReviewStatus.Rejected);
+}
+
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <div class="stat-label">异常订单总数</div>
+        <div class="stat-value">@Model.Count()</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">待复核</div>
+        <div class="stat-value">@pendingCount</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">已通过</div>
+        <div class="stat-value">@approvedCount</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">已驳回</div>
+        <div class="stat-value">@rejectedCount</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title" style="margin-bottom:15px;">异常订单列表</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>经销商</th>
+                <th>等级</th>
+                <th class="text-right">订单金额</th>
+                <th>异常类型</th>
+                <th>复核状态</th>
+                <th>提交时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td><strong>@order.OrderNo</strong></td>
+                    <td>@order.Dealer.Name</td>
+                    <td>
+                        <span class="badge badge-level-@order.Dealer.Level.ToString().ToLower()">@order.Dealer.Level级</span>
+                    </td>
+                    <td class="text-right">@order.FinalAmount.ToString("C0")</td>
+                    <td>
+                        <span class="badge badge-exception">@GetExceptionText(order.ExceptionType)</span>
+                    </td>
+                    <td>
+                        @if (order.ReviewRecord != null)
+                        {
+                            <span class="badge badge-@(order.ReviewRecord.Status == ReviewStatus.Pending ? "submitted" : order.ReviewRecord.Status == ReviewStatus.Approved ? "completed" : "rejected")">
+                                @GetReviewStatusText(order.ReviewRecord.Status)
+                            </span>
+                        }
+                    </td>
+                    <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <a href="@Url.Action("Details", "Orders", new { id = order.Id })" class="btn btn-secondary btn-sm">详情</a>
+                            @if (order.ReviewRecord?.Status == ReviewStatus.Pending)
+                            {
+                                <a href="@Url.Action("Review", new { id = order.Id })" class="btn btn-warning btn-sm">复核</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    string GetExceptionText(ExceptionType type)
+    {
+        return type switch
+        {
+            ExceptionType.None => "无",
+            ExceptionType.InsufficientCredit => "额度不足",
+            ExceptionType.OverdueDebt => "逾期欠款",
+            ExceptionType.PricePolicyConflict => "价格政策冲突",
+            _ => type.ToString()
+        };
+    }
+
+    string GetReviewStatusText(ReviewStatus status)
+    {
+        return status switch
+        {
+            ReviewStatus.Pending => "待复核",
+            ReviewStatus.Approved => "复核通过",
+            ReviewStatus.Rejected => "复核驳回",
+            _ => status.ToString()
+        };
+    }
+}

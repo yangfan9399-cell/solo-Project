@@ -1,0 +1,86 @@
+@{
+    ViewData["Title"] = "财务审核";
+}
+
+@model IEnumerable<Order>
+
+<h2 style="margin-bottom:20px; color:#1a1a2e;">财务审核 - 额度冻结</h2>
+
+<div class="alert alert-info">
+    <strong>💡 提示：</strong>以下订单已由销售提交，等待财务进行授信额度冻结。冻结前系统将自动检查逾期欠款、可用额度和价格政策。
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">待冻结额度订单</h3>
+        <span class="badge badge-frozen">@Model.Count() 笔</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted" style="text-align:center; padding:30px;">暂无待处理订单</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>经销商</th>
+                    <th>等级</th>
+                    <th class="text-right">订单金额</th>
+                    <th class="text-right">可用额度</th>
+                    <th>销售员</th>
+                    <th>提交时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    var credit = order.Dealer.CreditLimit;
+                    var available = credit.TotalCredit - credit.UsedCredit - credit.FrozenCredit;
+                    var isEnough = available >= order.FinalAmount;
+
+                    <tr>
+                        <td><strong>@order.OrderNo</strong></td>
+                        <td>@order.Dealer.Name</td>
+                        <td>
+                            <span class="badge badge-level-@order.Dealer.Level.ToString().ToLower()">@order.Dealer.Level级</span>
+                        </td>
+                        <td class="text-right"><strong>@order.FinalAmount.ToString("C0")</strong></td>
+                        <td class="text-right">
+                            <span class="@(isEnough ? "" : "danger")" style="font-weight:600;">
+                                @available.ToString("C0")
+                            </span>
+                        </td>
+                        <td>@order.SalesPerson</td>
+                        <td>@order.SubmittedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <a href="@Url.Action("Details", "Orders", new { id = order.Id })" class="btn btn-secondary btn-sm">详情</a>
+                                <form asp-action="FreezeCredit" method="post">
+                                    <input type="hidden" name="id" value="@order.Id" />
+                                    <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('确认冻结该订单的授信额度？')">
+                                        冻结额度
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
+    <a href="@Url.Action("CreditLimits")" class="card" style="text-decoration:none; color:inherit; display:block;">
+        <h3 class="card-title">📊 授信额度一览</h3>
+        <p class="text-muted">查看所有经销商的授信额度使用情况</p>
+    </a>
+    <a href="@Url.Action("Debts")" class="card" style="text-decoration:none; color:inherit; display:block;">
+        <h3 class="card-title">💳 应收账款管理</h3>
+        <p class="text-muted">查看所有未结清欠款和逾期情况</p>
+    </a>
+</div>
