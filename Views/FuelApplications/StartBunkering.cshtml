@@ -13,7 +13,7 @@
         <p><strong>计划量：</strong>@Model.PlannedQuantity 吨</p>
     </div>
 
-    <form asp-action="StartBunkering" asp-route-id="@Model.Id">
+    <form asp-action="StartBunkering" method="post" asp-route-id="@Model.Id">
         @Html.AntiForgeryToken()
         <div class="form-group">
             <label class="form-label">操作员姓名</label>

@@ -30,7 +30,7 @@
 
     @if (canSettle)
     {
-        <form asp-action="Settle" asp-route-id="@Model.Id">
+        <form asp-action="Settle" method="post" asp-route-id="@Model.Id">
             @Html.AntiForgeryToken()
             <div class="form-group">
                 <label class="form-label">财务复核人姓名</label>

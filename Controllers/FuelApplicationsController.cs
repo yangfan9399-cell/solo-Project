@@ -59,8 +59,8 @@ public class FuelApplicationsController : Controller
         if (ModelState.IsValid)
         {
             var applicantName = "船务经办人";
-            await _service.CreateAsync(application, applicantName);
-            return RedirectToAction(nameof(Index));
+            var created = await _service.CreateAsync(application, applicantName);
+            return RedirectToAction(nameof(Details), new { id = created.Id });
         }
         ViewData["ShipId"] = new SelectList(await _context.Ships.Where(s => s.IsActive).ToListAsync(), "Id", "Name", application.ShipId);
         ViewData["SupplierId"] = new SelectList(await _context.Suppliers.Where(s => s.IsActive).ToListAsync(), "Id", "Name", application.SupplierId);

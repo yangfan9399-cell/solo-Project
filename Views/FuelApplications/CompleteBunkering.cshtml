@@ -14,7 +14,7 @@
         <p><strong>单价：</strong>¥@Model.UnitPrice / 吨</p>
     </div>
 
-    <form asp-action="CompleteBunkering" asp-route-id="@Model.Id">
+    <form asp-action="CompleteBunkering" method="post" asp-route-id="@Model.Id">
         @Html.AntiForgeryToken()
         <div class="form-row">
             <div class="form-group">
