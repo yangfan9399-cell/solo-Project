@@ -34,6 +34,8 @@ public class FinanceController : Controller
             .ThenInclude(d => d.CreditLimit)
             .Include(o => o.Dealer)
             .ThenInclude(d => d.Debts)
+            .Include(o => o.Items)
+            .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null || order.Status != OrderStatus.Submitted)

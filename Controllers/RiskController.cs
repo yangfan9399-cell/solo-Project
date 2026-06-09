@@ -140,6 +140,10 @@ public class RiskController : Controller
                 historyRemark += $"，价格政策例外审批通过";
                 break;
 
+            case "组合达标":
+                historyRemark += $"，组合商品达标，价格政策冲突解除";
+                break;
+
             case "特殊审批":
                 historyRemark += $"，特殊审批通过";
                 break;
