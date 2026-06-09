@@ -148,28 +148,87 @@ export async function action({ request, params }: ActionFunctionArgs) {
       return json({ error: "无权限审核" }, { status: 403 });
     }
 
-    const result = ReviewSchema.safeParse({
-      action: formData.get("action"),
-      comment: formData.get("comment"),
-      issueType: formData.get("issueType"),
-      issueDescription: formData.get("issueDescription"),
-      documentIds: formData.get("documentIds"),
-    });
+    const action = formData.get("action");
+    const comment = formData.get("comment") as string | null;
+    const issueType = formData.get("issueType") as string | null;
+    const issueDescription = formData.get("issueDescription") as string | null;
+    const documentIds = formData.getAll("documentIds") as string[];
 
-    if (!result.success) {
-      return json(
-        { errors: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
+    if (action === "reject") {
+      const errors: Record<string, string[]> = {};
+
+      if (!issueType || issueType.trim() === "") {
+        errors.issueType = ["请选择问题类型"];
+      }
+      if (!issueDescription || issueDescription.trim() === "") {
+        errors.issueDescription = ["请填写问题描述"];
+      }
+      if (!documentIds || documentIds.length === 0 || documentIds.every((id) => id.trim() === "")) {
+        errors.documentIds = ["请至少选择一个关联材料"];
+      }
+
+      if (Object.keys(errors).length > 0) {
+        return json(
+          {
+            errors,
+            formValues: {
+              action: "reject",
+              issueType: issueType || "",
+              issueDescription: issueDescription || "",
+              comment: comment || "",
+              documentIds: documentIds || [],
+            },
+          },
+          { status: 400 }
+        );
+      }
+
+      const validDocIds = documentIds.filter((id) => id.trim() !== "");
+
+      await prisma.materialIssue.create({
+        data: {
+          issueType: issueType!,
+          description: issueDescription!,
+          trademarkId: trademarkId,
+          resolved: false,
+        },
+      });
+
+      if (validDocIds.length > 0) {
+        await prisma.document.updateMany({
+          where: {
+            id: { in: validDocIds },
+            trademarkId: trademarkId,
+          },
+          data: {
+            status: "REJECTED",
+            rejectionReason: issueDescription!,
+          },
+        });
+      }
+
+      await prisma.trademark.update({
+        where: { id: trademarkId },
+        data: {
+          status: "MATERIALS_DEFICIENT",
+          agentId: user.id,
+        },
+      });
+
+      await prisma.reviewHistory.create({
+        data: {
+          action: "代理人审核驳回",
+          status: "MATERIALS_DEFICIENT",
+          trademarkId: trademarkId,
+          userId: user.id,
+          comment: comment || issueDescription,
+        },
+      });
+
+      return redirect(`/trademarks/${trademarkId}`);
     }
 
-    let newStatus = trademark.status;
-    let actionText = "";
-
-    if (result.data.action === "approve") {
-      newStatus = "AGENT_APPROVED";
-      actionText = "代理人审核通过";
-
+    if (action === "approve") {
       await prisma.document.updateMany({
         where: { trademarkId: trademarkId, status: "UPLOADED" },
         data: { status: "APPROVED" },
@@ -179,57 +238,29 @@ export async function action({ request, params }: ActionFunctionArgs) {
         where: { trademarkId: trademarkId, resolved: false },
         data: { resolved: true },
       });
-    } else if (result.data.action === "reject") {
-      newStatus = "MATERIALS_DEFICIENT";
-      actionText = "代理人审核驳回";
 
-      if (result.data.issueType && result.data.issueDescription) {
-        await prisma.materialIssue.create({
-          data: {
-            issueType: result.data.issueType,
-            description: result.data.issueDescription,
-            trademarkId: trademarkId,
-            resolved: false,
-          },
-        });
-      }
+      await prisma.trademark.update({
+        where: { id: trademarkId },
+        data: {
+          status: "AGENT_APPROVED",
+          agentId: user.id,
+        },
+      });
 
-      if (result.data.documentIds) {
-        const docIds = result.data.documentIds.split(",").filter(Boolean);
-        if (docIds.length > 0) {
-          await prisma.document.updateMany({
-            where: {
-              id: { in: docIds },
-              trademarkId: trademarkId,
-            },
-            data: {
-              status: "REJECTED",
-              rejectionReason: result.data.issueDescription || result.data.comment,
-            },
-          });
-        }
-      }
+      await prisma.reviewHistory.create({
+        data: {
+          action: "代理人审核通过",
+          status: "AGENT_APPROVED",
+          trademarkId: trademarkId,
+          userId: user.id,
+          comment: comment || undefined,
+        },
+      });
+
+      return redirect(`/trademarks/${trademarkId}`);
     }
 
-    await prisma.trademark.update({
-      where: { id: trademarkId },
-      data: {
-        status: newStatus,
-        agentId: user.id,
-      },
-    });
-
-    await prisma.reviewHistory.create({
-      data: {
-        action: actionText,
-        status: newStatus,
-        trademarkId: trademarkId,
-        userId: user.id,
-        comment: result.data.comment,
-      },
-    });
-
-    return redirect(`/trademarks/${trademarkId}`);
+    return json({ error: "未知操作" }, { status: 400 });
   }
 
   if (_action === "submit") {
@@ -843,24 +874,22 @@ export default function TrademarkDetail() {
                       审核通过
                     </button>
                   </Form>
-                  <Form method="post" onSubmit={(e) => {
-                    const form = e.currentTarget;
-                    const checkboxes = form.querySelectorAll('input[name="docIds"]:checked');
-                    const ids = Array.from(checkboxes).map((cb) => (cb as HTMLInputElement).value).join(",");
-                    const hiddenInput = form.querySelector('input[name="documentIds"]') as HTMLInputElement;
-                    if (hiddenInput) hiddenInput.value = ids;
-                  }}>
+                  <Form method="post">
                     <input type="hidden" name="_action" value="agentReview" />
                     <input type="hidden" name="action" value="reject" />
-                    <input type="hidden" name="documentIds" value="" />
                     
                     <div className="mb-3">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        问题类型
+                        问题类型 <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="issueType"
-                        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md"
+                        defaultValue={String(actionData?.formValues?.issueType || "")}
+                        className={`block w-full pl-3 pr-10 py-2 text-base focus:outline-none sm:text-sm rounded-md ${
+                          actionData?.errors?.issueType
+                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                            : "border-gray-300 focus:ring-red-500 focus:border-red-500"
+                        }`}
                       >
                         <option value="">请选择问题类型</option>
                         <option value="文件不清晰">文件不清晰</option>
@@ -870,32 +899,55 @@ export default function TrademarkDetail() {
                         <option value="过期失效">过期失效</option>
                         <option value="其他问题">其他问题</option>
                       </select>
+                      {actionData?.errors?.issueType && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {actionData.errors.issueType[0]}
+                        </p>
+                      )}
                     </div>
                     
                     <div className="mb-3">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        问题描述
+                        问题描述 <span className="text-red-500">*</span>
                       </label>
                       <textarea
                         name="issueDescription"
                         rows={2}
                         placeholder="请详细描述材料存在的问题..."
-                        className="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                        defaultValue={String(actionData?.formValues?.issueDescription || "")}
+                        className={`shadow-sm block w-full sm:text-sm rounded-md ${
+                          actionData?.errors?.issueDescription
+                            ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                            : "border-gray-300 focus:ring-red-500 focus:border-red-500"
+                        }`}
                       />
+                      {actionData?.errors?.issueDescription && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {actionData.errors.issueDescription[0]}
+                        </p>
+                      )}
                     </div>
                     
                     {trademark.documents.length > 0 && (
                       <div className="mb-3">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          关联问题文档（可多选）
+                          关联问题文档 <span className="text-red-500">*</span>
                         </label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                        <div className={`space-y-2 max-h-40 overflow-y-auto border rounded-md p-2 ${
+                          actionData?.errors?.documentIds
+                            ? "border-red-500"
+                            : "border-gray-200"
+                        }`}>
                           {trademark.documents.map((doc: any) => (
                             <label key={doc.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
                               <input
                                 type="checkbox"
-                                name="docIds"
+                                name="documentIds"
                                 value={doc.id}
+                                defaultChecked={
+                                  Array.isArray(actionData?.formValues?.documentIds) &&
+                                  actionData.formValues.documentIds.includes(doc.id)
+                                }
                                 className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                               />
                               <span className="text-sm text-gray-700">{doc.name}</span>
@@ -905,6 +957,11 @@ export default function TrademarkDetail() {
                             </label>
                           ))}
                         </div>
+                        {actionData?.errors?.documentIds && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {actionData.errors.documentIds[0]}
+                          </p>
+                        )}
                       </div>
                     )}
                     
@@ -916,6 +973,7 @@ export default function TrademarkDetail() {
                         name="comment"
                         rows={2}
                         placeholder="其他补充说明..."
+                        defaultValue={String(actionData?.formValues?.comment || "")}
                         className="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"
                       />
                     </div>
