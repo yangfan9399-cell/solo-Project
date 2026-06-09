@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -217,7 +218,12 @@ public class FireHazardService {
 
     @Transactional
     public void checkAndMarkOverdue() {
-        List<FireHazard> overdueList = fireHazardRepository.findOverdueHazards(LocalDateTime.now());
+        List<HazardStatus> excludedStatuses = Arrays.asList(
+                HazardStatus.ACCEPTED,
+                HazardStatus.OVERDUE
+        );
+        List<FireHazard> overdueList = fireHazardRepository.findOverdueHazards(
+                LocalDateTime.now(), excludedStatuses);
         for (FireHazard hazard : overdueList) {
             HazardStatus oldStatus = hazard.getStatus();
             hazard.setOverdue(true);

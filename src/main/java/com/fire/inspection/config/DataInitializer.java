@@ -88,15 +88,10 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        FireHazard hazard1 = createNormalAcceptedHazard(inspector1, deptHead1, director1);
-        FireHazard hazard2 = createFireExtinguisherExpiredHazard(inspector1, deptHead2);
-        FireHazard hazard3 = createChannelBlockageHazard(inspector1, deptHead1);
-        FireHazard hazard4 = createOverdueHazard(inspector1, deptHead2);
-
-        fireHazardRepository.save(hazard1);
-        fireHazardRepository.save(hazard2);
-        fireHazardRepository.save(hazard3);
-        fireHazardRepository.save(hazard4);
+        createNormalAcceptedHazard(inspector1, deptHead1, director1);
+        createFireExtinguisherExpiredHazard(inspector1, deptHead2);
+        createChannelBlockageHazard(inspector1, deptHead1);
+        createOverdueHazard(inspector1, deptHead2);
     }
 
     private FireHazard createNormalAcceptedHazard(User inspector, User deptHead, User director) {

@@ -84,10 +84,20 @@ public class FireHazard {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
         if (status == null) {
             status = HazardStatus.REGISTERED;
+        }
+        if (overdue == null) {
+            overdue = false;
+        }
+        if (escalated == null) {
+            escalated = false;
         }
     }
 

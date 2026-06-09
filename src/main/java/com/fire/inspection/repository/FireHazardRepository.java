@@ -25,8 +25,8 @@ public interface FireHazardRepository extends JpaRepository<FireHazard, Long>, J
 
     List<FireHazard> findByLevel(HazardLevel level);
 
-    @Query("SELECT h FROM FireHazard h WHERE h.deadline < :now AND h.status NOT IN ('ACCEPTED', 'OVERDUE')")
-    List<FireHazard> findOverdueHazards(LocalDateTime now);
+    @Query("SELECT h FROM FireHazard h WHERE h.deadline < :now AND h.status NOT IN :excludedStatuses")
+    List<FireHazard> findOverdueHazards(LocalDateTime now, List<HazardStatus> excludedStatuses);
 
     @Query("SELECT h.building, COUNT(h) FROM FireHazard h GROUP BY h.building")
     List<Object[]> countByBuilding();
@@ -43,6 +43,10 @@ public interface FireHazardRepository extends JpaRepository<FireHazard, Long>, J
     @Query("SELECT h.level, COUNT(h) FROM FireHazard h GROUP BY h.level")
     List<Object[]> countByLevel();
 
-    @Query("SELECT h FROM FireHazard h WHERE h.status = 'ACCEPTED' AND h.rectifiedAt IS NOT NULL AND h.createdAt IS NOT NULL")
-    List<FireHazard> findCompletedHazards();
+    @Query("SELECT h FROM FireHazard h WHERE h.status = :status AND h.rectifiedAt IS NOT NULL AND h.createdAt IS NOT NULL")
+    List<FireHazard> findByStatusWithRectifiedAndCreated(HazardStatus status);
+
+    default List<FireHazard> findCompletedHazards() {
+        return findByStatusWithRectifiedAndCreated(HazardStatus.ACCEPTED);
+    }
 }
