@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  QUALITY_MANAGER
+  STORE_PHARMACIST
+  LOGISTICS_STAFF
+  REVIEWER
+}
+
+enum RecallStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  RECOVERING
+  CLOSED
+  INVESTIGATING
+}
+
+enum StoreRecallStatus {
+  UNREAD
+  READ
+  OFF_SHELF
+  RECOVERED
+  BATCH_MISMATCH
+}
+
+enum Region {
+  EAST
+  SOUTH
+  WEST
+  NORTH
+  CENTRAL
+}
+
+enum DrugCategory {
+  ANTIBIOTIC
+  CARDIOVASCULAR
+  GASTROINTESTINAL
+  RESPIRATORY
+  ANALGESIC
+  VITAMIN
+  OTHER
+}
+
+model User {
+  id                    String            @id @default(cuid())
+  name                  String
+  role                  UserRole
+  storeId               String?
+  store                 Store?            @relation(fields: [storeId], references: [id])
+  publishedRecalls      Recall[]          @relation("RecallPublisher")
+  closedRecalls         Recall[]          @relation("RecallCloser")
+  confirmedStoreRecalls StoreRecall[]
+  notedRecoveries       RecallRecovery[]
+  actionHistory         RecallHistory[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+}
+
+model Store {
+  id          String         @id @default(cuid())
+  name        String
+  code        String         @unique
+  region      Region
+  address     String
+  pharmacists User[]
+  recalls     StoreRecall[]
+  recoveries  RecallRecovery[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Drug {
+  id          String       @id @default(cuid())
+  name        String
+  genericName String
+  category    DrugCategory
+  manufacturer String
+  batches     DrugBatch[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model DrugBatch {
+  id             String        @id @default(cuid())
+  drugId         String
+  drug           Drug          @relation(fields: [drugId], references: [id])
+  batchNumber    String
+  productionDate DateTime
+  expiryDate     DateTime
+  recallBatches  RecallBatch[]
+  recoveries     RecallRecovery[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([drugId, batchNumber])
+}
+
+model Recall {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  reason      String
+  level       String
+  status      RecallStatus @default(DRAFT)
+  publisherId String
+  publisher   User     @relation("RecallPublisher", fields: [publisherId], references: [id])
+  batches     RecallBatch[]
+  stores      StoreRecall[]
+  history     RecallHistory[]
+  recoveries  RecallRecovery[]
+  closedAt    DateTime?
+  closerId    String?
+  closer      User?    @relation("RecallCloser", fields: [closerId], references: [id])
+  closeNote   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RecallBatch {
+  id          String   @id @default(cuid())
+  recallId    String
+  recall      Recall   @relation(fields: [recallId], references: [id])
+  drugBatchId String
+  drugBatch   DrugBatch @relation(fields: [drugBatchId], references: [id])
+  expectedQuantity Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([recallId, drugBatchId])
+}
+
+model StoreRecall {
+  id            String   @id @default(cuid())
+  recallId      String
+  recall        Recall   @relation(fields: [recallId], references: [id])
+  storeId       String
+  store         Store    @relation(fields: [storeId], references: [id])
+  status        StoreRecallStatus @default(UNREAD)
+  readAt        DateTime?
+  offShelfAt    DateTime?
+  offShelfPhoto String?
+  confirmedById String?
+  confirmedBy   User?    @relation(fields: [confirmedById], references: [id])
+  mismatchNote  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([recallId, storeId])
+}
+
+model RecallRecovery {
+  id          String   @id @default(cuid())
+  recallId    String
+  recall      Recall   @relation(fields: [recallId], references: [id])
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id])
+  batchId     String
+  batch       DrugBatch @relation(fields: [batchId], references: [id])
+  expectedQty Int
+  actualQty   Int
+  difference  Int
+  notedById   String?
+  notedBy     User?    @relation(fields: [notedById], references: [id])
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RecallHistory {
+  id         String   @id @default(cuid())
+  recallId   String
+  recall     Recall   @relation(fields: [recallId], references: [id])
+  action     String
+  detail     String
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  createdAt  DateTime @default(now())
+}
