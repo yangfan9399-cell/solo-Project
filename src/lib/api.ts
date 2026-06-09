@@ -129,6 +129,20 @@ export async function checkDischargeAllowed(
     };
   }
 
+  const pendingFees = await prisma.feeItem.count({
+    where: {
+      hospitalizationId,
+      status: FeeStatus.PENDING,
+    },
+  });
+
+  if (pendingFees > 0) {
+    return {
+      allowed: false,
+      reason: `存在 ${pendingFees} 项待确认费用，请财务确认后再办理出院`,
+    };
+  }
+
   const disputedFees = await prisma.feeItem.count({
     where: {
       hospitalizationId,

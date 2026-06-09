@@ -351,6 +351,17 @@ export async function dischargeHospitalization(formData: FormData) {
       throw new Error(`存在 ${pendingOrders} 条待确认医嘱，请兽医确认后再办理出院`);
     }
 
+    const pendingFees = await prisma.feeItem.count({
+      where: {
+        hospitalizationId,
+        status: FeeStatus.PENDING,
+      },
+    });
+
+    if (pendingFees > 0) {
+      throw new Error(`存在 ${pendingFees} 项待确认费用，请财务确认后再办理出院`);
+    }
+
     const disputedFees = await prisma.feeItem.count({
       where: {
         hospitalizationId,
@@ -363,11 +374,14 @@ export async function dischargeHospitalization(formData: FormData) {
     }
 
     await prisma.$transaction(async (tx) => {
-      const feeItems = await tx.feeItem.findMany({
-        where: { hospitalizationId },
+      const confirmedFees = await tx.feeItem.findMany({
+        where: {
+          hospitalizationId,
+          status: FeeStatus.CONFIRMED,
+        },
       });
 
-      const totalAmount = feeItems.reduce(
+      const totalAmount = confirmedFees.reduce(
         (sum, f) => sum + Number(f.totalPrice),
         0
       );
@@ -381,7 +395,10 @@ export async function dischargeHospitalization(formData: FormData) {
       });
 
       await tx.feeItem.updateMany({
-        where: { hospitalizationId },
+        where: {
+          hospitalizationId,
+          status: FeeStatus.CONFIRMED,
+        },
         data: {
           status: FeeStatus.SETTLED,
         },
@@ -410,6 +427,7 @@ export async function dischargeHospitalization(formData: FormData) {
   revalidatePath("/");
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/finance`);
+  revalidatePath("/statistics");
 
   redirect(`/hospitalizations/${hospitalizationId}`);
 }
@@ -428,6 +446,17 @@ export async function markReadyForDischarge(formData: FormData) {
     return {
       error: `存在 ${pendingOrders} 条待确认医嘱，请兽医确认后再办理出院`,
     };
+  }
+
+  const pendingFees = await prisma.feeItem.count({
+    where: {
+      hospitalizationId,
+      status: FeeStatus.PENDING,
+    },
+  });
+
+  if (pendingFees > 0) {
+    return { error: `存在 ${pendingFees} 项待确认费用，请财务确认后再办理出院` };
   }
 
   const disputedFees = await prisma.feeItem.count({

@@ -56,6 +56,9 @@ export default async function FinancePage({
   const pendingOrders = hospitalization.medicalOrders.filter(
     (o) => o.status === OrderStatus.PENDING
   );
+  const pendingFees = hospitalization.feeItems.filter(
+    (f) => f.status === FeeStatus.PENDING
+  );
   const disputedFees = hospitalization.feeItems.filter(
     (f) => f.status === FeeStatus.DISPUTED
   );
@@ -135,7 +138,7 @@ export default async function FinancePage({
               <div>
                 <h3 className="font-medium text-success-900">可以办理出院</h3>
                 <p className="text-sm text-success-700 mt-1">
-                  所有医嘱已确认，费用无争议，可以办理出院结算
+                  所有医嘱已确认，所有费用已确认且无争议，可以办理出院结算
                 </p>
               </div>
             </div>
@@ -349,6 +352,79 @@ export default async function FinancePage({
             </div>
           )}
 
+          {pendingFees.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                待确认费用（影响出院）
+              </h2>
+              <div className="space-y-3">
+                {pendingFees.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-blue-900">
+                          {item.name} - {formatCurrency(item.totalPrice)}
+                        </div>
+                        <div className="text-sm text-blue-700 mt-1">
+                          类别: {item.category} · 数量: {item.quantity}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <form action={confirmFeeItem}>
+                          <input
+                            type="hidden"
+                            name="feeId"
+                            value={item.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="hospitalizationId"
+                            value={hospitalization.id}
+                          />
+                          <button
+                            type="submit"
+                            className="px-3 py-1.5 bg-success-600 text-white text-sm rounded-lg hover:bg-success-700"
+                          >
+                            确认费用
+                          </button>
+                        </form>
+                        <form action={disputeFeeItem}>
+                          <input
+                            type="hidden"
+                            name="feeId"
+                            value={item.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="hospitalizationId"
+                            value={hospitalization.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="disputeNote"
+                            value="费用有异议，待核实"
+                          />
+                          <button
+                            type="submit"
+                            className="px-3 py-1.5 bg-danger-600 text-white text-sm rounded-lg hover:bg-danger-700"
+                          >
+                            标记争议
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                💡 提示：所有费用确认或解决争议后，出院结算按钮将自动解锁
+              </p>
+            </div>
+          )}
+
           {disputedFees.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -424,19 +500,24 @@ export default async function FinancePage({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    应收金额
+                    应收金额（已确认）
                   </label>
                   <div className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(totalFee)}
+                    {formatCurrency(confirmedFee)}
                   </div>
+                  {pendingFees.length + disputedFees.length > 0 && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      另有 {pendingFees.length + disputedFees.length} 项待处理费用未计入
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    实收金额
+                    实收金额（已确认）
                   </label>
                   <div className="text-2xl font-bold text-primary-600">
-                    {formatCurrency(totalFee)}
+                    {formatCurrency(confirmedFee)}
                   </div>
                 </div>
 
@@ -492,7 +573,7 @@ export default async function FinancePage({
                 <span className="font-medium">财务：</span>赵财务
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                办理出院前请确保所有医嘱已确认、费用无争议
+                办理出院前请确保所有医嘱已确认、所有费用已确认且无争议
               </p>
             </div>
           </div>
