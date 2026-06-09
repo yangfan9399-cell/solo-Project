@@ -8,12 +8,20 @@ import {
   permitWorkers,
   certificates,
   approvalNodes,
+  permitIssues,
 } from "~/db/schema";
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, isNull } from "drizzle-orm";
 
 export const meta: MetaFunction = () => {
   return [{ title: "安全验收 - 舞台搭建进场系统" }];
 };
+
+interface BlockingIssue {
+  id: number;
+  issueType: string;
+  description: string;
+  isBlocking: boolean;
+}
 
 interface PermitWithDetails {
   id: number;
@@ -28,6 +36,8 @@ interface PermitWithDetails {
   workZoneName: string | null;
   workZoneCode: string | null;
   hasExpiredHeightCert: boolean;
+  blockingIssues: BlockingIssue[];
+  hasBlockingIssues: boolean;
 }
 
 interface ApprovedPermit {
@@ -109,7 +119,41 @@ export async function loader() {
   const pendingPermits: PermitWithDetails[] = pendingResult.map((p) => ({
     ...p,
     hasExpiredHeightCert: heightCertsMap.get(p.id) || false,
+    blockingIssues: [],
+    hasBlockingIssues: false,
   }));
+
+  if (permitIds.length > 0) {
+    const issuesResult = await db
+      .select({
+        id: permitIssues.id,
+        permitId: permitIssues.permitId,
+        issueType: permitIssues.issueType,
+        description: permitIssues.description,
+        isBlocking: permitIssues.isBlocking,
+      })
+      .from(permitIssues)
+      .where(
+        and(
+          inArray(permitIssues.permitId, permitIds),
+          eq(permitIssues.isBlocking, true),
+          isNull(permitIssues.resolvedAt)
+        )
+      );
+
+    const issuesMap = new Map<number, BlockingIssue[]>();
+    for (const issue of issuesResult) {
+      const list = issuesMap.get(issue.permitId) || [];
+      list.push(issue as BlockingIssue);
+      issuesMap.set(issue.permitId, list);
+    }
+
+    for (const permit of pendingPermits) {
+      const issues = issuesMap.get(permit.id) || [];
+      permit.blockingIssues = issues;
+      permit.hasBlockingIssues = issues.length > 0 || permit.hasExpiredHeightCert;
+    }
+  }
 
   const approvedResult = await db
     .select({
@@ -189,6 +233,21 @@ export async function action({ request }: { request: Request }) {
       }
     }
 
+    const blockingIssues = await db
+      .select({ id: permitIssues.id })
+      .from(permitIssues)
+      .where(
+        and(
+          eq(permitIssues.permitId, permitId),
+          eq(permitIssues.isBlocking, true),
+          isNull(permitIssues.resolvedAt)
+        )
+      );
+
+    if (blockingIssues.length > 0) {
+      return { success: false, error: "存在未解决的阻断性问题，无法通过安全验收" };
+    }
+
     await db.transaction(async (tx) => {
       await tx
         .update(workPermits)
@@ -260,6 +319,18 @@ function getWorkTypeLabel(type: string) {
     scaffolding: "脚手架搭设",
     electrical: "电气作业",
     general: "一般作业",
+  };
+  return map[type] || type;
+}
+
+function getIssueTypeLabel(type: string) {
+  const map: Record<string, string> = {
+    certificate_expired: "证照过期",
+    zone_conflict: "区域冲突",
+    night_permit_missing: "夜间施工审批缺失",
+    incomplete_info: "信息不完整",
+    safety_violation: "安全违规",
+    other: "其他问题",
   };
   return map[type] || type;
 }
@@ -403,7 +474,7 @@ export default function SafetyReview() {
                   作业类型
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  施工区域
+                  阻断原因
                 </th>
                 <th className="px-5 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   安保通过时间
@@ -450,11 +521,29 @@ export default function SafetyReview() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-sm text-slate-600">
-                        {permit.workZoneName
-                          ? `${permit.workZoneName} (${permit.workZoneCode})`
-                          : "-"}
-                      </span>
+                      {permit.hasBlockingIssues ? (
+                        <div className="space-y-1">
+                          {permit.hasExpiredHeightCert && (
+                            <div className="flex items-center gap-1">
+                              <span className="badge badge-danger">
+                                登高证过期
+                              </span>
+                            </div>
+                          )}
+                          {permit.blockingIssues.map((issue) => (
+                            <div
+                              key={issue.id}
+                              className="flex items-center gap-1"
+                            >
+                              <span className="badge badge-danger">
+                                {getIssueTypeLabel(issue.issueType)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="badge badge-success">无阻断问题</span>
+                      )}
                     </td>
                     <td className="px-5 py-4">
                       <span className="text-sm text-slate-500">
@@ -469,7 +558,7 @@ export default function SafetyReview() {
                         >
                           详情
                         </button>
-                        {permit.hasExpiredHeightCert ? (
+                        {permit.hasBlockingIssues ? (
                           <div className="relative group">
                             <button
                               className="btn btn-success opacity-50 cursor-not-allowed"
@@ -478,7 +567,11 @@ export default function SafetyReview() {
                               通过验收
                             </button>
                             <div className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                              存在登高证过期的作业人员，无法通过安全验收
+                              {permit.hasExpiredHeightCert && <p>• 存在登高证过期的作业人员</p>}
+                              {permit.blockingIssues.map((issue) => (
+                                <p key={issue.id}>• {issue.description}</p>
+                              ))}
+                              <p className="mt-1 text-slate-300">请先解决以上阻断性问题</p>
                             </div>
                           </div>
                         ) : (
