@@ -558,23 +558,7 @@ export default function SafetyReview() {
                         >
                           详情
                         </button>
-                        {permit.hasBlockingIssues ? (
-                          <div className="relative group">
-                            <button
-                              className="btn btn-success opacity-50 cursor-not-allowed"
-                              disabled
-                            >
-                              通过验收
-                            </button>
-                            <div className="absolute bottom-full right-0 mb-2 w-56 p-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                              {permit.hasExpiredHeightCert && <p>• 存在登高证过期的作业人员</p>}
-                              {permit.blockingIssues.map((issue) => (
-                                <p key={issue.id}>• {issue.description}</p>
-                              ))}
-                              <p className="mt-1 text-slate-300">请先解决以上阻断性问题</p>
-                            </div>
-                          </div>
-                        ) : (
+                        {!permit.hasBlockingIssues ? (
                           <button
                             className="btn btn-success"
                             onClick={() => handleApprove(permit.id)}
@@ -582,7 +566,7 @@ export default function SafetyReview() {
                           >
                             通过验收
                           </button>
-                        )}
+                        ) : null}
                         <button
                           className="btn btn-danger"
                           onClick={() =>
