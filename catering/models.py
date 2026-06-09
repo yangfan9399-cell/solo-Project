@@ -163,34 +163,20 @@ class MealBatch(models.Model):
         return self.recalls.first()
 
     @property
-    def _last_status_action(self):
-        status_actions = [
-            '创建批次',
-            '入库冷藏',
-            '出库',
-            '品控通过',
-            '品控不通过',
-            '装机确认',
-            '已装机',
-            '发起召回',
-            '退回待重新品控',
-            '退回报废',
-        ]
-        return self.history.filter(action__in=status_actions).first()
+    def latest_resolved_recall(self):
+        return self.recalls.filter(is_resolved=True).first()
 
     @property
     def is_returned_for_qc(self):
         if self.status != BatchStatus.QC_PENDING:
             return False
-        last_action = self._last_status_action
-        return last_action and last_action.action == '退回待重新品控'
+        return self.latest_resolved_recall is not None
 
     @property
     def is_scrapped(self):
         if self.status != BatchStatus.RETURNED:
             return False
-        last_action = self._last_status_action
-        return last_action and last_action.action == '退回报废'
+        return self.latest_resolved_recall is not None
 
     def add_history(self, action, user, description=''):
         BatchHistory.objects.create(

@@ -324,12 +324,12 @@
                         <span class="info-label">召回发起人</span>
                         <span class="info-value">{{ batch.latest_recall.initiated_by.username|default:"-" }}</span>
                     </div>
-                    {% if batch.latest_recall.is_resolved %}
+                    {% endif %}
+                    {% if batch.latest_resolved_recall %}
                     <div class="info-item">
                         <span class="info-label">召回处理人</span>
-                        <span class="info-value" style="font-weight:600;">{{ batch.latest_recall.handled_by.username|default:"-" }}</span>
+                        <span class="info-value" style="font-weight:600;">{{ batch.latest_resolved_recall.handled_by.username|default:"-" }}</span>
                     </div>
-                    {% endif %}
                     {% endif %}
                 </div>
             </div>
