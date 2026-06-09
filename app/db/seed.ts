@@ -329,10 +329,9 @@ async function seed() {
         startTime: startDate1,
         endTime: endDate1,
         isNightWork: false,
-        status: "safety_approved",
+        status: "security_approved",
         submittedAt: submittedAt,
         securityApprovedAt: securityApprovedAt,
-        safetyApprovedAt: new Date(today),
       },
       {
         permitNumber: "WP-2024-0002",
@@ -393,7 +392,7 @@ async function seed() {
     { permitId: permit3.id, workerId: worker4.id, role: "电工" },
     { permitId: permit3.id, workerId: worker5.id, role: "灯光师" },
     { permitId: permit4.id, workerId: worker1.id, role: "现场负责人" },
-    { permitId: permit4.id, workerId: worker2.id, role: "架子工" },
+    { permitId: permit4.id, workerId: worker3.id, role: "架子工" },
   ]);
 
   console.log("✅ 创建作业人员关联数据");
@@ -407,15 +406,6 @@ async function seed() {
       comment: "人员身份核验通过，进场物资检查合格",
       operatorName: "安保-赵队长",
       createdAt: securityApprovedAt,
-    },
-    {
-      permitId: permit1.id,
-      role: "safety_officer",
-      action: "approve",
-      status: "safety_approved",
-      comment: "安全条件符合要求，防护措施到位",
-      operatorName: "安全主管-钱工",
-      createdAt: new Date(today),
     },
     {
       permitId: permit2.id,
