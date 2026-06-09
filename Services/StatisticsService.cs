@@ -47,12 +47,13 @@ public class StatisticsService : IStatisticsService
     {
         var query = _context.FuelApplications
             .Include(a => a.Supplier)
-            .Where(a => a.ActualQuantity.HasValue)
             .AsQueryable();
 
         if (year.HasValue)
         {
-            query = query.Where(a => a.ActualBunkeringDate.HasValue && a.ActualBunkeringDate.Value.Year == year.Value);
+            query = query.Where(a =>
+                (a.ActualBunkeringDate.HasValue && a.ActualBunkeringDate.Value.Year == year.Value) ||
+                (!a.ActualBunkeringDate.HasValue && a.PlannedBunkeringDate.Year == year.Value));
         }
 
         var applications = await query.ToListAsync();
@@ -64,13 +65,13 @@ public class StatisticsService : IStatisticsService
                 SupplierId = g.Key.SupplierId,
                 SupplierName = g.Key.SupplierName,
                 ApplicationCount = g.Count(),
-                TotalActualQuantity = g.Sum(a => a.ActualQuantity ?? 0),
-                TotalAmount = g.Sum(a => a.TotalAmount ?? 0),
+                TotalActualQuantity = g.Where(a => a.ActualQuantity.HasValue).Sum(a => a.ActualQuantity ?? 0),
+                TotalAmount = g.Where(a => a.TotalAmount.HasValue).Sum(a => a.TotalAmount ?? 0),
                 DelayedCount = g.Count(a =>
-                    a.PlannedBunkeringDate.Date < a.ActualBunkeringDate?.Date ||
-                    (a.Status == ApplicationStatus.BunkeringInProgress && DateTime.UtcNow > a.PlannedBunkeringDate))
+                    (a.ActualBunkeringDate.HasValue && a.PlannedBunkeringDate.Date < a.ActualBunkeringDate.Value.Date) ||
+                    (!a.ActualBunkeringDate.HasValue && DateTime.UtcNow > a.PlannedBunkeringDate))
             })
-            .OrderByDescending(s => s.TotalAmount)
+            .OrderByDescending(s => s.ApplicationCount)
             .ToList();
     }
 
