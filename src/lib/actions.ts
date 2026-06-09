@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { store } from "../data/store";
+import { prisma } from "./prisma";
 import {
   HospitalizationStatus,
   OrderStatus,
@@ -10,6 +10,51 @@ import {
   AnomalyType,
   NursingType,
 } from "../types/enums";
+
+async function recalculateAnomalyType(hospitalizationId: string) {
+  const pendingOrders = await prisma.medicalOrder.count({
+    where: {
+      hospitalizationId,
+      status: OrderStatus.PENDING,
+    },
+  });
+
+  const hasNursingAbnormal = await prisma.nursingRecord.count({
+    where: {
+      hospitalizationId,
+      isAbnormal: true,
+    },
+  });
+
+  const hasFeeDispute = await prisma.feeItem.count({
+    where: {
+      hospitalizationId,
+      status: FeeStatus.DISPUTED,
+    },
+  });
+
+  let newAnomaly = AnomalyType.NONE;
+  let newNote: string | null = null;
+
+  if (hasFeeDispute > 0) {
+    newAnomaly = AnomalyType.FEE_DISPUTE;
+    newNote = "存在费用争议";
+  } else if (pendingOrders > 0) {
+    newAnomaly = AnomalyType.MEDICATION_MISSED;
+    newNote = "存在待确认医嘱";
+  } else if (hasNursingAbnormal > 0) {
+    newAnomaly = AnomalyType.NURSING_ABNORMAL;
+    newNote = "存在护理异常记录";
+  }
+
+  await prisma.hospitalization.update({
+    where: { id: hospitalizationId },
+    data: {
+      anomalyType: newAnomaly,
+      anomalyNote: newNote,
+    },
+  });
+}
 
 export async function createAdmission(formData: FormData) {
   const ownerName = formData.get("ownerName") as string;
@@ -31,59 +76,71 @@ export async function createAdmission(formData: FormData) {
   const chiefComplaint = formData.get("chiefComplaint") as string;
   const admissionDateStr = formData.get("admissionDate") as string;
 
-  const owner = store.addOwner({
-    name: ownerName,
-    phone: ownerPhone,
-    idCard: ownerIdCard || null,
-    address: ownerAddress || null,
-  });
-
-  const pet = store.addPet({
-    name: petName,
-    type: petType,
-    breed: petBreed || null,
-    gender: petGender || null,
-    age: petAgeStr ? parseFloat(petAgeStr) : null,
-    weight: petWeightStr ? parseFloat(petWeightStr) : null,
-    ownerId: owner.id,
-  });
-
   const admissionDate = admissionDateStr
     ? new Date(admissionDateStr)
     : new Date();
 
-  const hospitalization = store.addHospitalization({
-    petId: pet.id,
-    departmentId,
-    primaryDiagnosis: primaryDiagnosis || "待诊",
-    secondaryDiagnosis: null,
-    admissionDate,
-    dischargeDate: null,
-    status: HospitalizationStatus.ADMITTED,
-    ward: ward || null,
-    cageNumber: cageNumber || null,
-    chiefComplaint: chiefComplaint || null,
-    anomalyType: AnomalyType.NONE,
-    anomalyNote: null,
-  });
-
-  const baseFees = [
-    { name: "挂号费", category: "挂号", unitPrice: 50, quantity: 1 },
-    { name: "住院费", category: "住院", unitPrice: 200, quantity: 1 },
-    { name: "护理费", category: "护理", unitPrice: 150, quantity: 1 },
-  ];
-
-  baseFees.forEach((fee) => {
-    store.addFeeItem({
-      hospitalizationId: hospitalization.id,
-      name: fee.name,
-      category: fee.category,
-      quantity: fee.quantity,
-      unitPrice: fee.unitPrice,
-      totalPrice: fee.quantity * fee.unitPrice,
-      status: FeeStatus.CONFIRMED,
-      recordDate: new Date(),
+  const hospitalization = await prisma.$transaction(async (tx) => {
+    const owner = await tx.owner.create({
+      data: {
+        name: ownerName,
+        phone: ownerPhone,
+        idCard: ownerIdCard || null,
+        address: ownerAddress || null,
+      },
     });
+
+    const pet = await tx.pet.create({
+      data: {
+        name: petName,
+        type: petType,
+        breed: petBreed || null,
+        gender: petGender || null,
+        age: petAgeStr ? parseFloat(petAgeStr) : null,
+        weight: petWeightStr ? parseFloat(petWeightStr) : null,
+        ownerId: owner.id,
+      },
+    });
+
+    const hosp = await tx.hospitalization.create({
+      data: {
+        petId: pet.id,
+        departmentId,
+        primaryDiagnosis: primaryDiagnosis || "待诊",
+        secondaryDiagnosis: null,
+        admissionDate,
+        dischargeDate: null,
+        status: HospitalizationStatus.ADMITTED,
+        ward: ward || null,
+        cageNumber: cageNumber || null,
+        chiefComplaint: chiefComplaint || null,
+        anomalyType: AnomalyType.NONE,
+        anomalyNote: null,
+      },
+    });
+
+    const baseFees = [
+      { name: "挂号费", category: "挂号", unitPrice: 50, quantity: 1 },
+      { name: "住院费", category: "住院", unitPrice: 200, quantity: 1 },
+      { name: "护理费", category: "护理", unitPrice: 150, quantity: 1 },
+    ];
+
+    for (const fee of baseFees) {
+      await tx.feeItem.create({
+        data: {
+          hospitalizationId: hosp.id,
+          name: fee.name,
+          category: fee.category,
+          quantity: fee.quantity,
+          unitPrice: fee.unitPrice,
+          totalPrice: fee.quantity * fee.unitPrice,
+          status: FeeStatus.CONFIRMED,
+          recordDate: new Date(),
+        },
+      });
+    }
+
+    return hosp;
   });
 
   revalidatePath("/");
@@ -105,31 +162,47 @@ export async function addNursingRecord(formData: FormData) {
 
   const isAbnormal = isAbnormalStr === "on";
 
-  store.addNursingRecord({
-    hospitalizationId,
-    type: type as NursingType,
-    content,
-    recordedById: "staff_2",
-    recordTime: new Date(),
-    temperature: temperatureStr ? parseFloat(temperatureStr) : null,
-    heartRate: heartRateStr ? parseInt(heartRateStr) : null,
-    respiratoryRate: respiratoryRateStr ? parseInt(respiratoryRateStr) : null,
-    bloodPressure: null,
-    weight: weightStr ? parseFloat(weightStr) : null,
-    appetite: appetite || null,
-    stool: null,
-    urine: null,
-    mentalStatus: mentalStatus || null,
-    isAbnormal,
-    abnormalNote: isAbnormal && abnormalNote ? abnormalNote : null,
-    orderId: null,
+  await prisma.$transaction(async (tx) => {
+    await tx.nursingRecord.create({
+      data: {
+        hospitalizationId,
+        type: type as NursingType,
+        content,
+        recordedById: "staff_2",
+        recordTime: new Date(),
+        temperature: temperatureStr ? parseFloat(temperatureStr) : null,
+        heartRate: heartRateStr ? parseInt(heartRateStr) : null,
+        respiratoryRate: respiratoryRateStr
+          ? parseInt(respiratoryRateStr)
+          : null,
+        bloodPressure: null,
+        weight: weightStr ? parseFloat(weightStr) : null,
+        appetite: appetite || null,
+        stool: null,
+        urine: null,
+        mentalStatus: mentalStatus || null,
+        isAbnormal,
+        abnormalNote: isAbnormal && abnormalNote ? abnormalNote : null,
+        orderId: null,
+      },
+    });
+
+    const hosp = await tx.hospitalization.findUnique({
+      where: { id: hospitalizationId },
+    });
+
+    if (hosp && hosp.status === HospitalizationStatus.ADMITTED) {
+      await tx.hospitalization.update({
+        where: { id: hospitalizationId },
+        data: {
+          status: HospitalizationStatus.IN_TREATMENT,
+        },
+      });
+    }
   });
 
-  const hosp = store.getHospitalizationById(hospitalizationId);
-  if (hosp && hosp.status === HospitalizationStatus.ADMITTED) {
-    store.updateHospitalization(hospitalizationId, {
-      status: HospitalizationStatus.IN_TREATMENT,
-    });
+  if (isAbnormal) {
+    await recalculateAnomalyType(hospitalizationId);
   }
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
@@ -149,28 +222,24 @@ export async function addMedicalOrder(formData: FormData) {
   const startDate = startDateStr ? new Date(startDateStr) : new Date();
   const endDate = endDateStr ? new Date(endDateStr) : null;
 
-  store.addMedicalOrder({
-    hospitalizationId,
-    orderType,
-    content,
-    dosage: dosage || null,
-    frequency: frequency || null,
-    startDate,
-    endDate,
-    status: OrderStatus.PENDING,
-    createdById: "staff_4",
-    confirmedById: null,
-    confirmedAt: null,
-    note: note || null,
+  await prisma.medicalOrder.create({
+    data: {
+      hospitalizationId,
+      orderType,
+      content,
+      dosage: dosage || null,
+      frequency: frequency || null,
+      startDate,
+      endDate,
+      status: OrderStatus.PENDING,
+      createdById: "staff_4",
+      confirmedById: null,
+      confirmedAt: null,
+      note: note || null,
+    },
   });
 
-  const hosp = store.getHospitalizationById(hospitalizationId);
-  if (hosp && hosp.anomalyType !== AnomalyType.MEDICATION_MISSED) {
-    store.updateHospitalization(hospitalizationId, {
-      anomalyType: AnomalyType.MEDICATION_MISSED,
-      anomalyNote: "存在待确认医嘱",
-    });
-  }
+  await recalculateAnomalyType(hospitalizationId);
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/orders`);
@@ -181,42 +250,16 @@ export async function confirmMedicalOrder(formData: FormData) {
   const orderId = formData.get("orderId") as string;
   const hospitalizationId = formData.get("hospitalizationId") as string;
 
-  store.updateMedicalOrder(orderId, {
-    status: OrderStatus.CONFIRMED,
-    confirmedById: "staff_4",
-    confirmedAt: new Date(),
+  await prisma.medicalOrder.update({
+    where: { id: orderId },
+    data: {
+      status: OrderStatus.CONFIRMED,
+      confirmedById: "staff_4",
+      confirmedAt: new Date(),
+    },
   });
 
-  const orders = store.getMedicalOrdersByHospitalization(hospitalizationId);
-  const pendingOrders = orders.filter((o) => o.status === OrderStatus.PENDING);
-
-  if (pendingOrders.length === 0) {
-    const hosp = store.getHospitalizationById(hospitalizationId);
-    if (hosp && hosp.anomalyType === AnomalyType.MEDICATION_MISSED) {
-      const hasNursingAbnormal = store
-        .getNursingRecordsByHospitalization(hospitalizationId)
-        .some((r) => r.isAbnormal);
-      const hasFeeDispute = store
-        .getFeeItemsByHospitalization(hospitalizationId)
-        .some((f) => f.status === FeeStatus.DISPUTED);
-
-      let newAnomaly = AnomalyType.NONE;
-      let newNote: string | null = null;
-
-      if (hasFeeDispute) {
-        newAnomaly = AnomalyType.FEE_DISPUTE;
-        newNote = "存在费用争议";
-      } else if (hasNursingAbnormal) {
-        newAnomaly = AnomalyType.NURSING_ABNORMAL;
-        newNote = "存在护理异常记录";
-      }
-
-      store.updateHospitalization(hospitalizationId, {
-        anomalyType: newAnomaly,
-        anomalyNote: newNote,
-      });
-    }
-  }
+  await recalculateAnomalyType(hospitalizationId);
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/orders`);
@@ -227,41 +270,15 @@ export async function confirmFeeItem(formData: FormData) {
   const feeId = formData.get("feeId") as string;
   const hospitalizationId = formData.get("hospitalizationId") as string;
 
-  store.updateFeeItem(feeId, {
-    status: FeeStatus.CONFIRMED,
-    disputeNote: null,
+  await prisma.feeItem.update({
+    where: { id: feeId },
+    data: {
+      status: FeeStatus.CONFIRMED,
+      disputeNote: null,
+    },
   });
 
-  const fees = store.getFeeItemsByHospitalization(hospitalizationId);
-  const disputedFees = fees.filter((f) => f.status === FeeStatus.DISPUTED);
-
-  if (disputedFees.length === 0) {
-    const hosp = store.getHospitalizationById(hospitalizationId);
-    if (hosp && hosp.anomalyType === AnomalyType.FEE_DISPUTE) {
-      const hasNursingAbnormal = store
-        .getNursingRecordsByHospitalization(hospitalizationId)
-        .some((r) => r.isAbnormal);
-      const hasPendingOrders = store
-        .getMedicalOrdersByHospitalization(hospitalizationId)
-        .some((o) => o.status === OrderStatus.PENDING);
-
-      let newAnomaly = AnomalyType.NONE;
-      let newNote: string | null = null;
-
-      if (hasPendingOrders) {
-        newAnomaly = AnomalyType.MEDICATION_MISSED;
-        newNote = "存在待确认医嘱";
-      } else if (hasNursingAbnormal) {
-        newAnomaly = AnomalyType.NURSING_ABNORMAL;
-        newNote = "存在护理异常记录";
-      }
-
-      store.updateHospitalization(hospitalizationId, {
-        anomalyType: newAnomaly,
-        anomalyNote: newNote,
-      });
-    }
-  }
+  await recalculateAnomalyType(hospitalizationId);
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/finance`);
@@ -272,18 +289,15 @@ export async function disputeFeeItem(formData: FormData) {
   const hospitalizationId = formData.get("hospitalizationId") as string;
   const disputeNote = formData.get("disputeNote") as string;
 
-  store.updateFeeItem(feeId, {
-    status: FeeStatus.DISPUTED,
-    disputeNote: disputeNote || "费用有异议",
+  await prisma.feeItem.update({
+    where: { id: feeId },
+    data: {
+      status: FeeStatus.DISPUTED,
+      disputeNote: disputeNote || "费用有异议",
+    },
   });
 
-  const hosp = store.getHospitalizationById(hospitalizationId);
-  if (hosp) {
-    store.updateHospitalization(hospitalizationId, {
-      anomalyType: AnomalyType.FEE_DISPUTE,
-      anomalyNote: "存在费用争议，待协商解决",
-    });
-  }
+  await recalculateAnomalyType(hospitalizationId);
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/finance`);
@@ -295,50 +309,27 @@ export async function resolveFeeDispute(formData: FormData) {
   const resolution = formData.get("resolution") as string;
 
   if (resolution === "confirm") {
-    store.updateFeeItem(feeId, {
-      status: FeeStatus.CONFIRMED,
-      disputeNote: null,
+    await prisma.feeItem.update({
+      where: { id: feeId },
+      data: {
+        status: FeeStatus.CONFIRMED,
+        disputeNote: null,
+      },
     });
   } else if (resolution === "adjust") {
     const newPriceStr = formData.get("newPrice") as string;
     const newPrice = newPriceStr ? parseFloat(newPriceStr) : 0;
-    store.updateFeeItem(feeId, {
-      status: FeeStatus.CONFIRMED,
-      totalPrice: newPrice,
-      disputeNote: null,
+    await prisma.feeItem.update({
+      where: { id: feeId },
+      data: {
+        status: FeeStatus.CONFIRMED,
+        totalPrice: newPrice,
+        disputeNote: null,
+      },
     });
   }
 
-  const fees = store.getFeeItemsByHospitalization(hospitalizationId);
-  const disputedFees = fees.filter((f) => f.status === FeeStatus.DISPUTED);
-
-  if (disputedFees.length === 0) {
-    const hosp = store.getHospitalizationById(hospitalizationId);
-    if (hosp && hosp.anomalyType === AnomalyType.FEE_DISPUTE) {
-      const hasNursingAbnormal = store
-        .getNursingRecordsByHospitalization(hospitalizationId)
-        .some((r) => r.isAbnormal);
-      const hasPendingOrders = store
-        .getMedicalOrdersByHospitalization(hospitalizationId)
-        .some((o) => o.status === OrderStatus.PENDING);
-
-      let newAnomaly = AnomalyType.NONE;
-      let newNote: string | null = null;
-
-      if (hasPendingOrders) {
-        newAnomaly = AnomalyType.MEDICATION_MISSED;
-        newNote = "存在待确认医嘱";
-      } else if (hasNursingAbnormal) {
-        newAnomaly = AnomalyType.NURSING_ABNORMAL;
-        newNote = "存在护理异常记录";
-      }
-
-      store.updateHospitalization(hospitalizationId, {
-        anomalyType: newAnomaly,
-        anomalyNote: newNote,
-      });
-    }
-  }
+  await recalculateAnomalyType(hospitalizationId);
 
   revalidatePath(`/hospitalizations/${hospitalizationId}`);
   revalidatePath(`/hospitalizations/${hospitalizationId}/finance`);
@@ -349,9 +340,64 @@ export async function dischargeHospitalization(formData: FormData) {
   const reviewNote = formData.get("reviewNote") as string;
 
   try {
-    store.dischargeHospitalization(hospitalizationId, {
-      reviewedById: "staff_6",
-      reviewNote: reviewNote || undefined,
+    const pendingOrders = await prisma.medicalOrder.count({
+      where: {
+        hospitalizationId,
+        status: OrderStatus.PENDING,
+      },
+    });
+
+    if (pendingOrders > 0) {
+      throw new Error(`存在 ${pendingOrders} 条待确认医嘱，请兽医确认后再办理出院`);
+    }
+
+    const disputedFees = await prisma.feeItem.count({
+      where: {
+        hospitalizationId,
+        status: FeeStatus.DISPUTED,
+      },
+    });
+
+    if (disputedFees > 0) {
+      throw new Error(`存在 ${disputedFees} 项争议费用，请先处理费用争议`);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      const feeItems = await tx.feeItem.findMany({
+        where: { hospitalizationId },
+      });
+
+      const totalAmount = feeItems.reduce(
+        (sum, f) => sum + Number(f.totalPrice),
+        0
+      );
+
+      await tx.hospitalization.update({
+        where: { id: hospitalizationId },
+        data: {
+          status: HospitalizationStatus.DISCHARGED,
+          dischargeDate: new Date(),
+        },
+      });
+
+      await tx.feeItem.updateMany({
+        where: { hospitalizationId },
+        data: {
+          status: FeeStatus.SETTLED,
+        },
+      });
+
+      await tx.feeReview.create({
+        data: {
+          hospitalizationId,
+          reviewedById: "staff_6",
+          totalAmount,
+          actualAmount: totalAmount,
+          reviewNote: reviewNote || null,
+          isFinal: true,
+          reviewedAt: new Date(),
+        },
+      });
     });
   } catch (error) {
     redirect(
@@ -371,13 +417,35 @@ export async function dischargeHospitalization(formData: FormData) {
 export async function markReadyForDischarge(formData: FormData) {
   const hospitalizationId = formData.get("hospitalizationId") as string;
 
-  const check = store.canDischarge(hospitalizationId);
-  if (!check.allowed) {
-    return { error: check.reason };
+  const pendingOrders = await prisma.medicalOrder.count({
+    where: {
+      hospitalizationId,
+      status: OrderStatus.PENDING,
+    },
+  });
+
+  if (pendingOrders > 0) {
+    return {
+      error: `存在 ${pendingOrders} 条待确认医嘱，请兽医确认后再办理出院`,
+    };
   }
 
-  store.updateHospitalization(hospitalizationId, {
-    status: HospitalizationStatus.READY_FOR_DISCHARGE,
+  const disputedFees = await prisma.feeItem.count({
+    where: {
+      hospitalizationId,
+      status: FeeStatus.DISPUTED,
+    },
+  });
+
+  if (disputedFees > 0) {
+    return { error: `存在 ${disputedFees} 项争议费用，请先处理费用争议` };
+  }
+
+  await prisma.hospitalization.update({
+    where: { id: hospitalizationId },
+    data: {
+      status: HospitalizationStatus.READY_FOR_DISCHARGE,
+    },
   });
 
   revalidatePath("/");

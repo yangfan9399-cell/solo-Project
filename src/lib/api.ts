@@ -1,8 +1,16 @@
-import { store } from "../data/store";
-import type { Hospitalization, Pet, Owner, Department, Staff, MedicalOrder, NursingRecord, FeeItem, FeeReview } from "../data/mockData";
+import { prisma } from "./prisma";
 import { HospitalizationStatus, AnomalyType, OrderStatus, FeeStatus } from "../types/enums";
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import type {
+  Hospitalization,
+  Pet,
+  Owner,
+  Department,
+  Staff,
+  MedicalOrder,
+  NursingRecord,
+  FeeItem,
+  FeeReview,
+} from "@prisma/client";
 
 export interface HospitalizationDetail extends Hospitalization {
   pet: Pet & { owner: Owner };
@@ -18,72 +26,143 @@ export interface HospitalizationListItem extends Hospitalization {
   department: Department;
 }
 
+function decimalToNumber(d: any): number {
+  return d ? Number(d) : 0;
+}
+
+function convertFeeItem(item: any): FeeItem {
+  return {
+    ...item,
+    unitPrice: decimalToNumber(item.unitPrice),
+    totalPrice: decimalToNumber(item.totalPrice),
+  } as FeeItem;
+}
+
+function convertFeeReview(review: any): FeeReview {
+  return {
+    ...review,
+    totalAmount: decimalToNumber(review.totalAmount),
+    actualAmount: review.actualAmount ? decimalToNumber(review.actualAmount) : null,
+  } as FeeReview;
+}
+
 export async function getHospitalizations(
   status?: string,
   anomalyType?: string
 ): Promise<HospitalizationListItem[]> {
-  await delay(50);
-  let list = store.getHospitalizations();
-
+  const where: any = {};
   if (status && status !== "ALL") {
-    list = list.filter((h) => h.status === status);
+    where.status = status;
   }
   if (anomalyType && anomalyType !== "ALL") {
-    list = list.filter((h) => h.anomalyType === anomalyType);
+    where.anomalyType = anomalyType;
   }
 
-  return list.map((h) => ({
-    ...h,
-    pet: {
-      ...store.getPetById(h.petId)!,
-      owner: store.getOwnerById(store.getPetById(h.petId)!.ownerId)!,
+  const list = await prisma.hospitalization.findMany({
+    where,
+    include: {
+      pet: {
+        include: {
+          owner: true,
+        },
+      },
+      department: true,
     },
-    department: store.getDepartments().find((d) => d.id === h.departmentId)!,
-  }));
+    orderBy: {
+      admissionDate: "desc",
+    },
+  });
+
+  return list as unknown as HospitalizationListItem[];
 }
 
 export async function getHospitalizationById(
   id: string
 ): Promise<HospitalizationDetail | null> {
-  await delay(50);
-  const hosp = store.getHospitalizationById(id);
-  if (!hosp) return null;
+  const hosp = await prisma.hospitalization.findUnique({
+    where: { id },
+    include: {
+      pet: {
+        include: {
+          owner: true,
+        },
+      },
+      department: true,
+      medicalOrders: {
+        orderBy: { createdAt: "desc" },
+      },
+      nursingRecords: {
+        orderBy: { recordTime: "desc" },
+      },
+      feeItems: {
+        orderBy: { createdAt: "asc" },
+      },
+      feeReviews: {
+        orderBy: { reviewedAt: "desc" },
+      },
+    },
+  });
 
-  const pet = store.getPetById(hosp.petId)!;
-  const owner = store.getOwnerById(pet.ownerId)!;
-  const department = store.getDepartments().find((d) => d.id === hosp.departmentId)!;
+  if (!hosp) return null;
 
   return {
     ...hosp,
-    pet: { ...pet, owner },
-    department,
-    medicalOrders: store.getMedicalOrdersByHospitalization(id),
-    nursingRecords: store.getNursingRecordsByHospitalization(id),
-    feeItems: store.getFeeItemsByHospitalization(id),
-    feeReviews: store.getFeeReviewsByHospitalization(id),
-  };
+    feeItems: hosp.feeItems.map(convertFeeItem) as any,
+    feeReviews: hosp.feeReviews.map(convertFeeReview) as any,
+  } as unknown as HospitalizationDetail;
 }
 
 export async function checkDischargeAllowed(
   hospitalizationId: string
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const result = store.canDischarge(hospitalizationId);
-  return result;
+  const pendingOrders = await prisma.medicalOrder.count({
+    where: {
+      hospitalizationId,
+      status: OrderStatus.PENDING,
+    },
+  });
+
+  if (pendingOrders > 0) {
+    return {
+      allowed: false,
+      reason: `存在 ${pendingOrders} 条待确认医嘱，请兽医确认后再办理出院`,
+    };
+  }
+
+  const disputedFees = await prisma.feeItem.count({
+    where: {
+      hospitalizationId,
+      status: FeeStatus.DISPUTED,
+    },
+  });
+
+  if (disputedFees > 0) {
+    return {
+      allowed: false,
+      reason: `存在 ${disputedFees} 项争议费用，请先处理费用争议`,
+    };
+  }
+
+  return { allowed: true };
 }
 
 export async function getDepartments(): Promise<Department[]> {
-  await delay(30);
-  return store.getDepartments();
+  return prisma.department.findMany({
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getStaffByRole(role: string): Promise<Staff[]> {
-  await delay(30);
-  return store.getStaffList().filter((s) => s.role === role);
+  return prisma.staff.findMany({
+    where: { role },
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getStaffById(id: string): Promise<Staff | null> {
-  await delay(30);
-  return store.getStaffById(id);
+  return prisma.staff.findUnique({
+    where: { id },
+  });
 }
 
 export interface StatisticsData {
@@ -99,34 +178,38 @@ export interface StatisticsData {
 }
 
 export async function getStatistics(): Promise<StatisticsData> {
-  await delay(50);
+  const totalHospitalizations = await prisma.hospitalization.count();
 
-  const hospitalizations = store.getHospitalizations();
-  const total = hospitalizations.length;
-  const inTreatment = hospitalizations.filter(
-    (h) => h.status === HospitalizationStatus.IN_TREATMENT
-  ).length;
-  const discharged = hospitalizations.filter(
-    (h) => h.status === HospitalizationStatus.DISCHARGED
-  ).length;
+  const inTreatment = await prisma.hospitalization.count({
+    where: { status: HospitalizationStatus.IN_TREATMENT },
+  });
 
-  const feeItems = store.getFeeItemsByHospitalization("hosp_1").concat(
-    store.getFeeItemsByHospitalization("hosp_5")
-  );
-  const totalRevenue = feeItems
-    .filter((f) => f.status === FeeStatus.SETTLED)
-    .reduce((sum, f) => sum + f.totalPrice, 0);
+  const discharged = await prisma.hospitalization.count({
+    where: { status: HospitalizationStatus.DISCHARGED },
+  });
 
-  const departments = store.getDepartments();
+  const settledFees = await prisma.feeItem.aggregate({
+    _sum: { totalPrice: true },
+    where: { status: FeeStatus.SETTLED },
+  });
+  const totalRevenue = decimalToNumber(settledFees._sum.totalPrice);
+
+  const hospitalizations = await prisma.hospitalization.findMany({
+    include: {
+      department: true,
+      feeItems: {
+        where: { status: FeeStatus.SETTLED },
+        select: { totalPrice: true },
+      },
+    },
+  });
+
   const deptMap = new Map<string, { count: number; revenue: number }>();
   for (const h of hospitalizations) {
-    const dept = departments.find((d) => d.id === h.departmentId)?.name || h.departmentId;
-    const fees = store.getFeeItemsByHospitalization(h.id);
-    const rev = fees
-      .filter((f) => f.status === FeeStatus.SETTLED)
-      .reduce((sum, f) => sum + f.totalPrice, 0);
-    const current = deptMap.get(dept) || { count: 0, revenue: 0 };
-    deptMap.set(dept, { count: current.count + 1, revenue: current.revenue + rev });
+    const deptName = h.department.name;
+    const rev = h.feeItems.reduce((sum, f) => sum + decimalToNumber(f.totalPrice), 0);
+    const current = deptMap.get(deptName) || { count: 0, revenue: 0 };
+    deptMap.set(deptName, { count: current.count + 1, revenue: current.revenue + rev });
   }
   const byDepartment = Array.from(deptMap.entries()).map(([name, data]) => ({
     name,
@@ -165,15 +248,18 @@ export async function getStatistics(): Promise<StatisticsData> {
 
   for (const h of hospitalizations) {
     const end = h.dischargeDate || new Date();
-    const days = Math.max(1, Math.ceil((end.getTime() - h.admissionDate.getTime()) / (1000 * 60 * 60 * 24)));
-    
+    const days = Math.max(
+      1,
+      Math.ceil((end.getTime() - h.admissionDate.getTime()) / (1000 * 60 * 60 * 24))
+    );
+
     for (let i = 0; i < dayRanges.length; i++) {
       if (days >= dayRanges[i].min && days < dayRanges[i].max) {
         byStayDays[i].count++;
         break;
       }
     }
-    
+
     if (h.status === HospitalizationStatus.DISCHARGED) {
       totalDays += days;
       dischargedCount++;
@@ -183,7 +269,7 @@ export async function getStatistics(): Promise<StatisticsData> {
   const averageStayDays = dischargedCount > 0 ? totalDays / dischargedCount : 0;
 
   return {
-    totalHospitalizations: total,
+    totalHospitalizations,
     inTreatment,
     discharged,
     totalRevenue,
