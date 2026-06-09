@@ -6,10 +6,11 @@
 
   <div class="bg-white rounded-lg shadow">
     <div class="px-6 py-4 border-b border-gray-200 flex space-x-2">
-      <%= link_to "全部", seal_applications_path, class: "px-3 py-1 text-sm rounded-md #{params[:status].blank? ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}" %>
-      <%= link_to "待处理", seal_applications_path(status: :pending_legal), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'pending_legal' ? 'bg-yellow-100 text-yellow-700' : 'text-gray-500 hover:bg-gray-100'}" %>
-      <%= link_to "已完成", seal_applications_path(status: :archived), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'archived' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100'}" %>
-      <%= link_to "异常", seal_applications_path(status: :version_conflict), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'version_conflict' ? 'bg-red-100 text-red-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "全部", seal_applications_path, class: "px-3 py-1 text-sm rounded-md #{params[:filter].blank? ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "待处理", seal_applications_path(filter: :pending), class: "px-3 py-1 text-sm rounded-md #{params[:filter] == 'pending' ? 'bg-yellow-100 text-yellow-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "已完成", seal_applications_path(filter: :completed), class: "px-3 py-1 text-sm rounded-md #{params[:filter] == 'completed' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "异常", seal_applications_path(filter: :abnormal), class: "px-3 py-1 text-sm rounded-md #{params[:filter] == 'abnormal' ? 'bg-red-100 text-red-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "草稿", seal_applications_path(filter: :draft), class: "px-3 py-1 text-sm rounded-md #{params[:filter] == 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-100'}" %>
     </div>
     <div class="divide-y divide-gray-200">
       <% @seal_applications.each do |app| %>
@@ -36,7 +37,7 @@
               </div>
             </div>
             <div class="text-sm text-gray-400">
-              <%= time_ago_in_words(app.created_at) %>前
+              <%= time_ago_in_chinese(app.created_at) %>
             </div>
           </div>
         <% end %>

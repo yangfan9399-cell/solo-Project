@@ -14,8 +14,8 @@
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
           <h3 class="text-sm font-medium text-red-800">请修正以下错误:</h3>
           <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
-            <% @seal_application.errors.full_messages.each do |msg| %>
-              <li><%= msg %></li>
+            <% @seal_application.errors.each do |error| %>
+              <li><%= error.message.sub(/^\^/, '') %></li>
             <% end %>
           </ul>
         </div>

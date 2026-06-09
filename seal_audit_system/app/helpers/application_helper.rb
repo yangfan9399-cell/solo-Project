@@ -15,7 +15,7 @@ module ApplicationHelper
   end
 
   def format_duration(seconds)
-    return 'N/A' if seconds.nil? || seconds.zero?
+    return 'N/A' if seconds.nil?
 
     hours = seconds.to_i / 3600
     minutes = (seconds.to_i % 3600) / 60
@@ -27,6 +27,24 @@ module ApplicationHelper
       "#{minutes}分#{secs}秒"
     else
       "#{secs}秒"
+    end
+  end
+
+  def time_ago_in_chinese(time)
+    return '' if time.nil?
+
+    seconds = (Time.current - time).to_i
+
+    if seconds < 60
+      '刚刚'
+    elsif seconds < 3600
+      "#{seconds / 60}分钟前"
+    elsif seconds < 86400
+      "#{seconds / 3600}小时前"
+    elsif seconds < 2592000
+      "#{seconds / 86400}天前"
+    else
+      time.strftime('%Y-%m-%d')
     end
   end
 

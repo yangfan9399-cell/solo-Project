@@ -1,7 +1,7 @@
 class SealApplication < ApplicationRecord
-  belongs_to :contract
-  belongs_to :seal
-  belongs_to :applicant, class_name: 'User'
+  belongs_to :contract, optional: true
+  belongs_to :seal, optional: true
+  belongs_to :applicant, class_name: 'User', optional: true
   has_many :approval_nodes, -> { chronological }, dependent: :destroy
   has_one :archive, dependent: :destroy
 
@@ -20,10 +20,10 @@ class SealApplication < ApplicationRecord
     archive_missing_pages: 11
   }
 
-  validates :purpose, presence: true
-  validates :seal_id, presence: true
-  validates :contract_id, presence: true
-  validates :use_count, numericality: { only_integer: true, greater_than: 0 }
+  validates :purpose, presence: { message: '^请填写用印用途' }
+  validates :seal_id, presence: { message: '^请选择印章' }
+  validates :contract_id, presence: { message: '^请选择合同' }
+  validates :use_count, numericality: { only_integer: true, greater_than: 0, message: '^用印次数必须是大于0的整数' }
 
   before_validation :set_defaults, on: :create
 
@@ -57,7 +57,7 @@ class SealApplication < ApplicationRecord
 
     ActiveRecord::Base.transaction do
       if contract.latest_version?
-        update!(status: :legal_approved, version_conflict: false)
+        update!(status: :pending_seal, version_conflict: false)
         approval_nodes.pending.where(role: :legal).first&.update!(
           user: user,
           status: :approved,
@@ -116,10 +116,10 @@ class SealApplication < ApplicationRecord
   end
 
   def seal_approve!(user, comment = '')
-    return false unless legal_approved?
+    return false unless pending_seal?
 
     ActiveRecord::Base.transaction do
-      update!(status: :seal_approved)
+      update!(status: :pending_archive)
       approval_nodes.pending.where(role: :seal_admin).first&.update!(
         user: user,
         status: :approved,
@@ -134,7 +134,7 @@ class SealApplication < ApplicationRecord
   end
 
   def seal_reject!(user, comment = '')
-    return false unless legal_approved?
+    return false unless pending_seal?
 
     ActiveRecord::Base.transaction do
       update!(status: :seal_rejected)
@@ -148,7 +148,7 @@ class SealApplication < ApplicationRecord
   end
 
   def mark_approver_absent!(user, comment = '')
-    return false unless legal_approved?
+    return false unless pending_seal?
 
     ActiveRecord::Base.transaction do
       update!(status: :approver_absent)
@@ -168,16 +168,14 @@ class SealApplication < ApplicationRecord
       update!(status: :pending_seal)
       approval_nodes.create!(
         role: :seal_admin,
-        user: user,
-        status: :pending,
-        comment: '审批人到岗，流程恢复'
+        status: :pending
       )
     end
     true
   end
 
   def archive_approve!(user, file_name, page_count, missing_pages = 0)
-    return false unless seal_approved?
+    return false unless pending_archive?
 
     ActiveRecord::Base.transaction do
       if missing_pages > 0

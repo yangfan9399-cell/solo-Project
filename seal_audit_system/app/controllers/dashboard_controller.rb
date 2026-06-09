@@ -3,7 +3,7 @@ class DashboardController < ApplicationController
     @seal_applications = SealApplication.order(created_at: :desc).limit(20)
     @stats = {
       total: SealApplication.count,
-      pending: SealApplication.where(status: [:pending_legal, :legal_approved, :pending_seal, :seal_approved]).count,
+      pending: SealApplication.where(status: [:pending_legal, :pending_seal, :pending_archive]).count,
       completed: SealApplication.where(status: [:archived]).count,
       abnormal: SealApplication.where(status: [:version_conflict, :legal_rejected, :seal_rejected, :approver_absent, :archive_missing_pages]).count
     }

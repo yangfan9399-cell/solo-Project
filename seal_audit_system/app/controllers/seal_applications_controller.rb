@@ -3,8 +3,17 @@ class SealApplicationsController < ApplicationController
 
   def index
     @seal_applications = SealApplication.order(created_at: :desc).all
-    @filter = params[:status]
-    @seal_applications = @seal_applications.where(status: params[:status]) if params[:status].present?
+    @filter = params[:filter]
+    case params[:filter]
+    when 'pending'
+      @seal_applications = @seal_applications.where(status: [:pending_legal, :pending_seal, :pending_archive])
+    when 'completed'
+      @seal_applications = @seal_applications.where(status: [:archived])
+    when 'abnormal'
+      @seal_applications = @seal_applications.where(status: [:version_conflict, :legal_rejected, :seal_rejected, :approver_absent, :archive_missing_pages])
+    when 'draft'
+      @seal_applications = @seal_applications.where(status: [:draft])
+    end
   end
 
   def show

@@ -200,7 +200,7 @@
             <% end %>
           <% end %>
 
-          <% if @seal_application.legal_approved? %>
+          <% if @seal_application.pending_seal? %>
             <%= form_with url: seal_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
               <%= f.text_area :comment, placeholder: "用印备注（可选）", rows: 2, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
               <div class="flex space-x-2">
@@ -215,7 +215,7 @@
             <%= button_to "恢复流程", resume_absence_seal_application_path(@seal_application), method: :post, class: "w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
           <% end %>
 
-          <% if @seal_application.seal_approved? %>
+          <% if @seal_application.pending_archive? %>
             <%= form_with url: archive_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
               <div>
                 <%= f.label :file_name, "归档文件名", class: "block text-xs font-medium text-gray-700" %>
