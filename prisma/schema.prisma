@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Owner {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  idCard    String?
+  address   String?
+  pets      Pet[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pet {
+  id               String            @id @default(cuid())
+  name             String
+  type             String
+  breed            String?
+  age              Float?
+  weight           Float?
+  gender           String?
+  ownerId          String
+  owner            Owner             @relation(fields: [ownerId], references: [id])
+  hospitalizations Hospitalization[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Department {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  staff            Staff[]
+  hospitalizations Hospitalization[]
+  createdAt        DateTime          @default(now())
+}
+
+model Staff {
+  id              String            @id @default(cuid())
+  name            String
+  role            String
+  departmentId    String?
+  department      Department?       @relation(fields: [departmentId], references: [id])
+  createdOrders   MedicalOrder[]    @relation("OrderCreator")
+  confirmedOrders MedicalOrder[]   @relation("OrderConfirmer")
+  nursingRecords  NursingRecord[]
+  feeReviews      FeeReview[]
+  createdAt       DateTime          @default(now())
+}
+
+model Hospitalization {
+  id                 String           @id @default(cuid())
+  petId              String
+  pet                Pet              @relation(fields: [petId], references: [id])
+  departmentId       String
+  department         Department       @relation(fields: [departmentId], references: [id])
+  primaryDiagnosis   String
+  secondaryDiagnosis String?
+  admissionDate      DateTime
+  dischargeDate      DateTime?
+  status             String           @default("ADMITTED")
+  ward               String?
+  cageNumber         String?
+  chiefComplaint     String?
+  anomalyType        String           @default("NONE")
+  anomalyNote        String?
+  medicalOrders      MedicalOrder[]
+  nursingRecords     NursingRecord[]
+  feeItems           FeeItem[]
+  feeReviews         FeeReview[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model MedicalOrder {
+  id                String          @id @default(cuid())
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  orderType         String
+  content           String
+  dosage            String?
+  frequency         String?
+  startDate         DateTime
+  endDate           DateTime?
+  status            String          @default("PENDING")
+  createdById       String
+  createdBy         Staff           @relation("OrderCreator", fields: [createdById], references: [id])
+  confirmedById     String?
+  confirmedBy       Staff?          @relation("OrderConfirmer", fields: [confirmedById], references: [id])
+  confirmedAt       DateTime?
+  note              String?
+  nursingRecords    NursingRecord[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model NursingRecord {
+  id                String              @id @default(cuid())
+  hospitalizationId String
+  hospitalization   Hospitalization     @relation(fields: [hospitalizationId], references: [id])
+  type              String
+  content           String
+  recordedById      String
+  recordedBy        Staff               @relation(fields: [recordedById], references: [id])
+  recordTime        DateTime            @default(now())
+  temperature       Float?
+  heartRate         Int?
+  respiratoryRate   Int?
+  bloodPressure     String?
+  weight            Float?
+  appetite          String?
+  stool             String?
+  urine             String?
+  mentalStatus      String?
+  isAbnormal        Boolean             @default(false)
+  abnormalNote      String?
+  orderId           String?
+  medicalOrder      MedicalOrder?       @relation(fields: [orderId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model FeeItem {
+  id                String          @id @default(cuid())
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  name              String
+  category          String
+  quantity          Float
+  unitPrice         Decimal
+  totalPrice        Decimal
+  status            String          @default("PENDING")
+  disputeNote       String?
+  recordDate        DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model FeeReview {
+  id                String          @id @default(cuid())
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+  reviewedById      String
+  reviewedBy        Staff           @relation(fields: [reviewedById], references: [id])
+  totalAmount       Decimal
+  actualAmount      Decimal?
+  reviewNote        String?
+  isFinal           Boolean         @default(false)
+  reviewedAt        DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+}
