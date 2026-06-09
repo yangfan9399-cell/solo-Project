@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using LiquorCreditSystem.Models;
 
 namespace LiquorCreditSystem.Data;
@@ -6,37 +7,39 @@ public static class SeedData
 {
     public static async Task InitializeAsync(AppDbContext context)
     {
-        if (context.Dealers.Any())
+        await context.Database.EnsureCreatedAsync();
+
+        if (await context.Dealers.AnyAsync())
         {
             return;
         }
 
         var dealers = CreateDealers();
-        context.Dealers.AddRange(dealers);
+        await context.Dealers.AddRangeAsync(dealers);
         await context.SaveChangesAsync();
 
         var creditLimits = CreateCreditLimits(dealers);
-        context.CreditLimits.AddRange(creditLimits);
+        await context.CreditLimits.AddRangeAsync(creditLimits);
         await context.SaveChangesAsync();
 
         var debts = CreateDebts(dealers);
-        context.Debts.AddRange(debts);
+        await context.Debts.AddRangeAsync(debts);
         await context.SaveChangesAsync();
 
         var products = CreateProducts();
-        context.Products.AddRange(products);
+        await context.Products.AddRangeAsync(products);
         await context.SaveChangesAsync();
 
         var pricePolicies = CreatePricePolicies(products);
-        context.PricePolicies.AddRange(pricePolicies);
+        await context.PricePolicies.AddRangeAsync(pricePolicies);
         await context.SaveChangesAsync();
 
         var productPricePolicies = CreateProductPricePolicies(products, pricePolicies);
-        context.ProductPricePolicies.AddRange(productPricePolicies);
+        await context.ProductPricePolicies.AddRangeAsync(productPricePolicies);
         await context.SaveChangesAsync();
 
         var orders = CreateSampleOrders(dealers, products, pricePolicies);
-        context.Orders.AddRange(orders);
+        await context.Orders.AddRangeAsync(orders);
         await context.SaveChangesAsync();
     }
 
@@ -101,7 +104,7 @@ public static class SeedData
                 DealerId = dealers[0].Id,
                 TotalCredit = 5000000,
                 UsedCredit = 1200000,
-                FrozenCredit = 0,
+                FrozenCredit = 482632,
                 PaymentDays = 60,
                 EffectiveDate = new DateTime(2026, 1, 1),
                 ExpiryDate = new DateTime(2026, 12, 31)
