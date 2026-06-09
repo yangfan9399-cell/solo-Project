@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using LiquorCreditSystem.Data;
 using LiquorCreditSystem.Models;
@@ -62,6 +63,51 @@ public class OrdersController : Controller
         ViewBag.PageSize = pageSize;
         ViewBag.TotalCount = totalCount;
         ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var statusItems = new List<SelectListItem>
+        {
+            new SelectListItem { Text = "全部", Value = "all" }
+        };
+        foreach (OrderStatus s in Enum.GetValues(typeof(OrderStatus)))
+        {
+            statusItems.Add(new SelectListItem
+            {
+                Text = s switch
+                {
+                    OrderStatus.Draft => "草稿",
+                    OrderStatus.Submitted => "已提交",
+                    OrderStatus.CreditFrozen => "额度已冻结",
+                    OrderStatus.Shipped => "已发货",
+                    OrderStatus.Completed => "已完成",
+                    OrderStatus.Rejected => "已驳回",
+                    OrderStatus.Exception => "异常",
+                    _ => s.ToString()
+                },
+                Value = s.ToString()
+            });
+        }
+        ViewBag.StatusSelectList = new SelectList(statusItems, "Value", "Text", ViewBag.Status);
+
+        var exceptionTypeItems = new List<SelectListItem>
+        {
+            new SelectListItem { Text = "全部", Value = "all" }
+        };
+        foreach (ExceptionType e in Enum.GetValues(typeof(ExceptionType)))
+        {
+            exceptionTypeItems.Add(new SelectListItem
+            {
+                Text = e switch
+                {
+                    ExceptionType.None => "无异常",
+                    ExceptionType.InsufficientCredit => "额度不足",
+                    ExceptionType.OverdueDebt => "逾期欠款",
+                    ExceptionType.PricePolicyConflict => "价格政策冲突",
+                    _ => e.ToString()
+                },
+                Value = e.ToString()
+            });
+        }
+        ViewBag.ExceptionTypeSelectList = new SelectList(exceptionTypeItems, "Value", "Text", ViewBag.ExceptionType);
 
         return View(orders);
     }

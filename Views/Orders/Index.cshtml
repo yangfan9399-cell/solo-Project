@@ -13,26 +13,11 @@
     <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         <div>
             <label>订单状态:</label>
-            <select name="status" onchange="this.form.submit()">
-                <option value="all" @(ViewBag.Status == "all" ? "selected" : "")>全部</option>
-                <option value="Draft" @(ViewBag.Status == "Draft" ? "selected" : "")>草稿</option>
-                <option value="Submitted" @(ViewBag.Status == "Submitted" ? "selected" : "")>已提交</option>
-                <option value="CreditFrozen" @(ViewBag.Status == "CreditFrozen" ? "selected" : "")>额度已冻结</option>
-                <option value="Shipped" @(ViewBag.Status == "Shipped" ? "selected" : "")>已发货</option>
-                <option value="Completed" @(ViewBag.Status == "Completed" ? "selected" : "")>已完成</option>
-                <option value="Exception" @(ViewBag.Status == "Exception" ? "selected" : "")>异常</option>
-                <option value="Rejected" @(ViewBag.Status == "Rejected" ? "selected" : "")>已驳回</option>
-            </select>
+            <select name="status" asp-items="(SelectList)ViewBag.StatusSelectList" onchange="this.form.submit()"></select>
         </div>
         <div>
             <label>异常类型:</label>
-            <select name="exceptionType" onchange="this.form.submit()">
-                <option value="all" @(ViewBag.ExceptionType == "all" ? "selected" : "")>全部</option>
-                <option value="None" @(ViewBag.ExceptionType == "None" ? "selected" : "")>无异常</option>
-                <option value="InsufficientCredit" @(ViewBag.ExceptionType == "InsufficientCredit" ? "selected" : "")>额度不足</option>
-                <option value="OverdueDebt" @(ViewBag.ExceptionType == "OverdueDebt" ? "selected" : "")>逾期欠款</option>
-                <option value="PricePolicyConflict" @(ViewBag.ExceptionType == "PricePolicyConflict" ? "selected" : "")>价格政策冲突</option>
-            </select>
+            <select name="exceptionType" asp-items="(SelectList)ViewBag.ExceptionTypeSelectList" onchange="this.form.submit()"></select>
         </div>
         <div>
             <label>搜索:</label>
