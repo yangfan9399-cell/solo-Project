@@ -130,6 +130,7 @@ model MaterialIssue {
   id             String   @id @default(cuid())
   issueType      String
   description    String
+  documentType   DocumentType?
   resolved       Boolean  @default(false)
   trademarkId    String
 

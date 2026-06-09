@@ -236,11 +236,13 @@ async function main() {
       {
         issueType: "文件不清晰",
         description: "身份证明文件模糊，无法辨认信息",
+        documentType: DocumentType.IDENTITY_PROOF,
         trademarkId: deficientTrademark.id,
       },
       {
         issueType: "材料缺失",
         description: "缺少授权委托书",
+        documentType: DocumentType.POWER_OF_ATTORNEY,
         trademarkId: deficientTrademark.id,
       },
     ],

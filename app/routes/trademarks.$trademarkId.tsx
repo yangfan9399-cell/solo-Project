@@ -129,24 +129,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
         type: result.data.type,
         status: "REJECTED",
       },
-      select: { id: true, rejectionReason: true },
+      select: { id: true },
     });
 
     if (rejectedDocsOfSameType.length > 0) {
-      const rejectionReasons = rejectedDocsOfSameType
-        .map((d) => d.rejectionReason)
-        .filter(Boolean) as string[];
-
-      if (rejectionReasons.length > 0) {
-        await prisma.materialIssue.updateMany({
-          where: {
-            trademarkId: trademarkId,
-            resolved: false,
-            description: { in: rejectionReasons },
-          },
-          data: { resolved: true },
-        });
-      }
+      await prisma.materialIssue.updateMany({
+        where: {
+          trademarkId: trademarkId,
+          resolved: false,
+          documentType: result.data.type,
+        },
+        data: { resolved: true },
+      });
 
       const remainingIssues = await prisma.materialIssue.count({
         where: {
@@ -243,14 +237,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
       const validDocIds = documentIds.filter((id) => id.trim() !== "");
 
-      await prisma.materialIssue.create({
-        data: {
-          issueType: issueType!,
-          description: issueDescription!,
+      const rejectedDocs = await prisma.document.findMany({
+        where: {
+          id: { in: validDocIds },
           trademarkId: trademarkId,
-          resolved: false,
         },
+        select: { id: true, type: true },
       });
+
+      const docTypes = [...new Set(rejectedDocs.map((d) => d.type))];
+
+      for (const docType of docTypes) {
+        await prisma.materialIssue.create({
+          data: {
+            issueType: issueType!,
+            description: issueDescription!,
+            documentType: docType,
+            trademarkId: trademarkId,
+            resolved: false,
+          },
+        });
+      }
 
       if (validDocIds.length > 0) {
         await prisma.document.updateMany({
@@ -477,6 +484,31 @@ export default function TrademarkDetail() {
 
   const rejectFormData = actionData as any;
 
+  const latestUploadByType = trademark.documents.reduce((acc: Record<string, any>, doc: any) => {
+    if (!acc[doc.type] || new Date(doc.createdAt) > new Date(acc[doc.type].createdAt)) {
+      acc[doc.type] = doc;
+    }
+    return acc;
+  }, {});
+
+  const hasRejectedByType = trademark.documents.reduce((acc: Record<string, boolean>, doc: any) => {
+    if (doc.status === "REJECTED") {
+      acc[doc.type] = true;
+    }
+    return acc;
+  }, {});
+
+  const isDocSuperseded = (doc: any) => {
+    if (doc.status !== "REJECTED") return false;
+    const latest = latestUploadByType[doc.type];
+    return latest && latest.id !== doc.id && latest.status !== "REJECTED";
+  };
+
+  const rejectedTypesWithoutFix = Object.keys(hasRejectedByType).filter((type) => {
+    const latest = latestUploadByType[type];
+    return latest && latest.status === "REJECTED";
+  });
+
   const daysLeft = differenceInDays(
     new Date(trademark.expiryDate),
     new Date()
@@ -647,17 +679,24 @@ export default function TrademarkDetail() {
                   暂无上传材料
                 </div>
               ) : (
-                  trademark.documents.map((doc: any) => (
+                  trademark.documents.map((doc: any) => {
+                    const superseded = isDocSuperseded(doc);
+                    return (
                     <div
                       key={doc.id}
                       className={`px-4 py-4 sm:px-6 ${
-                        doc.status === "REJECTED" ? "bg-red-50" : ""
+                        doc.status === "REJECTED" && !superseded ? "bg-red-50" : 
+                        superseded ? "bg-gray-50" : ""
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-3">
                           <div className="flex-shrink-0 mt-1">
-                            {doc.status === "REJECTED" ? (
+                            {superseded ? (
+                              <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            ) : doc.status === "REJECTED" ? (
                               <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                               </svg>
@@ -673,10 +712,17 @@ export default function TrademarkDetail() {
                           </div>
                           <div>
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className={`text-sm font-medium ${
+                                superseded ? "text-gray-500 line-through" : "text-gray-900"
+                              }`}>
                                 {doc.name}
                               </p>
-                              {doc.status === "REJECTED" && (
+                              {superseded && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-700">
+                                  已补正
+                                </span>
+                              )}
+                              {doc.status === "REJECTED" && !superseded && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                   已驳回
                                 </span>
@@ -692,7 +738,7 @@ export default function TrademarkDetail() {
                               <span className="mx-1">·</span>
                               {format(new Date(doc.createdAt), "yyyy-MM-dd HH:mm")}
                             </p>
-                            {doc.status === "REJECTED" && doc.rejectionReason && (
+                            {doc.status === "REJECTED" && doc.rejectionReason && !superseded && (
                               <div className="mt-2 p-2 bg-red-100 rounded-md">
                                 <p className="text-xs font-medium text-red-800">
                                   驳回原因：
@@ -702,10 +748,15 @@ export default function TrademarkDetail() {
                                 </p>
                               </div>
                             )}
+                            {superseded && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                已有新版本上传，此为历史驳回版本
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center space-x-3 ml-4 flex-shrink-0">
-                          <DocumentStatusBadge status={doc.status} />
+                          <DocumentStatusBadge status={superseded ? "REJECTED" : doc.status} />
                           <a
                             href={doc.fileUrl}
                             target="_blank"
@@ -717,7 +768,7 @@ export default function TrademarkDetail() {
                         </div>
                       </div>
                     </div>
-                  ))
+                  )})
                 )}
             </div>
 
@@ -725,7 +776,7 @@ export default function TrademarkDetail() {
               trademark.status !== "ARCHIVED" &&
               trademark.status !== "ABANDONED" && (
                 <div className="px-4 py-4 border-t border-gray-200 sm:px-6">
-                  {trademark.documents.some((d: any) => d.status === "REJECTED") && (
+                  {rejectedTypesWithoutFix.length > 0 && (
                     <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                       <div className="flex items-start">
                         <svg className="h-5 w-5 text-yellow-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -733,10 +784,33 @@ export default function TrademarkDetail() {
                         </svg>
                         <div className="ml-2 flex-1">
                           <p className="text-sm font-medium text-yellow-800">
-                            有 {trademark.documents.filter((d: any) => d.status === "REJECTED").length} 份材料被驳回，需要补正
+                            有 {rejectedTypesWithoutFix.length} 类材料待补正
                           </p>
                           <p className="text-xs text-yellow-700 mt-1">
-                            请重新上传被驳回的材料，上传同类型材料后对应问题会自动标记为已补正
+                            请重新上传以下类型的材料：
+                            {rejectedTypesWithoutFix.map((type) => documentTypeLabels[type] || type).join("、")}
+                          </p>
+                          <p className="text-xs text-yellow-600 mt-1">
+                            上传同类型材料后对应问题会自动标记为已补正
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {rejectedTypesWithoutFix.length === 0 &&
+                    trademark.documents.some((d: any) => d.status === "REJECTED") && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="flex items-start">
+                        <svg className="h-5 w-5 text-green-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="ml-2 flex-1">
+                          <p className="text-sm font-medium text-green-800">
+                            所有材料问题均已补正
+                          </p>
+                          <p className="text-xs text-green-700 mt-1">
+                            历史驳回版本可在上方材料清单中查看，等待代理人再次审核
                           </p>
                         </div>
                       </div>
@@ -752,9 +826,7 @@ export default function TrademarkDetail() {
                       <div>
                         <select
                           name="type"
-                          defaultValue={
-                            trademark.documents.find((d: any) => d.status === "REJECTED")?.type || ""
-                          }
+                          defaultValue={rejectedTypesWithoutFix[0] || ""}
                           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
                           <option value="">选择材料类型</option>
