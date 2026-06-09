@@ -52,7 +52,6 @@ export async function loader() {
     .leftJoin(contractors, eq(workPermits.contractorId, contractors.id))
     .where(
       or(
-        eq(workPermits.status, "manager_approved"),
         eq(workPermits.status, "manager_rejected"),
         eq(workPermits.status, "archived")
       )
@@ -78,12 +77,12 @@ export async function action({ request }: { request: Request }) {
   const operatorName = "项目经理";
 
   try {
-    if (intent === "approve") {
+    if (intent === "archive") {
       await db.transaction(async (tx) => {
         await tx
           .update(workPermits)
           .set({
-            status: "manager_approved",
+            status: "archived",
             managerApprovedAt: sql`now()`,
             updatedAt: sql`now()`,
           })
@@ -92,14 +91,14 @@ export async function action({ request }: { request: Request }) {
         await tx.insert(approvalNodes).values({
           permitId,
           role: "project_manager",
-          action: "批准",
-          status: "manager_approved",
+          action: "归档",
+          status: "archived",
           comment: comment || null,
           operatorName,
         });
       });
 
-      return { success: true, message: "审批通过" };
+      return { success: true, message: "已归档" };
     }
 
     if (intent === "reject") {
@@ -125,52 +124,6 @@ export async function action({ request }: { request: Request }) {
       return { success: true, message: "已退回" };
     }
 
-    if (intent === "archive") {
-      await db.transaction(async (tx) => {
-        await tx
-          .update(workPermits)
-          .set({
-            status: "archived",
-            updatedAt: sql`now()`,
-          })
-          .where(eq(workPermits.id, permitId));
-
-        await tx.insert(approvalNodes).values({
-          permitId,
-          role: "project_manager",
-          action: "归档",
-          status: "archived",
-          comment: comment || null,
-          operatorName,
-        });
-      });
-
-      return { success: true, message: "已归档" };
-    }
-
-    if (intent === "unarchive") {
-      await db.transaction(async (tx) => {
-        await tx
-          .update(workPermits)
-          .set({
-            status: "manager_approved",
-            updatedAt: sql`now()`,
-          })
-          .where(eq(workPermits.id, permitId));
-
-        await tx.insert(approvalNodes).values({
-          permitId,
-          role: "project_manager",
-          action: "取消归档",
-          status: "manager_approved",
-          comment: comment || null,
-          operatorName,
-        });
-      });
-
-      return { success: true, message: "已取消归档" };
-    }
-
     return { success: false, error: "无效的操作" };
   } catch (error) {
     console.error("审批操作失败:", error);
@@ -181,7 +134,6 @@ export async function action({ request }: { request: Request }) {
 function getStatusBadge(status: string) {
   const statusMap: Record<string, { label: string; className: string }> = {
     safety_approved: { label: "待项目经理审批", className: "badge-info" },
-    manager_approved: { label: "已批准", className: "badge-success" },
     manager_rejected: { label: "已退回", className: "badge-danger" },
     archived: { label: "已归档", className: "badge-secondary" },
   };
@@ -352,9 +304,9 @@ export default function ReviewManager() {
                           </button>
                           <Form method="post" className="inline">
                             <input type="hidden" name="permitId" value={permit.id} />
-                            <input type="hidden" name="intent" value="approve" />
+                            <input type="hidden" name="intent" value="archive" />
                             <button type="submit" className="btn btn-success text-xs">
-                              归档批准
+                              归档
                             </button>
                           </Form>
                           <button
@@ -442,24 +394,6 @@ export default function ReviewManager() {
                           >
                             查看详情
                           </button>
-                          {permit.status === "manager_approved" && (
-                            <Form method="post" className="inline">
-                              <input type="hidden" name="permitId" value={permit.id} />
-                              <input type="hidden" name="intent" value="archive" />
-                              <button type="submit" className="btn btn-secondary text-xs">
-                                归档
-                              </button>
-                            </Form>
-                          )}
-                          {permit.status === "archived" && (
-                            <Form method="post" className="inline">
-                              <input type="hidden" name="permitId" value={permit.id} />
-                              <input type="hidden" name="intent" value="unarchive" />
-                              <button type="submit" className="btn btn-secondary text-xs">
-                                取消归档
-                              </button>
-                            </Form>
-                          )}
                         </div>
                       </td>
                     </tr>
