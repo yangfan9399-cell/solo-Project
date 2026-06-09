@@ -133,50 +133,57 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">📡 传感器列表</h5>
-                <span class="badge bg-secondary">共 @Model.Sensors.Count 个</span>
+                <span class="badge bg-secondary">共 @(Model.Sensors?.Count ?? 0) 个</span>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>传感器编号</th>
-                                <th>类型</th>
-                                <th>位置</th>
-                                <th>状态</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var sensor in Model.Sensors)
-                            {
+                @if (Model.Sensors != null && Model.Sensors.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <td>@sensor.SensorCode</td>
-                                    <td>@sensor.SensorType</td>
-                                    <td>@sensor.Location</td>
-                                    <td>
-                                        @{
-                                            var statusText = sensor.Status switch
-                                            {
-                                                SensorStatus.Online => "在线",
-                                                SensorStatus.Offline => "离线",
-                                                SensorStatus.Faulty => "故障",
-                                                _ => "未知"
-                                            };
-                                            var statusClass = sensor.Status switch
-                                            {
-                                                SensorStatus.Online => "bg-success",
-                                                SensorStatus.Offline => "bg-danger",
-                                                SensorStatus.Faulty => "bg-warning",
-                                                _ => "bg-secondary"
-                                            };
-                                            <span class="badge @statusClass">@statusText</span>
-                                        }
-                                    </td>
+                                    <th>传感器编号</th>
+                                    <th>类型</th>
+                                    <th>位置</th>
+                                    <th>状态</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                @foreach (var sensor in Model.Sensors)
+                                {
+                                    <tr>
+                                        <td>@sensor.SensorCode</td>
+                                        <td>@sensor.SensorType</td>
+                                        <td>@sensor.Location</td>
+                                        <td>
+                                            @{
+                                                var statusText = sensor.Status switch
+                                                {
+                                                    SensorStatus.Online => "在线",
+                                                    SensorStatus.Offline => "离线",
+                                                    SensorStatus.Faulty => "故障",
+                                                    _ => "未知"
+                                                };
+                                                var statusClass = sensor.Status switch
+                                                {
+                                                    SensorStatus.Online => "bg-success",
+                                                    SensorStatus.Offline => "bg-danger",
+                                                    SensorStatus.Faulty => "bg-warning",
+                                                    _ => "bg-secondary"
+                                                };
+                                                <span class="badge @statusClass">@statusText</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-center text-muted py-4 mb-0">暂无传感器数据</p>
+                }
             </div>
         </div>
     </div>

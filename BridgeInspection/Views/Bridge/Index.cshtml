@@ -24,37 +24,48 @@
 </div>
 
 <div class="row">
-    @foreach (var bridge in Model)
+    @if (Model != null && Model.Any())
     {
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">@bridge.Name</h5>
-                    <span class="badge bg-light text-primary">
-                        @(bridge.BridgeType switch
-                        {
-                            BridgeType.BeamBridge => "梁桥",
-                            BridgeType.ArchBridge => "拱桥",
-                            BridgeType.CableStayedBridge => "斜拉桥",
-                            BridgeType.SuspensionBridge => "悬索桥",
-                            BridgeType.TrussBridge => "桁架桥",
-                            BridgeType.BoxGirderBridge => "箱梁桥",
-                            _ => "未知"
-                        })
-                    </span>
+        @foreach (var bridge in Model)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">@bridge.Name</h5>
+                        <span class="badge bg-light text-primary">
+                            @(bridge.BridgeType switch
+                            {
+                                BridgeType.BeamBridge => "梁桥",
+                                BridgeType.ArchBridge => "拱桥",
+                                BridgeType.CableStayedBridge => "斜拉桥",
+                                BridgeType.SuspensionBridge => "悬索桥",
+                                BridgeType.TrussBridge => "桁架桥",
+                                BridgeType.BoxGirderBridge => "箱梁桥",
+                                _ => "未知"
+                            })
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><span class="text-muted">路线：</span>@bridge.RouteName</p>
+                        <p class="mb-2"><span class="text-muted">位置：</span>@bridge.Location</p>
+                        <p class="mb-2"><span class="text-muted">长度：</span>@bridge.Length 米</p>
+                        <p class="mb-2"><span class="text-muted">宽度：</span>@bridge.Width 米</p>
+                        <p class="mb-0"><span class="text-muted">建成年份：</span>@bridge.BuildYear 年</p>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <a asp-controller="Bridge" asp-action="Details" asp-route-id="@bridge.Id" class="btn btn-outline-primary btn-sm w-100">
+                            查看详情 →
+                        </a>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p class="mb-2"><span class="text-muted">路线：</span>@bridge.RouteName</p>
-                    <p class="mb-2"><span class="text-muted">位置：</span>@bridge.Location</p>
-                    <p class="mb-2"><span class="text-muted">长度：</span>@bridge.Length 米</p>
-                    <p class="mb-2"><span class="text-muted">宽度：</span>@bridge.Width 米</p>
-                    <p class="mb-0"><span class="text-muted">建成年份：</span>@bridge.BuildYear 年</p>
-                </div>
-                <div class="card-footer bg-light">
-                    <a asp-controller="Bridge" asp-action="Details" asp-route-id="@bridge.Id" class="btn btn-outline-primary btn-sm w-100">
-                        查看详情 →
-                    </a>
-                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="text-center py-5">
+                <p class="text-muted mb-0">暂无桥梁数据</p>
             </div>
         </div>
     }

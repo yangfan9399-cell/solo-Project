@@ -81,7 +81,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">验收结论 <span class="text-danger">*</span></label>
-                            <div class="form-check">
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="IsApproved" id="approve" value="true" checked>
                                 <label class="form-check-label text-success fw-bold" for="approve">
                                     ✅ 验收通过，同意销项
@@ -93,12 +93,14 @@
                                     ❌ 验收不通过，退回重维
                                 </label>
                             </div>
+                            <span class="text-danger small d-none" id="approval-error">请选择验收结论</span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="AcceptanceComment" class="form-label">验收意见</label>
-                            <textarea asp-for="AcceptanceComment" class="form-control" rows="4" placeholder="请输入验收意见..."></textarea>
+                            <label asp-for="AcceptanceComment" class="form-label">验收意见 <span class="text-danger" id="comment-required" style="display:none;">*</span></label>
+                            <textarea asp-for="AcceptanceComment" class="form-control" rows="4" placeholder="请输入验收意见，退回时需说明退回原因..."></textarea>
                             <span asp-validation-for="AcceptanceComment" class="text-danger"></span>
+                            <small class="text-muted d-block mt-1">退回重维时请务必填写详细的退回原因，便于养护单位整改。</small>
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">

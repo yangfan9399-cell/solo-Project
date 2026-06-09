@@ -66,12 +66,19 @@
                         <label asp-for="MaintenanceUnitId" class="form-label">指派养护单位</label>
                         <select asp-for="MaintenanceUnitId" class="form-select">
                             <option value="">暂不指派</option>
-                            @foreach (var unit in Model.MaintenanceUnits!)
+                            @if (Model.MaintenanceUnits != null && Model.MaintenanceUnits.Any())
                             {
-                                <option value="@unit.Id">@unit.FullName</option>
+                                foreach (var unit in Model.MaintenanceUnits)
+                                {
+                                    <option value="@unit.Id">@unit.FullName</option>
+                                }
                             }
                         </select>
                         <span asp-validation-for="MaintenanceUnitId" class="text-danger"></span>
+                        @if (Model.MaintenanceUnits == null || !Model.MaintenanceUnits.Any())
+                        {
+                            <small class="text-muted">暂无可指派的养护单位</small>
+                        }
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">

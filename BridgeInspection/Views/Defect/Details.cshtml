@@ -235,7 +235,16 @@
                 <hr />
                 <div class="mb-0">
                     <label class="form-label text-muted">病害描述</label>
-                    <p class="mb-0">@defect.Description</p>
+                    <p class="mb-0">
+                        @if (string.IsNullOrEmpty(defect.Description))
+                        {
+                            <span class="text-muted">暂无描述</span>
+                        }
+                        else
+                        {
+                            @defect.Description
+                        }
+                    </p>
                 </div>
             </div>
         </div>

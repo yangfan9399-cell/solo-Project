@@ -64,100 +64,115 @@
 
 <div class="card">
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>编号</th>
-                        <th>桥梁</th>
-                        <th>病害标题</th>
-                        <th>位置</th>
-                        <th>等级</th>
-                        <th>状态</th>
-                        <th>巡检员</th>
-                        <th>登记时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <td><strong>#@item.Id</strong></td>
-                            <td>@item.BridgeName</td>
-                            <td>@item.Title</td>
-                            <td>@item.LocationOnBridge</td>
-                            <td>
-                                @if (item.Severity.HasValue)
-                                {
-                                    var severityClass = item.Severity.Value switch
-                                    {
-                                        DefectSeverity.Slight => "badge bg-success",
-                                        DefectSeverity.Moderate => "badge bg-warning",
-                                        DefectSeverity.Severe => "badge bg-danger",
-                                        DefectSeverity.Structural => "badge bg-dark",
-                                        _ => "badge bg-secondary"
-                                    };
-                                    var severityText = item.Severity.Value switch
-                                    {
-                                        DefectSeverity.Slight => "轻微",
-                                        DefectSeverity.Moderate => "一般",
-                                        DefectSeverity.Severe => "严重",
-                                        DefectSeverity.Structural => "结构性",
-                                        _ => "未知"
-                                    };
-                                    <span class="@severityClass">
-                                        @if (item.IsUpgraded || item.RequiresStructuralReview)
-                                        {
-                                            <span class="me-1">⬆️</span>
-                                        }
-                                        @severityText
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">待评定</span>
-                                }
-                            </td>
-                            <td>
-                                @{
-                                    var statusText = item.Status switch
-                                    {
-                                        DefectStatus.PendingAssessment => "待评定",
-                                        DefectStatus.Assessing => "评定中",
-                                        DefectStatus.PendingMaintenance => "待维修",
-                                        DefectStatus.MaintenanceInProgress => "维修中",
-                                        DefectStatus.PendingAcceptance => "待验收",
-                                        DefectStatus.Closed => "已销项",
-                                        DefectStatus.Returned => "已退回",
-                                        _ => "未知"
-                                    };
-                                    var statusClass = item.Status switch
-                                    {
-                                        DefectStatus.PendingAssessment => "badge bg-secondary",
-                                        DefectStatus.Assessing => "badge bg-info",
-                                        DefectStatus.PendingMaintenance => "badge bg-warning",
-                                        DefectStatus.MaintenanceInProgress => "badge bg-primary",
-                                        DefectStatus.PendingAcceptance => "badge bg-info",
-                                        DefectStatus.Closed => "badge bg-success",
-                                        DefectStatus.Returned => "badge bg-danger",
-                                        _ => "badge bg-secondary"
-                                    };
-                                    <span class="@statusClass">@statusText</span>
-                                }
-                            </td>
-                            <td>@item.ReporterName</td>
-                            <td>@item.ReportedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>
-                                <a asp-controller="Defect" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                    详情
-                                </a>
-                            </td>
+                            <th>编号</th>
+                            <th>桥梁</th>
+                            <th>病害标题</th>
+                            <th>位置</th>
+                            <th>等级</th>
+                            <th>状态</th>
+                            <th>巡检员</th>
+                            <th>登记时间</th>
+                            <th>操作</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td><strong>#@item.Id</strong></td>
+                                <td>@item.BridgeName</td>
+                                <td>@item.Title</td>
+                                <td>@item.LocationOnBridge</td>
+                                <td>
+                                    @if (item.Severity.HasValue)
+                                    {
+                                        var severityClass = item.Severity.Value switch
+                                        {
+                                            DefectSeverity.Slight => "badge bg-success",
+                                            DefectSeverity.Moderate => "badge bg-warning",
+                                            DefectSeverity.Severe => "badge bg-danger",
+                                            DefectSeverity.Structural => "badge bg-dark",
+                                            _ => "badge bg-secondary"
+                                        };
+                                        var severityText = item.Severity.Value switch
+                                        {
+                                            DefectSeverity.Slight => "轻微",
+                                            DefectSeverity.Moderate => "一般",
+                                            DefectSeverity.Severe => "严重",
+                                            DefectSeverity.Structural => "结构性",
+                                            _ => "未知"
+                                        };
+                                        <span class="@severityClass">
+                                            @if (item.IsUpgraded || item.RequiresStructuralReview)
+                                            {
+                                                <span class="me-1">⬆️</span>
+                                            }
+                                            @severityText
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">待评定</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var statusText = item.Status switch
+                                        {
+                                            DefectStatus.PendingAssessment => "待评定",
+                                            DefectStatus.Assessing => "评定中",
+                                            DefectStatus.PendingMaintenance => "待维修",
+                                            DefectStatus.MaintenanceInProgress => "维修中",
+                                            DefectStatus.PendingAcceptance => "待验收",
+                                            DefectStatus.Closed => "已销项",
+                                            DefectStatus.Returned => "已退回",
+                                            _ => "未知"
+                                        };
+                                        var statusClass = item.Status switch
+                                        {
+                                            DefectStatus.PendingAssessment => "badge bg-secondary",
+                                            DefectStatus.Assessing => "badge bg-info",
+                                            DefectStatus.PendingMaintenance => "badge bg-warning",
+                                            DefectStatus.MaintenanceInProgress => "badge bg-primary",
+                                            DefectStatus.PendingAcceptance => "badge bg-info",
+                                            DefectStatus.Closed => "badge bg-success",
+                                            DefectStatus.Returned => "badge bg-danger",
+                                            _ => "badge bg-secondary"
+                                        };
+                                        <span class="@statusClass">@statusText</span>
+                                    }
+                                </td>
+                                <td>@item.ReporterName</td>
+                                <td>@item.ReportedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <a asp-controller="Defect" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                        详情
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <p class="text-muted mb-3">暂无病害数据</p>
+                @if (User.IsInRole("Inspector") || User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Defect" asp-action="Create" class="btn btn-primary btn-sm">
+                        ➕ 登记第一条病害
+                    </a>
+                }
+            </div>
+        }
     </div>
 </div>
 
