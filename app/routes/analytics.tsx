@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireRole(request, ["CONSULTANT", "AGENT", "SUPERVISOR"]);
 
-  const [totalStats, byClient, byCategory, byStatus, cycleStats, expeditedStats] = await Promise.all([
+  const [totalStats, byClient, byCategory, byStatus, cycleStats, expeditedStats, materialIssueStats] = await Promise.all([
     prisma.trademark.aggregate({
       _count: { id: true },
       _avg: {},
@@ -48,6 +48,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
       _count: { id: true },
       where: { isExpedited: true },
     }),
+    prisma.materialIssue.groupBy({
+      by: ["issueType", "resolved"],
+      _count: { issueType: true },
+      orderBy: { _count: { issueType: "desc" } },
+    }),
   ]);
 
   const clients = await prisma.user.findMany({
@@ -58,6 +63,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 
   const clientMap = new Map(clients.map((c) => [c.id, c.name]));
+
+  const materialIssueMap = new Map<string, { total: number; resolved: number; unresolved: number }>();
+  for (const stat of materialIssueStats) {
+    const existing = materialIssueMap.get(stat.issueType) || { total: 0, resolved: 0, unresolved: 0 };
+    const count = stat._count.issueType;
+    existing.total += count;
+    if (stat.resolved) {
+      existing.resolved += count;
+    } else {
+      existing.unresolved += count;
+    }
+    materialIssueMap.set(stat.issueType, existing);
+  }
+
+  const byMaterialIssue = Array.from(materialIssueMap.entries())
+    .map(([issueType, stats]) => ({ issueType, ...stats }))
+    .sort((a, b) => b.total - a.total);
+
+  const totalMaterialIssues = byMaterialIssue.reduce((sum, item) => sum + item.total, 0);
 
   return json({
     totalCount: totalStats._count.id,
@@ -79,6 +103,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     expeditedCount: expeditedStats._count.id,
     archivedCount: byStatus.find((s) => s.status === "ARCHIVED")?._count.status || 0,
     abandonedCount: byStatus.find((s) => s.status === "ABANDONED")?._count.status || 0,
+    byMaterialIssue,
+    totalMaterialIssues,
   });
 }
 
@@ -92,6 +118,8 @@ export default function Analytics() {
     expeditedCount,
     archivedCount,
     abandonedCount,
+    byMaterialIssue,
+    totalMaterialIssues,
   } = useLoaderData<typeof loader>();
 
   const successRate = totalCount > 0
@@ -293,11 +321,60 @@ export default function Analytics() {
       <div className="card">
         <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900">
+            材料问题类型分布
+          </h3>
+        </div>
+        <div className="px-4 py-5 sm:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {byMaterialIssue.length === 0 ? (
+              <p className="text-gray-500 text-center py-4 col-span-full">暂无数据</p>
+            ) : (
+              byMaterialIssue.map((item: any) => (
+                <div
+                  key={item.issueType}
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      {item.issueType}
+                    </span>
+                    <span className="text-lg font-semibold text-gray-900">
+                      {item.total}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-green-600">已解决</span>
+                      <span className="text-green-600 font-medium">{item.resolved}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-500 h-2 rounded-full"
+                        style={{
+                          width: `${item.total > 0 ? (item.resolved / item.total) * 100 : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-yellow-600">待解决</span>
+                      <span className="text-yellow-600 font-medium">{item.unresolved}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
             关键指标
           </h3>
         </div>
         <div className="px-4 py-5 sm:p-6">
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
             <div>
               <dt className="text-sm font-medium text-gray-500">
                 完成率
@@ -328,6 +405,22 @@ export default function Analytics() {
               </dt>
               <dd className="mt-1 text-3xl font-semibold text-blue-600">
                 {byClient.length}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">
+                材料问题总数
+              </dt>
+              <dd className="mt-1 text-3xl font-semibold text-orange-600">
+                {totalMaterialIssues}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">
+                待解决问题
+              </dt>
+              <dd className="mt-1 text-3xl font-semibold text-yellow-600">
+                {byMaterialIssue.reduce((sum: number, item: any) => sum + item.unresolved, 0)}
               </dd>
             </div>
           </dl>

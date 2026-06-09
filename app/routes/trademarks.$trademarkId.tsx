@@ -70,6 +70,9 @@ const ReviewSchema = z.object({
   comment: z.string().optional(),
   rejectionReason: z.string().optional(),
   expeditedReason: z.string().optional(),
+  issueType: z.string().optional(),
+  issueDescription: z.string().optional(),
+  documentIds: z.string().optional(),
 });
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -148,6 +151,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const result = ReviewSchema.safeParse({
       action: formData.get("action"),
       comment: formData.get("comment"),
+      issueType: formData.get("issueType"),
+      issueDescription: formData.get("issueDescription"),
+      documentIds: formData.get("documentIds"),
     });
 
     if (!result.success) {
@@ -163,9 +169,46 @@ export async function action({ request, params }: ActionFunctionArgs) {
     if (result.data.action === "approve") {
       newStatus = "AGENT_APPROVED";
       actionText = "代理人审核通过";
+
+      await prisma.document.updateMany({
+        where: { trademarkId: trademarkId, status: "UPLOADED" },
+        data: { status: "APPROVED" },
+      });
+
+      await prisma.materialIssue.updateMany({
+        where: { trademarkId: trademarkId, resolved: false },
+        data: { resolved: true },
+      });
     } else if (result.data.action === "reject") {
       newStatus = "MATERIALS_DEFICIENT";
       actionText = "代理人审核驳回";
+
+      if (result.data.issueType && result.data.issueDescription) {
+        await prisma.materialIssue.create({
+          data: {
+            issueType: result.data.issueType,
+            description: result.data.issueDescription,
+            trademarkId: trademarkId,
+            resolved: false,
+          },
+        });
+      }
+
+      if (result.data.documentIds) {
+        const docIds = result.data.documentIds.split(",").filter(Boolean);
+        if (docIds.length > 0) {
+          await prisma.document.updateMany({
+            where: {
+              id: { in: docIds },
+              trademarkId: trademarkId,
+            },
+            data: {
+              status: "REJECTED",
+              rejectionReason: result.data.issueDescription || result.data.comment,
+            },
+          });
+        }
+      }
     }
 
     await prisma.trademark.update({
@@ -597,6 +640,71 @@ export default function TrademarkDetail() {
           </div>
 
           <div className="card">
+            <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                材料问题
+              </h3>
+              <span className="text-sm text-gray-500">
+                {trademark.materialIssues.filter((i: any) => !i.resolved).length} 项待解决 / 共 {trademark.materialIssues.length} 项
+              </span>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {trademark.materialIssues.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  暂无材料问题
+                </div>
+              ) : (
+                trademark.materialIssues.map((issue: any) => (
+                  <div
+                    key={issue.id}
+                    className="px-4 py-4 sm:px-6"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {issue.resolved ? (
+                            <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              issue.resolved
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {issue.issueType}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {format(new Date(issue.createdAt), "yyyy-MM-dd")}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-700">
+                            {issue.description}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        issue.resolved
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {issue.resolved ? "已解决" : "待解决"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="card">
             <div className="px-4 py-5 border-b border-gray-200 sm:px-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 历史节点
@@ -735,17 +843,83 @@ export default function TrademarkDetail() {
                       审核通过
                     </button>
                   </Form>
-                  <Form method="post">
+                  <Form method="post" onSubmit={(e) => {
+                    const form = e.currentTarget;
+                    const checkboxes = form.querySelectorAll('input[name="docIds"]:checked');
+                    const ids = Array.from(checkboxes).map((cb) => (cb as HTMLInputElement).value).join(",");
+                    const hiddenInput = form.querySelector('input[name="documentIds"]') as HTMLInputElement;
+                    if (hiddenInput) hiddenInput.value = ids;
+                  }}>
                     <input type="hidden" name="_action" value="agentReview" />
                     <input type="hidden" name="action" value="reject" />
-                    <div className="mb-2">
+                    <input type="hidden" name="documentIds" value="" />
+                    
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        问题类型
+                      </label>
+                      <select
+                        name="issueType"
+                        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md"
+                      >
+                        <option value="">请选择问题类型</option>
+                        <option value="文件不清晰">文件不清晰</option>
+                        <option value="材料缺失">材料缺失</option>
+                        <option value="信息不符">信息不符</option>
+                        <option value="格式错误">格式错误</option>
+                        <option value="过期失效">过期失效</option>
+                        <option value="其他问题">其他问题</option>
+                      </select>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        问题描述
+                      </label>
                       <textarea
-                        name="comment"
+                        name="issueDescription"
                         rows={2}
-                        placeholder="驳回原因..."
+                        placeholder="请详细描述材料存在的问题..."
                         className="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"
                       />
                     </div>
+                    
+                    {trademark.documents.length > 0 && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          关联问题文档（可多选）
+                        </label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                          {trademark.documents.map((doc: any) => (
+                            <label key={doc.id} className="flex items-center space-x-2 p-1 hover:bg-gray-50 rounded">
+                              <input
+                                type="checkbox"
+                                name="docIds"
+                                value={doc.id}
+                                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                              />
+                              <span className="text-sm text-gray-700">{doc.name}</span>
+                              <span className="text-xs text-gray-400">
+                                ({documentTypeLabels[doc.type] || doc.type})
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        备注说明
+                      </label>
+                      <textarea
+                        name="comment"
+                        rows={2}
+                        placeholder="其他补充说明..."
+                        className="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                    
                     <button type="submit" className="w-full btn btn-danger">
                       驳回申请
                     </button>
