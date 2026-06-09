@@ -23,11 +23,6 @@
                 <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge_class(app.status) %>">
                   <%= app.status_name %>
                 </span>
-                <% if app.abnormal? %>
-                  <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                    <%= app.anomaly_type %>
-                  </span>
-                <% end %>
               </div>
               <div class="mt-1 text-sm text-gray-500 flex space-x-4">
                 <span>印章: <%= app.seal.name %></span>

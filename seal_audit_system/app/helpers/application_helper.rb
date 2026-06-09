@@ -3,12 +3,14 @@ module ApplicationHelper
     case status.to_sym
     when :draft
       'bg-gray-100 text-gray-800'
-    when :pending_legal, :pending_seal, :pending_archive
+    when :pending_legal, :pending_seal, :pending_archive, :approver_absent, :pending
       'bg-yellow-100 text-yellow-800'
-    when :legal_approved, :seal_approved, :archived
+    when :legal_approved, :seal_approved, :archived, :approved
       'bg-green-100 text-green-800'
-    when :legal_rejected, :seal_rejected, :version_conflict, :archive_missing_pages, :approver_absent
+    when :legal_rejected, :seal_rejected, :version_conflict, :archive_missing_pages, :rejected
       'bg-red-100 text-red-800'
+    when :skipped
+      'bg-yellow-100 text-yellow-800'
     else
       'bg-gray-100 text-gray-800'
     end

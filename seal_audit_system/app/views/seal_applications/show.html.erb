@@ -6,11 +6,6 @@
         <span class="px-3 py-1 text-sm font-medium rounded-full <%= status_badge_class(@seal_application.status) %>">
           <%= @seal_application.status_name %>
         </span>
-        <% if @seal_application.abnormal? %>
-          <span class="px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800">
-            <%= @seal_application.anomaly_type %>
-          </span>
-        <% end %>
       </div>
       <p class="mt-1 text-sm text-gray-500">
         提交时间: <%= @seal_application.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
