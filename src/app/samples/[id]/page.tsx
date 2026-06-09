@@ -131,31 +131,73 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
       {isSealDamaged && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start">
           <AlertTriangle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-          <div>
-            <h3 className="font-medium text-red-800">封签破损 - 流程阻断</h3>
+          <div className="flex-1">
+            <h3 className="font-medium text-red-800 flex items-center gap-2">
+              封签破损 - 流程阻断
+              {sample.status === "RE_SAMPLING" && (
+                <span className="inline-flex items-center px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                  待重新取样
+                </span>
+              )}
+            </h3>
             <p className="text-sm text-red-600 mt-1">
               {sample.abnormalDescription ||
                 "样品封签已破损，根据规定必须阻断结论确认并要求重新取样。"}
             </p>
-            {session.user.role === "INSPECTION_OFFICER" && (
-              <form
-                action={async () => {
-                  "use server";
-                  const { reSample } = await import(
-                    "@/lib/actions/sample-actions"
-                  );
-                  await reSample(sample.id);
-                }}
-                className="mt-3"
-              >
-                <button
-                  type="submit"
-                  className="text-sm font-medium text-red-700 hover:text-red-800 underline"
-                >
-                  → 立即重新取样
-                </button>
-              </form>
+            {sample.status === "RE_SAMPLING" && sample.currentHandler && (
+              <p className="text-sm text-red-700 mt-2 flex items-center">
+                <User className="w-4 h-4 mr-1.5" />
+                当前责任人：
+                <span className="font-medium ml-1">
+                  {sample.currentHandler.name}
+                </span>
+                <span className="text-red-500 text-xs ml-2">
+                  （{sample.currentHandler.role === "INSPECTION_OFFICER" ? "查验关员" : sample.currentHandler.role}）
+                </span>
+              </p>
             )}
+            {session.user.role === "INSPECTION_OFFICER" &&
+              sample.status === "RE_SAMPLING" && (
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm font-medium text-orange-800">
+                    🔔 您是当前责任人，请尽快完成重新取样
+                  </p>
+                  <form
+                    action={async () => {
+                      "use server";
+                      const { reSample } = await import(
+                        "@/lib/actions/sample-actions"
+                      );
+                      await reSample(sample.id);
+                    }}
+                    className="mt-2"
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-1.5" />
+                      立即重新取样
+                    </button>
+                  </form>
+                </div>
+              )}
+            {session.user.role === "LAB_TECHNICIAN" &&
+              sample.status === "RE_SAMPLING" && (
+                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                  <p className="text-sm text-slate-600">
+                    📤 已转交查验关员重新取样，待新样品送检后继续检测流程
+                  </p>
+                </div>
+              )}
+            {session.user.role === "DISPOSAL_REVIEWER" &&
+              sample.status === "RE_SAMPLING" && (
+                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                  <p className="text-sm text-slate-600">
+                    ⏳ 待查验关员重新取样并完成检测后，再进入处置复核环节
+                  </p>
+                </div>
+              )}
           </div>
         </div>
       )}

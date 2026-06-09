@@ -158,9 +158,24 @@ export async function reportSealDamaged(sampleId: string, description: string) {
     throw new Error("无权限执行此操作");
   }
 
-  const sample = await prisma.sample.findUnique({ where: { id: sampleId } });
+  const sample = await prisma.sample.findUnique({
+    where: { id: sampleId },
+    include: { sampler: true },
+  });
   if (!sample) {
     throw new Error("样品不存在");
+  }
+
+  let handlerId = sample.samplerId;
+  if (!handlerId) {
+    const firstInspector = await prisma.user.findFirst({
+      where: { role: "INSPECTION_OFFICER" },
+      select: { id: true },
+    });
+    if (!firstInspector) {
+      throw new Error("未找到查验关员，无法分配责任人");
+    }
+    handlerId = firstInspector.id;
   }
 
   await prisma.sample.update({
@@ -170,10 +185,11 @@ export async function reportSealDamaged(sampleId: string, description: string) {
       abnormalType: AbnormalType.SEAL_DAMAGED,
       abnormalDescription: description,
       status: SampleStatus.RE_SAMPLING,
+      currentHandlerId: handlerId,
       auditLogs: {
         create: {
           action: "封签破损报告",
-          description: `实验室报告封签破损: ${description}`,
+          description: `实验室报告封签破损: ${description}，已转交查验关员重新取样`,
           operatorId: session.user.id,
           oldStatus: sample.status,
           newStatus: SampleStatus.RE_SAMPLING,
@@ -189,6 +205,7 @@ export async function reportSealDamaged(sampleId: string, description: string) {
 
   revalidatePath(`/samples/${sampleId}`);
   revalidatePath("/samples");
+  revalidatePath("/lab-tasks");
 }
 
 export async function reSample(sampleId: string) {
