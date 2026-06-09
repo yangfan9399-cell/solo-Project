@@ -127,11 +127,22 @@ public class InventoryController {
                          RedirectAttributes redirectAttributes) {
         try {
             InventoryRecord record = inventoryService.adjustInventory(id, adjustedVolume, remark, operator);
-            redirectAttributes.addFlashAttribute("success", "库存调整成功");
+            String message = buildAdjustSuccessMessage(record);
+            redirectAttributes.addFlashAttribute("success", message);
             return "redirect:/inventory/" + record.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "调整失败：" + e.getMessage());
             return "redirect:/inventory/" + id;
+        }
+    }
+
+    private String buildAdjustSuccessMessage(InventoryRecord record) {
+        if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            return "库存已按实收量调整，请注意跟踪配送差异后续核实进展";
+        } else if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            return "库存已调整，请持续跟踪损耗原因及整改效果";
+        } else {
+            return "库存调整成功";
         }
     }
 
@@ -142,11 +153,24 @@ public class InventoryController {
                               RedirectAttributes redirectAttributes) {
         try {
             InventoryRecord record = inventoryService.investigateInventory(id, remark, operator);
-            redirectAttributes.addFlashAttribute("success", "已启动追查");
+            String message = buildInvestigateSuccessMessage(record);
+            redirectAttributes.addFlashAttribute("success", message);
             return "redirect:/inventory/" + record.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "操作失败：" + e.getMessage());
             return "redirect:/inventory/" + id;
+        }
+    }
+
+    private String buildInvestigateSuccessMessage(InventoryRecord record) {
+        if (record.getDiscrepancyType() == DiscrepancyType.GAUGE_ERROR) {
+            return "已安排检修，请跟进液位仪检修进度，设备恢复后请重新盘点";
+        } else if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            return "已启动追查，请尽快与承运方核实配送差异";
+        } else if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            return "已启动追查，请尽快查明损耗原因并落实整改";
+        } else {
+            return "已启动追查";
         }
     }
 
@@ -157,11 +181,24 @@ public class InventoryController {
                           RedirectAttributes redirectAttributes) {
         try {
             InventoryRecord record = inventoryService.archiveInventory(id, remark, operator);
-            redirectAttributes.addFlashAttribute("success", "已归档");
+            String message = buildArchiveSuccessMessage(record);
+            redirectAttributes.addFlashAttribute("success", message);
             return "redirect:/inventory/" + record.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "操作失败：" + e.getMessage());
             return "redirect:/inventory/" + id;
+        }
+    }
+
+    private String buildArchiveSuccessMessage(InventoryRecord record) {
+        if (record.getDiscrepancyType() == DiscrepancyType.GAUGE_ERROR) {
+            return "已归档，请持续跟进液位仪修复进度，修复后重新盘点";
+        } else if (record.getDiscrepancyType() == DiscrepancyType.EXCESS_LOSS) {
+            return "已归档，请跟踪损耗整改情况，下次盘点持续关注损耗率";
+        } else if (record.getDiscrepancyType() == DiscrepancyType.DELIVERY_MISMATCH) {
+            return "已归档，请关注配送环节质量，加强配送验收管控";
+        } else {
+            return "已归档";
         }
     }
 }
