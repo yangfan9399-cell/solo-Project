@@ -13,7 +13,8 @@
         <p><strong>计划量：</strong>@Model.PlannedQuantity 吨</p>
     </div>
 
-    <form asp-action="StartBunkering">
+    <form asp-action="StartBunkering" asp-route-id="@Model.Id">
+        @Html.AntiForgeryToken()
         <div class="form-group">
             <label class="form-label">操作员姓名</label>
             <input name="operatorName" class="form-control" placeholder="请输入操作员姓名" required />

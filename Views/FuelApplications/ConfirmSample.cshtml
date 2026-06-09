@@ -17,7 +17,8 @@
         ⚠️ 油样封存是结算的前提条件，请务必确认油样已按规定封存。
     </div>
 
-    <form asp-action="ConfirmSample">
+    <form asp-action="ConfirmSample" asp-route-id="@Model.Id">
+        @Html.AntiForgeryToken()
         <div class="form-row">
             <div class="form-group">
                 <label class="form-label">轮机长姓名</label>

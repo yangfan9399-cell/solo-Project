@@ -205,6 +205,7 @@
         @if (Model.Status == ApplicationStatus.PendingApproval)
         {
             <form method="post" action="/FuelApplications/Approve/@Model.Id" style="display: inline;">
+                @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-success" onclick="return confirm('确定审批通过？')">✓ 审批通过</button>
             </form>
             <button type="button" class="btn btn-danger" onclick="showRejectModal()">✗ 拒绝</button>
@@ -261,6 +262,7 @@
     <div class="modal-content">
         <h3>拒绝申请</h3>
         <form method="post" action="/FuelApplications/Reject/@Model.Id">
+            @Html.AntiForgeryToken()
             <div class="form-group">
                 <label>拒绝原因</label>
                 <textarea name="reason" class="form-control" rows="3" required></textarea>

@@ -62,6 +62,7 @@
                             @if (app.Status == ApplicationStatus.PendingApproval)
                             {
                                 <form method="post" action="/FuelApplications/Approve/@app.Id" style="display: inline;">
+                                    @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('确定审批通过？')">通过</button>
                                 </form>
                             }
