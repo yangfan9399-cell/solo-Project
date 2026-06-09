@@ -43,14 +43,28 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
   }
 
   const isSealDamaged = sample.sealStatus === "DAMAGED";
-  const hasAllTestResults = sample.testItems.every((item) =>
-    sample.testResults.some(
-      (r) =>
-        r.testItemId === item.id &&
-        r.resultStatus !== "PENDING" &&
-        r.resultStatus !== "NOT_TESTED"
-    )
-  );
+
+  const missingRequiredItems = sample.testItems.filter((item) => {
+    if (!item.isRequired) return false;
+    const result = sample.testResults.find((r) => r.testItemId === item.id);
+    return (
+      !result ||
+      result.resultStatus === "PENDING" ||
+      result.resultStatus === "NOT_TESTED"
+    );
+  });
+
+  const completedItems = sample.testItems.filter((item) => {
+    const result = sample.testResults.find((r) => r.testItemId === item.id);
+    return (
+      result &&
+      result.resultStatus !== "PENDING" &&
+      result.resultStatus !== "NOT_TESTED"
+    );
+  });
+
+  const hasMissingTests = missingRequiredItems.length > 0;
+  const isReTestStatus = sample.status === "TESTING" && sample.disposals.length > 0;
 
   return (
     <div className="space-y-6">
@@ -157,6 +171,55 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
         </div>
       )}
 
+      {isReTestStatus && hasMissingTests && (
+        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 flex items-start">
+          <AlertTriangle className="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-medium text-yellow-800 flex items-center">
+              补检中 - 需补检 {missingRequiredItems.length} 项必检项目
+            </h3>
+            <p className="text-sm text-yellow-700 mt-1">
+              该样品因检测项目漏选被退回补检，完成所有必检项目后方可再次提交处置。
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {missingRequiredItems.map((item) => (
+                <span
+                  key={item.id}
+                  className="inline-flex items-center px-2.5 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-md border border-yellow-300 font-medium"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                  {item.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sample.status === "PENDING_DISPOSAL" && hasMissingTests && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-start">
+          <AlertTriangle className="w-5 h-5 text-amber-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="font-medium text-amber-800 flex items-center">
+              ⚠️ 检测项目漏选 - 禁止合格放行
+            </h3>
+            <p className="text-sm text-amber-700 mt-1">
+              存在 {missingRequiredItems.length} 项必检项目未检测，处置复核仅允许补检或扣留，不得放行归档。
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {missingRequiredItems.map((item) => (
+                <span
+                  key={item.id}
+                  className="inline-flex items-center px-2.5 py-1 bg-amber-100 text-amber-800 text-xs rounded-md border border-amber-300"
+                >
+                  漏检：{item.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200">
@@ -223,16 +286,49 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200">
-            <div className="p-5 border-b border-slate-200 flex items-center">
-              <FlaskConical className="w-5 h-5 text-customs-600 mr-2" />
-              <h2 className="font-semibold text-slate-800">检测指标与结果</h2>
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center">
+                <FlaskConical className="w-5 h-5 text-customs-600 mr-2" />
+                <h2 className="font-semibold text-slate-800">检测指标与结果</h2>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="inline-flex items-center">
+                  <span className="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>
+                  已检测 {completedItems.length}/{sample.testItems.length}
+                </span>
+                {hasMissingTests && (
+                  <span className="inline-flex items-center text-amber-600">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>
+                    需补检 {missingRequiredItems.length} 项
+                  </span>
+                )}
+              </div>
             </div>
             <div className="p-5">
+              {hasMissingTests && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm font-medium text-amber-800">
+                    ⚠️ 以下必检项目尚未检测，需补检完成后方可处置
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {missingRequiredItems.map((item) => (
+                      <span
+                        key={item.id}
+                        className="inline-flex items-center px-2.5 py-1 bg-amber-100 text-amber-800 text-xs rounded-md border border-amber-300 font-medium"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-600">
                       <th className="text-left pb-3 font-medium">检测项目</th>
+                      <th className="text-left pb-3 font-medium">属性</th>
                       <th className="text-left pb-3 font-medium">检测结果</th>
                       <th className="text-left pb-3 font-medium">状态</th>
                       <th className="text-left pb-3 font-medium">检测人员</th>
@@ -244,14 +340,52 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
                       const result = sample.testResults.find(
                         (r) => r.testItemId === item.id
                       );
+                      const isMissing =
+                        item.isRequired &&
+                        (!result ||
+                          result.resultStatus === "PENDING" ||
+                          result.resultStatus === "NOT_TESTED");
                       return (
                         <tr
                           key={item.id}
-                          className="border-b border-slate-100 last:border-0"
+                          className={`border-b border-slate-100 last:border-0 ${
+                            isMissing ? "bg-amber-50" : ""
+                          }`}
                         >
-                          <td className="py-3 text-slate-800">{item.name}</td>
-                          <td className="py-3 text-slate-600">
-                            {result?.resultValue || "-"}
+                          <td className="py-3">
+                            <div className="flex items-center">
+                              {isMissing && (
+                                <AlertTriangle className="w-4 h-4 text-amber-500 mr-2" />
+                              )}
+                              <span
+                                className={`font-medium ${
+                                  isMissing
+                                    ? "text-amber-900"
+                                    : "text-slate-800"
+                                }`}
+                              >
+                                {item.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            {item.isRequired ? (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs bg-red-50 text-red-600 rounded">
+                                必检
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded">
+                                选检
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            className={`py-3 ${
+                              isMissing ? "text-amber-700" : "text-slate-600"
+                            }`}
+                          >
+                            {result?.resultValue ||
+                              (isMissing ? "待补检" : "-")}
                           </td>
                           <td className="py-3">
                             {result ? (

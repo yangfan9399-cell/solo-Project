@@ -218,7 +218,13 @@ export async function createDisposal(sampleId: string, formData: FormData) {
     disposalType: rawData.disposalType as DisposalType,
   });
 
-  const sample = await prisma.sample.findUnique({ where: { id: sampleId } });
+  const sample = await prisma.sample.findUnique({
+    where: { id: sampleId },
+    include: {
+      testItems: true,
+      testResults: true,
+    },
+  });
   if (!sample) {
     throw new Error("样品不存在");
   }
@@ -227,12 +233,58 @@ export async function createDisposal(sampleId: string, formData: FormData) {
     throw new Error("封签破损，无法做出处置结论");
   }
 
-  const newStatus =
-    validated.disposalType === DisposalType.RELEASE
-      ? SampleStatus.DISPOSED
-      : validated.disposalType === DisposalType.DETAIN
-      ? SampleStatus.DISPOSED
-      : SampleStatus.TESTING;
+  const requiredItems = sample.testItems.filter((item) => item.isRequired);
+  const missingRequiredItems = requiredItems.filter(
+    (item) =>
+      !sample.testResults.some(
+        (r) =>
+          r.testItemId === item.id &&
+          r.resultStatus !== TestResultStatus.PENDING &&
+          r.resultStatus !== TestResultStatus.NOT_TESTED
+      )
+  );
+  const hasFailedTests = sample.testResults.some(
+    (r) => r.resultStatus === TestResultStatus.FAILED
+  );
+
+  if (
+    validated.disposalType === DisposalType.RELEASE &&
+    (missingRequiredItems.length > 0 || hasFailedTests)
+  ) {
+    const reasons = [];
+    if (missingRequiredItems.length > 0) {
+      reasons.push(
+        `存在 ${missingRequiredItems.length} 项必检项目未检测: ${missingRequiredItems.map((i) => i.name).join("、")}`
+      );
+    }
+    if (hasFailedTests) {
+      reasons.push("存在检测不合格项目");
+    }
+    throw new Error(`禁止合格放行：${reasons.join("；")}`);
+  }
+
+  const isReTest = validated.disposalType === DisposalType.RE_TEST;
+  const isDetain = validated.disposalType === DisposalType.DETAIN;
+  const isRelease = validated.disposalType === DisposalType.RELEASE;
+
+  let newStatus: SampleStatus;
+  let newCurrentHandlerId: string | null = sample.currentHandlerId;
+
+  if (isRelease) {
+    newStatus = SampleStatus.ARCHIVED;
+    newCurrentHandlerId = null;
+  } else if (isDetain) {
+    newStatus = SampleStatus.DISPOSED;
+  } else if (isReTest) {
+    newStatus = SampleStatus.TESTING;
+    const labTech = await prisma.user.findFirst({
+      where: { role: "LAB_TECHNICIAN" },
+      orderBy: { createdAt: "asc" },
+    });
+    newCurrentHandlerId = labTech?.id || null;
+  } else {
+    newStatus = SampleStatus.PENDING_DISPOSAL;
+  }
 
   const disposal = await prisma.disposal.create({
     data: {
@@ -242,25 +294,37 @@ export async function createDisposal(sampleId: string, formData: FormData) {
       remarks: validated.remarks || null,
       reviewedBy: session.user.id,
       reviewedAt: new Date(),
-      isFinal: validated.disposalType !== DisposalType.RE_TEST,
+      isFinal: !isReTest,
     },
   });
+
+  let abnormalDescription = sample.abnormalDescription || "";
+  if (isReTest && missingRequiredItems.length > 0) {
+    abnormalDescription = `需补检项目: ${missingRequiredItems.map((i) => i.name).join("、")}`;
+  } else if (isReTest) {
+    abnormalDescription = "补检";
+  }
 
   await prisma.sample.update({
     where: { id: sampleId },
     data: {
       status: newStatus,
-      disposalTime: new Date(),
+      currentHandlerId: newCurrentHandlerId,
+      disposalTime: isRelease || isDetain ? new Date() : sample.disposalTime,
+      abnormalType: isReTest
+        ? AbnormalType.MISSING_TEST_ITEMS
+        : sample.abnormalType,
+      abnormalDescription: isReTest ? abnormalDescription : sample.abnormalDescription,
       auditLogs: {
         create: {
           action: "处置复核",
           description: `处置结论: ${
-            validated.disposalType === "RELEASE"
+            isRelease
               ? "合格放行"
-              : validated.disposalType === "DETAIN"
+              : isDetain
               ? "扣留"
-              : validated.disposalType === "RE_TEST"
-              ? "补检"
+              : isReTest
+              ? `补检（${missingRequiredItems.length > 0 ? missingRequiredItems.length + "项必检项目待补检" : "重新检测"}）`
               : "结论复议"
           }`,
           operatorId: session.user.id,
@@ -271,16 +335,10 @@ export async function createDisposal(sampleId: string, formData: FormData) {
     },
   });
 
-  if (validated.disposalType === DisposalType.RELEASE) {
-    await prisma.sample.update({
-      where: { id: sampleId },
-      data: { status: SampleStatus.ARCHIVED },
-    });
-  }
-
   revalidatePath(`/samples/${sampleId}`);
   revalidatePath("/samples");
   revalidatePath("/disposals");
+  revalidatePath("/lab-tasks");
   return disposal;
 }
 
