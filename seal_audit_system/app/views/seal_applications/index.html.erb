@@ -1,0 +1,51 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">用印申请列表</h1>
+    <%= link_to "新建用印申请", new_seal_application_path, class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200 flex space-x-2">
+      <%= link_to "全部", seal_applications_path, class: "px-3 py-1 text-sm rounded-md #{params[:status].blank? ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "待处理", seal_applications_path(status: :pending_legal), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'pending_legal' ? 'bg-yellow-100 text-yellow-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "已完成", seal_applications_path(status: :archived), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'archived' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+      <%= link_to "异常", seal_applications_path(status: :version_conflict), class: "px-3 py-1 text-sm rounded-md #{params[:status] == 'version_conflict' ? 'bg-red-100 text-red-700' : 'text-gray-500 hover:bg-gray-100'}" %>
+    </div>
+    <div class="divide-y divide-gray-200">
+      <% @seal_applications.each do |app| %>
+        <%= link_to app, class: "block hover:bg-gray-50" do %>
+          <div class="px-6 py-4 flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center space-x-3">
+                <span class="text-gray-500 text-sm">##{app.id}</span>
+                <span class="font-medium text-gray-900"><%= app.contract.title %></span>
+                <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge_class(app.status) %>">
+                  <%= app.status_name %>
+                </span>
+                <% if app.abnormal? %>
+                  <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                    <%= app.anomaly_type %>
+                  </span>
+                <% end %>
+              </div>
+              <div class="mt-1 text-sm text-gray-500 flex space-x-4">
+                <span>印章: <%= app.seal.name %></span>
+                <span>用印次数: <%= app.use_count %> 次</span>
+                <span>申请人: <%= app.applicant.name %></span>
+                <span>部门: <%= app.contract.department.name %></span>
+              </div>
+            </div>
+            <div class="text-sm text-gray-400">
+              <%= time_ago_in_words(app.created_at) %>前
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+      <% if @seal_applications.empty? %>
+        <div class="px-6 py-12 text-center text-gray-500">
+          暂无用印申请
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

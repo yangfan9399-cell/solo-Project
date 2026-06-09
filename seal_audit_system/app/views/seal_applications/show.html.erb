@@ -1,0 +1,308 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <div class="flex items-center space-x-3">
+        <h1 class="text-2xl font-bold text-gray-900">用印申请 #<%= @seal_application.id %></h1>
+        <span class="px-3 py-1 text-sm font-medium rounded-full <%= status_badge_class(@seal_application.status) %>">
+          <%= @seal_application.status_name %>
+        </span>
+        <% if @seal_application.abnormal? %>
+          <span class="px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800">
+            <%= @seal_application.anomaly_type %>
+          </span>
+        <% end %>
+      </div>
+      <p class="mt-1 text-sm text-gray-500">
+        提交时间: <%= @seal_application.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
+      </p>
+    </div>
+    <div class="flex space-x-2">
+      <%= link_to "返回列表", seal_applications_path, class: "bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium" %>
+    </div>
+  </div>
+
+  <% if @seal_application.version_conflict? %>
+    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">合同版本不一致 - 已阻断用印</h3>
+          <div class="mt-2 text-sm text-red-700">
+            <p>当前合同版本不是最新版本，请重新确认最新版本合同后再提交审核。</p>
+          </div>
+          <div class="mt-4">
+            <%= form_with url: resolve_version_seal_application_path(@seal_application), method: :post, class: "flex items-center space-x-3" do |f| %>
+              <%= f.select :contract_id, options_from_collection_for_select(@seal_application.contract.version_history, :id, ->(c) { "#{c.version} - #{c.title}" }), {}, class: "rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" %>
+              <%= f.submit "重新提交", class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">合同信息</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-500">合同名称</label>
+              <p class="mt-1 text-gray-900 font-medium"><%= @seal_application.contract.title %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">版本号</label>
+              <p class="mt-1 text-gray-900">
+                <%= @seal_application.contract.version %>
+                <% if @seal_application.contract.latest_version? %>
+                  <span class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">最新版本</span>
+                <% else %>
+                  <span class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-800">非最新</span>
+                <% end %>
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">所属部门</label>
+              <p class="mt-1 text-gray-900"><%= @seal_application.contract.department.name %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">申请人</label>
+              <p class="mt-1 text-gray-900"><%= @seal_application.applicant.name %></p>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">合同内容</label>
+            <div class="mt-2 p-4 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
+              <%= @seal_application.contract.content %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">用印详情</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-500">印章名称</label>
+              <p class="mt-1 text-gray-900 font-medium"><%= @seal_application.seal.name %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">印章类型</label>
+              <p class="mt-1 text-gray-900"><%= @seal_application.seal.type_name %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">用印次数</label>
+              <p class="mt-1 text-gray-900"><%= @seal_application.use_count %> 次</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-500">审批时长</label>
+              <p class="mt-1 text-gray-900"><%= format_duration(@seal_application.total_approval_duration) %></p>
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500">用印用途</label>
+            <div class="mt-2 p-4 bg-gray-50 rounded-md text-sm text-gray-700 whitespace-pre-wrap">
+              <%= @seal_application.purpose %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if @seal_application.archive.present? %>
+        <div class="bg-white rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">归档文件</h2>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm font-medium text-gray-500">文件名</label>
+                <p class="mt-1 text-gray-900"><%= @seal_application.archive.file_name %></p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">状态</label>
+                <p class="mt-1">
+                  <span class="px-2 py-1 text-xs font-medium rounded-full <%= @seal_application.archive.completed? ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <%= @seal_application.archive.status_name %>
+                  </span>
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">总页数</label>
+                <p class="mt-1 text-gray-900"><%= @seal_application.archive.page_count %> 页</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">缺失页数</label>
+                <p class="mt-1 <%= @seal_application.archive.has_missing_pages? ? 'text-red-600 font-medium' : 'text-gray-900' %>">
+                  <%= @seal_application.archive.missing_pages %> 页
+                </p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-500">归档审核人</label>
+                <p class="mt-1 text-gray-900"><%= @seal_application.archive.auditor.name %></p>
+              </div>
+            </div>
+
+            <% if @seal_application.archive_missing_pages? %>
+              <div class="mt-4 p-4 bg-red-50 rounded-md">
+                <p class="text-sm text-red-700 font-medium">归档文件存在缺页，请补全后重新提交归档审核</p>
+                <%= form_with url: fix_archive_seal_application_path(@seal_application), method: :post, class: "mt-3 space-y-3" do |f| %>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <%= f.label :file_name, "文件名", class: "block text-xs font-medium text-gray-700" %>
+                      <%= f.text_field :file_name, value: @seal_application.archive.file_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+                    </div>
+                    <div>
+                      <%= f.label :page_count, "总页数", class: "block text-xs font-medium text-gray-700" %>
+                      <%= f.number_field :page_count, value: @seal_application.archive.page_count, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+                    </div>
+                    <div>
+                      <%= f.label :missing_pages, "缺页数", class: "block text-xs font-medium text-gray-700" %>
+                      <%= f.number_field :missing_pages, value: 0, min: 0, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+                    </div>
+                  </div>
+                  <%= f.submit "补全后重新审核", class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">审批操作</h2>
+        </div>
+        <div class="p-6 space-y-3">
+          <% if @seal_application.draft? %>
+            <%= button_to "提交申请", submit_seal_application_path(@seal_application), method: :post, class: "w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+          <% end %>
+
+          <% if @seal_application.pending_legal? %>
+            <%= form_with url: legal_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
+              <%= f.text_area :comment, placeholder: "审核意见（可选）", rows: 2, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+              <div class="flex space-x-2">
+                <%= f.submit "法务审核通过", class: "flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+                <%= f.submit "驳回", formaction: legal_reject_seal_application_path(@seal_application), class: "flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+              </div>
+            <% end %>
+          <% end %>
+
+          <% if @seal_application.legal_approved? %>
+            <%= form_with url: seal_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
+              <%= f.text_area :comment, placeholder: "用印备注（可选）", rows: 2, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+              <div class="flex space-x-2">
+                <%= f.submit "执行用印", class: "flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+                <%= f.submit "拒绝", formaction: seal_reject_seal_application_path(@seal_application), class: "flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+              </div>
+              <%= f.submit "标记审批人缺席", formaction: mark_absent_seal_application_path(@seal_application), class: "w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+            <% end %>
+          <% end %>
+
+          <% if @seal_application.approver_absent? %>
+            <%= button_to "恢复流程", resume_absence_seal_application_path(@seal_application), method: :post, class: "w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+          <% end %>
+
+          <% if @seal_application.seal_approved? %>
+            <%= form_with url: archive_approve_seal_application_path(@seal_application), method: :post, class: "space-y-3" do |f| %>
+              <div>
+                <%= f.label :file_name, "归档文件名", class: "block text-xs font-medium text-gray-700" %>
+                <%= f.text_field :file_name, value: "#{@seal_application.contract.title}_归档.pdf", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <%= f.label :page_count, "总页数", class: "block text-xs font-medium text-gray-700" %>
+                  <%= f.number_field :page_count, value: 10, min: 1, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+                </div>
+                <div>
+                  <%= f.label :missing_pages, "缺页数", class: "block text-xs font-medium text-gray-700" %>
+                  <%= f.number_field :missing_pages, value: 0, min: 0, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" %>
+                </div>
+              </div>
+              <%= f.submit "提交归档审核", class: "w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer" %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">审批链</h2>
+        </div>
+        <div class="p-6">
+          <ol class="relative border-l-2 border-gray-200 ml-3">
+            <% @approval_chain.each do |node| %>
+              <li class="mb-6 ml-6">
+                <span class="absolute flex items-center justify-center w-6 h-6 rounded-full -left-[11px] ring-4 ring-white
+                  <%= node.approved? ? 'bg-green-500' : node.rejected? ? 'bg-red-500' : node.skipped? ? 'bg-yellow-500' : 'bg-gray-300' %>">
+                  <% if node.approved? %>
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  <% elsif node.rejected? || node.skipped? %>
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  <% end %>
+                </span>
+                <h3 class="flex items-center text-sm font-medium text-gray-900">
+                  <%= node.role_name %>
+                  <% if node.user.present? %>
+                    <span class="ml-2 text-xs text-gray-500"><%= node.user.name %></span>
+                  <% end %>
+                </h3>
+                <time class="block mb-1 text-xs text-gray-400">
+                  <%= node.created_at.strftime('%Y-%m-%d %H:%M:%S') %>
+                </time>
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full <%= status_badge_class(node.status) %>">
+                  <%= node.status_name %>
+                </span>
+                <% if node.comment.present? %>
+                  <p class="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"><%= node.comment %></p>
+                <% end %>
+              </li>
+            <% end %>
+          </ol>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">历史节点</h2>
+        </div>
+        <div class="p-6">
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">创建时间</span>
+              <span class="text-gray-900"><%= @seal_application.created_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">更新时间</span>
+              <span class="text-gray-900"><%= @seal_application.updated_at.strftime('%Y-%m-%d %H:%M:%S') %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">审批节点数</span>
+              <span class="text-gray-900"><%= @approval_chain.count %> 个</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">总审批时长</span>
+              <span class="text-gray-900"><%= format_duration(@seal_application.total_approval_duration) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
