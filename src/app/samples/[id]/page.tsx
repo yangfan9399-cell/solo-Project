@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSampleDetail } from "@/lib/actions/sample-actions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatDate } from "@/lib/utils";
+import { getMissingRequiredTests, getTestSummary } from "@/lib/test-validation";
 import {
   ArrowLeft,
   Package,
@@ -44,26 +45,13 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
 
   const isSealDamaged = sample.sealStatus === "DAMAGED";
 
-  const missingRequiredItems = sample.testItems.filter((item) => {
-    if (!item.isRequired) return false;
-    const result = sample.testResults.find((r) => r.testItemId === item.id);
-    return (
-      !result ||
-      result.resultStatus === "PENDING" ||
-      result.resultStatus === "NOT_TESTED"
-    );
-  });
+  const {
+    missingItems: missingRequiredItems,
+    hasMissing: hasMissingTests,
+  } = getMissingRequiredTests(sample.testItems, sample.testResults);
 
-  const completedItems = sample.testItems.filter((item) => {
-    const result = sample.testResults.find((r) => r.testItemId === item.id);
-    return (
-      result &&
-      result.resultStatus !== "PENDING" &&
-      result.resultStatus !== "NOT_TESTED"
-    );
-  });
+  const testSummary = getTestSummary(sample.testItems, sample.testResults);
 
-  const hasMissingTests = missingRequiredItems.length > 0;
   const isReTestStatus = sample.status === "TESTING" && sample.disposals.length > 0;
 
   return (
@@ -294,7 +282,7 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
               <div className="flex items-center gap-3 text-xs">
                 <span className="inline-flex items-center">
                   <span className="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>
-                  已检测 {completedItems.length}/{sample.testItems.length}
+                  已检测 {testSummary.completedCount}/{sample.testItems.length}
                 </span>
                 {hasMissingTests && (
                   <span className="inline-flex items-center text-amber-600">

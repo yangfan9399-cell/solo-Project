@@ -11,6 +11,11 @@ import {
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import {
+  getMissingRequiredTests,
+  hasFailedTests,
+  canSampleBeReleased,
+} from "@/lib/test-validation";
 
 const testResultSchema = z.object({
   testItemId: z.string(),
@@ -140,31 +145,30 @@ export async function completeTesting(sampleId: string) {
     throw new Error("封签破损，无法完成检测");
   }
 
-  const requiredItems = sample.testItems.filter((item) => item.isRequired);
-  const completedResults = sample.testResults.filter(
-    (r) => r.resultStatus !== TestResultStatus.PENDING && r.resultStatus !== TestResultStatus.NOT_TESTED
-  );
+  const {
+    missingItems,
+    hasMissing: hasMissingTests,
+    missingCount,
+    missingNames,
+  } = getMissingRequiredTests(sample.testItems, sample.testResults);
 
-  const missingItems = requiredItems.filter(
-    (item) => !sample.testResults.some(
-      (r) => r.testItemId === item.id && r.resultStatus !== TestResultStatus.PENDING
-    )
-  );
+  const hasFailed = hasFailedTests(sample.testResults);
 
   let abnormalType: AbnormalType = AbnormalType.NONE;
   let abnormalDescription = "";
 
-  if (missingItems.length > 0) {
+  if (hasMissingTests) {
     abnormalType = AbnormalType.MISSING_TEST_ITEMS;
-    abnormalDescription = `漏检项目: ${missingItems.map((i) => i.name).join("、")}`;
-  }
-
-  const hasFailed = sample.testResults.some(
-    (r) => r.resultStatus === TestResultStatus.FAILED
-  );
-  if (hasFailed && abnormalType === AbnormalType.NONE) {
+    abnormalDescription = `漏检项目（${missingCount}项）: ${missingNames.join("、")}`;
+  } else if (hasFailed) {
     abnormalType = AbnormalType.TEST_FAILED;
-    abnormalDescription = "存在检测不合格项目";
+    const failedItems = sample.testResults
+      .filter((r) => r.resultStatus === TestResultStatus.FAILED)
+      .map((r) => {
+        const item = sample.testItems.find((i) => i.id === r.testItemId);
+        return item?.name || "未知项目";
+      });
+    abnormalDescription = `检测不合格（${failedItems.length}项）: ${failedItems.join("、")}`;
   }
 
   const updated = await prisma.sample.update({
@@ -178,7 +182,11 @@ export async function completeTesting(sampleId: string) {
         create: {
           action: "检测完成",
           description: `实验室检测完成，${
-            missingItems.length > 0 ? `存在 ${missingItems.length} 个漏检项目` : "所有项目已检测"
+            hasMissingTests
+              ? `存在 ${missingCount} 个漏检必检项目: ${missingNames.join("、")}`
+              : hasFailed
+              ? "存在检测不合格项目"
+              : "所有必检项目均已检测"
           }`,
           operatorId: session.user.id,
           oldStatus: sample.status,
@@ -233,31 +241,24 @@ export async function createDisposal(sampleId: string, formData: FormData) {
     throw new Error("封签破损，无法做出处置结论");
   }
 
-  const requiredItems = sample.testItems.filter((item) => item.isRequired);
-  const missingRequiredItems = requiredItems.filter(
-    (item) =>
-      !sample.testResults.some(
-        (r) =>
-          r.testItemId === item.id &&
-          r.resultStatus !== TestResultStatus.PENDING &&
-          r.resultStatus !== TestResultStatus.NOT_TESTED
-      )
-  );
-  const hasFailedTests = sample.testResults.some(
-    (r) => r.resultStatus === TestResultStatus.FAILED
-  );
+  const {
+    hasMissing: hasMissingTests,
+    missingCount,
+    missingNames,
+  } = getMissingRequiredTests(sample.testItems, sample.testResults);
+  const hasFailed = hasFailedTests(sample.testResults);
 
   if (
     validated.disposalType === DisposalType.RELEASE &&
-    (missingRequiredItems.length > 0 || hasFailedTests)
+    (hasMissingTests || hasFailed)
   ) {
     const reasons = [];
-    if (missingRequiredItems.length > 0) {
+    if (hasMissingTests) {
       reasons.push(
-        `存在 ${missingRequiredItems.length} 项必检项目未检测: ${missingRequiredItems.map((i) => i.name).join("、")}`
+        `存在 ${missingCount} 项必检项目未检测: ${missingNames.join("、")}`
       );
     }
-    if (hasFailedTests) {
+    if (hasFailed) {
       reasons.push("存在检测不合格项目");
     }
     throw new Error(`禁止合格放行：${reasons.join("；")}`);
@@ -299,8 +300,8 @@ export async function createDisposal(sampleId: string, formData: FormData) {
   });
 
   let abnormalDescription = sample.abnormalDescription || "";
-  if (isReTest && missingRequiredItems.length > 0) {
-    abnormalDescription = `需补检项目: ${missingRequiredItems.map((i) => i.name).join("、")}`;
+  if (isReTest && hasMissingTests) {
+    abnormalDescription = `需补检项目（${missingCount}项）: ${missingNames.join("、")}`;
   } else if (isReTest) {
     abnormalDescription = "补检";
   }
@@ -324,7 +325,7 @@ export async function createDisposal(sampleId: string, formData: FormData) {
               : isDetain
               ? "扣留"
               : isReTest
-              ? `补检（${missingRequiredItems.length > 0 ? missingRequiredItems.length + "项必检项目待补检" : "重新检测"}）`
+              ? `补检（${hasMissingTests ? missingCount + "项必检项目待补检" : "重新检测"}）`
               : "结论复议"
           }`,
           operatorId: session.user.id,
