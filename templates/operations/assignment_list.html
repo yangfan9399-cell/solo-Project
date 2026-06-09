@@ -58,28 +58,28 @@
             </tr>
         </thead>
         <tbody>
-            {% for assignment in assignments %}
+            {% for item in assignments %}
             <tr>
-                <td>{{ assignment.route.code }} - {{ assignment.route.name }}</td>
-                <td>{{ assignment.vehicle.plate_number }}</td>
-                <td>{{ assignment.driver.profile.real_name|default:assignment.driver.username }}</td>
-                <td>{{ assignment.dispatcher.profile.real_name|default:assignment.dispatcher.username }}</td>
-                <td>{{ assignment.assigned_date|date:"Y-m-d" }}</td>
+                <td>{{ item.obj.route.code }} - {{ item.obj.route.name }}</td>
+                <td>{{ item.obj.vehicle.plate_number }}</td>
+                <td>{{ item.obj.driver.profile.real_name|default:item.obj.driver.username }}</td>
+                <td>{{ item.obj.dispatcher.profile.real_name|default:item.obj.dispatcher.username }}</td>
+                <td>{{ item.obj.assigned_date|date:"Y-m-d" }}</td>
                 <td>
                     <div style="min-width: 100px;">
-                        <span style="font-size: 0.85rem;">{{ assignment.checked_in_stations }}/{{ assignment.total_stations }} 站</span>
+                        <span style="font-size: 0.85rem;">{{ item.obj.checked_in_stations }}/{{ item.obj.total_stations }} 站</span>
                         <div class="progress-bar">
-                            <div class="fill" style="width: {% if assignment.total_stations > 0 %}{{ assignment.checked_in_stations|divisibleby:assignment.total_stations|default:0 }}{% else %}0{% endif %}%;"></div>
+                            <div class="fill" style="width: {{ item.progress }}%;"></div>
                         </div>
                     </div>
                 </td>
                 <td>
-                    <span class="badge badge-{{ assignment.status }}">
-                        {{ assignment.get_status_display }}
+                    <span class="badge badge-{{ item.obj.status }}">
+                        {{ item.obj.get_status_display }}
                     </span>
                 </td>
                 <td>
-                    <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-sm btn-primary">详情</a>
+                    <a href="{% url 'operations:assignment_detail' item.obj.pk %}" class="btn btn-sm btn-primary">详情</a>
                 </td>
             </tr>
             {% endfor %}

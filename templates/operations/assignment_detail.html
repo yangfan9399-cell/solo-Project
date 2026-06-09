@@ -130,32 +130,32 @@
         <div class="card">
             <h3>站点签到情况</h3>
             <div style="max-height: 500px; overflow-y: auto;" id="station-list">
-            {% for station in assignment.route.stations.all %}
-                {% with checkin=station.check_ins.all %}
-                    {% if checkin.0 %}
+            {% for item in station_checkins %}
+                {% with station=item.station checkin=item.checkin %}
+                    {% if checkin %}
                         <div class="station-item checked" id="station-{{ station.id }}">
                             <div>
                                 <strong style="color: #27ae60;">✓ {{ station.order }}. {{ station.name }}</strong>
                                 <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">
-                                    签到时间：{{ checkin.0.check_in_time|date:"Y-m-d H:i" }}
+                                    签到时间：{{ checkin.check_in_time|date:"Y-m-d H:i" }}
                                     &nbsp;|&nbsp;
                                     状态：
-                                    <span class="badge badge-{{ checkin.0.status }}">
-                                        {{ checkin.0.get_status_display }}
+                                    <span class="badge badge-{{ checkin.status }}">
+                                        {{ checkin.get_status_display }}
                                     </span>
                                 </div>
-                                {% if checkin.0.waste_weight %}
+                                {% if checkin.waste_weight %}
                                 <div style="font-size: 0.85rem; color: #666;">
-                                    清运重量：{{ checkin.0.waste_weight }} kg
+                                    清运重量：{{ checkin.waste_weight }} kg
                                 </div>
                                 {% endif %}
-                                {% if checkin.0.notes %}
+                                {% if checkin.notes %}
                                 <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
-                                    备注：{{ checkin.0.notes }}
+                                    备注：{{ checkin.notes }}
                                 </div>
                                 {% endif %}
                             </div>
-                            <a href="{% url 'operations:checkin_detail' checkin.0.pk %}" class="btn btn-sm btn-secondary">详情</a>
+                            <a href="{% url 'operations:checkin_detail' checkin.pk %}" class="btn btn-sm btn-secondary">详情</a>
                         </div>
                     {% else %}
                         <div class="station-item missed" id="station-{{ station.id }}">

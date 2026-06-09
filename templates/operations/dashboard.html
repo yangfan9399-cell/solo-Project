@@ -42,24 +42,33 @@
                 <th>车辆</th>
                 <th>司机</th>
                 <th>调度员</th>
+                <th>进度</th>
                 <th>状态</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody>
-            {% for assignment in today_assignments %}
+            {% for item in today_assignments %}
             <tr>
-                <td>{{ assignment.route.code }} - {{ assignment.route.name }}</td>
-                <td>{{ assignment.vehicle.plate_number }}</td>
-                <td>{{ assignment.driver.profile.real_name|default:assignment.driver.username }}</td>
-                <td>{{ assignment.dispatcher.profile.real_name|default:assignment.dispatcher.username }}</td>
+                <td>{{ item.obj.route.code }} - {{ item.obj.route.name }}</td>
+                <td>{{ item.obj.vehicle.plate_number }}</td>
+                <td>{{ item.obj.driver.profile.real_name|default:item.obj.driver.username }}</td>
+                <td>{{ item.obj.dispatcher.profile.real_name|default:item.obj.dispatcher.username }}</td>
                 <td>
-                    <span class="badge badge-{{ assignment.status }}">
-                        {{ assignment.get_status_display }}
+                    <div style="min-width: 100px;">
+                        <span style="font-size: 0.85rem;">{{ item.obj.checked_in_stations }}/{{ item.obj.total_stations }} 站</span>
+                        <div class="progress-bar">
+                            <div class="fill" style="width: {{ item.progress }}%;"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-{{ item.obj.status }}">
+                        {{ item.obj.get_status_display }}
                     </span>
                 </td>
                 <td>
-                    <a href="{% url 'operations:assignment_detail' assignment.pk %}" class="btn btn-sm btn-primary">查看详情</a>
+                    <a href="{% url 'operations:assignment_detail' item.obj.pk %}" class="btn btn-sm btn-primary">查看详情</a>
                 </td>
             </tr>
             {% endfor %}

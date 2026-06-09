@@ -50,10 +50,10 @@ def dashboard(request):
     today = timezone.localdate()
     role = _get_user_role(request.user)
 
-    today_assignments = RouteAssignment.objects.filter(assigned_date=today)
+    today_assignments_qs = RouteAssignment.objects.filter(assigned_date=today)
 
     if role == Role.DRIVER:
-        today_assignments = today_assignments.filter(driver=request.user)
+        today_assignments_qs = today_assignments_qs.filter(driver=request.user)
     elif role == Role.INSPECTOR:
         pass
     elif role == Role.DISPATCHER:
@@ -61,10 +61,10 @@ def dashboard(request):
     elif role == Role.SUPERVISOR:
         pass
 
-    pending_count = today_assignments.filter(status=RouteAssignment.Status.PENDING).count()
-    in_progress_count = today_assignments.filter(status=RouteAssignment.Status.IN_PROGRESS).count()
-    completed_count = today_assignments.filter(status=RouteAssignment.Status.COMPLETED).count()
-    suspended_count = today_assignments.filter(status=RouteAssignment.Status.SUSPENDED).count()
+    pending_count = today_assignments_qs.filter(status=RouteAssignment.Status.PENDING).count()
+    in_progress_count = today_assignments_qs.filter(status=RouteAssignment.Status.IN_PROGRESS).count()
+    completed_count = today_assignments_qs.filter(status=RouteAssignment.Status.COMPLETED).count()
+    suspended_count = today_assignments_qs.filter(status=RouteAssignment.Status.SUSPENDED).count()
 
     pending_complaints = Complaint.objects.filter(status=Complaint.Status.PENDING).count()
     open_faults = VehicleFault.objects.filter(status__in=[
@@ -72,10 +72,20 @@ def dashboard(request):
         VehicleFault.Status.BEING_REPAIRED
     ]).count()
 
+    today_assignments = []
+    for a in today_assignments_qs[:10]:
+        total = a.total_stations()
+        checked = a.checked_in_stations()
+        progress = round(checked / total * 100, 1) if total > 0 else 0
+        today_assignments.append({
+            'obj': a,
+            'progress': progress,
+        })
+
     context = {
         'today': today,
         'role': role,
-        'today_assignments': today_assignments[:10],
+        'today_assignments': today_assignments,
         'pending_count': pending_count,
         'in_progress_count': in_progress_count,
         'completed_count': completed_count,
@@ -110,14 +120,28 @@ def assignment_list(request):
 
     districts = District.objects.all()
 
+    assignment_list = []
+    for a in assignments[:50]:
+        total = a.total_stations()
+        checked = a.checked_in_stations()
+        progress = round(checked / total * 100, 1) if total > 0 else 0
+        assignment_list.append({
+            'obj': a,
+            'progress': progress,
+        })
+
     context = {
-        'assignments': assignments[:50],
+        'assignments': assignment_list,
         'districts': districts,
         'status_choices': RouteAssignment.Status.choices,
         'filter_status': status,
         'filter_date_from': date_from,
         'filter_date_to': date_to,
         'filter_district': district_id,
+        'is_dispatcher': _is_dispatcher(request.user),
+        'is_driver': _is_driver(request.user),
+        'is_inspector': _is_inspector(request.user),
+        'is_supervisor': _is_supervisor(request.user),
     }
     return render(request, 'operations/assignment_list.html', context)
 
@@ -131,12 +155,22 @@ def assignment_detail(request, pk):
     complaints = assignment.complaints.all()
     reviews = assignment.reviews.all()
 
+    checkin_map = {c.station_id: c for c in check_ins}
+    stations = assignment.route.stations.order_by('order')
+    station_checkins = []
+    for station in stations:
+        station_checkins.append({
+            'station': station,
+            'checkin': checkin_map.get(station.id),
+        })
+
     checked_station_ids = check_ins.values_list('station_id', flat=True)
     missed_stations = assignment.route.stations.exclude(id__in=checked_station_ids)
 
     context = {
         'assignment': assignment,
         'check_ins': check_ins,
+        'station_checkins': station_checkins,
         'events': events,
         'faults': faults,
         'complaints': complaints,
