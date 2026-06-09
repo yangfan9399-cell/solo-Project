@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}施工人员 - 广告牌施工报备系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <h2 class="mb-4"><i class="bi bi-people me-2 text-primary"></i>施工人员</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>电话</th>
+                            <th>资质证书</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for worker in workers %}
+                        <tr>
+                            <td><strong>{{ worker.name }}</strong></td>
+                            <td>{{ worker.get_gender_display }}</td>
+                            <td>{{ worker.phone }}</td>
+                            <td>
+                                {% for qual in worker.qualification_set.all %}
+                                {% if qual.is_valid %}
+                                <span class="badge bg-success me-1" title="{{ qual.cert_no }} 有效期至 {{ qual.expiry_date }}">
+                                    {{ qual.get_cert_type_display }}
+                                </span>
+                                {% endif %}
+                                {% empty %}
+                                <span class="text-muted small">暂无资质</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if worker.is_active %}
+                                <span class="badge bg-success">在职</span>
+                                {% else %}
+                                <span class="badge bg-secondary">离职</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-person fs-2 d-block mb-2"></i>
+                                暂无施工人员
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-play-circle me-2 text-success"></i>确认开工</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <div class="modal-body">
+                {% if can_start %}
+                <p>确定要开始施工吗？</p>
+                <p class="mb-0">计划：<strong>{{ plan.title }}</strong></p>
+                {% else %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {{ start_reason }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                {% if can_start %}
+                <form method="post" action="{% url 'construction:start_work' plan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>确认开工
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

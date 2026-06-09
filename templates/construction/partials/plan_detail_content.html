@@ -1,0 +1,320 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'construction:plan_list' %}">施工计划</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ plan.plan_no }}</li>
+            </ol>
+        </nav>
+        <h2 class="mb-1">{{ plan.title }}</h2>
+        <div>
+            <span class="badge bg-primary fs-6">{{ plan.plan_no }}</span>
+            <span class="badge {% if plan.status == 'accepted' %}bg-success{% elif plan.status == 'in_progress' %}bg-primary{% elif 'rejected' in plan.status %}bg-danger{% else %}bg-warning text-dark{% endif %} fs-6 ms-2">
+                {{ plan.get_status_display }}
+            </span>
+            {% if plan.has_delay %}
+            <span class="badge bg-warning text-dark fs-6 ms-2"><i class="bi bi-clock-history"></i> 有延期</span>
+            {% endif %}
+            {% if plan.rework_count > 0 %}
+            <span class="badge bg-danger fs-6 ms-2"><i class="bi bi-arrow-repeat"></i> 返工{{ plan.rework_count }}次</span>
+            {% endif %}
+        </div>
+    </div>
+    <div>
+        {% if plan.status == 'draft' and plan.constructor_team == user %}
+        <a href="{% url 'construction:plan_edit' plan.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>编辑
+        </a>
+        <button class="btn btn-primary" hx-post="{% url 'construction:plan_submit' plan.pk %}" hx-target="#plan-detail-container">
+            <i class="bi bi-send me-1"></i>提交审核
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'submitted' and user.role == 'project_manager' %}
+        <button class="btn btn-primary" hx-get="{% url 'construction:pm_review' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-check2-square me-1"></i>材料审核
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'pm_approved' and user.role == 'safety_officer' %}
+        <button class="btn btn-warning" hx-get="{% url 'construction:safety_review' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-shield-check me-1"></i>安全审核
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'safety_approved' and plan.constructor_team == user %}
+        <button class="btn btn-success" hx-get="{% url 'construction:start_work' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-play-circle me-1"></i>确认开工
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'in_progress' and plan.constructor_team == user %}
+        <button class="btn btn-primary" hx-get="{% url 'construction:complete_work' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-check-circle me-1"></i>提交完工
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'completed' and user.role == 'acceptor' %}
+        <button class="btn btn-success" hx-get="{% url 'construction:acceptance' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-check2-all me-1"></i>验收
+        </button>
+        {% endif %}
+
+        {% if plan.status == 'in_progress' and plan.constructor_team == user %}
+        <button class="btn btn-outline-warning" hx-get="{% url 'construction:delay_apply' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-clock me-1"></i>申请延期
+        </button>
+        {% endif %}
+
+        {% if plan.status in 'draft,pm_rejected,safety_rejected,acceptance_rejected' and plan.constructor_team == user %}
+        <button class="btn btn-outline-primary" hx-get="{% url 'construction:manage_workers' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+            <i class="bi bi-people me-1"></i>管理人员
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div id="modal-container"></div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>点位信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>点位编号：</strong>{{ plan.location.code }}</p>
+                        <p class="mb-2"><strong>点位名称：</strong>{{ plan.location.name }}</p>
+                        <p class="mb-2"><strong>所在城市：</strong>{{ plan.location.city }}</p>
+                        <p class="mb-0"><strong>详细地址：</strong>{{ plan.location.address }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2"><strong>点位类型：</strong>{{ plan.location.get_location_type_display }}</p>
+                        <p class="mb-2"><strong>安装高度：</strong>{{ plan.location.height }} 米</p>
+                        <p class="mb-2"><strong>广告牌尺寸：</strong>{{ plan.location.width }} × {{ plan.location.height_dim }} 米</p>
+                    </div>
+                </div>
+                {% if plan.location.description %}
+                <hr>
+                <p class="mb-0"><strong>点位描述：</strong>{{ plan.location.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2 text-primary"></i>施工人员</h5>
+                {% if plan.status in 'draft,pm_rejected,safety_rejected,acceptance_rejected' and plan.constructor_team == user %}
+                <button class="btn btn-sm btn-outline-primary" hx-get="{% url 'construction:manage_workers' plan.pk %}" hx-target="#modal-container" hx-swap="innerHTML">
+                    <i class="bi bi-pencil"></i> 管理
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if plan_workers %}
+                <div class="row">
+                    {% for pw in plan_workers %}
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center p-2 bg-light rounded">
+                            <div class="me-3">
+                                <i class="bi bi-person-circle fs-2 text-muted"></i>
+                            </div>
+                            <div>
+                                <strong>{{ pw.worker.name }}</strong>
+                                {% if pw.is_lead %}<span class="badge bg-primary ms-1">负责人</span>{% endif %}
+                                <br>
+                                <small class="text-muted">{{ pw.role|default:"施工员" }}</small>
+                                <div class="mt-1">
+                                    {% for qual in pw.worker.qualification_set.all %}
+                                    {% if qual.is_valid and qual.expiry_date >= now %}
+                                    <span class="badge bg-success me-1">{{ qual.get_cert_type_display }}</span>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">暂无施工人员</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-file-text me-2 text-primary"></i>施工内容</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3"><strong>施工内容：</strong></p>
+                <p class="bg-light p-3 rounded">{{ plan.construction_content|linebreaks }}</p>
+                {% if plan.materials %}
+                <p class="mb-2"><strong>主要材料：</strong></p>
+                <p class="bg-light p-3 rounded mb-0">{{ plan.materials|linebreaks }}</p>
+                {% endif %}
+                {% if plan.safety_measures %}
+                <p class="mb-2 mt-3"><strong>安全措施：</strong></p>
+                <p class="bg-light p-3 rounded mb-0">{{ plan.safety_measures|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>审核历史节点</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for node in audit_nodes %}
+                    <div class="timeline-item {% if node.status == 'rejected' %}rejected{% elif node.status == 'approved' or node.status == 'completed' %}completed{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>{{ node.get_node_type_display }}</strong>
+                                <span class="badge {% if node.status == 'rejected' %}bg-danger{% elif node.status == 'approved' or node.status == 'completed' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                                    {{ node.get_status_display }}
+                                </span>
+                            </div>
+                            <small class="text-muted">{{ node.created_at|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <p class="mb-0 mt-1">
+                            <small class="text-muted">操作人：{{ node.operator.real_name|default:node.operator.username }}</small>
+                        </p>
+                        {% if node.comment %}
+                        <p class="mb-0 mt-1 small">{{ node.comment }}</p>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">暂无审核记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3 {% if current_weather and current_weather.has_wind_warning %}border-danger{% endif %}">
+            <div class="card-header {% if current_weather and current_weather.has_wind_warning %}bg-danger text-white{% else %}bg-white{% endif %}">
+                <h5 class="mb-0">
+                    <i class="bi {% if current_weather and current_weather.has_wind_warning %}bi-exclamation-triangle{% else %}bi-cloud-sun{% endif %} me-2"></i>
+                    天气风险
+                </h5>
+            </div>
+            <div class="card-body {% if current_weather and current_weather.has_wind_warning %}weather-warning{% endif %}">
+                {% if current_weather %}
+                <div class="text-center">
+                    <i class="bi bi-cloud fs-1"></i>
+                    <h3 class="mt-2">{{ current_weather.get_weather_display }}</h3>
+                    {% if current_weather.temperature_high and current_weather.temperature_low %}
+                    <p>{{ current_weather.temperature_low }}°C ~ {{ current_weather.temperature_high }}°C</p>
+                    {% endif %}
+                </div>
+                <hr class="my-2">
+                <p class="mb-1"><i class="bi bi-wind me-1"></i> 风力：{{ current_weather.get_wind_level_display }}</p>
+                <p class="mb-1"><i class="bi bi-speedometer2 me-1"></i> 风速：{{ current_weather.wind_speed }} m/s</p>
+                {% if current_weather.wind_direction %}
+                <p class="mb-1"><i class="bi bi-compass me-1"></i> 风向：{{ current_weather.wind_direction }}</p>
+                {% endif %}
+                {% if current_weather.has_wind_warning %}
+                <div class="mt-2 p-2 bg-white bg-opacity-25 rounded">
+                    <strong><i class="bi bi-exclamation-circle me-1"></i>大风预警！</strong>
+                    <br><small>{{ current_weather.warning_level|default:"黄色预警" }}</small>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-muted mb-0 text-center">
+                    <i class="bi bi-question-circle fs-2 d-block mb-2"></i>
+                    暂无当日天气记录
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">计划开工日期：{{ plan.planned_start_date|date:"Y年m月d日" }}</small>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>基本信息</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>施工队：</strong>{{ plan.constructor_team.real_name|default:plan.constructor_team.username }}</p>
+                <p class="mb-2"><strong>项目经理：</strong>
+                    {% if plan.project_manager %}
+                    {{ plan.project_manager.real_name|default:plan.project_manager.username }}
+                    {% else %}
+                    <span class="text-muted">待分配</span>
+                    {% endif %}
+                </p>
+                <p class="mb-2"><strong>安全员：</strong>
+                    {% if plan.safety_officer %}
+                    {{ plan.safety_officer.real_name|default:plan.safety_officer.username }}
+                    {% else %}
+                    <span class="text-muted">待分配</span>
+                    {% endif %}
+                </p>
+                <hr>
+                <p class="mb-2"><strong>计划开工：</strong>{{ plan.planned_start_date|date:"Y-m-d" }}</p>
+                <p class="mb-2"><strong>计划完工：</strong>{{ plan.planned_end_date|date:"Y-m-d" }}</p>
+                <p class="mb-2"><strong>实际开工：</strong>
+                    {% if plan.actual_start_date %}{{ plan.actual_start_date|date:"Y-m-d" }}{% else %}<span class="text-muted">-</span>{% endif %}
+                </p>
+                <p class="mb-2"><strong>实际完工：</strong>
+                    {% if plan.actual_end_date %}{{ plan.actual_end_date|date:"Y-m-d" }}{% else %}<span class="text-muted">-</span>{% endif %}
+                </p>
+                <hr>
+                <p class="mb-0"><strong>预算金额：</strong><span class="text-primary">¥ {{ plan.budget }}</span></p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock me-2 text-warning"></i>延期记录</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if delay_records %}
+                <div class="list-group list-group-flush">
+                    {% for delay in delay_records %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ delay.get_delay_type_display }}</strong>
+                                <span class="badge bg-warning text-dark ms-1">{{ delay.delay_days }}天</span>
+                            </div>
+                            <div>
+                                {% if delay.approved is None %}
+                                <span class="badge bg-secondary">待审批</span>
+                                {% elif delay.approved %}
+                                <span class="badge bg-success">已批准</span>
+                                {% else %}
+                                <span class="badge bg-danger">已驳回</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-0 mt-1">{{ delay.reason|truncatechars:30 }}</p>
+                        <small class="text-muted">{{ delay.created_at|date:"Y-m-d" }}</small>
+
+                        {% if delay.approved is None and user.role in 'project_manager,safety_officer' %}
+                        <div class="mt-2">
+                            <form method="post" action="{% url 'construction:delay_approve' plan.pk delay.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">批准</button>
+                            </form>
+                            <form method="post" action="{% url 'construction:delay_reject' plan.pk delay.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger">驳回</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3 mb-0">暂无延期记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

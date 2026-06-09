@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}工作台 - 广告牌施工报备系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <h2 class="mb-4">
+        <i class="bi bi-speedometer2 me-2 text-primary"></i>工作台
+        <small class="text-muted fs-6">欢迎回来，{{ user.real_name|default:user.username }}</small>
+    </h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card card-stat border-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">待处理</p>
+                            <p class="stat-number text-primary">{{ pending_count }}</p>
+                        </div>
+                        <i class="bi bi-clock-history fs-1 text-primary opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stat border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">进行中</p>
+                            <p class="stat-number text-warning">{{ in_progress_count }}</p>
+                        </div>
+                        <i class="bi bi-gear fs-1 text-warning opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stat border-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">已完成</p>
+                            <p class="stat-number text-success">{{ completed_count }}</p>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 text-success opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stat border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">返工次数</p>
+                            <p class="stat-number text-danger">{{ rework_count }}</p>
+                        </div>
+                        <i class="bi bi-arrow-repeat fs-1 text-danger opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>最近施工计划</h5>
+                    <a href="{% url 'construction:plan_list' %}" class="btn btn-sm btn-outline-primary">
+                        查看全部 <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>计划编号</th>
+                                    <th>计划标题</th>
+                                    <th>点位</th>
+                                    <th>状态</th>
+                                    <th>计划日期</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan in recent_plans %}
+                                <tr style="cursor: pointer;" onclick="window.location='{% url 'construction:plan_detail' plan.pk %}'">
+                                    <td><code>{{ plan.plan_no }}</code></td>
+                                    <td>{{ plan.title }}</td>
+                                    <td>{{ plan.location.name }}</td>
+                                    <td>
+                                        {% if plan.status == 'draft' %}
+                                        <span class="badge bg-secondary badge-status">草稿</span>
+                                        {% elif plan.status == 'submitted' %}
+                                        <span class="badge bg-info badge-status">已提交</span>
+                                        {% elif plan.status == 'pm_reviewing' or plan.status == 'pm_approved' %}
+                                        <span class="badge bg-primary badge-status">项目经理审核中</span>
+                                        {% elif plan.status == 'pm_rejected' %}
+                                        <span class="badge bg-danger badge-status">项目经理退回</span>
+                                        {% elif plan.status == 'safety_reviewing' or plan.status == 'safety_approved' %}
+                                        <span class="badge bg-warning text-dark badge-status">安全审核中</span>
+                                        {% elif plan.status == 'safety_rejected' %}
+                                        <span class="badge bg-danger badge-status">安全审核退回</span>
+                                        {% elif plan.status == 'ready' %}
+                                        <span class="badge bg-info badge-status">待开工</span>
+                                        {% elif plan.status == 'in_progress' %}
+                                        <span class="badge bg-primary badge-status">施工中</span>
+                                        {% elif plan.status == 'completed' %}
+                                        <span class="badge bg-warning text-dark badge-status">待验收</span>
+                                        {% elif plan.status == 'acceptance_rejected' %}
+                                        <span class="badge bg-danger badge-status">验收退回</span>
+                                        {% elif plan.status == 'accepted' %}
+                                        <span class="badge bg-success badge-status">已验收</span>
+                                        {% elif plan.status == 'cancelled' %}
+                                        <span class="badge bg-dark badge-status">已取消</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ plan.planned_start_date|date:"Y-m-d" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                        暂无施工计划
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2 text-warning"></i>快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    {% if user.role == 'constructor' %}
+                    <a href="{% url 'construction:plan_create' %}" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-plus-lg me-2"></i>新建施工计划
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'construction:plan_list' %}" class="btn btn-outline-secondary w-100 mb-2">
+                        <i class="bi bi-list-ul me-2"></i>查看全部计划
+                    </a>
+                    <a href="{% url 'construction:board' %}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-bar-chart me-2"></i>数据看板
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-info"></i>系统说明</h5>
+                </div>
+                <div class="card-body small">
+                    <p class="mb-2"><strong>角色说明：</strong></p>
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-1"><strong>施工队</strong>：提交计划、管理人员、申请延期</li>
+                        <li class="mb-1"><strong>项目经理</strong>：审核材料、审批延期</li>
+                        <li class="mb-1"><strong>安全员</strong>：天气确认、资质审核</li>
+                        <li class="mb-1"><strong>验收人</strong>：现场验收、归档/退回</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0 text-muted">
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        大风预警时禁止高空作业开工
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

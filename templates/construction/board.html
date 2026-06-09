@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load math_filters %}
+
+{% block title %}数据看板 - 广告牌施工报备系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <h2 class="mb-4"><i class="bi bi-bar-chart me-2 text-primary"></i>数据看板</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-geo-alt fs-1 text-primary opacity-25"></i>
+                    <p class="display-6 fw-bold text-primary mt-2">{{ total_locations }}</p>
+                    <p class="text-muted mb-0">点位总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-clipboard-check fs-1 text-info opacity-25"></i>
+                    <p class="display-6 fw-bold text-info mt-2">{{ total_plans }}</p>
+                    <p class="text-muted mb-0">施工计划总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-check2-circle fs-1 text-success opacity-25"></i>
+                    <p class="display-6 fw-bold text-success mt-2">{{ accepted_plans }}</p>
+                    <p class="text-muted mb-0">已完成计划</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-1 text-warning opacity-25"></i>
+                    <p class="display-6 fw-bold text-warning mt-2">{{ wind_warning_count }}</p>
+                    <p class="text-muted mb-0">大风预警天数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>按城市统计</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>城市</th>
+                                    <th class="text-center">总数</th>
+                                    <th class="text-center">已完成</th>
+                                    <th class="text-center">有延期</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_city %}
+                                <tr>
+                                    <td><i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ item.location__city }}</td>
+                                    <td class="text-center"><span class="badge bg-primary">{{ item.total }}</span></td>
+                                    <td class="text-center"><span class="badge bg-success">{{ item.completed }}</span></td>
+                                    <td class="text-center"><span class="badge bg-warning text-dark">{{ item.delayed }}</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-grid me-2 text-primary"></i>按点位类型统计</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>点位类型</th>
+                                    <th class="text-center">计划数</th>
+                                    <th class="text-center">已完成</th>
+                                    <th>完成率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_type %}
+                                <tr>
+                                    <td>
+                                        {% if item.location__location_type == 'rooftop' %}楼顶
+                                        {% elif item.location__location_type == 'wall' %}墙面
+                                        {% elif item.location__location_type == 'standalone' %}单立柱
+                                        {% elif item.location__location_type == 'bus_stop' %}公交站亭
+                                        {% elif item.location__location_type == 'subway' %}地铁站
+                                        {% else %}{{ item.location__location_type }}{% endif %}
+                                    </td>
+                                    <td class="text-center"><span class="badge bg-primary">{{ item.total }}</span></td>
+                                    <td class="text-center"><span class="badge bg-success">{{ item.completed }}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                style="width: {% if item.total > 0 %}{{ item.completed|multiply:100|divide:item.total }}{% else %}0{% endif %}%">
+                                                {% if item.total > 0 %}{{ item.completed|multiply:100|divide:item.total }}%{% else %}0%{% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-muted">暂无数据</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-warning"></i>延期原因分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>延期原因</th>
+                                    <th class="text-center">次数</th>
+                                    <th class="text-center">总天数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_delay_reason %}
+                                <tr>
+                                    <td>
+                                        {% if item.delay_type == 'wind' %}<i class="bi bi-wind text-primary me-1"></i>大风天气
+                                        {% elif item.delay_type == 'rain' %}<i class="bi bi-cloud-rain text-primary me-1"></i>降雨天气
+                                        {% elif item.delay_type == 'material' %}<i class="bi bi-box text-warning me-1"></i>材料问题
+                                        {% elif item.delay_type == 'personnel' %}<i class="bi bi-people text-info me-1"></i>人员问题
+                                        {% elif item.delay_type == 'site_issue' %}<i class="bi bi-exclamation-triangle text-danger me-1"></i>现场问题
+                                        {% else %}<i class="bi bi-question-circle text-muted me-1"></i>其他
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center"><span class="badge bg-warning text-dark">{{ item.count }}</span></td>
+                                    <td class="text-center"><span class="badge bg-info">{{ item.total_days }} 天</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">暂无延期数据</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-arrow-repeat me-2 text-danger"></i>返工次数分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>返工次数</th>
+                                    <th class="text-center">计划数</th>
+                                    <th>占比</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_rework %}
+                                <tr>
+                                    <td>{{ item.rework_count }} 次</td>
+                                    <td class="text-center"><span class="badge bg-danger">{{ item.count }}</span></td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-danger" role="progressbar"
+                                                style="width: {% if total_plans > 0 %}{{ item.count|multiply:100|divide:total_plans }}{% else %}0{% endif %}%">
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">暂无返工数据</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>状态分布</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in status_summary %}
+                        <div class="col-md-2">
+                            <div class="text-center p-3 bg-light rounded">
+                                <p class="fw-bold fs-4 mb-1
+                                    {% if item.status == 'accepted' %}text-success
+                                    {% elif item.status == 'in_progress' %}text-primary
+                                    {% elif 'rejected' in item.status %}text-danger
+                                    {% else %}text-warning{% endif %}">
+                                    {{ item.count }}
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    {% if item.status == 'draft' %}草稿
+                                    {% elif item.status == 'submitted' %}已提交
+                                    {% elif item.status == 'pm_reviewing' %}PM审核中
+                                    {% elif item.status == 'pm_rejected' %}PM退回
+                                    {% elif item.status == 'pm_approved' %}PM通过
+                                    {% elif item.status == 'safety_reviewing' %}安全审核中
+                                    {% elif item.status == 'safety_rejected' %}安全退回
+                                    {% elif item.status == 'safety_approved' %}安全通过
+                                    {% elif item.status == 'ready' %}待开工
+                                    {% elif item.status == 'in_progress' %}施工中
+                                    {% elif item.status == 'completed' %}待验收
+                                    {% elif item.status == 'acceptance_rejected' %}验收退回
+                                    {% elif item.status == 'accepted' %}已验收
+                                    {% elif item.status == 'cancelled' %}已取消
+                                    {% else %}{{ item.status }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

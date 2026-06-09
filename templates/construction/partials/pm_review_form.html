@@ -1,0 +1,32 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard-check me-2 text-primary"></i>项目经理材料审核</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <form method="post" action="{% url 'construction:pm_review' plan.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>计划：<strong>{{ plan.title }}</strong></p>
+                    <p>施工队：<strong>{{ plan.constructor_team.real_name|default:plan.constructor_team.username }}</strong></p>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label">审核意见</label>
+                        {{ form.comment }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>退回
+                    </button>
+                    <button type="submit" name="action" value="approve" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>通过
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

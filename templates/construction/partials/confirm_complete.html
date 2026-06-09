@@ -1,0 +1,24 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-check-circle me-2 text-primary"></i>提交完工</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定施工已完成并提交验收申请吗？</p>
+                <p class="mb-0">计划：<strong>{{ plan.title }}</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                <form method="post" action="{% url 'construction:complete_work' plan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>提交完工
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

@@ -1,0 +1,60 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-shield-check me-2 text-warning"></i>安全员安全审核</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <form method="post" action="{% url 'construction:safety_review' plan.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-cloud-sun me-1"></i>天气状况</h6>
+                            {% if current_weather %}
+                            <div class="p-3 rounded {% if current_weather.has_wind_warning %}bg-danger text-white{% else %}bg-light{% endif %}">
+                                <p class="mb-1"><strong>{{ current_weather.get_weather_display }}</strong></p>
+                                <p class="mb-1">风力：{{ current_weather.get_wind_level_display }}</p>
+                                <p class="mb-0">风速：{{ current_weather.wind_speed }} m/s</p>
+                                {% if current_weather.has_wind_warning %}
+                                <div class="mt-2 p-2 bg-white bg-opacity-25 rounded">
+                                    <strong><i class="bi bi-exclamation-triangle me-1"></i>大风预警！禁止开工</strong>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">暂无当日天气记录</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-people me-1"></i>人员资质</h6>
+                            <div class="p-3 bg-light rounded">
+                                {% if has_high_altitude_worker %}
+                                <p class="mb-1 text-success"><i class="bi bi-check-circle me-1"></i>有高空作业证人员</p>
+                                {% else %}
+                                <p class="mb-1 text-warning"><i class="bi bi-exclamation-triangle me-1"></i>暂无高空作业证人员</p>
+                                {% endif %}
+                                <p class="mb-0">施工人员：{{ plan_workers|length }} 人</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label">审核意见</label>
+                        {{ form.comment }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>退回
+                    </button>
+                    <button type="submit" name="action" value="approve" class="btn btn-success" {% if current_weather and current_weather.has_wind_warning %}disabled{% endif %}>
+                        <i class="bi bi-check-circle me-1"></i>通过
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

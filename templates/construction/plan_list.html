@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}施工计划 - 广告牌施工报备系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clipboard-check me-2 text-primary"></i>施工计划</h2>
+        {% if user.role == 'constructor' %}
+        <a href="{% url 'construction:plan_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>新建计划
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="btn-group">
+                <a href="{% url 'construction:plan_list' %}" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    全部
+                </a>
+                <a href="?status=draft" class="btn btn-sm {% if current_status == 'draft' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    草稿
+                </a>
+                <a href="?status=submitted" class="btn btn-sm {% if current_status == 'submitted' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    已提交
+                </a>
+                <a href="?status=pm_reviewing" class="btn btn-sm {% if current_status == 'pm_reviewing' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    项目经理审核中
+                </a>
+                <a href="?status=pm_rejected" class="btn btn-sm {% if current_status == 'pm_rejected' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    项目经理退回
+                </a>
+                <a href="?status=safety_approved" class="btn btn-sm {% if current_status == 'safety_approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    安全审核通过
+                </a>
+                <a href="?status=in_progress" class="btn btn-sm {% if current_status == 'in_progress' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    施工中
+                </a>
+                <a href="?status=completed" class="btn btn-sm {% if current_status == 'completed' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    待验收
+                </a>
+                <a href="?status=accepted" class="btn btn-sm {% if current_status == 'accepted' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    已验收
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="plan-list-container">
+        {% include "construction/partials/plan_list.html" %}
+    </div>
+</div>
+{% endblock %}

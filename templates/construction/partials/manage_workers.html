@@ -1,0 +1,48 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-people me-2 text-primary"></i>管理施工人员</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <form method="post" action="{% url 'construction:manage_workers' plan.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-3">计划：<strong>{{ plan.title }}</strong></p>
+                    <div class="scrollable-table">
+                        <div class="list-group">
+                            {% for worker in workers %}
+                            <label class="list-group-item list-group-item-action">
+                                <div class="d-flex align-items-center">
+                                    <input type="checkbox" name="workers" value="{{ worker.pk }}" class="me-3"
+                                        {% if worker.pk in current_workers %}checked{% endif %}>
+                                    <div>
+                                        <strong>{{ worker.name }}</strong>
+                                        <span class="text-muted ms-2">{{ worker.phone }}</span>
+                                        <div class="mt-1">
+                                            {% for qual in worker.qualification_set.all %}
+                                            {% if qual.is_valid %}
+                                            <span class="badge bg-success me-1">{{ qual.get_cert_type_display }}</span>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            {% empty %}
+                            <p class="text-muted text-center py-3">暂无施工人员</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

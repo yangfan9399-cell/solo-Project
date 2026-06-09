@@ -1,0 +1,22 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-send me-2 text-primary"></i>提交审核</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要提交施工计划 <strong>{{ plan.title }}</strong> 进行审核吗？</p>
+                <p class="text-muted small mb-0">提交后计划将流转至项目经理进行材料审核。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                <form method="post" action="{% url 'construction:plan_submit' plan.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">确认提交</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

@@ -1,0 +1,82 @@
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>计划编号</th>
+                        <th>标题</th>
+                        <th>点位</th>
+                        <th>城市</th>
+                        <th>状态</th>
+                        <th>计划开工</th>
+                        <th>计划完工</th>
+                        <th>返工</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plan in plans %}
+                    <tr>
+                        <td><code>{{ plan.plan_no }}</code></td>
+                        <td>{{ plan.title }}</td>
+                        <td>{{ plan.location.name }}</td>
+                        <td>{{ plan.location.city }}</td>
+                        <td>
+                            {% if plan.status == 'draft' %}
+                            <span class="badge bg-secondary">草稿</span>
+                            {% elif plan.status == 'submitted' %}
+                            <span class="badge bg-info">已提交</span>
+                            {% elif plan.status == 'pm_reviewing' or plan.status == 'pm_approved' %}
+                            <span class="badge bg-primary">项目经理审核</span>
+                            {% elif plan.status == 'pm_rejected' %}
+                            <span class="badge bg-danger">项目经理退回</span>
+                            {% elif plan.status == 'safety_reviewing' or plan.status == 'safety_approved' %}
+                            <span class="badge bg-warning text-dark">安全审核</span>
+                            {% elif plan.status == 'safety_rejected' %}
+                            <span class="badge bg-danger">安全审核退回</span>
+                            {% elif plan.status == 'ready' %}
+                            <span class="badge bg-info">待开工</span>
+                            {% elif plan.status == 'in_progress' %}
+                            <span class="badge bg-primary">施工中</span>
+                            {% elif plan.status == 'completed' %}
+                            <span class="badge bg-warning text-dark">待验收</span>
+                            {% elif plan.status == 'acceptance_rejected' %}
+                            <span class="badge bg-danger">验收退回</span>
+                            {% elif plan.status == 'accepted' %}
+                            <span class="badge bg-success">已验收</span>
+                            {% elif plan.status == 'cancelled' %}
+                            <span class="badge bg-dark">已取消</span>
+                            {% endif %}
+                            {% if plan.has_delay %}
+                            <span class="badge bg-warning text-dark ms-1">延期</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ plan.planned_start_date|date:"Y-m-d" }}</td>
+                        <td>{{ plan.planned_end_date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if plan.rework_count > 0 %}
+                            <span class="text-danger">{{ plan.rework_count }}次</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'construction:plan_detail' plan.pk %}" class="btn btn-sm btn-outline-primary">
+                                详情
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            暂无施工计划
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

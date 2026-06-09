@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plan.title }} - 施工计划详情{% endblock %}
+
+{% block content %}
+<div id="plan-detail-container" class="p-4">
+    {% include "construction/partials/plan_detail_content.html" %}
+</div>
+{% endblock %}

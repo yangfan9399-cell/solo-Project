@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}天气记录 - 广告牌施工报备系统{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <h2 class="mb-4"><i class="bi bi-cloud-sun me-2 text-primary"></i>天气记录</h2>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <div class="d-flex align-items-center">
+                <span class="me-3">城市筛选：</span>
+                <div class="btn-group">
+                    <a href="{% url 'construction:weather_list' %}" class="btn btn-sm {% if not current_city %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        全部
+                    </a>
+                    {% for city in cities %}
+                    <a href="?city={{ city }}" class="btn btn-sm {% if current_city == city %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        {{ city }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>日期</th>
+                            <th>点位</th>
+                            <th>城市</th>
+                            <th>天气</th>
+                            <th>温度</th>
+                            <th>风力</th>
+                            <th>风速</th>
+                            <th>大风预警</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in weathers %}
+                        <tr {% if w.has_wind_warning %}class="table-warning"{% endif %}>
+                            <td>{{ w.record_date|date:"Y-m-d" }}</td>
+                            <td>{{ w.location.name }}</td>
+                            <td>{{ w.location.city }}</td>
+                            <td>
+                                {% if w.weather == 'sunny' %}<i class="bi bi-sun text-warning"></i> 晴
+                                {% elif w.weather == 'cloudy' %}<i class="bi bi-cloud text-secondary"></i> 多云
+                                {% elif w.weather == 'overcast' %}<i class="bi bi-clouds text-secondary"></i> 阴
+                                {% elif w.weather == 'rain' %}<i class="bi bi-cloud-rain text-primary"></i> 雨
+                                {% elif w.weather == 'snow' %}<i class="bi bi-cloud-snow text-info"></i> 雪
+                                {% elif w.weather == 'fog' %}<i class="bi bi-cloud-fog text-muted"></i> 雾
+                                {% elif w.weather == 'thunderstorm' %}<i class="bi bi-cloud-lightning text-warning"></i> 雷阵雨
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if w.temperature_low and w.temperature_high %}
+                                {{ w.temperature_low }}°C ~ {{ w.temperature_high }}°C
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>{{ w.get_wind_level_display }}</td>
+                            <td>{{ w.wind_speed }} m/s</td>
+                            <td>
+                                {% if w.has_wind_warning %}
+                                <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>{{ w.warning_level|default:"预警" }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-cloud fs-2 d-block mb-2"></i>
+                                暂无天气记录
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

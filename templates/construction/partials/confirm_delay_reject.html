@@ -1,0 +1,27 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2 text-danger"></i>驳回延期</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <form method="post" action="{% url 'construction:delay_reject' plan.pk delay.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>确定驳回此次延期申请吗？</p>
+                    <ul>
+                        <li>延期原因：<strong>{{ delay.get_delay_type_display }}</strong></li>
+                        <li>延期天数：<strong>{{ delay.delay_days }} 天</strong></li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x me-1"></i>驳回
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>

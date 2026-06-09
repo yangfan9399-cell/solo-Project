@@ -1,0 +1,31 @@
+<div class="modal show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clock me-2 text-warning"></i>申请延期</h5>
+                <button type="button" class="btn-close" onclick="document.querySelector('.modal').remove()"></button>
+            </div>
+            <form method="post" action="{% url 'construction:delay_apply' plan.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>计划：<strong>{{ plan.title }}</strong></p>
+                    <p>当前计划完工日期：<strong>{{ plan.planned_end_date|date:"Y-m-d" }}</strong></p>
+                    <hr>
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="document.querySelector('.modal').remove()">取消</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-send me-1"></i>提交申请
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>
