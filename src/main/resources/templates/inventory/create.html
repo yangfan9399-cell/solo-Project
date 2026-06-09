@@ -46,6 +46,10 @@
                     </div>
                 </div>
 
+                <div id="gaugeWarning" class="alert alert-warning" style="display: none;">
+                    <strong>⚠️ 注意：</strong>该油罐液位仪状态异常，盘点数据仅供参考，后续将无法直接调整库存
+                </div>
+
                 <div class="section-title">库存数据</div>
                 <div class="form-row">
                     <div class="form-group">
@@ -97,14 +101,22 @@
             var select = document.getElementById('tankSelect');
             var option = select.options[select.selectedIndex];
             var gaugeDisplay = document.getElementById('gaugeStatusDisplay');
+            var gaugeWarning = document.getElementById('gaugeWarning');
 
             if (option && option.value) {
                 var gaugeNormal = option.getAttribute('data-gauge');
                 gaugeDisplay.value = gaugeNormal === 'true' ? '正常' : '异常';
                 gaugeDisplay.style.color = gaugeNormal === 'true' ? '#059669' : '#dc2626';
+
+                if (gaugeNormal === 'false') {
+                    gaugeWarning.style.display = 'block';
+                } else {
+                    gaugeWarning.style.display = 'none';
+                }
             } else {
                 gaugeDisplay.value = '';
                 gaugeDisplay.style.color = '';
+                gaugeWarning.style.display = 'none';
             }
         }
     </script>

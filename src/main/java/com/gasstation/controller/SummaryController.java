@@ -24,6 +24,7 @@ public class SummaryController {
         List<Object[]> byDiscrepancyType = inventoryService.getSummaryByDiscrepancyType();
         List<Object[]> byStation = inventoryService.getSummaryByStation();
         List<Object[]> byProduct = inventoryService.getSummaryByProduct();
+        List<InventoryService.LossRateRangeStat> byLossRateRange = inventoryService.getSummaryByLossRateRange();
 
         Map<String, Long> discrepancyCount = new HashMap<>();
         discrepancyCount.put("NORMAL", 0L);
@@ -40,6 +41,7 @@ public class SummaryController {
         model.addAttribute("byDiscrepancyType", byDiscrepancyType);
         model.addAttribute("byStation", byStation);
         model.addAttribute("byProduct", byProduct);
+        model.addAttribute("byLossRateRange", byLossRateRange);
         model.addAttribute("discrepancyCount", discrepancyCount);
 
         long totalCount = discrepancyCount.values().stream().mapToLong(Long::longValue).sum();

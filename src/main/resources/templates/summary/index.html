@@ -19,6 +19,37 @@
         <div class="card">
             <h2>复盘聚合统计</h2>
 
+            <div class="section-title">按损耗率区间分布</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>损耗率区间</th>
+                        <th>等级</th>
+                        <th>记录数</th>
+                        <th>累计差异绝对值 (L)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="stat : ${byLossRateRange}">
+                        <td th:text="${stat.rangeName}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:class="'badge-' + ${stat.level == '优秀' ? 'success' :
+                                                       stat.level == '正常' ? 'info' :
+                                                       stat.level == '轻微超标' ? 'warning' :
+                                                       stat.level == '数据无效' ? 'secondary' : 'danger'}"
+                                  th:text="${stat.level}"></span>
+                        </td>
+                        <td th:text="${stat.recordCount}"></td>
+                        <td class="text-right">
+                            <span th:if="${stat.totalDiff == null or stat.totalDiff.signum() == 0 and stat.level == '数据无效'}">-</span>
+                            <span th:unless="${stat.totalDiff == null or (stat.totalDiff.signum() == 0 and stat.level == '数据无效')}"
+                                  th:text="${#numbers.formatDecimal(stat.totalDiff, 1, 2)}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
             <div class="section-title">按差异原因分布</div>
             <table>
                 <thead>
@@ -26,11 +57,10 @@
                         <th>差异类型</th>
                         <th>记录数</th>
                         <th>差异总量 (L)</th>
-                        <th>占比</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="item, iter : ${byDiscrepancyType}">
+                    <tr th:each="item : ${byDiscrepancyType}">
                         <td>
                             <span class="badge"
                                   th:class="'badge-' + ${item[0].name() == 'NORMAL' ? 'success' :
@@ -39,8 +69,12 @@
                                   th:text="${item[0].description}"></span>
                         </td>
                         <td th:text="${item[1]}"></td>
-                        <td class="text-right" th:text="${item[2] != null ? #numbers.formatDecimal(item[2], 1, 2) : '-'}"></td>
-                        <td th:text="'-'"></td>
+                        <td class="text-right">
+                            <span th:if="${item[2] == null}">-</span>
+                            <span th:else
+                                  th:class="${item[2].signum() >= 0 ? 'text-success' : 'text-danger'}"
+                                  th:text="${#numbers.formatDecimal(item[2], 1, 2)}"></span>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -58,7 +92,7 @@
                     <tr th:each="item : ${byStation}">
                         <td th:text="${item[0]}"></td>
                         <td th:text="${item[1]}"></td>
-                        <td class="text-right"></td>
+                        <td class="text-right">
                             <span th:if="${item[2] == null}">-</span>
                             <span th:else
                                   th:class="${item[2].signum() >= 0 ? 'text-success' : 'text-danger'}"
@@ -82,7 +116,7 @@
                     <tr th:each="item : ${byProduct}">
                         <td th:text="${item[0]}"></td>
                         <td th:text="${item[1]}"></td>
-                        <td class="text-right"></td>
+                        <td class="text-right">
                             <span th:if="${item[2] == null}">-</span>
                             <span th:else
                                   th:class="${item[2].signum() >= 0 ? 'text-success' : 'text-danger'}"

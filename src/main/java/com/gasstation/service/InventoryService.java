@@ -11,6 +11,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -235,5 +236,77 @@ public class InventoryService {
 
     public List<Object[]> getSummaryByProduct() {
         return inventoryRecordRepository.sumByProduct();
+    }
+
+    public List<LossRateRangeStat> getSummaryByLossRateRange() {
+        List<LossRateRangeStat> ranges = new ArrayList<>();
+        ranges.add(new LossRateRangeStat("0% - 0.1%", "优秀", new BigDecimal("0"), new BigDecimal("0.001")));
+        ranges.add(new LossRateRangeStat("0.1% - 0.3%", "正常", new BigDecimal("0.001"), new BigDecimal("0.003")));
+        ranges.add(new LossRateRangeStat("0.3% - 0.5%", "轻微超标", new BigDecimal("0.003"), new BigDecimal("0.005")));
+        ranges.add(new LossRateRangeStat("0.5% - 1.0%", "中度超标", new BigDecimal("0.005"), new BigDecimal("0.01")));
+        ranges.add(new LossRateRangeStat("1.0% 以上", "严重超标", new BigDecimal("0.01"), null));
+        ranges.add(new LossRateRangeStat("液位仪异常", "数据无效", null, null));
+
+        List<InventoryRecord> allRecords = inventoryRecordRepository.findAll();
+
+        for (InventoryRecord record : allRecords) {
+            LossRateRangeStat target = null;
+
+            if (record.getDiscrepancyType() == DiscrepancyType.GAUGE_ERROR) {
+                target = ranges.get(5);
+            } else if (record.getLossRate() == null) {
+                continue;
+            } else {
+                BigDecimal rate = record.getLossRate();
+                if (rate.compareTo(new BigDecimal("0.001")) < 0) {
+                    target = ranges.get(0);
+                } else if (rate.compareTo(new BigDecimal("0.003")) < 0) {
+                    target = ranges.get(1);
+                } else if (rate.compareTo(new BigDecimal("0.005")) < 0) {
+                    target = ranges.get(2);
+                } else if (rate.compareTo(new BigDecimal("0.01")) < 0) {
+                    target = ranges.get(3);
+                } else {
+                    target = ranges.get(4);
+                }
+            }
+
+            if (target != null) {
+                target.setRecordCount(target.getRecordCount() + 1);
+                BigDecimal diff = record.getDifferenceVolume();
+                if (diff != null) {
+                    target.setTotalDiff(target.getTotalDiff().add(diff.abs()));
+                }
+            }
+        }
+
+        return ranges;
+    }
+
+    public static class LossRateRangeStat {
+        private String rangeName;
+        private String level;
+        private BigDecimal minRate;
+        private BigDecimal maxRate;
+        private int recordCount;
+        private BigDecimal totalDiff;
+
+        public LossRateRangeStat(String rangeName, String level, BigDecimal minRate, BigDecimal maxRate) {
+            this.rangeName = rangeName;
+            this.level = level;
+            this.minRate = minRate;
+            this.maxRate = maxRate;
+            this.recordCount = 0;
+            this.totalDiff = BigDecimal.ZERO;
+        }
+
+        public String getRangeName() { return rangeName; }
+        public String getLevel() { return level; }
+        public BigDecimal getMinRate() { return minRate; }
+        public BigDecimal getMaxRate() { return maxRate; }
+        public int getRecordCount() { return recordCount; }
+        public void setRecordCount(int recordCount) { this.recordCount = recordCount; }
+        public BigDecimal getTotalDiff() { return totalDiff; }
+        public void setTotalDiff(BigDecimal totalDiff) { this.totalDiff = totalDiff; }
     }
 }

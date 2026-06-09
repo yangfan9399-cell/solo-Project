@@ -105,7 +105,7 @@
             <div class="detail-grid">
                 <div class="detail-item">
                     <div class="label">差异量</div>
-                    <div class="value"></div>
+                    <div class="value">
                         <span th:if="${record.differenceVolume == null}">-</span>
                         <span th:else
                               th:class="${record.differenceVolume.signum() >= 0 ? 'text-success' : 'text-danger'}"
@@ -201,23 +201,29 @@
                 </div>
             </div>
 
-            <div style="margin-top: 2rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <a href="/inventory" class="btn btn-secondary">返回列表</a>
-
-                <div th:if="${canReview}">
-                    <button class="btn btn-success" onclick="showReviewModal(true)">复核通过</button>
-                    <button class="btn btn-danger" onclick="showReviewModal(false)">驳回</button>
+            <div style="margin-top: 2rem;">
+                <div th:if="${canDispose and not canAdjust}" class="alert alert-warning mb-2">
+                    <strong>⚠️ 液位仪异常：</strong>当前油罐液位仪状态异常，禁止直接调整库存。建议先启动追查，待液位仪修复后再进行库存调整。
                 </div>
 
-                <div th:if="${canDispose}">
-                    <button th:if="${canAdjust}" class="btn btn-primary" onclick="showAdjustModal()">调整库存</button>
-                    <button th:unless="${canAdjust}" class="btn btn-primary" disabled title="液位仪异常时禁止调整库存">调整库存</button>
-                    <button class="btn btn-warning" onclick="showInvestigateModal()">启动追查</button>
-                    <button class="btn btn-secondary" onclick="showArchiveModal()">归档</button>
-                </div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="/inventory" class="btn btn-secondary">返回列表</a>
 
-                <div th:if="${record.status.name() == 'INVESTIGATING' or record.status.name() == 'ADJUSTED'}">
-                    <button class="btn btn-secondary" onclick="showArchiveModal()">归档</button>
+                    <div th:if="${canReview}">
+                        <button class="btn btn-success" onclick="showReviewModal(true)">复核通过</button>
+                        <button class="btn btn-danger" onclick="showReviewModal(false)">驳回</button>
+                    </div>
+
+                    <div th:if="${canDispose}">
+                        <button th:if="${canAdjust}" class="btn btn-primary" onclick="showAdjustModal()">调整库存</button>
+                        <button th:unless="${canAdjust}" class="btn btn-primary" disabled title="液位仪异常时禁止调整库存">调整库存</button>
+                        <button class="btn btn-warning" onclick="showInvestigateModal()">启动追查</button>
+                        <button class="btn btn-secondary" onclick="showArchiveModal()">归档</button>
+                    </div>
+
+                    <div th:if="${record.status.name() == 'INVESTIGATING' or record.status.name() == 'ADJUSTED'}">
+                        <button class="btn btn-secondary" onclick="showArchiveModal()">归档</button>
+                    </div>
                 </div>
             </div>
         </div>

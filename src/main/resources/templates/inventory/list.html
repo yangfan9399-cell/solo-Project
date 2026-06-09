@@ -110,7 +110,7 @@
                         <td th:text="${r.inventoryDate}"></td>
                         <td class="text-right" th:text="${#numbers.formatDecimal(r.gaugeVolume, 1, 2)}"></td>
                         <td class="text-right" th:text="${#numbers.formatDecimal(r.theoreticalVolume, 1, 2)}"></td>
-                        <td class="text-right"></td>
+                        <td class="text-right">
                             <span th:if="${r.differenceVolume == null}">-</span>
                             <span th:else
                                   th:class="${r.differenceVolume.signum() >= 0 ? 'text-success' : 'text-danger'}"
