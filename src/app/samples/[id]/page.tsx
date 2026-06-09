@@ -113,7 +113,8 @@ export default async function SampleDetailPage({ params }: SampleDetailPageProps
             !isSealDamaged && <TestResultForm sample={sample} />}
 
           {session.user.role === "LAB_TECHNICIAN" &&
-            (sample.status === "SENT_TO_LAB" || sample.status === "TESTING") && (
+            (sample.status === "SENT_TO_LAB" || sample.status === "TESTING") &&
+            !isSealDamaged && (
               <SealDamagedModal sampleId={sample.id} />
             )}
 
