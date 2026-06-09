@@ -703,6 +703,12 @@ body {
     margin-bottom: 1rem;
 }
 
+.modal-subtitle {
+    color: var(--secondary);
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;

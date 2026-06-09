@@ -65,6 +65,7 @@
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('确定审批通过？')">通过</button>
                                 </form>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="showRejectModal(@app.Id, '@app.ApplicationNumber')">拒绝</button>
                             }
                             @if (app.Status == ApplicationStatus.BunkeringInProgress)
                             {
@@ -87,6 +88,37 @@
     <div class="empty-state">
         <p>暂无申请记录</p>
     </div>
+}
+
+<div id="rejectModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>拒绝申请</h3>
+        <p class="modal-subtitle">申请编号：<strong id="rejectAppNumber"></strong></p>
+        <form id="rejectForm" method="post" action="">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label>拒绝原因</label>
+                <textarea name="reason" class="form-control" rows="3" required placeholder="请填写拒绝原因"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="hideRejectModal()">取消</button>
+                <button type="submit" class="btn btn-danger">确认拒绝</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showRejectModal(id, appNumber) {
+            document.getElementById('rejectAppNumber').textContent = appNumber;
+            document.getElementById('rejectForm').action = '/FuelApplications/Reject/' + id;
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+        function hideRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
 }
 
 @functions {
