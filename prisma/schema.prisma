@@ -1,0 +1,219 @@
+// Prisma schema for Customs Inspection Laboratory Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  INSPECTION_OFFICER
+  LAB_TECHNICIAN
+  DISPOSAL_REVIEWER
+}
+
+enum SampleStatus {
+  SAMPLING
+  SAMPLED
+  SENT_TO_LAB
+  TESTING
+  TEST_COMPLETED
+  PENDING_DISPOSAL
+  DISPOSED
+  RE_SAMPLING
+  ARCHIVED
+}
+
+enum SealStatus {
+  INTACT
+  DAMAGED
+  VERIFIED
+}
+
+enum DisposalType {
+  RELEASE
+  DETAIN
+  RE_TEST
+  APPEAL
+}
+
+enum TestResultStatus {
+  NOT_TESTED
+  PASSED
+  FAILED
+  PENDING
+}
+
+enum AbnormalType {
+  NONE
+  SEAL_DAMAGED
+  MISSING_TEST_ITEMS
+  TEST_FAILED
+  CONCLUSION_APPEAL
+  OTHER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  name         String
+  role         UserRole
+  department   String?
+  employeeId   String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  samplesAsSampler    Sample[]         @relation("Sampler")
+  samplesAsHandler    Sample[]         @relation("CurrentHandler")
+  testResults         TestResult[]
+  disposals           Disposal[]
+  auditLogs           AuditLog[]
+}
+
+model Sample {
+  id                  String              @id @default(uuid())
+  sampleNo            String              @unique
+  customsDeclarationNo String
+  goodsName           String
+  goodsCategory       String
+  hsCode              String?
+  quantity            Decimal?
+  unit                String?
+  originCountry       String?
+  port                String
+  consignee           String?
+  consignor           String?
+
+  status              SampleStatus        @default(SAMPLING)
+  sealStatus          SealStatus          @default(INTACT)
+  abnormalType        AbnormalType        @default(NONE)
+  abnormalDescription String?
+
+  samplerId           String?
+  sampler             User?               @relation("Sampler", fields: [samplerId], references: [id])
+  samplingTime        DateTime?
+  samplingLocation    String?
+  samplingNotes       String?
+
+  currentHandlerId    String?
+  currentHandler      User?               @relation("CurrentHandler", fields: [currentHandlerId], references: [id])
+
+  sentToLabTime       DateTime?
+  labReceivedTime     DateTime?
+  testCompletedTime   DateTime?
+  disposalTime        DateTime?
+
+  testItems           TestItem[]
+  testResults         TestResult[]
+  seals               Seal[]
+  disposals           Disposal[]
+  auditLogs           AuditLog[]
+  reSampleParentId    String?
+  reSampleParent      Sample?             @relation("ReSample", fields: [reSampleParentId], references: [id])
+  reSampleChildren    Sample[]            @relation("ReSample")
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([sampleNo])
+  @@index([customsDeclarationNo])
+  @@index([status])
+  @@index([port])
+  @@index([goodsCategory])
+}
+
+model Seal {
+  id          String     @id @default(uuid())
+  sealNo      String     @unique
+  sampleId    String
+  sample      Sample     @relation(fields: [sampleId], references: [id])
+  status      SealStatus @default(INTACT)
+  sealType    String?
+  sealedAt    DateTime?
+  verifiedAt  DateTime?
+  notes       String?
+  images      String[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([sampleId])
+}
+
+model TestItem {
+  id          String   @id @default(uuid())
+  name        String
+  standard    String?
+  unit        String?
+  minValue    Decimal?
+  maxValue    Decimal?
+  isRequired  Boolean  @default(true)
+  category    String?
+  sortOrder   Int      @default(0)
+  sampleId    String
+  sample      Sample   @relation(fields: [sampleId], references: [id])
+  testResults TestResult[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sampleId])
+}
+
+model TestResult {
+  id          String           @id @default(uuid())
+  sampleId    String
+  sample      Sample           @relation(fields: [sampleId], references: [id])
+  testItemId  String
+  testItem    TestItem         @relation(fields: [testItemId], references: [id])
+  resultValue String?
+  resultStatus TestResultStatus @default(PENDING)
+  testedBy    String?
+  tester      User?            @relation(fields: [testedBy], references: [id])
+  testedAt    DateTime?
+  notes       String?
+  instrument  String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([sampleId])
+  @@index([testItemId])
+  @@unique([sampleId, testItemId])
+}
+
+model Disposal {
+  id              String       @id @default(uuid())
+  sampleId        String
+  sample          Sample       @relation(fields: [sampleId], references: [id])
+  disposalType    DisposalType
+  disposalBasis   String
+  remarks         String?
+  reviewedBy      String?
+  reviewer        User?        @relation(fields: [reviewedBy], references: [id])
+  reviewedAt      DateTime?
+  isFinal         Boolean      @default(true)
+  appealCount     Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([sampleId])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  sampleId    String
+  sample      Sample   @relation(fields: [sampleId], references: [id])
+  action      String
+  description String?
+  operatorId  String?
+  operator    User?    @relation(fields: [operatorId], references: [id])
+  oldStatus   String?
+  newStatus   String?
+  timestamp   DateTime @default(now())
+  metadata    Json?
+
+  @@index([sampleId])
+  @@index([timestamp])
+}
