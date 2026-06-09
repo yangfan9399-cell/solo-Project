@@ -143,7 +143,7 @@
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">是否实际控制人</span>
-                                    <span class="info-value" th:text="${lp.isActualController ? '是' : '否'}"></span>
+                                    <span class="info-value" th:text="${lp.actualController != null and lp.actualController ? '是' : '否'}"></span>
                                 </div>
                             </div>
                         </div>
@@ -157,15 +157,15 @@
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">持股比例</span>
-                                    <span class="info-value" th:text="${bo.shareholdingRatio + '%'}"></span>
+                                    <span class="info-value" th:text="${bo.shareholdingRatio != null ? bo.shareholdingRatio + '%' : '-'}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">关系</span>
-                                    <span class="info-value" th:text="${bo.relationship}"></span>
+                                    <span class="info-value" th:text="${bo.relationship != null ? bo.relationship : '-'}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">证件号码</span>
-                                    <span class="info-value" th:text="${bo.idNumber}"></span>
+                                    <span class="info-value" th:text="${bo.idNumber != null ? bo.idNumber : '-'}"></span>
                                 </div>
                             </div>
                             <div th:each="bo, iterStat : ${beneficialOwners}" th:if="${iterStat.last}">
@@ -175,15 +175,15 @@
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">持股比例</span>
-                                    <span class="info-value" th:text="${bo.shareholdingRatio + '%'}"></span>
+                                    <span class="info-value" th:text="${bo.shareholdingRatio != null ? bo.shareholdingRatio + '%' : '-'}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">关系</span>
-                                    <span class="info-value" th:text="${bo.relationship}"></span>
+                                    <span class="info-value" th:text="${bo.relationship != null ? bo.relationship : '-'}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">证件号码</span>
-                                    <span class="info-value" th:text="${bo.idNumber}"></span>
+                                    <span class="info-value" th:text="${bo.idNumber != null ? bo.idNumber : '-'}"></span>
                                 </div>
                             </div>
                             <div th:if="${#lists.isEmpty(beneficialOwners)}" style="color: #909399; text-align: center; padding: 20px;">
@@ -199,12 +199,12 @@
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                     <span style="font-weight: 600;" th:text="${addr.addressType}"></span>
                                     <span class="badge"
-                                          th:class="'badge ' + (addr.isVerified ? 'badge-success' : 'badge-danger')"
-                                          th:text="${addr.isVerified ? '已核验' : '未核验'}"></span>
+                                          th:class="'badge ' + (addr.verified ? 'badge-success' : 'badge-danger')"
+                                          th:text="${addr.verified ? '已核验' : '未核验'}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">地址</span>
-                                    <span class="info-value" th:text="${addr.province + addr.city + addr.district + addr.detailAddress}"></span>
+                                    <span class="info-value" th:text="${addr.fullAddress}"></span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">电话</span>
@@ -386,7 +386,7 @@
 
                         <div sec:authorize="hasRole('CUSTOMER_MANAGER')">
                             <form th:action="@{/applications/{id}/submit(id=${application.id})}" method="post"
-                                  th:if="${application.status.name() == 'DRAFT' || application.status.name() == 'MATERIAL_DEFICIENT'}">
+                                  th:if="${application.status.name() == 'DRAFT'}">
                                 <button type="submit" class="btn btn-primary">提交申请</button>
                             </form>
                         </div>

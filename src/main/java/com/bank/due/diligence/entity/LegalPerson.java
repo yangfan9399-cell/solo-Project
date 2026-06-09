@@ -49,4 +49,8 @@ public class LegalPerson {
 
     @UpdateTimestamp
     private LocalDateTime updateTime;
+
+    public Boolean getActualController() {
+        return isActualController;
+    }
 }

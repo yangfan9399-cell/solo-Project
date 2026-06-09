@@ -477,7 +477,7 @@ public class AccountApplicationServiceImpl implements AccountApplicationService 
         for (AccountApplication app : applications) {
             addHistory(app, app.getStatus(), app.getStatus(),
                     "地址核验", operatorName, null,
-                    address.getAddress() + " → " + (isVerified ? "核验通过" : "核验不通过") + "，" + verificationResult);
+                    address.getFullAddress() + " → " + (isVerified ? "核验通过" : "核验不通过") + "，" + verificationResult);
         }
 
         log.info("地址核验: {} -> {}", isVerified ? "通过" : "不通过", verificationResult);

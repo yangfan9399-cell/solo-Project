@@ -60,4 +60,17 @@ public class BusinessAddress {
 
     @UpdateTimestamp
     private LocalDateTime updateTime;
+
+    public String getFullAddress() {
+        StringBuilder sb = new StringBuilder();
+        if (province != null) sb.append(province);
+        if (city != null) sb.append(city);
+        if (district != null) sb.append(district);
+        if (detailAddress != null) sb.append(detailAddress);
+        return sb.toString();
+    }
+
+    public Boolean getVerified() {
+        return isVerified;
+    }
 }
