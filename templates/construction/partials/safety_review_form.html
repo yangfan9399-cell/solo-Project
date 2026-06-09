@@ -8,17 +8,46 @@
             <form method="post" action="{% url 'construction:safety_review' plan.pk %}">
                 {% csrf_token %}
                 <div class="modal-body">
+                    <p class="mb-3">计划：<strong>{{ plan.title }}</strong></p>
+
+                    {% if safety_risks %}
+                    <div class="alert alert-danger mb-3">
+                        <h6 class="alert-heading mb-2">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            发现 {{ safety_risks|length }} 项安全风险
+                        </h6>
+                        <ul class="mb-0 ps-3">
+                            {% for risk in safety_risks %}
+                            <li>{{ risk }}</li>
+                            {% endfor %}
+                        </ul>
+                        <hr>
+                        <p class="mb-0 small">存在以上安全风险时，<strong>禁止通过安全审核</strong>。</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        暂未发现安全风险，可通过审核
+                    </div>
+                    {% endif %}
+
                     <div class="row">
                         <div class="col-md-6">
                             <h6><i class="bi bi-cloud-sun me-1"></i>天气状况</h6>
                             {% if current_weather %}
                             <div class="p-3 rounded {% if current_weather.has_wind_warning %}bg-danger text-white{% else %}bg-light{% endif %}">
                                 <p class="mb-1"><strong>{{ current_weather.get_weather_display }}</strong></p>
-                                <p class="mb-1">风力：{{ current_weather.get_wind_level_display }}</p>
+                                <p class="mb-1">
+                                    风力：{{ current_weather.get_wind_level_display }}
+                                    {% if current_weather.wind_level >= 6 %}
+                                    <span class="badge bg-warning text-dark ms-1">风力偏大</span>
+                                    {% endif %}
+                                </p>
                                 <p class="mb-0">风速：{{ current_weather.wind_speed }} m/s</p>
                                 {% if current_weather.has_wind_warning %}
                                 <div class="mt-2 p-2 bg-white bg-opacity-25 rounded">
-                                    <strong><i class="bi bi-exclamation-triangle me-1"></i>大风预警！禁止开工</strong>
+                                    <strong><i class="bi bi-exclamation-triangle me-1"></i>大风预警！</strong>
+                                    <br><small>{{ current_weather.warning_level|default:"黄色预警" }}</small>
                                 </div>
                                 {% endif %}
                             </div>
@@ -29,12 +58,31 @@
                         <div class="col-md-6">
                             <h6><i class="bi bi-people me-1"></i>人员资质</h6>
                             <div class="p-3 bg-light rounded">
-                                {% if has_high_altitude_worker %}
-                                <p class="mb-1 text-success"><i class="bi bi-check-circle me-1"></i>有高空作业证人员</p>
-                                {% else %}
-                                <p class="mb-1 text-warning"><i class="bi bi-exclamation-triangle me-1"></i>暂无高空作业证人员</p>
+                                <p class="mb-1">
+                                    施工人员：{{ plan_workers|length }} 人
+                                </p>
+                                <p class="mb-1">
+                                    高空作业证：
+                                    {% if has_high_altitude_worker %}
+                                    <span class="badge bg-success">有</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">无</span>
+                                    {% endif %}
+                                </p>
+                                {% if plan_workers %}
+                                <div class="mt-2 small">
+                                    {% for pw in plan_workers %}
+                                    <div class="mb-1">
+                                        {{ pw.worker.name }}
+                                        {% for qual in pw.worker.qualification_set.all %}
+                                        {% if qual.is_valid %}
+                                        <span class="badge bg-success ms-1">{{ qual.get_cert_type_display }}</span>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
                                 {% endif %}
-                                <p class="mb-0">施工人员：{{ plan_workers|length }} 人</p>
                             </div>
                         </div>
                     </div>
@@ -49,7 +97,7 @@
                     <button type="submit" name="action" value="reject" class="btn btn-danger">
                         <i class="bi bi-x-circle me-1"></i>退回
                     </button>
-                    <button type="submit" name="action" value="approve" class="btn btn-success" {% if current_weather and current_weather.has_wind_warning %}disabled{% endif %}>
+                    <button type="submit" name="action" value="approve" class="btn btn-success" {% if safety_risks %}disabled{% endif %}>
                         <i class="bi bi-check-circle me-1"></i>通过
                     </button>
                 </div>

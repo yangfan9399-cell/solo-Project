@@ -242,19 +242,39 @@ class ConstructionPlan(models.Model):
         return self.status == 'completed' and user.role == 'acceptor'
 
     def can_start_work(self, user):
+        risks = self.get_safety_risks()
         if self.status != 'safety_approved':
             return False, '未通过安全审核，无法开工'
         if user.role != 'constructor' or user != self.constructor_team:
             return False, '无权限开工'
+        if risks:
+            return False, '；'.join(risks)
+        return True, '可以开工'
+
+    def get_safety_risks(self):
+        risks = []
         weather = WeatherRecord.objects.filter(
             location=self.location,
             record_date=self.planned_start_date
         ).first()
         if weather and weather.has_wind_warning:
-            return False, f'大风预警（{weather.get_wind_level_display()}），禁止开工'
-        if weather and weather.wind_level >= 6:
-            return False, f'风力过大（{weather.get_wind_level_display()}），禁止高空作业'
-        return True, '可以开工'
+            risks.append(f'大风预警（{weather.get_wind_level_display()}），禁止开工')
+        elif weather and weather.wind_level >= 6:
+            risks.append(f'风力过大（{weather.get_wind_level_display()}），禁止高空作业')
+
+        if self.location.height >= 2:
+            has_high_altitude_worker = False
+            plan_workers = PlanWorker.objects.filter(plan=self).select_related('worker')
+            for pw in plan_workers:
+                if pw.worker.has_valid_high_altitude_cert:
+                    has_high_altitude_worker = True
+                    break
+            if not has_high_altitude_worker and plan_workers.exists():
+                risks.append('无有效高空作业证人员，高处作业存在安全隐患')
+            elif not plan_workers.exists():
+                risks.append('未配置施工人员')
+
+        return risks
 
     @property
     def current_weather(self):

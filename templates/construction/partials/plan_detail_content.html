@@ -195,39 +195,58 @@
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm mb-3 {% if current_weather and current_weather.has_wind_warning %}border-danger{% endif %}">
-            <div class="card-header {% if current_weather and current_weather.has_wind_warning %}bg-danger text-white{% else %}bg-white{% endif %}">
+        <div class="card shadow-sm mb-3 {% if safety_risks %}border-danger{% endif %}">
+            <div class="card-header {% if safety_risks %}bg-danger text-white{% else %}bg-white{% endif %}">
                 <h5 class="mb-0">
-                    <i class="bi {% if current_weather and current_weather.has_wind_warning %}bi-exclamation-triangle{% else %}bi-cloud-sun{% endif %} me-2"></i>
-                    天气风险
+                    <i class="bi {% if safety_risks %}bi-exclamation-triangle{% else %}bi-shield-check{% endif %} me-2"></i>
+                    安全风险
+                    {% if safety_risks %}
+                    <span class="badge bg-white text-danger ms-2">{{ safety_risks|length }} 项</span>
+                    {% else %}
+                    <span class="badge bg-success ms-2">正常</span>
+                    {% endif %}
                 </h5>
             </div>
-            <div class="card-body {% if current_weather and current_weather.has_wind_warning %}weather-warning{% endif %}">
-                {% if current_weather %}
-                <div class="text-center">
-                    <i class="bi bi-cloud fs-1"></i>
-                    <h3 class="mt-2">{{ current_weather.get_weather_display }}</h3>
-                    {% if current_weather.temperature_high and current_weather.temperature_low %}
-                    <p>{{ current_weather.temperature_low }}°C ~ {{ current_weather.temperature_high }}°C</p>
-                    {% endif %}
+            <div class="card-body {% if safety_risks %}weather-warning{% endif %}">
+                {% if safety_risks %}
+                <div class="mb-3">
+                    <p class="mb-2"><strong>存在以下安全风险：</strong></p>
+                    <ul class="mb-0 ps-3">
+                        {% for risk in safety_risks %}
+                        <li class="mb-1">{{ risk }}</li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                <hr class="my-2">
-                <p class="mb-1"><i class="bi bi-wind me-1"></i> 风力：{{ current_weather.get_wind_level_display }}</p>
-                <p class="mb-1"><i class="bi bi-speedometer2 me-1"></i> 风速：{{ current_weather.wind_speed }} m/s</p>
-                {% if current_weather.wind_direction %}
-                <p class="mb-1"><i class="bi bi-compass me-1"></i> 风向：{{ current_weather.wind_direction }}</p>
+                <div class="p-2 bg-white bg-opacity-25 rounded">
+                    <small><i class="bi bi-info-circle me-1"></i>存在以上安全风险时，禁止通过安全审核及确认开工。</small>
+                </div>
+                {% else %}
+                <div class="text-center py-2">
+                    <i class="bi bi-shield-check fs-1 text-success"></i>
+                    <p class="mb-0 mt-2 text-success"><strong>暂未发现安全风险</strong></p>
+                </div>
                 {% endif %}
+
+                {% if current_weather %}
+                <hr class="my-3">
+                <p class="mb-2"><i class="bi bi-cloud-sun me-1"></i><strong>天气详情：</strong></p>
+                <div class="row">
+                    <div class="col-6">
+                        <p class="mb-1">天气：{{ current_weather.get_weather_display }}</p>
+                        <p class="mb-1">风力：{{ current_weather.get_wind_level_display }}</p>
+                    </div>
+                    <div class="col-6">
+                        {% if current_weather.temperature_high and current_weather.temperature_low %}
+                        <p class="mb-1">温度：{{ current_weather.temperature_low }}°C ~ {{ current_weather.temperature_high }}°C</p>
+                        {% endif %}
+                        <p class="mb-1">风速：{{ current_weather.wind_speed }} m/s</p>
+                    </div>
+                </div>
                 {% if current_weather.has_wind_warning %}
                 <div class="mt-2 p-2 bg-white bg-opacity-25 rounded">
-                    <strong><i class="bi bi-exclamation-circle me-1"></i>大风预警！</strong>
-                    <br><small>{{ current_weather.warning_level|default:"黄色预警" }}</small>
+                    <strong><i class="bi bi-exclamation-circle me-1"></i>大风预警：{{ current_weather.warning_level|default:"黄色预警" }}</strong>
                 </div>
                 {% endif %}
-                {% else %}
-                <p class="text-muted mb-0 text-center">
-                    <i class="bi bi-question-circle fs-2 d-block mb-2"></i>
-                    暂无当日天气记录
-                </p>
                 {% endif %}
             </div>
             <div class="card-footer bg-light">

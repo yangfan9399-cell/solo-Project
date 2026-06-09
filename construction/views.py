@@ -138,6 +138,7 @@ def plan_detail(request, pk):
     audit_nodes = AuditNode.objects.filter(plan=plan).order_by('created_at')
     delay_records = DelayRecord.objects.filter(plan=plan).order_by('-created_at')
     current_weather = plan.current_weather
+    safety_risks = plan.get_safety_risks()
 
     can_start, start_reason = plan.can_start_work(request.user)
 
@@ -147,6 +148,7 @@ def plan_detail(request, pk):
         'audit_nodes': audit_nodes,
         'delay_records': delay_records,
         'current_weather': current_weather,
+        'safety_risks': safety_risks,
         'can_start': can_start,
         'start_reason': start_reason,
     }
@@ -266,8 +268,10 @@ def safety_review(request, pk):
 
         if form.is_valid():
             if action == 'approve':
-                if current_weather and current_weather.has_wind_warning:
-                    messages.error(request, '当前有大风预警，禁止通过安全审核')
+                safety_risks = plan.get_safety_risks()
+                if safety_risks:
+                    risk_msg = '；'.join(safety_risks)
+                    messages.error(request, f'存在安全风险，无法通过审核：{risk_msg}')
                     return redirect('construction:plan_detail', pk=pk)
 
                 plan.status = 'safety_approved'
@@ -313,12 +317,13 @@ def safety_review(request, pk):
 def start_work(request, pk):
     plan = get_object_or_404(ConstructionPlan, pk=pk)
 
-    can_start, reason = plan.can_start_work(request.user)
-    if not can_start:
-        messages.error(request, reason)
-        return redirect('construction:plan_detail', pk=pk)
+    can_start, start_reason = plan.can_start_work(request.user)
 
     if request.method == 'POST':
+        if not can_start:
+            messages.error(request, start_reason)
+            return redirect('construction:plan_detail', pk=pk)
+
         plan.status = 'in_progress'
         plan.actual_start_date = timezone.now().date()
         plan.save()
@@ -333,7 +338,11 @@ def start_work(request, pk):
         messages.success(request, '已确认开工')
         return redirect('construction:plan_detail', pk=pk)
 
-    return render(request, 'construction/partials/confirm_start.html', {'plan': plan})
+    return render(request, 'construction/partials/confirm_start.html', {
+        'plan': plan,
+        'can_start': can_start,
+        'start_reason': start_reason,
+    })
 
 
 @login_required
