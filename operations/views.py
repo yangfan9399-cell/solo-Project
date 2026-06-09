@@ -716,7 +716,7 @@ def complaint_resolve(request, pk):
     if not _is_inspector(request.user) and not request.user.is_staff:
         return HttpResponseForbidden('无权限操作')
 
-    if complaint.status != Complaint.Status.IN_PROGRESS:
+    if complaint.status not in (Complaint.Status.CONFIRMED, Complaint.Status.IN_PROGRESS):
         if complaint.status == Complaint.Status.PENDING:
             error_msg = '该投诉尚未核实，请先由巡检员核实后再进行整改'
         elif complaint.status == Complaint.Status.RESOLVED:

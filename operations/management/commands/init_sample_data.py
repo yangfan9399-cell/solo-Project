@@ -441,7 +441,7 @@ class Command(BaseCommand):
             description='今天垃圾没有清运，垃圾桶都满了，请尽快处理。',
             photo_evidence='https://picsum.photos/seed/complaint1/400/300',
             reported_at=assignment2.actual_end_time + timedelta(hours=1),
-            status=Complaint.Status.CONFIRMED,
+            status=Complaint.Status.IN_PROGRESS,
             inspector=inspector,
             confirmed_at=assignment2.actual_end_time + timedelta(hours=2),
             confirmed_notes='经核实，该站点确实未清运，已通知司机整改。'
