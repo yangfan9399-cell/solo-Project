@@ -70,7 +70,7 @@ class LinenBatch < ApplicationRecord
   end
 
   def can_settle?
-    inspected? && !has_shortage? && all_claims_confirmed?
+    inspected? && all_claims_confirmed?
   end
 
   def all_claims_confirmed?

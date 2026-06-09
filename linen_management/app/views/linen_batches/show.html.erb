@@ -32,6 +32,12 @@
   </div>
 <% end %>
 
+<% if @linen_batch.inspected? && @linen_batch.has_shortage? && @linen_batch.all_claims_confirmed? %>
+  <div class="info-notice">
+    <p>✅ 数量差异已确认，短少数量已计入赔损，可进行结算。</p>
+  </div>
+<% end %>
+
 <div class="action-bar">
   <% if @linen_batch.pending? %>
     <%= button_to "交接布草", collect_linen_batch_path(@linen_batch), method: :post, class: "btn btn-primary" %>
@@ -52,7 +58,7 @@
   <% end %>
   <% if @linen_batch.inspected? && !@linen_batch.can_settle? %>
     <span class="text-muted" style="align-self: center; color: #999;">
-      <% if @linen_batch.has_shortage? %>请先确认数量差异<% elsif !@linen_batch.all_claims_confirmed? %>请先确认所有赔损<% end %>
+      请先确认所有赔损记录
     </span>
   <% end %>
 </div>
