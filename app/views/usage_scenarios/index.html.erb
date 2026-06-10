@@ -1,0 +1,38 @@
+<h1 class="mb-4">使用场景管理</h1>
+
+<%= link_to '添加使用场景', new_usage_scenario_path, class: 'btn btn-primary mb-4' %>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>素材名称</th>
+      <th>栏目</th>
+      <th>渠道</th>
+      <th>状态</th>
+      <th>审核状态</th>
+      <th>绑定人</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @usage_scenarios.each do |scenario| %>
+      <tr>
+        <td><%= link_to scenario.material.name, material_path(scenario.material) %></td>
+        <td><%= scenario.column_name %></td>
+        <td><%= channel_label(scenario.channel) %></td>
+        <td><%= status_badge(scenario.status) %></td>
+        <td><%= status_badge(scenario.approval_status) %></td>
+        <td><%= scenario.bound_by&.name %></td>
+        <td>
+          <%= link_to '审核', review_usage_scenario_path(scenario), class: 'btn btn-sm btn-primary' %>
+          <%= link_to '详情', usage_scenario_path(scenario), class: 'btn btn-sm btn-secondary' %>
+          <%= link_to '编辑', edit_usage_scenario_path(scenario), class: 'btn btn-sm btn-secondary' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @usage_scenarios.empty? %>
+  <p class="text-muted">暂无使用场景</p>
+<% end %>

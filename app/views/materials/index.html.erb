@@ -1,0 +1,38 @@
+<h1 class="mb-4">素材管理</h1>
+
+<%= link_to '添加素材', new_material_path, class: 'btn btn-primary mb-4' %>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>名称</th>
+      <th>类型</th>
+      <th>版权方</th>
+      <th>授权状态</th>
+      <th>创建人</th>
+      <th>创建时间</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @materials.each do |material| %>
+      <tr>
+        <td><%= link_to material.name, material_path(material) %></td>
+        <td><%= material_type_label(material.material_type) %></td>
+        <td><%= material.copyright_holder %></td>
+        <td><%= status_badge(material.license_status) %></td>
+        <td><%= material.created_by&.name %></td>
+        <td><%= material.created_at.strftime('%Y-%m-%d') %></td>
+        <td>
+          <%= link_to '详情', material_path(material), class: 'btn btn-sm btn-primary' %>
+          <%= link_to '编辑', edit_material_path(material), class: 'btn btn-sm btn-secondary' %>
+          <%= link_to '删除', material_path(material), method: :delete, data: { confirm: '确定删除?' }, class: 'btn btn-sm btn-danger' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @materials.empty? %>
+  <p class="text-muted">暂无素材</p>
+<% end %>

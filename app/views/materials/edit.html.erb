@@ -1,0 +1,37 @@
+<h1>编辑素材</h1>
+
+<%= form_with model: @material do |form| %>
+  <div class="card">
+    <div class="card-body">
+      <div class="mb-3">
+        <%= form.label :name, class: 'form-label' %>
+        <%= form.text_field :name, class: 'form-control', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :material_type, class: 'form-label' %>
+        <%= form.select :material_type, Material::MATERIAL_TYPES.map { |t| [material_type_label(t), t] }, {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :description, class: 'form-label' %>
+        <%= form.text_area :description, class: 'form-control', rows: 3 %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :copyright_holder, class: 'form-label' %>
+        <%= form.text_field :copyright_holder, class: 'form-control', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :file_url, class: 'form-label' %>
+        <%= form.url_field :file_url, class: 'form-control' %>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <%= form.submit '更新', class: 'btn btn-primary' %>
+      <%= link_to '取消', material_path(@material), class: 'btn btn-link' %>
+    </div>
+  </div>
+<% end %>

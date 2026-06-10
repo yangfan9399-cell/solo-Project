@@ -1,0 +1,104 @@
+<h1 class="mb-4">版权授权管理平台</h1>
+
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <div class="card-title">待审核</div>
+        <div class="card-text display-4"><%= @pending_count %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-danger text-white">
+      <div class="card-body">
+        <div class="card-title">风险素材</div>
+        <div class="card-text display-4"><%= @risk_count %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <div class="card-title">已到期</div>
+        <div class="card-text display-4"><%= @expired_count %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <div class="card-title">素材总数</div>
+        <div class="card-text display-4"><%= @materials.count %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">最近添加的素材</div>
+      <div class="card-body">
+        <% if @recent_materials.empty? %>
+          <p class="text-muted">暂无素材</p>
+        <% else %>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>名称</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_materials.each do |material| %>
+                <tr>
+                  <td><%= link_to material.name, material_path(material) %></td>
+                  <td><%= material.material_type %></td>
+                  <td><%= status_badge(material.license_status) %></td>
+                  <td><%= link_to '详情', material_path(material), class: 'btn btn-sm btn-primary' %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">最近审核记录</div>
+      <div class="card-body">
+        <% if @recent_reviews.empty? %>
+          <p class="text-muted">暂无审核记录</p>
+        <% else %>
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>审核类型</th>
+                <th>审核人</th>
+                <th>状态</th>
+                <th>时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @recent_reviews.each do |review| %>
+                <tr>
+                  <td><%= review.review_type_label %></td>
+                  <td><%= review.reviewer.name %></td>
+                  <td><%= status_badge(review.status) %></td>
+                  <td><%= review.reviewed_at.strftime('%Y-%m-%d %H:%M') %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= link_to '添加素材', new_material_path, class: 'btn btn-primary mt-4' %>

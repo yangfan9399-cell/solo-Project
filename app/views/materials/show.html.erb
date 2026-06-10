@@ -1,0 +1,119 @@
+<h1><%= @material.name %></h1>
+
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">素材信息</div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3">类型</dt>
+          <dd class="col-sm-9"><%= material_type_label(@material.material_type) %></dd>
+          <dt class="col-sm-3">版权方</dt>
+          <dd class="col-sm-9"><%= @material.copyright_holder %></dd>
+          <dt class="col-sm-3">描述</dt>
+          <dd class="col-sm-9"><%= @material.description %></dd>
+          <dt class="col-sm-3">文件链接</dt>
+          <dd class="col-sm-9"><%= link_to @material.file_url, @material.file_url if @material.file_url.present? %></dd>
+          <dt class="col-sm-3">创建人</dt>
+          <dd class="col-sm-9"><%= @material.created_by&.name %></dd>
+          <dt class="col-sm-3">创建时间</dt>
+          <dd class="col-sm-9"><%= @material.created_at.strftime('%Y-%m-%d %H:%M') %></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        授权信息
+        <%= link_to '添加授权', new_material_license_path(@material), class: 'btn btn-sm btn-primary float-end' %>
+      </div>
+      <div class="card-body">
+        <% if @license %>
+          <dl class="row">
+            <dt class="col-sm-3">授权方</dt>
+            <dd class="col-sm-9"><%= @license.licensor %></dd>
+            <dt class="col-sm-3">授权类型</dt>
+            <dd class="col-sm-9"><%= @license.license_type == 'exclusive' ? '独家授权' : '非独家授权' %></dd>
+            <dt class="col-sm-3">生效日期</dt>
+            <dd class="col-sm-9"><%= @license.start_date.strftime('%Y-%m-%d') %></dd>
+            <dt class="col-sm-3">到期日期</dt>
+            <dd class="col-sm-9"><%= @license.end_date.strftime('%Y-%m-%d') %></dd>
+            <dt class="col-sm-3">授权状态</dt>
+            <dd class="col-sm-9"><%= status_badge(@license.status) %></dd>
+            <dt class="col-sm-3">风险原因</dt>
+            <dd class="col-sm-9"><%= risk_reason_label(@license.risk_reason) %></dd>
+            <dt class="col-sm-3">合同文件</dt>
+            <dd class="col-sm-9"><%= @license.contract_file.present? ? '已上传' : '未上传' %></dd>
+            <dt class="col-sm-3">授权渠道</dt>
+            <dd class="col-sm-9">
+              <% if @license.authorized_channels.present? %>
+                <% JSON.parse(@license.authorized_channels).each do |channel| %>
+                  <span class="badge bg-secondary"><%= channel_label(channel) %></span>
+                <% end %>
+              <% else %>
+                未设置
+              <% end %>
+            </dd>
+          </dl>
+          <div class="mt-3">
+            <%= link_to '编辑授权', edit_license_path(@license), class: 'btn btn-sm btn-secondary' %>
+            <% if @license.status == 'expired' %>
+              <%= button_to '续约', renew_license_path(@license), method: :post, class: 'btn btn-sm btn-success', form: { id: 'renew-form' } %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-muted">暂无授权信息</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        使用场景
+        <%= link_to '绑定使用场景', new_material_usage_scenario_path(@material), class: 'btn btn-sm btn-primary float-end' %>
+      </div>
+      <div class="card-body">
+        <% if @usage_scenarios.empty? %>
+          <p class="text-muted">暂无使用场景</p>
+        <% else %>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>栏目</th>
+                <th>渠道</th>
+                <th>状态</th>
+                <th>审核状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @usage_scenarios.each do |scenario| %>
+                <tr>
+                  <td><%= scenario.column_name %></td>
+                  <td><%= channel_label(scenario.channel) %></td>
+                  <td><%= status_badge(scenario.status) %></td>
+                  <td><%= status_badge(scenario.approval_status) %></td>
+                  <td>
+                    <%= link_to '审核', review_usage_scenario_path(scenario), class: 'btn btn-sm btn-primary' %>
+                    <%= link_to '编辑', edit_usage_scenario_path(scenario), class: 'btn btn-sm btn-secondary' %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= link_to '编辑素材', edit_material_path(@material), class: 'btn btn-secondary mt-4' %>
+<%= link_to '返回列表', materials_path, class: 'btn btn-link mt-4' %>

@@ -1,0 +1,69 @@
+<h1><%= @material.name %> - 使用场景详情</h1>
+
+<div class="card">
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-3">素材</dt>
+      <dd class="col-sm-9"><%= link_to @material.name, material_path(@material) %></dd>
+      <dt class="col-sm-3">授权</dt>
+      <dd class="col-sm-9"><%= @license ? link_to(@license.licensor, license_path(@license)) : '未绑定授权' %></dd>
+      <dt class="col-sm-3">栏目</dt>
+      <dd class="col-sm-9"><%= @usage_scenario.column_name %></dd>
+      <dt class="col-sm-3">渠道</dt>
+      <dd class="col-sm-9"><%= channel_label(@usage_scenario.channel) %></dd>
+      <dt class="col-sm-3">使用范围</dt>
+      <dd class="col-sm-9"><%= @usage_scenario.usage_scope %></dd>
+      <dt class="col-sm-3">绑定人</dt>
+      <dd class="col-sm-9"><%= @usage_scenario.bound_by&.name %></dd>
+      <dt class="col-sm-3">状态</dt>
+      <dd class="col-sm-9"><%= status_badge(@usage_scenario.status) %></dd>
+      <dt class="col-sm-3">审核状态</dt>
+      <dd class="col-sm-9"><%= status_badge(@usage_scenario.approval_status) %></dd>
+      <dt class="col-sm-3">是否可发布</dt>
+      <dd class="col-sm-9">
+        <% if @usage_scenario.can_publish? %>
+          <span class="badge bg-success">可以发布</span>
+        <% else %>
+          <span class="badge bg-danger">发布阻断</span>
+          <p class="mt-2 text-danger"><%= @usage_scenario.blocking_reason %></p>
+        <% end %>
+      </dd>
+    </dl>
+  </div>
+</div>
+
+<div class="mt-4">
+  <h3>审核历史</h3>
+  <% if @review_logs.empty? %>
+    <p class="text-muted">暂无审核记录</p>
+  <% else %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>审核类型</th>
+          <th>审核人</th>
+          <th>状态</th>
+          <th>备注</th>
+          <th>审核时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @review_logs.each do |log| %>
+          <tr>
+            <td><%= log.review_type_label %></td>
+            <td><%= log.reviewer.name %></td>
+            <td><%= status_badge(log.status) %></td>
+            <td><%= log.comment %></td>
+            <td><%= log.reviewed_at.strftime('%Y-%m-%d %H:%M') %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
+
+<div class="mt-4">
+  <%= link_to '审核', review_usage_scenario_path(@usage_scenario), class: 'btn btn-primary' %>
+  <%= link_to '编辑', edit_usage_scenario_path(@usage_scenario), class: 'btn btn-secondary' %>
+  <%= link_to '返回', usage_scenarios_path, class: 'btn btn-link' %>
+</div>

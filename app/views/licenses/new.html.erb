@@ -1,0 +1,57 @@
+<h1>添加授权</h1>
+
+<%= form_with model: @license do |form| %>
+  <div class="card">
+    <div class="card-body">
+      <div class="mb-3">
+        <%= form.label :material_id, class: 'form-label' %>
+        <%= form.select :material_id, Material.all.map { |m| [m.name, m.id] }, {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :licensor, class: 'form-label' %>
+        <%= form.text_field :licensor, class: 'form-control', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :license_type, class: 'form-label' %>
+        <%= form.select :license_type, [['独家授权', 'exclusive'], ['非独家授权', 'non_exclusive']], {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :start_date, class: 'form-label' %>
+        <%= form.date_field :start_date, class: 'form-control', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :end_date, class: 'form-label' %>
+        <%= form.date_field :end_date, class: 'form-control', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :authorized_channels, class: 'form-label' %>
+        <p class="text-muted">选择授权使用的渠道</p>
+        <div class="row">
+          <% UsageScenario::CHANNELS.each do |channel| %>
+            <div class="col-md-3">
+              <label class="form-check-label">
+                <%= check_box_tag "license[authorized_channels][]", channel, false, class: 'form-check-input' %>
+                <%= channel_label(channel) %>
+              </label>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :contract_file, class: 'form-label' %>
+        <%= form.text_field :contract_file, class: 'form-control', placeholder: '合同文件路径或URL' %>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <%= form.submit '保存', class: 'btn btn-primary' %>
+      <%= link_to '取消', licenses_path, class: 'btn btn-link' %>
+    </div>
+  </div>
+<% end %>

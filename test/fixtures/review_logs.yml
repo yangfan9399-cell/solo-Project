@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  usage_scenario: one
+  reviewer: one
+  review_type: MyString
+  status: MyString
+  comment: MyText
+  reviewed_at: 2026-06-10 15:55:51
+
+two:
+  usage_scenario: two
+  reviewer: two
+  review_type: MyString
+  status: MyString
+  comment: MyText
+  reviewed_at: 2026-06-10 15:55:51

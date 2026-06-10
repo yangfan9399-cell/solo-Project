@@ -1,0 +1,148 @@
+<h1 class="mb-4">统计报表</h1>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">按栏目统计</div>
+      <div class="card-body">
+        <canvas id="columnChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">按素材类型统计</div>
+      <div class="card-body">
+        <canvas id="materialTypeChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">风险原因分布</div>
+      <div class="card-body">
+        <canvas id="riskChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">使用渠道分布</div>
+      <div class="card-body">
+        <canvas id="channelChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">使用场景状态</div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>状态</th>
+              <th>数量</th>
+              <th>占比</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @status_stats.each do |status, count| %>
+              <tr>
+                <td><%= status_label(status) %></td>
+                <td><%= count %></td>
+                <td><%= ((count.to_f / @status_stats.values.sum) * 100).round(1) %>%</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">审核状态分布</div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>审核状态</th>
+              <th>数量</th>
+              <th>占比</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @approval_stats.each do |status, count| %>
+              <tr>
+                <td><%= status_label(status) %></td>
+                <td><%= count %></td>
+                <td><%= ((count.to_f / @approval_stats.values.sum) * 100).round(1) %>%</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    new Chart(document.getElementById('columnChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= @by_column.keys.to_json %>,
+        datasets: [{
+          label: '数量',
+          data: <%= @by_column.values.to_json %>,
+          backgroundColor: '#0d6efd'
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    new Chart(document.getElementById('materialTypeChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= @by_material_type.keys.map { |k| material_type_label(k) }.to_json %>,
+        datasets: [{
+          label: '数量',
+          data: <%= @by_material_type.values.to_json %>,
+          backgroundColor: '#198754'
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    new Chart(document.getElementById('riskChart'), {
+      type: 'pie',
+      data: {
+        labels: <%= @by_risk_reason.keys.map { |k| risk_reason_label(k) }.to_json %>,
+        datasets: [{
+          data: <%= @by_risk_reason.values.to_json %>,
+          backgroundColor: ['#dc3545', '#ffc107', '#6f42c1']
+        }]
+      }
+    });
+
+    new Chart(document.getElementById('channelChart'), {
+      type: 'pie',
+      data: {
+        labels: <%= @channel_stats.keys.map { |k| channel_label(k) }.to_json %>,
+        datasets: [{
+          data: <%= @channel_stats.values.to_json %>,
+          backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1']
+        }]
+      }
+    });
+  });
+</script>
+
+<%= content_for :head do %>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<% end %>

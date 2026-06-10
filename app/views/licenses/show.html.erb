@@ -1,0 +1,42 @@
+<h1><%= @license.material.name %> - 授权详情</h1>
+
+<div class="card">
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-3">素材</dt>
+      <dd class="col-sm-9"><%= link_to @license.material.name, material_path(@license.material) %></dd>
+      <dt class="col-sm-3">授权方</dt>
+      <dd class="col-sm-9"><%= @license.licensor %></dd>
+      <dt class="col-sm-3">授权类型</dt>
+      <dd class="col-sm-9"><%= @license.license_type == 'exclusive' ? '独家授权' : '非独家授权' %></dd>
+      <dt class="col-sm-3">生效日期</dt>
+      <dd class="col-sm-9"><%= @license.start_date.strftime('%Y-%m-%d') %></dd>
+      <dt class="col-sm-3">到期日期</dt>
+      <dd class="col-sm-9"><%= @license.end_date.strftime('%Y-%m-%d') %></dd>
+      <dt class="col-sm-3">授权状态</dt>
+      <dd class="col-sm-9"><%= status_badge(@license.status) %></dd>
+      <dt class="col-sm-3">风险原因</dt>
+      <dd class="col-sm-9"><%= risk_reason_label(@license.risk_reason) %></dd>
+      <dt class="col-sm-3">合同文件</dt>
+      <dd class="col-sm-9"><%= @license.contract_file.present? ? '已上传' : '未上传' %></dd>
+      <dt class="col-sm-3">授权渠道</dt>
+      <dd class="col-sm-9">
+        <% if @license.authorized_channels.present? %>
+          <% JSON.parse(@license.authorized_channels).each do |channel| %>
+            <span class="badge bg-secondary"><%= channel_label(channel) %></span>
+          <% end %>
+        <% else %>
+          未设置
+        <% end %>
+      </dd>
+    </dl>
+  </div>
+</div>
+
+<div class="mt-4">
+  <%= link_to '编辑', edit_license_path(@license), class: 'btn btn-secondary' %>
+  <% if @license.status == 'expired' %>
+    <%= button_to '续约', renew_license_path(@license), method: :post, class: 'btn btn-success' %>
+  <% end %>
+  <%= link_to '返回', licenses_path, class: 'btn btn-link' %>
+</div>

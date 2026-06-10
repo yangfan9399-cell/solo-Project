@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  material: one
+  license: one
+  column_name: MyString
+  channel: MyString
+  usage_scope: MyText
+  bound_by: one
+  status: MyString
+  approval_status: MyString
+
+two:
+  material: two
+  license: two
+  column_name: MyString
+  channel: MyString
+  usage_scope: MyText
+  bound_by: two
+  status: MyString
+  approval_status: MyString

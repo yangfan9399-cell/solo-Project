@@ -1,0 +1,37 @@
+<h1>编辑使用场景</h1>
+
+<%= form_with model: @usage_scenario do |form| %>
+  <div class="card">
+    <div class="card-body">
+      <div class="mb-3">
+        <%= form.label :material_id, class: 'form-label' %>
+        <%= form.select :material_id, Material.all.map { |m| [m.name, m.id] }, {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :license_id, class: 'form-label' %>
+        <%= form.select :license_id, @licenses.map { |l| ["#{l.material.name} - #{l.licensor}", l.id] }, { include_blank: '选择授权' }, class: 'form-select' %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :column_name, class: 'form-label' %>
+        <%= form.select :column_name, UsageScenario::COLUMNS, {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :channel, class: 'form-label' %>
+        <%= form.select :channel, UsageScenario::CHANNELS.map { |c| [channel_label(c), c] }, {}, class: 'form-select', required: true %>
+      </div>
+
+      <div class="mb-3">
+        <%= form.label :usage_scope, class: 'form-label' %>
+        <%= form.text_area :usage_scope, class: 'form-control', rows: 3 %>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <%= form.submit '更新', class: 'btn btn-primary' %>
+      <%= link_to '取消', usage_scenario_path(@usage_scenario), class: 'btn btn-link' %>
+    </div>
+  </div>
+<% end %>

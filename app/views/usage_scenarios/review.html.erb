@@ -1,0 +1,131 @@
+<h1>审核使用场景</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-3">素材</dt>
+      <dd class="col-sm-9"><%= link_to @material.name, material_path(@material) %></dd>
+      <dt class="col-sm-3">授权</dt>
+      <dd class="col-sm-9"><%= @license ? link_to(@license.licensor, license_path(@license)) : '未绑定授权' %></dd>
+      <dt class="col-sm-3">栏目</dt>
+      <dd class="col-sm-9"><%= @usage_scenario.column_name %></dd>
+      <dt class="col-sm-3">渠道</dt>
+      <dd class="col-sm-9"><%= channel_label(@usage_scenario.channel) %></dd>
+      <dt class="col-sm-3">状态</dt>
+      <dd class="col-sm-9"><%= status_badge(@usage_scenario.status) %></dd>
+      <dt class="col-sm-3">审核状态</dt>
+      <dd class="col-sm-9"><%= status_badge(@usage_scenario.approval_status) %></dd>
+      <dt class="col-sm-3">发布阻断原因</dt>
+      <dd class="col-sm-9">
+        <% if @usage_scenario.blocking_reason %>
+          <span class="badge bg-danger"><%= @usage_scenario.blocking_reason %></span>
+        <% else %>
+          <span class="badge bg-success">无阻断</span>
+        <% end %>
+      </dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">授权详情</div>
+  <div class="card-body">
+    <% if @license %>
+      <dl class="row">
+        <dt class="col-sm-3">授权方</dt>
+        <dd class="col-sm-9"><%= @license.licensor %></dd>
+        <dt class="col-sm-3">授权类型</dt>
+        <dd class="col-sm-9"><%= @license.license_type == 'exclusive' ? '独家授权' : '非独家授权' %></dd>
+        <dt class="col-sm-3">生效日期</dt>
+        <dd class="col-sm-9"><%= @license.start_date.strftime('%Y-%m-%d') %></dd>
+        <dt class="col-sm-3">到期日期</dt>
+        <dd class="col-sm-9"><%= @license.end_date.strftime('%Y-%m-%d') %></dd>
+        <dt class="col-sm-3">授权状态</dt>
+        <dd class="col-sm-9"><%= status_badge(@license.status) %></dd>
+        <dt class="col-sm-3">授权渠道</dt>
+        <dd class="col-sm-9">
+          <% if @license.authorized_channels.present? %>
+            <% JSON.parse(@license.authorized_channels).each do |channel| %>
+              <span class="badge bg-secondary"><%= channel_label(channel) %></span>
+            <% end %>
+            <% if @usage_scenario.scope_exceeded? %>
+              <span class="badge bg-danger ms-2">使用范围超限</span>
+            <% end %>
+          <% else %>
+            未设置
+          <% end %>
+        </dd>
+        <dt class="col-sm-3">合同文件</dt>
+        <dd class="col-sm-9">
+          <% if @license.contract_file.present? %>
+            <span class="badge bg-success">已上传</span>
+          <% else %>
+            <span class="badge bg-danger">缺失</span>
+          <% end %>
+        </dd>
+      </dl>
+    <% else %>
+      <p class="text-danger">未绑定授权，无法通过审核</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">审核历史</div>
+  <div class="card-body">
+    <% if @review_logs.empty? %>
+      <p class="text-muted">暂无审核记录</p>
+    <% else %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>审核类型</th>
+            <th>审核人</th>
+            <th>状态</th>
+            <th>备注</th>
+            <th>审核时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @review_logs.each do |log| %>
+            <tr>
+              <td><%= log.review_type_label %></td>
+              <td><%= log.reviewer.name %></td>
+              <td><%= status_badge(log.status) %></td>
+              <td><%= log.comment %></td>
+              <td><%= log.reviewed_at.strftime('%Y-%m-%d %H:%M') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">审核操作</div>
+  <div class="card-body">
+    <% if @usage_scenario.approval_status == 'pending' %>
+      <div class="mb-3">
+        <label class="form-label">审核备注</label>
+        <textarea name="comment" class="form-control" rows="3"></textarea>
+      </div>
+      <%= button_to '法务复核通过', legal_review_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-primary' %>
+      <%= button_to '拒绝并下架', reject_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-danger' %>
+    <% elsif @usage_scenario.approval_status == 'legal_reviewed' %>
+      <div class="mb-3">
+        <label class="form-label">确认备注</label>
+        <textarea name="comment" class="form-control" rows="3"></textarea>
+      </div>
+      <%= button_to '运营确认通过', operations_confirm_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-success' %>
+      <%= button_to '拒绝并下架', reject_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-danger' %>
+    <% elsif @usage_scenario.approval_status == 'operations_confirmed' %>
+      <p class="text-success">已完成审核，可以发布</p>
+      <%= button_to '下架', remove_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-warning' %>
+    <% else %>
+      <p class="text-muted">当前状态不允许审核操作</p>
+    <% end %>
+  </div>
+</div>
+
+<%= link_to '返回', usage_scenarios_path, class: 'btn btn-link mt-4' %>
