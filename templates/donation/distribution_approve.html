@@ -1,0 +1,22 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <h2>批准分配计划</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>分配信息</h3>
+            <p><strong>批次:</strong> {{ distribution.batch.batch_number }} - {{ distribution.batch.material.name }}</p>
+            <p><strong>项目:</strong> {{ distribution.project.name }}</p>
+            <p><strong>受赠方:</strong> {{ distribution.recipient.name }}</p>
+            <p><strong>分配数量:</strong> {{ distribution.quantity }} {{ distribution.batch.material.unit }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <button type="submit" class="btn btn-success">确认批准</button>
+            <a href="/distribution/{{ distribution.id }}/" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+{% endblock %}

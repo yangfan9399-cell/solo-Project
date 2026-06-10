@@ -1,0 +1,50 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>物资批次列表</h2>
+            <a href="/batch/create/" class="btn btn-primary">新建批次</a>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <a href="/batch/list/" class="btn btn-secondary {% if not request.GET.status %}active{% endif %}">全部</a>
+            <a href="/batch/list/?status=pending" class="btn btn-secondary {% if request.GET.status == 'pending' %}active{% endif %}">待入库</a>
+            <a href="/batch/list/?status=in_stock" class="btn btn-secondary {% if request.GET.status == 'in_stock' %}active{% endif %}">库存中</a>
+            <a href="/batch/list/?status=expired" class="btn btn-secondary {% if request.GET.status == 'expired' %}active{% endif %}">已过期</a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>批次号</th>
+                    <th>捐赠方</th>
+                    <th>物资</th>
+                    <th>数量</th>
+                    <th>可用</th>
+                    <th>有效期</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in batches %}
+                <tr>
+                    <td><a href="/batch/{{ batch.id }}/">{{ batch.batch_number }}</a></td>
+                    <td>{{ batch.donor.name }}</td>
+                    <td>{{ batch.material.name }}</td>
+                    <td>{{ batch.quantity }} {{ batch.material.unit }}</td>
+                    <td>{{ batch.available_quantity }} {{ batch.material.unit }}</td>
+                    <td {% if batch.is_expired %}class="expired"{% endif %}>{{ batch.expire_date }}</td>
+                    <td><span class="badge badge-{{ batch.status }}">{{ batch.get_status_display }}</span></td>
+                    <td>
+                        {% if batch.status == 'pending' %}
+                        <a href="/batch/{{ batch.id }}/receive/" class="btn btn-success" style="font-size: 0.8rem;">入库</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

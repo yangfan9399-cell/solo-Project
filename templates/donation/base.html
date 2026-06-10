@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公益捐赠物资管理平台</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; }
+        header h1 { font-size: 1.5rem; }
+        nav { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 0.5rem 2rem; }
+        nav a { margin-right: 1.5rem; text-decoration: none; color: #333; padding: 0.5rem; border-radius: 4px; }
+        nav a:hover { background: #f0f0f0; }
+        nav a.active { background: #667eea; color: white; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card h2 { margin-bottom: 1rem; color: #333; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 8px; text-align: center; }
+        .stat-card .number { font-size: 2rem; font-weight: bold; }
+        .stat-card .label { font-size: 0.9rem; opacity: 0.9; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; transition: opacity 0.2s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .form-group textarea { resize: vertical; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        .alert-warning { background: #fff3cd; color: #856404; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 500; }
+        .badge-pending { background: #ffc107; color: #333; }
+        .badge-in_stock { background: #28a745; color: white; }
+        .badge-distributed { background: #17a2b8; color: white; }
+        .badge-expired { background: #dc3545; color: white; }
+        .badge-draft { background: #6c757d; color: white; }
+        .badge-approved { background: #17a2b8; color: white; }
+        .badge-received { background: #28a745; color: white; }
+        .badge-archived { background: #667eea; color: white; }
+        .history-item { padding: 0.75rem; border-left: 3px solid #667eea; background: #f8f9fa; margin-bottom: 0.5rem; }
+        .history-item .type { font-weight: 600; color: #667eea; }
+        .history-item .time { color: #666; font-size: 0.8rem; }
+        .expired { color: #dc3545; font-weight: bold; }
+        .discrepancy { background: #fff3cd; border-radius: 4px; padding: 0.5rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>公益捐赠物资管理平台</h1>
+    </header>
+    <nav>
+        <a href="/" {% if request.path == '/' %}class="active"{% endif %}>首页</a>
+        <a href="/batch/list/" {% if 'batch' in request.path %}class="active"{% endif %}>物资批次</a>
+        <a href="/distribution/list/" {% if 'distribution' in request.path %}class="active"{% endif %}>分配计划</a>
+        <a href="/recipient/list/" {% if 'recipient' in request.path %}class="active"{% endif %}>受赠方管理</a>
+        <a href="/review/" {% if 'review' in request.path %}class="active"{% endif %}>复盘分析</a>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <h2>签收确认</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>发放信息</h3>
+            <p><strong>批次:</strong> {{ distribution.batch.batch_number }} - {{ distribution.batch.material.name }}</p>
+            <p><strong>项目:</strong> {{ distribution.project.name }}</p>
+            <p><strong>受赠方:</strong> {{ distribution.recipient.name }}</p>
+            <p><strong>发放数量:</strong> {{ distribution.quantity }} {{ distribution.batch.material.unit }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>签收人</label>
+                <input type="text" name="signed_by" required>
+            </div>
+            
+            <div class="form-group">
+                <label>实际签收数量</label>
+                <input type="number" name="quantity_received" value="{{ distribution.quantity }}" required min="0">
+                <span style="color: #666; margin-left: 0.5rem;">{{ distribution.batch.material.unit }}</span>
+            </div>
+            
+            <div class="form-group">
+                <label>备注（如有数量差异请说明）</label>
+                <textarea name="notes" rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-success">确认签收</button>
+            <a href="/distribution/{{ distribution.id }}/" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+{% endblock %}

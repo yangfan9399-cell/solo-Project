@@ -1,0 +1,54 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <h2>新建捐赠批次</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div class="form-group">
+                    <label>捐赠方名称</label>
+                    <input type="text" name="donor_name" required>
+                </div>
+                <div class="form-group">
+                    <label>批次号</label>
+                    <input type="text" name="batch_number" required>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div class="form-group">
+                    <label>物资类别</label>
+                    <input type="text" name="category_name" required>
+                </div>
+                <div class="form-group">
+                    <label>物资名称</label>
+                    <input type="text" name="material_name" required>
+                </div>
+                <div class="form-group">
+                    <label>规格</label>
+                    <input type="text" name="specification">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div class="form-group">
+                    <label>数量</label>
+                    <input type="number" name="quantity" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>有效期</label>
+                    <input type="date" name="expire_date" required>
+                </div>
+                <div class="form-group">
+                    <label>存放位置</label>
+                    <input type="text" name="storage_location">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">创建批次</button>
+        </form>
+    </div>
+{% endblock %}

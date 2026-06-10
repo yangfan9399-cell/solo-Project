@@ -1,0 +1,37 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>受赠方管理</h2>
+            <a href="/recipient/create/" class="btn btn-primary">添加受赠方</a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>联系人</th>
+                    <th>电话</th>
+                    <th>地址</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in recipients %}
+                <tr>
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.contact|default:'-' }}</td>
+                    <td>{{ r.phone|default:'-' }}</td>
+                    <td>{{ r.address|default:'-' }}</td>
+                    <td><span class="badge badge-{% if r.is_valid %}in_stock{% else %}expired{% endif %}">{{ r.is_valid|yesno:'有效,无效' }}</span></td>
+                    <td>
+                        <a href="/recipient/{{ r.id }}/edit/" class="btn btn-secondary" style="font-size: 0.8rem;">编辑</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

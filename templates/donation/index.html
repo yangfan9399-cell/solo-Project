@@ -1,0 +1,35 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number">{{ pending_batches }}</div>
+            <div class="label">待入库批次</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ in_stock_batches }}</div>
+            <div class="label">库存中批次</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ expired_batches }}</div>
+            <div class="label">已过期批次</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ pending_distributions }}</div>
+            <div class="label">待审批分配</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ pending_signatures }}</div>
+            <div class="label">待签收</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>快速操作</h2>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <a href="/batch/create/" class="btn btn-primary">登记入库</a>
+            <a href="/distribution/create/" class="btn btn-success">创建分配</a>
+            <a href="/recipient/create/" class="btn btn-secondary">添加受赠方</a>
+        </div>
+    </div>
+{% endblock %}

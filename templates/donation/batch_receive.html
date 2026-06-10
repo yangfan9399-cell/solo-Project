@@ -1,0 +1,28 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <h2>批次入库确认</h2>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3>批次信息</h3>
+            <p><strong>批次号:</strong> {{ batch.batch_number }}</p>
+            <p><strong>物资:</strong> {{ batch.material.name }}</p>
+            <p><strong>捐赠数量:</strong> {{ batch.quantity }} {{ batch.material.unit }}</p>
+            <p><strong>有效期:</strong> {{ batch.expire_date }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>实际入库数量</label>
+                <input type="number" name="received_quantity" value="{{ batch.quantity }}" required min="0" max="{{ batch.quantity }}">
+                <span style="color: #666; margin-left: 0.5rem;">{{ batch.material.unit }}</span>
+            </div>
+            
+            <button type="submit" class="btn btn-success">确认入库</button>
+            <a href="/batch/{{ batch.id }}/" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+{% endblock %}

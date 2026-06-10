@@ -1,0 +1,85 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>批次详情: {{ batch.batch_number }}</h2>
+            <span class="badge badge-{{ batch.status }}">{{ batch.get_status_display }}</span>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div>
+                    <h3>捐赠方信息</h3>
+                    <p><strong>名称:</strong> {{ batch.donor.name }}</p>
+                    <p><strong>联系人:</strong> {{ batch.donor.contact }}</p>
+                    <p><strong>电话:</strong> {{ batch.donor.phone }}</p>
+                    <p><strong>地址:</strong> {{ batch.donor.address }}</p>
+                </div>
+                <div>
+                    <h3>物资信息</h3>
+                    <p><strong>名称:</strong> {{ batch.material.name }}</p>
+                    <p><strong>类别:</strong> {{ batch.material.category.name }}</p>
+                    <p><strong>规格:</strong> {{ batch.material.specification }}</p>
+                    <p><strong>单位:</strong> {{ batch.material.unit }}</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h3>批次详情</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                    <div><strong>总数量:</strong> {{ batch.quantity }} {{ batch.material.unit }}</div>
+                    <div><strong>已入库:</strong> {{ batch.received_quantity }} {{ batch.material.unit }}</div>
+                    <div><strong>已分配:</strong> {{ batch.distributed_quantity }} {{ batch.material.unit }}</div>
+                    <div><strong>可用:</strong> {{ batch.available_quantity }} {{ batch.material.unit }}</div>
+                </div>
+                <p><strong>有效期:</strong> {% if batch.is_expired %}<span class="expired">{{ batch.expire_date }} (已过期)</span>{% else %}{{ batch.expire_date }}{% endif %}</p>
+                <p><strong>存放位置:</strong> {{ batch.storage_location }}</p>
+                <p><strong>创建时间:</strong> {{ batch.created_at }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>分配记录</h3>
+        {% if distributions %}
+        <table>
+            <thead>
+                <tr>
+                    <th>分配ID</th>
+                    <th>项目</th>
+                    <th>受赠方</th>
+                    <th>数量</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in distributions %}
+                <tr>
+                    <td><a href="/distribution/{{ d.id }}/">{{ d.id }}</a></td>
+                    <td>{{ d.project.name }}</td>
+                    <td>{{ d.recipient.name }}</td>
+                    <td>{{ d.quantity }} {{ batch.material.unit }}</td>
+                    <td><span class="badge badge-{{ d.status }}">{{ d.get_status_display }}</span></td>
+                    <td><a href="/distribution/{{ d.id }}/" class="btn btn-secondary" style="font-size: 0.8rem;">详情</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无分配记录</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>历史节点</h3>
+        {% for node in history %}
+        <div class="history-item">
+            <span class="type">{{ node.get_node_type_display }}</span>
+            <p>{{ node.description }}</p>
+            <span class="time">{{ node.created_at }}</span>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

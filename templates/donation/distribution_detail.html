@@ -1,0 +1,98 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>分配详情: #{{ distribution.id }}</h2>
+            <span class="badge badge-{{ distribution.status }}">{{ distribution.get_status_display }}</span>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div>
+                    <h3>批次信息</h3>
+                    <p><strong>批次号:</strong> <a href="/batch/{{ distribution.batch.id }}/">{{ distribution.batch.batch_number }}</a></p>
+                    <p><strong>物资:</strong> {{ distribution.batch.material.name }}</p>
+                    <p><strong>分配数量:</strong> {{ distribution.quantity }} {{ distribution.batch.material.unit }}</p>
+                </div>
+                <div>
+                    <h3>项目信息</h3>
+                    <p><strong>项目名称:</strong> {{ distribution.project.name }}</p>
+                    <p><strong>计划日期:</strong> {{ distribution.planned_date }}</p>
+                    <p><strong>实际发放日期:</strong> {{ distribution.actual_distributed_date|default:'未发放' }}</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h3>受赠方信息</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <p><strong>名称:</strong> {{ distribution.recipient.name }}</p>
+                    <p><strong>联系人:</strong> {{ distribution.recipient.contact|default:'未填写' }}</p>
+                    <p><strong>电话:</strong> {{ distribution.recipient.phone|default:'未填写' }}</p>
+                    <p><strong>地址:</strong> {{ distribution.recipient.address|default:'未填写' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <h3>操作</h3>
+            <div style="display: flex; gap: 1rem;">
+                {% if distribution.status == 'draft' %}
+                <a href="/distribution/{{ distribution.id }}/approve/" class="btn btn-success">批准分配</a>
+                {% endif %}
+                {% if distribution.status == 'approved' %}
+                <a href="/distribution/{{ distribution.id }}/distribute/" class="btn btn-primary">确认发放</a>
+                {% endif %}
+                {% if distribution.status == 'distributed' %}
+                <a href="/distribution/{{ distribution.id }}/sign/" class="btn btn-success">签收确认</a>
+                {% endif %}
+                {% if distribution.status == 'received' %}
+                <a href="/distribution/{{ distribution.id }}/audit/" class="btn btn-warning">审计处理</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if receipt %}
+    <div class="card {% if receipt.has_discrepancy %}discrepancy{% endif %}">
+        <h3>签收凭证</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <p><strong>签收人:</strong> {{ receipt.signed_by }}</p>
+            <p><strong>签收数量:</strong> {{ receipt.quantity_received }} {{ distribution.batch.material.unit }}</p>
+            <p><strong>签收时间:</strong> {{ receipt.signed_at }}</p>
+        </div>
+        {% if receipt.has_discrepancy %}
+        <div class="alert alert-warning" style="margin-top: 1rem;">
+            <strong>数量差异:</strong> 发放 {{ distribution.quantity }}，实际签收 {{ receipt.quantity_received }}，差异 {{ distribution.quantity|add:-receipt.quantity_received }} {{ distribution.batch.material.unit }}
+        </div>
+        {% endif %}
+        {% if receipt.notes %}
+        <p><strong>备注:</strong> {{ receipt.notes }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if audit_records %}
+    <div class="card">
+        <h3>审计记录</h3>
+        {% for record in audit_records %}
+        <div class="history-item">
+            <span class="type">{{ record.get_action_display }}</span>
+            <p>{{ record.notes }}</p>
+            <span class="time">{{ record.created_at }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h3>历史节点</h3>
+        {% for node in history %}
+        <div class="history-item">
+            <span class="type">{{ node.get_node_type_display }}</span>
+            <p>{{ node.description }}</p>
+            <span class="time">{{ node.created_at }}</span>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}

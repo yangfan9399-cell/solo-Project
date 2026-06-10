@@ -1,0 +1,47 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>分配计划列表</h2>
+            <a href="/distribution/create/" class="btn btn-primary">新建分配</a>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <a href="/distribution/list/" class="btn btn-secondary {% if not request.GET.status %}active{% endif %}">全部</a>
+            <a href="/distribution/list/?status=draft" class="btn btn-secondary {% if request.GET.status == 'draft' %}active{% endif %}">草稿</a>
+            <a href="/distribution/list/?status=approved" class="btn btn-secondary {% if request.GET.status == 'approved' %}active{% endif %}">已批准</a>
+            <a href="/distribution/list/?status=distributed" class="btn btn-secondary {% if request.GET.status == 'distributed' %}active{% endif %}">已发放</a>
+            <a href="/distribution/list/?status=received" class="btn btn-secondary {% if request.GET.status == 'received' %}active{% endif %}">已签收</a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>批次</th>
+                    <th>项目</th>
+                    <th>受赠方</th>
+                    <th>数量</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in distributions %}
+                <tr>
+                    <td><a href="/distribution/{{ d.id }}/">{{ d.id }}</a></td>
+                    <td>{{ d.batch.batch_number }}</td>
+                    <td>{{ d.project.name }}</td>
+                    <td>{{ d.recipient.name }}</td>
+                    <td>{{ d.quantity }} {{ d.batch.material.unit }}</td>
+                    <td><span class="badge badge-{{ d.status }}">{{ d.get_status_display }}</span></td>
+                    <td>
+                        <a href="/distribution/{{ d.id }}/" class="btn btn-secondary" style="font-size: 0.8rem;">详情</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

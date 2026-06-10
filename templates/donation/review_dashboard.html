@@ -1,0 +1,54 @@
+{% extends 'donation/base.html' %}
+
+{% block content %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number">{{ discrepancies }}</div>
+            <div class="label">数量差异记录</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>按项目聚合</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>项目名称</th>
+                    <th>分配次数</th>
+                    <th>总数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in by_project %}
+                <tr>
+                    <td>{{ item.project__name }}</td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.total_quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>按物资类别聚合</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>类别名称</th>
+                    <th>分配次数</th>
+                    <th>总数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in by_category %}
+                <tr>
+                    <td>{{ item.batch__material__category__name }}</td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.total_quantity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
