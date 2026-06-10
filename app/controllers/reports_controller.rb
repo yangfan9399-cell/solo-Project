@@ -1,6 +1,6 @@
 class ReportsController < ApplicationController
   before_action :authenticate_user!, except: [:index, :show]
-  before_action :set_report, only: [:show, :confirm_pickup, :reject_pickup, :request_reissue, :approve_reissue, :reject_reissue]
+  before_action :set_report, only: [:show, :confirm_pickup, :reject_pickup, :deliver, :request_reissue, :approve_reissue, :reject_reissue]
 
   def index
     @reports = Report.includes(:exam, :patient).order(created_at: :desc)
@@ -43,6 +43,20 @@ class ReportsController < ApplicationController
       redirect_to @report, alert: "已拒绝领取请求"
     else
       redirect_to @report, alert: "当前状态不允许拒绝"
+    end
+  end
+
+  def deliver
+    if @report.can_deliver?
+      if @report.id_mismatch?
+        redirect_to @report, alert: "身份证不符，禁止交付报告"
+      else
+        @report.update!(status: :delivered)
+        @report.add_history("delivered", current_user.name)
+        redirect_to @report, notice: "报告已交付"
+      end
+    else
+      redirect_to @report, alert: "当前状态不允许交付"
     end
   end
 

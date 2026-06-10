@@ -23,4 +23,8 @@ class User < ApplicationRecord
   def can_access_admin?
     %w[supervisor admin].include?(role)
   end
+
+  def can_deliver?
+    %w[technician supervisor admin].include?(role)
+  end
 end

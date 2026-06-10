@@ -115,18 +115,40 @@
   <div class="card-footer">
     <div class="btn-group">
       <% if current_user && @report.can_request_pickup? %>
-        <%= link_to "申请领取", request_pickup_report_path(@report), method: :post, class: "btn btn-primary" %>
+        <%= form_tag request_pickup_reports_path, method: :post, class: "d-inline" do %>
+          <%= hidden_field_tag :id, @report.id %>
+          <%= submit_tag "申请领取", class: "btn btn-primary" %>
+        <% end %>
       <% end %>
       <% if current_user&.can_confirm? && @report.can_confirm? %>
-        <%= link_to "确认报告", confirm_pickup_report_path(@report), method: :post, class: "btn btn-success" %>
-        <%= link_to "拒绝领取", reject_pickup_report_path(@report), method: :post, class: "btn btn-danger", data: { confirm: "确定拒绝此领取请求?" } %>
+        <%= form_tag confirm_pickup_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "确认报告", class: "btn btn-success" %>
+        <% end %>
+        <%= form_tag reject_pickup_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "拒绝领取", class: "btn btn-danger", data: { confirm: "确定拒绝此领取请求?" } %>
+        <% end %>
       <% end %>
       <% if current_user && @report.can_request_reissue? %>
-        <%= link_to "申请补打", request_reissue_report_path(@report), method: :post, class: "btn btn-warning" %>
+        <%= form_tag request_reissue_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "申请补打", class: "btn btn-warning" %>
+        <% end %>
       <% end %>
       <% if current_user&.can_approve_reissue? && @report.can_approve_reissue? %>
-        <%= link_to "批准补打", approve_reissue_report_path(@report), method: :post, class: "btn btn-success" %>
-        <%= link_to "拒绝补打", reject_reissue_report_path(@report), method: :post, class: "btn btn-danger", data: { confirm: "确定拒绝此补打申请?" } %>
+        <%= form_tag approve_reissue_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "批准补打", class: "btn btn-success" %>
+        <% end %>
+        <%= form_tag reject_reissue_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "拒绝补打", class: "btn btn-danger", data: { confirm: "确定拒绝此补打申请?" } %>
+        <% end %>
+      <% end %>
+      <% if current_user&.can_deliver? && @report.confirmed? %>
+        <% if @report.id_mismatch? %>
+          <button type="button" class="btn btn-primary disabled" title="身份证不符，禁止交付">交付报告</button>
+        <% else %>
+          <%= form_tag deliver_report_path(@report), method: :post, class: "d-inline" do %>
+            <%= submit_tag "交付报告", class: "btn btn-primary" %>
+          <% end %>
+        <% end %>
       <% end %>
       <%= link_to "返回列表", reports_path, class: "btn btn-secondary" %>
     </div>

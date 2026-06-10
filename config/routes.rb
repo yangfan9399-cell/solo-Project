@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     member do
       post :confirm_pickup
       post :reject_pickup
+      post :deliver
       post :request_reissue
       post :approve_reissue
       post :reject_reissue

@@ -58,6 +58,24 @@
   </div>
 </div>
 
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>等待时长统计</h4>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <% @wait_time_stats.each do |range, count| %>
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="stat-value"><%= count %></div>
+            <div class="stat-label"><%= range %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
 <div class="card">
   <div class="card-header">
     <h4>每日报告统计</h4>
