@@ -20,7 +20,7 @@ public static class SeedData
             DangerLevel = DangerLevel.一般,
             DangerType = "电线老化",
             Description = "配电箱内部分电线绝缘层老化，需要更换",
-            InspectionPhotos = "/images/placeholder.png",
+            InspectionPhotos = "/images/placeholder.svg",
             Status = DangerStatus.已送电,
             CreatedAt = DateTime.Now.AddDays(-5),
             CreatedBy = "张三(电工)"
@@ -33,7 +33,7 @@ public static class SeedData
         {
             HiddenDangerId = danger1.Id,
             Requirement = "更换老化电线，确保绝缘性能符合标准",
-            RectificationPhotos = "/images/placeholder.png",
+            RectificationPhotos = "/images/placeholder.svg",
             Feedback = "已更换全部老化电线，经检测合格",
             CompletedAt = DateTime.Now.AddDays(-2),
             Status = RectificationStatus.已通过,
@@ -73,7 +73,7 @@ public static class SeedData
             DangerLevel = DangerLevel.严重,
             DangerType = "漏保失效",
             Description = "漏电保护器失灵，无法起到漏电保护作用",
-            InspectionPhotos = "/images/placeholder.png",
+            InspectionPhotos = "/images/placeholder.svg",
             Status = DangerStatus.已送电,
             CreatedAt = DateTime.Now.AddDays(-7),
             CreatedBy = "赵六(电工)"
@@ -85,7 +85,7 @@ public static class SeedData
         {
             HiddenDangerId = danger2.Id,
             Requirement = "立即更换漏电保护器，选型符合规范要求",
-            RectificationPhotos = "/images/placeholder.png",
+            RectificationPhotos = "/images/placeholder.svg",
             Feedback = "已更换全新的漏电保护器，经测试动作正常",
             CompletedAt = DateTime.Now.AddDays(-4),
             Status = RectificationStatus.已通过,
@@ -123,7 +123,7 @@ public static class SeedData
             DangerLevel = DangerLevel.一般,
             DangerType = "整改照片缺失",
             Description = "上次整改未上传整改照片，需要补充",
-            InspectionPhotos = "/images/placeholder.png",
+            InspectionPhotos = "/images/placeholder.svg",
             Status = DangerStatus.已送电,
             CreatedAt = DateTime.Now.AddDays(-10),
             CreatedBy = "周八(电工)"
@@ -135,7 +135,7 @@ public static class SeedData
         {
             HiddenDangerId = danger3.Id,
             Requirement = "补充上传整改照片，证明整改已完成",
-            RectificationPhotos = "/images/placeholder.png",
+            RectificationPhotos = "/images/placeholder.svg",
             Feedback = "已补充上传整改照片",
             CompletedAt = DateTime.Now.AddDays(-6),
             Status = RectificationStatus.已通过,
@@ -174,7 +174,7 @@ public static class SeedData
             DangerLevel = DangerLevel.严重,
             DangerType = "复检不通过",
             Description = "整改不到位，漏保测试仍未通过",
-            InspectionPhotos = "/images/placeholder.png",
+            InspectionPhotos = "/images/placeholder.svg",
             Status = DangerStatus.退回,
             CreatedAt = DateTime.Now.AddDays(-3),
             CreatedBy = "郑十(电工)"
@@ -186,7 +186,7 @@ public static class SeedData
         {
             HiddenDangerId = danger4.Id,
             Requirement = "重新测试漏保动作电流，确保符合30mA标准",
-            RectificationPhotos = "/images/placeholder.png",
+            RectificationPhotos = "/images/placeholder.svg",
             Feedback = "已重新测试，动作电流28mA，符合要求",
             CompletedAt = DateTime.Now.AddDays(-1),
             Status = RectificationStatus.待复检,
@@ -195,12 +195,24 @@ public static class SeedData
         };
         context.Rectifications.Add(rect4);
 
+        // 添加审批记录（退回）
+        var approval4 = new PowerApproval
+        {
+            HiddenDangerId = danger4.Id,
+            ApprovedBy = "王五(项目经理)",
+            ApprovalResult = ApprovalResult.退回,
+            Comment = "漏保测试数据不达标，实际测试值为35mA，超出30mA标准，需重新整改",
+            ApprovedAt = DateTime.Now,
+            CanPowerOn = false // 复检不通过，禁止送电
+        };
+        context.PowerApprovals.Add(approval4);
+
         context.StatusHistories.AddRange(new[]
         {
             new StatusHistory { HiddenDangerId = danger4.Id, Status = DangerStatus.待整改, Operator = "郑十(电工)", Remark = "提交巡检", OperatedAt = DateTime.Now.AddDays(-3) },
             new StatusHistory { HiddenDangerId = danger4.Id, Status = DangerStatus.整改中, Operator = "钱十一(安全员)", Remark = "下发整改要求", OperatedAt = DateTime.Now.AddDays(-2) },
             new StatusHistory { HiddenDangerId = danger4.Id, Status = DangerStatus.待复检, Operator = "郑十(电工)", Remark = "整改完成，申请复检", OperatedAt = DateTime.Now.AddDays(-1) },
-            new StatusHistory { HiddenDangerId = danger4.Id, Status = DangerStatus.退回, Operator = "王五(项目经理)", Remark = "复检不通过，退回重新整改", OperatedAt = DateTime.Now }
+            new StatusHistory { HiddenDangerId = danger4.Id, Status = DangerStatus.退回, Operator = "王五(项目经理)", Remark = "复检不通过，退回重新整改: 漏保测试数据不达标", OperatedAt = DateTime.Now }
         });
 
         context.SaveChanges();

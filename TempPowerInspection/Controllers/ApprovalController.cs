@@ -38,6 +38,105 @@ public class ApprovalController : Controller
         return View(approval);
     }
 
+    // GET: Approval/Create - 为待复检隐患创建审批记录
+    public async Task<IActionResult> Create(int hiddenDangerId)
+    {
+        var danger = await _hiddenDangerService.GetByIdAsync(hiddenDangerId);
+        if (danger == null)
+        {
+            return NotFound();
+        }
+
+        // 检查是否已有审批记录
+        var existingApproval = await _approvalService.GetByHiddenDangerIdAsync(hiddenDangerId);
+        if (existingApproval != null)
+        {
+            // 已有审批记录，跳转到审批页面
+            return RedirectToAction(nameof(Approve), new { id = existingApproval.Id });
+        }
+
+        ViewBag.HiddenDanger = danger;
+        return View();
+    }
+
+    // POST: Approval/Create - 创建审批记录并审批通过
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("HiddenDangerId,ApprovedBy,Comment")] PowerApproval approval)
+    {
+        if (ModelState.IsValid)
+        {
+            approval.ApprovalResult = ApprovalResult.通过;
+            approval.ApprovedAt = DateTime.Now;
+            approval.CanPowerOn = true;
+
+            await _approvalService.CreateAsync(approval);
+
+            var danger = await _hiddenDangerService.GetByIdAsync(approval.HiddenDangerId);
+            if (danger != null)
+            {
+                danger.Status = DangerStatus.已通过;
+                await _hiddenDangerService.UpdateAsync(danger);
+
+                // Add status history
+                _context.StatusHistories.Add(new StatusHistory
+                {
+                    HiddenDangerId = danger.Id,
+                    Status = DangerStatus.已通过,
+                    Operator = approval.ApprovedBy ?? "项目经理",
+                    Remark = "复检通过",
+                    OperatedAt = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Details", "HiddenDanger", new { id = approval.HiddenDangerId });
+        }
+
+        var danger = await _hiddenDangerService.GetByIdAsync(approval.HiddenDangerId);
+        ViewBag.HiddenDanger = danger;
+        return View(approval);
+    }
+
+    // POST: Approval/CreateAndReject - 创建审批记录并退回
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAndReject([Bind("HiddenDangerId,ApprovedBy,Comment")] PowerApproval approval)
+    {
+        if (ModelState.IsValid)
+        {
+            approval.ApprovalResult = ApprovalResult.退回;
+            approval.ApprovedAt = DateTime.Now;
+            approval.CanPowerOn = false; // 复检不通过，禁止送电
+
+            await _approvalService.CreateAsync(approval);
+
+            var danger = await _hiddenDangerService.GetByIdAsync(approval.HiddenDangerId);
+            if (danger != null)
+            {
+                danger.Status = DangerStatus.退回;
+                await _hiddenDangerService.UpdateAsync(danger);
+
+                // Add status history
+                _context.StatusHistories.Add(new StatusHistory
+                {
+                    HiddenDangerId = danger.Id,
+                    Status = DangerStatus.退回,
+                    Operator = approval.ApprovedBy ?? "项目经理",
+                    Remark = $"复检不通过，退回重新整改: {approval.Comment}",
+                    OperatedAt = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Details", "HiddenDanger", new { id = approval.HiddenDangerId });
+        }
+
+        var dangerForReject = await _hiddenDangerService.GetByIdAsync(approval.HiddenDangerId);
+        ViewBag.HiddenDanger = dangerForReject;
+        return View("Create", approval);
+    }
+
     public async Task<IActionResult> Approve(int id)
     {
         var approval = await _approvalService.GetByIdAsync(id);
