@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兽医复核 - 入境动物隔离观察与放行系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <nav class="bg-[#1e3a5f] shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'batches:list' %}" class="text-white hover:text-[#f59e0b] transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-white font-bold text-xl">兽医复核</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[#f59e0b] text-sm">{{ user.full_name }} ({{ user.get_role_display }})</span>
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-all">
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if batches_to_review or batches_with_abnormal %}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="bg-[#ef4444] px-6 py-4">
+                    <h2 class="text-white font-bold">待复核批次 ({{ batches_to_review.count|add:batches_with_abnormal.count }})</h2>
+                </div>
+                <div class="p-6">
+                    {% if batches_to_review %}
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">异常待复核批次</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                            {% for batch in batches_to_review %}
+                                <div class="border-2 border-red-200 bg-red-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <h4 class="font-bold text-[#1e3a5f]">{{ batch.batch_number }}</h4>
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">异常</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600 space-y-1 mb-4">
+                                        <p>动物种类: {{ batch.animal_type }}</p>
+                                        <p>数量: {{ batch.quantity }}</p>
+                                        <p>来源国: {{ batch.origin_country }}</p>
+                                        <p>隔离天数: {{ batch.get_quarantine_days }} 天</p>
+                                    </div>
+                                    <a href="{% url 'observations:review' batch.pk %}" 
+                                       class="block w-full bg-[#1e3a5f] text-white text-center py-2 rounded-lg hover:bg-[#2d5a87] transition-all">
+                                        进行复核
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if batches_with_abnormal %}
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">发现异常症状批次</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for batch in batches_with_abnormal %}
+                                <div class="border-2 border-orange-200 bg-orange-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <h4 class="font-bold text-[#1e3a5f]">{{ batch.batch_number }}</h4>
+                                        <span class="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full">有异常</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600 space-y-1 mb-4">
+                                        <p>动物种类: {{ batch.animal_type }}</p>
+                                        <p>数量: {{ batch.quantity }}</p>
+                                        <p>来源国: {{ batch.origin_country }}</p>
+                                        <p>隔离天数: {{ batch.get_quarantine_days }} 天</p>
+                                    </div>
+                                    <a href="{% url 'observations:review' batch.pk %}" 
+                                       class="block w-full bg-[#f59e0b] text-white text-center py-2 rounded-lg hover:bg-orange-600 transition-all">
+                                        进行复核
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#10b981] px-6 py-4">
+                    <h2 class="text-white font-bold">暂无待复核批次</h2>
+                </div>
+                <div class="p-12 text-center text-gray-500">
+                    <svg class="w-16 h-16 mx-auto text-green-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-lg">目前没有需要复核的批次</p>
+                    <p class="text-sm mt-2">所有批次观察记录正常，无需兽医复核</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兽医复核 - {{ batch.batch_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <nav class="bg-[#1e3a5f] shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'observations:review_list' %}" class="text-white hover:text-[#f59e0b] transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-white font-bold text-xl">兽医复核 - {{ batch.batch_number }}</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[#f59e0b] text-sm">{{ user.full_name }} ({{ user.get_role_display }})</span>
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-all">
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">批次信息</h2>
+                </div>
+                <div class="p-6 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">批次号:</span>
+                        <span class="font-medium">{{ batch.batch_number }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">动物种类:</span>
+                        <span class="font-medium">{{ batch.animal_type }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">数量:</span>
+                        <span class="font-medium">{{ batch.quantity }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">来源国:</span>
+                        <span class="font-medium">{{ batch.origin_country }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">隔离天数:</span>
+                        <span class="font-medium">{{ batch.get_quarantine_days }} 天</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">当前状态:</span>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                                    {% if batch.status == 'reviewing' %}bg-purple-100 text-purple-700{% endif %}
+                                    {% if batch.status == 'quarantining' %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ batch.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">证明材料状态</h2>
+                </div>
+                <div class="p-6 space-y-3">
+                    <div class="flex items-center justify-between p-3 rounded-lg {% if batch.vaccine_certificate %}bg-green-50{% else %}bg-red-50{% endif %}">
+                        <span class="{% if batch.vaccine_certificate %}text-green-700{% else %}text-red-700{% endif %} font-medium">
+                            疫苗证明
+                        </span>
+                        {% if batch.vaccine_certificate %}
+                            <span class="text-green-600">✓ 已上传</span>
+                        {% else %}
+                            <span class="text-red-600">✗ 未上传</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg {% if batch.health_certificate %}bg-green-50{% else %}bg-gray-50{% endif %}">
+                        <span class="{% if batch.health_certificate %}text-green-700{% else %}text-gray-600{% endif %} font-medium">
+                            健康证明
+                        </span>
+                        {% if batch.health_certificate %}
+                            <span class="text-green-600">✓ 已上传</span>
+                        {% else %}
+                            <span class="text-gray-400">✗ 未上传</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg {% if batch.quarantine_certificate %}bg-green-50{% else %}bg-gray-50{% endif %}">
+                        <span class="{% if batch.quarantine_certificate %}text-green-700{% else %}text-gray-600{% endif %} font-medium">
+                            检疫证书
+                        </span>
+                        {% if batch.quarantine_certificate %}
+                            <span class="text-green-600">✓ 已上传</span>
+                        {% else %}
+                            <span class="text-gray-400">✗ 未上传</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+            <div class="bg-[#1e3a5f] px-6 py-4">
+                <h2 class="text-white font-bold">观察记录</h2>
+            </div>
+            <div class="p-6">
+                {% if observations %}
+                    <div class="space-y-4">
+                        {% for obs in observations %}
+                            <div class="border rounded-lg p-4 {% if obs.is_abnormal %}border-red-300 bg-red-50{% else %}border-gray-200{% endif %}">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="font-bold text-[#1e3a5f]">{{ obs.observation_date }}</span>
+                                    {% if obs.is_abnormal %}
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">异常</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">正常</span>
+                                    {% endif %}
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600 mb-2">
+                                    <div>体温: {{ obs.temperature }}℃</div>
+                                    <div>食欲: {{ obs.get_appetite_display }}</div>
+                                    <div>精神: {{ obs.get_mental_state_display }}</div>
+                                    <div>排泄: {{ obs.get_excretion_display }}</div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    <div>环境: 温度 {{ obs.environment_temp }}℃ / 湿度 {{ obs.environment_humidity }}%</div>
+                                    <div>饮水: {{ obs.water_intake }}</div>
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    <strong>饲养记录:</strong> {{ obs.feeding_record }}
+                                </div>
+                                {% if obs.abnormal_symptoms %}
+                                    <div class="text-sm text-red-600 font-medium">
+                                        <strong>异常症状:</strong> {{ obs.abnormal_symptoms }}
+                                    </div>
+                                {% endif %}
+                                <div class="text-xs text-gray-400 mt-2">观察员: {{ obs.observer.full_name }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-gray-500 py-8">
+                        暂无观察记录
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-[#1e3a5f] px-6 py-4">
+                <h2 class="text-white font-bold">兽医复核意见</h2>
+            </div>
+            <form method="post" action="{% url 'observations:review' batch.pk %}" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">健康状态 *</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <label class="flex items-center p-4 border-2 border-green-200 rounded-lg cursor-pointer hover:bg-green-50 transition-all">
+                            <input type="radio" name="health_status" value="healthy" required class="mr-3">
+                            <div>
+                                <div class="font-medium text-green-700">健康</div>
+                                <div class="text-xs text-gray-500">可以放行或进入审批</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-orange-200 rounded-lg cursor-pointer hover:bg-orange-50 transition-all">
+                            <input type="radio" name="health_status" value="attention_needed" required class="mr-3">
+                            <div>
+                                <div class="font-medium text-orange-700">需观察</div>
+                                <div class="text-xs text-gray-500">建议延长隔离期</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-4 border-2 border-red-200 rounded-lg cursor-pointer hover:bg-red-50 transition-all">
+                            <input type="radio" name="health_status" value="unhealthy" required class="mr-3">
+                            <div>
+                                <div class="font-medium text-red-700">不健康</div>
+                                <div class="text-xs text-gray-500">建议退运处理</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="comments" class="block text-sm font-medium text-gray-700 mb-2">复核意见 *</label>
+                    <textarea id="comments" 
+                              name="comments" 
+                              rows="4"
+                              required
+                              placeholder="请详细描述复核情况和意见..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'observations:review_list' %}" 
+                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        返回列表
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-[#1e3a5f] text-white rounded-lg font-medium hover:bg-[#2d5a87] transition-all">
+                        提交复核意见
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

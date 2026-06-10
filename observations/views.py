@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.db.models import Count, Q
 from .models import ObservationRecord, ObservationPhoto
 from batches.models import Batch, StatusHistory
 
@@ -94,3 +95,73 @@ def observation_detail(request, pk):
         'observation': observation,
     }
     return render(request, 'observations/observation_detail.html', context)
+
+
+@login_required
+def veterinary_review_list(request):
+    if not request.user.can_review_health():
+        messages.error(request, '您没有权限访问兽医复核功能')
+        return redirect('batches:list')
+    
+    batches_to_review = Batch.objects.filter(status='reviewing').select_related('created_by')
+    batches_with_abnormal = Batch.objects.filter(status='quarantining').annotate(
+        abnormal_count=Count('observation_records', filter=Q(observation_records__is_abnormal=True))
+    ).filter(abnormal_count__gt=0)
+    
+    context = {
+        'batches_to_review': batches_to_review,
+        'batches_with_abnormal': batches_with_abnormal,
+    }
+    return render(request, 'observations/veterinary_review_list.html', context)
+
+
+@login_required
+def veterinary_review(request, batch_id):
+    if not request.user.can_review_health():
+        messages.error(request, '您没有权限进行兽医复核')
+        return redirect('batches:list')
+    
+    batch = get_object_or_404(Batch, pk=batch_id)
+    observations = ObservationRecord.objects.filter(batch=batch).order_by('-observation_date')
+    
+    if request.method == 'POST':
+        health_status = request.POST.get('health_status')
+        comments = request.POST.get('comments', '')
+        
+        old_status = batch.status
+        if health_status == 'healthy':
+            batch.status = 'approving'
+            action = 'approve'
+        elif health_status == 'attention_needed':
+            batch.status = 'extended'
+            action = 'extend'
+        else:
+            batch.status = 'returned'
+            action = 'return'
+        
+        batch.save()
+        
+        StatusHistory.objects.create(
+            batch=batch,
+            from_status=old_status,
+            to_status=batch.status,
+            changed_by=request.user,
+            notes=f'兽医复核: {comments}'
+        )
+        
+        from batches.models import ApprovalHistory
+        ApprovalHistory.objects.create(
+            batch=batch,
+            approver=request.user,
+            action='veterinary_review',
+            reason=f'健康状态: {health_status}, 备注: {comments}'
+        )
+        
+        messages.success(request, f'兽医复核完成，批次状态已更新为 {batch.get_status_display()}')
+        return redirect('observations:review_list')
+    
+    context = {
+        'batch': batch,
+        'observations': observations,
+    }
+    return render(request, 'observations/veterinary_review_form.html', context)

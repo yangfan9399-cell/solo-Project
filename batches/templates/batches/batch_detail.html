@@ -215,23 +215,40 @@
                     
                     {% if user.can_approve_release %}
                         <div class="space-y-3">
-                            <button {% if not can_release %}disabled{% endif %}
-                                    class="w-full py-3 rounded-lg font-medium transition-all
-                                           {% if can_release %}bg-[#10b981] text-white hover:bg-green-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
-                                ✓ 放行
-                            </button>
+                            <form method="post" action="{% url 'batches:approve_release' batch.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" {% if not can_release %}disabled{% endif %}
+                                        class="w-full py-3 rounded-lg font-medium transition-all
+                                               {% if can_release %}bg-[#10b981] text-white hover:bg-green-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}"
+                                        onclick="return confirm('确认放行该批次？')">
+                                    ✓ 放行
+                                </button>
+                            </form>
                             
-                            <button {% if not can_extend %}disabled{% endif %}
-                                    class="w-full py-3 rounded-lg font-medium transition-all
-                                           {% if can_extend %}bg-[#f59e0b] text-white hover:bg-orange-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
-                                延长隔离
-                            </button>
+                            <form method="post" action="{% url 'batches:approve_extend' batch.pk %}">
+                                {% csrf_token %}
+                                <div class="flex space-x-2">
+                                    <input type="number" name="extend_days" value="7" min="1" max="30" 
+                                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                    <button type="submit" {% if not can_extend %}disabled{% endif %}
+                                            class="flex-1 py-3 rounded-lg font-medium transition-all
+                                                   {% if can_extend %}bg-[#f59e0b] text-white hover:bg-orange-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
+                                        延长隔离
+                                    </button>
+                                </div>
+                                <input type="hidden" name="reason" value="延长隔离">
+                            </form>
                             
-                            <button {% if not can_return %}disabled{% endif %}
-                                    class="w-full py-3 rounded-lg font-medium transition-all
-                                           {% if can_return %}bg-[#ef4444] text-white hover:bg-red-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
-                                退运
-                            </button>
+                            <form method="post" action="{% url 'batches:approve_return' batch.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" {% if not can_return %}disabled{% endif %}
+                                        class="w-full py-3 rounded-lg font-medium transition-all
+                                               {% if can_return %}bg-[#ef4444] text-white hover:bg-red-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}"
+                                               onclick="return confirm('确认退运该批次？')">
+                                    退运
+                                </button>
+                                <input type="hidden" name="reason" value="退运">
+                            </form>
                         </div>
                     {% else %}
                         <div class="text-center text-gray-500 py-8">

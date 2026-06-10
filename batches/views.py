@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
+from django.conf import settings
+import os
 from .models import Batch, Document, ApprovalHistory, StatusHistory
 from observations.models import ObservationRecord
 
@@ -56,9 +58,9 @@ def batch_detail(request, pk):
     approval_history = ApprovalHistory.objects.filter(batch=batch).order_by('-action_time')
     status_history = StatusHistory.objects.filter(batch=batch).order_by('-changed_at')
     
-    can_release = batch.can_release() and request.user.can_approve_release() and batch.status == 'approving'
-    can_extend = request.user.can_approve_release() and batch.status in ['approving', 'quarantining']
-    can_return = request.user.can_approve_release() and batch.status in ['approving', 'reviewing']
+    can_release = batch.can_release() and request.user.can_approve_release() and batch.status in ['quarantining', 'approving']
+    can_extend = request.user.can_approve_release() and batch.status in ['quarantining', 'reviewing', 'approving', 'extended']
+    can_return = request.user.can_approve_release() and batch.status in ['quarantining', 'reviewing', 'approving']
     
     context = {
         'batch': batch,
@@ -149,27 +151,35 @@ def upload_document(request, pk):
         file = request.FILES.get('file')
         
         if file:
-            file_path = f'media/certificates/{document_type}/{batch.batch_number}_{file.name}'
+            upload_dir = os.path.join(settings.MEDIA_ROOT, 'certificates', document_type)
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            file_name = f'{batch.batch_number}_{file.name}'
+            file_path = os.path.join(upload_dir, file_name)
+            
             with open(file_path, 'wb+') as destination:
                 for chunk in file.chunks():
                     destination.write(chunk)
             
+            relative_path = f'certificates/{document_type}/{file_name}'
+            
             Document.objects.create(
                 batch=batch,
                 document_type=document_type,
-                file_path=file_path,
+                file_path=relative_path,
                 uploaded_by=request.user
             )
             
             if document_type == 'vaccine_certificate':
                 batch.vaccine_certificate = True
+                messages.success(request, '疫苗证明上传成功！')
             elif document_type == 'health_certificate':
                 batch.health_certificate = True
+                messages.success(request, '健康证明上传成功！')
             elif document_type == 'quarantine_certificate':
                 batch.quarantine_certificate = True
+                messages.success(request, '检疫证书上传成功！')
             batch.save()
-            
-            messages.success(request, '文档上传成功')
     
     return redirect('batches:detail', pk=batch.pk)
 
