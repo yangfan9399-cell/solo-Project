@@ -63,6 +63,7 @@ namespace EquipmentMaintenanceSystem.Data
                 new ProductionLine { Name = "C产线", Description = "主要生产C产品", IsActive = true }
             };
             context.ProductionLines.AddRange(productionLines);
+            await context.SaveChangesAsync();
 
             var equipmentTypes = new[]
             {
@@ -72,7 +73,6 @@ namespace EquipmentMaintenanceSystem.Data
                 new EquipmentType { Name = "压缩机", Description = "压缩设备" }
             };
             context.EquipmentTypes.AddRange(equipmentTypes);
-
             await context.SaveChangesAsync();
 
             var equipments = new[]
@@ -85,6 +85,7 @@ namespace EquipmentMaintenanceSystem.Data
                 new Equipment { Code = "EQ-C002", Name = "C产线循环泵", Location = "C区-02", Status = EquipmentStatus.Normal, InstallDate = DateTime.Now.AddYears(-2), LastMaintenanceDate = DateTime.Now.AddMonths(-2), ProductionLineId = 3, EquipmentTypeId = 2 }
             };
             context.Equipments.AddRange(equipments);
+            await context.SaveChangesAsync();
 
             var spareParts = new[]
             {
@@ -95,30 +96,7 @@ namespace EquipmentMaintenanceSystem.Data
                 new SparePart { Code = "SP-005", Name = "泵叶轮", Specification = "DN80", StockQuantity = 8, SafetyStock = 4, Location = "仓库A-03" }
             };
             context.SpareParts.AddRange(spareParts);
-
             await context.SaveChangesAsync();
-
-            var inspection1 = new InspectionRecord
-            {
-                InspectionCode = "INS-20240101-001",
-                InspectionTime = DateTime.Now.AddDays(-5),
-                Description = "电机异响",
-                Status = InspectionStatus.Completed,
-                ReportedBy = "operator",
-                ReportedTime = DateTime.Now.AddDays(-5),
-                EquipmentId = 1
-            };
-            context.InspectionRecords.Add(inspection1);
-
-            context.InspectionItems.Add(new InspectionItem
-            {
-                ItemName = "电机运行声音",
-                StandardValue = "正常无杂音",
-                ActualValue = "有异常异响",
-                IsAbnormal = true,
-                AbnormalDescription = "电机运行时有明显异响",
-                InspectionRecordId = inspection1.Id
-            });
 
             var maintenanceOrder1 = new MaintenanceOrder
             {
@@ -138,53 +116,7 @@ namespace EquipmentMaintenanceSystem.Data
                 EquipmentId = 1
             };
             context.MaintenanceOrders.Add(maintenanceOrder1);
-
-            context.MaintenanceSpareParts.Add(new MaintenanceSparePart
-            {
-                MaintenanceOrderId = maintenanceOrder1.Id,
-                SparePartId = 1,
-                Quantity = 1,
-                IsAvailable = true
-            });
-
-            inspection1.MaintenanceOrderId = maintenanceOrder1.Id;
-
-            context.InspectionHistories.AddRange(
-                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
-                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(1), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
-                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(2), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
-            );
-
-            context.MaintenanceHistories.AddRange(
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5), Operator = "teamleader", Action = MaintenanceAction.Created, Remark = "创建工单" },
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(1), Operator = "teamleader", Action = MaintenanceAction.StopConfirmed, Remark = "确认停机" },
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(2), Operator = "maintenance", Action = MaintenanceAction.RepairStarted, Remark = "开始维修" },
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(4), Operator = "maintenance", Action = MaintenanceAction.RepairCompleted, Remark = "维修完成" },
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(4).AddMinutes(30), Operator = "engineer", Action = MaintenanceAction.ReviewApproved, Remark = "验收通过" },
-                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(5), Operator = "engineer", Action = MaintenanceAction.Resumed, Remark = "确认复产" }
-            );
-
-            var inspection2 = new InspectionRecord
-            {
-                InspectionCode = "INS-20240102-001",
-                InspectionTime = DateTime.Now.AddDays(-3),
-                Description = "压缩机压力不足",
-                Status = InspectionStatus.Maintenance,
-                ReportedBy = "operator",
-                ReportedTime = DateTime.Now.AddDays(-3),
-                EquipmentId = 3
-            };
-            context.InspectionRecords.Add(inspection2);
-
-            context.InspectionItems.Add(new InspectionItem
-            {
-                ItemName = "压缩机排气压力",
-                StandardValue = "0.8MPa",
-                ActualValue = "0.5MPa",
-                IsAbnormal = true,
-                AbnormalDescription = "排气压力低于标准值",
-                InspectionRecordId = inspection2.Id
-            });
+            await context.SaveChangesAsync();
 
             var maintenanceOrder2 = new MaintenanceOrder
             {
@@ -203,6 +135,104 @@ namespace EquipmentMaintenanceSystem.Data
                 EquipmentId = 3
             };
             context.MaintenanceOrders.Add(maintenanceOrder2);
+            await context.SaveChangesAsync();
+
+            var maintenanceOrder4 = new MaintenanceOrder
+            {
+                OrderCode = "WO-20240104-001",
+                CreateTime = DateTime.Now.AddDays(-1),
+                StopTime = DateTime.Now.AddDays(-1).AddHours(1),
+                RepairStartTime = DateTime.Now.AddDays(-1).AddHours(2),
+                RepairEndTime = DateTime.Now.AddDays(-1).AddHours(4),
+                ResumeTime = null,
+                Status = MaintenanceStatus.Failed,
+                FailureReason = "泵叶轮不平衡",
+                RepairContent = "重新平衡叶轮",
+                ConfirmedBy = "teamleader",
+                RepairedBy = "maintenance",
+                ReviewedBy = "engineer",
+                DowntimeLoss = null,
+                EquipmentId = 6
+            };
+            context.MaintenanceOrders.Add(maintenanceOrder4);
+            await context.SaveChangesAsync();
+
+            var inspection1 = new InspectionRecord
+            {
+                InspectionCode = "INS-20240101-001",
+                InspectionTime = DateTime.Now.AddDays(-5),
+                Description = "电机异响",
+                Status = InspectionStatus.Completed,
+                ReportedBy = "operator",
+                ReportedTime = DateTime.Now.AddDays(-5),
+                EquipmentId = 1,
+                MaintenanceOrderId = maintenanceOrder1.Id
+            };
+            context.InspectionRecords.Add(inspection1);
+            await context.SaveChangesAsync();
+
+            context.InspectionItems.Add(new InspectionItem
+            {
+                ItemName = "电机运行声音",
+                StandardValue = "正常无杂音",
+                ActualValue = "有异常异响",
+                IsAbnormal = true,
+                AbnormalDescription = "电机运行时有明显异响",
+                InspectionRecordId = inspection1.Id
+            });
+
+            context.InspectionHistories.AddRange(
+                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
+                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(1), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
+                new InspectionHistory { InspectionRecordId = inspection1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(2), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
+            );
+
+            context.MaintenanceSpareParts.Add(new MaintenanceSparePart
+            {
+                MaintenanceOrderId = maintenanceOrder1.Id,
+                SparePartId = 1,
+                Quantity = 1,
+                IsAvailable = true
+            });
+
+            context.MaintenanceHistories.AddRange(
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5), Operator = "teamleader", Action = MaintenanceAction.Created, Remark = "创建工单" },
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(1), Operator = "teamleader", Action = MaintenanceAction.StopConfirmed, Remark = "确认停机" },
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(2), Operator = "maintenance", Action = MaintenanceAction.RepairStarted, Remark = "开始维修" },
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(4), Operator = "maintenance", Action = MaintenanceAction.RepairCompleted, Remark = "维修完成" },
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(4).AddMinutes(30), Operator = "engineer", Action = MaintenanceAction.ReviewApproved, Remark = "验收通过" },
+                new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder1.Id, OperationTime = DateTime.Now.AddDays(-5).AddHours(5), Operator = "engineer", Action = MaintenanceAction.Resumed, Remark = "确认复产" }
+            );
+
+            var inspection2 = new InspectionRecord
+            {
+                InspectionCode = "INS-20240102-001",
+                InspectionTime = DateTime.Now.AddDays(-3),
+                Description = "压缩机压力不足",
+                Status = InspectionStatus.Maintenance,
+                ReportedBy = "operator",
+                ReportedTime = DateTime.Now.AddDays(-3),
+                EquipmentId = 3,
+                MaintenanceOrderId = maintenanceOrder2.Id
+            };
+            context.InspectionRecords.Add(inspection2);
+            await context.SaveChangesAsync();
+
+            context.InspectionItems.Add(new InspectionItem
+            {
+                ItemName = "压缩机排气压力",
+                StandardValue = "0.8MPa",
+                ActualValue = "0.5MPa",
+                IsAbnormal = true,
+                AbnormalDescription = "排气压力低于标准值",
+                InspectionRecordId = inspection2.Id
+            });
+
+            context.InspectionHistories.AddRange(
+                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
+                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3).AddHours(2), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
+                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3).AddHours(2), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
+            );
 
             context.MaintenanceSpareParts.Add(new MaintenanceSparePart
             {
@@ -211,14 +241,6 @@ namespace EquipmentMaintenanceSystem.Data
                 Quantity = 2,
                 IsAvailable = false
             });
-
-            inspection2.MaintenanceOrderId = maintenanceOrder2.Id;
-
-            context.InspectionHistories.AddRange(
-                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
-                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3).AddHours(2), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
-                new InspectionHistory { InspectionRecordId = inspection2.Id, OperationTime = DateTime.Now.AddDays(-3).AddHours(2), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
-            );
 
             context.MaintenanceHistories.AddRange(
                 new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder2.Id, OperationTime = DateTime.Now.AddDays(-3), Operator = "teamleader", Action = MaintenanceAction.Created, Remark = "创建工单" },
@@ -234,9 +256,11 @@ namespace EquipmentMaintenanceSystem.Data
                 Status = InspectionStatus.Rejected,
                 ReportedBy = "operator",
                 ReportedTime = DateTime.Now.AddDays(-2),
-                EquipmentId = 4
+                EquipmentId = 4,
+                MaintenanceOrderId = null
             };
             context.InspectionRecords.Add(inspection3);
+            await context.SaveChangesAsync();
 
             context.InspectionItems.Add(new InspectionItem
             {
@@ -261,9 +285,11 @@ namespace EquipmentMaintenanceSystem.Data
                 Status = InspectionStatus.Maintenance,
                 ReportedBy = "operator",
                 ReportedTime = DateTime.Now.AddDays(-1),
-                EquipmentId = 6
+                EquipmentId = 6,
+                MaintenanceOrderId = maintenanceOrder4.Id
             };
             context.InspectionRecords.Add(inspection4);
+            await context.SaveChangesAsync();
 
             context.InspectionItems.Add(new InspectionItem
             {
@@ -275,24 +301,11 @@ namespace EquipmentMaintenanceSystem.Data
                 InspectionRecordId = inspection4.Id
             });
 
-            var maintenanceOrder4 = new MaintenanceOrder
-            {
-                OrderCode = "WO-20240104-001",
-                CreateTime = DateTime.Now.AddDays(-1),
-                StopTime = DateTime.Now.AddDays(-1).AddHours(1),
-                RepairStartTime = DateTime.Now.AddDays(-1).AddHours(2),
-                RepairEndTime = DateTime.Now.AddDays(-1).AddHours(4),
-                ResumeTime = null,
-                Status = MaintenanceStatus.Failed,
-                FailureReason = "泵叶轮不平衡",
-                RepairContent = "重新平衡叶轮",
-                ConfirmedBy = "teamleader",
-                RepairedBy = "maintenance",
-                ReviewedBy = "engineer",
-                DowntimeLoss = null,
-                EquipmentId = 6
-            };
-            context.MaintenanceOrders.Add(maintenanceOrder4);
+            context.InspectionHistories.AddRange(
+                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
+                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1).AddHours(1), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
+                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1).AddHours(1), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
+            );
 
             context.MaintenanceSpareParts.Add(new MaintenanceSparePart
             {
@@ -301,14 +314,6 @@ namespace EquipmentMaintenanceSystem.Data
                 Quantity = 1,
                 IsAvailable = true
             });
-
-            inspection4.MaintenanceOrderId = maintenanceOrder4.Id;
-
-            context.InspectionHistories.AddRange(
-                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1), Operator = "operator", Action = InspectionAction.Reported, Remark = "提交点检异常" },
-                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1).AddHours(1), Operator = "teamleader", Action = InspectionAction.Confirmed, Remark = "确认停机" },
-                new InspectionHistory { InspectionRecordId = inspection4.Id, OperationTime = DateTime.Now.AddDays(-1).AddHours(1), Operator = "teamleader", Action = InspectionAction.Transferred, Remark = "转维修" }
-            );
 
             context.MaintenanceHistories.AddRange(
                 new MaintenanceHistory { MaintenanceOrderId = maintenanceOrder4.Id, OperationTime = DateTime.Now.AddDays(-1), Operator = "teamleader", Action = MaintenanceAction.Created, Remark = "创建工单" },

@@ -1,3 +1,4 @@
+@model LoginViewModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "登录";
@@ -61,5 +62,5 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }
