@@ -1,0 +1,262 @@
+@{
+    ViewData["Title"] = "看板统计";
+    var statistics = ViewBag.Statistics as HazardousGoodsYard.Services.DashboardStatistics;
+    var byGoodsCategory = ViewBag.ByGoodsCategory as List<HazardousGoodsYard.Services.ReservationGroupByGoodsCategory>;
+    var byYard = ViewBag.ByYard as List<HazardousGoodsYard.Services.ReservationGroupByYard>;
+    var byRejectionReason = ViewBag.ByRejectionReason as List<HazardousGoodsYard.Services.ReservationGroupByRejectionReason>;
+    var byWaitingTime = ViewBag.ByWaitingTime as List<HazardousGoodsYard.Services.ReservationGroupByWaitingTime>;
+    var yardCapacity = ViewBag.YardCapacity as HazardousGoodsYard.Services.YardCapacityStatistics;
+}
+
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.TotalReservations</h5>
+                <small class="text-muted">总预约数</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-hourglass-split text-warning" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.PendingReservations</h5>
+                <small class="text-muted">待处理</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.CompletedReservations</h5>
+                <small class="text-muted">已完成</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-x-circle text-danger" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.RejectedReservations</h5>
+                <small class="text-muted">已退回</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-clock text-secondary" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.ExpiredReservations</h5>
+                <small class="text-muted">已过期</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-clock-history text-info" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">@statistics?.AverageWaitingTime</h5>
+                <small class="text-muted">平均等待(小时)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-tag"></i> 按货物类别统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>货物类别</th>
+                            <th>数量</th>
+                            <th>状态分布</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in byGoodsCategory ?? new List<HazardousGoodsYard.Services.ReservationGroupByGoodsCategory>())
+                        {
+                            <tr>
+                                <td>@item.GoodsCategory</td>
+                                <td><strong>@item.Count</strong></td>
+                                <td>
+                                    @foreach (var status in item.Statuses.Distinct())
+                                    {
+                                        <span class="badge status-@status.ToString().ToLower() me-1">@status</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-building"></i> 按堆场统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>堆场区域</th>
+                            <th>预约数</th>
+                            <th>容量使用</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in byYard ?? new List<HazardousGoodsYard.Services.ReservationGroupByYard>())
+                        {
+                            <tr>
+                                <td>@item.AreaName</td>
+                                <td><strong>@item.Count</strong></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @(item.UsagePercentage > 80 ? "bg-danger" : item.UsagePercentage > 60 ? "bg-warning" : "bg-success")" 
+                                             role="progressbar" style="width: @item.UsagePercentage%">
+                                            @item.Usage/@item.Capacity
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 按退回原因统计</h5>
+            </div>
+            <div class="card-body">
+                @if (byRejectionReason?.Any() == true)
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>退回原因</th>
+                                <th>数量</th>
+                                <th>示例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in byRejectionReason)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge @(item.ReasonType == HazardousGoodsYard.Models.RejectionReasonType.HazardClassConflict ? "bg-danger" : item.ReasonType == HazardousGoodsYard.Models.RejectionReasonType.MissingDocuments ? "bg-warning" : item.ReasonType == HazardousGoodsYard.Models.RejectionReasonType.ExpiredWindow ? "bg-secondary" : "bg-info")">
+                                            @item.ReasonTypeName
+                                        </span>
+                                    </td>
+                                    <td><strong>@item.Count</strong></td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @foreach (var example in item.Examples.Take(2))
+                                            {
+                                                @example<br />
+                                            }
+                                        </small>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-center text-muted py-3">暂无退回记录</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-hourglass"></i> 按等待时长统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>等待时长</th>
+                            <th>数量</th>
+                            <th>平均时长</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in byWaitingTime ?? new List<HazardousGoodsYard.Services.ReservationGroupByWaitingTime>())
+                        {
+                            <tr>
+                                <td>@item.TimeRange</td>
+                                <td><strong>@item.Count</strong></td>
+                                <td>@item.AverageHours 小时</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 堆场容量总览</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 text-center">
+                        <h6>总容量</h6>
+                        <h3 class="text-primary">@yardCapacity?.TotalCapacity</h3>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h6>已使用</h6>
+                        <h3 class="text-warning">@yardCapacity?.TotalUsage</h3>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h6>使用率</h6>
+                        <h3 class="@(yardCapacity?.UsagePercentage > 80 ? "text-danger" : yardCapacity?.UsagePercentage > 60 ? "text-warning" : "text-success")">@yardCapacity?.UsagePercentage%</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    @foreach (var area in yardCapacity?.Areas ?? new List<HazardousGoodsYard.Services.YardAreaStatistics>())
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">@area.AreaName</h6>
+                                    <div class="progress mb-2" style="height: 25px;">
+                                        <div class="progress-bar @(area.UsagePercentage > 80 ? "bg-danger" : area.UsagePercentage > 60 ? "bg-warning" : "bg-success")" 
+                                             role="progressbar" style="width: @area.UsagePercentage%">
+                                            @area.UsagePercentage%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@area.CurrentUsage / @area.MaxCapacity</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

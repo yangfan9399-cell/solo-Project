@@ -1,0 +1,161 @@
+@model HazardousGoodsYard.Services.CreateReservationViewModel
+@{
+    ViewData["Title"] = "新建预约";
+    var hazardClasses = ViewBag.HazardClasses as List<HazardousGoodsYard.Controllers.SelectListItem>;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> 新建危险品预约入库申请
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="UNNumber" class="form-label">
+                                    <i class="bi bi-hash"></i> UN编号
+                                </label>
+                                <input asp-for="UNNumber" class="form-control" placeholder="例如：UN1203" />
+                                <span asp-validation-for="UNNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="HazardClass" class="form-label">
+                                    <i class="bi bi-exclamation-triangle"></i> 危险等级
+                                </label>
+                                <select asp-for="HazardClass" class="form-select" asp-items="@(new SelectList(hazardClasses, "Value", "Text"))">
+                                </select>
+                                <span asp-validation-for="HazardClass" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="GoodsName" class="form-label">
+                                    <i class="bi bi-box"></i> 货物名称
+                                </label>
+                                <input asp-for="GoodsName" class="form-control" placeholder="例如：汽油" />
+                                <span asp-validation-for="GoodsName" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ContainerNumber" class="form-label">
+                                    <i class="bi bi-truck"></i> 集装箱号
+                                </label>
+                                <input asp-for="ContainerNumber" class="form-control" placeholder="例如：CONT001" />
+                                <span asp-validation-for="ContainerNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="GoodsCategory" class="form-label">
+                                    <i class="bi bi-tag"></i> 货物类别
+                                </label>
+                                <input asp-for="GoodsCategory" class="form-control" placeholder="例如：易燃液体" />
+                                <span asp-validation-for="GoodsCategory" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="SpecialInstructions" class="form-label">
+                                    <i class="bi bi-info-circle"></i> 特殊说明
+                                </label>
+                                <input asp-for="SpecialInstructions" class="form-control" placeholder="例如：需要阴凉通风处存放" />
+                                <span asp-validation-for="SpecialInstructions" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h6 class="mb-3">
+                        <i class="bi bi-calendar"></i> 预约窗口时间
+                    </h6>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ReservationWindowStart" class="form-label">开始时间</label>
+                                <input asp-for="ReservationWindowStart" class="form-control" type="datetime-local" />
+                                <span asp-validation-for="ReservationWindowStart" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ReservationWindowEnd" class="form-label">结束时间</label>
+                                <input asp-for="ReservationWindowEnd" class="form-control" type="datetime-local" />
+                                <span asp-validation-for="ReservationWindowEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Remarks" class="form-label">
+                            <i class="bi bi-chat-text"></i> 备注
+                        </label>
+                        <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="其他需要说明的信息"></textarea>
+                        <span asp-validation-for="Remarks" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> 提交预约
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> 预约流程说明
+                </h6>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li class="mb-2"><strong>货代提交预约</strong><br /><small class="text-muted">填写危险品信息和预约窗口时间</small></li>
+                    <li class="mb-2"><strong>调度员分配区域</strong><br /><small class="text-muted">根据危险等级分配合适的堆场区域和隔离区</small></li>
+                    <li class="mb-2"><strong>安全员核验资料</strong><br /><small class="text-muted">核验MSDS、申报单等安全资料</small></li>
+                    <li class="mb-2"><strong>复核人确认入库</strong><br /><small class="text-muted">最终确认入库或退回</small></li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> 注意事项
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0 small">
+                    <li>请确保UN编号和危险等级准确无误</li>
+                    <li>预约窗口时间建议设置8小时以上</li>
+                    <li>危险等级冲突的货物将被退回</li>
+                    <li>安全资料缺失将导致预约被退回</li>
+                    <li>预约窗口过期后需重新提交</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

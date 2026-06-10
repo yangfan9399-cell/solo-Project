@@ -1,0 +1,99 @@
+@model List<HazardousGoodsYard.Models.Reservation>
+@{
+    ViewData["Title"] = "预约管理";
+    var statusFilter = ViewBag.StatusFilter as string;
+    var search = ViewBag.Search as string;
+    var userRoles = ViewBag.UserRoles as List<string>;
+}
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <form method="get" class="row g-2">
+            <div class="col-md-4">
+                <select name="statusFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="">全部状态</option>
+                    @foreach (HazardousGoodsYard.Models.ReservationStatus status in Enum.GetValues(typeof(HazardousGoodsYard.Models.ReservationStatus)))
+                    {
+                        <option value="@status" selected="@(statusFilter == status.ToString())">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input type="text" name="search" value="@search" class="form-control" placeholder="搜索预约编号、UN编号、箱号或货物名称" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        @if (userRoles?.Contains("Forwarder") == true)
+        {
+            <a asp-action="Create" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> 新建预约
+            </a>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>预约编号</th>
+                    <th>货物名称</th>
+                    <th>UN编号</th>
+                    <th>危险等级</th>
+                    <th>箱号</th>
+                    <th>堆场区域</th>
+                    <th>隔离区</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var reservation in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@reservation.ReservationNumber</strong>
+                        </td>
+                        <td>@reservation.HazardousGood?.GoodsName</td>
+                        <td>@reservation.HazardousGood?.UNNumber</td>
+                        <td>
+                            <span class="badge hazard-class-@((int)reservation.HazardousGood?.HazardClass % 10)">
+                                @reservation.HazardousGood?.HazardClass
+                            </span>
+                        </td>
+                        <td>@reservation.HazardousGood?.ContainerNumber</td>
+                        <td>@reservation.YardArea?.AreaName ?? "-"</td>
+                        <td>@reservation.IsolationZone?.ZoneName ?? "-"</td>
+                        <td>
+                            <span class="badge status-@reservation.Status.ToString().ToLower()">
+                                @reservation.Status
+                            </span>
+                        </td>
+                        <td>@reservation.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@reservation.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> 详情
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                <p>暂无预约记录</p>
+            </div>
+        }
+    </div>
+</div>

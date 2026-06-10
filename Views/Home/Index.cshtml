@@ -1,0 +1,182 @@
+@{
+    ViewData["Title"] = "首页";
+    var statistics = ViewBag.Statistics as HazardousGoodsYard.Services.DashboardStatistics;
+    var recentReservations = ViewBag.RecentReservations as List<HazardousGoodsYard.Models.Reservation>;
+    var pendingReservations = ViewBag.PendingReservations as List<HazardousGoodsYard.Models.Reservation>;
+    var yardCapacity = ViewBag.YardCapacity as HazardousGoodsYard.Services.YardCapacityStatistics;
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card card-statistic bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">总预约数</h6>
+                        <h2 class="mb-0">@statistics?.TotalReservations</h2>
+                    </div>
+                    <i class="bi bi-calendar-check" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-statistic bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">待处理</h6>
+                        <h2 class="mb-0">@statistics?.PendingReservations</h2>
+                    </div>
+                    <i class="bi bi-hourglass-split" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-statistic bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">已完成</h6>
+                        <h2 class="mb-0">@statistics?.CompletedReservations</h2>
+                    </div>
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-statistic bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">已退回</h6>
+                        <h2 class="mb-0">@statistics?.RejectedReservations</h2>
+                    </div>
+                    <i class="bi bi-x-circle" style="font-size: 2rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i> 最近预约
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>预约编号</th>
+                            <th>货物名称</th>
+                            <th>UN编号</th>
+                            <th>危险等级</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reservation in recentReservations ?? new List<HazardousGoodsYard.Models.Reservation>())
+                        {
+                            <tr>
+                                <td>@reservation.ReservationNumber</td>
+                                <td>@reservation.HazardousGood?.GoodsName</td>
+                                <td>@reservation.HazardousGood?.UNNumber</td>
+                                <td>
+                                    <span class="badge hazard-class-@((int)reservation.HazardousGood?.HazardClass % 10)">
+                                        @reservation.HazardousGood?.HazardClass
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge status-@reservation.Status.ToString().ToLower()">
+                                        @reservation.Status
+                                    </span>
+                                </td>
+                                <td>@reservation.CreatedAt.ToString("MM-dd HH:mm")</td>
+                                <td>
+                                    <a asp-controller="Reservation" asp-action="Details" asp-route-id="@reservation.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-hourglass-top"></i> 待分配预约
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (pendingReservations?.Any() == true)
+                {
+                    @foreach (var reservation in pendingReservations.Take(5))
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                            <div>
+                                <strong>@reservation.ReservationNumber</strong>
+                                <br />
+                                <small class="text-muted">@reservation.HazardousGood?.GoodsName</small>
+                            </div>
+                            <div>
+                                <span class="badge status-pending">待分配</span>
+                                <br />
+                                <small class="text-muted">@((DateTime.Now - reservation.CreatedAt).TotalHours.ToString("F1"))小时</small>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted text-center">暂无待分配预约</p>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-building"></i> 堆场容量
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>总容量使用率</span>
+                        <span>@yardCapacity?.UsagePercentage%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: @(yardCapacity?.UsagePercentage)%"></div>
+                    </div>
+                </div>
+
+                @foreach (var area in yardCapacity?.Areas ?? new List<HazardousGoodsYard.Services.YardAreaStatistics>())
+                {
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>@area.AreaName</span>
+                            <span>@area.UsagePercentage%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar @(area.UsagePercentage > 80 ? "bg-danger" : area.UsagePercentage > 60 ? "bg-warning" : "bg-success")" 
+                                 role="progressbar" style="width: @area.UsagePercentage%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

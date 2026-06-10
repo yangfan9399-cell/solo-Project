@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 港区危险品堆场预约入库系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <style>
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #f8f9fa;
+        }
+        .sidebar .nav-link {
+            color: #495057;
+            border-radius: 0;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #e9ecef;
+        }
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+        }
+        .status-pending { background-color: #ffc107; color: #212529; }
+        .status-areaassigned { background-color: #17a2b8; color: white; }
+        .status-pendingverification { background-color: #fd7e14; color: white; }
+        .status-documentsverified { background-color: #20c997; color: white; }
+        .status-pendingreview { background-color: #6f42c1; color: white; }
+        .status-completed { background-color: #28a745; color: white; }
+        .status-rejected { background-color: #dc3545; color: white; }
+        .status-expired { background-color: #6c757d; color: white; }
+        .card-statistic {
+            transition: transform 0.2s;
+        }
+        .card-statistic:hover {
+            transform: translateY(-5px);
+        }
+        .history-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #dee2e6;
+        }
+        .history-item {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            border: 2px solid white;
+        }
+        .hazard-class-1 { background-color: #dc3545; }
+        .hazard-class-2 { background-color: #fd7e14; }
+        .hazard-class-3 { background-color: #ffc107; }
+        .hazard-class-4 { background-color: #17a2b8; }
+        .hazard-class-5 { background-color: #28a745; }
+        .hazard-class-6 { background-color: #6f42c1; }
+        .hazard-class-7 { background-color: #e9ecef; }
+        .hazard-class-8 { background-color: #20c997; }
+        .hazard-class-9 { background-color: #6c757d; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-building"></i> 港区危险品堆场预约入库系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-house"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Reservation" asp-action="Index">
+                            <i class="bi bi-calendar-check"></i> 预约管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                            <i class="bi bi-graph-up"></i> 看板统计
+                        </a>
+                    </li>
+                </ul>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> @User.Identity.Name
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">
+                                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                                </a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                }
+                else
+                {
+                    <a class="btn btn-outline-light" asp-controller="Account" asp-action="Login">
+                        <i class="bi bi-box-arrow-in-right"></i> 登录
+                    </a>
+                }
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">&copy; 2026 港区危险品堆场预约入库与隔离区校验系统</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

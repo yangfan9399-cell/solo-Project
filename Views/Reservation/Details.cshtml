@@ -1,0 +1,369 @@
+@model HazardousGoodsYard.Models.Reservation
+@{
+    ViewData["Title"] = "预约详情 - " + Model.ReservationNumber;
+    var userRoles = ViewBag.UserRoles as List<string>;
+    var availableZones = ViewBag.AvailableZones as List<HazardousGoodsYard.Models.IsolationZone>;
+    var availableAreas = ViewBag.AvailableAreas as List<HazardousGoodsYard.Models.YardArea>;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> 预约基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" width="120">预约编号：</td>
+                                <td><strong>@Model.ReservationNumber</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">UN编号：</td>
+                                <td><strong>@Model.HazardousGood?.UNNumber</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">危险等级：</td>
+                                <td>
+                                    <span class="badge hazard-class-@((int)Model.HazardousGood?.HazardClass % 10) text-white">
+                                        @Model.HazardousGood?.HazardClass
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">集装箱号：</td>
+                                <td>@Model.HazardousGood?.ContainerNumber</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">货物名称：</td>
+                                <td>@Model.HazardousGood?.GoodsName</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">货物类别：</td>
+                                <td>@Model.HazardousGood?.GoodsCategory</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="text-muted" width="120">堆场区域：</td>
+                                <td>@Model.YardArea?.AreaName ?? <span class="text-muted">未分配</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">隔离区：</td>
+                                <td>@Model.IsolationZone?.ZoneName ?? <span class="text-muted">未分配</span></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">预约窗口：</td>
+                                <td>
+                                    @Model.ReservationWindowStart.ToString("MM-dd HH:mm") ~ 
+                                    @Model.ReservationWindowEnd.ToString("MM-dd HH:mm")
+                                    @if (Model.ReservationWindowEnd < DateTime.Now)
+                                    {
+                                        <span class="badge bg-danger">已过期</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">当前状态：</td>
+                                <td>
+                                    <span class="badge status-@Model.Status.ToString().ToLower()">
+                                        @Model.Status
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">创建时间：</td>
+                                <td>@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.HazardousGood?.SpecialInstructions))
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> <strong>特殊说明：</strong>@Model.HazardousGood?.SpecialInstructions
+                    </div>
+                }
+
+                @if (Model.Status == HazardousGoodsYard.Models.ReservationStatus.Rejected || Model.Status == HazardousGoodsYard.Models.ReservationStatus.Expired)
+                {
+                    <div class="alert alert-danger">
+                        <h6><i class="bi bi-exclamation-triangle"></i> 退回原因</h6>
+                        <p><strong>@Model.RejectionReasonType：</strong>@Model.RejectionReason</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> 处理历史
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="history-timeline">
+                    @foreach (var history in Model.Histories?.OrderByDescending(h => h.CreatedAt) ?? new List<HazardousGoodsYard.Models.ReservationHistory>())
+                    {
+                        <div class="history-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>@history.Action</strong>
+                                    @if (history.FromStatus != null || history.ToStatus != null)
+                                    {
+                                        <small class="text-muted">
+                                            (@history.FromStatus → @history.ToStatus)
+                                        </small>
+                                    }
+                                    <br />
+                                    <small class="text-muted">@history.Description</small>
+                                    @if (history.OperatorUser != null)
+                                    {
+                                        <br />
+                                        <small class="text-info">操作人：@history.OperatorUser.FullName</small>
+                                    }
+                                </div>
+                                <div class="text-muted">
+                                    <small>@history.CreatedAt.ToString("MM-dd HH:mm")</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (Model.SafetyDocuments?.Any() == true)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> 安全资料
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>资料类型</th>
+                                <th>资料名称</th>
+                                <th>核验状态</th>
+                                <th>核验人</th>
+                                <th>核验时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in Model.SafetyDocuments)
+                            {
+                                <tr>
+                                    <td>@doc.DocumentType</td>
+                                    <td>@doc.DocumentName</td>
+                                    <td>
+                                        <span class="badge @(doc.VerificationStatus == HazardousGoodsYard.Models.VerificationStatus.Approved ? "bg-success" : doc.VerificationStatus == HazardousGoodsYard.Models.VerificationStatus.Rejected ? "bg-danger" : "bg-warning")">
+                                            @doc.VerificationStatus
+                                        </span>
+                                    </td>
+                                    <td>@doc.VerifiedByUser?.FullName ?? "-"</td>
+                                    <td>@doc.VerifiedAt?.ToString("MM-dd HH:mm") ?? "-"</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-user"></i> 相关人员
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">货代：</td>
+                        <td>@Model.ForwarderUser?.FullName</td>
+                    </tr>
+                    @if (Model.DispatcherUser != null)
+                    {
+                        <tr>
+                            <td class="text-muted">调度员：</td>
+                            <td>@Model.DispatcherUser?.FullName</td>
+                        </tr>
+                    }
+                    @if (Model.SafetyOfficerUser != null)
+                    {
+                        <tr>
+                            <td class="text-muted">安全员：</td>
+                            <td>@Model.SafetyOfficerUser?.FullName</td>
+                        </tr>
+                    }
+                    @if (Model.ReviewerUser != null)
+                    {
+                        <tr>
+                            <td class="text-muted">复核人：</td>
+                            <td>@Model.ReviewerUser?.FullName</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> 操作
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Status == HazardousGoodsYard.Models.ReservationStatus.Pending && userRoles?.Contains("Dispatcher") == true)
+                {
+                    <div class="mb-3">
+                        <h6>分配区域和隔离区</h6>
+                        <form asp-action="AssignArea" method="post">
+                            <input type="hidden" name="reservationId" value="@Model.Id" />
+                            <div class="mb-2">
+                                <label class="form-label">堆场区域</label>
+                                <select name="yardAreaId" class="form-select" id="yardAreaSelect">
+                                    <option value="">请选择区域</option>
+                                    @foreach (var area in availableAreas ?? new List<HazardousGoodsYard.Models.YardArea>())
+                                    {
+                                        <option value="@area.Id">@area.AreaName (剩余容量: @(area.MaxCapacity - area.CurrentUsage))</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">隔离区</label>
+                                <select name="isolationZoneId" class="form-select" id="isolationZoneSelect">
+                                    <option value="">请选择隔离区</option>
+                                    @foreach (var zone in availableZones ?? new List<HazardousGoodsYard.Models.IsolationZone>())
+                                    {
+                                        <option value="@zone.Id" data-area-id="@zone.YardAreaId">@zone.ZoneName (剩余容量: @(zone.MaxCapacity - zone.CurrentUsage))</option>
+                                    }
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check-circle"></i> 分配
+                            </button>
+                        </form>
+                    </div>
+                }
+
+                @if (Model.Status == HazardousGoodsYard.Models.ReservationStatus.AreaAssigned && userRoles?.Contains("SafetyOfficer") == true)
+                {
+                    <div class="mb-3">
+                        <h6>核验安全资料</h6>
+                        <form asp-action="VerifyDocuments" method="post">
+                            <input type="hidden" name="reservationId" value="@Model.Id" />
+                            @foreach (var doc in Model.SafetyDocuments ?? new List<HazardousGoodsYard.Models.SafetyDocument>())
+                            {
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="approvedDocuments" value="@doc.Id" class="form-check-input" id="doc_@doc.Id" />
+                                    <label class="form-check-label" for="doc_@doc.Id">@doc.DocumentType - 通过</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="rejectedDocuments" value="@doc.Id" class="form-check-input" id="doc_reject_@doc.Id" />
+                                    <label class="form-check-label text-danger" for="doc_reject_@doc.Id">@doc.DocumentType - 不通过</label>
+                                </div>
+                            }
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-check-circle"></i> 提交核验
+                            </button>
+                        </form>
+                    </div>
+                }
+
+                @if (Model.Status == HazardousGoodsYard.Models.ReservationStatus.DocumentsVerified && userRoles?.Contains("Reviewer") == true)
+                {
+                    <div class="mb-3">
+                        <h6>复核确认</h6>
+                        <form asp-action="Review" method="post">
+                            <input type="hidden" name="reservationId" value="@Model.Id" />
+                            <div class="d-grid gap-2">
+                                <button type="submit" name="approve" value="true" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> 确认入库
+                                </button>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                    <i class="bi bi-x-circle"></i> 退回预约
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                }
+
+                @if (Model.Status != HazardousGoodsYard.Models.ReservationStatus.Completed && Model.Status != HazardousGoodsYard.Models.ReservationStatus.Rejected && Model.Status != HazardousGoodsYard.Models.ReservationStatus.Expired)
+                {
+                    if (userRoles?.Contains("Dispatcher") == true || userRoles?.Contains("SafetyOfficer") == true || userRoles?.Contains("Reviewer") == true)
+                    {
+                        <hr />
+                        <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="bi bi-x-circle"></i> 退回预约
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">退回预约</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Reject" method="post">
+                <input type="hidden" name="reservationId" value="@Model.Id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">退回原因类型</label>
+                        <select name="reasonType" class="form-select">
+                            @foreach (HazardousGoodsYard.Models.RejectionReasonType reason in Enum.GetValues(typeof(HazardousGoodsYard.Models.RejectionReasonType)))
+                            {
+                                <option value="@reason">@reason</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">详细说明</label>
+                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认退回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('yardAreaSelect').addEventListener('change', function() {
+            var areaId = this.value;
+            var zoneSelect = document.getElementById('isolationZoneSelect');
+            var options = zoneSelect.querySelectorAll('option');
+            
+            options.forEach(function(option) {
+                if (option.value === '') {
+                    option.style.display = '';
+                } else {
+                    var zoneAreaId = option.getAttribute('data-area-id');
+                    option.style.display = (zoneAreaId === areaId || !areaId) ? '' : 'none';
+                }
+            });
+        });
+    </script>
+}
