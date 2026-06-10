@@ -124,19 +124,52 @@ class DashboardController extends Controller
         $baseQuery = $this->getIssueQuery();
         $storeIds = $baseQuery->pluck('id')->toArray();
 
-        $now = now();
-        $today = $now->startOfDay();
-        $weekAgo = $now->subWeek()->startOfDay();
-        $monthAgo = $now->subMonth()->startOfDay();
-        $quarterAgo = $now->subQuarter()->startOfDay();
+        // 整改周期聚合：按整改时长分布（从上报到整改完成的天数）
+        // 使用独立时间边界，避免 Carbon 对象连续修改导致失真
+        
+        $issues = InspectionIssue::whereIn('id', $storeIds)
+            ->select('id', 'status', 'created_at', 'updated_at', 'deadline')
+            ->get();
 
         $stats = [
-            'today' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $today)->count(),
-            'week' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $weekAgo)->where('created_at', '<', $today)->count(),
-            'month' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $monthAgo)->where('created_at', '<', $weekAgo)->count(),
-            'quarter' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $quarterAgo)->where('created_at', '<', $monthAgo)->count(),
-            'older' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '<', $quarterAgo)->count(),
+            'within_24h' => 0,      // 24小时内整改完成
+            'within_3d' => 0,       // 1-3天整改完成
+            'within_7d' => 0,       // 3-7天整改完成
+            'within_14d' => 0,      // 7-14天整改完成
+            'over_14d' => 0,        // 14天以上整改完成
+            'not_rectified' => 0,   // 未整改完成
+            'overdue_not_rectified' => 0, // 超期未整改
         ];
+
+        foreach ($issues as $issue) {
+            // 未整改完成的问题
+            if ($issue->status === 'pending' || $issue->status === 'rectifying') {
+                $stats['not_rectified']++;
+                // 检查是否超期
+                if ($issue->deadline && \Carbon\Carbon::parse($issue->deadline)->lt(now())) {
+                    $stats['overdue_not_rectified']++;
+                }
+                continue;
+            }
+
+            // 已整改完成的问题（reviewing/reviewed/closed/rejected）
+            // 计算整改时长：从上报(created_at)到整改完成(updated_at进入reviewing状态)
+            $createdAt = \Carbon\Carbon::parse($issue->created_at);
+            $updatedAt = \Carbon\Carbon::parse($issue->updated_at);
+            $rectifyDays = $createdAt->diffInDays($updatedAt);
+
+            if ($rectifyDays < 1) {
+                $stats['within_24h']++;
+            } elseif ($rectifyDays <= 3) {
+                $stats['within_3d']++;
+            } elseif ($rectifyDays <= 7) {
+                $stats['within_7d']++;
+            } elseif ($rectifyDays <= 14) {
+                $stats['within_14d']++;
+            } else {
+                $stats['over_14d']++;
+            }
+        }
 
         return response()->json($stats);
     }

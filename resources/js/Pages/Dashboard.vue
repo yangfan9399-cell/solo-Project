@@ -65,24 +65,34 @@
             <h3 class="font-semibold text-gray-800 mb-4">整改周期分布</h3>
             <div class="space-y-2">
               <div class="flex justify-between">
-                <span>今日</span>
-                <span class="font-medium">{{ cycleStats?.today || 0 }}</span>
+                <span class="text-green-600">24小时内</span>
+                <span class="font-medium text-green-600">{{ cycleStats?.within_24h || 0 }}</span>
               </div>
               <div class="flex justify-between">
-                <span>本周</span>
-                <span class="font-medium">{{ cycleStats?.week || 0 }}</span>
+                <span class="text-blue-600">1-3天</span>
+                <span class="font-medium text-blue-600">{{ cycleStats?.within_3d || 0 }}</span>
               </div>
               <div class="flex justify-between">
-                <span>本月</span>
-                <span class="font-medium">{{ cycleStats?.month || 0 }}</span>
+                <span class="text-yellow-600">3-7天</span>
+                <span class="font-medium text-yellow-600">{{ cycleStats?.within_7d || 0 }}</span>
               </div>
               <div class="flex justify-between">
-                <span>本季度</span>
-                <span class="font-medium">{{ cycleStats?.quarter || 0 }}</span>
+                <span class="text-orange-600">7-14天</span>
+                <span class="font-medium text-orange-600">{{ cycleStats?.within_14d || 0 }}</span>
               </div>
               <div class="flex justify-between">
-                <span>更早</span>
-                <span class="font-medium">{{ cycleStats?.older || 0 }}</span>
+                <span class="text-red-600">14天以上</span>
+                <span class="font-medium text-red-600">{{ cycleStats?.over_14d || 0 }}</span>
+              </div>
+              <div class="border-t pt-2 mt-2">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">未整改完成</span>
+                  <span class="font-medium text-gray-600">{{ cycleStats?.not_rectified || 0 }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-red-800 font-semibold">超期未整改</span>
+                  <span class="font-medium text-red-800 font-semibold">{{ cycleStats?.overdue_not_rectified || 0 }}</span>
+                </div>
               </div>
             </div>
           </div>
