@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if elder %}编辑长者{% else %}添加长者{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{% if elder %}编辑长者信息{% else %}添加新长者{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="border-bottom pb-2 mb-3">基本信息</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">姓名 *</label>
+                            <input type="text" class="form-control" name="name" 
+                                   value="{{ elder.name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">性别 *</label>
+                            <select class="form-select" name="gender" required>
+                                <option value="M" {% if elder.gender == 'M' %}selected{% endif %}>男</option>
+                                <option value="F" {% if elder.gender == 'F' %}selected{% endif %}>女</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">出生日期 *</label>
+                            <input type="date" class="form-control" name="birth_date" 
+                                   value="{{ elder.birth_date|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">身份证号 *</label>
+                        <input type="text" class="form-control" name="id_number" 
+                               value="{{ elder.id_number|default:'' }}" maxlength="18" required>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3">居住信息</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">楼层 *</label>
+                            <select class="form-select" name="floor" required>
+                                {% for f in floors %}
+                                <option value="{{ f }}" {% if elder.floor == f %}selected{% endif %}>
+                                    {{ f }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">房间号 *</label>
+                            <input type="text" class="form-control" name="room_number" 
+                                   value="{{ elder.room_number|default:'' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">床位号 *</label>
+                            <input type="text" class="form-control" name="bed_number" 
+                                   value="{{ elder.bed_number|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">入住日期 *</label>
+                        <input type="date" class="form-control" name="admission_date" 
+                               value="{{ elder.admission_date|default:'' }}" required>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3">健康信息</h6>
+                    <div class="mb-3">
+                        <label class="form-label">病史</label>
+                        <textarea class="form-control" name="medical_history" rows="3">
+                            {{ elder.medical_history|default:'' }}
+                        </textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">过敏史</label>
+                        <textarea class="form-control" name="allergies" rows="2">
+                            {{ elder.allergies|default:'' }}
+                        </textarea>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3">联系信息</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">紧急联系人 *</label>
+                            <input type="text" class="form-control" name="emergency_contact" 
+                                   value="{{ elder.emergency_contact|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">紧急联系电话 *</label>
+                            <input type="text" class="form-control" name="emergency_phone" 
+                                   value="{{ elder.emergency_phone|default:'' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">家属成员</label>
+                        <select class="form-select" name="family_members" multiple size="4">
+                            {% for family in family_users %}
+                            <option value="{{ family.id }}" 
+                                    {% if elder and family in elder.family_members.all %}selected{% endif %}>
+                                {{ family.username }}（{{ family.phone }}）
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">按住Ctrl可多选</small>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            {% if elder %}保存更改{% else %}添加长者{% endif %}
+                        </button>
+                        <a href="{% if elder %}{% url 'core:elder_detail' elder.pk %}{% else %}{% url 'core:elder_list' %}{% endif %}" 
+                           class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}护理评估列表{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">护理评估列表</h5>
+                    </div>
+                    {% if user.is_nurse %}
+                    <div class="col-auto">
+                        <a href="{% url 'assessments:assessment_create' %}" class="btn btn-success">
+                            创建新评估
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ search }}" placeholder="搜索长者姓名/身份证">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="status">
+                                <option value="">全部状态</option>
+                                {% for status_val, status_label in status_choices %}
+                                <option value="{{ status_val }}" {% if status_val == selected_status %}selected{% endif %}>
+                                    {{ status_label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">筛选</button>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'assessments:assessment_list' %}" class="btn btn-secondary w-100">清除</a>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>长者</th>
+                                <th>评估日期</th>
+                                <th>评估护士</th>
+                                <th>建议等级</th>
+                                <th>等级变化</th>
+                                <th>费用变化</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assessment in assessments %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'core:elder_detail' assessment.elder.pk %}">
+                                        {{ assessment.elder.name }}
+                                    </a>
+                                </td>
+                                <td>{{ assessment.assessment_date }}</td>
+                                <td>{{ assessment.nurse.username|default:'-' }}</td>
+                                <td>{{ assessment.nursing_level.name|default:'-' }}</td>
+                                <td>
+                                    {% if assessment.get_level_change_type == 'unchanged' %}
+                                    <span class="badge bg-secondary">等级不变</span>
+                                    {% elif assessment.get_level_change_type == 'upgraded' %}
+                                    <span class="badge bg-warning">护理升级</span>
+                                    {% elif assessment.get_level_change_type == 'downgraded' %}
+                                    <span class="badge bg-info">护理降级</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if assessment.get_fee_change %}
+                                    {% if assessment.get_fee_change > 0 %}
+                                    <span class="text-danger">+¥{{ assessment.get_fee_change }}</span>
+                                    {% elif assessment.get_fee_change < 0 %}
+                                    <span class="text-success">-¥{{ assessment.get_fee_change|abs }}</span>
+                                    {% else %}
+                                    <span class="text-muted">无变化</span>
+                                    {% endif %}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ assessment.status }}">
+                                        {{ assessment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'assessments:assessment_detail' assessment.pk %}" 
+                                       class="btn btn-sm btn-primary">详情</a>
+                                    {% if assessment.status == 'draft' and user.is_nurse %}
+                                    <a href="{% url 'assessments:assessment_edit' assessment.pk %}" 
+                                       class="btn btn-sm btn-warning">编辑</a>
+                                    <a href="{% url 'assessments:assessment_submit' assessment.pk %}" 
+                                       class="btn btn-sm btn-success">提交</a>
+                                    {% endif %}
+                                    {% if assessment.status == 'pending_doctor' and user.is_doctor %}
+                                    <a href="{% url 'assessments:doctor_confirm' assessment.pk %}" 
+                                       class="btn btn-sm btn-success">确认</a>
+                                    {% endif %}
+                                    {% if assessment.status == 'pending_family' and user.is_family %}
+                                    <a href="{% url 'assessments:family_confirm' assessment.pk %}" 
+                                       class="btn btn-sm btn-success">确认</a>
+                                    {% endif %}
+                                    {% if assessment.status == 'pending_director' and user.is_director %}
+                                    <a href="{% url 'assessments:director_review' assessment.pk %}" 
+                                       class="btn btn-sm btn-warning">复核</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">暂无评估记录</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

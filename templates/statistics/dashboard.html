@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}统计分析{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h4 class="mb-4">统计分析</h4>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card card-hover">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">按楼层统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>楼层</th>
+                            <th>长者数</th>
+                            <th>等级分布</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in floor_stats %}
+                        <tr>
+                            <td>{{ stat.floor }}</td>
+                            <td>{{ stat.total }}</td>
+                            <td>
+                                {% for level, count in stat.by_level.items %}
+                                <span class="badge bg-info me-1">{{ level }}: {{ count }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card card-hover">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">护理等级分布</h5>
+            </div>
+            <div class="card-body">
+                <h6>当前长者等级分布</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>等级</th>
+                            <th>人数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in level_stats.current_distribution %}
+                        <tr>
+                            <td>{{ stat.level }}</td>
+                            <td>{{ stat.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <hr>
+                <h6>等级调整统计</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>调整至等级</th>
+                            <th>次数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in level_stats.level_changes %}
+                        <tr>
+                            <td>{{ stat.level }}</td>
+                            <td>{{ stat.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card card-hover">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">家属异议统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <h6 class="text-muted">同意</h6>
+                        <p class="fs-4 text-success">{{ objection_stats.agreed }}</p>
+                    </div>
+                    <div class="col-4">
+                        <h6 class="text-muted">异议</h6>
+                        <p class="fs-4 text-warning">{{ objection_stats.objected }}</p>
+                    </div>
+                    <div class="col-4">
+                        <h6 class="text-muted">待确认</h6>
+                        <p class="fs-4 text-muted">{{ objection_stats.pending }}</p>
+                    </div>
+                </div>
+                
+                {% if objection_stats.reasons %}
+                <hr>
+                <h6>异议原因分布</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>异议原因</th>
+                            <th>次数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reason in objection_stats.reasons %}
+                        <tr>
+                            <td>{{ reason.reason }}</td>
+                            <td>{{ reason.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card card-hover">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">调整周期统计</h5>
+            </div>
+            <div class="card-body">
+                <h6>月度调整汇总</h6>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>周期</th>
+                            <th>总调整</th>
+                            <th>升级</th>
+                            <th>降级</th>
+                            <th>不变</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in period_stats.detailed %}
+                        <tr>
+                            <td>{{ stat.period }}</td>
+                            <td>{{ stat.total }}</td>
+                            <td class="text-warning">{{ stat.upgrade }}</td>
+                            <td class="text-info">{{ stat.downgrade }}</td>
+                            <td class="text-muted">{{ stat.unchanged }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

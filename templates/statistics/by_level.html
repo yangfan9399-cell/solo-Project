@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}护理等级统计{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">当前长者护理等级分布</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>护理等级</th>
+                            <th>长者人数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in level_stats.current_distribution %}
+                        <tr>
+                            <td><strong>{{ stat.level }}</strong></td>
+                            <td>{{ stat.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">护理等级调整统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>调整至等级</th>
+                            <th>调整次数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in level_stats.level_changes %}
+                        <tr>
+                            <td><strong>{{ stat.level }}</strong></td>
+                            <td>{{ stat.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+    <a href="{% url 'statistics:dashboard' %}" class="btn btn-secondary">返回统计概览</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}评估详情 - {{ assessment.elder.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">长者信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted">姓名</td>
+                        <td><strong>{{ assessment.elder.name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">性别/年龄</td>
+                        <td>{{ assessment.elder.get_gender_display }} / {{ assessment.elder.age }}岁</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">楼层/房间</td>
+                        <td>{{ assessment.elder.location }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">入住日期</td>
+                        <td>{{ assessment.elder.admission_date }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">护理等级变化</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 text-center border-end">
+                        <h6 class="text-muted">原等级</h6>
+                        {% if assessment.previous_nursing_level %}
+                        <p class="mb-1"><strong>{{ assessment.previous_nursing_level.name }}</strong></p>
+                        <p class="text-muted small">¥{{ assessment.previous_monthly_fee }}/月</p>
+                        {% else %}
+                        <p class="text-muted">未定级</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-6 text-center">
+                        <h6 class="text-muted">建议等级</h6>
+                        {% if assessment.nursing_level %}
+                        <p class="mb-1"><strong>{{ assessment.nursing_level.name }}</strong></p>
+                        <p class="text-muted small">¥{{ assessment.new_monthly_fee }}/月</p>
+                        {% else %}
+                        <p class="text-muted">-</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if assessment.get_fee_change %}
+                <hr>
+                <div class="text-center">
+                    <h6>费用变化</h6>
+                    {% if assessment.get_fee_change > 0 %}
+                    <p class="text-danger fs-4">+¥{{ assessment.get_fee_change }}</p>
+                    {% elif assessment.get_fee_change < 0 %}
+                    <p class="text-success fs-4">-¥{{ assessment.get_fee_change|abs }}</p>
+                    {% else %}
+                    <p class="text-muted">无变化</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <hr>
+                <div class="text-center">
+                    <span class="status-badge status-{{ assessment.status }} fs-5">
+                        {{ assessment.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        {% if not is_complete %}
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">评估表缺项</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-danger">以下必填项目未填写，评估无法生效：</p>
+                <ul class="list-group">
+                    {% for item in missing_items %}
+                    <li class="list-group-item list-group-item-danger">
+                        {{ item.dimension.name }} - {{ item.name }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">评估维度评分</h5>
+                    </div>
+                    <div class="col-auto">
+                        <strong>总分: {{ assessment.get_total_score }}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% for dimension_data in dimension_scores %}
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">
+                        {{ dimension_data.dimension.name }}
+                        <small class="text-muted ms-2">权重: {{ dimension_data.dimension.weight }}</small>
+                    </h6>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>项目</th>
+                                <th>得分</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item_data in dimension_data.items %}
+                            <tr>
+                                <td>
+                                    {{ item_data.item.name }}
+                                    {% if item_data.item.is_required and not item_data.score %}
+                                    <span class="badge bg-danger">缺项</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item_data.score %}
+                                    {{ item_data.score.score }} / {{ item_data.item.max_score }}
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item_data.score.notes|default:'-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
+                
+                {% if assessment.assessment_reason %}
+                <hr>
+                <h6>评估原因</h6>
+                <p>{{ assessment.assessment_reason }}</p>
+                {% endif %}
+                
+                {% if assessment.nurse_notes %}
+                <hr>
+                <h6>护士备注</h6>
+                <p>{{ assessment.nurse_notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if assessment.doctor %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">医生确认</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>{{ assessment.doctor.username }}</strong>
+                    于 {{ assessment.doctor_confirmed_at|date:"Y-m-d H:i" }} 确认
+                </p>
+                {% if assessment.doctor_notes %}
+                <p class="text-muted">{{ assessment.doctor_notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if assessment.family_member %}
+        <div class="card mb-4">
+            <div class="card-header {% if assessment.family_agreed %}bg-success{% else %}bg-warning{% endif %} text-white">
+                <h5 class="mb-0">家属确认</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>{{ assessment.family_member.username }}</strong>
+                    于 {{ assessment.family_confirmed_at|date:"Y-m-d H:i" }} 确认
+                </p>
+                <p>
+                    {% if assessment.family_agreed %}
+                    <span class="badge bg-success">同意</span>
+                    {% else %}
+                    <span class="badge bg-warning">异议</span>
+                    {% endif %}
+                </p>
+                {% if assessment.family_notes %}
+                <p class="text-muted">{{ assessment.family_notes }}</p>
+                {% endif %}
+                {% if assessment.objection_reason %}
+                <p class="text-danger"><strong>异议原因：</strong>{{ assessment.objection_reason }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if assessment.director %}
+        <div class="card mb-4">
+            <div class="card-header {% if assessment.director_approved %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <h5 class="mb-0">院长复核</h5>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>{{ assessment.director.username }}</strong>
+                    于 {{ assessment.director_confirmed_at|date:"Y-m-d H:i" }} 复核
+                </p>
+                <p>
+                    {% if assessment.director_approved %}
+                    <span class="badge bg-success">批准生效</span>
+                    {% else %}
+                    <span class="badge bg-danger">退回</span>
+                    {% endif %}
+                </p>
+                {% if assessment.director_notes %}
+                <p class="text-muted">{{ assessment.director_notes }}</p>
+                {% endif %}
+                {% if assessment.effective_at %}
+                <p class="text-success"><strong>生效时间：</strong>{{ assessment.effective_at|date:"Y-m-d H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">历史节点</h5>
+            </div>
+            <div class="card-body">
+                {% for h in history %}
+                <div class="timeline-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ h.get_action_display }}</strong>
+                        <small class="text-muted">{{ h.created_at|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <div>
+                        {% if h.user %}
+                        <span class="text-muted">{{ h.user.username }}</span>
+                        {% endif %}
+                        {% if h.from_status %}
+                        <span class="status-badge status-{{ h.from_status }} ms-2">
+                            {{ h.from_status }}
+                        </span>
+                        →
+                        <span class="status-badge status-{{ h.to_status }}">
+                            {{ h.to_status }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if h.notes %}
+                    <p class="text-muted small mt-1">{{ h.notes }}</p>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-center text-muted">暂无历史记录</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                {% if assessment.status == 'draft' and user.is_nurse %}
+                <a href="{% url 'assessments:assessment_edit' assessment.pk %}" 
+                   class="btn btn-warning">编辑评估</a>
+                <a href="{% url 'assessments:assessment_submit' assessment.pk %}" 
+                   class="btn btn-success">提交审核</a>
+                {% endif %}
+                
+                {% if assessment.status == 'pending_doctor' and user.is_doctor %}
+                <a href="{% url 'assessments:doctor_confirm' assessment.pk %}" 
+                   class="btn btn-success">确认护理建议</a>
+                {% endif %}
+                
+                {% if assessment.status == 'pending_family' and user.is_family %}
+                <a href="{% url 'assessments:family_confirm' assessment.pk %}" 
+                   class="btn btn-success">确认费用</a>
+                {% endif %}
+                
+                {% if assessment.status == 'pending_director' and user.is_director %}
+                <a href="{% url 'assessments:director_review' assessment.pk %}" 
+                   class="btn btn-warning">复核生效</a>
+                {% endif %}
+                
+                <a href="{% url 'core:elder_detail' assessment.elder.pk %}" 
+                   class="btn btn-secondary">查看长者</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

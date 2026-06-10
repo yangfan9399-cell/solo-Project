@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if assessment %}编辑评估{% else %}创建评估{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{% if assessment %}编辑护理评估{% else %}创建护理评估{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="border-bottom pb-2 mb-3">基本信息</h6>
+                    <div class="row mb-3">
+                        {% if assessment %}
+                        <div class="col-md-6">
+                            <label class="form-label">长者</label>
+                            <input type="text" class="form-control" value="{{ assessment.elder.name }}" disabled>
+                        </div>
+                        {% else %}
+                        <div class="col-md-6">
+                            <label class="form-label">长者 *</label>
+                            <select class="form-select" name="elder" required>
+                                {% if elder %}
+                                <option value="{{ elder.id }}" selected>{{ elder.name }}</option>
+                                {% else %}
+                                {% for e in elders %}
+                                <option value="{{ e.id }}">{{ e.name }} - {{ e.location }}</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-3">
+                            <label class="form-label">评估日期 *</label>
+                            <input type="date" class="form-control" name="assessment_date" 
+                                   value="{{ assessment.assessment_date|default:today }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">建议护理等级 *</label>
+                            <select class="form-select" name="nursing_level" required>
+                                {% for level in nursing_levels %}
+                                <option value="{{ level.id }}" 
+                                        {% if assessment and assessment.nursing_level.id == level.id %}selected{% endif %}>
+                                    {{ level.name }} - ¥{{ level.monthly_fee }}/月
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">评估原因</label>
+                        <textarea class="form-control" name="assessment_reason" rows="2">
+                            {{ assessment.assessment_reason|default:'' }}
+                        </textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">护士备注</label>
+                        <textarea class="form-control" name="nurse_notes" rows="2">
+                            {{ assessment.nurse_notes|default:'' }}
+                        </textarea>
+                    </div>
+                    
+                    <h6 class="border-bottom pb-2 mb-3">评估维度评分</h6>
+                    {% for dimension_data in dimensions %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>{{ dimension_data.name }}</strong>
+                            <small class="text-muted ms-2">
+                                权重: {{ dimension_data.weight }} | 最高分: {{ dimension_data.max_score }}
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            {% for item in dimension_data.items.all %}
+                            <div class="row mb-2 align-items-center">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        {{ item.name }}
+                                        {% if item.is_required %}
+                                        <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+                                    <small class="text-muted d-block">{{ item.description }}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control" 
+                                           name="score_{{ item.id }}" 
+                                           min="0" max="{{ item.max_score }}"
+                                           value="{% if scores_dict %}{{ scores_dict.get:item.id.score }}{% endif %}"
+                                           {% if item.is_required %}required{% endif %}>
+                                    <small class="text-muted">范围: 0-{{ item.max_score }}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control" 
+                                           name="notes_{{ item.id }}" 
+                                           placeholder="备注"
+                                           value="{% if scores_dict %}{{ scores_dict.get:item.id.notes }}{% endif %}">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            {% if assessment %}保存更改{% else %}创建评估{% endif %}
+                        </button>
+                        <a href="{% if assessment %}{% url 'assessments:assessment_detail' assessment.pk %}{% else %}{% url 'assessments:assessment_list' %}{% endif %}" 
+                           class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

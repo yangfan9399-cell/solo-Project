@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}工作台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">欢迎，{{ user.username }}（{{ user.get_role_display_zh }}）</h5>
+            </div>
+            <div class="card-body">
+                {% if pending_count %}
+                <div class="alert alert-info">
+                    您有 <strong>{{ pending_count }}</strong> 条待处理事项
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    {% if user.is_nurse %}
+                    <div class="col-md-4">
+                        <a href="{% url 'assessments:assessment_create' %}" class="btn btn-success btn-lg w-100 mb-3">
+                            创建新评估
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'core:elder_list' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            查看长者列表
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'assessments:assessment_list' %}?status=draft" class="btn btn-warning btn-lg w-100 mb-3">
+                            我的草稿
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.is_doctor %}
+                    <div class="col-md-6">
+                        <a href="{% url 'assessments:assessment_list' %}?status=pending_doctor" class="btn btn-warning btn-lg w-100 mb-3">
+                            待确认评估
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'core:elder_list' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            查看长者列表
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.is_family %}
+                    <div class="col-md-6">
+                        <a href="{% url 'assessments:assessment_list' %}?status=pending_family" class="btn btn-warning btn-lg w-100 mb-3">
+                            待确认费用
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'core:elder_list' %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            查看长者列表
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user.is_director %}
+                    <div class="col-md-4">
+                        <a href="{% url 'assessments:assessment_list' %}?status=pending_director" class="btn btn-warning btn-lg w-100 mb-3">
+                            待复核评估
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'core:elder_create' %}" class="btn btn-success btn-lg w-100 mb-3">
+                            添加长者
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'statistics:dashboard' %}" class="btn btn-info btn-lg w-100 mb-3">
+                            统计分析
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if assessments %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">最近评估记录</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>长者</th>
+                                <th>评估日期</th>
+                                <th>建议等级</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assessment in assessments %}
+                            <tr>
+                                <td>{{ assessment.elder.name }}</td>
+                                <td>{{ assessment.assessment_date }}</td>
+                                <td>{{ assessment.nursing_level.name|default:'-' }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ assessment.status }}">
+                                        {{ assessment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'assessments:assessment_detail' assessment.pk %}" 
+                                       class="btn btn-sm btn-primary">查看详情</a>
+                                    {% if assessment.status == 'pending_doctor' and user.is_doctor %}
+                                    <a href="{% url 'assessments:doctor_confirm' assessment.pk %}" 
+                                       class="btn btn-sm btn-success">确认</a>
+                                    {% endif %}
+                                    {% if assessment.status == 'pending_family' and user.is_family %}
+                                    <a href="{% url 'assessments:family_confirm' assessment.pk %}" 
+                                       class="btn btn-sm btn-success">确认</a>
+                                    {% endif %}
+                                    {% if assessment.status == 'pending_director' and user.is_director %}
+                                    <a href="{% url 'assessments:director_review' assessment.pk %}" 
+                                       class="btn btn-sm btn-warning">复核</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">暂无评估记录</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

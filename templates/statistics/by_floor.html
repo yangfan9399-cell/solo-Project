@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}楼层统计{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">按楼层统计长者分布</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>楼层</th>
+                            <th>长者总数</th>
+                            <th>护理等级分布</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in floor_stats %}
+                        <tr>
+                            <td><strong>{{ stat.floor }}</strong></td>
+                            <td>{{ stat.total }}</td>
+                            <td>
+                                {% for level, count in stat.by_level.items %}
+                                <span class="badge bg-info me-2">{{ level }}: {{ count }}人</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <a href="{% url 'statistics:dashboard' %}" class="btn btn-secondary">返回统计概览</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

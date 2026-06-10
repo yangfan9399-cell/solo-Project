@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}异议统计{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">家属确认情况统计</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h3>{{ objection_stats.agreed }}</h3>
+                                <p>同意</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-warning">
+                            <div class="card-body">
+                                <h3>{{ objection_stats.objected }}</h3>
+                                <p>异议</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body">
+                                <h3>{{ objection_stats.pending }}</h3>
+                                <p>待确认</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">异议原因分布</h5>
+            </div>
+            <div class="card-body">
+                {% if objection_stats.reasons %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>异议原因</th>
+                            <th>出现次数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reason in objection_stats.reasons %}
+                        <tr>
+                            <td>{{ reason.reason }}</td>
+                            <td><strong>{{ reason.count }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-muted">暂无异议记录</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+    <a href="{% url 'statistics:dashboard' %}" class="btn btn-secondary">返回统计概览</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}长者列表{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">长者列表</h5>
+                    </div>
+                    {% if user.is_director %}
+                    <div class="col-auto">
+                        <a href="{% url 'core:elder_create' %}" class="btn btn-success">
+                            添加长者
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="search" 
+                                   value="{{ search }}" placeholder="搜索姓名/身份证/房间">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="floor">
+                                <option value="">全部楼层</option>
+                                {% for f in floors %}
+                                <option value="{{ f }}" {% if f == selected_floor %}selected{% endif %}>
+                                    {{ f }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="nursing_level">
+                                <option value="">全部等级</option>
+                                {% for nl in nursing_levels %}
+                                <option value="{{ nl.id }}" {% if nl.id|stringformat:'s' == selected_nursing_level %}selected{% endif %}>
+                                    {{ nl.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">筛选</button>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{% url 'core:elder_list' %}" class="btn btn-secondary w-100">清除</a>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>性别</th>
+                                <th>年龄</th>
+                                <th>楼层/房间</th>
+                                <th>当前护理等级</th>
+                                <th>当前月费</th>
+                                <th>入住日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for elder in elders %}
+                            <tr>
+                                <td>{{ elder.name }}</td>
+                                <td>{{ elder.get_gender_display }}</td>
+                                <td>{{ elder.age }}岁</td>
+                                <td>{{ elder.location }}</td>
+                                <td>
+                                    {% if elder.current_nursing_level %}
+                                    <span class="badge bg-info">{{ elder.current_nursing_level.name }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">未定级</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if elder.current_monthly_fee %}
+                                    ¥{{ elder.current_monthly_fee }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>{{ elder.admission_date }}</td>
+                                <td>
+                                    <a href="{% url 'core:elder_detail' elder.pk %}" 
+                                       class="btn btn-sm btn-primary">详情</a>
+                                    {% if user.is_nurse %}
+                                    <a href="{% url 'assessments:assessment_create_for_elder' elder.pk %}" 
+                                       class="btn btn-sm btn-success">评估</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">暂无长者数据</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
