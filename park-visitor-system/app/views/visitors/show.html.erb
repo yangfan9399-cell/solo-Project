@@ -1,0 +1,84 @@
+<div class="bg-white shadow rounded-lg p-6">
+  <div class="mb-6 flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-gray-900">访客详情</h2>
+    <div class="flex gap-2">
+      <%= link_to '编辑', edit_visitor_path(@visitor), class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
+      <%= link_to '返回', visitors_path, class: "bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600" %>
+    </div>
+  </div>
+
+  <dl class="grid grid-cols-2 gap-4 mb-6">
+    <div>
+      <dt class="text-sm font-medium text-gray-500">姓名</dt>
+      <dd class="text-lg text-gray-900"><%= @visitor.name %></dd>
+    </div>
+    <div>
+      <dt class="text-sm font-medium text-gray-500">电话</dt>
+      <dd class="text-lg text-gray-900"><%= @visitor.phone %></dd>
+    </div>
+    <div>
+      <dt class="text-sm font-medium text-gray-500">身份证号</dt>
+      <dd class="text-lg text-gray-900"><%= @visitor.id_card_number || 'N/A' %></dd>
+    </div>
+    <div>
+      <dt class="text-sm font-medium text-gray-500">公司</dt>
+      <dd class="text-lg text-gray-900"><%= @visitor.company || 'N/A' %></dd>
+    </div>
+  </dl>
+
+  <div class="border-t pt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">车辆信息</h3>
+    <% if @vehicles.any? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% @vehicles.each do |vehicle| %>
+          <div class="border p-4 rounded-lg <%= vehicle.active? ? '' : 'bg-gray-50' %>">
+            <div class="flex justify-between">
+              <span class="font-bold text-xl"><%= vehicle.license_plate %></span>
+              <span class="px-2 text-sm rounded-full <%= vehicle.active? ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                <%= vehicle.active? ? '可用' : '已禁用' %>
+              </span>
+            </div>
+            <p class="text-gray-500 mt-2"><%= vehicle.vehicle_type %> - <%= vehicle.color || '未知颜色' %></p>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无车辆信息</p>
+    <% end %>
+  </div>
+
+  <div class="border-t pt-6 mt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">预约历史</h3>
+    <% if @reservations.any? %>
+      <div class="space-y-4">
+        <% @reservations.each do |reservation| %>
+          <div class="border p-4 rounded-lg">
+            <div class="flex justify-between">
+              <div>
+                <p class="font-medium"><%= reservation.vehicle.license_plate %></p>
+                <p class="text-sm text-gray-500">
+                  被访人: <%= reservation.host.name %> - <%= reservation.host.department.name %>
+                </p>
+                <p class="text-sm text-gray-500">
+                  <%= l(reservation.scheduled_at, format: :long) %>
+                </p>
+              </div>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                <%= case reservation.status
+                    when 'pending' then 'bg-yellow-100 text-yellow-800'
+                    when 'confirmed' then 'bg-green-100 text-green-800'
+                    when 'rejected' then 'bg-red-100 text-red-800'
+                    when 'expired' then 'bg-gray-100 text-gray-800'
+                    else 'bg-gray-100 text-gray-800'
+                    end %>">
+                <%= Reservation.human_attribute_name("status.#{reservation.status}") %>
+              </span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无预约历史</p>
+    <% end %>
+  </div>
+</div>

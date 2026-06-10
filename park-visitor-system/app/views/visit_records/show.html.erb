@@ -1,0 +1,201 @@
+<div class="bg-white shadow rounded-lg p-6">
+  <div class="mb-6 flex justify-between items-center">
+    <h2 class="text-2xl font-bold text-gray-900">访问记录详情</h2>
+    <%= link_to '返回', visit_records_path, class: "bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600" %>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="border p-4 rounded-lg">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">访客信息</h3>
+      <dl class="space-y-2">
+        <div class="flex">
+          <dt class="w-24 text-gray-500">姓名:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.visitor.name %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">电话:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.visitor.phone %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">公司:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.visitor.company || 'N/A' %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="border p-4 rounded-lg">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">车辆信息</h3>
+      <dl class="space-y-2">
+        <div class="flex">
+          <dt class="w-24 text-gray-500">车牌:</dt>
+          <dd class="text-gray-900 font-bold text-xl"><%= @visit_record.reservation.vehicle.license_plate %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">类型:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.vehicle.vehicle_type %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">颜色:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.vehicle.color || 'N/A' %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="border p-4 rounded-lg">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">被访人信息</h3>
+      <dl class="space-y-2">
+        <div class="flex">
+          <dt class="w-24 text-gray-500">姓名:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.host.name %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">部门:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.host.department.name %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="border p-4 rounded-lg">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">预约信息</h3>
+      <dl class="space-y-2">
+        <div class="flex">
+          <dt class="w-24 text-gray-500">预约时段:</dt>
+          <dd class="text-gray-900">
+            <%= l(@visit_record.reservation.scheduled_at, format: :long) %>
+          </dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">入口:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.entrance.name %></dd>
+        </div>
+        <div class="flex">
+          <dt class="w-24 text-gray-500">事由:</dt>
+          <dd class="text-gray-900"><%= @visit_record.reservation.purpose %></dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="mt-6 border p-4 rounded-lg">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">入离园状态</h3>
+    <dl class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <p class="text-sm text-gray-500">入园时间</p>
+        <p class="font-medium"><%= @visit_record.actual_entry_at ? l(@visit_record.actual_entry_at, format: :long) : '未入园' %></p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">入园入口</p>
+        <p class="font-medium"><%= @visit_record.entry_entrance&.name || '-' %></p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">离园时间</p>
+        <p class="font-medium"><%= @visit_record.actual_exit_at ? l(@visit_record.actual_exit_at, format: :long) : '未离园' %></p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">停留时长</p>
+        <p class="font-medium"><%= @visit_record.stay_duration_formatted %></p>
+      </div>
+    </dl>
+
+    <div class="mt-4">
+      <p class="text-sm text-gray-500 mb-2">当前状态</p>
+      <span class="px-4 py-2 inline-flex text-lg leading-5 font-semibold rounded-full
+        <%= case @visit_record.status
+            when 'pending_verification' then 'bg-yellow-100 text-yellow-800'
+            when 'pending_approval' then 'bg-orange-100 text-orange-800'
+            when 'approved' then 'bg-blue-100 text-blue-800'
+            when 'blocked' then 'bg-red-100 text-red-800'
+            when 'entered' then 'bg-green-100 text-green-800'
+            when 'exited' then 'bg-gray-100 text-gray-800'
+            else 'bg-gray-100 text-gray-800'
+            end %>">
+        <%= VisitRecord.human_attribute_name("status.#{@visit_record.status}") %>
+      </span>
+      <% if @visit_record.blocking_reason.present? %>
+        <p class="mt-2 text-red-600">拦截原因: <%= @visit_record.blocking_reason %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-6 border p-4 rounded-lg bg-gray-50">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">操作</h3>
+
+    <% case @visit_record.status %>
+    <% when 'pending_verification' %>
+      <%= form_with(url: verify_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+        <div>
+          <%= label_tag :license_plate, "输入车牌号进行核验", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag :license_plate, nil, placeholder: "请输入车牌号",
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+        </div>
+        <%= submit_tag "核验", class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
+      <% end %>
+
+    <% when 'pending_approval' %>
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <%= form_with(url: approve_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+            <div>
+              <%= label_tag :entrance_id, "选择入口", class: "block text-sm font-medium text-gray-700" %>
+              <%= select_tag :entrance_id,
+                options_from_collection_for_select(@entrances, :id, :name, @visit_record.reservation.entrance_id),
+                class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+            </div>
+            <%= submit_tag "批准放行", class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" %>
+          <% end %>
+        </div>
+        <div class="flex-1">
+          <%= form_with(url: block_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+            <div class="flex-1">
+              <%= label_tag :blocking_reason, "拦截原因", class: "block text-sm font-medium text-gray-700" %>
+              <%= text_field_tag :blocking_reason, nil, placeholder: "请输入拦截原因",
+                class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+            </div>
+            <%= submit_tag "拦截车辆", class: "bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" %>
+          <% end %>
+        </div>
+      </div>
+
+    <% when 'entered' %>
+      <%= form_with(url: record_exit_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+        <div>
+          <%= label_tag :exit_entrance_id, "选择出口", class: "block text-sm font-medium text-gray-700" %>
+          <%= select_tag :exit_entrance_id,
+            options_from_collection_for_select(@entrances, :id, :name),
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+        </div>
+        <%= submit_tag "确认离园", class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" %>
+      <% end %>
+
+    <% when 'exited', 'blocked' %>
+      <p class="text-gray-500">此访问记录已完结</p>
+    <% end %>
+  </div>
+
+  <div class="mt-6 border p-4 rounded-lg">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">历史节点</h3>
+    <% if @visit_record.history_nodes.any? %>
+      <div class="space-y-4">
+        <% @visit_record.history_nodes.order(created_at: :asc).each do |node| %>
+          <div class="flex items-start">
+            <div class="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
+            <div class="ml-4 flex-1">
+              <div class="flex justify-between">
+                <span class="font-medium text-gray-900"><%= node.action %></span>
+                <span class="text-sm text-gray-500"><%= l(node.created_at, format: :long) %></span>
+              </div>
+              <div class="text-sm text-gray-500">
+                操作人: <%= node.actor_display_name %>
+              </div>
+              <% if node.notes %>
+                <div class="text-sm text-gray-600 mt-1"><%= node.notes %></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无历史记录</p>
+    <% end %>
+  </div>
+</div>

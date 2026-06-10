@@ -1,0 +1,60 @@
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-900">
+    <%= action_name == 'pending_verification' ? '待核验列表' : '待审批列表' %>
+  </h2>
+</div>
+
+<% if @visit_records.any? %>
+  <div class="grid gap-6">
+    <% @visit_records.each do |record| %>
+      <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-start">
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900"><%= record.reservation.visitor.name %></h3>
+              <p class="text-sm text-gray-500"><%= record.reservation.visitor.phone %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">车牌</p>
+              <p class="font-bold text-lg"><%= record.reservation.vehicle.license_plate %></p>
+              <p class="text-sm text-gray-500"><%= record.reservation.vehicle.vehicle_type %> - <%= record.reservation.vehicle.color %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">被访人</p>
+              <p class="font-medium"><%= record.reservation.host.name %></p>
+              <p class="text-sm text-gray-500"><%= record.reservation.host.department.name %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">预约时段</p>
+              <p class="text-sm"><%= l(record.reservation.scheduled_at, format: :long) %></p>
+              <% if record.reservation.scheduled_end_at %>
+                <p class="text-sm">至 <%= l(record.reservation.scheduled_end_at, format: :long) %></p>
+              <% end %>
+            </div>
+          </div>
+          <div class="ml-4 flex flex-col gap-2">
+            <%= link_to '查看详情', record, class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-center" %>
+            <% if action_name == 'pending_verification' %>
+              <% if Blacklist.is_blacklisted?(record.reservation.vehicle.license_plate) %>
+                <span class="bg-red-100 text-red-800 px-4 py-2 rounded-md text-center text-sm">黑名单车辆</span>
+              <% else %>
+                <span class="bg-green-100 text-green-800 px-4 py-2 rounded-md text-center text-sm">可核验</span>
+              <% end %>
+            <% elsif action_name == 'pending_approval' %>
+              <span class="bg-orange-100 text-orange-800 px-4 py-2 rounded-md text-center text-sm">待审批</span>
+            <% end %>
+          </div>
+        </div>
+        <% if record.reservation.purpose.present? %>
+          <div class="mt-4 pt-4 border-t">
+            <p class="text-sm text-gray-500">来访事由: <span class="text-gray-900"><%= record.reservation.purpose %></span></p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <div class="bg-white shadow rounded-lg p-12 text-center">
+    <p class="text-gray-500 text-lg">暂无待处理记录</p>
+  </div>
+<% end %>

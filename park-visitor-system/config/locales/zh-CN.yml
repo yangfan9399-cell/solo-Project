@@ -1,0 +1,87 @@
+zh-CN:
+  activerecord:
+    models:
+      reservation: 预约
+      visit_record: 访问记录
+      visitor: 访客
+      vehicle: 车辆
+      employee: 员工
+      department: 部门
+      entrance: 入口
+      blacklist: 黑名单
+      history_node: 历史节点
+
+    attributes:
+      reservation:
+        visitor: 访客
+        vehicle: 车辆
+        host: 被访人
+        entrance: 入口
+        scheduled_at: 预约开始时间
+        scheduled_end_at: 预约结束时间
+        purpose: 来访事由
+        status: 状态
+        host_notes: 接待人备注
+      visit_record:
+        reservation: 预约
+        entry_guard: 入园门岗
+        exit_guard: 离园门岗
+        entry_entrance: 入园入口
+        exit_entrance: 离园出口
+        supervisor: 审批主管
+        actual_entry_at: 实际入园时间
+        actual_exit_at: 实际离园时间
+        status: 状态
+        blocking_reason: 拦截原因
+      visitor:
+        name: 姓名
+        phone: 电话
+        id_card_number: 身份证号
+        company: 公司
+        email: 邮箱
+      vehicle:
+        license_plate: 车牌号
+        vehicle_type: 车辆类型
+        color: 颜色
+        active: 状态
+      employee:
+        name: 姓名
+        employee_number: 工号
+        department: 部门
+        phone: 电话
+        email: 邮箱
+        position: 职位
+        is_security_guard: 是否门岗
+        is_security_supervisor: 是否安保主管
+      department:
+        name: 名称
+        code: 代码
+        description: 描述
+      entrance:
+        name: 名称
+        location: 位置
+        gate_type: 门岗类型
+        is_active: 是否启用
+      blacklist:
+        license_plate: 车牌号
+        reason: 原因
+        added_by: 添加人
+        added_at: 添加时间
+        is_active: 是否有效
+
+    enum:
+      reservation:
+        status:
+          pending: 待确认
+          confirmed: 已确认
+          rejected: 已拒绝
+          expired: 已过期
+          cancelled: 已取消
+      visit_record:
+        status:
+          pending_verification: 待核验
+          pending_approval: 待审批
+          approved: 已批准
+          blocked: 已拦截
+          entered: 已入园
+          exited: 已离园

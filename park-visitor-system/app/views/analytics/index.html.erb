@@ -1,0 +1,136 @@
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-900">数据分析</h2>
+</div>
+
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+  <h3 class="text-lg font-semibold text-gray-900 mb-4">筛选条件</h3>
+  <%= form_with(url: analytics_path, method: :get, class: "flex gap-4 items-end") do %>
+    <div>
+      <%= label_tag :start_date, "开始日期", class: "block text-sm font-medium text-gray-700" %>
+      <%= date_field_tag :start_date, params[:start_date] || 30.days.ago.to_date,
+        class: "mt-1 block border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+    </div>
+    <div>
+      <%= label_tag :end_date, "结束日期", class: "block text-sm font-medium text-gray-700" %>
+      <%= date_field_tag :end_date, params[:end_date] || Date.today,
+        class: "mt-1 block border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+    </div>
+    <%= submit_tag "查询", class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+  <div class="bg-white shadow rounded-lg p-6">
+    <p class="text-sm text-gray-500">总访问量</p>
+    <p class="text-3xl font-bold text-gray-900"><%= @stats[:total_visits] %></p>
+  </div>
+  <div class="bg-white shadow rounded-lg p-6">
+    <p class="text-sm text-gray-500">拦截量</p>
+    <p class="text-3xl font-bold text-red-600"><%= @stats[:blocked_visits] %></p>
+  </div>
+  <div class="bg-white shadow rounded-lg p-6">
+    <p class="text-sm text-gray-500">平均停留时长</p>
+    <p class="text-3xl font-bold text-gray-900"><%= @stats[:avg_stay_duration] %></p>
+  </div>
+  <div class="bg-white shadow rounded-lg p-6">
+    <p class="text-sm text-gray-500">拦截率</p>
+    <p class="text-3xl font-bold text-orange-600">
+      <%= @stats[:total_visits] > 0 ? "#{(100.0 * @stats[:blocked_visits] / @stats[:total_visits]).round(1)}%" : "0%" %>
+    </p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="bg-white shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">按部门统计</h3>
+    <% if @stats[:by_department].any? %>
+      <div class="space-y-3">
+        <% @stats[:by_department].sort_by { |_, v| -v }.each do |dept, count| %>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700"><%= dept %></span>
+            <div class="flex items-center gap-2">
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: <%= (count.to_f / @stats[:total_visits] * 100).round %>%"></div>
+              </div>
+              <span class="font-medium"><%= count %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无数据</p>
+    <% end %>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">按入口统计</h3>
+    <% if @stats[:by_entrance].any? %>
+      <div class="space-y-3">
+        <% @stats[:by_entrance].sort_by { |_, v| -v }.each do |entrance, count| %>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700"><%= entrance %></span>
+            <div class="flex items-center gap-2">
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <div class="bg-green-600 h-2 rounded-full" style="width: <%= (count.to_f / @stats[:total_visits] * 100).round %>%"></div>
+              </div>
+              <span class="font-medium"><%= count %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无数据</p>
+    <% end %>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">按拦截原因统计</h3>
+    <% if @stats[:by_blocking_reason].any? %>
+      <div class="space-y-3">
+        <% @stats[:by_blocking_reason].sort_by { |_, v| -v }.each do |reason, count| %>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700"><%= reason %></span>
+            <div class="flex items-center gap-2">
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <div class="bg-red-600 h-2 rounded-full" style="width: <%= (count.to_f / @stats[:blocked_visits] * 100).round %>%"></div>
+              </div>
+              <span class="font-medium"><%= count %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无拦截记录</p>
+    <% end %>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">停留时长分布</h3>
+    <% exited_records = @visit_records.exited %>
+    <% if exited_records.any? %>
+      <% duration_buckets = { "<1h" => 0, "1-2h" => 0, "2-4h" => 0, "4-8h" => 0, ">8h" => 0 } %>
+      <% exited_records.each do |record| %>
+        <% duration = record.stay_duration %>
+        <% if duration %>
+          <% hours = duration / 3600 %>
+          <% duration_buckets[hours < 1 ? "<1h" : hours < 2 ? "1-2h" : hours < 4 ? "2-4h" : hours < 8 ? "4-8h" : ">8h"] += 1 %>
+        <% end %>
+      <% end %>
+      <div class="space-y-3">
+        <% duration_buckets.each do |bucket, count| %>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700"><%= bucket %></span>
+            <div class="flex items-center gap-2">
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: <%= exited_records.count > 0 ? (count.to_f / exited_records.count * 100).round : 0 %>%"></div>
+              </div>
+              <span class="font-medium"><%= count %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500">暂无已离园记录</p>
+    <% end %>
+  </div>
+</div>
