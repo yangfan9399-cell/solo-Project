@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useLoaderData, Link } from 'react-router-dom'
 import { ReportDashboard } from '@/components/report/ReportDashboard'
 
 interface SupplierSummary {
@@ -38,44 +37,16 @@ interface DashboardStats {
   completedCount: number
 }
 
+interface LoaderData {
+  suppliers: SupplierSummary[]
+  categories: CategorySummary[]
+  defects: DefectTypeSummary[]
+  periods: PeriodSummary[]
+  stats: DashboardStats
+}
+
 export function ReportPage() {
-  const [suppliers, setSuppliers] = useState<SupplierSummary[]>([])
-  const [categories, setCategories] = useState<CategorySummary[]>([])
-  const [defects, setDefects] = useState<DefectTypeSummary[]>([])
-  const [periods, setPeriods] = useState<PeriodSummary[]>([])
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/report/suppliers').then(res => res.json()),
-      fetch('/api/report/categories').then(res => res.json()),
-      fetch('/api/report/defects').then(res => res.json()),
-      fetch('/api/report/periods').then(res => res.json()),
-      fetch('/api/report/stats').then(res => res.json()),
-    ])
-    .then(([supplierData, categoryData, defectData, periodData, statsData]) => {
-      setSuppliers(supplierData)
-      setCategories(categoryData)
-      setDefects(defectData)
-      setPeriods(periodData)
-      setStats(statsData)
-      setLoading(false)
-    })
-    .catch(err => {
-      console.error('Failed to fetch report data:', err)
-      setLoading(false)
-    })
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-500">加载中...</p>
-      </div>
-    )
-  }
+  const { suppliers, categories, defects, periods, stats } = useLoaderData<LoaderData>()
 
   return (
     <div>
@@ -94,7 +65,7 @@ export function ReportPage() {
         categories={categories}
         defects={defects}
         periods={periods}
-        stats={stats || { totalClaims: 0, totalAmount: 0, pendingCount: 0, underReviewCount: 0, completedCount: 0 }}
+        stats={stats}
       />
     </div>
   )

@@ -4,10 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "node scripts/build.cjs",
-    "preview": "vite preview",
     "serve": "tsx src/server.tsx",
+    "dev": "tsx src/server.tsx",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts"

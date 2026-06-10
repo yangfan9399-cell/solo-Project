@@ -2,7 +2,7 @@ import { Outlet, Link } from 'react-router-dom'
 import { FileText, BarChart3, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
-export function Layout() {
+export function DefaultLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (

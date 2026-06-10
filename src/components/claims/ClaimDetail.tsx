@@ -47,7 +47,7 @@ interface ClaimDetailType {
 interface ClaimDetailProps {
   claim: ClaimDetailType
   onUpdateStatus: (status: string, comment: string, operator: string) => void
-  onSupplierResponse: (responseType: string, comment: string) => void
+  onSupplierResponse: (responseType: string, comment: string, evidenceUrl: string | null) => void
 }
 
 export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: ClaimDetailProps) {
@@ -77,7 +77,7 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
     if (actionType === 'status') {
       onUpdateStatus(newStatus, comment, '财务部')
     } else {
-      onSupplierResponse(responseType, comment)
+      onSupplierResponse(responseType, comment, null)
     }
     setShowActionModal(false)
     setComment('')

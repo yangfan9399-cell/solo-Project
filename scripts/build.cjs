@@ -42,24 +42,32 @@ body {
 console.log('Writing CSS...')
 fs.writeFileSync(path.join(distDir, 'index.css'), tailwindCss)
 
-console.log('Building client JavaScript...')
-esbuild.build({
-  entryPoints: ['src/main.tsx'],
-  bundle: true,
-  minify: true,
-  sourcemap: true,
-  platform: 'browser',
-  target: ['es2020'],
-  outfile: path.join(distDir, 'main.js'),
-  loader: {
-    '.ts': 'tsx',
-    '.tsx': 'tsx',
-  },
-  plugins: [],
-  resolveExtensions: ['.tsx', '.ts', '.jsx', '.js'],
-}).then(() => {
+async function build() {
+  console.log('Building client JavaScript...')
+  
+  await esbuild.build({
+    entryPoints: ['src/main.tsx'],
+    bundle: true,
+    minify: true,
+    sourcemap: true,
+    platform: 'browser',
+    target: ['es2020'],
+    outfile: path.join(distDir, 'main.js'),
+    loader: {
+      '.ts': 'tsx',
+      '.tsx': 'tsx',
+    },
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js'],
+    alias: {
+      '@': path.resolve(__dirname, '../src'),
+    },
+    external: ['pg', 'pg-native', 'drizzle-orm', 'drizzle-kit'],
+  })
+
   console.log('Build completed successfully!')
-}).catch((err) => {
+}
+
+build().catch((err) => {
   console.error('Build failed:', err)
   process.exit(1)
 })

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useLoaderData, useNavigate, Link } from 'react-router-dom'
 import { ClaimDetail } from '@/components/claims/ClaimDetail'
 
 interface Evidence {
@@ -48,33 +47,13 @@ interface ClaimDetailData {
   supplierResponse: SupplierResponse | null
 }
 
+interface LoaderData {
+  claim: ClaimDetailData | null
+}
+
 export function ClaimDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const [claim, setClaim] = useState<ClaimDetailData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!id) return
-    fetch(`/api/claims/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setClaim(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('Failed to fetch claim:', err)
-        setLoading(false)
-      })
-  }, [id])
-
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-500">加载中...</p>
-      </div>
-    )
-  }
+  const { claim } = useLoaderData<LoaderData>()
+  const navigate = useNavigate()
 
   if (!claim) {
     return (
@@ -87,6 +66,24 @@ export function ClaimDetailPage() {
     )
   }
 
+  const handleUpdateStatus = async (status: string, comment: string, operator: string) => {
+    await fetch(`/api/claims/${claim.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateStatus', status, comment, operator }),
+    })
+    navigate(`/claims/${claim.id}`)
+  }
+
+  const handleSupplierResponse = async (responseType: string, comment: string, evidenceUrl: string | null) => {
+    await fetch(`/api/claims/${claim.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'supplierResponse', responseType, comment, evidenceUrl }),
+    })
+    navigate(`/claims/${claim.id}`)
+  }
+
   return (
     <div>
       <Link
@@ -95,7 +92,11 @@ export function ClaimDetailPage() {
       >
         返回索赔列表
       </Link>
-      <ClaimDetail claim={claim} />
+      <ClaimDetail 
+        claim={claim} 
+        onUpdateStatus={handleUpdateStatus}
+        onSupplierResponse={handleSupplierResponse}
+      />
     </div>
   )
 }

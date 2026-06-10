@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useLoaderData, Link } from 'react-router-dom'
 import { ClaimList } from '@/components/claims/ClaimList'
 
 interface Claim {
@@ -21,31 +20,12 @@ interface Claim {
   createdAt: string | null
 }
 
+interface LoaderData {
+  claims: Claim[]
+}
+
 export function IndexPage() {
-  const [claims, setClaims] = useState<Claim[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/claims')
-      .then(res => res.json())
-      .then(data => {
-        setClaims(data)
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('Failed to fetch claims:', err)
-        setLoading(false)
-      })
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-500">加载中...</p>
-      </div>
-    )
-  }
+  const { claims } = useLoaderData<LoaderData>()
 
   return (
     <div>
