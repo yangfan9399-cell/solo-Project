@@ -96,11 +96,11 @@ class VisitRecordsController < ApplicationController
   end
 
   def record_exit
-    entrance = current_entrance
+    exit_entrance = current_exit_entrance
     guard = current_guard
 
-    if @visit_record.may_exit? && entrance && guard
-      @visit_record.record_exit!(entrance: entrance, guard: guard)
+    if @visit_record.may_exit? && exit_entrance && guard
+      @visit_record.record_exit!(entrance: exit_entrance, guard: guard)
       redirect_to @visit_record, notice: '已记录离园'
     else
       redirect_to @visit_record, alert: '无法记录离园'
@@ -143,5 +143,11 @@ class VisitRecordsController < ApplicationController
     entrance_id = params[:entrance_id].to_i
     return nil if entrance_id.zero?
     @entrances&.find(entrance_id) || Entrance.find_by(id: entrance_id)
+  end
+
+  def current_exit_entrance
+    exit_entrance_id = params[:exit_entrance_id].to_i
+    return nil if exit_entrance_id.zero?
+    @entrances&.find(exit_entrance_id) || Entrance.find_by(id: exit_entrance_id)
   end
 end

@@ -63,7 +63,7 @@ class VisitRecord < ApplicationRecord
   end
 
   def approve!(supervisor:, entrance:, guard:)
-    update!(status: :approved, supervisor_id: supervisor.id, entry_entrance_id: entrance.id, entry_guard_id: guard.id, actual_entry_at: Time.current)
+    update!(status: :entered, supervisor_id: supervisor.id, entry_entrance_id: entrance.id, entry_guard_id: guard.id, actual_entry_at: Time.current)
     add_history_node(action: '安保主管批准', actor: supervisor, notes: '车辆获准入园')
     add_history_node(action: '入园', actor: guard, notes: "入口: #{entrance.name}")
   end
