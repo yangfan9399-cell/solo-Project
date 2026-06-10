@@ -8,13 +8,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const result = await client.query(`
       SELECT
         a.*,
-        e.name as "employeeName",
-        e."employeeId" as "employeeCode",
-        e.email as "employeeEmail",
-        s.name as "softwareName",
-        s.vendor as "softwareVendor",
-        s.description as "softwareDescription",
-        d.name as "departmentName"
+        json_build_object('id', e.id, 'name', e.name, 'employeeId', e."employeeId", 'email', e.email) as "employee",
+        json_build_object('id', s.id, 'name', s.name, 'vendor', s.vendor, 'description', s.description) as "software",
+        json_build_object('id', d.id, 'name', d.name, 'code', d.code) as "department"
       FROM "Application" a
       LEFT JOIN "Employee" e ON a."employeeId" = e.id
       LEFT JOIN "Software" s ON a."softwareId" = s.id
@@ -27,7 +23,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const approvals = await client.query(`
-      SELECT ap.*, e.name as "approverName", e."employeeId" as "approverCode"
+      SELECT 
+        ap.*, 
+        json_build_object('id', e.id, 'name', e.name, 'employeeId', e."employeeId") as "approver"
       FROM "Approval" ap
       LEFT JOIN "Employee" e ON ap."approverId" = e.id
       WHERE ap."applicationId" = $1
@@ -35,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     `, [id])
 
     const assignment = await client.query(`
-      SELECT la.*, l."licenseKey"
+      SELECT la.*, json_build_object('id', l.id, 'licenseKey', l."licenseKey") as "license"
       FROM "LicenseAssignment" la
       LEFT JOIN "License" l ON la."licenseId" = l.id
       WHERE la."applicationId" = $1

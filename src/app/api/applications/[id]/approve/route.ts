@@ -18,15 +18,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (role === 'DEPARTMENT_HEAD') {
       await client.query(`
-        INSERT INTO "Approval" ("id", "applicationId", "approverId", "role", "status", "comment")
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO "Approval" ("id", "applicationId", "approverId", "role", "status", "comment", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       `, [`apr_${Date.now()}`, id, approverId, role, status, comment])
 
       const newStatus = status === 'APPROVED' ? 'DEPARTMENT_APPROVED' : 'REJECTED'
       await client.query('UPDATE "Application" SET status = $1, "updatedAt" = NOW() WHERE id = $2', [newStatus, id])
 
       await client.query('COMMIT')
-      return NextResponse.json({ ...application, status: newStatus })
+      
+      const emp = await client.query('SELECT id, name, "employeeId" FROM "Employee" WHERE id = $1', [application.employeeId])
+      const sw = await client.query('SELECT id, name, vendor FROM "Software" WHERE id = $1', [application.softwareId])
+      const dept = await client.query('SELECT id, name, code FROM "Department" WHERE id = $1', [application.departmentId])
+      
+      return NextResponse.json({
+        ...application,
+        status: newStatus,
+        employee: emp.rows[0] || null,
+        software: sw.rows[0] || null,
+        department: dept.rows[0] || null,
+      })
     } else if (role === 'IT_ADMIN') {
       if (application.status !== 'DEPARTMENT_APPROVED') {
         await client.query('ROLLBACK')
@@ -38,7 +49,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
       if (!sw || sw.usedSeats >= sw.totalSeats) {
         const recallCandidates = await client.query(`
-          SELECT la.*, e.name as "employeeName", e."employeeId" as "employeeCode"
+          SELECT la.*, 
+            json_build_object('id', e.id, 'name', e.name, 'employeeId', e."employeeId") as "employee"
           FROM "LicenseAssignment" la
           LEFT JOIN "Employee" e ON la."employeeId" = e.id
           WHERE la."licenseId" IN (SELECT id FROM "License" WHERE "softwareId" = $1)
@@ -54,8 +66,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
 
       await client.query(`
-        INSERT INTO "Approval" ("id", "applicationId", "approverId", "role", "status", "comment")
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO "Approval" ("id", "applicationId", "approverId", "role", "status", "comment", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
       `, [`apr_${Date.now()}`, id, approverId, role, status, comment])
 
       if (status === 'APPROVED') {
@@ -64,9 +76,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
         if (lic) {
           await client.query(`
-            INSERT INTO "LicenseAssignment" ("id", "licenseId", "employeeId", "applicationId", "assignedAt", "expiresAt", "status")
-            VALUES ($1, $2, $3, $4, NOW(), $5, 'ACTIVE')
-          `, [`ass_${Date.now()}`, lic.id, application.employeeId, id, lic."endDate"])
+            INSERT INTO "LicenseAssignment" ("id", "licenseId", "employeeId", "applicationId", "assignedAt", "expiresAt", "status", "createdAt", "updatedAt")
+            VALUES ($1, $2, $3, $4, NOW(), $5, 'ACTIVE', NOW(), NOW())
+          `, [`ass_${Date.now()}`, lic.id, application.employeeId, id, lic.endDate])
 
           await client.query('UPDATE "Software" SET "usedSeats" = "usedSeats" + 1 WHERE id = $1', [application.softwareId])
           await client.query('UPDATE "Application" SET status = $1, "updatedAt" = NOW() WHERE id = $2', ['ASSIGNED', id])
@@ -76,7 +88,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
 
       await client.query('COMMIT')
-      return NextResponse.json({ ...application, status: status === 'APPROVED' ? 'ASSIGNED' : 'REJECTED' })
+      
+      const emp = await client.query('SELECT id, name, "employeeId" FROM "Employee" WHERE id = $1', [application.employeeId])
+      const swRes = await client.query('SELECT id, name, vendor FROM "Software" WHERE id = $1', [application.softwareId])
+      const dept = await client.query('SELECT id, name, code FROM "Department" WHERE id = $1', [application.departmentId])
+      
+      return NextResponse.json({
+        ...application,
+        status: status === 'APPROVED' ? 'ASSIGNED' : 'REJECTED',
+        employee: emp.rows[0] || null,
+        software: swRes.rows[0] || null,
+        department: dept.rows[0] || null,
+      })
     }
 
     await client.query('COMMIT')
