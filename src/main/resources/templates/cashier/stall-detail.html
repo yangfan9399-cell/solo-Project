@@ -58,8 +58,8 @@
                 <div class="info-item"><label>摊位编号</label><value th:text="${detail.stall.stallCode}"></value></div>
                 <div class="info-item"><label>区域</label><value th:text="${detail.stall.area}"></value></div>
                 <div class="info-item"><label>经营品类</label><value th:text="${detail.stall.category}"></value></div>
-                <div class="info-item"><label>面积</label><value th:text="${detail.stall.size} ㎡"></value></div>
-                <div class="info-item"><label>月租金</label><value th:text="${detail.stall.monthlyRent} 元"></value></div>
+                <div class="info-item"><label>面积</label><value th:text="|${detail.stall.size} ㎡|"></value></div>
+                <div class="info-item"><label>月租金</label><value th:text="|${detail.stall.monthlyRent} 元|"></value></div>
                 <div class="info-item"><label>状态</label><value th:text="${detail.stall.status}"></value></div>
             </div>
         </div>

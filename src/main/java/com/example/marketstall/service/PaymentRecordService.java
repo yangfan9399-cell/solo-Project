@@ -72,7 +72,7 @@ public class PaymentRecordService {
         LocalDate today = LocalDate.now();
         
         return pendingPayments.stream()
-                .filter(p -> p.getDueDate() != null)
+                .filter(p -> p.getDueDate() != null && p.getDueDate().isBefore(today))
                 .collect(Collectors.groupingBy(
                         p -> {
                             long days = java.time.temporal.ChronoUnit.DAYS.between(p.getDueDate(), today);
