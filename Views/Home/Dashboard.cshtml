@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "首页";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-primary">欢迎使用设备点检系统</h2>
+        <p class="text-muted">当前用户：@User.Identity?.Name</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card border-primary mb-3">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">待确认点检</h5>
+                <p class="card-text display-4 text-primary">@ViewBag.PendingInspections</p>
+                <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-primary">查看详情</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning mb-3">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">待验收维修</h5>
+                <p class="card-text display-4 text-warning">@ViewBag.PendingMaintenance</p>
+                <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-warning">查看详情</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info mb-3">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">点检管理</h5>
+                <p class="card-text display-4 text-info">→</p>
+                <a asp-action="Index" asp-controller="Inspection" class="btn btn-info">进入管理</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success mb-3">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">统计分析</h5>
+                <p class="card-text display-4 text-success">📊</p>
+                <a asp-action="Index" asp-controller="Statistics" class="btn btn-success">查看报表</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">快捷操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (User.IsInRole("Operator"))
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Create" asp-controller="Inspection" class="btn btn-success w-100">
+                                📝 提交点检异常
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("TeamLeader"))
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-warning w-100">
+                                ✓ 确认停机
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Index" asp-controller="Inspection" asp-route-status="Confirmed" class="btn btn-primary w-100">
+                                🔧 转维修工单
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("Maintenance"))
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Stopped" class="btn btn-info w-100">
+                                🔨 开始维修
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Repairing" class="btn btn-secondary w-100">
+                                🔧 处理故障
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("Engineer"))
+                    {
+                        <div class="col-md-3 mb-2">
+                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-primary w-100">
+                                ✅ 复产验收
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>系统说明</h5>
+            </div>
+            <div class="card-body">
+                <h6>操作流程：</h6>
+                <ol class="mb-3">
+                    <li><strong>操作工</strong> - 提交设备点检异常</li>
+                    <li><strong>班组长</strong> - 确认停机，转维修工单</li>
+                    <li><strong>维修员</strong> - 处理故障，完成维修</li>
+                    <li><strong>设备工程师</strong> - 验收维修，确认复产</li>
+                </ol>
+                <p class="text-muted small">
+                    注：当备件缺料时，禁止确认复产。
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>预置样本</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <span class="badge bg-success">✓ 已完成</span>
+                        <strong>A产线主电机</strong> - 轴承更换，¥2400损失
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-warning">⏳ 维修中</span>
+                        <strong>B产线压缩机</strong> - 备件缺料
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-secondary">⚠ 误报</span>
+                        <strong>B产线传送带</strong> - 正常波动
+                    </li>
+                    <li class="mb-2">
+                        <span class="badge bg-danger">✗ 验收失败</span>
+                        <strong>C产线循环泵</strong> - 振动超标
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

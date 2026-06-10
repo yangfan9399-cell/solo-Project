@@ -1,86 +1,35 @@
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "首页";
 }
 
-<div class="row">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">待确认点检</h5>
-                <p class="card-text display-4">@ViewBag.PendingInspections</p>
-                <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-primary">查看</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">待验收维修</h5>
-                <p class="card-text display-4">@ViewBag.PendingMaintenance</p>
-                <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-primary">查看</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">正在维修</h5>
-                <p class="card-text display-4">0</p>
-                <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Repairing" class="btn btn-primary">查看</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">统计分析</h5>
-                <p class="card-text display-4">→</p>
-                <a asp-action="Index" asp-controller="Statistics" class="btn btn-primary">查看</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>快捷操作</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    @if (User.IsInRole("Operator"))
-                    {
-                        <div class="col-md-3">
-                            <a asp-action="Create" asp-controller="Inspection" class="btn btn-success w-100">
-                                提交点检异常
-                            </a>
-                        </div>
-                    }
-                    @if (User.IsInRole("TeamLeader"))
-                    {
-                        <div class="col-md-3">
-                            <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-warning w-100">
-                                确认停机
-                            </a>
-                        </div>
-                    }
-                    @if (User.IsInRole("Maintenance"))
-                    {
-                        <div class="col-md-3">
-                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Stopped" class="btn btn-info w-100">
-                                处理故障
-                            </a>
-                        </div>
-                    }
-                    @if (User.IsInRole("Engineer"))
-                    {
-                        <div class="col-md-3">
-                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-primary w-100">
-                                复产验收
-                            </a>
-                        </div>
-                    }
+<div class="text-center mt-5">
+    <h1 class="display-4 text-primary mb-4">设备点检异常停机与维修确认系统</h1>
+    <p class="lead text-muted mb-4">管理设备从点检异常、停机报修到维修复产的完整流程</p>
+    
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h3 class="mb-4">功能特点</h3>
+                    <ul class="list-unstyled text-start">
+                        <li class="mb-3">
+                            <strong>操作工</strong> - 提交设备点检异常
+                        </li>
+                        <li class="mb-3">
+                            <strong>班组长</strong> - 确认停机，转维修工单
+                        </li>
+                        <li class="mb-3">
+                            <strong>维修员</strong> - 处理故障，完成维修
+                        </li>
+                        <li class="mb-3">
+                            <strong>设备工程师</strong> - 验收维修，确认复产
+                        </li>
+                    </ul>
+                    <hr class="my-4"/>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg">
+                        立即登录
+                    </a>
                 </div>
             </div>
         </div>

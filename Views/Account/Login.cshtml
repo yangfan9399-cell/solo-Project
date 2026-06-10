@@ -1,49 +1,65 @@
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "登录";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3>设备点检系统 - 登录</h3>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <h3 class="mb-0">设备点检系统</h3>
+                <p class="mb-0 mt-2">用户登录</p>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form asp-action="Login" method="post">
-                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                     
-                    <div class="form-group">
-                        <label asp-for="UserName">用户名</label>
-                        <input asp-for="UserName" class="form-control" />
+                    <div class="mb-3">
+                        <label asp-for="UserName" class="form-label">用户名</label>
+                        <input asp-for="UserName" class="form-control" placeholder="请输入用户名" />
                         <span asp-validation-for="UserName" class="text-danger"></span>
                     </div>
                     
-                    <div class="form-group">
-                        <label asp-for="Password">密码</label>
-                        <input asp-for="Password" class="form-control" />
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">密码</label>
+                        <input asp-for="Password" class="form-control" type="password" placeholder="请输入密码" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
                     
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input asp-for="RememberMe" class="form-check-input" />
-                            <label asp-for="RememberMe" class="form-check-label">记住我</label>
-                        </div>
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">记住我</label>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2">登 录</button>
                 </form>
-                
-                <div class="mt-3 p-3 bg-light rounded">
-                    <p class="text-muted">测试用户：</p>
-                    <ul class="list-unstyled text-sm">
-                        <li>操作工: <strong>operator</strong> / Password123!</li>
-                        <li>班组长: <strong>teamleader</strong> / Password123!</li>
-                        <li>维修员: <strong>maintenance</strong> / Password123!</li>
-                        <li>设备工程师: <strong>engineer</strong> / Password123!</li>
-                    </ul>
+            </div>
+            <div class="card-footer bg-light">
+                <h6 class="text-muted mb-3">测试用户账号：</h6>
+                <div class="row text-center small">
+                    <div class="col-6 col-md-3 mb-2">
+                        <strong>操作工</strong><br/>
+                        <code>operator</code>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <strong>班组长</strong><br/>
+                        <code>teamleader</code>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <strong>维修员</strong><br/>
+                        <code>maintenance</code>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <strong>设备工程师</strong><br/>
+                        <code>engineer</code>
+                    </div>
                 </div>
+                <p class="text-muted small mb-0 text-center">密码统一：<code>Password123!</code></p>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

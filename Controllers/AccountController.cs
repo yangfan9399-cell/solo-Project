@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+using EquipmentMaintenanceSystem.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -7,11 +7,13 @@ namespace EquipmentMaintenanceSystem.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public AccountController(SignInManager<IdentityUser> signInManager)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
         {
             _signInManager = signInManager;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -53,17 +55,17 @@ namespace EquipmentMaintenanceSystem.Controllers
             {
                 return Redirect(returnUrl);
             }
-            return RedirectToAction(nameof(HomeController.Index), "Home");
+            return RedirectToAction("Index", "Home");
         }
     }
 
     public class LoginViewModel
     {
-        [Required]
+        [Required(ErrorMessage = "请输入用户名")]
         [Display(Name = "用户名")]
         public string UserName { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "请输入密码")]
         [DataType(DataType.Password)]
         [Display(Name = "密码")]
         public string Password { get; set; } = string.Empty;

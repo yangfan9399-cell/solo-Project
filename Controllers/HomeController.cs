@@ -16,7 +16,18 @@ namespace EquipmentMaintenanceSystem.Controllers
             _maintenanceService = maintenanceService;
         }
 
-        public async Task<IActionResult> Index()
+        [AllowAnonymous]
+        public IActionResult Index()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction(nameof(Dashboard));
+            }
+            return View();
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Dashboard()
         {
             var pendingInspections = await _inspectionService.GetInspectionsByStatus(InspectionStatus.Pending);
             var pendingMaintenance = await _maintenanceService.GetMaintenanceOrdersByStatus(MaintenanceStatus.PendingReview);
@@ -27,6 +38,7 @@ namespace EquipmentMaintenanceSystem.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         public IActionResult Error()
         {
             return View();
