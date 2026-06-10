@@ -7,6 +7,6 @@ class Store < ApplicationRecord
   validates :code, presence: true, uniqueness: true
   validates :store_type, presence: true
 
-  enum :store_type, { restaurant: "restaurant", warehouse: "warehouse" }, prefix: true
-  enum :status, { active: "active", inactive: "inactive" }, prefix: true
+  enum :store_type, { restaurant: "restaurant", warehouse: "warehouse" }
+  enum :status, { active: "active", inactive: "inactive" }
 end

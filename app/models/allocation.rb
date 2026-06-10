@@ -15,7 +15,7 @@ class Allocation < ApplicationRecord
     received: "received",
     rejected: "rejected",
     cancelled: "cancelled"
-  }, prefix: true
+  }
 
   after_create :create_workflow_node
 

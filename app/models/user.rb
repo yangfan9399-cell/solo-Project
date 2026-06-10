@@ -10,5 +10,5 @@ class User < ApplicationRecord
   validates :employee_id, presence: true, uniqueness: true
   validates :role, presence: true
 
-  enum :role, { store_manager: "store_manager", warehouse_dispatcher: "warehouse_dispatcher", finance_reviewer: "finance_reviewer" }, prefix: true
+  enum :role, { store_manager: "store_manager", warehouse_dispatcher: "warehouse_dispatcher", finance_reviewer: "finance_reviewer" }
 end

@@ -1,8 +1,8 @@
-source "https://rubygems.org"
+source "https://gems.ruby-china.com/"
 
 ruby "4.0.5"
 
-gem "rails", "~> 8.0.0"
+gem "rails", "8.0.0"
 gem "pg", "~> 1.5"
 gem "puma", ">= 5.0"
 gem "importmap-rails"

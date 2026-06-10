@@ -9,8 +9,8 @@ class Batch < ApplicationRecord
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :available_quantity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
-  enum :status, { in_stock: "in_stock", allocated: "allocated", lost: "lost" }, prefix: true
-  enum :warning_level, { normal: "normal", warning: "warning", critical: "critical" }, prefix: true
+  enum :status, { in_stock: "in_stock", allocated: "allocated", lost: "lost" }
+  enum :warning_level, { normal: "normal", warning: "warning", critical: "critical" }
 
   def days_until_expiry
     return nil if expiry_date.blank?

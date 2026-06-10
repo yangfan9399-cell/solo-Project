@@ -6,7 +6,7 @@ class AllocationItem < ApplicationRecord
 
   validates :quantity, presence: true, numericality: { greater_than: 0 }
 
-  enum :status, { pending: "pending", in_transit: "in_transit", received: "received", rejected: "rejected" }, prefix: true
+  enum :status, { pending: "pending", in_transit: "in_transit", received: "received", rejected: "rejected" }
 
   after_update :create_workflow_node
 

@@ -15,9 +15,9 @@ class LossReport < ApplicationRecord
     rejection: "rejection",
     quantity_discrepancy: "quantity_discrepancy",
     damage: "damage"
-  }, prefix: true
+  }
 
-  enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, prefix: true
+  enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }
 
   after_create :create_workflow_node
 
