@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.db.models import Count, Sum, Q, F
+from django.db.models import Count, Sum, Q, F, ExpressionWrapper, DurationField
 from django.utils import timezone
 from datetime import timedelta
 from .models import (
@@ -171,9 +171,9 @@ def safety_check(request, pk):
         messages.error(request, '申请状态不允许此操作')
         return redirect('application_detail', pk=pk)
     
-    user_profile = UserProfile.objects.get(user=request.user)
+    applicant_profile = UserProfile.objects.get(user=application.applicant)
     
-    if application.consumable.requires_qualification and not user_profile.has_dangerous_qualification:
+    if application.consumable.requires_qualification and not applicant_profile.has_dangerous_qualification:
         application.status = 'rejected'
         application.exception_reason = 'qualification_missing'
         application.exception_note = '申请人未获得危险品操作资质'
@@ -328,13 +328,20 @@ def statistics(request):
         count=Count('id')
     ).filter(exception_reason__isnull=False)
     
-    avg_turnover = Application.objects.filter(
+    returned_apps = Application.objects.filter(
         status='returned',
         issued_at__isnull=False,
         returned_at__isnull=False
-    ).aggregate(
-        avg_days=Sum((F('returned_at') - F('issued_at')).days) / Count('id')
     )
+    
+    total_days = 0
+    count = 0
+    for app in returned_apps:
+        if app.issued_at and app.returned_at:
+            total_days += (app.returned_at - app.issued_at).days
+            count += 1
+    
+    avg_turnover = total_days / count if count > 0 else None
     
     low_stock_items = Batch.objects.filter(
         quantity__lt=F('consumable__min_stock'),
