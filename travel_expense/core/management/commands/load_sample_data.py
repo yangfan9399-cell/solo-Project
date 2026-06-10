@@ -213,98 +213,98 @@ class Command(BaseCommand):
             },
         ]
 
+        test_usernames = ['employee_zhang', 'employee_li', 'employee_wang', 'employee_zhao']
+        Travel.objects.filter(applicant__username__in=test_usernames).delete()
+
         travels = []
         for data in travels_data:
             user = user_map[data['username']]
             dept = dept_map[data['department_code']]
 
-            travel, created = Travel.objects.get_or_create(
+            travel = Travel.objects.create(
                 applicant=user,
+                department=dept,
                 destination_city=data['destination_city'],
+                purpose=data['purpose'],
+                estimated_budget=data['estimated_budget'],
                 start_date=data['start_date'],
-                defaults={
-                    'department': dept,
-                    'purpose': data['purpose'],
-                    'estimated_budget': data['estimated_budget'],
-                    'end_date': data['end_date'],
-                    'status': data['status'],
-                }
+                end_date=data['end_date'],
+                status=data['status'],
             )
 
-            if created:
-                self.stdout.write(f'  创建差旅: {user.username} -> {data["destination_city"]}')
+            self.stdout.write(f'  创建差旅: {user.username} -> {data["destination_city"]}')
 
+            HistoryNode.objects.create(
+                travel=travel,
+                action_type='create',
+                actor=user,
+                comment='创建差旅申请'
+            )
+
+            if data['status'] != 'draft':
                 HistoryNode.objects.create(
                     travel=travel,
-                    action_type='create',
+                    action_type='submit',
                     actor=user,
-                    comment='创建差旅申请'
+                    comment='提交差旅申请'
                 )
 
-                if data['status'] != 'draft':
+                if data['status'] not in ['pending_approval', 'draft']:
+                    manager = user_map['manager_chen']
                     HistoryNode.objects.create(
                         travel=travel,
-                        action_type='submit',
-                        actor=user,
-                        comment='提交差旅申请'
+                        action_type='approve',
+                        actor=manager,
+                        comment='审批通过'
                     )
 
-                    if data['status'] not in ['pending_approval', 'draft']:
-                        manager = user_map['manager_chen']
-                        HistoryNode.objects.create(
-                            travel=travel,
-                            action_type='approve',
-                            actor=manager,
-                            comment='审批通过'
-                        )
+            if data['has_booking']:
+                booking_data = data['booking']
+                booking = Booking.objects.create(
+                    travel=travel,
+                    flight_info=booking_data['flight_info'],
+                    hotel_info=booking_data['hotel_info'],
+                    actual_cost=booking_data['actual_cost'],
+                    over_budget_reason=booking_data['over_budget_reason'],
+                    over_budget_reason_text=booking_data.get('over_budget_reason_text', ''),
+                    booking_status=booking_data['booking_status'],
+                )
 
-                if data['has_booking']:
-                    booking_data = data['booking']
-                    booking = Booking.objects.create(
-                        travel=travel,
-                        flight_info=booking_data['flight_info'],
-                        hotel_info=booking_data['hotel_info'],
-                        actual_cost=booking_data['actual_cost'],
-                        over_budget_reason=booking_data['over_budget_reason'],
-                        over_budget_reason_text=booking_data.get('over_budget_reason_text', ''),
-                        booking_status=booking_data['booking_status'],
-                    )
+                admin_user = user_map['admin_wu']
+                HistoryNode.objects.create(
+                    travel=travel,
+                    action_type='book',
+                    actor=admin_user,
+                    comment='完成行程预订'
+                )
 
-                    admin_user = user_map['admin_wu']
+            if data['has_reimbursement']:
+                reimb_data = data['reimbursement']
+                reimbursement = Reimbursement.objects.create(
+                    travel=travel,
+                    total_actual_cost=reimb_data['total_actual_cost'],
+                    receipt_status=reimb_data['receipt_status'],
+                    has_flight_receipt=reimb_data['has_flight_receipt'],
+                    has_hotel_receipt=reimb_data['has_hotel_receipt'],
+                    has_meal_receipt=reimb_data['has_meal_receipt'],
+                    has_meal_expense=reimb_data['has_meal_expense'],
+                    review_status=reimb_data['review_status'],
+                )
+
+                if reimb_data['review_status'] == 'approved':
+                    finance_user = user_map['finance_xu']
                     HistoryNode.objects.create(
                         travel=travel,
-                        action_type='book',
-                        actor=admin_user,
-                        comment='完成行程预订'
+                        action_type='approve_reimbursement',
+                        actor=finance_user,
+                        comment='报销通过'
                     )
-
-                if data['has_reimbursement']:
-                    reimb_data = data['reimbursement']
-                    reimbursement = Reimbursement.objects.create(
+                    HistoryNode.objects.create(
                         travel=travel,
-                        total_actual_cost=reimb_data['total_actual_cost'],
-                        receipt_status=reimb_data['receipt_status'],
-                        has_flight_receipt=reimb_data['has_flight_receipt'],
-                        has_hotel_receipt=reimb_data['has_hotel_receipt'],
-                        has_meal_receipt=reimb_data['has_meal_receipt'],
-                        has_meal_expense=reimb_data['has_meal_expense'],
-                        review_status=reimb_data['review_status'],
+                        action_type='complete',
+                        actor=finance_user,
+                        comment='差旅完成'
                     )
-
-                    if reimb_data['review_status'] == 'approved':
-                        finance_user = user_map['finance_xu']
-                        HistoryNode.objects.create(
-                            travel=travel,
-                            action_type='approve_reimbursement',
-                            actor=finance_user,
-                            comment='报销通过'
-                        )
-                        HistoryNode.objects.create(
-                            travel=travel,
-                            action_type='complete',
-                            actor=finance_user,
-                            comment='差旅完成'
-                        )
 
             travels.append(travel)
 
