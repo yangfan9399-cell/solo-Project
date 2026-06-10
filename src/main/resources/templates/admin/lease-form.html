@@ -46,7 +46,7 @@
                 <p>摊位编号: <strong th:text="${stall.stallCode}"></strong></p>
                 <p>区域: <strong th:text="${stall.area}"></strong></p>
                 <p>经营品类: <strong th:text="${stall.category}"></strong></p>
-                <p>月租金: <strong th:text="${stall.monthlyRent} 元"></strong></p>
+                <p>月租金: <strong th:text="|${stall.monthlyRent} 元|"></strong></p>
             </div>
             
             <form th:action="@{/admin/stalls/{id}/lease(id=${stall.id})}" method="post">

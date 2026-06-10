@@ -65,7 +65,7 @@
                         <td><span th:class="['status', ${stall.status}]" th:text="${stall.status}"></span></td>
                         <td>
                             <a th:href="@{/cashier/stalls/{id}(id=${stall.id})}" class="btn btn-secondary">详情</a>
-                            <a th:if="${stall.status == 'leased'}" href="/cashier/stalls/{id}/payment(id=${stall.id})" class="btn">缴费</a>
+                            <a th:if="${stall.status == 'leased'}" th:href="@{/cashier/stalls/{id}/payment(id=${stall.id})}" class="btn">缴费</a>
                         </td>
                     </tr>
                 </tbody>

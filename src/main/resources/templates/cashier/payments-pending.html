@@ -59,7 +59,7 @@
                         <td th:text="${payment.amount}"></td>
                         <td th:text="${payment.paymentMethod}"></td>
                         <td>
-                            <a href="/cashier/payments/{id}/confirm(id=${payment.id})" class="btn">确认缴费</a>
+                            <a th:href="@{/cashier/payments/{id}/confirm(id=${payment.id})}" class="btn">确认缴费</a>
                         </td>
                     </tr>
                 </tbody>

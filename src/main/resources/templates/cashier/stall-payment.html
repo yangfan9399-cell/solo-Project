@@ -44,7 +44,7 @@
             <div class="info-box">
                 <p>摊位编号: <strong th:text="${detail.stall.stallCode}"></strong></p>
                 <p>摊主: <strong th:text="${detail.tenant != null ? detail.tenant.name : '无'}"></strong></p>
-                <p>月租金: <strong th:text="${detail.stall.monthlyRent} 元"></strong></p>
+                <p>月租金: <strong th:text="|${detail.stall.monthlyRent} 元|"></strong></p>
             </div>
             
             <form th:action="@{/cashier/stalls/{id}/payment(id=${detail.stall.id})}" method="post" th:object="${payment}">

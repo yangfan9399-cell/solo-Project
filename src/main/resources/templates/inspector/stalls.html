@@ -65,7 +65,7 @@
                         <td><span th:class="['status', ${stall.status}]" th:text="${stall.status}"></span></td>
                         <td>
                             <a th:href="@{/inspector/stalls/{id}(id=${stall.id})}" class="btn btn-secondary">详情</a>
-                            <a th:if="${stall.status == 'leased'}" href="/inspector/stalls/{id}/violation(id=${stall.id})" class="btn">记录违规</a>
+                            <a th:if="${stall.status == 'leased'}" th:href="@{/inspector/stalls/{id}/violation(id=${stall.id})}" class="btn">记录违规</a>
                         </td>
                     </tr>
                 </tbody>
