@@ -48,7 +48,7 @@
                     </div>
                     {% elif assessment.get_fee_change < 0 %}
                     <div class="alert alert-success">
-                        <strong>费用减少: ¥{{ assessment.get_fee_change|abs }}/月</strong>
+                        <strong>费用减少: ¥{{ assessment.get_fee_change_abs }}/月</strong>
                     </div>
                     {% else %}
                     <div class="alert alert-info">
