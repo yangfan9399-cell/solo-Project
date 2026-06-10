@@ -36,7 +36,7 @@ export async function getSupplierSummary(): Promise<SupplierSummary[]> {
       supplierId: suppliers.id,
       supplierName: suppliers.name,
       claimCount: count(claims.id).as('claimCount'),
-      totalAmount: sum(claims.claimAmount).as('totalAmount')
+      totalAmount: sum(sql<number>`${claims.claimAmount}::numeric`).as('totalAmount')
     })
     .from(suppliers)
     .leftJoin(batches, eq(suppliers.id, batches.supplierId))
@@ -57,7 +57,7 @@ export async function getCategorySummary(): Promise<CategorySummary[]> {
       categoryId: partCategories.id,
       categoryName: partCategories.name,
       claimCount: count(claims.id).as('claimCount'),
-      totalAmount: sum(claims.claimAmount).as('totalAmount')
+      totalAmount: sum(sql<number>`${claims.claimAmount}::numeric`).as('totalAmount')
     })
     .from(partCategories)
     .leftJoin(parts, eq(partCategories.id, parts.categoryId))
@@ -78,7 +78,7 @@ export async function getDefectTypeSummary(): Promise<DefectTypeSummary[]> {
       defectTypeId: defectTypes.id,
       defectTypeName: defectTypes.name,
       claimCount: count(claims.id).as('claimCount'),
-      totalAmount: sum(claims.claimAmount).as('totalAmount')
+      totalAmount: sum(sql<number>`${claims.claimAmount}::numeric`).as('totalAmount')
     })
     .from(defectTypes)
     .leftJoin(claims, eq(defectTypes.id, claims.defectTypeId))
@@ -96,7 +96,7 @@ export async function getPeriodSummary(): Promise<PeriodSummary[]> {
     .select({
       period: sql<string>`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`.as('period'),
       claimCount: count(claims.id).as('claimCount'),
-      totalAmount: sum(claims.claimAmount).as('totalAmount')
+      totalAmount: sum(sql<number>`${claims.claimAmount}::numeric`).as('totalAmount')
     })
     .from(claims)
     .groupBy(sql`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`)
@@ -120,7 +120,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const totalResult = await db
     .select({
       totalClaims: count(claims.id).as('totalClaims'),
-      totalAmount: sum(claims.claimAmount).as('totalAmount')
+      totalAmount: sum(sql<number>`${claims.claimAmount}::numeric`).as('totalAmount')
     })
     .from(claims)
 
