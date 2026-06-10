@@ -11,7 +11,7 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                 <div>
                     <h3>批次信息</h3>
-                    <p><strong>批次号:</strong> <a href="/batch/{{ distribution.batch.id }}/">{{ distribution.batch.batch_number }}</a></p>
+                    <p><strong>批次号:</strong> <a href="{% url 'batch_detail' distribution.batch.id %}">{{ distribution.batch.batch_number }}</a></p>
                     <p><strong>物资:</strong> {{ distribution.batch.material.name }}</p>
                     <p><strong>分配数量:</strong> {{ distribution.quantity }} {{ distribution.batch.material.unit }}</p>
                 </div>
@@ -38,16 +38,22 @@
             <h3>操作</h3>
             <div style="display: flex; gap: 1rem;">
                 {% if distribution.status == 'draft' %}
-                <a href="/distribution/{{ distribution.id }}/approve/" class="btn btn-success">批准分配</a>
+                <form method="post" action="{% url 'distribution_approve' distribution.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">批准分配</button>
+                </form>
                 {% endif %}
                 {% if distribution.status == 'approved' %}
-                <a href="/distribution/{{ distribution.id }}/distribute/" class="btn btn-primary">确认发放</a>
+                <form method="post" action="{% url 'distribution_distribute' distribution.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">确认发放</button>
+                </form>
                 {% endif %}
                 {% if distribution.status == 'distributed' %}
-                <a href="/distribution/{{ distribution.id }}/sign/" class="btn btn-success">签收确认</a>
+                <button class="btn btn-success" onclick="openSignModal()">签收确认</button>
                 {% endif %}
                 {% if distribution.status == 'received' %}
-                <a href="/distribution/{{ distribution.id }}/audit/" class="btn btn-warning">审计处理</a>
+                <button class="btn btn-warning" onclick="openAuditModal()">审计处理</button>
                 {% endif %}
             </div>
         </div>
@@ -64,10 +70,19 @@
         {% if receipt.has_discrepancy %}
         <div class="alert alert-warning" style="margin-top: 1rem;">
             <strong>数量差异:</strong> 发放 {{ distribution.quantity }}，实际签收 {{ receipt.quantity_received }}，差异 {{ distribution.quantity|add:-receipt.quantity_received }} {{ distribution.batch.material.unit }}
+            {% if receipt.discrepancy_reason %}
+            <br><strong>差异原因:</strong> {{ receipt.get_discrepancy_reason_display }}
+            {% endif %}
         </div>
         {% endif %}
         {% if receipt.notes %}
         <p><strong>备注:</strong> {{ receipt.notes }}</p>
+        {% endif %}
+        {% if receipt.evidence %}
+        <div style="margin-top: 1rem;">
+            <strong>签收证据:</strong><br>
+            <img src="{{ receipt.evidence.url }}" alt="签收证据" style="max-width: 400px; border-radius: 4px;">
+        </div>
         {% endif %}
     </div>
     {% endif %}
@@ -78,7 +93,7 @@
         {% for record in audit_records %}
         <div class="history-item">
             <span class="type">{{ record.get_action_display }}</span>
-            <p>{{ record.notes }}</p>
+            <p>{{ record.notes|default:'' }}</p>
             <span class="time">{{ record.created_at }}</span>
         </div>
         {% endfor %}
@@ -95,4 +110,77 @@
         </div>
         {% endfor %}
     </div>
+
+    <div id="sign-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
+            <h3>签收确认</h3>
+            <form method="post" action="{% url 'distribution_sign' distribution.id %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>签收人</label>
+                    <input type="text" name="signed_by" required>
+                </div>
+                <div class="form-group">
+                    <label>实际签收数量</label>
+                    <input type="number" name="quantity_received" value="{{ distribution.quantity }}" required min="0">
+                    <span style="color: #666; margin-left: 0.5rem;">{{ distribution.batch.material.unit }}</span>
+                </div>
+                {% if distribution.quantity > 0 %}
+                <div class="form-group">
+                    <label>差异原因（如有）</label>
+                    <select name="discrepancy_reason">
+                        <option value="">无差异</option>
+                        <option value="damage">物资损坏</option>
+                        <option value="loss">运输丢失</option>
+                        <option value="shortage">数量短缺</option>
+                        <option value="other">其他原因</option>
+                    </select>
+                </div>
+                {% endif %}
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">确认签收</button>
+                <button type="button" class="btn btn-secondary" onclick="closeSignModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="audit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
+            <h3>审计处理</h3>
+            <form method="post" action="{% url 'distribution_audit' distribution.id %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>处理方式</label>
+                    <select name="action" required>
+                        <option value="archive">归档</option>
+                        <option value="investigate">追查</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-warning">确认处理</button>
+                <button type="button" class="btn btn-secondary" onclick="closeAuditModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openSignModal() {
+            document.getElementById('sign-modal').style.display = 'flex';
+        }
+        function closeSignModal() {
+            document.getElementById('sign-modal').style.display = 'none';
+        }
+        function openAuditModal() {
+            document.getElementById('audit-modal').style.display = 'flex';
+        }
+        function closeAuditModal() {
+            document.getElementById('audit-modal').style.display = 'none';
+        }
+    </script>
 {% endblock %}

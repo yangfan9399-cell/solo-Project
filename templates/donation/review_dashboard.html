@@ -6,6 +6,14 @@
             <div class="number">{{ discrepancies }}</div>
             <div class="label">数量差异记录</div>
         </div>
+        <div class="stat-card">
+            <div class="number">{{ received_count }}</div>
+            <div class="label">已签收</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ archived_count }}</div>
+            <div class="label">已归档</div>
+        </div>
     </div>
 
     <div class="card">
@@ -50,5 +58,56 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="card">
+        <h2>按差异原因聚合</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>差异原因</th>
+                    <th>发生次数</th>
+                    <th>总差异数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in by_discrepancy_reason %}
+                <tr>
+                    <td>
+                        {% if item.receipt__discrepancy_reason == 'damage' %}物资损坏{% endif %}
+                        {% if item.receipt__discrepancy_reason == 'loss' %}运输丢失{% endif %}
+                        {% if item.receipt__discrepancy_reason == 'shortage' %}数量短缺{% endif %}
+                        {% if item.receipt__discrepancy_reason == 'other' %}其他原因{% endif %}
+                        {% if not item.receipt__discrepancy_reason %}未说明原因{% endif %}
+                    </td>
+                    <td>{{ item.count }}</td>
+                    <td>{{ item.total_discrepancy }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>按发放周期聚合</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>周期范围</th>
+                    <th>数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bucket in by_cycle %}
+                <tr>
+                    <td>{{ bucket.label }}</td>
+                    <td>{{ bucket.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if avg_cycle.cycle__avg %}
+        <p style="margin-top: 1rem;"><strong>平均发放周期:</strong> {{ avg_cycle.cycle__avg.days }} 天</p>
+        {% endif %}
     </div>
 {% endblock %}

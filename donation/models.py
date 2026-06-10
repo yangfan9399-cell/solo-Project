@@ -107,12 +107,20 @@ class DistributionPlan(models.Model):
         return f"{self.batch.batch_number} -> {self.recipient.name}"
 
 class Receipt(models.Model):
+    DISCREPANCY_REASON_CHOICES = [
+        ('damage', '物资损坏'),
+        ('loss', '运输丢失'),
+        ('shortage', '数量短缺'),
+        ('other', '其他原因'),
+    ]
+    
     distribution = models.OneToOneField(DistributionPlan, on_delete=models.CASCADE)
     quantity_received = models.IntegerField()
     signed_by = models.CharField(max_length=100)
     signed_at = models.DateTimeField(auto_now_add=True)
     evidence = models.ImageField(upload_to='receipts/', null=True, blank=True)
     notes = models.TextField(blank=True)
+    discrepancy_reason = models.CharField(max_length=50, choices=DISCREPANCY_REASON_CHOICES, blank=True)
 
     @property
     def has_discrepancy(self):
@@ -145,6 +153,8 @@ class HistoryNode(models.Model):
         ('sign', '签收'),
         ('audit', '审计'),
         ('archive', '归档'),
+        ('approve', '批准'),
+        ('reject', '驳回'),
     ]
     
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True)

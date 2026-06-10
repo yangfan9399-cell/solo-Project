@@ -31,14 +31,14 @@ def index(request):
 
 def batch_list(request):
     status = request.GET.get('status', '')
-    batches = Batch.objects.all()
+    batches = Batch.objects.select_related('donor', 'material', 'material__category').all()
     if status:
         batches = batches.filter(status=status)
     return render(request, 'donation/batch_list.html', {'batches': batches})
 
 def batch_detail(request, pk):
     batch = get_object_or_404(Batch, pk=pk)
-    distributions = DistributionPlan.objects.filter(batch=batch)
+    distributions = DistributionPlan.objects.filter(batch=batch).select_related('project', 'recipient')
     history = HistoryNode.objects.filter(batch=batch).order_by('-created_at')
     return render(request, 'donation/batch_detail.html', {'batch': batch, 'distributions': distributions, 'history': history})
 
@@ -95,7 +95,7 @@ def batch_receive(request, pk):
 
 def distribution_list(request):
     status = request.GET.get('status', '')
-    distributions = DistributionPlan.objects.all()
+    distributions = DistributionPlan.objects.select_related('batch', 'batch__material', 'project', 'recipient').all()
     if status:
         distributions = distributions.filter(status=status)
     return render(request, 'donation/distribution_list.html', {'distributions': distributions})
@@ -130,7 +130,7 @@ def distribution_create(request):
         )
         return redirect('distribution_detail', pk=distribution.pk)
     
-    batches = Batch.objects.filter(status='in_stock').exclude(available_quantity=0)
+    batches = Batch.objects.filter(status='in_stock').exclude(available_quantity=0).select_related('material')
     projects = Project.objects.filter(status='active')
     recipients = Recipient.objects.filter(is_valid=True)
     return render(request, 'donation/distribution_create.html', {'batches': batches, 'projects': projects, 'recipients': recipients})
@@ -140,6 +140,7 @@ def distribution_detail(request, pk):
     receipt = Receipt.objects.filter(distribution=distribution).first()
     audit_records = AuditRecord.objects.filter(distribution=distribution)
     history = HistoryNode.objects.filter(Q(batch=distribution.batch) | Q(distribution=distribution)).order_by('-created_at')
+    
     return render(request, 'donation/distribution_detail.html', {
         'distribution': distribution,
         'receipt': receipt,
@@ -156,7 +157,7 @@ def distribution_approve(request, pk):
         HistoryNode.objects.create(
             batch=distribution.batch,
             distribution=distribution,
-            node_type='audit',
+            node_type='approve',
             operator=request.user if request.user.is_authenticated else None,
             description='分配计划已批准'
         )
@@ -191,6 +192,7 @@ def distribution_sign(request, pk):
             quantity_received=request.POST.get('quantity_received'),
             signed_by=request.POST.get('signed_by'),
             notes=request.POST.get('notes'),
+            discrepancy_reason=request.POST.get('discrepancy_reason'),
         )
         
         distribution.status = 'received'
@@ -278,9 +280,21 @@ def review_dashboard(request):
         total_quantity=Sum('quantity')
     ).order_by('-count')
     
-    discrepancies = DistributionPlan.objects.filter(
+    by_discrepancy_reason = DistributionPlan.objects.filter(
         receipt__quantity_received__lt=F('quantity')
-    ).count()
+    ).values('receipt__discrepancy_reason').annotate(
+        count=Count('id'),
+        total_discrepancy=Sum(F('quantity') - F('receipt__quantity_received'))
+    ).order_by('-count')
+    
+    by_cycle = DistributionPlan.objects.filter(
+        status='received',
+        actual_distributed_date__isnull=False
+    ).annotate(
+        cycle=F('receipt__signed_at') - F('actual_distributed_date')
+    ).values('cycle').annotate(
+        count=Count('id')
+    ).order_by('cycle')
     
     avg_cycle = DistributionPlan.objects.filter(
         status='received',
@@ -289,11 +303,37 @@ def review_dashboard(request):
         cycle=F('receipt__signed_at') - F('actual_distributed_date')
     ).aggregate(Avg('cycle'))
     
-    return render(request, 'donation/review_dashboard.html', {
+    discrepancies = DistributionPlan.objects.filter(
+        receipt__quantity_received__lt=F('quantity')
+    ).count()
+    
+    received_count = DistributionPlan.objects.filter(status='received').count()
+    archived_count = DistributionPlan.objects.filter(status='archived').count()
+    
+    cycle_buckets = []
+    bucket_labels = ['3天内', '3-7天', '7-14天', '14天以上']
+    bucket_thresholds = [timedelta(days=3), timedelta(days=7), timedelta(days=14)]
+    
+    for label, threshold in zip(bucket_labels, bucket_thresholds):
+        count = DistributionPlan.objects.filter(
+            status='received',
+            actual_distributed_date__isnull=False
+        ).annotate(
+            cycle=F('receipt__signed_at') - F('actual_distributed_date')
+        ).filter(cycle__lt=threshold).count()
+        cycle_buckets.append({'label': label, 'count': count})
+    
+    context = {
         'by_project': by_project,
         'by_category': by_category,
+        'by_discrepancy_reason': by_discrepancy_reason,
+        'by_cycle': cycle_buckets,
         'discrepancies': discrepancies,
-    })
+        'received_count': received_count,
+        'archived_count': archived_count,
+        'avg_cycle': avg_cycle,
+    }
+    return render(request, 'donation/review_dashboard.html', context)
 
 def api_batches(request):
     status = request.GET.get('status', '')
