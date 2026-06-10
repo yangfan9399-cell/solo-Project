@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData, useActionData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 
 export async function loader({}: LoaderFunctionArgs) {
@@ -19,11 +19,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const readerId = formData.get("readerId") as string;
   const bookId = formData.get("bookId") as string;
 
-  // 检查读者是否有逾期未还的申请（状态为 OVERDUE）
+  // 检查读者是否有逾期未还的申请（状态为 OVERDUE 且未归还）
   const overdueApplication = await prisma.interlibraryApplication.findFirst({
     where: {
       readerId,
       status: "OVERDUE",
+      actualReturnDate: null, // 未归还
     },
   });
 
@@ -67,6 +68,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Apply() {
   const { readers, books } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
 
   return (
     <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
@@ -75,6 +77,21 @@ export default function Apply() {
       </a>
 
       <h1>提交馆际互借申请</h1>
+
+      {/* 显示错误消息 */}
+      {actionData?.error && (
+        <div style={{
+          padding: "15px",
+          backgroundColor: "#ffebee",
+          border: "1px solid #f44336",
+          borderRadius: "4px",
+          marginBottom: "20px",
+          color: "#f44336",
+          fontWeight: "bold"
+        }}>
+          {actionData.error}
+        </div>
+      )}
 
       <Form method="post" style={{ maxWidth: "600px" }}>
         <div style={{ marginBottom: "20px" }}>
