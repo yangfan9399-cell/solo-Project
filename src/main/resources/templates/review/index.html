@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复盘统计</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">器械追溯系统</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/packages">器械包列表</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/review">复盘统计</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h2>复盘统计</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-primary mb-2" th:text="${totalPackages}">0</div>
+                        <div class="text-muted">发放总次数</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-danger mb-2" th:text="${totalAbnormals}">0</div>
+                        <div class="text-muted">异常总次数</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="text-4xl font-bold text-success mb-2" th:text="${avgTurnoverHours}">0</div>
+                        <div class="text-muted">平均周转时长(小时)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">按科室发放统计</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>科室</th>
+                                    <th>发放次数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="(count, dept) : ${issueByDepartment}">
+                                    <td th:text="${dept}"></td>
+                                    <td th:text="${count}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">器械类型统计</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>器械类型</th>
+                                    <th>数量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="(count, type) : ${instrumentByType}">
+                                    <td th:text="${type}"></td>
+                                    <td th:text="${count}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">异常原因统计</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>异常类型</th>
+                                    <th>次数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="(count, type) : ${abnormalByType}">
+                                    <td th:text="${getAbnormalTypeText(type)}"></td>
+                                    <td th:text="${count}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">周转时长统计</div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">平均时长</dt>
+                            <dd class="col-sm-8" th:text="${avgTurnoverHours} + ' 小时'"></dd>
+                            <dt class="col-sm-4">最长时长</dt>
+                            <dd class="col-sm-8" th:text="${maxTurnoverHours} + ' 小时'"></dd>
+                            <dt class="col-sm-4">最短时长</dt>
+                            <dd class="col-sm-8" th:text="${minTurnoverHours} + ' 小时'"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">科室异常明细</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>科室</th>
+                                    <th>器械缺失</th>
+                                    <th>灭菌过期</th>
+                                    <th>手术室退回</th>
+                                    <th>器械损坏</th>
+                                    <th>其他</th>
+                                    <th>总计</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${abnormalByDept}">
+                                    <td th:text="${item.department}"></td>
+                                    <td th:text="${item.details['INSTRUMENT_MISSING'] ?: 0}"></td>
+                                    <td th:text="${item.details['EXPIRED_STERILIZATION'] ?: 0}"></td>
+                                    <td th:text="${item.details['RETURNED_FROM_OPERATING_ROOM'] ?: 0}"></td>
+                                    <td th:text="${item.details['DAMAGED_INSTRUMENT'] ?: 0}"></td>
+                                    <td th:text="${item.details['OTHER'] ?: 0}"></td>
+                                    <td th:text="${item.total}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function getAbnormalTypeText(type) {
+            const texts = {
+                'INSTRUMENT_MISSING': '器械缺失',
+                'EXPIRED_STERILIZATION': '灭菌过期',
+                'RETURNED_FROM_OPERATING_ROOM': '手术室退回',
+                'DAMAGED_INSTRUMENT': '器械损坏',
+                'OTHER': '其他异常'
+            };
+            return texts[type] || type;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

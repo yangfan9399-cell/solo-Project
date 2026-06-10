@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手术器械包追溯系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">器械追溯系统</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link active" href="/">首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/packages">器械包列表</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/review">复盘统计</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${totalPackages}">0</div>
+                        <div class="text-sm">总器械包</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${pendingInventory}">0</div>
+                        <div class="text-sm">待清点</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${pendingReview}">0</div>
+                        <div class="text-sm">待复核</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${released}">0</div>
+                        <div class="text-sm">已放行</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${abnormal}">0</div>
+                        <div class="text-sm">异常器械包</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <div class="text-4xl mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"></path><circle cx="12" cy="12" r="10"></circle></svg>
+                        </div>
+                        <div class="text-3xl font-bold" th:text="${pendingAbnormals}">0</div>
+                        <div class="text-sm">待处理异常</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>最近器械包</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>器械包编码</th>
+                                    <th>器械包名称</th>
+                                    <th>状态</th>
+                                    <th>更新时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="pkg : ${recentPackages}">
+                                    <td th:text="${pkg.packageCode}"></td>
+                                    <td th:text="${pkg.packageName}"></td>
+                                    <td>
+                                        <span th:class="getBadgeClass(pkg.status)" th:text="${getStatusText(pkg.status)}"></span>
+                                    </td>
+                                    <td th:text="${#temporals.format(pkg.updateTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td>
+                                        <a th:href="@{/packages/{id}(id=${pkg.id})}" class="btn btn-sm btn-primary">查看</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function getBadgeClass(status) {
+            const classes = {
+                'PENDING_INVENTORY': 'badge bg-warning',
+                'INVENTORY_COMPLETED': 'badge bg-info',
+                'PENDING_STERILIZATION': 'badge bg-info',
+                'STERILIZATION_COMPLETED': 'badge bg-info',
+                'PENDING_RECEIVE': 'badge bg-info',
+                'RECEIVED': 'badge bg-info',
+                'PENDING_REVIEW': 'badge bg-info',
+                'RELEASED': 'badge bg-success',
+                'ISSUED': 'badge bg-primary',
+                'RETURNED': 'badge bg-secondary',
+                'ABNORMAL': 'badge bg-danger'
+            };
+            return classes[status] || 'badge bg-secondary';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'PENDING_INVENTORY': '待清点',
+                'INVENTORY_COMPLETED': '清点完成',
+                'PENDING_STERILIZATION': '待灭菌',
+                'STERILIZATION_COMPLETED': '灭菌完成',
+                'PENDING_RECEIVE': '待核收',
+                'RECEIVED': '已核收',
+                'PENDING_REVIEW': '待复核',
+                'RELEASED': '已放行',
+                'ISSUED': '已发放',
+                'RETURNED': '已退回',
+                'ABNORMAL': '异常'
+            };
+            return texts[status] || status;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>器械包详情</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">器械追溯系统</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/packages">器械包列表</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/review">复盘统计</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>[[${instrumentPackage.packageName}]]</h2>
+                <p class="text-muted">编码: [[${instrumentPackage.packageCode}]]</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span th:class="${getBadgeClass(instrumentPackage.status)}" th:text="${getStatusText(instrumentPackage.status)}" class="fs-4"></span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">基本信息</div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">器械包编码</dt>
+                            <dd class="col-sm-8" th:text="${instrumentPackage.packageCode}"></dd>
+                            <dt class="col-sm-4">器械包名称</dt>
+                            <dd class="col-sm-8" th:text="${instrumentPackage.packageName}"></dd>
+                            <dt class="col-sm-4">创建时间</dt>
+                            <dd class="col-sm-8" th:text="${#temporals.format(instrumentPackage.createTime, 'yyyy-MM-dd HH:mm')}"></dd>
+                            <dt class="col-sm-4">更新时间</dt>
+                            <dd class="col-sm-8" th:text="${#temporals.format(instrumentPackage.updateTime, 'yyyy-MM-dd HH:mm')}"></dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-danger text-white" th:if="${isExpired}">灭菌批次已过期</div>
+                    <div class="card-header bg-success text-white" th:unless="${isExpired}" th:if="${latestBatch}">灭菌批次信息</div>
+                    <div class="card-body" th:if="${latestBatch}">
+                        <dl class="row">
+                            <dt class="col-sm-4">批次号</dt>
+                            <dd class="col-sm-8" th:text="${latestBatch.batchNo}"></dd>
+                            <dt class="col-sm-4">灭菌器号</dt>
+                            <dd class="col-sm-8" th:text="${latestBatch.sterilizerNo}"></dd>
+                            <dt class="col-sm-4">灭菌日期</dt>
+                            <dd class="col-sm-8" th:text="${#temporals.format(latestBatch.sterilizationDate, 'yyyy-MM-dd')}"></dd>
+                            <dt class="col-sm-4">有效期至</dt>
+                            <dd class="col-sm-8" th:class="${isExpired ? 'text-danger' : ''}" th:text="${#temporals.format(latestBatch.expiryDate, 'yyyy-MM-dd')}"></dd>
+                            <dt class="col-sm-4">操作员</dt>
+                            <dd class="col-sm-8" th:text="${latestBatch.operator}"></dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">操作</div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a th:if="${instrumentPackage.status == 'PENDING_INVENTORY' || instrumentPackage.status == 'RETURNED'}" 
+                               th:href="@{/packages/{id}/inventory(id=${instrumentPackage.id})}" 
+                               class="btn btn-warning">清点器械</a>
+                            
+                            <a th:if="${instrumentPackage.status == 'INVENTORY_COMPLETED'}" 
+                               th:href="@{/packages/{id}/sterilization(id=${instrumentPackage.id})}" 
+                               class="btn btn-info">登记灭菌批次</a>
+                            
+                            <a th:if="${instrumentPackage.status == 'STERILIZATION_COMPLETED'}" 
+                               th:href="@{/packages/{id}/receive(id=${instrumentPackage.id})}" 
+                               class="btn btn-info">核收器械包</a>
+                            
+                            <a th:if="${instrumentPackage.status == 'RECEIVED'}" 
+                               th:href="@{/packages/{id}/review(id=${instrumentPackage.id})}" 
+                               class="btn btn-info">质控复核</a>
+                            
+                            <a th:if="${instrumentPackage.status == 'RELEASED' && !isExpired}" 
+                               th:href="@{/packages/{id}/issue(id=${instrumentPackage.id})}" 
+                               class="btn btn-success">发放器械包</a>
+                            
+                            <form th:if="${instrumentPackage.status == 'ISSUED'}" 
+                                  th:action="@{/packages/{id}/return(id=${instrumentPackage.id})}" 
+                                  method="post" class="d-grid">
+                                <button type="submit" class="btn btn-secondary">退回器械包</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">器械清单</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>器械编码</th>
+                                    <th>器械名称</th>
+                                    <th>类型</th>
+                                    <th>规格</th>
+                                    <th>数量</th>
+                                    <th>单位</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="instrument : ${instruments}">
+                                    <td th:text="${instrument.instrumentCode}"></td>
+                                    <td th:text="${instrument.instrumentName}"></td>
+                                    <td th:text="${instrument.instrumentType}"></td>
+                                    <td th:text="${instrument.specification}"></td>
+                                    <td th:text="${instrument.quantity}"></td>
+                                    <td th:text="${instrument.unit}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">清点记录</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>清点单号</th>
+                                    <th>实际数量</th>
+                                    <th>应到数量</th>
+                                    <th>结果</th>
+                                    <th>操作员</th>
+                                    <th>时间</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="record : ${inventoryRecords}">
+                                    <td th:text="${record.inventoryNo}"></td>
+                                    <td th:text="${record.actualQuantity}"></td>
+                                    <td th:text="${record.expectedQuantity}"></td>
+                                    <td>
+                                        <span th:class="${record.result == 'NORMAL' ? 'badge bg-success' : 'badge bg-danger'}" 
+                                              th:text="${record.result == 'NORMAL' ? '正常' : (record.result == 'MISSING' ? '缺失' : '多余')}"></span>
+                                    </td>
+                                    <td th:text="${record.operator}"></td>
+                                    <td th:text="${#temporals.format(record.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td th:text="${record.notes ?: '-'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">历史节点</div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div th:each="(node, index) : ${historyNodes}" class="timeline-item">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div th:class="${getNodeIconClass(node.type)}" class="w-10 h-10 rounded-full flex items-center justify-center">
+                                            <svg th:class="${getNodeIconColor(node.type)}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path th:if="${node.type == 'inventory'}" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z"></path>
+                                                <path th:if="${node.type == 'sterilization'}" d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                                                <path th:if="${node.type == 'receive'}" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline th:if="${node.type == 'receive'}" points="17 8 12 3 7 8"></polyline>
+                                                <line th:if="${node.type == 'receive'}" x1="12" y1="3" x2="12" y2="15"></line>
+                                                <path th:if="${node.type == 'review'}" d="M9 12l2 2 4-4"></path>
+                                                <circle th:if="${node.type == 'review'}" cx="12" cy="12" r="10"></circle>
+                                                <path th:if="${node.type == 'issue'}" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline th:if="${node.type == 'issue'}" points="7 8 12 3 17 8"></polyline>
+                                                <line th:if="${node.type == 'issue'}" x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-4">
+                                        <h5 th:text="${getNodeTitle(node.type)}"></h5>
+                                        <p class="text-muted">
+                                            操作员: [[${node.operator}]] | 时间: [[${#temporals.format(node.time, 'yyyy-MM-dd HH:mm')}]]
+                                            <span th:if="${node.result}">| 结果: [[${node.result == 'NORMAL' || node.result == 'ACCEPTED' || node.result == 'APPROVED' ? '通过' : '未通过'}]]</span>
+                                            <span th:if="${node.department}">| 科室: [[${node.department}]]</span>
+                                            <span th:if="${node.batchNo}">| 批次: [[${node.batchNo}]]</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4" th:if="${abnormalRecords.size() > 0}">
+                    <div class="card-header bg-danger text-white">异常记录</div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>异常类型</th>
+                                    <th>原因</th>
+                                    <th>处理人</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>处理备注</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="record : ${abnormalRecords}">
+                                    <td th:text="${getAbnormalTypeText(record.abnormalType)}"></td>
+                                    <td th:text="${record.reason}"></td>
+                                    <td th:text="${record.handler ?: '-'}"></td>
+                                    <td>
+                                        <span th:class="${record.resolveStatus == 'RESOLVED' ? 'badge bg-success' : 'badge bg-danger'}" 
+                                              th:text="${record.resolveStatus == 'RESOLVED' ? '已处理' : '待处理'}"></span>
+                                    </td>
+                                    <td th:text="${#temporals.format(record.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td th:text="${record.resolveNotes ?: '-'}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function getBadgeClass(status) {
+            const classes = {
+                'PENDING_INVENTORY': 'badge bg-warning',
+                'INVENTORY_COMPLETED': 'badge bg-info',
+                'PENDING_STERILIZATION': 'badge bg-info',
+                'STERILIZATION_COMPLETED': 'badge bg-info',
+                'PENDING_RECEIVE': 'badge bg-info',
+                'RECEIVED': 'badge bg-info',
+                'PENDING_REVIEW': 'badge bg-info',
+                'RELEASED': 'badge bg-success',
+                'ISSUED': 'badge bg-primary',
+                'RETURNED': 'badge bg-secondary',
+                'ABNORMAL': 'badge bg-danger'
+            };
+            return classes[status] || 'badge bg-secondary';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'PENDING_INVENTORY': '待清点',
+                'INVENTORY_COMPLETED': '清点完成',
+                'PENDING_STERILIZATION': '待灭菌',
+                'STERILIZATION_COMPLETED': '灭菌完成',
+                'PENDING_RECEIVE': '待核收',
+                'RECEIVED': '已核收',
+                'PENDING_REVIEW': '待复核',
+                'RELEASED': '已放行',
+                'ISSUED': '已发放',
+                'RETURNED': '已退回',
+                'ABNORMAL': '异常'
+            };
+            return texts[status] || status;
+        }
+
+        function getNodeIconClass(type) {
+            const classes = {
+                'inventory': 'bg-warning',
+                'sterilization': 'bg-primary',
+                'receive': 'bg-info',
+                'review': 'bg-success',
+                'issue': 'bg-green-500'
+            };
+            return classes[type] || 'bg-secondary';
+        }
+
+        function getNodeIconColor(type) {
+            const classes = {
+                'inventory': 'text-white',
+                'sterilization': 'text-white',
+                'receive': 'text-white',
+                'review': 'text-white',
+                'issue': 'text-white'
+            };
+            return classes[type] || 'text-white';
+        }
+
+        function getNodeTitle(type) {
+            const titles = {
+                'inventory': '器械清点',
+                'sterilization': '灭菌登记',
+                'receive': '核收确认',
+                'review': '质控复核',
+                'issue': '发放出库'
+            };
+            return titles[type] || type;
+        }
+
+        function getAbnormalTypeText(type) {
+            const texts = {
+                'INSTRUMENT_MISSING': '器械缺失',
+                'EXPIRED_STERILIZATION': '灭菌过期',
+                'RETURNED_FROM_OPERATING_ROOM': '手术室退回',
+                'DAMAGED_INSTRUMENT': '器械损坏',
+                'OTHER': '其他异常'
+            };
+            return texts[type] || type;
+        }
+    </script>
+    <style>
+        .timeline-item:not(:last-child) {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

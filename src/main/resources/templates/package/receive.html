@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核收确认</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">器械追溯系统</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/packages">器械包列表</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/review">复盘统计</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">核收确认</div>
+            <div class="card-body">
+                <h4>器械包: [[${package.packageName}]]</h4>
+                <p class="text-muted">编码: [[${package.packageCode}]]</p>
+
+                <form th:action="@{/packages/{id}/receive(id=${package.id})}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">领用科室 *</label>
+                        <input type="text" name="department" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">核收结果 *</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="result" value="ACCEPTED" checked>
+                            <label class="form-check-label">接收</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="result" value="REJECTED">
+                            <label class="form-check-label">退回</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">操作员 *</label>
+                        <input type="text" name="operator" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-info">确认核收</button>
+                        <a th:href="@{/packages/{id}(id=${package.id})}" class="btn btn-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
