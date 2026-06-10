@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  code        String     @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  employees   Employee[]
+  applications Application[]
+}
+
+model Employee {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  employeeId    String       @unique
+  departmentId  String
+  role          EmployeeRole @default(EMPLOYEE)
+  status        EmployeeStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  department    Department   @relation(fields: [departmentId], references: [id])
+  applications  Application[]
+  assignments   LicenseAssignment[]
+  approvals     Approval[]
+}
+
+model Software {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  vendor        String
+  description   String?
+  totalSeats    Int          @default(0)
+  usedSeats     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  licenses      License[]
+  applications  Application[]
+}
+
+model License {
+  id            String       @id @default(cuid())
+  softwareId    String
+  licenseKey    String
+  seatCount     Int          @default(1)
+  startDate     DateTime
+  endDate       DateTime
+  status        LicenseStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  software      Software     @relation(fields: [softwareId], references: [id])
+  assignments   LicenseAssignment[]
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  employeeId      String
+  softwareId      String
+  departmentId    String
+  reason          String
+  requestedSeats  Int               @default(1)
+  useScope        String
+  status          ApplicationStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  employee        Employee          @relation(fields: [employeeId], references: [id])
+  software        Software          @relation(fields: [softwareId], references: [id])
+  department      Department        @relation(fields: [departmentId], references: [id])
+  approvals       Approval[]
+  assignment      LicenseAssignment?
+}
+
+model Approval {
+  id              String          @id @default(cuid())
+  applicationId   String
+  approverId      String
+  role            ApprovalRole
+  status          ApprovalStatus  @default(PENDING)
+  comment         String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  application     Application     @relation(fields: [applicationId], references: [id])
+  approver        Employee        @relation(fields: [approverId], references: [id])
+}
+
+model LicenseAssignment {
+  id              String              @id @default(cuid())
+  licenseId       String
+  employeeId      String
+  applicationId   String?             @unique
+  assignedAt      DateTime            @default(now())
+  expiresAt       DateTime?
+  status          AssignmentStatus    @default(ACTIVE)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  license         License             @relation(fields: [licenseId], references: [id])
+  employee        Employee            @relation(fields: [employeeId], references: [id])
+  application     Application?        @relation(fields: [applicationId], references: [id])
+}
+
+model Alert {
+  id              String          @id @default(cuid())
+  type            AlertType
+  message         String
+  severity        AlertSeverity   @default(WARNING)
+  relatedId       String
+  relatedType     String
+  resolved        Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum EmployeeRole {
+  EMPLOYEE
+  DEPARTMENT_HEAD
+  IT_ADMIN
+  AUDITOR
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  RESIGNED
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+enum ApplicationStatus {
+  PENDING
+  DEPARTMENT_APPROVED
+  IT_APPROVED
+  REJECTED
+  ASSIGNED
+  RECALLED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalRole {
+  DEPARTMENT_HEAD
+  IT_ADMIN
+  AUDITOR
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  EXPIRED
+  RECALLED
+}
+
+enum AlertType {
+  LICENSE_SHORTAGE
+  UNRETURNED_LICENSE
+  SCOPE_VIOLATION
+  EXPIRING_SOON
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
