@@ -1,7 +1,5 @@
-
 package com.example.cinema.config;
 
-import com.example.cinema.util.EquipmentStatusUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
@@ -26,10 +24,5 @@ public class ThymeleafConfig {
         resolver.setTemplateEngine(templateEngine);
         resolver.setCharacterEncoding("UTF-8");
         return resolver;
-    }
-
-    @Bean
-    public EquipmentStatusUtil equipmentStatusUtil() {
-        return new EquipmentStatusUtil();
     }
 }

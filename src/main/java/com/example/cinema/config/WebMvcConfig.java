@@ -1,8 +1,6 @@
-
 package com.example.cinema.config;
 
 import com.example.cinema.util.EquipmentStatusUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -16,8 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Autowired
-    private EquipmentStatusUtil equipmentStatusUtil;
+    private final EquipmentStatusUtil equipmentStatusUtil = new EquipmentStatusUtil();
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
