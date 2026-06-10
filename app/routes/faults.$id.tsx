@@ -1,5 +1,5 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { useLoaderData, Link, Form } from "@remix-run/react";
 import { prisma } from "~/lib/db.server";
 import { StatusBadge } from "~/components/StatusBadge";
 import { RiskAlert } from "~/components/RiskAlert";
@@ -11,7 +11,10 @@ import {
   User,
   Building2,
   Calendar,
-  Phone,
+  CheckCircle,
+  XCircle,
+  Send,
+  Wrench,
 } from "lucide-react";
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -38,6 +41,108 @@ export async function loader({ params }: LoaderFunctionArgs) {
   });
 
   return json({ fault, history });
+}
+
+export async function action({ params, request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const actionType = formData.get("actionType");
+  const remark = formData.get("remark") as string;
+  const currentUserId = "system-user";
+
+  if (actionType === "startProcess") {
+    await prisma.fault.update({
+      where: { id: params.id! },
+      data: { status: "处理中" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        faultId: params.id!,
+        type: "故障处理",
+        title: "开始处理故障",
+        description: remark || "维保单位开始处理故障",
+        operator: currentUserId,
+        operatorRole: "维保单位",
+      },
+    });
+
+    return redirect(`/faults/${params.id}`);
+  }
+
+  if (actionType === "submitResult") {
+    const processResult = formData.get("processResult") as string;
+    
+    await prisma.fault.update({
+      where: { id: params.id! },
+      data: { 
+        status: "待复查",
+        resolvedDate: processResult === "resolved" ? new Date() : null,
+      },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        faultId: params.id!,
+        type: "故障处理",
+        title: processResult === "resolved" ? "故障已修复" : "故障处理中",
+        description: remark || (processResult === "resolved" ? "维保单位报告故障已修复" : "维保单位报告故障处理中"),
+        operator: currentUserId,
+        operatorRole: "维保单位",
+      },
+    });
+
+    return redirect(`/faults/${params.id}`);
+  }
+
+  if (actionType === "review") {
+    const reviewResult = formData.get("reviewResult") as string;
+    
+    await prisma.fault.update({
+      where: { id: params.id! },
+      data: { status: reviewResult === "approve" ? "待确认" : "退回修改" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        faultId: params.id!,
+        type: reviewResult === "approve" ? "复查" : "退回",
+        title: reviewResult === "approve" ? "安全管理员复查通过" : "安全管理员复查退回",
+        description: remark || (reviewResult === "approve" ? "安全管理员复查通过" : "安全管理员复查退回，需重新处理"),
+        operator: currentUserId,
+        operatorRole: "安全管理员",
+      },
+    });
+
+    return redirect(`/faults/${params.id}`);
+  }
+
+  if (actionType === "confirm") {
+    const confirmResult = formData.get("confirmResult") as string;
+    
+    await prisma.fault.update({
+      where: { id: params.id! },
+      data: { status: confirmResult === "archive" ? "已解决" : "退回修改" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        faultId: params.id!,
+        type: confirmResult === "archive" ? "归档" : "退回",
+        title: confirmResult === "archive" ? "项目经理确认归档" : "项目经理退回",
+        description: remark || (confirmResult === "archive" ? "项目经理确认故障已解决并归档" : "项目经理退回，需重新处理"),
+        operator: currentUserId,
+        operatorRole: "项目经理",
+      },
+    });
+
+    return redirect(`/faults/${params.id}`);
+  }
+
+  return json({ success: true });
 }
 
 export default function FaultDetail() {
@@ -118,6 +223,155 @@ export default function FaultDetail() {
                   <p className="text-sm text-amber-700 mt-1">
                     该故障关联业主投诉，需要重点关注处理进度
                   </p>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              {fault.status === "待处理" && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-700 mb-2">维保单位操作</div>
+                  <Form method="post" className="space-y-3">
+                    <input type="hidden" name="actionType" value="startProcess" />
+                    <textarea
+                      name="remark"
+                      placeholder="处理说明（可选）"
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      rows={2}
+                    />
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                    >
+                      <Wrench className="w-4 h-4" />
+                      开始处理
+                    </button>
+                  </Form>
+                </div>
+              )}
+
+              {fault.status === "处理中" && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-700 mb-2">维保单位操作</div>
+                  <Form method="post" className="space-y-3">
+                    <input type="hidden" name="actionType" value="submitResult" />
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="processResult" value="resolved" defaultChecked className="text-primary" />
+                        <span className="text-sm text-slate-700">故障已修复</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="processResult" value="processing" className="text-primary" />
+                        <span className="text-sm text-slate-700">正在处理中</span>
+                      </label>
+                    </div>
+                    <textarea
+                      name="remark"
+                      placeholder="处理结果说明（可选）"
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      rows={2}
+                    />
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                    >
+                      <Send className="w-4 h-4" />
+                      提交处理结果
+                    </button>
+                  </Form>
+                </div>
+              )}
+
+              {fault.status === "待复查" && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-700 mb-2">安全管理员复查</div>
+                  <Form method="post" className="space-y-2">
+                    <input type="hidden" name="actionType" value="review" />
+                    <textarea
+                      name="remark"
+                      placeholder="复查意见（可选）"
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        name="reviewResult"
+                        value="approve"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        复查通过
+                      </button>
+                      <button
+                        type="submit"
+                        name="reviewResult"
+                        value="reject"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        退回修改
+                      </button>
+                    </div>
+                  </Form>
+                </div>
+              )}
+
+              {fault.status === "待确认" && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-slate-700 mb-2">项目经理确认</div>
+                  <Form method="post" className="space-y-2">
+                    <input type="hidden" name="actionType" value="confirm" />
+                    <textarea
+                      name="remark"
+                      placeholder="确认意见（可选）"
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        name="confirmResult"
+                        value="archive"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        确认归档
+                      </button>
+                      <button
+                        type="submit"
+                        name="confirmResult"
+                        value="reject"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        退回
+                      </button>
+                    </div>
+                  </Form>
+                </div>
+              )}
+
+              {(fault.status === "退回修改" || fault.status === "已退回") && (
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-amber-700 mb-2">已被退回，需要重新处理</div>
+                  <Form method="post" className="space-y-3">
+                    <input type="hidden" name="actionType" value="startProcess" />
+                    <textarea
+                      name="remark"
+                      placeholder="重新处理说明（可选）"
+                      className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                      rows={2}
+                    />
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                    >
+                      <Wrench className="w-4 h-4" />
+                      重新处理
+                    </button>
+                  </Form>
                 </div>
               )}
             </div>

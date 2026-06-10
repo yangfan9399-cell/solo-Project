@@ -312,37 +312,46 @@ export default function ElevatorDetail() {
 
                     {/* Action Buttons */}
                     <div className="mt-4 pt-4 border-t border-slate-200">
-                      {plan.status === "待执行" && (
+                      {(plan.status === "待执行" || plan.status === "已退回") && (
                         <div className="space-y-3">
                           <div className="text-sm font-medium text-slate-700 mb-2">维保单位操作</div>
-                          <Form method="post" className="space-y-3">
+                          <Form method="post" className="space-y-3" onSubmit={(e) => {
+                            const form = e.currentTarget;
+                            const item1 = (form as HTMLFormElement).item1.value;
+                            const item2 = (form as HTMLFormElement).item2.value;
+                            const item3 = (form as HTMLFormElement).item3.value;
+                            const item4 = (form as HTMLFormElement).item4.value;
+                            const items = JSON.stringify([
+                              { item: "门系统检查", result: item1 },
+                              { item: "曳引机检查", result: item2 },
+                              { item: "安全装置检查", result: item3 },
+                              { item: "电气系统检查", result: item4 },
+                            ]);
+                            (form as HTMLFormElement).items.value = items;
+                          }}>
                             <input type="hidden" name="actionType" value="submitRecord" />
                             <input type="hidden" name="planId" value={plan.id} />
+                            <input type="hidden" name="items" value="" />
                             <div className="grid grid-cols-2 gap-2">
-                              <select name="item1" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item1" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">门系统检查 - 正常</option>
                                 <option value="异常">门系统检查 - 异常</option>
                               </select>
-                              <select name="item2" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item2" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">曳引机检查 - 正常</option>
                                 <option value="异常">曳引机检查 - 异常</option>
                               </select>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                              <select name="item3" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item3" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">安全装置检查 - 正常</option>
                                 <option value="异常">安全装置检查 - 异常</option>
                               </select>
-                              <select name="item4" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item4" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">电气系统检查 - 正常</option>
                                 <option value="异常">电气系统检查 - 异常</option>
                               </select>
                             </div>
-                            <input
-                              type="hidden"
-                              name="items"
-                              value='[{"item":"门系统检查","result":"正常"},{"item":"曳引机检查","result":"正常"},{"item":"安全装置检查","result":"正常"},{"item":"电气系统检查","result":"正常"}]'
-                            />
                             <button
                               type="submit"
                               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
@@ -429,34 +438,43 @@ export default function ElevatorDetail() {
                       {plan.status === "退回修改" && (
                         <div className="space-y-3">
                           <div className="text-sm font-medium text-amber-700 mb-2">已被退回，需要修改后重新提交</div>
-                          <Form method="post" className="space-y-3">
+                          <Form method="post" className="space-y-3" onSubmit={(e) => {
+                            const form = e.currentTarget;
+                            const item1 = (form as HTMLFormElement).item1.value;
+                            const item2 = (form as HTMLFormElement).item2.value;
+                            const item3 = (form as HTMLFormElement).item3.value;
+                            const item4 = (form as HTMLFormElement).item4.value;
+                            const items = JSON.stringify([
+                              { item: "门系统检查", result: item1 },
+                              { item: "曳引机检查", result: item2 },
+                              { item: "安全装置检查", result: item3 },
+                              { item: "电气系统检查", result: item4 },
+                            ]);
+                            (form as HTMLFormElement).items.value = items;
+                          }}>
                             <input type="hidden" name="actionType" value="submitRecord" />
                             <input type="hidden" name="planId" value={plan.id} />
+                            <input type="hidden" name="items" value="" />
                             <div className="grid grid-cols-2 gap-2">
-                              <select name="item1" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item1" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">门系统检查 - 正常</option>
                                 <option value="异常">门系统检查 - 异常</option>
                               </select>
-                              <select name="item2" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item2" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">曳引机检查 - 正常</option>
                                 <option value="异常">曳引机检查 - 异常</option>
                               </select>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                              <select name="item3" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item3" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">安全装置检查 - 正常</option>
                                 <option value="异常">安全装置检查 - 异常</option>
                               </select>
-                              <select name="item4" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                              <select name="item4" defaultValue="正常" className="px-3 py-2 border border-slate-300 rounded text-sm">
                                 <option value="正常">电气系统检查 - 正常</option>
                                 <option value="异常">电气系统检查 - 异常</option>
                               </select>
                             </div>
-                            <input
-                              type="hidden"
-                              name="items"
-                              value='[{"item":"门系统检查","result":"正常"},{"item":"曳引机检查","result":"正常"},{"item":"安全装置检查","result":"正常"},{"item":"电气系统检查","result":"正常"}]'
-                            />
                             <button
                               type="submit"
                               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
