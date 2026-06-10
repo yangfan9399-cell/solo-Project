@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import pool from '@/lib/pg'
 
 export async function GET() {
-  const departments = await prisma.department.findMany()
-  return NextResponse.json(departments)
+  const client = await pool.connect()
+  try {
+    const result = await client.query('SELECT * FROM "Department" ORDER BY "createdAt" DESC')
+    return NextResponse.json(result.rows)
+  } finally {
+    client.release()
+  }
 }

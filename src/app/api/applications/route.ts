@@ -1,43 +1,40 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import pool from '@/lib/pg'
 
 export async function GET() {
-  const applications = await prisma.application.findMany({
-    include: {
-      employee: true,
-      software: true,
-      department: true,
-      approvals: true,
-      assignment: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-  return NextResponse.json(applications)
+  const client = await pool.connect()
+  try {
+    const result = await client.query(`
+      SELECT
+        a.*,
+        e.name as "employeeName",
+        e."employeeId" as "employeeCode",
+        s.name as "softwareName",
+        s.vendor as "softwareVendor",
+        d.name as "departmentName"
+      FROM "Application" a
+      LEFT JOIN "Employee" e ON a."employeeId" = e.id
+      LEFT JOIN "Software" s ON a."softwareId" = s.id
+      LEFT JOIN "Department" d ON a."departmentId" = d.id
+      ORDER BY a."createdAt" DESC
+    `)
+    return NextResponse.json(result.rows)
+  } finally {
+    client.release()
+  }
 }
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { employeeId, softwareId, departmentId, reason, requestedSeats, useScope } = body
-
-  const software = await prisma.software.findUnique({ where: { id: softwareId } })
-  if (!software) {
-    return NextResponse.json({ error: '软件不存在' }, { status: 404 })
+  const client = await pool.connect()
+  try {
+    const result = await client.query(`
+      INSERT INTO "Application" ("id", "employeeId", "softwareId", "departmentId", "reason", "requestedSeats", "useScope", "status")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING')
+      RETURNING *
+    `, [body.id, body.employeeId, body.softwareId, body.departmentId, body.reason, body.requestedSeats, body.useScope])
+    return NextResponse.json(result.rows[0])
+  } finally {
+    client.release()
   }
-
-  if (software.usedSeats >= software.totalSeats) {
-    return NextResponse.json({ error: '许可证不足', availableRecallCandidates: [] }, { status: 400 })
-  }
-
-  const application = await prisma.application.create({
-    data: {
-      employeeId,
-      softwareId,
-      departmentId,
-      reason,
-      requestedSeats,
-      useScope,
-    },
-  })
-
-  return NextResponse.json(application, { status: 201 })
 }
