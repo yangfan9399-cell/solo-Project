@@ -1,16 +1,16 @@
-interface DataTableProps<T> {
-  data: T[]
+interface DataTableProps {
+  data: Array<Record<string, unknown>>
   columns: Array<{ key: string; label: string }>
-  onRowClick?: (row: T) => void
-  rowClassName?: (row: T) => string
+  onRowClick?: (row: Record<string, unknown>) => void
+  rowClassName?: (row: Record<string, unknown>) => string
 }
 
-export default function DataTable<T extends object>({
+export default function DataTable({
   data,
   columns,
   onRowClick,
   rowClassName,
-}: DataTableProps<T>) {
+}: DataTableProps) {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -40,7 +40,7 @@ export default function DataTable<T extends object>({
                   key={String(column.key)}
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                 >
-                  {String((row as Record<string, unknown>)[column.key] ?? '')}
+                  {String(row[column.key] ?? '')}
                 </td>
               ))}
             </tr>

@@ -1,25 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus } from 'lucide-react'
-import { getInventoryRecords, getDiscrepancyTypes } from '../server/api/assets'
+import { getInventoryRecords, getDiscrepancyTypes, type InventoryRecord } from '../data/mockData'
 import DataTable from '../components/DataTable'
-
-interface InventoryRecord {
-  id: number
-  assetId: number
-  inventoryDate: string
-  discrepancyTypeId: number | null
-  actualStatus: string | null
-  actualLocation: string | null
-  actualUser: string | null
-  remarks: string | null
-  recorderName: string
-  createdAt: Date
-  assetNo: string
-  assetName: string
-  discrepancyTypeName: string | null
-  discrepancyTypeCode: string | null
-}
 
 export default function InventoryList() {
   const [records, setRecords] = useState<InventoryRecord[]>([])
@@ -36,7 +19,7 @@ export default function InventoryList() {
           getInventoryRecords(),
           getDiscrepancyTypes(),
         ])
-        setRecords(inventoryData as InventoryRecord[])
+        setRecords(inventoryData)
         setDiscrepancies(discData)
       } finally {
         setLoading(false)
@@ -137,7 +120,7 @@ export default function InventoryList() {
       </div>
 
       <DataTable
-        data={filteredRecords}
+        data={filteredRecords as Record<string, unknown>[]}
         columns={columns}
         onRowClick={(row) => navigate(`/inventory/${row.id}`)}
         rowClassName={rowClassName}

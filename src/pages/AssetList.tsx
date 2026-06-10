@@ -1,22 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Package, Building, MapPin, User } from 'lucide-react'
-import { getAssets } from '../server/api/assets'
+import { getAssets, type Asset } from '../data/mockData'
 import DataTable from '../components/DataTable'
-
-interface Asset {
-  id: number
-  assetNo: string
-  name: string
-  categoryName: string | null
-  departmentName: string | null
-  location: string | null
-  userName: string | null
-  purchaseDate: string
-  bookValue: string
-  tagNumber: string | null
-  status: string
-}
 
 export default function AssetList() {
   const [assets, setAssets] = useState<Asset[]>([])
@@ -28,7 +14,7 @@ export default function AssetList() {
     async function fetchData() {
       try {
         const data = await getAssets()
-        setAssets(data as Asset[])
+        setAssets(data)
       } finally {
         setLoading(false)
       }
@@ -115,7 +101,7 @@ export default function AssetList() {
       </div>
 
       <DataTable
-        data={filteredAssets}
+        data={filteredAssets as Record<string, unknown>[]}
         columns={columns}
         onRowClick={(row) => navigate(`/assets/${row.id}`)}
       />

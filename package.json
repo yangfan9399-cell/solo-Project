@@ -11,20 +11,21 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.61.1",
+    "drizzle-orm": "^0.30.0",
+    "lucide-react": "^0.290.0",
+    "pg": "^8.11.0",
+    "postgresql": "^0.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.0.0",
-    "postgresql": "^0.0.1",
-    "drizzle-orm": "^0.30.0",
-    "pg": "^8.11.0",
-    "zod": "^3.22.0",
-    "lucide-react": "^0.290.0"
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "@types/pg": "^8.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/pg": "^8.10.0",
     "@vitejs/plugin-react": "^4.2.0",
     "drizzle-kit": "^0.20.0",
     "tsx": "^4.7.0",

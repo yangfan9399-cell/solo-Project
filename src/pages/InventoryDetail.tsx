@@ -1,49 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, MapPin, User, Calendar, Tag, FileText, CheckCircle, AlertCircle } from 'lucide-react'
-import { getInventoryRecordById } from '../server/api/assets'
-import { getDisposalProcessById, createDisposalProcess, updateDisposalProcess } from '../server/api/approval'
-
-interface InventoryRecord {
-  id: number
-  assetId: number
-  inventoryDate: string
-  discrepancyTypeId: number | null
-  actualStatus: string | null
-  actualLocation: string | null
-  actualUser: string | null
-  photoUrl: string | null
-  remarks: string | null
-  recorderName: string
-  createdAt: Date
-  assetNo: string
-  assetName: string
-  assetLocation: string | null
-  assetUser: string | null
-  assetBookValue: string
-  discrepancyTypeName: string | null
-  discrepancyTypeCode: string | null
-}
-
-interface DisposalProcess {
-  id: number
-  inventoryRecordId: number
-  processType: string
-  departmentRemark: string | null
-  departmentApprovedAt: Date | null
-  departmentApproverId: string | null
-  departmentApproverName: string | null
-  financeRemark: string | null
-  financeApprovedAt: Date | null
-  financeApproverId: string | null
-  financeApproverName: string | null
-  supervisorRemark: string | null
-  supervisorApprovedAt: Date | null
-  supervisorApproverId: string | null
-  supervisorApproverName: string | null
-  status: string
-  createdAt: Date
-}
+import { getInventoryRecordById, getDisposalProcessById, createDisposalProcess, updateDisposalProcess, type InventoryRecord, type DisposalProcess } from '../data/mockData'
 
 export default function InventoryDetail() {
   const { id } = useParams<{ id: string }>()
@@ -61,10 +19,10 @@ export default function InventoryDetail() {
     async function fetchData() {
       try {
         const inventoryData = await getInventoryRecordById(parseInt(id || '0'))
-        setRecord(inventoryData as InventoryRecord | null)
+        setRecord(inventoryData)
         if (inventoryData) {
           const processData = await getDisposalProcessById(inventoryData.id)
-          setProcess(processData as DisposalProcess | null)
+          setProcess(processData)
         }
       } finally {
         setLoading(false)
@@ -86,8 +44,7 @@ export default function InventoryDetail() {
     if (!process) return
     const updated = await updateDisposalProcess(process.id, {
       departmentRemark,
-      departmentApprovedAt: new Date(),
-      departmentApproverId: 'CURRENT_USER',
+      departmentApprovedAt: new Date().toLocaleString(),
       departmentApproverName: '当前用户',
     })
     setProcess(updated)
@@ -97,8 +54,7 @@ export default function InventoryDetail() {
     if (!process) return
     const updated = await updateDisposalProcess(process.id, {
       financeRemark,
-      financeApprovedAt: new Date(),
-      financeApproverId: 'CURRENT_USER',
+      financeApprovedAt: new Date().toLocaleString(),
       financeApproverName: '当前用户',
     })
     setProcess(updated)
@@ -108,8 +64,7 @@ export default function InventoryDetail() {
     if (!process) return
     const updated = await updateDisposalProcess(process.id, {
       supervisorRemark,
-      supervisorApprovedAt: new Date(),
-      supervisorApproverId: 'CURRENT_USER',
+      supervisorApprovedAt: new Date().toLocaleString(),
       supervisorApproverName: '当前用户',
       status: 'approved',
     })
@@ -285,7 +240,7 @@ export default function InventoryDetail() {
                     <div className="mt-2">
                       <div className="text-gray-800">{process.departmentRemark}</div>
                       <div className="text-sm text-gray-500 mt-1">
-                        审批人: {process.departmentApproverName} | {process.departmentApprovedAt instanceof Date ? process.departmentApprovedAt.toLocaleString() : process.departmentApprovedAt}
+                        审批人: {process.departmentApproverName} | {process.departmentApprovedAt}
                       </div>
                     </div>
                   ) : (
@@ -322,7 +277,7 @@ export default function InventoryDetail() {
                     <div className="mt-2">
                       <div className="text-gray-800">{process.financeRemark}</div>
                       <div className="text-sm text-gray-500 mt-1">
-                        审批人: {process.financeApproverName} | {process.financeApprovedAt instanceof Date ? process.financeApprovedAt.toLocaleString() : process.financeApprovedAt}
+                        审批人: {process.financeApproverName} | {process.financeApprovedAt}
                       </div>
                     </div>
                   ) : process.departmentApprovedAt ? (
@@ -361,7 +316,7 @@ export default function InventoryDetail() {
                     <div className="mt-2">
                       <div className="text-gray-800">{process.supervisorRemark}</div>
                       <div className="text-sm text-gray-500 mt-1">
-                        审批人: {process.supervisorApproverName} | {process.supervisorApprovedAt instanceof Date ? process.supervisorApprovedAt.toLocaleString() : process.supervisorApprovedAt}
+                        审批人: {process.supervisorApproverName} | {process.supervisorApprovedAt}
                       </div>
                     </div>
                   ) : process.financeApprovedAt ? (
@@ -401,7 +356,7 @@ export default function InventoryDetail() {
               </div>
               <div>
                 <div className="font-medium text-gray-800">盘点登记</div>
-                <div className="text-sm text-gray-500">{record.recorderName} | {record.createdAt instanceof Date ? record.createdAt.toLocaleString() : record.createdAt}</div>
+                <div className="text-sm text-gray-500">{record.recorderName} | {record.createdAt}</div>
               </div>
             </div>
             {process && process.departmentApprovedAt && (
@@ -411,7 +366,7 @@ export default function InventoryDetail() {
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">部门审批通过</div>
-                  <div className="text-sm text-gray-500">{process.departmentApproverName} | {process.departmentApprovedAt instanceof Date ? process.departmentApprovedAt.toLocaleString() : process.departmentApprovedAt}</div>
+                  <div className="text-sm text-gray-500">{process.departmentApproverName} | {process.departmentApprovedAt}</div>
                 </div>
               </div>
             )}
@@ -422,7 +377,7 @@ export default function InventoryDetail() {
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">财务复核通过</div>
-                  <div className="text-sm text-gray-500">{process.financeApproverName} | {process.financeApprovedAt instanceof Date ? process.financeApprovedAt.toLocaleString() : process.financeApprovedAt}</div>
+                  <div className="text-sm text-gray-500">{process.financeApproverName} | {process.financeApprovedAt}</div>
                 </div>
               </div>
             )}

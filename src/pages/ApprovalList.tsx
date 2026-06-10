@@ -1,39 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { getDisposalProcesses, getAccountabilityRecords } from '../server/api/approval'
+import { getDisposalProcesses, getAccountabilityRecords, type DisposalProcess, type AccountabilityRecord } from '../data/mockData'
 import DataTable from '../components/DataTable'
-
-interface DisposalProcess {
-  id: number
-  inventoryRecordId: number
-  processType: string
-  departmentRemark: string | null
-  departmentApprovedAt: Date | null
-  departmentApproverName: string | null
-  financeRemark: string | null
-  financeApprovedAt: Date | null
-  financeApproverName: string | null
-  supervisorRemark: string | null
-  supervisorApprovedAt: Date | null
-  supervisorApproverName: string | null
-  status: string
-  createdAt: Date
-}
-
-interface AccountabilityRecord {
-  id: number
-  inventoryRecordId: number
-  responsibleUserId: string
-  responsibleUserName: string
-  investigationResult: string | null
-  compensationAmount: string | number | null
-  status: string
-  createdAt: Date
-  assetName: string | null
-  assetNo: string | null
-  assetBookValue: string | null
-}
 
 export default function ApprovalList() {
   const [processes, setProcesses] = useState<DisposalProcess[]>([])
@@ -49,8 +18,8 @@ export default function ApprovalList() {
           getDisposalProcesses(),
           getAccountabilityRecords(),
         ])
-        setProcesses(processData as DisposalProcess[])
-        setAccountabilityList(accountabilityData as AccountabilityRecord[])
+        setProcesses(processData)
+        setAccountabilityList(accountabilityData)
       } finally {
         setLoading(false)
       }
@@ -158,7 +127,7 @@ export default function ApprovalList() {
           </div>
 
           <DataTable
-            data={processes}
+            data={processes as Record<string, unknown>[]}
             columns={approvalColumns}
             onRowClick={(row) => navigate(`/approval/${row.id}`)}
             rowClassName={rowClassName}

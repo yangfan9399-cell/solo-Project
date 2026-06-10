@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PieChart, BarChart3, Calendar, Building, Tag, Clock } from 'lucide-react'
-import { getInventoryRecords, getDepartments, getAssetCategories, getDiscrepancyTypes } from '../server/api/assets'
-
-interface InventoryRecord {
-  id: number
-  assetId: number
-  inventoryDate: string
-  discrepancyTypeId: number | null
-  discrepancyTypeName: string | null
-  discrepancyTypeCode: string | null
-  departmentName?: string
-  categoryName?: string
-}
+import { getInventoryRecords, getDepartments, getAssetCategories, getDiscrepancyTypes, type InventoryRecord } from '../data/mockData'
 
 export default function ReviewPage() {
   const [records, setRecords] = useState<InventoryRecord[]>([])
