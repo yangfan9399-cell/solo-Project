@@ -6,9 +6,9 @@ import { prisma } from "~/db.server";
 export async function loader({}: LoaderFunctionArgs) {
   const readers = await prisma.reader.findMany({
     include: {
-      overdueRecords: {
+      applications: {
         where: {
-          paidStatus: false,
+          status: "OVERDUE",
         },
       },
     },
@@ -119,30 +119,14 @@ export default function Readers() {
               <td style={{ border: "1px solid #ddd", padding: "12px" }}>{reader.phone}</td>
               <td style={{ border: "1px solid #ddd", padding: "12px" }}>{reader.email}</td>
               <td style={{ border: "1px solid #ddd", padding: "12px" }}>
-                {reader.overdueRecords.length > 0 ? (
+                {reader.applications.length > 0 ? (
                   <div>
                     <span style={{ color: "#f44336", fontWeight: "bold" }}>
-                      有逾期记录（{reader.overdueRecords.length}条）
+                      有逾期未还图书（{reader.applications.length}条）
                     </span>
-                    {reader.overdueRecords.map((record) => (
-                      <div key={record.id} style={{ marginTop: "5px" }}>
-                        <Form method="post">
-                          <input type="hidden" name="_action" value="pay" />
-                          <input type="hidden" name="overdueId" value={record.id} />
-                          <span>逾期{record.overdueDays}天，罚款¥{record.fineAmount.toFixed(2)}</span>
-                          <button type="submit" style={{
-                            marginLeft: "10px",
-                            padding: "3px 8px",
-                            backgroundColor: "#4caf50",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "3px",
-                            cursor: "pointer",
-                            fontSize: "12px"
-                          }}>
-                            缴纳罚款
-                          </button>
-                        </Form>
+                    {reader.applications.map((app) => (
+                      <div key={app.id} style={{ marginTop: "5px" }}>
+                        <span>申请ID: {app.id.substring(0, 8)}...</span>
                       </div>
                     ))}
                   </div>

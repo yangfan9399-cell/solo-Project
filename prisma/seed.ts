@@ -146,6 +146,16 @@ async function main() {
     },
   });
 
+  const reader5 = await prisma.reader.create({
+    data: {
+      name: "孙七",
+      studentId: "2021005",
+      college: "机械学院",
+      phone: "13800138005",
+      email: "sunqi@university.edu.cn",
+    },
+  });
+
   // 创建样本申请数据
 
   // 1. 正常归还样本
@@ -517,6 +527,112 @@ async function main() {
       receivedBy: "王馆际",
       condition: "破损",
       notes: "封面破损，部分页面有污渍",
+    },
+  });
+
+  // 5. 仍未归还的逾期读者样本（孙七）
+  const app5 = await prisma.interlibraryApplication.create({
+    data: {
+      readerId: reader5.id,
+      bookId: book5.id,
+      libraryId: library2.id,
+      status: "OVERDUE", // 逾期未还
+      logisticsStatus: "RETURNED",
+      logisticsNumber: "SF5678901234",
+      borrowStartDate: new Date("2024-05-01"),
+      borrowEndDate: new Date("2024-05-31"),
+      // actualReturnDate 留空，表示仍未归还
+      processedByStaffId: "staff-001",
+      processedByCirculationId: "circulation-001",
+      processedByManagerId: "manager-001",
+    },
+  });
+
+  await prisma.historyNode.createMany({
+    data: [
+      {
+        applicationId: app5.id,
+        status: "PENDING",
+        operatorId: reader5.id,
+        operatorRole: "读者",
+        operatorName: reader5.name,
+        description: "提交馆际互借申请",
+        createdAt: new Date("2024-04-15"),
+      },
+      {
+        applicationId: app5.id,
+        status: "CONTACTING",
+        operatorId: "staff-001",
+        operatorRole: "馆员",
+        operatorName: "张馆员",
+        description: "开始联系外馆",
+        createdAt: new Date("2024-04-16"),
+      },
+      {
+        applicationId: app5.id,
+        status: "APPROVED",
+        operatorId: "external-002",
+        operatorRole: "外馆",
+        operatorName: "李馆长",
+        description: "外馆同意借书",
+        createdAt: new Date("2024-04-17"),
+      },
+      {
+        applicationId: app5.id,
+        status: "IN_TRANSIT",
+        operatorId: "logistics-001",
+        operatorRole: "物流",
+        operatorName: "物流公司",
+        description: "图书已发出，物流单号：SF5678901234",
+        createdAt: new Date("2024-04-18"),
+      },
+      {
+        applicationId: app5.id,
+        status: "ARRIVED",
+        operatorId: "staff-001",
+        operatorRole: "馆员",
+        operatorName: "张馆员",
+        description: "图书已到达本馆",
+        createdAt: new Date("2024-04-20"),
+      },
+      {
+        applicationId: app5.id,
+        status: "READY_FOR_PICKUP",
+        operatorId: "circulation-001",
+        operatorRole: "流通管理员",
+        operatorName: "李流通",
+        description: "已通知读者取书",
+        createdAt: new Date("2024-04-21"),
+      },
+      {
+        applicationId: app5.id,
+        status: "BORROWED",
+        operatorId: reader5.id,
+        operatorRole: "读者",
+        operatorName: reader5.name,
+        description: "读者已取书",
+        createdAt: new Date("2024-05-01"),
+      },
+      {
+        applicationId: app5.id,
+        status: "OVERDUE",
+        operatorId: "manager-001",
+        operatorRole: "馆际负责人",
+        operatorName: "王馆际",
+        description: "图书已逾期（超过归还期限仍未归还）",
+        createdAt: new Date("2024-06-01"),
+      },
+    ],
+  });
+
+  // 创建逾期记录
+  await prisma.overdueRecord.create({
+    data: {
+      applicationId: app5.id,
+      readerId: reader5.id,
+      overdueDays: 10, // 假设当前已逾期10天
+      fineAmount: 5.0, // 罚款金额
+      paidStatus: false, // 未缴纳
     },
   });
 

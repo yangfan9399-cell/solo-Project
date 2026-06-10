@@ -34,7 +34,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
   const action = formData.get("action");
-  const applicationId = params.id;
+  const applicationId = params.id!; // params.id 来自 URL，始终存在
 
   const application = await prisma.interlibraryApplication.findUnique({
     where: { id: applicationId },

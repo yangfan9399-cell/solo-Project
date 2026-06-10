@@ -19,15 +19,15 @@ export async function action({ request }: ActionFunctionArgs) {
   const readerId = formData.get("readerId") as string;
   const bookId = formData.get("bookId") as string;
 
-  // 检查读者是否有逾期未还的图书
-  const overdueRecords = await prisma.overdueRecord.findMany({
+  // 检查读者是否有逾期未还的申请（状态为 OVERDUE）
+  const overdueApplication = await prisma.interlibraryApplication.findFirst({
     where: {
       readerId,
-      paidStatus: false,
+      status: "OVERDUE",
     },
   });
 
-  if (overdueRecords.length > 0) {
+  if (overdueApplication) {
     return json({ error: "您有逾期未还的图书，暂时无法申请新的馆际互借" }, { status: 400 });
   }
 
