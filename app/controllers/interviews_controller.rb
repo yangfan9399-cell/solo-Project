@@ -213,10 +213,37 @@ class InterviewsController < ApplicationController
     
     @rejected_reasons = ReviewRecord.where(status: :rejected).group(:comment).count
     
-    @avg_review_duration = ReviewRecord.where(status: [:approved, :rejected]).average('EXTRACT(EPOCH FROM (created_at - (SELECT MIN(created_at) FROM review_records r WHERE r.interview_id = review_records.interview_id))) / 3600')
+    avg_duration_sql = <<~SQL
+      SELECT AVG(duration_hours) 
+      FROM (
+        SELECT EXTRACT(EPOCH FROM (MAX(r.created_at) - MIN(r.created_at))) / 3600 AS duration_hours
+        FROM review_records r
+        WHERE r.status IN (1, 2)
+        GROUP BY r.interview_id
+      ) AS durations
+    SQL
+    @avg_review_duration = ReviewRecord.connection.select_value(avg_duration_sql)
     
-    @completed_interviews = Interview.where(status: [:published, :rejected])
-    @total_duration = @completed_interviews.joins(:review_records).group(:id).average('EXTRACT(EPOCH FROM (MAX(review_records.created_at) - MIN(review_records.created_at))) / 3600')
+    completed_ids = Interview.where(status: [:published, :rejected]).pluck(:id)
+    if completed_ids.present?
+      duration_sql = <<~SQL
+        SELECT interview_id, EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))) / 3600 AS duration_hours
+        FROM review_records
+        WHERE interview_id IN (#{completed_ids.join(',')})
+        GROUP BY interview_id
+      SQL
+      results = ReviewRecord.connection.select_all(duration_sql)
+      @total_duration = results.to_h { |row| [row['interview_id'].to_i, row['duration_hours'].to_f] }
+    else
+      @total_duration = {}
+    end
+    
+    @duration_stats = {
+      count: @total_duration.size,
+      avg: @avg_review_duration ? @avg_review_duration.to_f.round(2) : 0,
+      min: @total_duration.values.min&.round(2) || 0,
+      max: @total_duration.values.max&.round(2) || 0
+    }
   end
 
   private

@@ -46,12 +46,20 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">审核时长统计</h2>
         <div class="space-y-3">
           <div class="flex justify-between items-center">
-            <span class="text-gray-600">平均审核时长</span>
-            <span class="font-medium"><%= @avg_review_duration ? "#{@avg_review_duration.round(2)} 小时" : '无数据' %></span>
+            <span class="text-gray-600">已完成审核</span>
+            <span class="font-medium"><%= @duration_stats[:count] %> 篇</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="text-gray-600">已完成审核</span>
-            <span class="font-medium"><%= @completed_interviews.count %> 篇</span>
+            <span class="text-gray-600">平均审核时长</span>
+            <span class="font-medium"><%= @duration_stats[:avg] %> 小时</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">最短审核时长</span>
+            <span class="font-medium"><%= @duration_stats[:min] %> 小时</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">最长审核时长</span>
+            <span class="font-medium"><%= @duration_stats[:max] %> 小时</span>
           </div>
         </div>
       </div>
