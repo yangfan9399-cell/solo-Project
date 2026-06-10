@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// 读者表
+model Reader {
+  id        String   @id @default(uuid())
+  name      String
+  studentId String   @unique
+  college   String
+  phone     String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  applications InterlibraryApplication[]
+  overdueRecords OverdueRecord[]
+  
+  @@map("readers")
+}
+
+// 外馆表
+model ExternalLibrary {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  contact   String
+  phone     String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  applications InterlibraryApplication[]
+  books       Book[]
+  
+  @@map("external_libraries")
+}
+
+// 图书表
+model Book {
+  id           String   @id @default(uuid())
+  title        String
+  author       String
+  isbn         String   @unique
+  publisher    String
+  publishYear  Int
+  libraryId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  library      ExternalLibrary @relation(fields: [libraryId], references: [id])
+  applications InterlibraryApplication[]
+  
+  @@map("books")
+}
+
+// 馆际互借申请表
+model InterlibraryApplication {
+  id              String   @id @default(uuid())
+  readerId        String
+  bookId          String
+  libraryId       String
+  status          String   @default("PENDING")
+  rejectReason    String?
+  logisticsStatus String?
+  logisticsNumber String?
+  borrowStartDate DateTime?
+  borrowEndDate   DateTime?
+  actualReturnDate DateTime?
+  damageStatus    String?
+  damageDescription String?
+  processedByStaffId     String?
+  processedByManagerId   String?
+  processedByCirculationId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  reader        Reader   @relation(fields: [readerId], references: [id])
+  book          Book     @relation(fields: [bookId], references: [id])
+  library       ExternalLibrary @relation(fields: [libraryId], references: [id])
+  historyNodes  HistoryNode[]
+  returnRecord  ReturnRecord?
+  overdueRecord OverdueRecord?
+  
+  @@map("interlibrary_applications")
+}
+
+// 历史节点表
+model HistoryNode {
+  id             String   @id @default(uuid())
+  applicationId  String
+  status         String
+  operatorId     String?
+  operatorRole   String?
+  operatorName   String?
+  description    String
+  createdAt      DateTime @default(now())
+  
+  application InterlibraryApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  @@map("history_nodes")
+}
+
+// 归还记录表
+model ReturnRecord {
+  id             String   @id @default(uuid())
+  applicationId  String   @unique
+  returnDate     DateTime
+  returnedBy     String
+  receivedBy     String
+  condition      String
+  notes          String?
+  createdAt      DateTime @default(now())
+  
+  application InterlibraryApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  @@map("return_records")
+}
+
+// 逾期记录表
+model OverdueRecord {
+  id             String   @id @default(uuid())
+  applicationId  String   @unique
+  readerId       String
+  overdueDays    Int
+  fineAmount     Float
+  paidStatus     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  application InterlibraryApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reader      Reader   @relation(fields: [readerId], references: [id])
+  
+  @@map("overdue_records")
+}
