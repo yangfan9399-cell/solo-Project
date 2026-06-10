@@ -6,6 +6,7 @@ const pool = new Pool({
 
 export default pool
 
+// Type definitions (matching Prisma schema)
 export type WorkOrderStatus = 'PENDING' | 'DISPATCHED' | 'REPAIRED' | 'REVIEWING' | 'COMPLETED' | 'REJECTED'
 export type LeakLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 export type RepairResult = 'FIXED' | 'SUSPECTED_DUPLICATE' | 'VALVE_LOCATION_FAILED' | 'NOT_REPAIRED'
@@ -18,63 +19,84 @@ export interface PipeSection {
   area: string
   diameter: string
   material: string
-  installation_year: number
+  installationYear: number
 }
 
 export interface RepairTeam {
   id: string
   name: string
-  leader_name: string
-  leader_phone: string
+  leaderName: string
+  leaderPhone: string
 }
 
 export interface WorkOrderHistory {
   id: string
-  work_order_id: string
+  workOrderId: string
   action: HistoryAction
   operator: string
   comment?: string
-  created_at: Date
+  createdAt: Date
 }
 
 export interface WorkOrder {
   id: string
-  serial_number: string
+  serialNumber: string
   status: WorkOrderStatus
-  reporter_name: string
-  reporter_phone: string
-  pipe_section_id: string
-  pipe_section?: PipeSection
-  leak_level: LeakLevel
-  water_stop_area?: string
+  reporterName: string
+  reporterPhone: string
+  pipeSectionId: string
+  pipeSection?: PipeSection
+  leakLevel: LeakLevel
+  waterStopArea?: string
   description: string
-  created_at: Date
-  updated_at: Date
-  dispatch_to?: string
-  repair_team?: RepairTeam
-  repair_result?: RepairResult
-  repair_photos: string[]
-  review_result?: ReviewResult
-  review_comment?: string
-  merged_from: string[]
+  createdAt: Date
+  updatedAt: Date
+  dispatchTo?: string
+  repairTeam?: RepairTeam
+  repairResult?: RepairResult
+  repairPhotos: string[]
+  reviewResult?: ReviewResult
+  reviewComment?: string
+  mergedFrom: string[]
   history?: WorkOrderHistory[]
 }
 
+// Reference data
 export const pipeSections: PipeSection[] = [
-  { id: 'ps1', name: '管段A-001', area: '东城片区', diameter: 'DN300', material: '铸铁', installation_year: 2005 },
-  { id: 'ps2', name: '管段B-002', area: '西城片区', diameter: 'DN200', material: 'PE', installation_year: 2018 },
-  { id: 'ps3', name: '管段C-003', area: '南城片区', diameter: 'DN400', material: '钢管', installation_year: 1998 },
-  { id: 'ps4', name: '管段D-004', area: '北城片区', diameter: 'DN150', material: 'PE', installation_year: 2020 },
-  { id: 'ps5', name: '管段E-005', area: '中心片区', diameter: 'DN500', material: '钢管', installation_year: 2010 },
+  { id: 'ps1', name: '管段A-001', area: '东城片区', diameter: 'DN300', material: '铸铁', installationYear: 2005 },
+  { id: 'ps2', name: '管段B-002', area: '西城片区', diameter: 'DN200', material: 'PE', installationYear: 2018 },
+  { id: 'ps3', name: '管段C-003', area: '南城片区', diameter: 'DN400', material: '钢管', installationYear: 1998 },
+  { id: 'ps4', name: '管段D-004', area: '北城片区', diameter: 'DN150', material: 'PE', installationYear: 2020 },
+  { id: 'ps5', name: '管段E-005', area: '中心片区', diameter: 'DN500', material: '钢管', installationYear: 2010 },
 ]
 
 export const repairTeams: RepairTeam[] = [
-  { id: 'rt1', name: '抢修一队', leader_name: '张师傅', leader_phone: '13800138001' },
-  { id: 'rt2', name: '抢修二队', leader_name: '李师傅', leader_phone: '13800138002' },
-  { id: 'rt3', name: '抢修三队', leader_name: '王师傅', leader_phone: '13800138003' },
+  { id: 'rt1', name: '抢修一队', leaderName: '张师傅', leaderPhone: '13800138001' },
+  { id: 'rt2', name: '抢修二队', leaderName: '李师傅', leaderPhone: '13800138002' },
+  { id: 'rt3', name: '抢修三队', leaderName: '王师傅', leaderPhone: '13800138003' },
 ]
 
-export async function initializeDatabase() {
+// Prisma-like client interface
+interface PrismaLikeClient {
+  pipeSection: {
+    findMany: () => Promise<PipeSection[]>
+    findUnique: (args: { where: { id: string } }) => Promise<PipeSection | null>
+  }
+  repairTeam: {
+    findMany: () => Promise<RepairTeam[]>
+    findUnique: (args: { where: { id: string } }) => Promise<RepairTeam | null>
+  }
+  workOrder: {
+    findMany: (args?: { where?: { status?: string; pipeSectionId?: string; dispatchTo?: string } }) => Promise<WorkOrder[]>
+    findUnique: (args: { where: { id: string } }) => Promise<WorkOrder | null>
+    create: (args: { data: Partial<WorkOrder> }) => Promise<WorkOrder>
+    update: (args: { where: { id: string }; data: Partial<WorkOrder> }) => Promise<WorkOrder>
+    delete: (args: { where: { id: string } }) => Promise<void>
+  }
+}
+
+// Database initialization
+export async function initializeDatabase(): Promise<void> {
   const client = await pool.connect()
   try {
     await client.query(`
@@ -130,12 +152,13 @@ export async function initializeDatabase() {
       )
     `)
 
+    // Initialize reference data
     const sectionsResult = await client.query('SELECT COUNT(*) FROM pipe_sections')
     if (parseInt(sectionsResult.rows[0].count) === 0) {
       for (const ps of pipeSections) {
         await client.query(
           'INSERT INTO pipe_sections (id, name, area, diameter, material, installation_year) VALUES ($1, $2, $3, $4, $5, $6)',
-          [ps.id, ps.name, ps.area, ps.diameter, ps.material, ps.installation_year]
+          [ps.id, ps.name, ps.area, ps.diameter, ps.material, ps.installationYear]
         )
       }
     }
@@ -145,11 +168,12 @@ export async function initializeDatabase() {
       for (const rt of repairTeams) {
         await client.query(
           'INSERT INTO repair_teams (id, name, leader_name, leader_phone) VALUES ($1, $2, $3, $4)',
-          [rt.id, rt.name, rt.leader_name, rt.leader_phone]
+          [rt.id, rt.name, rt.leaderName, rt.leaderPhone]
         )
       }
     }
 
+    // Initialize sample data
     const ordersResult = await client.query('SELECT COUNT(*) FROM work_orders')
     if (parseInt(ordersResult.rows[0].count) === 0) {
       await initializeSampleData(client)
@@ -159,7 +183,7 @@ export async function initializeDatabase() {
   }
 }
 
-async function initializeSampleData(client: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+async function initializeSampleData(client: any): Promise<void> {
   const now = new Date()
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
@@ -299,15 +323,219 @@ async function initializeSampleData(client: any) { // eslint-disable-line @types
   }
 }
 
-export async function getNextSerialNumber(): Promise<number> {
-  const result = await pool.query('SELECT COUNT(*) FROM work_orders')
-  return parseInt(result.rows[0].count) + 1
+// Prisma-like database client
+export const prisma: PrismaLikeClient = {
+  pipeSection: {
+    findMany: async () => {
+      const result = await pool.query('SELECT * FROM pipe_sections')
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        area: row.area,
+        diameter: row.diameter,
+        material: row.material,
+        installationYear: row.installation_year,
+      }))
+    },
+    findUnique: async (args) => {
+      const result = await pool.query('SELECT * FROM pipe_sections WHERE id = $1', [args.where.id])
+      if (result.rows.length === 0) return null
+      const row = result.rows[0]
+      return {
+        id: row.id,
+        name: row.name,
+        area: row.area,
+        diameter: row.diameter,
+        material: row.material,
+        installationYear: row.installation_year,
+      }
+    },
+  },
+  repairTeam: {
+    findMany: async () => {
+      const result = await pool.query('SELECT * FROM repair_teams')
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        leaderName: row.leader_name,
+        leaderPhone: row.leader_phone,
+      }))
+    },
+    findUnique: async (args) => {
+      const result = await pool.query('SELECT * FROM repair_teams WHERE id = $1', [args.where.id])
+      if (result.rows.length === 0) return null
+      const row = result.rows[0]
+      return {
+        id: row.id,
+        name: row.name,
+        leaderName: row.leader_name,
+        leaderPhone: row.leader_phone,
+      }
+    },
+  },
+  workOrder: {
+    findMany: async (args) => {
+      let query = `
+        SELECT wo.*, 
+               ps.id as ps_id, ps.name as ps_name, ps.area as ps_area, ps.diameter as ps_diameter, ps.material as ps_material,
+               rt.id as rt_id, rt.name as rt_name, rt.leader_name as rt_leader, rt.leader_phone as rt_phone
+        FROM work_orders wo
+        LEFT JOIN pipe_sections ps ON wo.pipe_section_id = ps.id
+        LEFT JOIN repair_teams rt ON wo.dispatch_to = rt.id
+      `
+      const params: any[] = []
+      const conditions: string[] = []
+
+      if (args?.where) {
+        if (args.where.status) {
+          params.push(args.where.status)
+          conditions.push(`wo.status = $${params.length}`)
+        }
+        if (args.where.pipeSectionId) {
+          params.push(args.where.pipeSectionId)
+          conditions.push(`wo.pipe_section_id = $${params.length}`)
+        }
+        if (args.where.dispatchTo) {
+          params.push(args.where.dispatchTo)
+          conditions.push(`wo.dispatch_to = $${params.length}`)
+        }
+      }
+
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ')
+      }
+      query += ' ORDER BY wo.created_at DESC'
+
+      const result = await pool.query(query, params)
+      return result.rows.map((row: any) => mapRowToWorkOrder(row))
+    },
+    findUnique: async (args) => {
+      const result = await pool.query(`
+        SELECT wo.*, 
+               ps.id as ps_id, ps.name as ps_name, ps.area as ps_area, ps.diameter as ps_diameter, ps.material as ps_material,
+               rt.id as rt_id, rt.name as rt_name, rt.leader_name as rt_leader, rt.leader_phone as rt_phone
+        FROM work_orders wo
+        LEFT JOIN pipe_sections ps ON wo.pipe_section_id = ps.id
+        LEFT JOIN repair_teams rt ON wo.dispatch_to = rt.id
+        WHERE wo.id = $1
+      `, [args.where.id])
+      if (result.rows.length === 0) return null
+      return mapRowToWorkOrder(result.rows[0])
+    },
+    create: async (args) => {
+      const nextSeq = await pool.query('SELECT COUNT(*) FROM work_orders')
+      const seq = parseInt(nextSeq.rows[0].count) + 1
+      const date = new Date()
+      const year = date.getFullYear().toString().slice(2)
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const serialNumber = `LS${year}${month}${day}${String(seq).padStart(4, '0')}`
+      const id = `wo${Date.now()}`
+
+      await pool.query(
+        `INSERT INTO work_orders (id, serial_number, status, reporter_name, reporter_phone, pipe_section_id, leak_level, water_stop_area, description, repair_photos, merged_from)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          id, serialNumber, args.data.status || 'PENDING',
+          args.data.reporterName, args.data.reporterPhone,
+          args.data.pipeSectionId, args.data.leakLevel,
+          args.data.waterStopArea || null, args.data.description || '',
+          JSON.stringify(args.data.repairPhotos || []),
+          JSON.stringify(args.data.mergedFrom || [])
+        ]
+      )
+
+      await pool.query(
+        'INSERT INTO work_order_history (id, work_order_id, action, operator) VALUES ($1, $2, $3, $4)',
+        [`h${Date.now()}`, id, 'REPORTED', args.data.reporterName || '系统']
+      )
+
+      const result = await pool.query('SELECT * FROM work_orders WHERE id = $1', [id])
+      return mapRowToWorkOrder(result.rows[0])
+    },
+    update: async (args) => {
+      const updates: string[] = ['updated_at = NOW()']
+      const params: any[] = []
+
+      if (args.data.status) {
+        params.push(args.data.status)
+        updates.push(`status = $${params.length}`)
+      }
+      if (args.data.dispatchTo !== undefined) {
+        params.push(args.data.dispatchTo || null)
+        updates.push(`dispatch_to = $${params.length}`)
+      }
+      if (args.data.repairResult !== undefined) {
+        params.push(args.data.repairResult || null)
+        updates.push(`repair_result = $${params.length}`)
+      }
+      if (args.data.repairPhotos !== undefined) {
+        params.push(JSON.stringify(args.data.repairPhotos))
+        updates.push(`repair_photos = $${params.length}`)
+      }
+      if (args.data.reviewResult !== undefined) {
+        params.push(args.data.reviewResult || null)
+        updates.push(`review_result = $${params.length}`)
+      }
+      if (args.data.reviewComment !== undefined) {
+        params.push(args.data.reviewComment || null)
+        updates.push(`review_comment = $${params.length}`)
+      }
+      if (args.data.mergedFrom !== undefined) {
+        params.push(JSON.stringify(args.data.mergedFrom))
+        updates.push(`merged_from = $${params.length}`)
+      }
+
+      params.push(args.where.id)
+      await pool.query(
+        `UPDATE work_orders SET ${updates.join(', ')} WHERE id = $${params.length}`,
+        params
+      )
+
+      const result = await pool.query('SELECT * FROM work_orders WHERE id = $1', [args.where.id])
+      return mapRowToWorkOrder(result.rows[0])
+    },
+    delete: async (args) => {
+      await pool.query('DELETE FROM work_orders WHERE id = $1', [args.where.id])
+    },
+  },
 }
 
-export function formatOrder(order: any): WorkOrder { // eslint-disable-line @typescript-eslint/no-explicit-any
+function mapRowToWorkOrder(row: any): WorkOrder {
   return {
-    ...order,
-    pipe_section: order.pipe_section || undefined,
-    repair_team: order.repair_team || undefined,
+    id: row.id,
+    serialNumber: row.serial_number,
+    status: row.status,
+    reporterName: row.reporter_name,
+    reporterPhone: row.reporter_phone,
+    pipeSectionId: row.pipe_section_id,
+    pipeSection: row.ps_id ? {
+      id: row.ps_id,
+      name: row.ps_name,
+      area: row.ps_area,
+      diameter: row.ps_diameter,
+      material: row.ps_material,
+      installationYear: 0,
+    } : undefined,
+    leakLevel: row.leak_level,
+    waterStopArea: row.water_stop_area,
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    dispatchTo: row.dispatch_to,
+    repairTeam: row.rt_id ? {
+      id: row.rt_id,
+      name: row.rt_name,
+      leaderName: row.rt_leader,
+      leaderPhone: row.rt_phone,
+    } : undefined,
+    repairResult: row.repair_result,
+    repairPhotos: row.repair_photos || [],
+    reviewResult: row.review_result,
+    reviewComment: row.review_comment,
+    mergedFrom: row.merged_from || [],
   }
 }
+
+// Export db for compatibility
+export const db = prisma

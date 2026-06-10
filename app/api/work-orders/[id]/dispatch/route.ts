@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import pool, { initializeDatabase } from '@/lib/db'
+import { prisma, initializeDatabase, type HistoryAction } from '@/lib/db'
+import pool from '@/lib/db'
 
 export async function POST(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
   await initializeDatabase()
@@ -7,15 +8,16 @@ export async function POST(request: Request, paramContext: any) { // eslint-disa
   const { repairTeamId, operator, comment } = body
   const { id } = paramContext.params
   
-  const teamResult = await pool.query('SELECT * FROM repair_teams WHERE id = $1', [repairTeamId])
-  if (teamResult.rows.length === 0) {
-    return NextResponse.json({ error: '抢修队不存在' }, { status: 400 })
-  }
+  const repairTeam = await prisma.repairTeam.findUnique({ where: { id: repairTeamId } })
+  if (!repairTeam) return NextResponse.json({ error: '抢修队不存在' }, { status: 400 })
   
-  await pool.query(
-    `UPDATE work_orders SET status = 'DISPATCHED', dispatch_to = $1, updated_at = NOW() WHERE id = $2`,
-    [repairTeamId, id]
-  )
+  await prisma.workOrder.update({
+    where: { id },
+    data: {
+      status: 'DISPATCHED',
+      dispatchTo: repairTeamId,
+    },
+  })
   
   await pool.query(
     'INSERT INTO work_order_history (id, work_order_id, action, operator, comment) VALUES ($1, $2, $3, $4, $5)',

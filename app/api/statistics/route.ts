@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import pool, { initializeDatabase } from '@/lib/db'
+import { initializeDatabase } from '@/lib/db'
+import pool from '@/lib/db'
 
 export async function GET() {
   await initializeDatabase()
@@ -10,7 +11,7 @@ export async function GET() {
     LEFT JOIN repair_teams rt ON wo.dispatch_to = rt.id
   `)
   
-  const orders = result.rows.map((row: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+  const orders = result.rows.map((row: any) => ({
     area: row.area,
     leakLevel: row.leak_level,
     teamName: row.team_name,

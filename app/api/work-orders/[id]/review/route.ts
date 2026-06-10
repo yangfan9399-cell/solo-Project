@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import pool, { initializeDatabase } from '@/lib/db'
+import { initializeDatabase } from '@/lib/db'
+import pool from '@/lib/db'
 
 export async function POST(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
   await initializeDatabase()

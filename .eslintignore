@@ -1,0 +1,4 @@
+node_modules
+.next
+app/api
+src/lib/db.ts
