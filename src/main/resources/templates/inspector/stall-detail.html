@@ -48,7 +48,7 @@
     <div class="main">
         <div class="actions-bar">
             <a href="/inspector/stalls" class="btn btn-secondary">返回列表</a>
-            <a th:if="${detail.stall.status == 'leased'}" href="/inspector/stalls/{id}/violation(id=${detail.stall.id})" class="btn">记录违规</a>
+            <a th:if="${detail.stall.status == 'leased'}" th:href="@{/inspector/stalls/{id}/violation(id=${detail.stall.id})}" class="btn">记录违规</a>
         </div>
         
         <div class="card">

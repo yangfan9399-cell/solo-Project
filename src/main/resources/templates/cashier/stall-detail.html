@@ -49,7 +49,7 @@
     <div class="main">
         <div class="actions-bar">
             <a href="/cashier/stalls" class="btn btn-secondary">返回列表</a>
-            <a th:if="${detail.stall.status == 'leased'}" href="/cashier/stalls/{id}/payment(id=${detail.stall.id})" class="btn">缴费</a>
+            <a th:if="${detail.stall.status == 'leased'}" th:href="@{/cashier/stalls/{id}/payment(id=${detail.stall.id})}" class="btn">缴费</a>
         </div>
         
         <div class="card">

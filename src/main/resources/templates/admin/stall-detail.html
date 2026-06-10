@@ -61,8 +61,8 @@
     <div class="main">
         <div class="actions-bar">
             <a href="/admin/stalls" class="btn btn-secondary">返回列表</a>
-            <a th:if="${detail.stall.status == 'available'}" href="/admin/stalls/{id}/lease(id=${detail.stall.id})" class="btn">签订租赁</a>
-            <a th:if="${detail.stall.status == 'leased'}" href="/admin/stalls/{id}/renew(id=${detail.stall.id})" class="btn" th:classappend="${!detail.canRenew ? 'btn-disabled' : ''}" th:disabled="${!detail.canRenew}">续租</a>
+            <a th:if="${detail.stall.status == 'available'}" th:href="@{/admin/stalls/{id}/lease(id=${detail.stall.id})}" class="btn">签订租赁</a>
+            <a th:if="${detail.stall.status == 'leased'}" th:href="@{/admin/stalls/{id}/renew(id=${detail.stall.id})}" class="btn" th:classappend="${!detail.canRenew ? 'btn-disabled' : ''}" th:disabled="${!detail.canRenew}">续租</a>
         </div>
         
         <div th:if="${param.error == 'license_expired'}" class="error">证照已过期，无法续租！请先更新证照信息。</div>

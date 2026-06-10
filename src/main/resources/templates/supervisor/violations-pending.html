@@ -63,7 +63,7 @@
                         <td th:text="${violation.recordDate}"></td>
                         <td th:text="${violation.inspector}"></td>
                         <td>
-                            <a href="/supervisor/violations/{id}/review(id=${violation.id})" class="btn">复核</a>
+                            <a th:href="@{/supervisor/violations/{id}/review(id=${violation.id})}" class="btn">复核</a>
                         </td>
                     </tr>
                 </tbody>

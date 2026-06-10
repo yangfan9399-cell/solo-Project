@@ -38,6 +38,7 @@ public class DashboardController {
         model.addAttribute("stallByCategory", stallByCategory);
         model.addAttribute("stallByStatus", stallByStatus);
         model.addAttribute("violationByType", violationByType);
+        model.addAttribute("overdueByDays", paymentRecordService.countOverdueDaysDistribution());
         
         model.addAttribute("totalStalls", stallService.getAllStalls().size());
         model.addAttribute("totalTenants", tenantService.getAllTenants().size());

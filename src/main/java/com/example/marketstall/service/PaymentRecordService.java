@@ -66,4 +66,22 @@ public class PaymentRecordService {
                         row -> (Long) row[1]
                 ));
     }
+
+    public Map<String, Long> countOverdueDaysDistribution() {
+        List<PaymentRecord> pendingPayments = paymentRecordRepository.findByStatus("pending");
+        LocalDate today = LocalDate.now();
+        
+        return pendingPayments.stream()
+                .filter(p -> p.getDueDate() != null)
+                .collect(Collectors.groupingBy(
+                        p -> {
+                            long days = java.time.temporal.ChronoUnit.DAYS.between(p.getDueDate(), today);
+                            if (days <= 7) return "0-7天";
+                            else if (days <= 14) return "8-14天";
+                            else if (days <= 30) return "15-30天";
+                            else return "30天以上";
+                        },
+                        Collectors.counting()
+                ));
+    }
 }

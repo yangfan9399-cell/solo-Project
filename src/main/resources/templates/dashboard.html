@@ -116,15 +116,29 @@
                 </div>
             </div>
             <div class="chart-card">
-                <h3>违规类型分布</h3>
-                <div class="chart-bar">
-                    <div th:each="(count, type) : ${violationByType}" class="bar-item" th:style="'height:' + (count * 30) + 'px;'">
-                        <div class="value" th:text="${count}"></div>
+                    <h3>违规类型分布</h3>
+                    <div class="chart-bar">
+                        <div th:each="(count, type) : ${violationByType}" class="bar-item" th:style="'height:' + (count * 30) + 'px;'">
+                            <div class="value" th:text="${count}"></div>
+                        </div>
+                    </div>
+                    <div class="chart-bar">
+                        <div th:each="(count, type) : ${violationByType}" class="bar-item">
+                            <div class="label" th:text="${type}"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="chart-bar">
-                    <div th:each="(count, type) : ${violationByType}" class="bar-item">
-                        <div class="label" th:text="${type}"></div>
+                <div class="chart-card">
+                    <h3>欠费天数分布</h3>
+                    <div class="chart-bar">
+                        <div th:each="(count, range) : ${overdueByDays}" class="bar-item" th:style="'height:' + (count * 30) + 'px;'">
+                            <div class="value" th:text="${count}"></div>
+                        </div>
+                    </div>
+                    <div class="chart-bar">
+                        <div th:each="(count, range) : ${overdueByDays}" class="bar-item">
+                            <div class="label" th:text="${range}"></div>
+                        </div>
                     </div>
                 </div>
             </div>
