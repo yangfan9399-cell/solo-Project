@@ -1,10 +1,7 @@
-import { createRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Route as rootRoute } from './__root'
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/recalls/$id',
+export const Route = createFileRoute('/recalls/$id')({
   component: RecallDetailPage,
 })
 
@@ -46,8 +43,10 @@ function RecallDetailPage() {
   const [activeTab, setActiveTab] = useState('stores')
 
   useEffect(() => {
-    const saved = localStorage.getItem('currentUser')
-    if (saved) setCurrentUser(JSON.parse(saved))
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('currentUser')
+      if (saved) setCurrentUser(JSON.parse(saved))
+    }
   }, [])
 
   useEffect(() => {

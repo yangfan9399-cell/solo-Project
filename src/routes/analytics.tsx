@@ -1,10 +1,7 @@
-import { createRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Route as rootRoute } from './__root'
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/analytics',
+export const Route = createFileRoute('/analytics')({
   component: AnalyticsPage,
 })
 
@@ -120,7 +117,7 @@ function AnalyticsPage() {
                 <div className="flex items-center space-x-4">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${item.bucket.includes('正常') ? 'bg-green-500' : item.bucket.includes('严重') ? 'bg-red-500' : 'bg-yellow-500'}`}
+                      className={`h-full rounded-full ${item.bucket.includes('无差异') ? 'bg-green-500' : item.bucket.includes('严重') ? 'bg-red-500' : 'bg-yellow-500'}`}
                       style={{ width: `${Math.min((item.count / (analytics.summary.total || 1)) * 100, 100)}%` }}
                     />
                   </div>

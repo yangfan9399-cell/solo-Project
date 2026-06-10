@@ -1,7 +1,7 @@
-import { createRootRoute, Outlet, Link, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Outlet, Link, useLocation } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 
-export const Route = createRootRoute({
+export const Route = createFileRoute('/_root')({
   component: RootComponent,
 })
 
@@ -23,13 +23,15 @@ function RootComponent() {
   }, [])
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser')
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser)
-        setCurrentUser(parsed)
-      } catch (e) {
-        console.error('Failed to parse saved user', e)
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('currentUser')
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser)
+          setCurrentUser(parsed)
+        } catch (e) {
+          console.error('Failed to parse saved user', e)
+        }
       }
     }
   }, [])

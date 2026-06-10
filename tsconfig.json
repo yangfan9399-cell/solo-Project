@@ -13,8 +13,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./app/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "server/**/*.ts", "prisma/**/*.ts"]
+  "include": ["app/**/*.ts", "app/**/*.tsx", "server/**/*.ts", "prisma/**/*.ts"]
 }

@@ -1,10 +1,7 @@
-import { createRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Route as rootRoute } from './__root'
 
-export const Route = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/recalls/new',
+export const Route = createFileRoute('/recalls/new')({
   component: NewRecallPage,
 })
 
@@ -28,8 +25,10 @@ function NewRecallPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem('currentUser')
-    if (saved) setCurrentUser(JSON.parse(saved))
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('currentUser')
+      if (saved) setCurrentUser(JSON.parse(saved))
+    }
     fetchData()
   }, [])
 
