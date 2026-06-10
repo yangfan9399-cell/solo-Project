@@ -2,7 +2,7 @@ class AnalyticsController < ApplicationController
   def index
     @date_range = parse_date_range
     @visit_records = VisitRecord.includes(
-      reservation: [:visitor, :vehicle, :host, :entrance]
+      reservation: [:visitor, :vehicle, :host => :department]
     ).where(created_at: @date_range)
 
     @stats = {
@@ -24,8 +24,8 @@ class AnalyticsController < ApplicationController
   end
 
   def average_stay_duration
-    records_with_duration = @visit_records.select { |r| r.stay_duration.present? }
-    return 0 if records_with_duration.empty?
+    records_with_duration = @visit_records.to_a.select { |r| r.stay_duration.present? }
+    return '0h 0m' if records_with_duration.empty?
 
     total_seconds = records_with_duration.sum(&:stay_duration)
     avg_seconds = total_seconds / records_with_duration.count
@@ -35,23 +35,32 @@ class AnalyticsController < ApplicationController
   end
 
   def by_department
-    @visit_records.joins(reservation: :host)
-      .group('departments.name')
-      .count
-      .transform_keys { |k| k || '未知部门' }
+    result = {}
+    @visit_records.each do |vr|
+      dept_name = vr.reservation.host.department.name rescue '未知部门'
+      result[dept_name] ||= 0
+      result[dept_name] += 1
+    end
+    result
   end
 
   def by_entrance
-    @visit_records.joins(:entry_entrance)
-      .group('entrances.name')
-      .count
-      .transform_keys { |k| k || '未知入口' }
+    result = {}
+    @visit_records.each do |vr|
+      entrance_name = vr.entry_entrance&.name || '未知入口'
+      result[entrance_name] ||= 0
+      result[entrance_name] += 1
+    end
+    result
   end
 
   def by_blocking_reason
-    @visit_records.blocked
-      .group(:blocking_reason)
-      .count
-      .transform_keys { |k| k || '未说明原因' }
+    result = {}
+    @visit_records.blocked.each do |vr|
+      reason = vr.blocking_reason.presence || '未说明原因'
+      result[reason] ||= 0
+      result[reason] += 1
+    end
+    result
   end
 end

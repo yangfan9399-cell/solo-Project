@@ -74,14 +74,6 @@ ActiveRecord::Base.transaction do
     is_active: true
   )
 
-  Blacklist.create!(
-    license_plate: '京D22222',
-    reason: '违反园区管理规定',
-    added_by: security_supervisor,
-    added_at: 15.days.ago,
-    is_active: true
-  )
-
   now = Time.current
 
   res1 = Reservation.create!(
@@ -152,8 +144,8 @@ ActiveRecord::Base.transaction do
 
   vr3.add_history_node(action: '预约创建', actor: visitors[4], notes: '访客提交预约')
   vr3.add_history_node(action: '接待人确认', actor: employees[2], notes: '确认访问')
-  vr3.add_history_node(action: '车牌核验通过', actor: security_guards[0], notes: '车牌: 浙E33333')
-  vr3.add_history_node(action: '安保主管拦截', actor: security_supervisor, notes: '该车辆在黑名单中')
+  vr3.add_history_node(action: '车牌核验', actor: security_guards[0], notes: '该车辆在黑名单中，禁止入园')
+  vr3.add_history_node(action: '系统自动拦截', actor: security_guards[0], notes: '黑名单车辆自动拦截')
 
   res4 = Reservation.create!(
     visitor: visitors[2],

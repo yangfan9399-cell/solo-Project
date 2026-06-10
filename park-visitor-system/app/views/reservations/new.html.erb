@@ -1,27 +1,43 @@
 <div class="bg-white shadow rounded-lg p-6">
   <h2 class="text-2xl font-bold text-gray-900 mb-6">新建预约</h2>
 
-  <%= form_with(model: @reservation, local: true, class: "space-y-6") do |form| %>
+  <%= form_with(model: @reservation, url: reservations_path, method: :post, local: true, class: "space-y-6") do |form| %>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="border p-4 rounded-lg">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">访客信息</h3>
 
         <div class="mb-4">
-          <%= form.label :visitor_id, "选择访客", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.collection_select :visitor_id, Visitor.order(:name), :id, :name_and_phone,
-            { prompt: "选择已有访客" }, { class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
+          <%= label_tag :reservation_visitor_id, "选择已有访客", class: "block text-sm font-medium text-gray-700" %>
+          <%= select_tag "reservation[visitor_id]",
+            options_from_collection_for_select(@visitors, :id, :name_and_phone, params[:visitor_id]),
+            { prompt: "选择已有访客", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
         </div>
 
-        <div class="mb-4">
-          <%= form.label :new_visitor_name, "或新建访客", class: "block text-sm font-medium text-gray-700" %>
-          <input type="text" name="new_visitor_name" id="new_visitor_name"
-            placeholder="访客姓名" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">或新建访客</span>
+          </div>
         </div>
 
-        <div class="mb-4">
-          <%= form.label :new_visitor_phone, "访客电话", class: "block text-sm font-medium text-gray-700" %>
-          <input type="text" name="new_visitor_phone" id="new_visitor_phone"
-            placeholder="手机号码" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+        <div class="mt-4">
+          <%= label_tag :visitor_name, "访客姓名", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag :visitor_name, nil, placeholder: "新建访客时请填写",
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+        </div>
+
+        <div class="mt-4">
+          <%= label_tag :visitor_phone, "访客电话", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag :visitor_phone, nil, placeholder: "新建访客时请填写",
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+        </div>
+
+        <div class="mt-4">
+          <%= label_tag :visitor_company, "公司", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag :visitor_company, nil, placeholder: "可选",
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
         </div>
       </div>
 
@@ -29,63 +45,67 @@
         <h3 class="text-lg font-semibold text-gray-900 mb-4">车辆信息</h3>
 
         <div class="mb-4">
-          <%= form.label :license_plate, "车牌号", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.text_field :license_plate, placeholder: "如: 京A12345",
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+          <%= label_tag "reservation[license_plate]", "车牌号 *", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag "reservation[license_plate]", nil, placeholder: "如: 京A12345",
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
         </div>
 
         <div class="mb-4">
-          <%= form.label :vehicle_type, "车辆类型", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.select :vehicle_type, ['car', 'truck', 'bus', 'motorcycle'],
-            { prompt: "选择类型" }, { class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
+          <%= label_tag "reservation[vehicle_type]", "车辆类型", class: "block text-sm font-medium text-gray-700" %>
+          <%= select_tag "reservation[vehicle_type]",
+            options_for_select([['轿车', 'car'], ['卡车', 'truck'], ['公交车', 'bus'], ['摩托车', 'motorcycle']], 'car'),
+            { class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
         </div>
 
         <div class="mb-4">
-          <%= form.label :color, "车辆颜色", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.text_field :color, placeholder: "如: 黑色",
+          <%= label_tag "reservation[color]", "车辆颜色", class: "block text-sm font-medium text-gray-700" %>
+          <%= text_field_tag "reservation[color]", nil, placeholder: "如: 黑色",
             class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
         </div>
       </div>
 
-      <div class="border p-4 rounded-lg">
+      <div class="border p-4 rounded-lg md:col-span-2">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">预约信息</h3>
 
-        <div class="mb-4">
-          <%= form.label :host_id, "被访人", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.collection_select :host_id, @employees, :id, :name_and_department,
-            { prompt: "选择被访人" }, { class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <%= label_tag "reservation[host_id]", "被访人 *", class: "block text-sm font-medium text-gray-700" %>
+            <%= select_tag "reservation[host_id]",
+              options_from_collection_for_select(@employees, :id, :name_and_department),
+              { prompt: "选择被访人", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+          </div>
 
-        <div class="mb-4">
-          <%= form.label :entrance_id, "入口", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.collection_select :entrance_id, @entrances, :id, :name,
-            { prompt: "选择入口" }, { class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" } %>
-        </div>
+          <div>
+            <%= label_tag "reservation[entrance_id]", "入口 *", class: "block text-sm font-medium text-gray-700" %>
+            <%= select_tag "reservation[entrance_id]",
+              options_from_collection_for_select(@entrances, :id, :name),
+              { prompt: "选择入口", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+          </div>
 
-        <div class="mb-4">
-          <%= form.label :scheduled_at, "预约到达时间", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.datetime_local_field :scheduled_at,
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
-        </div>
+          <div>
+            <%= label_tag "reservation[scheduled_at]", "预约到达时间 *", class: "block text-sm font-medium text-gray-700" %>
+            <%= datetime_local_field_tag "reservation[scheduled_at]", nil,
+              class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
+          </div>
 
-        <div class="mb-4">
-          <%= form.label :scheduled_end_at, "预约离开时间(可选)", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.datetime_local_field :scheduled_end_at,
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
-        </div>
+          <div>
+            <%= label_tag "reservation[scheduled_end_at]", "预约离开时间", class: "block text-sm font-medium text-gray-700" %>
+            <%= datetime_local_field_tag "reservation[scheduled_end_at]", nil,
+              class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+          </div>
 
-        <div class="mb-4">
-          <%= form.label :purpose, "来访事由", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.text_area :purpose, rows: 3,
-            placeholder: "请填写来访事由",
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+          <div class="md:col-span-2">
+            <%= label_tag "reservation[purpose]", "来访事由 *", class: "block text-sm font-medium text-gray-700" %>
+            <%= text_area_tag "reservation[purpose]", nil, rows: 3, placeholder: "请填写来访事由",
+              class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="flex justify-end gap-4">
       <%= link_to '取消', reservations_path, class: "bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600" %>
-      <%= form.submit '创建预约', class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
+      <%= submit_tag '创建预约', class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
     </div>
   <% end %>
 </div>

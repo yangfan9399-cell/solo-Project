@@ -1,7 +1,7 @@
 class VisitRecordsController < ApplicationController
   before_action :set_visit_record, only: [:show, :verify, :approve, :block, :record_entry, :record_exit]
-  before_action :set_entrances, only: [:record_entry, :record_exit]
-  before_action :set_security_supervisors, only: [:approve, :block]
+  before_action :set_entrances, only: [:show, :record_entry, :record_exit]
+  before_action :set_security_supervisors, only: [:show, :approve, :block]
 
   def index
     @visit_records = VisitRecord.includes(
@@ -43,6 +43,17 @@ class VisitRecordsController < ApplicationController
   end
 
   def approve
+    license_plate = @visit_record.reservation.vehicle.license_plate
+
+    if Blacklist.is_blacklisted?(license_plate)
+      @visit_record.block!(
+        supervisor_id: current_supervisor_id,
+        blocking_reason: "该车辆在黑名单中"
+      )
+      redirect_to @visit_record, alert: '该车辆在黑名单中，已自动拦截'
+      return
+    end
+
     if @visit_record.may_approve?
       @visit_record.approve!(supervisor_id: current_supervisor_id)
       @visit_record.record_entry!(
@@ -104,14 +115,14 @@ class VisitRecordsController < ApplicationController
   end
 
   def set_security_supervisors
-    @security_supervisors = Employee.security_supervisor.order(:name)
+    @security_supervisors = Employee.where(is_security_supervisor: true).order(:name)
   end
 
   def current_guard_id
-    params[:guard_id] || @visit_record&.reservation&.entrance&.id
+    params[:guard_id]&.to_i
   end
 
   def current_supervisor_id
-    params[:supervisor_id]
+    params[:supervisor_id]&.to_i
   end
 end

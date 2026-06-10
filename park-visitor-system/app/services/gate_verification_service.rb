@@ -17,13 +17,11 @@ class GateVerificationService
     end
 
     if Blacklist.is_blacklisted?(license_plate)
-      @visit_record.add_history_node(
-        action: '黑名单车辆',
-        actor: guard_id,
-        notes: "车牌: #{license_plate}"
+      @visit_record.block!(
+        supervisor_id: guard_id,
+        blocking_reason: "该车辆在黑名单中，禁止入园"
       )
-      @visit_record.pending_approval!
-      return { success: false, message: '该车辆在黑名单中，需安保主管审批' }
+      return { success: false, message: '该车辆在黑名单中，已自动拦截' }
     end
 
     if !reservation.can_be_verified?
