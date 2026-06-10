@@ -1,0 +1,84 @@
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="stat-value"><%= @total_reports %></div>
+      <div class="stat-label">总报告数</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="stat-value text-warning"><%= @pending_reissues %></div>
+      <div class="stat-label">待审核补打</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="stat-value text-danger"><%= @exception_reports %></div>
+      <div class="stat-label">异常报告</div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="stat-value text-success"><%= @today_reports %></div>
+      <div class="stat-label">今日报告</div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h4>最近报告</h4>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>报告号</th>
+              <th>患者</th>
+              <th>检查类型</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_reports.each do |report| %>
+              <tr>
+                <td><%= link_to report.report_no, admin_report_path(report) %></td>
+                <td><%= report.patient&.name %></td>
+                <td><%= report.exam&.exam_type.humanize %></td>
+                <td><span class="status-badge status-<%= report.status %>"><%= report.status.humanize %></span></td>
+                <td><%= link_to "查看", admin_report_path(report), class: "btn btn-info btn-sm" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h4>待审核补打</h4>
+      </div>
+      <div class="card-body">
+        <% if @pending_reissue_list.any? %>
+          <ul class="list-group">
+            <% @pending_reissue_list.each do |report| %>
+              <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                  <span><%= report.report_no %></span>
+                  <%= link_to "审核", admin_report_path(report), class: "btn btn-primary btn-sm" %>
+                </div>
+                <small class="text-muted"><%= report.patient&.name %></small>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-muted text-center">暂无待审核补打申请</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

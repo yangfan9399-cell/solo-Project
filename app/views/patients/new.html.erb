@@ -1,0 +1,41 @@
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3>新增患者</h3>
+      </div>
+      <div class="card-body">
+        <%= form_for @patient do |f| %>
+          <div class="form-group">
+            <%= f.label :name %>
+            <%= f.text_field :name, class: "form-control", required: true %>
+          </div>
+          <div class="form-group">
+            <%= f.label :id_card %>
+            <%= f.text_field :id_card, class: "form-control", required: true %>
+          </div>
+          <div class="form-group">
+            <%= f.label :phone %>
+            <%= f.text_field :phone, class: "form-control", required: true %>
+          </div>
+          <div class="form-group">
+            <%= f.label :gender %>
+            <%= f.select :gender, ["男", "女"], class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= f.label :birth_date %>
+            <%= f.date_field :birth_date, class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= f.label :address %>
+            <%= f.text_area :address, class: "form-control", rows: 3 %>
+          </div>
+          <div class="form-group">
+            <%= f.submit "创建", class: "btn btn-primary" %>
+            <%= link_to "取消", patients_path, class: "btn btn-secondary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,134 @@
+<div class="card">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-md-8">
+        <h3>报告详情 - <%= @report.report_no %></h3>
+      </div>
+      <div class="col-md-4 text-right">
+        <span class="status-badge status-<%= @report.status %>"><%= @report.status.humanize %></span>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h4>患者信息</h4>
+        <table class="table table-borderless">
+          <tr>
+            <th>姓名</th>
+            <td><%= @report.patient&.name %></td>
+          </tr>
+          <tr>
+            <th>身份证号</th>
+            <td><%= @report.patient&.id_card %></td>
+          </tr>
+          <tr>
+            <th>联系电话</th>
+            <td><%= @report.patient&.phone %></td>
+          </tr>
+          <tr>
+            <th>性别</th>
+            <td><%= @report.patient&.gender %></td>
+          </tr>
+          <tr>
+            <th>出生日期</th>
+            <td><%= @report.patient&.birth_date %></td>
+          </tr>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <h4>检查信息</h4>
+        <table class="table table-borderless">
+          <tr>
+            <th>检查类型</th>
+            <td><%= @report.exam&.exam_type.humanize %></td>
+          </tr>
+          <tr>
+            <th>检查日期</th>
+            <td><%= @report.exam&.exam_date %></td>
+          </tr>
+          <tr>
+            <th>检查编号</th>
+            <td><%= @report.exam&.exam_no %></td>
+          </tr>
+          <tr>
+            <th>报告日期</th>
+            <td><%= @report.issue_date %></td>
+          </tr>
+          <tr>
+            <th>领取方式</th>
+            <td><%= @report.pickup_type ? Report::PICKUP_TYPES.find { |_, v| v == @report.pickup_type }&.first : "-" %></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <h4>授权材料</h4>
+        <% if @report.authorizations.any? %>
+          <ul class="list-group">
+            <% @report.authorizations.each do |auth| %>
+              <li class="list-group-item">
+                <strong><%= Authorization::AUTH_TYPES.find { |_, v| v == auth.auth_type }&.first %></strong>
+                <span class="float-right">领取人: <%= auth.receiver_name %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-muted">暂无授权材料</p>
+        <% end %>
+      </div>
+      <div class="col-md-6">
+        <h4>补打信息</h4>
+        <table class="table table-borderless">
+          <tr>
+            <th>补打次数</th>
+            <td><%= @report.reissue_count %> / <%= Report::MAX_REISSUE_COUNT %></td>
+          </tr>
+          <tr>
+            <th>是否可补打</th>
+            <td><%= @report.can_request_reissue? ? "是" : "否" %></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-12">
+        <h4>操作历史</h4>
+        <div class="history-list">
+          <% @history_records.each do |record| %>
+            <div class="history-item">
+              <div class="row">
+                <div class="col-md-3"><strong><%= record.operation_text %></strong></div>
+                <div class="col-md-2"><%= record.operator %></div>
+                <div class="col-md-4"><%= record.created_at.strftime("%Y-%m-%d %H:%M") %></div>
+                <div class="col-md-3"><%= record.remark.present? ? record.remark : "-" %></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="btn-group">
+      <% if current_user && @report.can_request_pickup? %>
+        <%= link_to "申请领取", request_pickup_report_path(@report), method: :post, class: "btn btn-primary" %>
+      <% end %>
+      <% if current_user&.can_confirm? && @report.can_confirm? %>
+        <%= link_to "确认报告", confirm_pickup_report_path(@report), method: :post, class: "btn btn-success" %>
+        <%= link_to "拒绝领取", reject_pickup_report_path(@report), method: :post, class: "btn btn-danger", data: { confirm: "确定拒绝此领取请求?" } %>
+      <% end %>
+      <% if current_user && @report.can_request_reissue? %>
+        <%= link_to "申请补打", request_reissue_report_path(@report), method: :post, class: "btn btn-warning" %>
+      <% end %>
+      <% if current_user&.can_approve_reissue? && @report.can_approve_reissue? %>
+        <%= link_to "批准补打", approve_reissue_report_path(@report), method: :post, class: "btn btn-success" %>
+        <%= link_to "拒绝补打", reject_reissue_report_path(@report), method: :post, class: "btn btn-danger", data: { confirm: "确定拒绝此补打申请?" } %>
+      <% end %>
+      <%= link_to "返回列表", reports_path, class: "btn btn-secondary" %>
+    </div>
+  </div>
+</div>

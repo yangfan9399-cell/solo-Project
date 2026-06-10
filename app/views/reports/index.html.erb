@@ -1,0 +1,102 @@
+<div class="row mb-4">
+  <div class="col-md-6">
+    <%= form_tag reports_path, method: :get do %>
+      <div class="input-group">
+        <%= text_field_tag :q, params[:q], placeholder: "搜索患者姓名、身份证号或报告号", class: "form-control" %>
+        <div class="input-group-append">
+          <%= submit_tag "搜索", class: "btn btn-primary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <div class="col-md-6">
+    <div class="btn-group float-right">
+      <%= link_to "全部", reports_path, class: "btn btn-secondary #{"active" if params[:status].blank?}" %>
+      <%= link_to "待领取", reports_path(status: "pickup_requested"), class: "btn btn-secondary #{"active" if params[:status] == "pickup_requested"}" %>
+      <%= link_to "待审核补打", reports_path(status: "reissue_requested"), class: "btn btn-secondary #{"active" if params[:status] == "reissue_requested"}" %>
+      <%= link_to "异常", reports_path(status: "exception"), class: "btn btn-secondary #{"active" if params[:status] == "exception"}" %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>报告列表</h3>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>报告号</th>
+          <th>患者</th>
+          <th>检查项目</th>
+          <th>领取方式</th>
+          <th>状态</th>
+          <th>补打次数</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @reports.each do |report| %>
+          <tr>
+            <td><%= link_to report.report_no, report %></td>
+            <td><%= report.patient&.name %></td>
+            <td><%= report.exam&.exam_type.humanize %></td>
+            <td><%= report.pickup_type ? Report::PICKUP_TYPES.find { |_, v| v == report.pickup_type }&.first : "-" %></td>
+            <td><span class="status-badge status-<%= report.status %>"><%= report.status.humanize %></span></td>
+            <td><%= report.reissue_count %></td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <%= link_to "查看", report, class: "btn btn-info" %>
+                <% if current_user && report.can_request_pickup? %>
+                  <%= link_to "领取登记", "#", class: "btn btn-primary pickup-request-btn", data: { report_id: report.id } %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  
+</div>
+
+<div class="modal fade" id="pickupModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">领取登记</h5>
+        <button type="button" class="close" data-dismiss="modal">×</button>
+      </div>
+      <%= form_tag request_pickup_reports_path, method: :post do %>
+        <div class="modal-body">
+          <%= hidden_field_tag :id %>
+          <div class="form-group">
+            <label>领取方式</label>
+            <%= select_tag :pickup_type, options_for_select(Report::PICKUP_TYPES), class: "form-control", required: true %>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <%= text_area_tag :remark, nil, class: "form-control", rows: 3 %>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+          <%= submit_tag "提交", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.pickup-request-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelector('#pickupModal input[name="id"]').value = this.dataset.reportId;
+        $('#pickupModal').modal('show');
+      });
+    });
+  });
+</script>

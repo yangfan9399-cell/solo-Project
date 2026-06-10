@@ -1,0 +1,848 @@
+  [1m[35mSQL (0.4ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35m (557.7ms)[0m  [1m[35mCREATE DATABASE "q_129_development" ENCODING = 'unicode' /*application='Q129'*/[0m
+  [1m[35m (3.7ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY) /*application='Q129'*/[0m
+  [1m[35m (6.2ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (3.6ms)[0m  [1m[34mSELECT pg_try_advisory_lock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.7ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-10 10:29:49.517507', '2026-06-10 10:29:49.517509') RETURNING "key" /*application='Q129'*/[0m
+Migrating to CreatePatients (20240101000001)
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (3.1ms)[0m  [1m[35mCREATE TABLE "patients" ("id" bigserial primary key, "name" character varying NOT NULL, "id_card" character varying NOT NULL, "phone" character varying NOT NULL, "birth_date" date, "gender" character varying, "address" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_patients_on_id_card" ON "patients" ("id_card") /*application='Q129'*/[0m
+  [1m[35m (0.4ms)[0m  [1m[35mCREATE INDEX "index_patients_on_phone" ON "patients" ("phone") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.5ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000001') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Migrating to CreateExams (20240101000002)
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (10.4ms)[0m  [1m[35mCREATE TABLE "exams" ("id" bigserial primary key, "patient_id" bigint NOT NULL, "exam_type" character varying NOT NULL, "exam_date" date NOT NULL, "exam_no" character varying, "description" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_6989b69bff"
+FOREIGN KEY ("patient_id")
+  REFERENCES "patients" ("id")
+) /*application='Q129'*/[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id" ON "exams" ("patient_id") /*application='Q129'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id_and_exam_date" ON "exams" ("patient_id", "exam_date") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.4ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000002') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Migrating to CreateReports (20240101000003)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (2.7ms)[0m  [1m[35mCREATE TABLE "reports" ("id" bigserial primary key, "exam_id" bigint NOT NULL, "report_no" character varying NOT NULL, "issue_date" date NOT NULL, "status" character varying DEFAULT 'generated' NOT NULL, "pickup_type" character varying, "reissue_count" integer DEFAULT 0, "remark" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_54e168ea92"
+FOREIGN KEY ("exam_id")
+  REFERENCES "exams" ("id")
+) /*application='Q129'*/[0m
+  [1m[35m (0.4ms)[0m  [1m[35mCREATE INDEX "index_reports_on_exam_id" ON "reports" ("exam_id") /*application='Q129'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_reports_on_report_no" ON "reports" ("report_no") /*application='Q129'*/[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_reports_on_status" ON "reports" ("status") /*application='Q129'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE INDEX "index_reports_on_issue_date" ON "reports" ("issue_date") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000003') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Migrating to CreateAuthorizations (20240101000004)
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (4.9ms)[0m  [1m[35mCREATE TABLE "authorizations" ("id" bigserial primary key, "report_id" bigint NOT NULL, "auth_type" character varying NOT NULL, "file_path" character varying NOT NULL, "receiver_name" character varying NOT NULL, "receiver_id_card" character varying NOT NULL, "remark" text, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_1758b5d083"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+) /*application='Q129'*/[0m
+  [1m[35m (4.1ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id" ON "authorizations" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (3.3ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id_and_auth_type" ON "authorizations" ("report_id", "auth_type") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000004') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Migrating to CreateHistoryRecords (20240101000005)
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (9.6ms)[0m  [1m[35mCREATE TABLE "history_records" ("id" bigserial primary key, "report_id" bigint NOT NULL, "operation" character varying NOT NULL, "operator" character varying NOT NULL, "remark" text, "status_before" character varying, "status_after" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL, CONSTRAINT "fk_rails_2f77740418"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+) /*application='Q129'*/[0m
+  [1m[35m (0.8ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id" ON "history_records" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (1.0ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id_and_created_at" ON "history_records" ("report_id", "created_at") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000005') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (3.0ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Migrating to CreateUsers (20240101000006)
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[35m (2.7ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "username" character varying NOT NULL, "name" character varying NOT NULL, "password_digest" character varying NOT NULL, "role" character varying DEFAULT 'receptionist' NOT NULL, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (1.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_username" ON "users" ("username") /*application='Q129'*/[0m
+  [1m[35m (3.9ms)[0m  [1m[35mCREATE INDEX "index_users_on_role" ON "users" ("role") /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.5ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20240101000006') RETURNING "version" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[35m (3.5ms)[0m  [1m[34mSELECT pg_advisory_unlock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[35mSQL (2.2ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[35mSQL (0.2ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (2.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (11.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (6.9ms)[0m  [1m[32mINSERT INTO "users" ("username", "name", "password_digest", "role", "created_at", "updated_at") VALUES ('admin', '管理员', '$2a$12$vEXZCNycDCcrplfQoIYxgOZ/N/uBEg0xiReTT8RzVaSMluJEg3GW6', 'admin', '2026-06-10 10:30:03.139645', '2026-06-10 10:30:03.139645') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (7.7ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'supervisor' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (0.3ms)[0m  [1m[32mINSERT INTO "users" ("username", "name", "password_digest", "role", "created_at", "updated_at") VALUES ('supervisor', '主管张', '$2a$12$r/JQDrlVIaVNlhGiSoQKEeAFi0fQmb4cJb/ZHW73A.JHpeGPJD5ci', 'supervisor', '2026-06-10 10:30:03.681156', '2026-06-10 10:30:03.681156') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (1.7ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'technician' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (0.2ms)[0m  [1m[32mINSERT INTO "users" ("username", "name", "password_digest", "role", "created_at", "updated_at") VALUES ('technician', '技师李', '$2a$12$Y0RUcV1oXCYFE093M1wTbORpydQfIG1Wz1kvoAe0D4J/82i5Epix6', 'technician', '2026-06-10 10:30:04.120544', '2026-06-10 10:30:04.120544') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (1.6ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'receptionist' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (0.6ms)[0m  [1m[32mINSERT INTO "users" ("username", "name", "password_digest", "role", "created_at", "updated_at") VALUES ('receptionist', '前台王', '$2a$12$oLyISNFky2iO1CeRczJWW.ZTjfcRuc2Il6P31MtH4AFsrfCMGc9sa', 'receptionist', '2026-06-10 10:30:04.640768', '2026-06-10 10:30:04.640768') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (3.6ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '110101199003074512' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (1.8ms)[0m  [1m[32mINSERT INTO "patients" ("name", "id_card", "phone", "birth_date", "gender", "address", "created_at", "updated_at") VALUES ('张三', '110101199003074512', '13800138001', '1990-03-07', '男', '北京市朝阳区', '2026-06-10 10:30:04.657340', '2026-06-10 10:30:04.657340') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (37.4ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '310101198506127890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.3ms)[0m  [1m[32mINSERT INTO "patients" ("name", "id_card", "phone", "birth_date", "gender", "address", "created_at", "updated_at") VALUES ('李四', '310101198506127890', '13900139002', '1985-06-12', '女', '上海市浦东新区', '2026-06-10 10:30:04.700664', '2026-06-10 10:30:04.700664') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (1.6ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '440101199512153678' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.2ms)[0m  [1m[32mINSERT INTO "patients" ("name", "id_card", "phone", "birth_date", "gender", "address", "created_at", "updated_at") VALUES ('王五', '440101199512153678', '13600136003', '1995-12-15', '男', '广东省广州市', '2026-06-10 10:30:04.705574', '2026-06-10 10:30:04.705574') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (1.7ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '330101198809204567' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (1.1ms)[0m  [1m[32mINSERT INTO "patients" ("name", "id_card", "phone", "birth_date", "gender", "address", "created_at", "updated_at") VALUES ('赵六', '330101198809204567', '13700137004', '1988-09-20', '女', '浙江省杭州市', '2026-06-10 10:30:04.711665', '2026-06-10 10:30:04.711665') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (1.5ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '210101199205087890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.4ms)[0m  [1m[32mINSERT INTO "patients" ("name", "id_card", "phone", "birth_date", "gender", "address", "created_at", "updated_at") VALUES ('孙七', '210101199205087890', '13500135005', '1992-05-08', '男', '辽宁省沈阳市', '2026-06-10 10:30:04.717479', '2026-06-10 10:30:04.717479') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (3.9ms)[0m  [1m[32mINSERT INTO "exams" ("patient_id", "exam_type", "exam_date", "exam_no", "description", "created_at", "updated_at") VALUES (1, 'ct', '2026-06-07', 'CT20240101001', '头部CT平扫', '2026-06-10 10:30:04.740891', '2026-06-10 10:30:04.740891') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (3.0ms)[0m  [1m[32mINSERT INTO "exams" ("patient_id", "exam_type", "exam_date", "exam_no", "description", "created_at", "updated_at") VALUES (2, 'mri', '2026-06-08', 'MRI20240102001', '膝关节MRI', '2026-06-10 10:30:04.748562', '2026-06-10 10:30:04.748562') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (2.1ms)[0m  [1m[32mINSERT INTO "exams" ("patient_id", "exam_type", "exam_date", "exam_no", "description", "created_at", "updated_at") VALUES (3, 'xray', '2026-06-09', 'XR20240103001', '胸部X光片', '2026-06-10 10:30:04.755182', '2026-06-10 10:30:04.755182') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (2.7ms)[0m  [1m[32mINSERT INTO "exams" ("patient_id", "exam_type", "exam_date", "exam_no", "description", "created_at", "updated_at") VALUES (4, 'ultrasound', '2026-06-06', 'US20240104001', '腹部超声', '2026-06-10 10:30:04.761048', '2026-06-10 10:30:04.761048') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (1.3ms)[0m  [1m[32mINSERT INTO "exams" ("patient_id", "exam_type", "exam_date", "exam_no", "description", "created_at", "updated_at") VALUES (5, 'ct', '2026-06-05', 'CT20240105001', '肺部CT增强', '2026-06-10 10:30:04.768214', '2026-06-10 10:30:04.768214') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (3.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (2.9ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (5.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.8ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (4.2ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[35mSQL (0.5ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35m (457.1ms)[0m  [1m[35mDROP DATABASE IF EXISTS "q_129_development" /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35m (45.7ms)[0m  [1m[35mDROP DATABASE IF EXISTS "q_129_test" /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35m (547.8ms)[0m  [1m[35mCREATE DATABASE "q_129_development" ENCODING = 'unicode' /*application='Q129'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35m (742.8ms)[0m  [1m[35mCREATE DATABASE "q_129_test" ENCODING = 'unicode' /*application='Q129'*/[0m
+  [1m[35mSQL (83.7ms)[0m  [1m[35mCREATE EXTENSION IF NOT EXISTS "plpgsql" SCHEMA pg_catalog /*application='Q129'*/[0m
+  [1m[35m (15.5ms)[0m  [1m[35mDROP TABLE IF EXISTS "authorizations" CASCADE /*application='Q129'*/[0m
+  [1m[35m (178.4ms)[0m  [1m[35mCREATE TABLE "authorizations" ("id" bigserial primary key, "auth_type" character varying NOT NULL, "created_at" timestamp(6) NOT NULL, "file_path" character varying NOT NULL, "receiver_id_card" character varying NOT NULL, "receiver_name" character varying NOT NULL, "remark" text, "report_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (4.6ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id_and_auth_type" ON "authorizations" ("report_id", "auth_type") /*application='Q129'*/[0m
+  [1m[35m (16.6ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id" ON "authorizations" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (1.7ms)[0m  [1m[35mDROP TABLE IF EXISTS "exams" CASCADE /*application='Q129'*/[0m
+  [1m[35m (15.4ms)[0m  [1m[35mCREATE TABLE "exams" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "description" text, "exam_date" date NOT NULL, "exam_no" character varying, "exam_type" character varying NOT NULL, "patient_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (5.0ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id_and_exam_date" ON "exams" ("patient_id", "exam_date") /*application='Q129'*/[0m
+  [1m[35m (6.2ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id" ON "exams" ("patient_id") /*application='Q129'*/[0m
+  [1m[35m (0.6ms)[0m  [1m[35mDROP TABLE IF EXISTS "history_records" CASCADE /*application='Q129'*/[0m
+  [1m[35m (9.8ms)[0m  [1m[35mCREATE TABLE "history_records" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "operation" character varying NOT NULL, "operator" character varying NOT NULL, "remark" text, "report_id" bigint NOT NULL, "status_after" character varying, "status_before" character varying, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (4.1ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id_and_created_at" ON "history_records" ("report_id", "created_at") /*application='Q129'*/[0m
+  [1m[35m (3.2ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id" ON "history_records" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (0.4ms)[0m  [1m[35mDROP TABLE IF EXISTS "patients" CASCADE /*application='Q129'*/[0m
+  [1m[35m (8.6ms)[0m  [1m[35mCREATE TABLE "patients" ("id" bigserial primary key, "address" character varying, "birth_date" date, "created_at" timestamp(6) NOT NULL, "gender" character varying, "id_card" character varying NOT NULL, "name" character varying NOT NULL, "phone" character varying NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (4.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_patients_on_id_card" ON "patients" ("id_card") /*application='Q129'*/[0m
+  [1m[35m (3.3ms)[0m  [1m[35mCREATE INDEX "index_patients_on_phone" ON "patients" ("phone") /*application='Q129'*/[0m
+  [1m[35m (0.9ms)[0m  [1m[35mDROP TABLE IF EXISTS "reports" CASCADE /*application='Q129'*/[0m
+  [1m[35m (7.7ms)[0m  [1m[35mCREATE TABLE "reports" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "exam_id" bigint NOT NULL, "issue_date" date NOT NULL, "pickup_type" character varying, "reissue_count" integer DEFAULT 0, "remark" text, "report_no" character varying NOT NULL, "status" character varying DEFAULT 'generated' NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (7.1ms)[0m  [1m[35mCREATE INDEX "index_reports_on_exam_id" ON "reports" ("exam_id") /*application='Q129'*/[0m
+  [1m[35m (22.8ms)[0m  [1m[35mCREATE INDEX "index_reports_on_issue_date" ON "reports" ("issue_date") /*application='Q129'*/[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_reports_on_report_no" ON "reports" ("report_no") /*application='Q129'*/[0m
+  [1m[35m (2.6ms)[0m  [1m[35mCREATE INDEX "index_reports_on_status" ON "reports" ("status") /*application='Q129'*/[0m
+  [1m[35m (1.2ms)[0m  [1m[35mDROP TABLE IF EXISTS "users" CASCADE /*application='Q129'*/[0m
+  [1m[35m (12.0ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "name" character varying NOT NULL, "password_digest" character varying NOT NULL, "role" character varying DEFAULT 'receptionist' NOT NULL, "updated_at" timestamp(6) NOT NULL, "username" character varying NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (8.7ms)[0m  [1m[35mCREATE INDEX "index_users_on_role" ON "users" ("role") /*application='Q129'*/[0m
+  [1m[35m (7.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_username" ON "users" ("username") /*application='Q129'*/[0m
+  [1m[35m (75.9ms)[0m  [1m[35mALTER TABLE "authorizations" ADD CONSTRAINT "fk_rails_1758b5d083"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (35.3ms)[0m  [1m[35mALTER TABLE "exams" ADD CONSTRAINT "fk_rails_6989b69bff"
+FOREIGN KEY ("patient_id")
+  REFERENCES "patients" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (19.4ms)[0m  [1m[35mALTER TABLE "history_records" ADD CONSTRAINT "fk_rails_2f77740418"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (22.7ms)[0m  [1m[35mALTER TABLE "reports" ADD CONSTRAINT "fk_rails_54e168ea92"
+FOREIGN KEY ("exam_id")
+  REFERENCES "exams" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (8.6ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (2.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[35m (9.5ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES (20240101000006) /*application='Q129'*/[0m
+  [1m[35m (12.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES
+(20240101000005),
+(20240101000004),
+(20240101000003),
+(20240101000002),
+(20240101000001); /*application='Q129'*/[0m
+  [1m[35m (13.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (2.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (8.0ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-10 10:30:58.405251', '2026-06-10 10:30:58.405259') RETURNING "key" /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (7.4ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'schema_sha1' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (3.0ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('schema_sha1', '38aac7d2e605441833cb046d914053bfc8442dc6', '2026-06-10 10:30:58.429588', '2026-06-10 10:30:58.429590') RETURNING "key" /*application='Q129'*/[0m
+  [1m[35mSQL (48.2ms)[0m  [1m[35mCREATE EXTENSION IF NOT EXISTS "plpgsql" SCHEMA pg_catalog /*application='Q129'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mDROP TABLE IF EXISTS "authorizations" CASCADE /*application='Q129'*/[0m
+  [1m[35m (31.1ms)[0m  [1m[35mCREATE TABLE "authorizations" ("id" bigserial primary key, "auth_type" character varying NOT NULL, "created_at" timestamp(6) NOT NULL, "file_path" character varying NOT NULL, "receiver_id_card" character varying NOT NULL, "receiver_name" character varying NOT NULL, "remark" text, "report_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id_and_auth_type" ON "authorizations" ("report_id", "auth_type") /*application='Q129'*/[0m
+  [1m[35m (9.2ms)[0m  [1m[35mCREATE INDEX "index_authorizations_on_report_id" ON "authorizations" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (0.8ms)[0m  [1m[35mDROP TABLE IF EXISTS "exams" CASCADE /*application='Q129'*/[0m
+  [1m[35m (10.0ms)[0m  [1m[35mCREATE TABLE "exams" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "description" text, "exam_date" date NOT NULL, "exam_no" character varying, "exam_type" character varying NOT NULL, "patient_id" bigint NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (1.7ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id_and_exam_date" ON "exams" ("patient_id", "exam_date") /*application='Q129'*/[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_exams_on_patient_id" ON "exams" ("patient_id") /*application='Q129'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mDROP TABLE IF EXISTS "history_records" CASCADE /*application='Q129'*/[0m
+  [1m[35m (8.4ms)[0m  [1m[35mCREATE TABLE "history_records" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "operation" character varying NOT NULL, "operator" character varying NOT NULL, "remark" text, "report_id" bigint NOT NULL, "status_after" character varying, "status_before" character varying, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (4.4ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id_and_created_at" ON "history_records" ("report_id", "created_at") /*application='Q129'*/[0m
+  [1m[35m (2.0ms)[0m  [1m[35mCREATE INDEX "index_history_records_on_report_id" ON "history_records" ("report_id") /*application='Q129'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mDROP TABLE IF EXISTS "patients" CASCADE /*application='Q129'*/[0m
+  [1m[35m (5.4ms)[0m  [1m[35mCREATE TABLE "patients" ("id" bigserial primary key, "address" character varying, "birth_date" date, "created_at" timestamp(6) NOT NULL, "gender" character varying, "id_card" character varying NOT NULL, "name" character varying NOT NULL, "phone" character varying NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (1.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_patients_on_id_card" ON "patients" ("id_card") /*application='Q129'*/[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_patients_on_phone" ON "patients" ("phone") /*application='Q129'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mDROP TABLE IF EXISTS "reports" CASCADE /*application='Q129'*/[0m
+  [1m[35m (10.6ms)[0m  [1m[35mCREATE TABLE "reports" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "exam_id" bigint NOT NULL, "issue_date" date NOT NULL, "pickup_type" character varying, "reissue_count" integer DEFAULT 0, "remark" text, "report_no" character varying NOT NULL, "status" character varying DEFAULT 'generated' NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_reports_on_exam_id" ON "reports" ("exam_id") /*application='Q129'*/[0m
+  [1m[35m (1.3ms)[0m  [1m[35mCREATE INDEX "index_reports_on_issue_date" ON "reports" ("issue_date") /*application='Q129'*/[0m
+  [1m[35m (0.9ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_reports_on_report_no" ON "reports" ("report_no") /*application='Q129'*/[0m
+  [1m[35m (2.3ms)[0m  [1m[35mCREATE INDEX "index_reports_on_status" ON "reports" ("status") /*application='Q129'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mDROP TABLE IF EXISTS "users" CASCADE /*application='Q129'*/[0m
+  [1m[35m (9.4ms)[0m  [1m[35mCREATE TABLE "users" ("id" bigserial primary key, "created_at" timestamp(6) NOT NULL, "name" character varying NOT NULL, "password_digest" character varying NOT NULL, "role" character varying DEFAULT 'receptionist' NOT NULL, "updated_at" timestamp(6) NOT NULL, "username" character varying NOT NULL) /*application='Q129'*/[0m
+  [1m[35m (10.7ms)[0m  [1m[35mCREATE INDEX "index_users_on_role" ON "users" ("role") /*application='Q129'*/[0m
+  [1m[35m (7.2ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_users_on_username" ON "users" ("username") /*application='Q129'*/[0m
+  [1m[35m (14.7ms)[0m  [1m[35mALTER TABLE "authorizations" ADD CONSTRAINT "fk_rails_1758b5d083"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (31.6ms)[0m  [1m[35mALTER TABLE "exams" ADD CONSTRAINT "fk_rails_6989b69bff"
+FOREIGN KEY ("patient_id")
+  REFERENCES "patients" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (5.3ms)[0m  [1m[35mALTER TABLE "history_records" ADD CONSTRAINT "fk_rails_2f77740418"
+FOREIGN KEY ("report_id")
+  REFERENCES "reports" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (2.9ms)[0m  [1m[35mALTER TABLE "reports" ADD CONSTRAINT "fk_rails_54e168ea92"
+FOREIGN KEY ("exam_id")
+  REFERENCES "exams" ("id")
+ /*application='Q129'*/[0m
+  [1m[35m (14.1ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" character varying NOT NULL PRIMARY KEY) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[35m (2.7ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES (20240101000006) /*application='Q129'*/[0m
+  [1m[35m (0.7ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES
+(20240101000005),
+(20240101000004),
+(20240101000003),
+(20240101000002),
+(20240101000001); /*application='Q129'*/[0m
+  [1m[35m (45.0ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" character varying NOT NULL PRIMARY KEY, "value" character varying, "created_at" timestamp(6) NOT NULL, "updated_at" timestamp(6) NOT NULL) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (15.8ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (1.6ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-10 10:30:58.864175', '2026-06-10 10:30:58.864178') RETURNING "key" /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.9ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Update (1.1ms)[0m  [1m[33mUPDATE "ar_internal_metadata" SET "value" = 'test', "updated_at" = '2026-06-10 10:30:58.872104' WHERE "ar_internal_metadata"."key" = 'environment' /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'schema_sha1' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.8ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('schema_sha1', '38aac7d2e605441833cb046d914053bfc8442dc6', '2026-06-10 10:30:58.876310', '2026-06-10 10:30:58.876312') RETURNING "key" /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (4.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (25.2ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (47.6ms)[0m  [1m[32mINSERT INTO "users" ("created_at", "name", "password_digest", "role", "updated_at", "username") VALUES ('2026-06-10 10:30:59.999725', '管理员', '$2a$12$ddpRFRxxYPzWgv0kutx1C.v9z66.uPU83T.8YSRtTsNQSy1zmjx/G', 'admin', '2026-06-10 10:30:59.999725', 'admin') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (2.0ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (3.4ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (14.6ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'supervisor' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (1.4ms)[0m  [1m[32mINSERT INTO "users" ("created_at", "name", "password_digest", "role", "updated_at", "username") VALUES ('2026-06-10 10:31:01.174731', '主管张', '$2a$12$yMmkBweq9EzOzJTrKLuyn.A.UPLmiGtvJ/pEO0JhMKe0Jp0qfv1BS', 'supervisor', '2026-06-10 10:31:01.174731', 'supervisor') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (20.1ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.9ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (5.3ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'technician' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (0.6ms)[0m  [1m[32mINSERT INTO "users" ("created_at", "name", "password_digest", "role", "updated_at", "username") VALUES ('2026-06-10 10:31:01.698584', '技师李', '$2a$12$DGIRc5YruRa1HfjngDjGJuhFVBxBs63xhQxYOidHPy96BZv6prqhK', 'technician', '2026-06-10 10:31:01.698584', 'technician') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (4.6ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'receptionist' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Create (3.7ms)[0m  [1m[32mINSERT INTO "users" ("created_at", "name", "password_digest", "role", "updated_at", "username") VALUES ('2026-06-10 10:31:02.468644', '前台王', '$2a$12$Y9q14hCohG7GwxiT8Y0jLeGiMjejGfUqgD/Un3JZwsgKLnWxOKVV2', 'receptionist', '2026-06-10 10:31:02.468644', 'receptionist') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (2.3ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '110101199003074512' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (4.8ms)[0m  [1m[32mINSERT INTO "patients" ("address", "birth_date", "created_at", "gender", "id_card", "name", "phone", "updated_at") VALUES ('北京市朝阳区', '1990-03-07', '2026-06-10 10:31:02.547665', '男', '110101199003074512', '张三', '13800138001', '2026-06-10 10:31:02.547665') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (10.2ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '310101198506127890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.4ms)[0m  [1m[32mINSERT INTO "patients" ("address", "birth_date", "created_at", "gender", "id_card", "name", "phone", "updated_at") VALUES ('上海市浦东新区', '1985-06-12', '2026-06-10 10:31:02.571005', '女', '310101198506127890', '李四', '13900139002', '2026-06-10 10:31:02.571005') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (16.6ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '440101199512153678' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.7ms)[0m  [1m[32mINSERT INTO "patients" ("address", "birth_date", "created_at", "gender", "id_card", "name", "phone", "updated_at") VALUES ('广东省广州市', '1995-12-15', '2026-06-10 10:31:02.598014', '男', '440101199512153678', '王五', '13600136003', '2026-06-10 10:31:02.598014') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (8.6ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '330101198809204567' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (4.1ms)[0m  [1m[32mINSERT INTO "patients" ("address", "birth_date", "created_at", "gender", "id_card", "name", "phone", "updated_at") VALUES ('浙江省杭州市', '1988-09-20', '2026-06-10 10:31:02.616462', '女', '330101198809204567', '赵六', '13700137004', '2026-06-10 10:31:02.616462') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mPatient Exists? (3.6ms)[0m  [1m[34mSELECT 1 AS one FROM "patients" WHERE "patients"."id_card" = '210101199205087890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Create (0.3ms)[0m  [1m[32mINSERT INTO "patients" ("address", "birth_date", "created_at", "gender", "id_card", "name", "phone", "updated_at") VALUES ('辽宁省沈阳市', '1992-05-08', '2026-06-10 10:31:02.630105', '男', '210101199205087890', '孙七', '13500135005', '2026-06-10 10:31:02.630105') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (3.6ms)[0m  [1m[32mINSERT INTO "exams" ("created_at", "description", "exam_date", "exam_no", "exam_type", "patient_id", "updated_at") VALUES ('2026-06-10 10:31:02.689088', '头部CT平扫', '2026-06-07', 'CT20240101001', 'ct', 1, '2026-06-10 10:31:02.689088') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (1.1ms)[0m  [1m[32mINSERT INTO "exams" ("created_at", "description", "exam_date", "exam_no", "exam_type", "patient_id", "updated_at") VALUES ('2026-06-10 10:31:02.695391', '膝关节MRI', '2026-06-08', 'MRI20240102001', 'mri', 2, '2026-06-10 10:31:02.695391') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (1.4ms)[0m  [1m[32mINSERT INTO "exams" ("created_at", "description", "exam_date", "exam_no", "exam_type", "patient_id", "updated_at") VALUES ('2026-06-10 10:31:02.698104', '胸部X光片', '2026-06-09', 'XR20240103001', 'xray', 3, '2026-06-10 10:31:02.698104') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (1.8ms)[0m  [1m[32mINSERT INTO "exams" ("created_at", "description", "exam_date", "exam_no", "exam_type", "patient_id", "updated_at") VALUES ('2026-06-10 10:31:02.702606', '腹部超声', '2026-06-06', 'US20240104001', 'ultrasound', 4, '2026-06-10 10:31:02.702606') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mExam Create (1.0ms)[0m  [1m[32mINSERT INTO "exams" ("created_at", "description", "exam_date", "exam_no", "exam_type", "patient_id", "updated_at") VALUES ('2026-06-10 10:31:02.706001', '肺部CT增强', '2026-06-05', 'CT20240105001', 'ct', 5, '2026-06-10 10:31:02.706001') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (4.1ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_try_advisory_lock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.7ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (2.2ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.9ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q129'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_advisory_unlock(1893760109180059155) /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[35mSQL (0.4ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[35mSET search_path TO public /*application='Q129'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[35mSET search_path TO "$user", public /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (11.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.0ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mUser Exists? (2.8ms)[0m  [1m[34mSELECT 1 AS one FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (2.2ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mUser Load (14.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'supervisor' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (3.0ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'technician' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'receptionist' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (2.5ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '110101199003074512' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (5.4ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '310101198506127890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (1.5ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '440101199512153678' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (3.6ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '330101198809204567' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.5ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '210101199205087890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (7.3ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.4ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'MRI20240102001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (1.3ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'XR20240103001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.7ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'US20240104001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (1.7ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240105001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Load (3.6ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.6ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (0.5ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (3.7ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mUser Load (0.7ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'supervisor' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.3ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'technician' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.9ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'receptionist' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (1.9ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '110101199003074512' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.2ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '310101198506127890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.2ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '440101199512153678' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.3ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '330101198809204567' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.4ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '210101199205087890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.8ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.9ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'MRI20240102001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.3ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'XR20240103001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.7ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'US20240104001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.2ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240105001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Load (0.9ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[31mROLLBACK /*application='Q129'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (4.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+  [1m[36mUser Load (1.8ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'admin' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (0.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'supervisor' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (1.1ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'technician' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mUser Load (13.4ms)[0m  [1m[34mSELECT "users".* FROM "users" WHERE "users"."username" = 'receptionist' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.8ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '110101199003074512' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.4ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '310101198506127890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (1.8ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '440101199512153678' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.6ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '330101198809204567' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mPatient Load (0.5ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id_card" = '210101199205087890' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.8ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (1.0ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'MRI20240102001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.5ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'XR20240103001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.4ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'US20240104001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mExam Load (0.2ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."exam_no" = 'CT20240105001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Load (1.5ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (0.4ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240101001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Create (9.0ms)[0m  [1m[32mINSERT INTO "reports" ("created_at", "exam_id", "issue_date", "pickup_type", "reissue_count", "remark", "report_no", "status", "updated_at") VALUES ('2026-06-10 10:34:24.186075', 1, '2026-06-08', 'self', 0, NULL, 'RPT20240101001', 'delivered', '2026-06-10 10:34:24.186075') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mReport Load (0.5ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240102001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (1.1ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240102001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Create (0.6ms)[0m  [1m[32mINSERT INTO "reports" ("created_at", "exam_id", "issue_date", "pickup_type", "reissue_count", "remark", "report_no", "status", "updated_at") VALUES ('2026-06-10 10:34:24.207179', 2, '2026-06-09', 'authorized', 0, NULL, 'RPT20240102001', 'pickup_requested', '2026-06-10 10:34:24.207179') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mReport Load (0.2ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240103001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240103001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Create (1.1ms)[0m  [1m[32mINSERT INTO "reports" ("created_at", "exam_id", "issue_date", "pickup_type", "reissue_count", "remark", "report_no", "status", "updated_at") VALUES ('2026-06-10 10:34:24.213679', 3, '2026-06-10', NULL, 0, 'id_mismatch', 'RPT20240103001', 'exception', '2026-06-10 10:34:24.213679') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240104001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (2.0ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240104001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Create (0.7ms)[0m  [1m[32mINSERT INTO "reports" ("created_at", "exam_id", "issue_date", "pickup_type", "reissue_count", "remark", "report_no", "status", "updated_at") VALUES ('2026-06-10 10:34:24.223834', 4, '2026-06-07', 'self', 3, NULL, 'RPT20240104001', 'delivered', '2026-06-10 10:34:24.223834') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (1.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mReport Load (0.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" WHERE "reports"."report_no" = 'RPT20240105001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mReport Exists? (1.4ms)[0m  [1m[34mSELECT 1 AS one FROM "reports" WHERE "reports"."report_no" = 'RPT20240105001' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mReport Create (0.4ms)[0m  [1m[32mINSERT INTO "reports" ("created_at", "exam_id", "issue_date", "pickup_type", "reissue_count", "remark", "report_no", "status", "updated_at") VALUES ('2026-06-10 10:34:24.232912', 5, '2026-06-08', 'delivery', 0, NULL, 'RPT20240105001', 'reissue_requested', '2026-06-10 10:34:24.232912') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  [1m[36mHistoryRecord Exists? (12.5ms)[0m  [1m[34mSELECT 1 AS one FROM "history_records" WHERE "history_records"."report_id" = 1 LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (13.4ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.277441', 'generated', '系统', '报告自动生成', 1, 'delivered', 'delivered', '2026-06-10 10:34:24.277441') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.294316', 'pickup_requested', '前台王', '本人领取', 1, 'delivered', 'delivered', '2026-06-10 10:34:24.294316') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.5ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.297303', 'confirmed', '技师李', '报告已确认', 1, 'delivered', 'delivered', '2026-06-10 10:34:24.297303') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.4ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.301319', 'delivered', '技师李', '报告已交付', 1, 'delivered', 'delivered', '2026-06-10 10:34:24.301319') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "history_records" WHERE "history_records"."report_id" = 2 LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.7ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.306674', 'generated', '系统', '报告自动生成', 2, 'pickup_requested', 'pickup_requested', '2026-06-10 10:34:24.306674') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.6ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.311038', 'pickup_requested', '前台王', '授权代领', 2, 'pickup_requested', 'pickup_requested', '2026-06-10 10:34:24.311038') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (1.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Exists? (1.2ms)[0m  [1m[34mSELECT 1 AS one FROM "history_records" WHERE "history_records"."report_id" = 3 LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.6ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.322666', 'generated', '系统', '报告自动生成', 3, 'exception', 'exception', '2026-06-10 10:34:24.322666') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (0.9ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.327714', 'pickup_requested', '前台王', '本人领取', 3, 'exception', 'exception', '2026-06-10 10:34:24.327714') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (3.3ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.335374', 'exception', '技师李', '身份证不符', 3, 'exception', 'exception', '2026-06-10 10:34:24.335374') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "history_records" WHERE "history_records"."report_id" = 4 LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.344650', 'generated', '系统', '报告自动生成', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.344650') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.3ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.348059', 'pickup_requested', '前台王', '本人领取', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.348059') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.350880', 'confirmed', '技师李', '报告已确认', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.350880') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.353668', 'delivered', '技师李', '报告已交付', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.353668') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.356955', 'reissue_requested', '前台王', '补打申请', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.356955') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (0.9ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.359438', 'reissued', '主管张', '补打已批准', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.359438') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.3ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.363096', 'generated', '系统', '报告自动生成', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.363096') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (0.9ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.367080', 'pickup_requested', '前台王', '本人领取', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.367080') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (0.7ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.369344', 'confirmed', '技师李', '报告已确认', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.369344') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.372302', 'delivered', '技师李', '报告已交付', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.372302') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (28.8ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.375846', 'reissue_requested', '前台王', '补打申请', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.375846') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (2.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (2.0ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (3.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.413447', 'reissued', '主管张', '补打已批准', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.413447') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.3ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.419985', 'generated', '系统', '报告自动生成', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.419985') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.425608', 'pickup_requested', '前台王', '本人领取', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.425608') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.8ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.430125', 'confirmed', '技师李', '报告已确认', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.430125') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.436505', 'delivered', '技师李', '报告已交付', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.436505') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (1.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.7ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.442604', 'reissue_requested', '前台王', '补打申请', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.442604') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (4.6ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.448458', 'reissued', '主管张', '补打已批准', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.448458') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (1.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (4.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.456985', 'generated', '系统', '报告自动生成', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.456985') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (1.4ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.466323', 'pickup_requested', '前台王', '本人领取', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.466323') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (1.9ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (5.4ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.471417', 'confirmed', '技师李', '报告已确认', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.471417') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.7ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (4.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (5.3ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.479872', 'delivered', '技师李', '报告已交付', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.479872') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.0ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.487204', 'reissue_requested', '前台王', '补打申请', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.487204') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.4ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.490215', 'reissued', '主管张', '补打已批准', 4, 'delivered', 'delivered', '2026-06-10 10:34:24.490215') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "history_records" WHERE "history_records"."report_id" = 5 LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (2.4ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.496824', 'generated', '系统', '报告自动生成', 5, 'reissue_requested', 'reissue_requested', '2026-06-10 10:34:24.496824') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.8ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.502385', 'pickup_requested', '前台王', '快递邮寄', 5, 'reissue_requested', 'reissue_requested', '2026-06-10 10:34:24.502385') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.7ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.508930', 'confirmed', '技师李', '报告已确认', 5, 'reissue_requested', 'reissue_requested', '2026-06-10 10:34:24.508930') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (9.5ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (22.2ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.514295', 'delivered', '技师李', '报告已交付', 5, 'reissue_requested', 'reissue_requested', '2026-06-10 10:34:24.514295') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mHistoryRecord Create (1.6ms)[0m  [1m[32mINSERT INTO "history_records" ("created_at", "operation", "operator", "remark", "report_id", "status_after", "status_before", "updated_at") VALUES ('2026-06-10 10:34:24.541040', 'reissue_requested', '前台王', '快递丢失，申请补打', 5, 'reissue_requested', 'reissue_requested', '2026-06-10 10:34:24.541040') RETURNING "id" /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+  ↳ app/models/report.rb:75:in 'Report#add_history'
+  [1m[36mAuthorization Load (1.0ms)[0m  [1m[34mSELECT "authorizations".* FROM "authorizations" WHERE "authorizations"."report_id" = 2 AND "authorizations"."auth_type" = 'power_of_attorney' LIMIT 1 /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*application='Q129'*/[0m
+  [1m[36mAuthorization Create (3.0ms)[0m  [1m[32mINSERT INTO "authorizations" ("auth_type", "created_at", "file_path", "receiver_id_card", "receiver_name", "remark", "report_id", "updated_at") VALUES ('power_of_attorney', '2026-06-10 10:34:24.556867', '/uploads/auth/POA_20240102.pdf', '310101198001011234', '李四的代理人', '患者授权委托书', 2, '2026-06-10 10:34:24.556867') RETURNING "id" /*application='Q129'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT /*application='Q129'*/[0m
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:34:40 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (7.9ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+Processing by ReportsController#index as HTML
+Completed 500 Internal Server Error in 77ms (ActiveRecord: 38.4ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+NoMethodError (undefined method 'page' for an instance of ActiveRecord::Relation):
+  
+app/controllers/reports_controller.rb:8:in 'ReportsController#index'
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:34:41 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:36:01 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (4.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (3.5ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (1.6ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (1.0ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 60.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 60.8ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 275ms (ActiveRecord: 24.9ms (3 queries, 0 cached) | GC: 23.2ms)
+
+
+  
+ActionView::Template::Error (undefined method 'paginate' for an instance of #<Class:0x00000001268b5ac0>)
+Caused by: NoMethodError (undefined method 'paginate' for an instance of #<Class:0x00000001268b5ac0>)
+
+Information for: ActionView::Template::Error (undefined method 'paginate' for an instance of #<Class:0x00000001268b5ac0>):
+    60:   </div>
+    61:   <div class="card-footer">
+    62:     <%= paginate @reports %>
+    63:   </div>
+    64: </div>
+    65: 
+    66: <div class="modal fade" id="pickupModal" tabindex="-1" role="dialog">
+  
+app/views/reports/index.html.erb:63
+
+Information for cause: NoMethodError (undefined method 'paginate' for an instance of #<Class:0x00000001268b5ac0>):
+  
+app/views/reports/index.html.erb:63
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:36:02 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:37:30 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (1.7ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (1.3ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (2.2ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (0.7ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 54.5ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 56.0ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 282ms (ActiveRecord: 27.4ms (3 queries, 0 cached) | GC: 19.5ms)
+
+
+  
+ActionView::Template::Error (No route matches {action: "request_pickup", controller: "reports"}, missing required keys: [:id])
+Caused by: ActionController::UrlGenerationError (No route matches {action: "request_pickup", controller: "reports"}, missing required keys: [:id])
+
+Information for: ActionView::Template::Error (No route matches {action: "request_pickup", controller: "reports"}, missing required keys: [:id]):
+    69:         <button type="button" class="close" data-dismiss="modal">×</button>
+    70:       </div>
+    71:       <%= form_tag request_pickup_report_path, method: :post do %>
+    72:         <div class="modal-body">
+    73:           <%= hidden_field_tag :id %>
+    74:           <div class="form-group">
+    75:             <label>领取方式</label>
+  
+app/views/reports/index.html.erb:72
+
+Information for cause: ActionController::UrlGenerationError (No route matches {action: "request_pickup", controller: "reports"}, missing required keys: [:id]):
+  
+app/views/reports/index.html.erb:72
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:37:31 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:38:49 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (1.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (3.9ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (1.3ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (0.7ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 37.8ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 38.0ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 221ms (ActiveRecord: 36.9ms (3 queries, 0 cached) | GC: 16.9ms)
+
+
+  
+ActionView::Template::Error (undefined local variable or method 'request_pickup_report_path' for an instance of #<Class:0x0000000140db50b0>)
+Caused by: NameError (undefined local variable or method 'request_pickup_report_path' for an instance of #<Class:0x0000000140db50b0>)
+
+Information for: ActionView::Template::Error (undefined local variable or method 'request_pickup_report_path' for an instance of #<Class:0x0000000140db50b0>):
+    69:         <button type="button" class="close" data-dismiss="modal">×</button>
+    70:       </div>
+    71:       <%= form_tag request_pickup_report_path, method: :post do %>
+    72:         <div class="modal-body">
+    73:           <%= hidden_field_tag :id %>
+    74:           <div class="form-group">
+    75:             <label>领取方式</label>
+  
+app/views/reports/index.html.erb:72
+
+Information for cause: NameError (undefined local variable or method 'request_pickup_report_path' for an instance of #<Class:0x0000000140db50b0>):
+  
+app/views/reports/index.html.erb:72
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:38:50 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:39:32 +0800
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (0.4ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (0.2ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (0.7ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 96.4ms | GC: 32.8ms)
+  Rendered layout layouts/application.html.erb (Duration: 129.4ms | GC: 35.3ms)
+Completed 200 OK in 143ms (Views: 125.4ms | ActiveRecord: 8.6ms (3 queries, 0 cached) | GC: 35.3ms)
+
+
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:39:34 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 18:40:18 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (1.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q129'*/[0m
+Processing by ReportsController#index as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (1.7ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (1.6ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (0.6ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 43.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 45.8ms | GC: 0.0ms)
+Completed 200 OK in 229ms (Views: 39.5ms | ActiveRecord: 18.2ms (3 queries, 0 cached) | GC: 16.9ms)
+
+
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:40:20 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/login" for 127.0.0.1 at 2026-06-10 18:40:35 +0800
+Processing by SessionsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering sessions/new.html.erb within layouts/application
+  Rendered sessions/new.html.erb within layouts/application (Duration: 8.7ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 17.5ms | GC: 0.0ms)
+Completed 200 OK in 53ms (Views: 21.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-10 18:40:37 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for 127.0.0.1 at 2026-06-10 19:42:15 +0800
+Processing by ReportsController#index as */*
+  Rendering layout layouts/application.html.erb
+  Rendering reports/index.html.erb within layouts/application
+  [1m[36mReport Load (6532.6ms)[0m  [1m[34mSELECT "reports".* FROM "reports" ORDER BY "reports"."created_at" DESC /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mExam Load (57.6ms)[0m  [1m[34mSELECT "exams".* FROM "exams" WHERE "exams"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  [1m[36mPatient Load (67.4ms)[0m  [1m[34mSELECT "patients".* FROM "patients" WHERE "patients"."id" IN (5, 4, 3, 2, 1) /*action='index',application='Q129',controller='reports'*/[0m
+  ↳ app/views/reports/index.html.erb:41
+  Rendered reports/index.html.erb within layouts/application (Duration: 18258.9ms | GC: 16.2ms)
+  Rendered layout layouts/application.html.erb (Duration: 19167.8ms | GC: 16.2ms)
+Completed 200 OK in 27795ms (Views: 16166.3ms | ActiveRecord: 7934.2ms (3 queries, 0 cached) | GC: 16.2ms)
+
+

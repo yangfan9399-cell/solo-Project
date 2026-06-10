@@ -1,0 +1,83 @@
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>检查类型分布</h4>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <% @exam_type_stats.each do |type, count| %>
+        <div class="col-md-3">
+          <div class="card stat-card">
+            <div class="stat-value"><%= count %></div>
+            <div class="stat-label"><%= Exam::EXAM_TYPES.find { |_, v| v == type }&.first || type %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>领取方式统计</h4>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <% @pickup_type_stats.each do |type, count| %>
+        <div class="col-md-4">
+          <div class="card stat-card">
+            <div class="stat-value"><%= count %></div>
+            <div class="stat-label"><%= Report::PICKUP_TYPES.find { |_, v| v == type }&.first || type %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>异常原因统计</h4>
+  </div>
+  <div class="card-body">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>异常原因</th>
+          <th>数量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @exception_stats.each do |reason, count| %>
+          <tr>
+            <td><%= Report::EXCEPTION_REASONS.find { |_, v| v == reason }&.first || reason %></td>
+            <td><%= count %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h4>每日报告统计</h4>
+  </div>
+  <div class="card-body">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>报告数量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @daily_stats.each do |date, count| %>
+          <tr>
+            <td><%= date %></td>
+            <td><%= count %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
