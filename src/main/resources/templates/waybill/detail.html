@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: body}">
+<head>
+    <title>运单详情</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>运单详情 - <span th:text="${waybill.waybillNo}"></span></h3>
+                <span th:if="${waybill.status == T(com.example.coldchain.enums.WaybillStatus).ARRIVED}" class="badge badge-info">等待签收</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label>状态</label>
+                    <div th:text="${waybill.status.getDescription()}" th:class="status-${waybill.status}"></div>
+                </div>
+                <div>
+                    <label>路线</label>
+                    <div th:text="${waybill.origin + ' -> ' + waybill.destination}"></div>
+                </div>
+                <div>
+                    <label>货品类型</label>
+                    <div th:text="${waybill.productType.getDescription()}"></div>
+                </div>
+                <div>
+                    <label>货品名称</label>
+                    <div th:text="${waybill.productName}"></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <label>数量</label>
+                    <div th:text="${waybill.quantity + ' ' + waybill.unit}"></div>
+                </div>
+                <div>
+                    <label>温度范围</label>
+                    <div th:text="${waybill.temperatureMin + '°C ~ ' + waybill.temperatureMax + '°C'}"></div>
+                </div>
+                <div>
+                    <label>发车时间</label>
+                    <div th:text="${waybill.departureTime}"></div>
+                </div>
+                <div>
+                    <label>到达时间</label>
+                    <div th:text="${waybill.arrivalTime ?: '-'}"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px;">
+                <form th:if="${waybill.status == T(com.example.coldchain.enums.WaybillStatus).ARRIVED}" 
+                      th:action="@{/waybills/{id}/sign(id=${waybill.id})}" method="post">
+                    <button type="submit" class="btn btn-success" th:disabled="${hasUndisposedExceptions}">
+                        <span th:if="${hasUndisposedExceptions}">存在未处置异常，禁止签收</span>
+                        <span th:unless="${hasUndisposedExceptions}">签收通过</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>温度曲线</h3>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <div style="font-size: 18px; margin-bottom: 10px;">温度监控曲线</div>
+                    <div style="height: 120px; width: 400px; background: #fff; border: 1px solid #ddd; border-radius: 4px; position: relative;">
+                        <svg width="400" height="120" style="position: absolute;">
+                            <defs>
+                                <linearGradient id="tempGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#dc3545"/>
+                                    <stop offset="50%" style="stop-color:#ffc107"/>
+                                    <stop offset="100%" style="stop-color:#28a745"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M 0 60 Q 100 40, 200 70 T 400 50" stroke="url(#tempGradient)" stroke-width="2" fill="none"/>
+                            <line x1="0" y1="75" x2="400" y2="75" stroke="#eee" stroke-width="1" stroke-dasharray="5,5"/>
+                            <text x="10" y="85" fill="#666" font-size="10">温度基准线</text>
+                        </svg>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        正常范围: <span style="color: #28a745;">${waybill.temperatureMin}°C - ${waybill.temperatureMax}°C</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="card">
+                <h3>车辆信息</h3>
+                <div th:if="${vehicle}">
+                    <div style="margin-bottom: 10px;"><label>车牌号:</label> <span th:text="${vehicle.plateNumber}"></span></div>
+                    <div style="margin-bottom: 10px;"><label>车辆类型:</label> <span th:text="${vehicle.vehicleType}"></span></div>
+                    <div style="margin-bottom: 10px;"><label>载重:</label> <span th:text="${vehicle.capacity + ' 吨'}"></span></div>
+                    <div><label>制冷方式:</label> <span th:text="${vehicle.refrigerationType}"></span></div>
+                </div>
+                <div th:unless="${vehicle}" style="color: #999;">暂无车辆信息</div>
+            </div>
+
+            <div class="card">
+                <h3>司机信息</h3>
+                <div th:if="${driver}">
+                    <div style="margin-bottom: 10px;"><label>姓名:</label> <span th:text="${driver.name}"></span></div>
+                    <div style="margin-bottom: 10px;"><label>电话:</label> <span th:text="${driver.phone}"></span></div>
+                    <div><label>驾驶证号:</label> <span th:text="${driver.licenseNumber}"></span></div>
+                </div>
+                <div th:unless="${driver}" style="color: #999;">暂无司机信息</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>异常记录</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>描述</th>
+                        <th>时间</th>
+                        <th>位置</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="exception : ${exceptions}">
+                        <td>
+                            <span th:class="${exception.exceptionType == T(com.example.coldchain.enums.ExceptionType).TEMPERATURE_OVER_LIMIT ? 'badge badge-danger' : 'badge badge-warning'}"
+                                  th:text="${exception.exceptionType.getDescription()}"></span>
+                        </td>
+                        <td th:text="${exception.description}"></td>
+                        <td th:text="${exception.exceptionTime}"></td>
+                        <td th:text="${exception.location}"></td>
+                        <td th:text="${exception.isDisposed ? '已处置' : '待处置'}"></td>
+                        <td>
+                            <button th:if="!exception.isDisposed" class="btn btn-warning" 
+                                    onclick="document.getElementById('disposal-form-' + ${exception.id}).style.display='block'"
+                                    style="padding:4px 10px;font-size:12px;">提交处置</button>
+                            <span th:if="exception.isDisposed" class="badge badge-success">已处置</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:each="exception : ${exceptions}" th:if="!exception.isDisposed">
+            <div class="card" id="disposal-form-${exception.id}" style="display: none;">
+                <h4>提交处置方案 - 异常ID: ${exception.id}</h4>
+                <form th:action="@{/waybills/{id}/submit-disposal(id=${waybill.id})}" method="post">
+                    <input type="hidden" name="exceptionId" th:value="${exception.id}"/>
+                    <div class="form-group">
+                        <label>处置方式</label>
+                        <textarea name="disposalMethod" rows="3" placeholder="请描述处置方式..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提交</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('disposal-form-${exception.id}').style.display='none'">取消</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>处置记录</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>处置人</th>
+                        <th>处置方式</th>
+                        <th>处置结果</th>
+                        <th>状态</th>
+                        <th>处置时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="disposal : ${disposals}">
+                        <td th:text="${disposal.handlerName}"></td>
+                        <td th:text="${disposal.disposalMethod}"></td>
+                        <td th:text="${disposal.disposalResult ?: '-'}"></td>
+                        <td>
+                            <span th:class="${disposal.status == T(com.example.coldchain.enums.DisposalStatus).COMPLETED ? 'badge badge-success' : 
+                                              disposal.status == T(com.example.coldchain.enums.DisposalStatus).PROCESSING ? 'badge badge-warning' : 'badge badge-secondary'}"
+                                  th:text="${disposal.status.getDescription()}"></span>
+                        </td>
+                        <td th:text="${disposal.disposalTime ?: '-'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>货损评估与赔付</h3>
+            <div th:if="${compensation}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div>
+                        <label>状态</label>
+                        <div th:text="${compensation.status.getDescription()}"></div>
+                    </div>
+                    <div>
+                        <label>定损描述</label>
+                        <div th:text="${compensation.damageDescription}"></div>
+                    </div>
+                    <div>
+                        <label>损失比例</label>
+                        <div th:text="${compensation.damagePercentage + '%'}"></div>
+                    </div>
+                    <div>
+                        <label>索赔金额</label>
+                        <div th:text="'¥' + ${compensation.claimedAmount}"></div>
+                    </div>
+                </div>
+                <div th:if="${compensation.assessedAmount}" style="margin-bottom: 20px;">
+                    <h4>评估信息</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                        <div>评估人: <span th:text="${compensation.assessorName}"></span></div>
+                        <div>评估金额: <span th:text="'¥' + ${compensation.assessedAmount}"></span></div>
+                        <div>评估时间: <span th:text="${compensation.assessmentTime}"></span></div>
+                    </div>
+                    <div style="margin-top: 10px;">评估意见: <span th:text="${compensation.assessorComment}"></span></div>
+                </div>
+            </div>
+            <div th:unless="${compensation}">
+                <form th:action="@{/waybills/{id}/assess-damage(id=${waybill.id})}" method="post">
+                    <div class="form-group">
+                        <label>货损描述</label>
+                        <textarea name="damageDescription" rows="2" placeholder="请描述货损情况..."></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>损失比例 (%)</label>
+                            <input type="number" name="damagePercentage" min="0" max="100" step="1"/>
+                        </div>
+                        <div class="form-group">
+                            <label>索赔金额 (元)</label>
+                            <input type="number" name="claimedAmount" min="0" step="0.01"/>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提交评估</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

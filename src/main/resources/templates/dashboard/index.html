@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: body}">
+<head>
+    <title>监控看板</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="grid">
+            <div class="card stat-card">
+                <div class="number" th:text="${statusStats.get(T( com.example.coldchain.enums.WaybillStatus ).IN_TRANSIT) ?: 0}">0</div>
+                <div class="label">运输中</div>
+            </div>
+            <div class="card stat-card">
+                <div class="number" th:text="${statusStats.get(T( com.example.coldchain.enums.WaybillStatus ).EXCEPTION) ?: 0}">0</div>
+                <div class="label">异常运单</div>
+            </div>
+            <div class="card stat-card">
+                <div class="number" th:text="${pendingAssessments}">0</div>
+                <div class="label">待评估</div>
+            </div>
+            <div class="card stat-card">
+                <div class="number" th:text="${pendingReviews}">0</div>
+                <div class="label">待复核</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>异常运单概览</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>运单号</th>
+                        <th>路线</th>
+                        <th>货品</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="waybill : ${abnormalWaybills}">
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}"></a></td>
+                        <td th:text="${waybill.origin + ' -> ' + waybill.destination}"></td>
+                        <td th:text="${waybill.productName}"></td>
+                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.getDescription()}"></span></td>
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">查看</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h3>线路分布</h3>
+                <table>
+                    <thead><tr><th>线路</th><th>运单数</th></tr></thead>
+                    <tbody>
+                        <tr th:each="(count, route) : ${routeStats}">
+                            <td th:text="${route}"></td>
+                            <td th:text="${count}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h3>货品类型</h3>
+                <table>
+                    <thead><tr><th>类型</th><th>运单数</th></tr></thead>
+                    <tbody>
+                        <tr th:each="(count, type) : ${productTypeStats}">
+                            <td th:text="${type.getDescription()}"></td>
+                            <td th:text="${count}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>异常原因统计</h3>
+            <table>
+                <thead><tr><th>异常类型</th><th>数量</th></tr></thead>
+                <tbody>
+                    <tr th:each="(count, type) : ${exceptionTypeStats}">
+                        <td th:text="${type.getDescription()}"></td>
+                        <td th:text="${count}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

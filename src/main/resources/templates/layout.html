@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">冷链温控系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .sidebar { width: 220px; background: #1a1a2e; color: #fff; min-height: 100vh; padding: 20px; position: fixed; }
+        .sidebar h1 { font-size: 18px; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 10px; }
+        .sidebar a { color: #b8b8b8; text-decoration: none; display: block; padding: 10px; border-radius: 4px; }
+        .sidebar a:hover, .sidebar a.active { background: #16213e; color: #fff; }
+        .main { margin-left: 220px; padding: 20px; }
+        .header { margin-bottom: 20px; }
+        .header h2 { font-size: 24px; color: #333; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #4a90d9; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        .badge-secondary { background: #e2e3e5; color: #383d41; }
+        .alert { padding: 12px 16px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group textarea { resize: vertical; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .tab { padding: 10px 20px; cursor: pointer; border-radius: 4px 4px 0 0; border: 1px solid transparent; }
+        .tab.active { background: #fff; border-color: #eee; border-bottom-color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .chart-placeholder { height: 200px; background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6c757d; }
+        .stat-card { text-align: center; padding: 20px; }
+        .stat-card .number { font-size: 32px; font-weight: 700; color: #333; }
+        .stat-card .label { font-size: 14px; color: #666; margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .status-PENDING { color: #ffc107; }
+        .status-IN_TRANSIT { color: #4a90d9; }
+        .status-ARRIVED { color: #28a745; }
+        .status-SIGNED { color: #28a745; }
+        .status-EXCEPTION { color: #dc3545; }
+        .status-COMPENSATION_PENDING { color: #ffc107; }
+        .status-COMPENSATION_APPROVED { color: #28a745; }
+        .status-COMPENSATION_REJECTED { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h1>冷链温控系统</h1>
+        <ul>
+            <li><a th:href="@{/dashboard}" th:class="${activePage == 'dashboard' ? 'active' : ''}">监控看板</a></li>
+            <li><a th:href="@{/waybills}" th:class="${activePage == 'waybills' ? 'active' : ''}">运单管理</a></li>
+            <li><a th:href="@{/compensation/pending}" th:class="${activePage == 'compensation' ? 'active' : ''}">赔付审核</a></li>
+        </ul>
+    </div>
+    <div class="main">
+        <div class="header">
+            <h2 th:text="${pageTitle}">页面标题</h2>
+        </div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:fragment="content"></div>
+    </div>
+</body>
+</html>

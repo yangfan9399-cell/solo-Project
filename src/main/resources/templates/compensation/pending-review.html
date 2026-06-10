@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: body}">
+<head>
+    <title>赔付审核</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <a th:href="@{/compensation/pending}" class="btn btn-secondary" th:class="${activeTab == 'pending' ? 'active' : ''}">待评估</a>
+            <a th:href="@{/compensation/review}" class="btn btn-primary" th:class="${activeTab == 'review' ? 'active' : ''}">待复核</a>
+        </div>
+
+        <div class="card">
+            <h3>待复核赔付申请</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>运单号</th>
+                        <th>索赔金额</th>
+                        <th>评估金额</th>
+                        <th>评估人</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="compensation : ${compensations}">
+                        <td><a th:href="@{/waybills/{id}(id=${compensation.waybillId})}" th:text="'WB' + ${compensation.waybillId}"></a></td>
+                        <td th:text="'¥' + ${compensation.claimedAmount}"></td>
+                        <td th:text="'¥' + ${compensation.assessedAmount}"></td>
+                        <td th:text="${compensation.assessorName}"></td>
+                        <td>
+                            <button class="btn btn-success" style="padding:4px 10px;font-size:12px;margin-right:5px;" 
+                                    onclick="document.getElementById('approve-form-' + ${compensation.id}).style.display='block'">通过</button>
+                            <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;" 
+                                    onclick="document.getElementById('reject-form-' + ${compensation.id}).style.display='block'">拒绝</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:each="compensation : ${compensations}">
+            <div class="card" id="approve-form-${compensation.id}" style="display: none;">
+                <h4>通过赔付 - 运单ID: ${compensation.waybillId}</h4>
+                <form th:action="@{/compensation/{id}/approve(id=${compensation.id})}" method="post">
+                    <div class="form-group">
+                        <label>复核意见</label>
+                        <textarea name="comment" rows="2" placeholder="请输入复核意见..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">确认通过</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('approve-form-${compensation.id}').style.display='none'">取消</button>
+                </form>
+            </div>
+
+            <div class="card" id="reject-form-${compensation.id}" style="display: none;">
+                <h4>拒绝赔付 - 运单ID: ${compensation.waybillId}</h4>
+                <form th:action="@{/compensation/{id}/reject(id=${compensation.id})}" method="post">
+                    <div class="form-group">
+                        <label>拒绝理由</label>
+                        <textarea name="comment" rows="2" placeholder="请输入拒绝理由..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">确认拒绝</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('reject-form-${compensation.id}').style.display='none'">取消</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

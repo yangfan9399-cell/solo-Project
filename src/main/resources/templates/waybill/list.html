@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: body}">
+<head>
+    <title>运单管理</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="card">
+            <h3>运单列表</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>运单号</th>
+                        <th>路线</th>
+                        <th>货品</th>
+                        <th>温度范围</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="waybill : ${waybills}">
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}"></a></td>
+                        <td th:text="${waybill.origin + ' -> ' + waybill.destination}"></td>
+                        <td th:text="${waybill.productType.getDescription() + ' - ' + waybill.productName}"></td>
+                        <td th:text="${waybill.temperatureMin + '°C ~ ' + waybill.temperatureMax + '°C'}"></td>
+                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.getDescription()}"></span></td>
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">详情</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
