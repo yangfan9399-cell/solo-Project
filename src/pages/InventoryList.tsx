@@ -46,8 +46,8 @@ export default function InventoryList() {
     { key: 'createdAt', label: '登记时间' },
   ] as { key: string; label: string }[]
 
-  const rowClassName = (row: Record<string, unknown>) => {
-    const code = row.discrepancyTypeCode as string | null
+  const rowClassName = (row: unknown) => {
+    const code = (row as Record<string, unknown>).discrepancyTypeCode as string | null
     if (code === 'LOST') return 'bg-red-50'
     if (code === 'TRANSFER') return 'bg-blue-50'
     return ''
@@ -120,9 +120,9 @@ export default function InventoryList() {
       </div>
 
       <DataTable
-        data={filteredRecords as Record<string, unknown>[]}
+        data={filteredRecords}
         columns={columns}
-        onRowClick={(row) => navigate(`/inventory/${row.id}`)}
+        onRowClick={(row) => navigate(`/inventory/${(row as Record<string, unknown>).id}`)}
         rowClassName={rowClassName}
       />
     </div>

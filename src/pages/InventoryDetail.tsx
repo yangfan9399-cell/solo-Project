@@ -388,7 +388,7 @@ export default function InventoryDetail() {
                 </div>
                 <div>
                   <div className="font-medium text-gray-800">主管审批通过</div>
-                  <div className="text-sm text-gray-500">{process.supervisorApproverName} | {process.supervisorApprovedAt instanceof Date ? process.supervisorApprovedAt.toLocaleString() : process.supervisorApprovedAt}</div>
+                  <div className="text-sm text-gray-500">{process.supervisorApproverName} | {process.supervisorApprovedAt}</div>
                 </div>
               </div>
             )}

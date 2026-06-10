@@ -1,8 +1,8 @@
 interface DataTableProps {
-  data: Array<Record<string, unknown>>
+  data: Array<unknown>
   columns: Array<{ key: string; label: string }>
-  onRowClick?: (row: Record<string, unknown>) => void
-  rowClassName?: (row: Record<string, unknown>) => string
+  onRowClick?: (row: unknown) => void
+  rowClassName?: (row: unknown) => string
 }
 
 export default function DataTable({
@@ -40,7 +40,7 @@ export default function DataTable({
                   key={String(column.key)}
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                 >
-                  {String(row[column.key] ?? '')}
+                  {String((row as Record<string, unknown>)[column.key] ?? '')}
                 </td>
               ))}
             </tr>

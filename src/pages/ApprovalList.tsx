@@ -47,8 +47,8 @@ export default function ApprovalList() {
     { key: 'createdAt', label: '创建时间' },
   ] as { key: string; label: string }[]
 
-  const rowClassName = (row: Record<string, unknown>) => {
-    const status = row.status as string
+  const rowClassName = (row: unknown) => {
+    const status = (row as Record<string, unknown>).status as string
     if (status === 'pending') return 'bg-yellow-50'
     if (status === 'approved') return 'bg-green-50'
     if (status === 'rejected') return 'bg-red-50'
@@ -127,9 +127,9 @@ export default function ApprovalList() {
           </div>
 
           <DataTable
-            data={processes as Record<string, unknown>[]}
+            data={processes}
             columns={approvalColumns}
-            onRowClick={(row) => navigate(`/approval/${row.id}`)}
+            onRowClick={(row) => navigate(`/approval/${(row as Record<string, unknown>).id}`)}
             rowClassName={rowClassName}
           />
         </>

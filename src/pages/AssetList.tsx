@@ -101,9 +101,9 @@ export default function AssetList() {
       </div>
 
       <DataTable
-        data={filteredAssets as Record<string, unknown>[]}
+        data={filteredAssets}
         columns={columns}
-        onRowClick={(row) => navigate(`/assets/${row.id}`)}
+        onRowClick={(row) => navigate(`/assets/${(row as Record<string, unknown>).id}`)}
       />
     </div>
   )
