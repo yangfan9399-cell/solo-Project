@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宠物托运系统</title>
+    <title th:text="${pageTitle} ?: '宠物托运系统'">宠物托运系统</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
@@ -75,9 +75,7 @@
             <a href="/booking/statistics">数据复盘</a>
         </div>
     </div>
-    <div class="content">
-        <th:block th:fragment="content">
-        </th:block>
+    <div class="content" th:fragment="content">
     </div>
 </body>
 </html>

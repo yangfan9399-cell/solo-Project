@@ -115,6 +115,39 @@ public class BookingServiceImpl implements BookingService {
         }
         
         Crate crate = booking.getCrate();
+        Pet pet = booking.getPet();
+        
+        StringBuilder validationErrors = new StringBuilder();
+        double petWeight = pet.getWeight();
+        double crateVolume = crate.getLength() * crate.getWidth() * crate.getHeight();
+        double requiredVolume = petWeight * 3000;
+        
+        if (crateVolume < requiredVolume) {
+            validationErrors.append(String.format("箱体体积不足（当前%.0fcm³，要求至少%.0fcm³）；", crateVolume, requiredVolume));
+        }
+        
+        if (!Boolean.TRUE.equals(crate.getHasVentilation())) {
+            validationErrors.append("缺少通风口；");
+        }
+        
+        if (!Boolean.TRUE.equals(crate.getHasDripTray())) {
+            validationErrors.append("缺少接尿盘；");
+        }
+        
+        if (validationErrors.length() > 0) {
+            crate.setIsApproved(false);
+            crate.setCheckedBy(operator);
+            crate.setCheckNotes(validationErrors.toString());
+            crateRepository.save(crate);
+            
+            booking.setStatus(BookingStatus.CRATE_REJECTED);
+            bookingRepository.save(booking);
+            
+            createHistory(booking, HistoryType.CRATE_REJECTED, operator, validationErrors.toString());
+            
+            throw new IllegalStateException("航空箱不合规：" + validationErrors);
+        }
+        
         crate.setIsApproved(true);
         crate.setCheckedBy(operator);
         crateRepository.save(crate);
