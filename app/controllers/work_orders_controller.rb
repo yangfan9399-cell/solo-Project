@@ -53,6 +53,32 @@ class WorkOrdersController < ApplicationController
     end
   end
 
+  def update_status_action
+    new_status = params[:status]
+    operator = params[:operator] || '系统用户'
+    
+    if @work_order.update_status(new_status, operator, status_remark(new_status))
+      redirect_to @work_order, notice: '状态更新成功'
+    else
+      redirect_to @work_order, alert: '状态更新失败'
+    end
+  end
+
+  private
+
+  def status_remark(status)
+    case status
+    when 'pending_proof' then '提交工单等待打样'
+    when 'proof_submitted' then '提交打样'
+    when 'color_measured' then '完成色差检测'
+    when 'customer_confirmed' then '客户确认'
+    when 'rejected' then '客户拒绝'
+    when 'in_production' then '开始批量生产'
+    when 'completed' then '工单完成'
+    else nil
+    end
+  end
+
   def destroy
     @work_order.destroy
     redirect_to work_orders_url, notice: '工单已删除'

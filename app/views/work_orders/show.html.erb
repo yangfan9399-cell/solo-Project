@@ -135,8 +135,9 @@
           <div class="space-y-3">
             <% if @work_order.draft? %>
               <button onclick="submitForm('submit_form')" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">提交工单等待打样</button>
-              <form id="submit_form" action="/work_orders/<%= @work_order.id %>" method="patch" class="hidden">
-                <input type="hidden" name="work_order[status]" value="pending_proof">
+              <form id="submit_form" action="/work_orders/<%= @work_order.id %>/update_status_action" method="post" class="hidden">
+                <input type="hidden" name="status" value="pending_proof">
+                <input type="hidden" name="operator" value="<%= current_user %>">
               </form>
             <% end %>
 
@@ -216,8 +217,9 @@
 
             <% if @work_order.rejected? %>
               <button onclick="submitForm('restart_form')" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">重新打样</button>
-              <form id="restart_form" action="/work_orders/<%= @work_order.id %>" method="patch">
-                <input type="hidden" name="work_order[status]" value="pending_proof">
+              <form id="restart_form" action="/work_orders/<%= @work_order.id %>/update_status_action" method="post">
+                <input type="hidden" name="status" value="pending_proof">
+                <input type="hidden" name="operator" value="<%= current_user %>">
               </form>
             <% end %>
           </div>

@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       post :reject
       post :start_production
       post :complete
+      post :update_status_action
     end
   end
   

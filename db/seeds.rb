@@ -109,6 +109,24 @@ work_order6.work_order_histories.create!(previous_status: 'proof_submitted', cur
 work_order6.work_order_histories.create!(previous_status: 'color_measured', current_status: 'customer_confirmed', operator: '李总监', action: '客户确认', remark: '')
 work_order6.work_order_histories.create!(previous_status: 'customer_confirmed', current_status: 'in_production', operator: '郑师傅', action: '进入批量生产', remark: '')
 
+work_order7 = WorkOrder.create!(
+  customer: customer4,
+  category: '海报',
+  target_color: 'CMYK(100,60,0,0)',
+  paper_type: '铜版纸157g',
+  machine: '海德堡CD102',
+  responsible_person: '周师傅',
+  status: 'customer_confirmed',
+  remark: '客户延迟确认样本 - 确认耗时较长'
+)
+work_order7.work_order_histories.create!(previous_status: nil, current_status: 'draft', operator: '业务经办', action: '创建工单', remark: '工单创建')
+work_order7.work_order_histories.create!(previous_status: 'draft', current_status: 'pending_proof', operator: '业务经办', action: '提交工单等待打样', remark: '')
+proof7 = work_order7.proofs.create!(version: 1, submitter: '车间小李', submitted_at: 15.days.ago, status: 'measured')
+proof7.color_measurements.create!(l_value: 68.5, a_value: 52.3, b_value: 12.8, delta_e: 2.2, inspector: '质检小张', measured_at: 14.days.ago, is_qualified: true)
+work_order7.work_order_histories.create!(previous_status: 'pending_proof', current_status: 'proof_submitted', operator: '车间小李', action: '提交打样', remark: '提交打样 v1')
+work_order7.work_order_histories.create!(previous_status: 'proof_submitted', current_status: 'color_measured', operator: '质检小张', action: '完成色差检测', remark: '色差检测完成，ΔE=2.2')
+work_order7.work_order_histories.create!(previous_status: 'color_measured', current_status: 'customer_confirmed', operator: '陈设计师', action: '客户确认', remark: '', created_at: 2.days.ago)
+
 puts 'Seed data created successfully!'
 puts "#{Customer.count} customers created"
 puts "#{WorkOrder.count} work orders created"
