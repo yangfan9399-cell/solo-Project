@@ -212,9 +212,10 @@
             <button type="submit" class="btn btn-info">解冻合同（允许重新认证）</button>
         </form>
         
-        <div th:if="${!contract.isFrozen && contract.status == 'FAILED'}" style="margin: 15px 0;">
-            <h3 style="color: #856404;">重新认证补签</h3>
-            <form action="/contract/[[${contract.id}]]/reauth" method="post" style="display: inline;">
+        <div th:if="${!contract.isFrozen && contract.status == 'PENDING'}" style="margin: 15px 0;">
+            <h3 style="color: #856404;">完成签署</h3>
+            <p style="color: #666;">请选择认证方式完成签署</p>
+            <form action="/contract/[[${contract.id}]]/complete" method="post" style="display: inline;">
                 <div style="margin-bottom: 10px;">
                     <label style="display: inline-block; margin-right: 10px;">认证方式：</label>
                     <select name="authMethod" required style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
@@ -225,23 +226,9 @@
                         <option value="ALIPAY">支付宝认证</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-success">重新认证并签署</button>
+                <button type="submit" class="btn btn-success">完成签署</button>
             </form>
         </div>
-        
-        <form action="/contract/[[${contract.id}]]/complete" method="post" style="display: inline; margin-right: 10px;" th:if="${contract.status == 'PENDING'}">
-            <div style="margin-bottom: 10px;">
-                <label style="display: inline-block; margin-right: 10px;">认证方式：</label>
-                <select name="authMethod" required style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-                    <option value="SMS">短信验证</option>
-                    <option value="FACE">人脸识别</option>
-                    <option value="ID_CARD">身份证验证</option>
-                    <option value="WECHAT">微信认证</option>
-                    <option value="ALIPAY">支付宝认证</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-success">完成签署</button>
-        </form>
         
         <form action="/contract/[[${contract.id}]]/revoke" method="post" style="display: inline; margin-right: 10px;" th:if="${contract.status == 'PENDING'}">
             <div style="margin-bottom: 10px;">

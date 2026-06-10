@@ -1,6 +1,7 @@
 package com.example.contract.controller;
 
 import com.example.contract.entity.*;
+import com.example.contract.enums.AuthMethod;
 import com.example.contract.enums.ContractStatus;
 import com.example.contract.enums.FailureReason;
 import com.example.contract.repository.ContractHistoryRepository;
@@ -113,12 +114,6 @@ public class WebController {
     @PostMapping("/contract/{id}/revoke")
     public String revokeContract(@PathVariable Long id, @RequestParam String authMethod) {
         contractService.revokeContract(id, 1L, AuthMethod.valueOf(authMethod));
-        return "redirect:/contract/" + id;
-    }
-
-    @PostMapping("/contract/{id}/reauth")
-    public String reAuthenticate(@PathVariable Long id, @RequestParam String authMethod) {
-        contractService.reAuthenticate(id, 2L, AuthMethod.valueOf(authMethod));
         return "redirect:/contract/" + id;
     }
 

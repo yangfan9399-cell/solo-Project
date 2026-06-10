@@ -163,34 +163,6 @@ public class ContractService {
         });
     }
 
-    @Transactional
-    public void reAuthenticate(Long contractId, Long signerId, AuthMethod authMethod) {
-        Contract contract = contractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("合同不存在"));
-
-        if (Boolean.TRUE.equals(contract.getIsFrozen())) {
-            throw new RuntimeException("合同已冻结，无法进行重新认证");
-        }
-
-        SigningRecord record = new SigningRecord();
-        record.setContractId(contractId);
-        record.setSignerId(signerId);
-        record.setAuthMethod(authMethod);
-        record.setAuthSuccess(true);
-        record.setSigningTime(LocalDateTime.now());
-        record.setRetryCount(signingRecordRepository.countByContractId(contractId));
-        signingRecordRepository.save(record);
-
-        contract.setStatus(ContractStatus.SIGNED);
-        contract.setSignedAt(LocalDateTime.now());
-        contract.setIsFrozen(false);
-        contractRepository.save(contract);
-
-        userRepository.findById(signerId).ifPresent(signer -> {
-            addHistory(contractId, signerId, signer.getRealName(), "RE_AUTH_SUCCESS", "身份重新认证成功，签署完成");
-        });
-    }
-
     private void addHistory(Long contractId, Long operatorId, String operatorName, String action, String description) {
         ContractHistory history = new ContractHistory();
         history.setContractId(contractId);
