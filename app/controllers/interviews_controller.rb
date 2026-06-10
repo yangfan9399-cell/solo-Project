@@ -1,5 +1,5 @@
 class InterviewsController < ApplicationController
-  before_action :set_interview, only: [:show, :edit, :update, :destroy, :submit_for_review, :brand_review, :legal_review, :publish_review, :publish, :reject, :add_sensitive_item, :cover_sensitive_item, :upload_authorization]
+  before_action :set_interview, only: [:show, :edit, :update, :submit_for_review, :brand_review, :legal_review, :publish_review, :publish, :reject, :add_sensitive_item, :cover_sensitive_item, :upload_authorization]
 
   def index
     @interviews = Interview.all.order(created_at: :desc)
