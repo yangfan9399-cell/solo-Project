@@ -1,10 +1,10 @@
 package com.example.coldchain.controller;
 
 import com.example.coldchain.entity.*;
-import com.example.coldchain.enums.DisposalStatus;
 import com.example.coldchain.enums.ExceptionType;
 import com.example.coldchain.enums.ProductType;
 import com.example.coldchain.enums.WaybillStatus;
+import com.example.coldchain.repository.ExceptionRecordRepository;
 import com.example.coldchain.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,14 +22,15 @@ import java.util.stream.Collectors;
 public class DashboardController {
 
     private final WaybillService waybillService;
-    private final ExceptionService exceptionService;
+    private final ExceptionRecordRepository exceptionRecordRepository;
     private final CompensationService compensationService;
     private final DisposalService disposalService;
 
     @GetMapping
     public String dashboard(Model model) {
         List<Waybill> allWaybills = waybillService.findAll();
-        List<ExceptionRecord> allExceptions = exceptionService.findByType(null);
+        List<ExceptionRecord> allExceptions = exceptionRecordRepository.findAll();
+        List<DisposalRecord> allDisposals = disposalService.findAllDisposals();
 
         // 线路统计
         Map<String, Long> routeStats = allWaybills.stream()
@@ -48,9 +48,8 @@ public class DashboardController {
         Map<WaybillStatus, Long> statusStats = allWaybills.stream()
                 .collect(Collectors.groupingBy(Waybill::getStatus, Collectors.counting()));
 
-        // 处置时长统计
-        List<DisposalRecord> completedDisposals = disposalService.findCompletedDisposals();
-        Map<String, Long> disposalDurationStats = calculateDisposalDurationStats(completedDisposals);
+        // 处置时长统计：从异常发生到处置完成的时长
+        Map<String, Long> disposalDurationStats = calculateDisposalDurationStats(allExceptions, allDisposals);
 
         long pendingAssessments = compensationService.findPendingAssessments().size();
         long pendingReviews = compensationService.findPendingReviews().size();
@@ -69,7 +68,10 @@ public class DashboardController {
         return "dashboard/index";
     }
 
-    private Map<String, Long> calculateDisposalDurationStats(List<DisposalRecord> disposals) {
+    /**
+     * 计算处置时长：从异常发生(ExceptionRecord.exceptionTime)到处置完成(DisposalRecord.disposalTime)
+     */
+    private Map<String, Long> calculateDisposalDurationStats(List<ExceptionRecord> exceptions, List<DisposalRecord> disposals) {
         Map<String, Long> stats = new LinkedHashMap<>();
         stats.put("0-1小时", 0L);
         stats.put("1-2小时", 0L);
@@ -77,19 +79,27 @@ public class DashboardController {
         stats.put("4-8小时", 0L);
         stats.put("8小时以上", 0L);
 
+        // 按exceptionId建立关联
+        Map<Long, ExceptionRecord> exceptionMap = exceptions.stream()
+                .collect(Collectors.toMap(ExceptionRecord::getId, e -> e));
+
+        // 只统计已处置完成的异常
         for (DisposalRecord disposal : disposals) {
-            if (disposal.getDisposalTime() != null && disposal.getCreatedAt() != null) {
-                long minutes = Duration.between(disposal.getCreatedAt(), disposal.getDisposalTime()).toMinutes();
-                if (minutes <= 60) {
-                    stats.put("0-1小时", stats.get("0-1小时") + 1);
-                } else if (minutes <= 120) {
-                    stats.put("1-2小时", stats.get("1-2小时") + 1);
-                } else if (minutes <= 240) {
-                    stats.put("2-4小时", stats.get("2-4小时") + 1);
-                } else if (minutes <= 480) {
-                    stats.put("4-8小时", stats.get("4-8小时") + 1);
-                } else {
-                    stats.put("8小时以上", stats.get("8小时以上") + 1);
+            if ("COMPLETED".equals(disposal.getStatus().name()) && disposal.getDisposalTime() != null) {
+                ExceptionRecord exception = exceptionMap.get(disposal.getExceptionId());
+                if (exception != null && exception.getExceptionTime() != null) {
+                    long minutes = Duration.between(exception.getExceptionTime(), disposal.getDisposalTime()).toMinutes();
+                    if (minutes <= 60) {
+                        stats.put("0-1小时", stats.get("0-1小时") + 1);
+                    } else if (minutes <= 120) {
+                        stats.put("1-2小时", stats.get("1-2小时") + 1);
+                    } else if (minutes <= 240) {
+                        stats.put("2-4小时", stats.get("2-4小时") + 1);
+                    } else if (minutes <= 480) {
+                        stats.put("4-8小时", stats.get("4-8小时") + 1);
+                    } else {
+                        stats.put("8小时以上", stats.get("8小时以上") + 1);
+                    }
                 }
             }
         }

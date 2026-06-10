@@ -25,6 +25,10 @@ public class DisposalService {
         return disposalRecordRepository.findCompletedWithDuration();
     }
 
+    public List<DisposalRecord> findAllDisposals() {
+        return disposalRecordRepository.findAll();
+    }
+
     @Transactional
     public DisposalRecord createDisposal(Long exceptionId, Long waybillId, Long handlerId, 
                                          String handlerName, String disposalMethod) {

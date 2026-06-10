@@ -7,19 +7,19 @@
     <div th:fragment="content">
         <div class="grid">
             <div class="card stat-card">
-                <div class="number" th:text="${statusStats.get(T(com.example.coldchain.enums.WaybillStatus).IN_TRANSIT) ?: 0}">0</div>
+                <div class="number" th:text="${statusStats[T(com.example.coldchain.enums.WaybillStatus).IN_TRANSIT]?:0}">0</div>
                 <div class="label">运输中</div>
             </div>
             <div class="card stat-card">
-                <div class="number" th:text="${statusStats.get(T(com.example.coldchain.enums.WaybillStatus).EXCEPTION) ?: 0}">0</div>
+                <div class="number" th:text="${statusStats[T(com.example.coldchain.enums.WaybillStatus).EXCEPTION]?:0}">0</div>
                 <div class="label">异常运单</div>
             </div>
             <div class="card stat-card">
-                <div class="number" th:text="${pendingAssessments}">0</div>
+                <div class="number" th:text="${pendingAssessments}?:0">0</div>
                 <div class="label">待评估</div>
             </div>
             <div class="card stat-card">
-                <div class="number" th:text="${pendingReviews}">0</div>
+                <div class="number" th:text="${pendingReviews}?:0">0</div>
                 <div class="label">待复核</div>
             </div>
         </div>
@@ -39,22 +39,22 @@
                 <tbody>
                     <tr th:each="waybill : ${abnormalWaybills}">
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}">WB2024001</a></td>
-                        <td th:text="${waybill.origin + ' -> ' + waybill.destination}">北京 -> 上海</td>
+                        <td th:text="${waybill.origin}+' -> '+${waybill.destination}">北京 -> 上海</td>
                         <td th:text="${waybill.productName}">疫苗</td>
                         <td>
-                            <span th:if="${waybill.status.name() == 'EXCEPTION'}" style="color: #dc3545;" th:text="${waybill.status.description}">异常</span>
-                            <span th:if="${waybill.status.name() == 'COMPENSATION_PENDING'}" style="color: #ffc107;" th:text="${waybill.status.description}">待赔付审核</span>
+                            <span th:if="${waybill.status.name()=='EXCEPTION'}" style="color:#dc3545" th:text="${waybill.status.description}">异常</span>
+                            <span th:if="${waybill.status.name()=='COMPENSATION_PENDING'}" style="color:#ffc107" th:text="${waybill.status.description}">待赔付审核</span>
                         </td>
-                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">查看</a></td>
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px">查看</a></td>
                     </tr>
-                    <tr th:if="${#lists.isEmpty(abnormalWaybills)}">
-                        <td colspan="5" style="text-align: center; color: #999; padding: 20px;">暂无异常运单</td>
+                    <tr th:if="${abnormalWaybills==null or #lists.isEmpty(abnormalWaybills)}">
+                        <td colspan="5" style="text-align:center;color:#999;padding:20px">暂无异常运单</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
             <div class="card">
                 <h3>线路分布</h3>
                 <table>
@@ -64,8 +64,8 @@
                             <td th:text="${entry.key}">北京 -> 上海</td>
                             <td th:text="${entry.value}">1</td>
                         </tr>
-                        <tr th:if="${#maps.isEmpty(routeStats)}">
-                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        <tr th:if="${routeStats==null or #maps.isEmpty(routeStats)}">
+                            <td colspan="2" style="text-align:center;color:#999">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
@@ -79,15 +79,15 @@
                             <td th:text="${entry.key.description}">医药</td>
                             <td th:text="${entry.value}">1</td>
                         </tr>
-                        <tr th:if="${#maps.isEmpty(productTypeStats)}">
-                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        <tr th:if="${productTypeStats==null or #maps.isEmpty(productTypeStats)}">
+                            <td colspan="2" style="text-align:center;color:#999">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
             <div class="card">
                 <h3>异常原因统计</h3>
                 <table>
@@ -97,15 +97,15 @@
                             <td th:text="${entry.key.description}">温度超限</td>
                             <td th:text="${entry.value}">1</td>
                         </tr>
-                        <tr th:if="${#maps.isEmpty(exceptionTypeStats)}">
-                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        <tr th:if="${exceptionTypeStats==null or #maps.isEmpty(exceptionTypeStats)}">
+                            <td colspan="2" style="text-align:center;color:#999">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <div class="card">
                 <h3>处置时长聚合</h3>
-                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">统计异常发生到处置完成的时长</p>
+                <p style="font-size:12px;color:#666;margin-bottom:10px">统计口径：异常发生到处置完成的时长</p>
                 <table>
                     <thead><tr><th>时长区间</th><th>处置数量</th></tr></thead>
                     <tbody>
@@ -113,8 +113,8 @@
                             <td th:text="${entry.key}">0-1小时</td>
                             <td th:text="${entry.value}">0</td>
                         </tr>
-                        <tr th:if="${#maps.isEmpty(disposalDurationStats)}">
-                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        <tr th:if="${disposalDurationStats==null or #maps.isEmpty(disposalDurationStats)}">
+                            <td colspan="2" style="text-align:center;color:#999">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
