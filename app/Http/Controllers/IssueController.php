@@ -82,6 +82,15 @@ class IssueController extends Controller
         ]);
 
         $issue = InspectionIssue::findOrFail($id);
+        
+        if ($issue->status !== 'pending') {
+            return response()->json(['error' => '只能分配待整改状态的问题'], 400);
+        }
+
+        if (!Auth::user()->is_store_manager) {
+            return response()->json(['error' => '只有店长可以分配整改'], 403);
+        }
+
         $issue->update([
             'status' => 'rectifying',
             'rectifier_id' => $request->rectifier_id,
@@ -105,6 +114,14 @@ class IssueController extends Controller
 
         $issue = InspectionIssue::findOrFail($id);
         
+        if ($issue->status !== 'rectifying') {
+            return response()->json(['error' => '只能提交整改中的问题'], 400);
+        }
+
+        if ($issue->rectifier_id !== Auth::id()) {
+            return response()->json(['error' => '只有分配的整改人可以提交整改'], 403);
+        }
+
         if (!$issue->hasPhotos()) {
             return response()->json(['error' => '请先上传整改照片'], 400);
         }
@@ -132,6 +149,15 @@ class IssueController extends Controller
         ]);
 
         $issue = InspectionIssue::findOrFail($id);
+        
+        if ($issue->status !== 'rectifying') {
+            return response()->json(['error' => '只能在整改中状态上传照片'], 400);
+        }
+
+        if ($issue->rectifier_id !== Auth::id()) {
+            return response()->json(['error' => '只有分配的整改人可以上传照片'], 403);
+        }
+
         $existingPhotos = $issue->photos ?? [];
         $newPhotos = array_merge($existingPhotos, $request->photos);
         
@@ -151,6 +177,18 @@ class IssueController extends Controller
 
         $issue = InspectionIssue::findOrFail($id);
         
+        if ($issue->status !== 'reviewing') {
+            return response()->json(['error' => '只能复查待复查状态的问题'], 400);
+        }
+
+        if (!Auth::user()->is_region_manager) {
+            return response()->json(['error' => '只有区域经理可以进行复查'], 403);
+        }
+
+        if (!$issue->hasPhotos()) {
+            return response()->json(['error' => '整改照片缺失，无法进行复查'], 400);
+        }
+
         if ($request->approved) {
             $issue->update([
                 'status' => 'reviewed',
@@ -189,6 +227,15 @@ class IssueController extends Controller
         ]);
 
         $issue = InspectionIssue::findOrFail($id);
+        
+        if ($issue->status !== 'reviewed') {
+            return response()->json(['error' => '只能闭环已复查状态的问题'], 400);
+        }
+
+        if (!Auth::user()->is_operation) {
+            return response()->json(['error' => '只有运营负责人可以确认闭环'], 403);
+        }
+
         $issue->update([
             'status' => 'closed',
             'closer_id' => Auth::id(),
@@ -208,6 +255,13 @@ class IssueController extends Controller
     public function reopen($id)
     {
         $issue = InspectionIssue::findOrFail($id);
+        
+        if ($issue->status === 'closed') {
+            if (!Auth::user()->is_operation) {
+                return response()->json(['error' => '只有运营负责人可以重新打开已闭环的问题'], 403);
+            }
+        }
+
         $issue->update([
             'status' => 'pending',
             'rectifier_id' => null,

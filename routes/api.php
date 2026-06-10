@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/by-region', [DashboardController::class, 'byRegion']);
     Route::get('/dashboard/by-level', [DashboardController::class, 'byLevel']);
     Route::get('/dashboard/by-problem-type', [DashboardController::class, 'byProblemType']);
+    Route::get('/dashboard/by-cycle', [DashboardController::class, 'byCycle']);
     Route::get('/dashboard/recent-issues', [DashboardController::class, 'recentIssues']);
 
     Route::get('/users', [UserController::class, 'index']);

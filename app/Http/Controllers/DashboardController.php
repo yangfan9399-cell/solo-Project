@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function overview()
+    private function getIssueQuery()
     {
         $user = Auth::user();
         $query = InspectionIssue::query();
@@ -21,15 +21,23 @@ class DashboardController extends Controller
             $query->whereIn('store_id', $storeIds);
         }
 
+        return $query;
+    }
+
+    public function overview()
+    {
+        $baseQuery = $this->getIssueQuery();
+        $storeIds = $baseQuery->pluck('id')->toArray();
+
         $stats = [
-            'total' => $query->count(),
-            'pending' => $query->where('status', 'pending')->count(),
-            'rectifying' => $query->where('status', 'rectifying')->count(),
-            'reviewing' => $query->where('status', 'reviewing')->count(),
-            'reviewed' => $query->where('status', 'reviewed')->count(),
-            'closed' => $query->where('status', 'closed')->count(),
-            'rejected' => $query->where('status', 'rejected')->count(),
-            'overdue' => $query->where('status', '<>', 'closed')->where('deadline', '<', now())->count(),
+            'total' => InspectionIssue::whereIn('id', $storeIds)->count(),
+            'pending' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'pending')->count(),
+            'rectifying' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'rectifying')->count(),
+            'reviewing' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'reviewing')->count(),
+            'reviewed' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'reviewed')->count(),
+            'closed' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'closed')->count(),
+            'rejected' => InspectionIssue::whereIn('id', $storeIds)->where('status', 'rejected')->count(),
+            'overdue' => InspectionIssue::whereIn('id', $storeIds)->where('status', '<>', 'closed')->where('deadline', '<', now())->count(),
         ];
 
         return response()->json($stats);
@@ -50,12 +58,16 @@ class DashboardController extends Controller
             ->groupBy('region')
             ->get();
 
+        $baseQuery = $this->getIssueQuery();
+        $storeIds = $baseQuery->pluck('id')->toArray();
+
         $regionStats = [];
         foreach ($regions as $region) {
+            $regionStoreIds = Store::where('region', $region->region)->pluck('id');
             $regionStats[] = [
                 'region' => $region->region,
-                'count' => $region->count,
-                'issues' => InspectionIssue::whereIn('store_id', Store::where('region', $region->region)->pluck('id'))->count(),
+                'store_count' => $region->count,
+                'issue_count' => InspectionIssue::whereIn('id', $storeIds)->whereIn('store_id', $regionStoreIds)->count(),
             ];
         }
 
@@ -73,30 +85,58 @@ class DashboardController extends Controller
             $query->where('region_manager_id', $user->id);
         }
 
-        $levels = $query->select('level', \DB::raw('count(*) as count'))
+        $levels = $query->select('level', \DB::raw('count(*) as store_count'))
             ->groupBy('level')
             ->get();
 
-        return response()->json($levels);
+        $baseQuery = $this->getIssueQuery();
+        $storeIds = $baseQuery->pluck('id')->toArray();
+
+        $levelStats = [];
+        foreach ($levels as $level) {
+            $levelStoreIds = Store::where('level', $level->level)->pluck('id');
+            $levelStats[] = [
+                'level' => $level->level,
+                'store_count' => $level->store_count,
+                'issue_count' => InspectionIssue::whereIn('id', $storeIds)->whereIn('store_id', $levelStoreIds)->count(),
+            ];
+        }
+
+        return response()->json($levelStats);
     }
 
     public function byProblemType()
     {
-        $user = Auth::user();
-        $query = InspectionIssue::query();
+        $baseQuery = $this->getIssueQuery();
+        $storeIds = $baseQuery->pluck('id')->toArray();
 
-        if ($user->is_store_manager) {
-            $storeIds = $user->managedStores()->pluck('id');
-            $query->whereIn('store_id', $storeIds);
-        } elseif ($user->is_region_manager) {
-            $storeIds = $user->regionStores()->pluck('id');
-            $query->whereIn('store_id', $storeIds);
-        }
-
-        $stats = $query->select('problem_type_id', \DB::raw('count(*) as count'))
+        $stats = InspectionIssue::whereIn('id', $storeIds)
+            ->select('problem_type_id', \DB::raw('count(*) as count'))
             ->groupBy('problem_type_id')
             ->with('problemType')
             ->get();
+
+        return response()->json($stats);
+    }
+
+    public function byCycle()
+    {
+        $baseQuery = $this->getIssueQuery();
+        $storeIds = $baseQuery->pluck('id')->toArray();
+
+        $now = now();
+        $today = $now->startOfDay();
+        $weekAgo = $now->subWeek()->startOfDay();
+        $monthAgo = $now->subMonth()->startOfDay();
+        $quarterAgo = $now->subQuarter()->startOfDay();
+
+        $stats = [
+            'today' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $today)->count(),
+            'week' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $weekAgo)->where('created_at', '<', $today)->count(),
+            'month' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $monthAgo)->where('created_at', '<', $weekAgo)->count(),
+            'quarter' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '>=', $quarterAgo)->where('created_at', '<', $monthAgo)->count(),
+            'older' => InspectionIssue::whereIn('id', $storeIds)->where('created_at', '<', $quarterAgo)->count(),
+        ];
 
         return response()->json($stats);
     }

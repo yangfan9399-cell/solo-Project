@@ -42,7 +42,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="bg-white rounded-lg shadow p-4">
             <h3 class="font-semibold text-gray-800 mb-4">问题类型分布</h3>
             <div class="space-y-2">
@@ -57,7 +57,32 @@
             <div class="space-y-2">
               <div v-for="item in regions" :key="item.region" class="flex justify-between">
                 <span>{{ item.region }}</span>
-                <span class="font-medium">{{ item.issues }} 个问题</span>
+                <span class="font-medium">{{ item.issue_count }} 个问题</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="font-semibold text-gray-800 mb-4">整改周期分布</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>今日</span>
+                <span class="font-medium">{{ cycleStats?.today || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>本周</span>
+                <span class="font-medium">{{ cycleStats?.week || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>本月</span>
+                <span class="font-medium">{{ cycleStats?.month || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>本季度</span>
+                <span class="font-medium">{{ cycleStats?.quarter || 0 }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>更早</span>
+                <span class="font-medium">{{ cycleStats?.older || 0 }}</span>
               </div>
             </div>
           </div>
@@ -362,6 +387,7 @@ const stores = ref([]);
 const problemTypes = ref([]);
 const problemTypeList = ref([]);
 const regions = ref([]);
+const cycleStats = ref({});
 const recentIssues = ref([]);
 const users = ref([]);
 
@@ -533,6 +559,15 @@ const loadRegions = async () => {
   }
 };
 
+const loadCycleStats = async () => {
+  try {
+    const response = await window.axios.get('/api/dashboard/by-cycle');
+    cycleStats.value = response.data;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 const loadRecentIssues = async () => {
   try {
     const response = await window.axios.get('/api/dashboard/recent-issues');
@@ -657,6 +692,7 @@ onMounted(async () => {
   await loadStores();
   await loadProblemTypes();
   await loadRegions();
+  await loadCycleStats();
   await loadRecentIssues();
   await loadUsers();
 });
