@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>补充证据 - {{ appeal.penalty.order.order_no }}</h2>
+        </div>
+        <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <div style="margin-bottom: 0.5rem;"><strong>扣罚金额:</strong> ¥{{ appeal.penalty.amount }}</div>
+            <div style="margin-bottom: 0.5rem;"><strong>原申诉理由:</strong> {{ appeal.reason }}</div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>补充说明</label>
+                <textarea name="reason" placeholder="请补充证据说明"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">提交补充</button>
+            <a href="{% url 'appeal_detail' appeal.id %}" class="btn btn-secondary" style="margin-left: 1rem;">返回详情</a>
+        </form>
+    </div>
+{% endblock %}

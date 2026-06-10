@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>扣罚列表</h2>
+            <a href="{% url 'create_penalty' %}" class="btn btn-primary" style="margin-top: 1rem;">创建扣罚</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>扣罚规则</th>
+                    <th>骑手</th>
+                    <th>站点</th>
+                    <th>扣罚金额</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for penalty in penalties %}
+                <tr>
+                    <td>{{ penalty.order.order_no }}</td>
+                    <td>{{ penalty.rule.name }}</td>
+                    <td>{{ penalty.rider.user.username }}</td>
+                    <td>{{ penalty.site.name }}</td>
+                    <td>¥{{ penalty.amount }}</td>
+                    <td>
+                        {% if penalty.status == 'pending' %}
+                            <span class="badge badge-pending">待申诉</span>
+                        {% elif penalty.status == 'appealing' %}
+                            <span class="badge badge-arbitration">申诉中</span>
+                        {% elif penalty.status == 'resolved' %}
+                            <span class="badge badge-approved">已解决</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ penalty.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if penalty.status == 'pending' %}
+                            <a href="{% url 'submit_appeal' penalty.id %}" class="btn btn-sm btn-primary">申诉</a>
+                        {% else %}
+                            {% if penalty.appeal %}
+                                <a href="{% url 'appeal_detail' penalty.appeal.id %}" class="btn btn-sm btn-secondary">查看申诉</a>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

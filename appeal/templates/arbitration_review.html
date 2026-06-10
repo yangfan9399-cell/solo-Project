@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>仲裁复核 - {{ appeal.penalty.order.order_no }}</h2>
+        </div>
+        <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <div style="margin-bottom: 0.5rem;"><strong>扣罚金额:</strong> ¥{{ appeal.penalty.amount }}</div>
+            <div style="margin-bottom: 0.5rem;"><strong>扣罚规则:</strong> {{ appeal.penalty.rule.name }}</div>
+            <div style="margin-bottom: 0.5rem;"><strong>申诉理由:</strong> {{ appeal.reason }}</div>
+            <div><strong>当前状态:</strong> {{ appeal.get_status_display }}</div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>最终裁决</label>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button type="submit" name="action" value="revoke" class="btn btn-success">撤销扣罚</button>
+                    <button type="submit" name="action" value="maintain" class="btn btn-danger">维持扣罚</button>
+                    <button type="submit" name="action" value="supplement" class="btn btn-warning">要求补证</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>裁决理由</label>
+                <textarea name="comment" required placeholder="请输入裁决理由"></textarea>
+            </div>
+            <a href="{% url 'appeal_detail' appeal.id %}" class="btn btn-secondary">返回详情</a>
+        </form>
+    </div>
+{% endblock %}

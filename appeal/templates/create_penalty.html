@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>创建扣罚</h2>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>订单号</label>
+                    <select name="order_no" required>
+                        <option value="">请选择订单</option>
+                        {% for order in orders %}
+                            <option value="{{ order.order_no }}">{{ order.order_no }} - {{ order.customer_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>扣罚规则</label>
+                    <select name="rule_id" required>
+                        <option value="">请选择规则</option>
+                        {% for rule in rules %}
+                            <option value="{{ rule.id }}">{{ rule.name }} (¥{{ rule.base_amount }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>骑手</label>
+                    <select name="rider_id" required>
+                        <option value="">请选择骑手</option>
+                        {% for rider in riders %}
+                            <option value="{{ rider.id }}">{{ rider.user.username }} - {{ rider.site.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>站点</label>
+                    <select name="site_id" required>
+                        <option value="">请选择站点</option>
+                        {% for site in sites %}
+                            <option value="{{ site.id }}">{{ site.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>扣罚金额</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="请输入扣罚金额">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>扣罚描述</label>
+                <textarea name="description" placeholder="请描述扣罚原因"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">创建扣罚</button>
+            <a href="{% url 'penalty_list' %}" class="btn btn-secondary" style="margin-left: 1rem;">返回列表</a>
+        </form>
+    </div>
+{% endblock %}

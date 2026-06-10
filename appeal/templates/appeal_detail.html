@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>申诉详情 - {{ appeal.penalty.order.order_no }}</h2>
+            <div style="margin-top: 1rem;">
+                {% if appeal.status == 'pending' %}
+                    <span class="badge badge-pending">待初审</span>
+                {% elif appeal.status == 'first_review' %}
+                    <span class="badge badge-pending">初审中</span>
+                {% elif appeal.status == 'first_approved' %}
+                    <span class="badge badge-approved">初审通过</span>
+                {% elif appeal.status == 'first_rejected' %}
+                    <span class="badge badge-rejected">初审驳回</span>
+                {% elif appeal.status == 'arbitration' %}
+                    <span class="badge badge-arbitration">仲裁中</span>
+                {% elif appeal.status == 'approved' %}
+                    <span class="badge badge-approved">申诉通过</span>
+                {% elif appeal.status == 'rejected' %}
+                    <span class="badge badge-rejected">申诉驳回</span>
+                {% elif appeal.status == 'supplement' %}
+                    <span class="badge badge-supplement">待补证</span>
+                {% endif %}
+                {% if appeal.result == 'revoked' %}
+                    <span class="badge badge-approved">撤销扣罚</span>
+                {% elif appeal.result == 'maintained' %}
+                    <span class="badge badge-rejected">维持扣罚</span>
+                {% elif appeal.result == 'supplement' %}
+                    <span class="badge badge-supplement">要求补证</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="grid grid-2" style="gap: 1.5rem;">
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">订单信息</h3>
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                    <div style="margin-bottom: 0.5rem;"><strong>订单号:</strong> {{ order.order_no }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>客户:</strong> {{ order.customer_name }} ({{ order.customer_phone }})</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>地址:</strong> {{ order.address }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>订单金额:</strong> ¥{{ order.amount }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>创建时间:</strong> {{ order.create_time|date:"Y-m-d H:i:s" }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>预计送达:</strong> {{ order.expected_delivery_time|date:"Y-m-d H:i:s" }}</div>
+                    <div><strong>实际送达:</strong> {{ order.actual_delivery_time|date:"Y-m-d H:i:s"|default:"未送达" }}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">扣罚信息</h3>
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                    <div style="margin-bottom: 0.5rem;"><strong>扣罚规则:</strong> {{ penalty.rule.name }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>规则类型:</strong> {{ penalty.rule.get_rule_type_display }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>扣罚金额:</strong> <span style="color: #dc2626; font-weight: 600; font-size: 1.25rem;">¥{{ penalty.amount }}</span></div>
+                    <div style="margin-bottom: 0.5rem;"><strong>扣罚描述:</strong> {{ penalty.description }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>创建人:</strong> {{ penalty.created_by.username }}</div>
+                    <div><strong>创建时间:</strong> {{ penalty.created_at|date:"Y-m-d H:i:s" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-2" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">骑手信息</h3>
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                    <div style="margin-bottom: 0.5rem;"><strong>骑手:</strong> {{ rider.user.username }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>站点:</strong> {{ rider.site.name }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>手机号:</strong> {{ rider.phone }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>入职日期:</strong> {{ rider.join_date|date:"Y-m-d" }}</div>
+                    <div><strong>状态:</strong> {{ rider.get_status_display }}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">申诉信息</h3>
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                    <div style="margin-bottom: 0.5rem;"><strong>申诉理由:</strong></div>
+                    <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: #fff; border-radius: 0.25rem;">{{ appeal.reason }}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>申诉时间:</strong> {{ appeal.created_at|date:"Y-m-d H:i:s" }}</div>
+                    <div><strong>更新时间:</strong> {{ appeal.updated_at|date:"Y-m-d H:i:s" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        {% if trajectories.exists %}
+        <div style="margin-top: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">轨迹数据
+                {% if is_location_drift %}
+                    <button 
+                        hx-post="{% url 'recalculate_trajectory' appeal.id %}"
+                        hx-target="#trajectory-container"
+                        hx-swap="innerHTML"
+                        class="btn btn-sm btn-warning"
+                        style="margin-left: 1rem;"
+                    >
+                        轨迹重算
+                    </button>
+                {% endif %}
+            </h3>
+            <div id="trajectory-container" style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 0.5rem; text-align: left; background: #fff;">时间</th>
+                            <th style="padding: 0.5rem; text-align: left; background: #fff;">纬度</th>
+                            <th style="padding: 0.5rem; text-align: left; background: #fff;">经度</th>
+                            <th style="padding: 0.5rem; text-align: left; background: #fff;">精度(m)</th>
+                            <th style="padding: 0.5rem; text-align: left; background: #fff;">重算状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for traj in trajectories %}
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 0.5rem;">{{ traj.timestamp|date:"Y-m-d H:i:s" }}</td>
+                            <td style="padding: 0.5rem;">{{ traj.latitude }}</td>
+                            <td style="padding: 0.5rem;">{{ traj.longitude }}</td>
+                            <td style="padding: 0.5rem;">{{ traj.accuracy }}</td>
+                            <td style="padding: 0.5rem;">
+                                {% if traj.is_recalculated %}
+                                    <span class="badge badge-approved">已重算</span>
+                                {% else %}
+                                    <span class="badge badge-pending">原始数据</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if chat_evidences.exists %}
+        <div style="margin-top: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">聊天证据</h3>
+            <div style="background: #f9fafb; padding: 1rem; border-radius: 0.5rem;">
+                {% for chat in chat_evidences %}
+                    <div class="chat-message {% if chat.direction == 'in' %}in{% else %}out{% endif %}">
+                        <div>
+                            <div class="bubble">{{ chat.content }}</div>
+                            <div class="sender">{{ chat.sender }} · {{ chat.timestamp|date:"H:i" }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 1.5rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">历史节点</h3>
+            <div class="timeline">
+                {% for item in history %}
+                    <div class="timeline-item">
+                        <div class="timeline-title">{{ item.get_action_display }}</div>
+                        <div class="timeline-time">{{ item.created_at|date:"Y-m-d H:i:s" }}</div>
+                        <div style="margin-bottom: 0.25rem;"><strong>操作人:</strong> {{ item.operator.username }}</div>
+                        {% if item.comment %}
+                            <div class="timeline-comment">{{ item.comment }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">操作</h3>
+            <div style="display: flex; gap: 1rem;">
+                {% if appeal.status == 'pending' %}
+                    <a href="{% url 'first_review' appeal.id %}" class="btn btn-primary">站长初审</a>
+                {% elif appeal.status == 'first_approved' %}
+                    <a href="{% url 'arbitration_review' appeal.id %}" class="btn btn-warning">仲裁复核</a>
+                {% elif appeal.status == 'supplement' %}
+                    <a href="{% url 'resubmit_evidence' appeal.id %}" class="btn btn-success">补充证据</a>
+                {% elif appeal.status == 'arbitration' %}
+                    <a href="{% url 'arbitration_review' appeal.id %}" class="btn btn-warning">仲裁复核</a>
+                {% endif %}
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+        <div class="stats-card">
+            <div class="value">{{ total_appeals }}</div>
+            <div class="label">总申诉数</div>
+        </div>
+        <div class="stats-card">
+            <div class="value">{{ pending_count }}</div>
+            <div class="label">待处理</div>
+        </div>
+        <div class="stats-card">
+            <div class="value">
+                {% if avg_duration %}
+                    {{ avg_duration.days }}天{{ avg_duration.seconds//3600 }}小时
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="label">平均处理时长</div>
+        </div>
+        <div class="stats-card">
+            <div class="value">{{ completed_count }}</div>
+            <div class="label">已完成</div>
+        </div>
+    </div>
+    
+    <div class="grid grid-2" style="gap: 1.5rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2>按站点统计</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for site in sites %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem;">
+                        <span>{{ site.name }}</span>
+                        <span style="font-weight: 600;">{{ site.appeal_count }} 件</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>按规则类型统计</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for rule in rules %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem;">
+                        <span>{{ rule.get_rule_type_display }}</span>
+                        <span style="font-weight: 600;">{{ rule.appeal_count }} 件</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>按申诉状态统计</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for status in status_counts %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem;">
+                        <span>
+                            {% if status.status == 'pending' %}待初审
+                            {% elif status.status == 'first_review' %}初审中
+                            {% elif status.status == 'first_approved' %}初审通过
+                            {% elif status.status == 'first_rejected' %}初审驳回
+                            {% elif status.status == 'arbitration' %}仲裁中
+                            {% elif status.status == 'approved' %}申诉通过
+                            {% elif status.status == 'rejected' %}申诉驳回
+                            {% elif status.status == 'supplement' %}待补证
+                            {% else %}{{ status.status }}{% endif %}
+                        </span>
+                        <span style="font-weight: 600;">{{ status.count }} 件</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>按申诉结果统计</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% for result in result_counts %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem;">
+                        <span>
+                            {% if result.result == 'revoked' %}撤销扣罚
+                            {% elif result.result == 'maintained' %}维持扣罚
+                            {% elif result.result == 'supplement' %}要求补证
+                            {% else %}待处理{% endif %}
+                        </span>
+                        <span style="font-weight: 600;">{{ result.count }} 件</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
