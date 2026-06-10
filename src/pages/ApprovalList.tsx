@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, CheckCircle, XCircle, Clock } from 'lucide-react'
-import { getDisposalProcesses, getAccountabilityRecords, type DisposalProcess, type AccountabilityRecord } from '../data/mockData'
+import { FileText, CheckCircle, XCircle, Clock, Edit, X } from 'lucide-react'
+import { getDisposalProcesses, getAccountabilityRecords, updateAccountabilityRecord, type DisposalProcess, type AccountabilityRecord } from '../data/mockData'
 import DataTable from '../components/DataTable'
 
 export default function ApprovalList() {
@@ -9,6 +9,10 @@ export default function ApprovalList() {
   const [accountabilityList, setAccountabilityList] = useState<AccountabilityRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'approval' | 'accountability'>('approval')
+  const [showModal, setShowModal] = useState(false)
+  const [selectedRecord, setSelectedRecord] = useState<AccountabilityRecord | null>(null)
+  const [investigationResult, setInvestigationResult] = useState('')
+  const [compensationAmount, setCompensationAmount] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function ApprovalList() {
     { key: 'compensationAmount', label: '赔偿金额' },
     { key: 'status', label: '状态' },
     { key: 'createdAt', label: '创建时间' },
+    { key: 'actions', label: '操作' },
   ] as { key: string; label: string }[]
 
   const rowClassName = (row: unknown) => {
@@ -53,6 +58,50 @@ export default function ApprovalList() {
     if (status === 'approved') return 'bg-green-50'
     if (status === 'rejected') return 'bg-red-50'
     return ''
+  }
+
+  const formatAccountabilityRow = (record: AccountabilityRecord) => ({
+    ...record,
+    actions: record.status === 'pending' ? (
+      <button
+        onClick={() => handleEditAccountability(record)}
+        className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        <Edit className="w-4 h-4" />
+        处理
+      </button>
+    ) : (
+      <span className="text-green-600 text-sm">已完成</span>
+    ),
+  })
+
+  const handleEditAccountability = (record: AccountabilityRecord) => {
+    setSelectedRecord(record)
+    setInvestigationResult(record.investigationResult || '')
+    setCompensationAmount(record.compensationAmount || '')
+    setShowModal(true)
+  }
+
+  const handleSubmitAccountability = async () => {
+    if (!selectedRecord) return
+
+    try {
+      await updateAccountabilityRecord(selectedRecord.id, {
+        investigationResult: investigationResult || null,
+        compensationAmount: compensationAmount || null,
+        status: investigationResult ? 'completed' : 'pending',
+      })
+
+      const updatedRecords = await getAccountabilityRecords()
+      setAccountabilityList(updatedRecords)
+      setShowModal(false)
+      setSelectedRecord(null)
+      setInvestigationResult('')
+      setCompensationAmount('')
+    } catch (error) {
+      console.error('更新追责记录失败:', error)
+      alert('更新追责记录失败')
+    }
   }
 
   if (loading) {
@@ -129,7 +178,7 @@ export default function ApprovalList() {
           <DataTable
             data={processes}
             columns={approvalColumns}
-            onRowClick={(row) => navigate(`/approval/${(row as Record<string, unknown>).id}`)}
+            onRowClick={(row) => navigate(`/inventory/${(row as Record<string, unknown>).inventoryRecordId}`)}
             rowClassName={rowClassName}
           />
         </>
@@ -148,10 +197,76 @@ export default function ApprovalList() {
           </div>
 
           <DataTable
-            data={accountabilityList}
+            data={accountabilityList.map(formatAccountabilityRow)}
             columns={accountabilityColumns}
           />
         </>
+      )}
+
+      {showModal && selectedRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">处理追责记录</h2>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-6 h-6 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-sm text-gray-500 mb-2">资产信息</div>
+                <div className="font-medium">{selectedRecord.assetNo} - {selectedRecord.assetName}</div>
+                <div className="text-sm text-gray-500">账面价值: ¥{selectedRecord.assetBookValue}</div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-sm text-gray-500 mb-2">责任人</div>
+                <div className="font-medium">{selectedRecord.responsibleUserName}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">调查结果</label>
+                <textarea
+                  rows={3}
+                  value={investigationResult}
+                  onChange={(e) => setInvestigationResult(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="请输入调查结果..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">赔偿金额</label>
+                <input
+                  type="number"
+                  value={compensationAmount}
+                  onChange={(e) => setCompensationAmount(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="请输入赔偿金额"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSubmitAccountability}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  提交处理
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

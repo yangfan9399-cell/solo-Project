@@ -534,6 +534,92 @@ export async function getDisposalProcessById(inventoryRecordId: number): Promise
   return mockDisposalProcesses.find(p => p.inventoryRecordId === inventoryRecordId) || null
 }
 
+export async function createInventoryRecord(data: {
+  assetId: number
+  inventoryDate: string
+  discrepancyTypeId: number | null
+  actualStatus: string | null
+  actualLocation: string | null
+  actualUser: string | null
+  remarks: string | null
+  recorderName: string
+}): Promise<InventoryRecord> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  const asset = mockAssets.find(a => a.id === data.assetId)
+  const discrepancyType = mockDiscrepancyTypes.find(d => d.id === data.discrepancyTypeId)
+  
+  const newRecord: InventoryRecord = {
+    id: mockInventoryRecords.length + 1,
+    assetId: data.assetId,
+    inventoryDate: data.inventoryDate,
+    discrepancyTypeId: data.discrepancyTypeId,
+    actualStatus: data.actualStatus,
+    actualLocation: data.actualLocation,
+    actualUser: data.actualUser,
+    photoUrl: null,
+    remarks: data.remarks,
+    recorderName: data.recorderName,
+    createdAt: new Date().toLocaleString(),
+    assetNo: asset?.assetNo || '',
+    assetName: asset?.name || '',
+    discrepancyTypeName: discrepancyType?.name || null,
+    discrepancyTypeCode: discrepancyType?.code || null,
+    assetUser: asset?.userName || null,
+    assetLocation: asset?.location || null,
+    assetBookValue: asset?.bookValue || null,
+    departmentName: asset?.departmentName || undefined,
+    categoryName: asset?.categoryName || undefined,
+  }
+  
+  mockInventoryRecords.push(newRecord)
+  
+  if (data.discrepancyTypeId === 2) {
+    await createAccountabilityRecord({
+      inventoryRecordId: newRecord.id,
+      responsibleUserId: asset?.userName ? `U${asset.userName}` : 'UNKNOWN',
+      responsibleUserName: asset?.userName || '未知',
+    })
+  }
+  
+  return newRecord
+}
+
+export async function createAccountabilityRecord(data: {
+  inventoryRecordId: number
+  responsibleUserId: string
+  responsibleUserName: string
+}): Promise<AccountabilityRecord> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  
+  const inventoryRecord = mockInventoryRecords.find(r => r.id === data.inventoryRecordId)
+  
+  const newRecord: AccountabilityRecord = {
+    id: mockAccountabilityRecords.length + 1,
+    inventoryRecordId: data.inventoryRecordId,
+    responsibleUserId: data.responsibleUserId,
+    responsibleUserName: data.responsibleUserName,
+    investigationResult: null,
+    compensationAmount: null,
+    status: 'pending',
+    createdAt: new Date().toLocaleString(),
+    assetName: inventoryRecord?.assetName || null,
+    assetNo: inventoryRecord?.assetNo || null,
+    assetBookValue: inventoryRecord?.assetBookValue || null,
+  }
+  
+  mockAccountabilityRecords.push(newRecord)
+  return newRecord
+}
+
+export async function updateAccountabilityRecord(id: number, data: Partial<AccountabilityRecord>): Promise<AccountabilityRecord | null> {
+  await new Promise(resolve => setTimeout(resolve, 200))
+  const index = mockAccountabilityRecords.findIndex(r => r.id === id)
+  if (index === -1) return null
+  mockAccountabilityRecords[index] = { ...mockAccountabilityRecords[index], ...data }
+  return mockAccountabilityRecords[index]
+}
+
 export async function createDisposalProcess(data: { inventoryRecordId: number; processType: string }): Promise<DisposalProcess> {
   await new Promise(resolve => setTimeout(resolve, 200))
   const newProcess: DisposalProcess = {
