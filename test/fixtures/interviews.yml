@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  title: MyString
+  content: MyString
+  status: 1
+  publish_date: 2026-06-10 21:16:08
+  channel: 1
+  user: one
+  respondent: one
+
+two:
+  title: MyString
+  content: MyString
+  status: 1
+  publish_date: 2026-06-10 21:16:08
+  channel: 1
+  user: two
+  respondent: two

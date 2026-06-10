@@ -1,0 +1,76 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">复盘统计</h1>
+      <a href="<%= interviews_path %>" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">返回列表</a>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">按发布渠道统计</h2>
+        <div class="space-y-3">
+          <% @by_channel.each do |channel, count| %>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600"><%= channel_label(channel) %></span>
+              <span class="font-medium"><%= count %> 篇</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">按受访者类型统计</h2>
+        <div class="space-y-3">
+          <% @by_respondent_type.each do |type, count| %>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600"><%= respondent_type_label(type) %></span>
+              <span class="font-medium"><%= count %> 篇</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">按状态统计</h2>
+        <div class="space-y-3">
+          <% @by_status.each do |status, count| %>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600"><%= status_label(status) %></span>
+              <span class="font-medium"><%= count %> 篇</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">审核时长统计</h2>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">平均审核时长</span>
+            <span class="font-medium"><%= @avg_review_duration ? "#{@avg_review_duration.round(2)} 小时" : '无数据' %></span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600">已完成审核</span>
+            <span class="font-medium"><%= @completed_interviews.count %> 篇</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">退回原因统计</h2>
+      <div class="space-y-3">
+        <% if @rejected_reasons.present? %>
+          <% @rejected_reasons.each do |reason, count| %>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span class="text-gray-600"><%= reason.presence || '未填写原因' %></span>
+              <span class="font-medium"><%= count %> 次</span>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-gray-500 text-center py-4">暂无退回记录</div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

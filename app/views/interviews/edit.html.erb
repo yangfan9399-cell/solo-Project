@@ -1,0 +1,51 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">编辑访谈稿</h1>
+      <div class="flex gap-2">
+        <a href="<%= interview_path(@interview) %>" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">查看</a>
+        <a href="<%= interviews_path %>" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">返回列表</a>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <%= form_with model: @interview do |f| %>
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">标题</label>
+            <%= f.text_field :title, class: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500' %>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">受访者</label>
+            <%= f.select :respondent_id, @respondents.map { |r| [r.name, r.id] }, { prompt: '请选择受访者' }, class: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500' %>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">发布渠道</label>
+            <%= f.select :channel, Interview.channels.map { |k, v| [channel_label(k), k] }, class: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500' %>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">发布日期</label>
+            <%= f.date_field :publish_date, class: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500' %>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">访谈内容</label>
+            <%= f.text_area :content, rows: 10, class: 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500' %>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">修改备注</label>
+            <textarea name="comment" rows="3" placeholder="请简要说明修改内容" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+          </div>
+
+          <div class="flex gap-4">
+            <%= f.submit '保存修改', class: 'px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

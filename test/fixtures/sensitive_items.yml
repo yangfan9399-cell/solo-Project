@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  interview: one
+  content: MyString
+  position: MyString
+  start_index: 1
+  end_index: 1
+  covered: false
+
+two:
+  interview: two
+  content: MyString
+  position: MyString
+  start_index: 1
+  end_index: 1
+  covered: false
