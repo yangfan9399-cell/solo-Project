@@ -6,6 +6,7 @@ import { Badge, StatusBadge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 import { Timeline } from "~/components/ui/Timeline";
 import { prisma } from "~/db/db.server";
+import type { ApplicationWithRelations, EquipmentHandover, ApplicationHistory } from "~/types";
 
 export const loader: LoaderFunction = async ({ params }) => {
   const application = await prisma.borrowApplication.findUnique({
@@ -133,7 +134,7 @@ export default function ApplicationDetail() {
           <CardBody>
             {application.handovers.length > 0 ? (
               <div className="space-y-2">
-                {application.handovers.map((handover, idx) => (
+                {application.handovers.map((handover: EquipmentHandover, idx: number) => (
                   <div key={idx} className="flex items-center justify-between py-2 border-b last:border-b-0">
                     <span className="text-sm text-gray-900">{handover.equipmentName}</span>
                     <Badge variant="success">x{handover.quantity}</Badge>
@@ -253,8 +254,8 @@ export default function ApplicationDetail() {
         </CardHeader>
         <CardBody>
           <Timeline
-            items={application.history.map((item, idx) => ({
-              id: item.id,
+            items={application.history.map((item: ApplicationHistory, idx: number) => ({
+              id: String(item.id),
               title: formatAction(item.action),
               description: item.note,
               timestamp: new Date(item.timestamp).toLocaleString("zh-CN"),

@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 import { prisma } from "~/db/db.server";
+import type { ApplicationWithRelations, Classroom } from "~/types";
 
 export const loader: LoaderFunction = async ({ params }) => {
   const application = await prisma.borrowApplication.findUnique({
@@ -33,7 +34,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     },
   });
 
-  let alternatives: any[] = [];
+  let alternatives: (Classroom & { campus: { name: string } })[] = [];
   if (conflict) {
     alternatives = await prisma.classroom.findMany({
       where: {
@@ -44,7 +45,7 @@ export const loader: LoaderFunction = async ({ params }) => {
       include: { campus: true },
     });
 
-    const availableAlternatives = [];
+    const availableAlternatives: (Classroom & { campus: { name: string } })[] = [];
     for (const alt of alternatives) {
       const altConflict = await prisma.borrowApplication.findFirst({
         where: {
@@ -180,7 +181,7 @@ export default function ApproveApplication() {
                 以下同校区同类型教室在此时段可用：
               </p>
               <div className="space-y-2">
-                {alternatives.map((alt) => (
+                {alternatives.map((alt: Classroom & { campus: { name: string } }) => (
                   <div key={alt.id} className="bg-white rounded p-3 border border-blue-200">
                     <div className="flex items-center justify-between">
                       <div>

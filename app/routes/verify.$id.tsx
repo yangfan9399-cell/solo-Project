@@ -5,6 +5,7 @@ import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
 import { Badge } from "~/components/ui/Badge";
 import { prisma } from "~/db/db.server";
+import type { ApplicationWithRelations, EquipmentHandover } from "~/types";
 
 export const loader: LoaderFunction = async ({ params }) => {
   const application = await prisma.borrowApplication.findUnique({
@@ -140,7 +141,7 @@ export default function VerifyApplication() {
           </CardHeader>
           <CardBody>
             <div className="space-y-2">
-              {application.handovers.map((handover, idx) => (
+              {application.handovers.map((handover: EquipmentHandover, idx: number) => (
                 <div key={idx} className="flex items-center justify-between py-2 border-b last:border-b-0">
                   <span className="text-sm text-gray-900">{handover.equipmentName}</span>
                   <Badge variant="info">x{handover.quantity}</Badge>
@@ -156,7 +157,7 @@ export default function VerifyApplication() {
           </CardHeader>
           <CardBody>
             <div className="space-y-2">
-              {application.handovers.map((handover, idx) => (
+              {application.handovers.map((handover: EquipmentHandover, idx: number) => (
                 <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <span className="text-sm text-gray-900">{handover.equipmentName}</span>
                   <Badge variant="success">已归还</Badge>

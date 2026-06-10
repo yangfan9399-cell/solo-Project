@@ -4,6 +4,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Badge, StatusBadge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
+import type { ApplicationWithRelations } from "~/types";
 
 export const loader: LoaderFunction = async () => {
   const { prisma } = await import("~/db/db.server");
@@ -64,7 +65,7 @@ export default function Admin() {
             </CardBody>
           </Card>
         ) : (
-          pendingApplications.map((app) => (
+          pendingApplications.map((app: ApplicationWithRelations) => (
             <Card key={app.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">

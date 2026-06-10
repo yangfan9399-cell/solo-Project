@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Badge } from "~/components/ui/Badge";
+import type { ApplicationWithRelations, EquipmentWithClassroom } from "~/types";
 
 export const loader: LoaderFunction = async () => {
   const { prisma } = await import("~/db/db.server");
@@ -44,7 +45,7 @@ export default function Equipment() {
               <p className="text-center text-gray-500 py-8">暂无待交接申请</p>
             ) : (
               <div className="space-y-4">
-                {approvedApplications.map((app) => (
+                {approvedApplications.map((app: ApplicationWithRelations) => (
                   <div
                     key={app.id}
                     className="p-4 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors"
@@ -80,7 +81,7 @@ export default function Equipment() {
           </CardHeader>
           <CardBody>
             <div className="space-y-3">
-              {equipment.map((eq) => (
+              {equipment.map((eq: EquipmentWithClassroom) => (
                 <div
                   key={eq.id}
                   className="flex items-center justify-between p-3 rounded-lg border border-gray-200"

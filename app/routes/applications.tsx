@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, CardFooter } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
 import { Badge, StatusBadge } from "~/components/ui/Badge";
 import { prisma } from "~/db/db.server";
+import type { CampusWithClassrooms, ApplicationWithRelations, Classroom } from "~/types";
 
 export const loader: LoaderFunction = async () => {
   const [campuses, applications] = await Promise.all([
@@ -78,7 +79,7 @@ export default function Applications() {
   const [selectedCampus, setSelectedCampus] = useState<number | null>(null);
   const isSubmitting = navigation.state === "submitting";
 
-  const filteredApplications = applications.filter((app) => {
+  const filteredApplications = applications.filter((app: ApplicationWithRelations) => {
     if (!selectedCampus) return true;
     return app.classroom.campusId === selectedCampus;
   });
@@ -121,7 +122,7 @@ export default function Applications() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="">选择校区</option>
-                    {campuses.map((campus) => (
+                    {campuses.map((campus: CampusWithClassrooms) => (
                       <option key={campus.id} value={campus.id}>
                         {campus.name}
                       </option>
@@ -141,8 +142,8 @@ export default function Applications() {
                     <option value="">选择教室</option>
                     {selectedCampus &&
                       campuses
-                        .find((c) => c.id === selectedCampus)
-                        ?.classrooms.map((classroom) => (
+                        .find((c: CampusWithClassrooms) => c.id === selectedCampus)
+                        ?.classrooms.map((classroom: Classroom) => (
                           <option key={classroom.id} value={classroom.id}>
                             {classroom.name} ({classroom.type}, {classroom.capacity}人)
                           </option>
@@ -207,7 +208,7 @@ export default function Applications() {
                   className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">全部校区</option>
-                  {campuses.map((campus) => (
+                  {campuses.map((campus: CampusWithClassrooms) => (
                     <option key={campus.id} value={campus.id}>
                       {campus.name}
                     </option>
@@ -217,7 +218,7 @@ export default function Applications() {
             </CardHeader>
             <CardBody>
               <div className="space-y-4">
-                {filteredApplications.map((app) => (
+                {filteredApplications.map((app: ApplicationWithRelations) => (
                   <a
                     key={app.id}
                     href={`/applications/${app.id}`}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Button } from "~/components/ui/Button";
 import { prisma } from "~/db/db.server";
+import type { ApplicationWithRelations, Equipment } from "~/types";
 
 export const loader: LoaderFunction = async ({ params }) => {
   const application = await prisma.borrowApplication.findUnique({
@@ -74,7 +75,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   await prisma.borrowApplication.update({
     where: { id: params.id },
-    data: { status: "IN_USE" },
+    data: { status: "RETURN_PENDING" },
   });
 
   await prisma.applicationHistory.create({
@@ -90,10 +91,10 @@ export const action: ActionFunction = async ({ request, params }) => {
   await prisma.applicationHistory.create({
     data: {
       applicationId: params.id!,
-      action: "IN_USE",
+      action: "RETURN_PENDING",
       actor: "系统",
       timestamp: new Date(),
-      note: "设备已交接，开始使用",
+      note: "设备已交接，待归还核验",
     },
   });
 
@@ -172,7 +173,7 @@ export default function EquipmentHandover() {
               </div>
 
               <div className="space-y-3">
-                {equipment.map((eq) => (
+                {equipment.map((eq: Equipment) => (
                   <div
                     key={eq.id}
                     className={`p-4 rounded-lg border-2 transition-colors ${

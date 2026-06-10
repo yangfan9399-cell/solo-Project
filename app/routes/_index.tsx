@@ -4,6 +4,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Badge } from "~/components/ui/Badge";
 import { prisma } from "~/db/db.server";
+import type { ApplicationWithRelations } from "~/types";
 
 export const loader: LoaderFunction = async () => {
   const [
@@ -134,7 +135,7 @@ export default function Index() {
           </CardHeader>
           <CardBody>
             <div className="space-y-4">
-              {recentApplications.map((app) => (
+              {recentApplications.map((app: ApplicationWithRelations) => (
                 <Link
                   key={app.id}
                   to={`/applications/${app.id}`}

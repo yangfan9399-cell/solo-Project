@@ -3,6 +3,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { Card, CardBody, CardHeader } from "~/components/ui/Card";
 import { Badge } from "~/components/ui/Badge";
+import type { ApplicationWithRelations, EquipmentHandover } from "~/types";
 
 export const loader: LoaderFunction = async () => {
   const { prisma } = await import("~/db/db.server");
@@ -65,7 +66,7 @@ export default function Verify() {
             </CardBody>
           </Card>
         ) : (
-          returnPendingApplications.map((app) => (
+          returnPendingApplications.map((app: ApplicationWithRelations) => (
             <Card key={app.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -91,7 +92,7 @@ export default function Verify() {
                   <div className="col-span-2">
                     <p className="text-sm text-gray-600">交接设备</p>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {app.handovers.map((handover, idx) => (
+                      {(app.handovers || []).map((handover: EquipmentHandover, idx: number) => (
                         <Badge key={idx} variant="info">
                           {handover.equipmentName} x{handover.quantity}
                         </Badge>
