@@ -78,8 +78,12 @@
       </div>
 
       <div class="bg-white rounded-lg shadow p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">确认时长统计</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">确认时长统计（按打样提交到客户确认）</h3>
         <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-700">统计工单数</span>
+            <span class="font-medium text-gray-800"><%= @confirmation_count %> 单</span>
+          </div>
           <div class="flex justify-between items-center">
             <span class="text-gray-700">平均确认时长</span>
             <span class="font-medium text-blue-600"><%= @avg_confirmation_days %> 天</span>

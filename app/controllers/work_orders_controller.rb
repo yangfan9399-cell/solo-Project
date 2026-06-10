@@ -1,5 +1,5 @@
 class WorkOrdersController < ApplicationController
-  before_action :set_work_order, only: [:show, :edit, :update, :destroy, :submit_proof, :measure_color, :confirm, :reject, :start_production, :complete]
+  before_action :set_work_order, only: [:show, :edit, :update, :destroy, :submit_proof, :measure_color, :confirm, :reject, :start_production, :complete, :update_status_action]
 
   def index
     @work_orders = WorkOrder.includes(:customer, :proofs).order(created_at: :desc)
@@ -50,32 +50,6 @@ class WorkOrdersController < ApplicationController
     else
       @customers = Customer.all
       render :edit
-    end
-  end
-
-  def update_status_action
-    new_status = params[:status]
-    operator = params[:operator] || '系统用户'
-    
-    if @work_order.update_status(new_status, operator, status_remark(new_status))
-      redirect_to @work_order, notice: '状态更新成功'
-    else
-      redirect_to @work_order, alert: '状态更新失败'
-    end
-  end
-
-  private
-
-  def status_remark(status)
-    case status
-    when 'pending_proof' then '提交工单等待打样'
-    when 'proof_submitted' then '提交打样'
-    when 'color_measured' then '完成色差检测'
-    when 'customer_confirmed' then '客户确认'
-    when 'rejected' then '客户拒绝'
-    when 'in_production' then '开始批量生产'
-    when 'completed' then '工单完成'
-    else nil
     end
   end
 
@@ -157,6 +131,17 @@ class WorkOrdersController < ApplicationController
     end
   end
 
+  def update_status_action
+    new_status = params[:status]
+    operator = params[:operator] || '系统用户'
+    
+    if @work_order.update_status(new_status, operator, status_remark(new_status))
+      redirect_to @work_order, notice: '状态更新成功'
+    else
+      redirect_to @work_order, alert: '状态更新失败'
+    end
+  end
+
   private
 
   def set_work_order
@@ -176,5 +161,18 @@ class WorkOrdersController < ApplicationController
 
   def current_operator
     params[:operator] || '系统用户'
+  end
+
+  def status_remark(status)
+    case status
+    when 'pending_proof' then '提交工单等待打样'
+    when 'proof_submitted' then '提交打样'
+    when 'color_measured' then '完成色差检测'
+    when 'customer_confirmed' then '客户确认'
+    when 'rejected' then '客户拒绝'
+    when 'in_production' then '开始批量生产'
+    when 'completed' then '工单完成'
+    else nil
+    end
   end
 end
