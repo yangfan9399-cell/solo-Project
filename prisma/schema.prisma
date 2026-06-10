@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Campus {
+  id         Int         @id @default(autoincrement())
+  name       String
+  location   String
+  classrooms Classroom[]
+}
+
+model Classroom {
+  id           Int                @id @default(autoincrement())
+  name         String
+  campusId     Int
+  campus       Campus             @relation(fields: [campusId], references: [id])
+  type         String
+  capacity     Int
+  equipment    Equipment[]
+  applications BorrowApplication[]
+}
+
+model Equipment {
+  id           Int       @id @default(autoincrement())
+  name         String
+  classroomId  Int
+  classroom    Classroom @relation(fields: [classroomId], references: [id])
+  status       String    @default("AVAILABLE")
+  quantity     Int       @default(1)
+}
+
+model BorrowApplication {
+  id            String               @id @default(cuid())
+  classroomId   Int
+  classroom     Classroom            @relation(fields: [classroomId], references: [id])
+  applicantName String
+  startTime     DateTime
+  endTime       DateTime
+  purpose       String
+  status        String               @default("PENDING")
+  createdAt     DateTime             @default(now())
+  handovers     EquipmentHandover[]
+  verification  ReturnVerification?
+  history       ApplicationHistory[]
+}
+
+model EquipmentHandover {
+  id            Int               @id @default(autoincrement())
+  applicationId String
+  application   BorrowApplication @relation(fields: [applicationId], references: [id])
+  equipmentName String
+  quantity      Int
+  handoverTime  DateTime
+  handlerName   String
+}
+
+model ReturnVerification {
+  id             Int               @id @default(autoincrement())
+  applicationId  String            @unique
+  application    BorrowApplication @relation(fields: [applicationId], references: [id])
+  cleaningStatus String            @default("PENDING")
+  cleaningPhoto  String?
+  abnormalReason String?
+  verifierName   String
+  verifiedAt     DateTime
+}
+
+model ApplicationHistory {
+  id            Int               @id @default(autoincrement())
+  applicationId String
+  application   BorrowApplication @relation(fields: [applicationId], references: [id])
+  action        String
+  actor         String
+  timestamp     DateTime          @default(now())
+  note          String?
+}
