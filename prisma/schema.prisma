@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Resident {
+  id            String     @id @default(cuid())
+  name          String
+  idCardNumber  String     @unique
+  phone         String
+  address       String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  houses        House[]
+  agreements    Agreement[]
+}
+
+model House {
+  id              String      @id @default(cuid())
+  houseNumber     String
+  area            Float
+  buildingType    String
+  location        String
+  district        String
+  residentId      String
+  resident        Resident    @relation(fields: [residentId], references: [id])
+  evaluations     Evaluation[]
+  agreements      Agreement[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Agreement {
+  id                  String             @id @default(cuid())
+  agreementNo         String             @unique
+  houseId             String
+  house               House              @relation(fields: [houseId], references: [id])
+  residentId          String
+  resident            Resident           @relation(fields: [residentId], references: [id])
+  signingDate         DateTime
+  status              AgreementStatus    @default(PENDING)
+  totalCompensation   Float
+  paymentStatus       PaymentStatus      @default(UNPAID)
+  frozen              Boolean            @default(false)
+  freezeReason        String?
+  handlerId           String
+  handlerName         String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  evaluation          Evaluation?
+  acceptance          Acceptance?
+  compensation        Compensation?
+  historyNodes        HistoryNode[]
+}
+
+model Evaluation {
+  id              String          @id @default(cuid())
+  agreementId     String
+  agreement       Agreement       @relation(fields: [agreementId], references: [id])
+  evaluatorId     String
+  evaluatorName   String
+  grossArea       Float
+  netArea         Float
+  unitPrice       Float
+  totalAmount     Float
+  status          EvaluationStatus @default(PENDING)
+  disputeReason   String?
+  reviewed        Boolean         @default(false)
+  reviewResult    String?
+  reviewDate      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Acceptance {
+  id              String            @id @default(cuid())
+  agreementId     String
+  agreement       Agreement         @relation(fields: [agreementId], references: [id])
+  inspectorId     String
+  inspectorName   String
+  checkDate       DateTime
+  status          AcceptanceStatus  @default(PENDING)
+  remarks         String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Compensation {
+  id              String              @id @default(cuid())
+  agreementId     String
+  agreement       Agreement           @relation(fields: [agreementId], references: [id])
+  reviewerId      String
+  reviewerName    String
+  reviewDate      DateTime
+  amount          Float
+  status          CompensationStatus  @default(PENDING)
+  paymentDate     DateTime?
+  remarks         String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model HistoryNode {
+  id              String          @id @default(cuid())
+  agreementId     String
+  agreement       Agreement       @relation(fields: [agreementId], references: [id])
+  nodeType        NodeType
+  operatorId      String
+  operatorName    String
+  timestamp       DateTime        @default(now())
+  remarks         String?
+}
+
+enum AgreementStatus {
+  PENDING
+  SIGNED
+  EVALUATED
+  ACCEPTED
+  COMPENSATED
+  DISPUTED
+  REVIEWING
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  FROZEN
+}
+
+enum EvaluationStatus {
+  PENDING
+  CONFIRMED
+  DISPUTED
+  REVIEWED
+}
+
+enum AcceptanceStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum CompensationStatus {
+  PENDING
+  REVIEWED
+  APPROVED
+  PAID
+}
+
+enum NodeType {
+  AGREEMENT_REGISTERED
+  AGREEMENT_SIGNED
+  EVALUATION_CONFIRMED
+  AREA_DISPUTE
+  ACCEPTANCE_PASSED
+  ACCEPTANCE_FAILED
+  COMPENSATION_REVIEWED
+  COMPENSATION_APPROVED
+  COMPENSATION_PAID
+  FROZEN
+  REVIEW_REQUESTED
+}
