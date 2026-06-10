@@ -1,0 +1,259 @@
+<div class="min-h-screen bg-gray-50">
+  <nav class="bg-blue-600 text-white px-6 py-4">
+    <div class="flex justify-between items-center">
+      <h1 class="text-xl font-bold">印刷厂工单打样系统</h1>
+      <div class="flex space-x-4">
+        <a href="/work_orders" class="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800">工单列表</a>
+        <a href="/statistics" class="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800">统计分析</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+      <a href="/work_orders" class="text-blue-600 hover:text-blue-800 mb-4 block">返回列表</a>
+      <h2 class="text-2xl font-bold text-gray-800">工单 #<%= @work_order.id %></h2>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">工单信息</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-gray-500 text-sm">客户</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.customer&.name %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">品类</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.category %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">目标色值</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.target_color %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">纸张类型</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.paper_type %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">机台</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.machine %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">责任人</span>
+              <p class="text-gray-800 font-medium"><%= @work_order.responsible_person %></p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">状态</span>
+              <p class="text-gray-800 font-medium">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= status_color(@work_order.status) %>">
+                  <%= status_label(@work_order.status) %>
+                </span>
+              </p>
+            </div>
+            <div>
+              <span class="text-gray-500 text-sm">打样版本</span>
+              <p class="text-gray-800 font-medium">v<%= @work_order.latest_proof&.version || 0 %></p>
+            </div>
+          </div>
+          <% if @work_order.remark.present? %>
+            <div class="mt-4">
+              <span class="text-gray-500 text-sm">备注</span>
+              <p class="text-gray-800"><%= @work_order.remark %></p>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">色差检测记录</h3>
+          <% if @work_order.latest_proof&.color_measurements&.any? %>
+            <table class="min-w-full">
+              <thead>
+                <tr class="border-b">
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">L值</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">a值</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">b值</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">ΔE</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">结果</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">检测人</th>
+                  <th class="text-left py-2 px-4 text-sm text-gray-500">检测时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @work_order.latest_proof.color_measurements.order(measured_at: :desc).each do |measurement| %>
+                  <tr class="border-b">
+                    <td class="py-2 px-4"><%= measurement.l_value %></td>
+                    <td class="py-2 px-4"><%= measurement.a_value %></td>
+                    <td class="py-2 px-4"><%= measurement.b_value %></td>
+                    <td class="py-2 px-4"><span class="font-medium <%= measurement.delta_e_color %>"><%= measurement.delta_e %> (<%= measurement.delta_e_level %>)</span></td>
+                    <td class="py-2 px-4"><span class="font-medium <%= measurement.status_color %>"><%= measurement.status_label %></span></td>
+                    <td class="py-2 px-4"><%= measurement.inspector %></td>
+                    <td class="py-2 px-4"><%= measurement.measured_at&.strftime('%Y-%m-%d %H:%M') %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="text-gray-500">暂无检测记录</p>
+          <% end %>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">历史节点</h3>
+          <div class="relative">
+            <div class="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            <% @history.each do |h| %>
+              <div class="relative pl-8 pb-6 last:pb-0">
+                <div class="absolute left-1 top-0 w-4 h-4 rounded-full bg-blue-600 border-2 border-white"></div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="flex justify-between items-start mb-1">
+                    <span class="font-medium text-gray-800"><%= h.action %></span>
+                    <span class="text-xs text-gray-500"><%= h.created_at&.strftime('%Y-%m-%d %H:%M') %></span>
+                  </div>
+                  <div class="text-sm text-gray-600 mb-1">
+                    <% if h.previous_status %>
+                      <span class="text-gray-400"><%= h.previous_status_label %></span>
+                      <span class="mx-2">→</span>
+                    <% end %>
+                    <span class="<%= status_color(h.current_status) %>"><%= h.current_status_label %></span>
+                  </div>
+                  <div class="text-sm text-gray-500">操作人: <%= h.operator %></div>
+                  <% if h.remark.present? %>
+                    <div class="text-sm text-gray-600 mt-1">备注: <%= h.remark %></div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">操作</h3>
+          <div class="space-y-3">
+            <% if @work_order.draft? %>
+              <button onclick="submitForm('submit_form')" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">提交工单等待打样</button>
+              <form id="submit_form" action="/work_orders/<%= @work_order.id %>" method="patch" class="hidden">
+                <input type="hidden" name="work_order[status]" value="pending_proof">
+              </form>
+            <% end %>
+
+            <% if @work_order.pending_proof? %>
+              <button onclick="submitForm('proof_form')" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">提交打样</button>
+              <form id="proof_form" action="/work_orders/<%= @work_order.id %>/submit_proof" method="post">
+                <input type="hidden" name="operator" value="<%= current_user %>">
+              </form>
+            <% end %>
+
+            <% if @work_order.proof_submitted? %>
+              <div class="border-t pt-3">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">色差检测</h4>
+                <form action="/work_orders/<%= @work_order.id %>/measure_color" method="post" class="space-y-2">
+                  <input type="hidden" name="operator" value="<%= current_user %>">
+                  <div>
+                    <label class="text-xs text-gray-500">L值</label>
+                    <input type="number" step="0.01" name="color_measurement[l_value]" class="w-full border rounded px-2 py-1 text-sm" required>
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500">a值</label>
+                    <input type="number" step="0.01" name="color_measurement[a_value]" class="w-full border rounded px-2 py-1 text-sm" required>
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500">b值</label>
+                    <input type="number" step="0.01" name="color_measurement[b_value]" class="w-full border rounded px-2 py-1 text-sm" required>
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500">ΔE</label>
+                    <input type="number" step="0.01" name="color_measurement[delta_e]" class="w-full border rounded px-2 py-1 text-sm" required>
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-500">备注</label>
+                    <textarea name="color_measurement[remark]" class="w-full border rounded px-2 py-1 text-sm"></textarea>
+                  </div>
+                  <button type="submit" class="w-full bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700">提交检测结果</button>
+                </form>
+              </div>
+            <% end %>
+
+            <% if @work_order.color_measured? %>
+              <button onclick="submitForm('confirm_form')" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">客户确认</button>
+              <form id="confirm_form" action="/work_orders/<%= @work_order.id %>/confirm" method="post">
+                <input type="hidden" name="operator" value="<%= current_user %>">
+              </form>
+
+              <div class="border-t pt-3">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">客户拒绝</h4>
+                <form action="/work_orders/<%= @work_order.id %>/reject" method="post" class="space-y-2">
+                  <input type="hidden" name="operator" value="<%= current_user %>">
+                  <select name="reject_reason" class="w-full border rounded px-2 py-1 text-sm">
+                    <option value="色差超标">色差超标</option>
+                    <option value="纸张替换">纸张替换</option>
+                    <option value="设计变更">设计变更</option>
+                    <option value="其他">其他</option>
+                  </select>
+                  <button type="submit" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">拒绝并返工</button>
+                </form>
+              </div>
+            <% end %>
+
+            <% if @work_order.customer_confirmed? %>
+              <button onclick="submitForm('production_form')" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 <%= @work_order.has_color_deviation? ? 'opacity-50 cursor-not-allowed' : '' %>" <%= @work_order.has_color_deviation? ? 'disabled' : '' %>>
+                <%= @work_order.has_color_deviation? ? '色差超标，禁止投产' : '开始批量生产' %>
+              </button>
+              <form id="production_form" action="/work_orders/<%= @work_order.id %>/start_production" method="post">
+                <input type="hidden" name="operator" value="<%= current_user %>">
+              </form>
+            <% end %>
+
+            <% if @work_order.in_production? %>
+              <button onclick="submitForm('complete_form')" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">完成工单</button>
+              <form id="complete_form" action="/work_orders/<%= @work_order.id %>/complete" method="post">
+                <input type="hidden" name="operator" value="<%= current_user %>">
+              </form>
+            <% end %>
+
+            <% if @work_order.rejected? %>
+              <button onclick="submitForm('restart_form')" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">重新打样</button>
+              <form id="restart_form" action="/work_orders/<%= @work_order.id %>" method="patch">
+                <input type="hidden" name="work_order[status]" value="pending_proof">
+              </form>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">色差预警</h3>
+          <% if @work_order.has_color_deviation? %>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-red-700 font-medium">色差超标警告</span>
+              </div>
+              <p class="text-sm text-red-600 mt-2">当前色差 ΔE=<%= @work_order.latest_color_measurement&.delta_e %>，超过合格标准，禁止进入批量生产</p>
+            </div>
+          <% else %>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="text-green-700 font-medium">色差检测合格</span>
+              </div>
+              <p class="text-sm text-green-600 mt-2">当前色差 ΔE=<%= @work_order.latest_color_measurement&.delta_e || '未检测' %>，符合标准</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function submitForm(formId) {
+    document.getElementById(formId).submit();
+  }
+</script>

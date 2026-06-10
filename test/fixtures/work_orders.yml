@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  customer: one
+  category: MyString
+  target_color: MyString
+  paper_type: MyString
+  status: MyString
+  machine: MyString
+  responsible_person: MyString
+  remark: MyText
+
+two:
+  customer: two
+  category: MyString
+  target_color: MyString
+  paper_type: MyString
+  status: MyString
+  machine: MyString
+  responsible_person: MyString
+  remark: MyText

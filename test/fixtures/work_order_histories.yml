@@ -1,0 +1,19 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  work_order: one
+  previous_status: MyString
+  current_status: MyString
+  operator: MyString
+  action: MyString
+  remark: MyText
+  created_at: 2026-06-10 16:24:25
+
+two:
+  work_order: two
+  previous_status: MyString
+  current_status: MyString
+  operator: MyString
+  action: MyString
+  remark: MyText
+  created_at: 2026-06-10 16:24:25

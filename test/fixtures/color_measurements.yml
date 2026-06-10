@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  proof: one
+  l_value: 9.99
+  a_value: 9.99
+  b_value: 9.99
+  delta_e: 9.99
+  measured_at: 2026-06-10 16:24:13
+  inspector: MyString
+  is_qualified: false
+  remark: MyText
+
+two:
+  proof: two
+  l_value: 9.99
+  a_value: 9.99
+  b_value: 9.99
+  delta_e: 9.99
+  measured_at: 2026-06-10 16:24:13
+  inspector: MyString
+  is_qualified: false
+  remark: MyText
