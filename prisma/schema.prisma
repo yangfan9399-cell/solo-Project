@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  STATION_STAFF
+  CUSTOMER_SERVICE
+  DUTY_MANAGER
+  AUDITOR
+}
+
+enum ItemStatus {
+  FOUND
+  CLAIMED
+  VERIFIED
+  RETURNED
+  TRANSFERRED
+  ARCHIVED
+  EXPIRED
+}
+
+enum ItemCategory {
+  ELECTRONICS
+  DOCUMENTS
+  BAGS
+  CLOTHING
+  JEWELRY
+  WALLET
+  OTHER
+}
+
+model User {
+  id        String  @id @default(cuid())
+  name      String
+  role      Role
+  username  String  @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LostItem {
+  id              String        @id @default(cuid())
+  name            String
+  category        ItemCategory
+  description     String
+  foundLocation   String
+  lockerNumber    String
+  isValuable      Boolean       @default(false)
+  estimatedValue  Float?
+  foundAt         DateTime      @default(now())
+  expiresAt       DateTime
+  status          ItemStatus    @default(FOUND)
+  foundBy         String
+  foundByUserId   String
+  foundByUser     User          @relation(fields: [foundByUserId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  claimRequests   ClaimRequest[]
+  history         HistoryRecord[]
+}
+
+model ClaimRequest {
+  id                String          @id @default(cuid())
+  itemId            String
+  item              LostItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimantName      String
+  claimantPhone     String
+  claimantIdCard    String
+  relationshipProof String?
+  description       String
+  claimedAt         DateTime        @default(now())
+  verified          Boolean         @default(false)
+  verificationNote  String?
+  verifiedBy        String?
+  verifiedAt        DateTime?
+  
+  history           HistoryRecord[]
+}
+
+model HistoryRecord {
+  id                String          @id @default(cuid())
+  itemId            String
+  item              LostItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimRequestId    String?
+  claimRequest      ClaimRequest?   @relation(fields: [claimRequestId], references: [id])
+  action            String
+  operatorName      String
+  operatorUserId    String
+  operatorUser      User            @relation(fields: [operatorUserId], references: [id])
+  notes             String?
+  timestamp         DateTime        @default(now())
+}
