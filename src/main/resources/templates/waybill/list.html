@@ -20,11 +20,18 @@
                 </thead>
                 <tbody>
                     <tr th:each="waybill : ${waybills}">
-                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}"></a></td>
-                        <td th:text="${waybill.origin + ' -> ' + waybill.destination}"></td>
-                        <td th:text="${waybill.productType.description + ' - ' + waybill.productName}"></td>
-                        <td th:text="${waybill.temperatureMin + '°C ~ ' + waybill.temperatureMax + '°C'}"></td>
-                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.description}"></span></td>
+                        <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}">WB2024001</a></td>
+                        <td th:text="${waybill.origin + ' -> ' + waybill.destination}">北京 -> 上海</td>
+                        <td th:text="${waybill.productType.description + ' - ' + waybill.productName}">医药 - 疫苗</td>
+                        <td th:text="${waybill.temperatureMin + '°C ~ ' + waybill.temperatureMax + '°C'}">2°C ~ 8°C</td>
+                        <td>
+                            <span th:if="${waybill.status.name() == 'EXCEPTION'}" style="color: #dc3545;" th:text="${waybill.status.description}">异常</span>
+                            <span th:if="${waybill.status.name() == 'COMPENSATION_PENDING'}" style="color: #ffc107;" th:text="${waybill.status.description}">待赔付审核</span>
+                            <span th:if="${waybill.status.name() == 'SIGNED'}" style="color: #28a745;" th:text="${waybill.status.description}">已签收</span>
+                            <span th:if="${waybill.status.name() == 'IN_TRANSIT'}" style="color: #4a90d9;" th:text="${waybill.status.description}">运输中</span>
+                            <span th:if="${waybill.status.name() == 'PENDING'}" style="color: #6c757d;" th:text="${waybill.status.description}">待运输</span>
+                            <span th:if="${waybill.status.name() == 'ARRIVED'}" style="color: #17a2b8;" th:text="${waybill.status.description}">已到达</span>
+                        </td>
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">详情</a></td>
                     </tr>
                 </tbody>
