@@ -1,0 +1,40 @@
+<table style="width: 100%;">
+    <thead>
+        <tr>
+            <th style="padding: 0.5rem; text-align: left; background: #fff;">时间</th>
+            <th style="padding: 0.5rem; text-align: left; background: #fff;">纬度</th>
+            <th style="padding: 0.5rem; text-align: left; background: #fff;">经度</th>
+            <th style="padding: 0.5rem; text-align: left; background: #fff;">精度(m)</th>
+            <th style="padding: 0.5rem; text-align: left; background: #fff;">重算状态</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for traj in trajectories %}
+        <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 0.5rem;">{{ traj.timestamp|date:"Y-m-d H:i:s" }}</td>
+            <td style="padding: 0.5rem;">{{ traj.latitude }}</td>
+            <td style="padding: 0.5rem;">{{ traj.longitude }}</td>
+            <td style="padding: 0.5rem;">{{ traj.accuracy }}</td>
+            <td style="padding: 0.5rem;">
+                {% if traj.is_recalculated %}
+                    <span class="badge badge-approved">已重算</span>
+                {% else %}
+                    <span class="badge badge-pending">原始数据</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div id="history-container" hx-swap-oob="innerHTML">
+    {% for item in history %}
+        <div class="timeline-item">
+            <div class="timeline-title">{{ item.get_action_display }}</div>
+            <div class="timeline-time">{{ item.created_at|date:"Y-m-d H:i:s" }}</div>
+            <div style="margin-bottom: 0.25rem;"><strong>操作人:</strong> {{ item.operator.username }}</div>
+            {% if item.comment %}
+                <div class="timeline-comment">{{ item.comment }}</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>

@@ -73,7 +73,7 @@ def create_penalty(request):
             status='pending'
         )
         
-        return JsonResponse({'success': True, 'penalty_id': penalty.id})
+        return redirect('penalty_list')
     else:
         orders = Order.objects.all()
         rules = PenaltyRule.objects.filter(is_active=True)
@@ -86,6 +86,7 @@ def submit_appeal(request, penalty_id):
     penalty = get_object_or_404(Penalty, id=penalty_id)
     if request.method == 'POST':
         reason = request.POST['reason']
+        evidence_description = request.POST.get('evidence_description', '')
         
         appeal = Appeal.objects.create(
             penalty=penalty,
@@ -100,6 +101,23 @@ def submit_appeal(request, penalty_id):
             operator=request.user,
             comment=reason
         )
+        
+        if request.FILES.getlist('evidence_files'):
+            for file in request.FILES.getlist('evidence_files'):
+                file_ext = file.name.split('.')[-1].lower()
+                if file_ext in ['jpg', 'jpeg', 'png', 'gif']:
+                    evidence_type = 'image'
+                elif file_ext in ['mp4', 'mov', 'avi', 'mkv']:
+                    evidence_type = 'video'
+                else:
+                    evidence_type = 'other'
+                
+                Evidence.objects.create(
+                    appeal=appeal,
+                    file=file,
+                    evidence_type=evidence_type,
+                    description=evidence_description
+                )
         
         penalty.status = 'appealing'
         penalty.save()
@@ -231,27 +249,48 @@ def recalculate_trajectory(request, appeal_id):
         comment='系统已重新计算定位轨迹'
     )
     
-    return JsonResponse({'success': True, 'message': '轨迹重算完成'})
+    trajectories = Trajectory.objects.filter(rider=appeal.rider, order=penalty.order).order_by('timestamp')
+    history = appeal.history.all().order_by('created_at')
+    
+    return render(request, 'trajectory_table.html', {
+        'trajectories': trajectories,
+        'history': history,
+        'appeal_id': appeal.id
+    })
 
 @login_required
 def kanban(request):
-    sites = Site.objects.annotate(appeal_count=Count('appeal__penalty')).all()
-    rules = PenaltyRule.objects.annotate(appeal_count=Count('penalty__appeal')).all()
+    sites = Site.objects.all()
+    site_stats = []
+    for site in sites:
+        appeal_count = Appeal.objects.filter(rider__site=site).count()
+        site_stats.append({'site': site, 'appeal_count': appeal_count})
+    
+    rules = PenaltyRule.objects.all()
+    rule_stats = []
+    for rule in rules:
+        appeal_count = Appeal.objects.filter(penalty__rule=rule).count()
+        rule_stats.append({'rule': rule, 'appeal_count': appeal_count})
+    
     status_counts = Appeal.objects.values('status').annotate(count=Count('id'))
     result_counts = Appeal.objects.values('result').annotate(count=Count('id'))
     
-    duration = ExpressionWrapper(timezone.now() - F('created_at'), output_field=DurationField())
-    avg_duration = Appeal.objects.aggregate(avg_duration=duration.avg)
+    completed_appeals = Appeal.objects.filter(status__in=['approved', 'rejected'])
+    avg_duration = None
+    if completed_appeals.exists():
+        duration = ExpressionWrapper(timezone.now() - F('created_at'), output_field=DurationField())
+        avg_duration_result = completed_appeals.aggregate(avg_duration=duration.avg)
+        avg_duration = avg_duration_result['avg_duration']
     
     context = {
-        'sites': sites,
-        'rules': rules,
+        'site_stats': site_stats,
+        'rule_stats': rule_stats,
         'status_counts': status_counts,
         'result_counts': result_counts,
-        'avg_duration': avg_duration['avg_duration'],
+        'avg_duration': avg_duration,
         'total_appeals': Appeal.objects.count(),
         'pending_count': Appeal.objects.filter(status__in=['pending', 'first_review', 'arbitration']).count(),
-        'completed_count': Appeal.objects.filter(status__in=['approved', 'rejected']).count()
+        'completed_count': completed_appeals.count()
     }
     return render(request, 'kanban.html', context)
 

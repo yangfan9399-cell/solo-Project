@@ -148,7 +148,7 @@
         
         <div style="margin-top: 1.5rem;">
             <h3 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #374151;">历史节点</h3>
-            <div class="timeline">
+            <div class="timeline" id="history-container">
                 {% for item in history %}
                     <div class="timeline-item">
                         <div class="timeline-title">{{ item.get_action_display }}</div>

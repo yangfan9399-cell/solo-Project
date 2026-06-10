@@ -11,11 +11,27 @@
             <div style="margin-bottom: 0.5rem;"><strong>扣罚金额:</strong> ¥{{ penalty.amount }}</div>
             <div><strong>扣罚描述:</strong> {{ penalty.description }}</div>
         </div>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group">
                 <label>申诉理由</label>
                 <textarea name="reason" required placeholder="请详细描述申诉理由"></textarea>
+            </div>
+            <div class="form-group">
+                <label>证据上传</label>
+                <div style="border: 2px dashed #d1d5db; border-radius: 0.5rem; padding: 2rem; text-align: center;">
+                    <input type="file" name="evidence_files" multiple accept="image/*,video/*" style="display: none;" id="evidence-upload">
+                    <label for="evidence-upload" style="cursor: pointer; color: #2563eb; font-weight: 500;">
+                        点击选择文件或拖拽到此处
+                    </label>
+                    <div style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+                        支持图片、视频格式，可多选
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>证据说明</label>
+                <textarea name="evidence_description" placeholder="请简要说明所上传证据的内容"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">提交申诉</button>
             <a href="{% url 'penalty_list' %}" class="btn btn-secondary" style="margin-left: 1rem;">返回</a>
