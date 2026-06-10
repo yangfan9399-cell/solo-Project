@@ -123,6 +123,12 @@ public class WebController {
         return "redirect:/contract/" + id;
     }
 
+    @PostMapping("/contract/{id}/reauth")
+    public String reAuthenticate(@PathVariable Long id, @RequestParam String authMethod) {
+        contractService.reAuthenticate(id, 2L, AuthMethod.valueOf(authMethod));
+        return "redirect:/contract/" + id;
+    }
+
     @GetMapping("/legal/review")
     public String legalReviewList(Model model) {
         List<LegalReview> reviews = legalReviewService.getReviewsByStatus("PENDING");
