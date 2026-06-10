@@ -50,6 +50,7 @@
                 </div>
 
                 <form th:action="@{/packages/{id}/inventory(id=${package.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="mb-3">
                         <label class="form-label">应到数量</label>
                         <input type="text" class="form-control" th:value="${expectedQuantity}" readonly>

@@ -92,9 +92,10 @@
                                th:href="@{/packages/{id}/issue(id=${instrumentPackage.id})}" 
                                class="btn btn-success">发放器械包</a>
                             
-                            <form th:if="${instrumentPackage.status == 'ISSUED'}" 
-                                  th:action="@{/packages/{id}/return(id=${instrumentPackage.id})}" 
+                            <form th:if="${instrumentPackage.status == 'ISSUED'}"
+                                  th:action="@{/packages/{id}/return(id=${instrumentPackage.id})}"
                                   method="post" class="d-grid">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                 <button type="submit" class="btn btn-secondary">退回器械包</button>
                             </form>
                         </div>

@@ -3,43 +3,34 @@
 ## 系统要求
 - JDK 17+ 或 JDK 21
 - PostgreSQL 12+
-- Maven 3.8+
+- Maven 3.8+ 或 Gradle 8+
 
-## 数据库设置
-1. 创建 PostgreSQL 数据库：
-```sql
-CREATE DATABASE instrument_db;
-```
+## 快速启动（Docker 推荐）
 
-2. 修改 `src/main/resources/application.yml` 中的数据库连接信息：
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/instrument_db
-    username: postgres
-    password: your_password
-```
-
-## 运行方式
-
-### 方式一：Maven Wrapper（推荐）
+### 一键启动（包含数据库）
 ```bash
-# Linux/macOS
-./mvnw spring-boot:run
-
-# Windows
-mvnw.cmd spring-boot:run
+docker-compose up --build
 ```
 
-### 方式二：传统 Maven
-```bash
-mvn clean compile spring-boot:run
-```
+等待启动完成后访问：http://localhost:8080/
 
-### 方式三：打包后运行
+## 手动部署
+
+### 方式一：Maven
 ```bash
 mvn clean package -DskipTests
 java -jar target/instrument-trace-1.0.0.jar
+```
+
+### 方式二：Gradle
+```bash
+gradle build
+java -jar build/libs/instrument-trace-1.0.0.jar
+```
+
+### 方式三：直接运行
+```bash
+mvn spring-boot:run
 ```
 
 ## 访问地址

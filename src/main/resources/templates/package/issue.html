@@ -32,6 +32,7 @@
                 </div>
 
                 <form th:action="@{/packages/{id}/issue(id=${package.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="mb-3">
                         <label class="form-label">领用科室 *</label>
                         <input type="text" name="department" class="form-control" required>

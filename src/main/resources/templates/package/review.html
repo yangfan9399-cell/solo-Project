@@ -32,6 +32,7 @@
                 </div>
 
                 <form th:action="@{/packages/{id}/review(id=${package.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="mb-3">
                         <label class="form-label">复核结果 *</label>
                         <div class="form-check">
