@@ -124,45 +124,79 @@
     <% when 'pending_verification' %>
       <%= form_with(url: verify_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
         <div>
+          <%= label_tag :guard_id, "门岗", class: "block text-sm font-medium text-gray-700" %>
+          <%= select_tag :guard_id,
+            options_from_collection_for_select(@guards, :id, :name),
+            { prompt: "选择门岗", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+        </div>
+        <div class="flex-1">
           <%= label_tag :license_plate, "输入车牌号进行核验", class: "block text-sm font-medium text-gray-700" %>
           <%= text_field_tag :license_plate, nil, placeholder: "请输入车牌号",
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
         </div>
         <%= submit_tag "核验", class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700" %>
       <% end %>
 
     <% when 'pending_approval' %>
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <%= form_with(url: approve_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
-            <div>
-              <%= label_tag :entrance_id, "选择入口", class: "block text-sm font-medium text-gray-700" %>
-              <%= select_tag :entrance_id,
-                options_from_collection_for_select(@entrances, :id, :name, @visit_record.reservation.entrance_id),
-                class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
-            </div>
-            <%= submit_tag "批准放行", class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" %>
-          <% end %>
+      <div class="space-y-4">
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <%= form_with(url: approve_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+              <div>
+                <%= label_tag :supervisor_id, "审批主管", class: "block text-sm font-medium text-gray-700" %>
+                <%= select_tag :supervisor_id,
+                  options_from_collection_for_select(@security_supervisors, :id, :name),
+                  { prompt: "选择主管", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+              </div>
+              <div>
+                <%= label_tag :entrance_id, "入口", class: "block text-sm font-medium text-gray-700" %>
+                <%= select_tag :entrance_id,
+                  options_from_collection_for_select(@entrances, :id, :name, @visit_record.reservation.entrance_id),
+                  class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
+              </div>
+              <div>
+                <%= label_tag :guard_id, "门岗", class: "block text-sm font-medium text-gray-700" %>
+                <%= select_tag :guard_id,
+                  options_from_collection_for_select(@guards, :id, :name),
+                  { prompt: "选择门岗", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+              </div>
+              <%= submit_tag "批准放行", class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" %>
+            <% end %>
+          </div>
         </div>
-        <div class="flex-1">
-          <%= form_with(url: block_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
-            <div class="flex-1">
-              <%= label_tag :blocking_reason, "拦截原因", class: "block text-sm font-medium text-gray-700" %>
-              <%= text_field_tag :blocking_reason, nil, placeholder: "请输入拦截原因",
-                class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
-            </div>
-            <%= submit_tag "拦截车辆", class: "bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" %>
-          <% end %>
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <%= form_with(url: block_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
+              <div>
+                <%= label_tag :supervisor_id, "审批主管", class: "block text-sm font-medium text-gray-700" %>
+                <%= select_tag :supervisor_id,
+                  options_from_collection_for_select(@security_supervisors, :id, :name),
+                  { prompt: "选择主管", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+              </div>
+              <div class="flex-1">
+                <%= label_tag :blocking_reason, "拦截原因", class: "block text-sm font-medium text-gray-700" %>
+                <%= text_field_tag :blocking_reason, nil, placeholder: "请输入拦截原因",
+                  class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true %>
+              </div>
+              <%= submit_tag "拦截车辆", class: "bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700" %>
+            <% end %>
+          </div>
         </div>
       </div>
 
     <% when 'entered' %>
       <%= form_with(url: record_exit_visit_record_path(@visit_record), method: :post, class: "flex gap-4 items-end") do %>
         <div>
-          <%= label_tag :exit_entrance_id, "选择出口", class: "block text-sm font-medium text-gray-700" %>
+          <%= label_tag :exit_entrance_id, "出口", class: "block text-sm font-medium text-gray-700" %>
           <%= select_tag :exit_entrance_id,
             options_from_collection_for_select(@entrances, :id, :name),
-            class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" %>
+            { prompt: "选择出口", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
+        </div>
+        <div>
+          <%= label_tag :guard_id, "门岗", class: "block text-sm font-medium text-gray-700" %>
+          <%= select_tag :guard_id,
+            options_from_collection_for_select(@guards, :id, :name),
+            { prompt: "选择门岗", class: "mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3", required: true } %>
         </div>
         <%= submit_tag "确认离园", class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700" %>
       <% end %>

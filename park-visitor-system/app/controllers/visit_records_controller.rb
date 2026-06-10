@@ -2,6 +2,7 @@ class VisitRecordsController < ApplicationController
   before_action :set_visit_record, only: [:show, :verify, :approve, :block, :record_entry, :record_exit]
   before_action :set_entrances, only: [:show, :record_entry, :record_exit]
   before_action :set_security_supervisors, only: [:show, :approve, :block]
+  before_action :set_guards, only: [:show, :verify, :approve, :record_entry, :record_exit]
 
   def index
     @visit_records = VisitRecord.includes(
@@ -30,9 +31,10 @@ class VisitRecordsController < ApplicationController
   end
 
   def verify
+    guard = current_guard
     result = GateVerificationService.new(@visit_record).verify(
       license_plate: params[:license_plate],
-      guard_id: current_guard_id
+      guard: guard
     )
 
     if result[:success]
@@ -46,30 +48,33 @@ class VisitRecordsController < ApplicationController
     license_plate = @visit_record.reservation.vehicle.license_plate
 
     if Blacklist.is_blacklisted?(license_plate)
+      supervisor = current_supervisor || current_guard
       @visit_record.block!(
-        supervisor_id: current_supervisor_id,
+        supervisor: supervisor,
         blocking_reason: "该车辆在黑名单中"
       )
       redirect_to @visit_record, alert: '该车辆在黑名单中，已自动拦截'
       return
     end
 
-    if @visit_record.may_approve?
-      @visit_record.approve!(supervisor_id: current_supervisor_id)
-      @visit_record.record_entry!(
-        entrance_id: params[:entrance_id] || @visit_record.reservation.entrance_id,
-        guard_id: current_guard_id
-      )
+    supervisor = current_supervisor
+    entrance = current_entrance
+    guard = current_guard
+
+    if @visit_record.may_approve? && supervisor && entrance && guard
+      @visit_record.approve!(supervisor: supervisor, entrance: entrance, guard: guard)
       redirect_to @visit_record, notice: '已批准放行'
     else
-      redirect_to @visit_record, alert: '无法批准'
+      redirect_to @visit_record, alert: '无法批准，请检查参数'
     end
   end
 
   def block
-    if @visit_record.may_block?
+    supervisor = current_supervisor || current_guard
+
+    if @visit_record.may_block? && supervisor
       @visit_record.block!(
-        supervisor_id: current_supervisor_id,
+        supervisor: supervisor,
         blocking_reason: params[:blocking_reason]
       )
       redirect_to @visit_record, notice: '已拦截车辆'
@@ -79,11 +84,11 @@ class VisitRecordsController < ApplicationController
   end
 
   def record_entry
-    if @visit_record.may_enter?
-      @visit_record.record_entry!(
-        entrance_id: params[:entrance_id],
-        guard_id: current_guard_id
-      )
+    entrance = current_entrance
+    guard = current_guard
+
+    if @visit_record.may_enter? && entrance && guard
+      @visit_record.record_entry!(entrance: entrance, guard: guard)
       redirect_to @visit_record, notice: '已记录入园'
     else
       redirect_to @visit_record, alert: '无法记录入园'
@@ -91,11 +96,11 @@ class VisitRecordsController < ApplicationController
   end
 
   def record_exit
-    if @visit_record.may_exit?
-      @visit_record.record_exit!(
-        entrance_id: params[:exit_entrance_id],
-        guard_id: current_guard_id
-      )
+    entrance = current_entrance
+    guard = current_guard
+
+    if @visit_record.may_exit? && entrance && guard
+      @visit_record.record_exit!(entrance: entrance, guard: guard)
       redirect_to @visit_record, notice: '已记录离园'
     else
       redirect_to @visit_record, alert: '无法记录离园'
@@ -118,11 +123,25 @@ class VisitRecordsController < ApplicationController
     @security_supervisors = Employee.where(is_security_supervisor: true).order(:name)
   end
 
-  def current_guard_id
-    params[:guard_id]&.to_i
+  def set_guards
+    @guards = Employee.where(is_security_guard: true).order(:name)
   end
 
-  def current_supervisor_id
-    params[:supervisor_id]&.to_i
+  def current_guard
+    guard_id = params[:guard_id].to_i
+    return nil if guard_id.zero?
+    @guards&.find(guard_id) || Employee.find_by(id: guard_id)
+  end
+
+  def current_supervisor
+    supervisor_id = params[:supervisor_id].to_i
+    return nil if supervisor_id.zero?
+    @security_supervisors&.find(supervisor_id) || Employee.find_by(id: supervisor_id)
+  end
+
+  def current_entrance
+    entrance_id = params[:entrance_id].to_i
+    return nil if entrance_id.zero?
+    @entrances&.find(entrance_id) || Entrance.find_by(id: entrance_id)
   end
 end

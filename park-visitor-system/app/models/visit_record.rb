@@ -62,34 +62,34 @@ class VisitRecord < ApplicationRecord
     entered?
   end
 
-  def approve!(supervisor_id:)
-    update!(status: :approved, supervisor_id: supervisor_id)
-    add_history_node(action: '安保主管批准', actor: supervisor_id, notes: '车辆获准入园')
+  def approve!(supervisor:, entrance:, guard:)
+    update!(status: :approved, supervisor_id: supervisor.id, entry_entrance_id: entrance.id, entry_guard_id: guard.id, actual_entry_at: Time.current)
+    add_history_node(action: '安保主管批准', actor: supervisor, notes: '车辆获准入园')
+    add_history_node(action: '入园', actor: guard, notes: "入口: #{entrance.name}")
   end
 
-  def block!(supervisor_id:, blocking_reason:)
-    update!(status: :blocked, supervisor_id: supervisor_id, blocking_reason: blocking_reason)
-    add_history_node(action: '安保主管拦截', actor: supervisor_id, notes: blocking_reason)
+  def block!(supervisor:, blocking_reason:)
+    update!(status: :blocked, supervisor_id: supervisor.id, blocking_reason: blocking_reason)
+    add_history_node(action: '安保主管拦截', actor: supervisor, notes: blocking_reason)
   end
 
-  def record_entry!(entrance_id:, guard_id:)
-    now = Time.current
+  def record_entry!(entrance:, guard:)
     update!(
       status: :entered,
-      actual_entry_at: now,
-      entry_entrance_id: entrance_id,
-      entry_guard_id: guard_id
+      actual_entry_at: Time.current,
+      entry_entrance_id: entrance.id,
+      entry_guard_id: guard.id
     )
-    add_history_node(action: '入园', actor: guard_id, notes: "入口: #{Entrance.find(entrance_id)&.name}")
+    add_history_node(action: '入园', actor: guard, notes: "入口: #{entrance.name}")
   end
 
-  def record_exit!(entrance_id:, guard_id:)
+  def record_exit!(entrance:, guard:)
     update!(
       status: :exited,
       actual_exit_at: Time.current,
-      exit_entrance_id: entrance_id,
-      exit_guard_id: guard_id
+      exit_entrance_id: entrance.id,
+      exit_guard_id: guard.id
     )
-    add_history_node(action: '离园', actor: guard_id, notes: "出口: #{Entrance.find(entrance_id)&.name}")
+    add_history_node(action: '离园', actor: guard, notes: "出口: #{entrance.name}")
   end
 end
