@@ -125,11 +125,19 @@ class DashboardController extends Controller
         $storeIds = $baseQuery->pluck('id')->toArray();
 
         // 整改周期聚合：按整改时长分布（从上报到整改完成的天数）
-        // 使用独立时间边界，避免 Carbon 对象连续修改导致失真
+        // 使用 IssueHistory 表中 action='rectify' 的记录作为整改完成时间节点
+        // 避免使用 updated_at，因为复查、闭环、退回会改写该时间
         
         $issues = InspectionIssue::whereIn('id', $storeIds)
-            ->select('id', 'status', 'created_at', 'updated_at', 'deadline')
+            ->select('id', 'status', 'created_at', 'deadline')
             ->get();
+
+        // 获取所有整改完成的历史记录（action = 'rectify'）
+        $rectifyHistories = \App\Models\IssueHistory::whereIn('issue_id', $storeIds)
+            ->where('action', 'rectify')
+            ->select('issue_id', 'created_at')
+            ->get()
+            ->keyBy('issue_id');
 
         $stats = [
             'within_24h' => 0,      // 24小时内整改完成
@@ -142,7 +150,7 @@ class DashboardController extends Controller
         ];
 
         foreach ($issues as $issue) {
-            // 未整改完成的问题
+            // 未整改完成的问题（pending 或 rectifying 状态）
             if ($issue->status === 'pending' || $issue->status === 'rectifying') {
                 $stats['not_rectified']++;
                 // 检查是否超期
@@ -153,10 +161,17 @@ class DashboardController extends Controller
             }
 
             // 已整改完成的问题（reviewing/reviewed/closed/rejected）
-            // 计算整改时长：从上报(created_at)到整改完成(updated_at进入reviewing状态)
+            // 使用 IssueHistory 中 rectify 记录的 created_at 作为整改完成时间
+            $rectifyHistory = $rectifyHistories->get($issue->id);
+            
+            if (!$rectifyHistory) {
+                // 没有整改记录，可能是种子数据，跳过或计入未整改
+                continue;
+            }
+
             $createdAt = \Carbon\Carbon::parse($issue->created_at);
-            $updatedAt = \Carbon\Carbon::parse($issue->updated_at);
-            $rectifyDays = $createdAt->diffInDays($updatedAt);
+            $rectifyAt = \Carbon\Carbon::parse($rectifyHistory->created_at);
+            $rectifyDays = $createdAt->diffInDays($rectifyAt);
 
             if ($rectifyDays < 1) {
                 $stats['within_24h']++;
