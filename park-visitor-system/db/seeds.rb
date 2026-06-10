@@ -63,7 +63,8 @@ ActiveRecord::Base.transaction do
     { license_plate: '沪B67890', vehicle_type: 'car', color: '白色', visitor: visitors[1], active: true },
     { license_plate: '粤C11111', vehicle_type: 'truck', color: '蓝色', visitor: visitors[2], active: true },
     { license_plate: '京D22222', vehicle_type: 'car', color: '红色', visitor: visitors[3], active: true },
-    { license_plate: '浙E33333', vehicle_type: 'car', color: '灰色', visitor: visitors[4], active: true }
+    { license_plate: '浙E33333', vehicle_type: 'car', color: '灰色', visitor: visitors[4], active: true },
+    { license_plate: '津F55555', vehicle_type: 'car', color: '白色', visitor: visitors[3], active: true }
   ])
 
   Blacklist.create!(
@@ -71,6 +72,14 @@ ActiveRecord::Base.transaction do
     reason: '上次来访损坏公司财物',
     added_by: security_supervisor,
     added_at: 7.days.ago,
+    is_active: true
+  )
+
+  Blacklist.create!(
+    license_plate: '京D22222',
+    reason: '违反园区管理规定',
+    added_by: security_supervisor,
+    added_at: 15.days.ago,
     is_active: true
   )
 
@@ -160,7 +169,7 @@ ActiveRecord::Base.transaction do
 
   res5 = Reservation.create!(
     visitor: visitors[3],
-    vehicle: vehicles[3],
+    vehicle: vehicles[5],
     host: employees[4],
     entrance: entrances[1],
     scheduled_at: now - 30.minutes,
@@ -179,7 +188,7 @@ ActiveRecord::Base.transaction do
 
   vr5.add_history_node(action: '预约创建', actor: visitors[3], notes: '访客提交预约')
   vr5.add_history_node(action: '接待人确认', actor: employees[4], notes: '确认访问')
-  vr5.add_history_node(action: '车牌核验通过', actor: security_guards[1], notes: '车牌: 京D22222')
+  vr5.add_history_node(action: '车牌核验通过', actor: security_guards[1], notes: '车牌: 津F55555')
   vr5.add_history_node(action: '安保主管批准', actor: security_supervisor, notes: '批准入园')
   vr5.add_history_node(action: '入园', actor: security_guards[1], notes: '西门')
 
