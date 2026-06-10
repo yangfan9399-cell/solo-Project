@@ -49,6 +49,17 @@ export async function action({ params, request }: ActionFunctionArgs) {
   const remark = formData.get("remark") as string;
   const currentUserId = "system-user";
 
+  const fault = await prisma.fault.findUnique({
+    where: { id: params.id! },
+    select: { elevatorId: true },
+  });
+
+  if (!fault) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  const elevatorId = fault.elevatorId;
+
   if (actionType === "startProcess") {
     await prisma.fault.update({
       where: { id: params.id! },
@@ -57,7 +68,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
     await prisma.historyNode.create({
       data: {
-        elevatorId: params.id!,
+        elevatorId,
         faultId: params.id!,
         type: "故障处理",
         title: "开始处理故障",
@@ -83,7 +94,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
     await prisma.historyNode.create({
       data: {
-        elevatorId: params.id!,
+        elevatorId,
         faultId: params.id!,
         type: "故障处理",
         title: processResult === "resolved" ? "故障已修复" : "故障处理中",
@@ -106,7 +117,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
     await prisma.historyNode.create({
       data: {
-        elevatorId: params.id!,
+        elevatorId,
         faultId: params.id!,
         type: reviewResult === "approve" ? "复查" : "退回",
         title: reviewResult === "approve" ? "安全管理员复查通过" : "安全管理员复查退回",
@@ -129,7 +140,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
     await prisma.historyNode.create({
       data: {
-        elevatorId: params.id!,
+        elevatorId,
         faultId: params.id!,
         type: confirmResult === "archive" ? "归档" : "退回",
         title: confirmResult === "archive" ? "项目经理确认归档" : "项目经理退回",
@@ -353,7 +364,7 @@ export default function FaultDetail() {
                 </div>
               )}
 
-              {(fault.status === "退回修改" || fault.status === "已退回") && (
+              {fault.status === "退回修改" && (
                 <div className="space-y-3">
                   <div className="text-sm font-medium text-amber-700 mb-2">已被退回，需要重新处理</div>
                   <Form method="post" className="space-y-3">

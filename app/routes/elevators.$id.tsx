@@ -312,7 +312,7 @@ export default function ElevatorDetail() {
 
                     {/* Action Buttons */}
                     <div className="mt-4 pt-4 border-t border-slate-200">
-                      {(plan.status === "待执行" || plan.status === "已退回") && (
+                      {(plan.status === "待执行" || plan.status === "退回修改") && (
                         <div className="space-y-3">
                           <div className="text-sm font-medium text-slate-700 mb-2">维保单位操作</div>
                           <Form method="post" className="space-y-3" onSubmit={(e) => {

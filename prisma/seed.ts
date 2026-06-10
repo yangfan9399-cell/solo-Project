@@ -230,7 +230,7 @@ async function main() {
       maintenanceUnitId: unit1.id,
       planDate: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
       dueDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-      status: "已退回",
+      status: "退回修改",
       riskLevel: "警告",
     },
   });
