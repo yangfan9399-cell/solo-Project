@@ -871,91 +871,190 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         status_display = {'draft': '草稿', 'approved': '已批准', 'distributed': '已发放', 'received': '已签收', 'archived': '已归档', 'rejected': '已退回'}
 
-        html = self.render_header('distribution') + f'''
+        html_parts = []
+        html_parts.append(self.render_header('distribution'))
+        
+        html_parts.append('''
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>分配详情: #{dist['id']}</h2>
-                <span class="badge badge-{dist['status']}">{status_display.get(dist['status'], dist['status'])}</span>
+                <h2>分配详情: #%s</h2>
+                <span class="badge badge-%s">%s</span>
             </div>
             <div style="margin-top: 1.5rem;">
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                     <div>
                         <h3>批次信息</h3>
-                        <p><strong>批次号:</strong> <a href="/batch/{dist['batch_id']}">{dist['batch_number']}</a></p>
-                        <p><strong>物资:</strong> {dist['material_name']}</p>
-                        <p><strong>分配数量:</strong> {dist['quantity']} {dist['material_unit']}</p>
+                        <p><strong>批次号:</strong> <a href="/batch/%s">%s</a></p>
+                        <p><strong>物资:</strong> %s</p>
+                        <p><strong>分配数量:</strong> %s %s</p>
                     </div>
                     <div>
                         <h3>项目信息</h3>
-                        <p><strong>项目名称:</strong> {dist['project_name']}</p>
-                        <p><strong>计划日期:</strong> {dist['planned_date']}</p>
-                        <p><strong>实际发放日期:</strong> {dist['actual_distributed_date'] or '未发放'}</p>
+                        <p><strong>项目名称:</strong> %s</p>
+                        <p><strong>计划日期:</strong> %s</p>
+                        <p><strong>实际发放日期:</strong> %s</p>
                     </div>
                 </div>
                 <div style="margin-top: 1.5rem;">
                     <h3>受赠方信息</h3>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                        <p><strong>名称:</strong> {dist['recipient_name']}</p>
-                        <p><strong>联系人:</strong> {dist['recipient_contact'] or '未填写'}</p>
-                        <p><strong>电话:</strong> {dist['recipient_phone'] or '未填写'}</p>
-                        <p><strong>地址:</strong> {dist['recipient_address'] or '未填写'}</p>
+                        <p><strong>名称:</strong> %s</p>
+                        <p><strong>联系人:</strong> %s</p>
+                        <p><strong>电话:</strong> %s</p>
+                        <p><strong>地址:</strong> %s</p>
                     </div>
                 </div>
             </div>
             <div style="margin-top: 1.5rem;">
                 <h3>操作</h3>
                 <div style="display: flex; gap: 1rem;">
-                    {'<button class="btn btn-success" hx-post="/distribution/approve" hx-vals=\'{"dist_id": ' + str(dist_id) + '}\'>批准分配</button>' if dist['status'] == 'draft' else ''}
-                    {'<button class="btn btn-primary" hx-post="/distribution/distribute" hx-vals=\'{"dist_id": ' + str(dist_id) + '}\'>确认发放</button>' if dist['status'] == 'approved' else ''}
-                    {'<button class="btn btn-success" hx-get="/distribution/sign_form?dist_id=' + str(dist_id) + '" hx-target="#sign-modal">签收确认</button>' if dist['status'] == 'distributed' else ''}
-                    {'<button class="btn btn-warning" hx-get="/distribution/audit_form?dist_id=' + str(dist_id) + '" hx-target="#audit-modal">审计处理</button>' if dist['status'] == 'received' else ''}
+        ''' % (dist['id'], dist['status'], status_display.get(dist['status'], dist['status']),
+               dist['batch_id'], dist['batch_number'], dist['material_name'],
+               dist['quantity'], dist['material_unit'], dist['project_name'],
+               dist['planned_date'], dist['actual_distributed_date'] or '未发放',
+               dist['recipient_name'], dist['recipient_contact'] or '未填写',
+               dist['recipient_phone'] or '未填写', dist['recipient_address'] or '未填写'))
+
+        if dist['status'] == 'draft':
+            html_parts.append('<button class="btn btn-success" hx-post="/distribution/approve" hx-vals=\'{"dist_id": %s}\'>批准分配</button>' % dist_id)
+        if dist['status'] == 'approved':
+            html_parts.append('<button class="btn btn-primary" hx-post="/distribution/distribute" hx-vals=\'{"dist_id": %s}\'>确认发放</button>' % dist_id)
+        if dist['status'] == 'distributed':
+            html_parts.append('<button class="btn btn-success" onclick="openSignModal(%s)">签收确认</button>' % dist_id)
+        if dist['status'] == 'received':
+            html_parts.append('<button class="btn btn-warning" onclick="openAuditModal(%s)">审计处理</button>' % dist_id)
+
+        html_parts.append('''
                 </div>
             </div>
         </div>
-        '''
+        
+        <div id="sign-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
+                <h3>签收确认</h3>
+                <form hx-post="/distribution/sign" hx-target="body">
+                    <input type="hidden" name="dist_id" value="%s">
+                    <div class="form-group">
+                        <label>签收人</label>
+                        <input type="text" name="signed_by" required>
+                    </div>
+                    <div class="form-group">
+                        <label>实际签收数量</label>
+                        <input type="number" name="quantity_received" value="%s" required min="0">
+                        <span style="color: #666; margin-left: 0.5rem;">%s</span>
+                    </div>
+                    <div class="form-group">
+                        <label>备注（如有数量差异请说明）</label>
+                        <textarea name="notes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">确认签收</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="audit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
+                <h3>审计处理</h3>
+                <form hx-post="/distribution/audit" hx-target="body">
+                    <input type="hidden" name="dist_id" value="%s">
+                    <div class="form-group">
+                        <label>处理方式</label>
+                        <select name="action" required>
+                            <option value="archive">归档</option>
+                            <option value="investigate">追查</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea name="notes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning">确认处理</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAuditModal()">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <script>
+            function openSignModal(distId) {
+                document.getElementById("sign-modal").style.display = "flex";
+            }
+            function closeModal() {
+                document.getElementById("sign-modal").style.display = "none";
+            }
+            function openAuditModal(distId) {
+                document.getElementById("audit-modal").style.display = "flex";
+            }
+            function closeAuditModal() {
+                document.getElementById("audit-modal").style.display = "none";
+            }
+        </script>
+        ''' % (dist_id, dist['quantity'], dist['material_unit'], dist_id))
 
         if receipt:
             has_discrepancy = receipt[2] != dist['quantity']
-            html += f'''
-        <div class="card {'discrepancy' if has_discrepancy else ''}">
+            discrepancy_html = ''
+            if has_discrepancy:
+                discrepancy_html = '<div class="alert alert-warning"><strong>数量差异:</strong> 发放 %s，实际签收 %s，差异 %s %s</div>' % (
+                    dist['quantity'], receipt[2], dist['quantity'] - receipt[2], dist['material_unit'])
+            
+            notes_html = ''
+            if receipt[5]:
+                notes_html = '<p><strong>备注:</strong> %s</p>' % receipt[5]
+            
+            html_parts.append('''
+        <div class="card %s">
             <h3>签收凭证</h3>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                <p><strong>签收人:</strong> {receipt[3]}</p>
-                <p><strong>签收数量:</strong> {receipt[2]} {dist['material_unit']}</p>
-                <p><strong>签收时间:</strong> {receipt[4]}</p>
+                <p><strong>签收人:</strong> %s</p>
+                <p><strong>签收数量:</strong> %s %s</p>
+                <p><strong>签收时间:</strong> %s</p>
             </div>
-            {'<div class="alert alert-warning"><strong>数量差异:</strong> 发放 ' + str(dist['quantity']) + '，实际签收 ' + str(receipt[2]) + '，差异 ' + str(dist['quantity'] - receipt[2]) + ' ' + dist['material_unit'] + '</div>' if has_discrepancy else ''}
-            {'<p><strong>备注:</strong> ' + receipt[5] + '</p>' if receipt[5] else ''}
+            %s
+            %s
         </div>
-            '''
+            ''' % ('discrepancy' if has_discrepancy else '', receipt[3], receipt[2], dist['material_unit'], receipt[4], discrepancy_html, notes_html))
 
         if audit_records:
-            html += '''
+            audit_html = ''
+            for a in audit_records:
+                action_display = '归档' if a[2] == 'archive' else '追查' if a[2] == 'investigate' else '批准' if a[2] == 'approve' else '驳回'
+                audit_html += '''
+                <div class="history-item">
+                    <span class="type">%s</span>
+                    <p>%s</p>
+                    <span class="time">%s</span>
+                </div>
+                ''' % (action_display, a[4] or '', a[5])
+            
+            html_parts.append('''
         <div class="card">
             <h3>审计记录</h3>
-            ''' + ''.join([f'''
-                <div class="history-item">
-                    <span class="type">{'归档' if a[2] == 'archive' else '追查' if a[2] == 'investigate' else '批准' if a[2] == 'approve' else '驳回'}</span>
-                    <p>{a[4] or ''}</p>
-                    <span class="time">{a[5]}</span>
-                </div>
-            ''' for a in audit_records]) + '''
+            %s
         </div>
-            '''
+            ''' % audit_html)
 
-        html += '''
+        history_html = ''
+        for h in history:
+            node_type_display = '入库' if h[3] == 'receive' else '分配' if h[3] == 'distribute' else '签收' if h[3] == 'sign' else '审计' if h[3] == 'audit' else '归档'
+            history_html += '''
+                <div class="history-item">
+                    <span class="type">%s</span>
+                    <p>%s</p>
+                    <span class="time">%s</span>
+                </div>
+                ''' % (node_type_display, h[5], h[6])
+        
+        html_parts.append('''
         <div class="card">
             <h3>历史节点</h3>
-            ''' + ''.join([f'''
-                <div class="history-item">
-                    <span class="type">{'入库' if h[3] == 'receive' else '分配' if h[3] == 'distribute' else '签收' if h[3] == 'sign' else '审计' if h[3] == 'audit' else '归档'}</span>
-                    <p>{h[5]}</p>
-                    <span class="time">{h[6]}</span>
-                </div>
-            ''' for h in history]) + '''
+            %s
         </div>
-            ''' + self.render_footer()
-        self.send_html(html)
+            ''' % history_html)
+
+        html_parts.append(self.render_footer())
+        
+        self.send_html(''.join(html_parts))
 
     def handle_distribution_create_form(self):
         cursor.execute('''
@@ -1268,11 +1367,59 @@ class RequestHandler(BaseHTTPRequestHandler):
         ''')
         discrepancies = cursor.fetchone()[0]
 
+        cursor.execute('''
+            SELECT r.notes, COUNT(*) as count, SUM(dp.quantity - r.quantity_received) as total_discrepancy
+            FROM DistributionPlan dp
+            JOIN Receipt r ON dp.id = r.distribution_id
+            WHERE dp.quantity != r.quantity_received
+            GROUP BY r.notes
+            ORDER BY count DESC
+        ''')
+        by_discrepancy_reason = cursor.fetchall()
+
+        cursor.execute('''
+            SELECT 
+                CASE 
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 3 THEN '3天内'
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 7 THEN '3-7天'
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 14 THEN '7-14天'
+                    ELSE '14天以上'
+                END as cycle_range,
+                COUNT(*) as count,
+                AVG(julianday(r.signed_at) - julianday(dp.actual_distributed_date)) as avg_days
+            FROM DistributionPlan dp
+            JOIN Receipt r ON dp.id = r.distribution_id
+            WHERE dp.actual_distributed_date IS NOT NULL AND r.signed_at IS NOT NULL
+            GROUP BY cycle_range
+            ORDER BY count DESC
+        ''')
+        by_cycle = cursor.fetchall()
+
+        cursor.execute('''
+            SELECT COUNT(*) FROM DistributionPlan dp
+            WHERE dp.status = 'received'
+        ''')
+        received_count = cursor.fetchone()[0]
+        
+        cursor.execute('''
+            SELECT COUNT(*) FROM DistributionPlan dp
+            WHERE dp.status = 'archived'
+        ''')
+        archived_count = cursor.fetchone()[0]
+
         html = self.render_header('review') + f'''
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="number">{discrepancies}</div>
                 <div class="label">数量差异记录</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">{received_count}</div>
+                <div class="label">已签收</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">{archived_count}</div>
+                <div class="label">已归档</div>
             </div>
         </div>
         <div class="card">
@@ -1290,6 +1437,24 @@ class RequestHandler(BaseHTTPRequestHandler):
                 <thead><tr><th>类别名称</th><th>分配次数</th><th>总数量</th></tr></thead>
                 <tbody>
                     {''.join([f'<tr><td>{c[0]}</td><td>{c[1]}</td><td>{c[2]}</td></tr>' for c in by_category])}
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h2>按差异原因聚合</h2>
+            <table>
+                <thead><tr><th>差异原因</th><th>发生次数</th><th>总差异数量</th></tr></thead>
+                <tbody>
+                    {''.join([f'<tr><td>{dr[0] or "未说明原因"}</td><td>{dr[1]}</td><td>{dr[2]}</td></tr>' for dr in by_discrepancy_reason])}
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h2>按发放周期聚合</h2>
+            <table>
+                <thead><tr><th>周期范围</th><th>数量</th><th>平均天数</th></tr></thead>
+                <tbody>
+                    {''.join([f'<tr><td>{c[0]}</td><td>{c[1]}</td><td>{round(c[2], 1)} 天</td></tr>' for c in by_cycle])}
                 </tbody>
             </table>
         </div>
