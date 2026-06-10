@@ -59,7 +59,7 @@ model Agreement {
 
 model Evaluation {
   id              String          @id @default(cuid())
-  agreementId     String
+  agreementId     String          @unique
   agreement       Agreement       @relation(fields: [agreementId], references: [id])
   evaluatorId     String
   evaluatorName   String
@@ -78,7 +78,7 @@ model Evaluation {
 
 model Acceptance {
   id              String            @id @default(cuid())
-  agreementId     String
+  agreementId     String            @unique
   agreement       Agreement         @relation(fields: [agreementId], references: [id])
   inspectorId     String
   inspectorName   String
@@ -91,10 +91,10 @@ model Acceptance {
 
 model Compensation {
   id              String              @id @default(cuid())
-  agreementId     String
+  agreementId     String              @unique
   agreement       Agreement           @relation(fields: [agreementId], references: [id])
   reviewerId      String
-  reviewerName    String
+  reviewerName   String
   reviewDate      DateTime
   amount          Float
   status          CompensationStatus  @default(PENDING)

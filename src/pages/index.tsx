@@ -185,11 +185,14 @@ export default function Home({ agreements }: { agreements: Agreement[] }) {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <button className="flex items-center justify-center gap-1 text-primary-600 hover:text-primary-700 transition-colors">
+                      <Link 
+                        href={`/agreement/${agreement.id}`}
+                        className="flex items-center justify-center gap-1 text-primary-600 hover:text-primary-700 transition-colors"
+                      >
                         <Eye size={16} />
                         <span>查看详情</span>
                         <ArrowRight size={14} />
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))}
