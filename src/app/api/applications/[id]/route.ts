@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-export async function GET(request: Request, params: unknown) {
-  const id = (params as { params: { id: string } }).params.id
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const application = await prisma.application.findUnique({
     where: { id },
     include: {
@@ -24,8 +24,8 @@ export async function GET(request: Request, params: unknown) {
   return NextResponse.json(application)
 }
 
-export async function PUT(request: Request, params: unknown) {
-  const id = (params as { params: { id: string } }).params.id
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const body = await request.json()
 
   const application = await prisma.application.update({

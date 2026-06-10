@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { AssignmentStatus } from '@prisma/client'
+import { AssignmentStatus, ApplicationStatus } from '@prisma/client'
 
-export async function POST(request: Request, params: unknown) {
-  const id = (params as { params: { id: string } }).params.id
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
 
   const assignment = await prisma.licenseAssignment.findUnique({
     where: { id },
@@ -24,14 +24,10 @@ export async function POST(request: Request, params: unknown) {
     data: { usedSeats: { decrement: 1 } },
   })
 
-  const application = await prisma.application.findFirst({
-    where: { assignment: { id: id } },
-  })
-
-  if (application) {
+  if (assignment.applicationId) {
     await prisma.application.update({
-      where: { id: application.id },
-      data: { status: 'RECALLED' },
+      where: { id: assignment.applicationId },
+      data: { status: ApplicationStatus.RECALLED },
     })
   }
 

@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from 'react'
 import { Button, Badge, Card, Divider, Avatar } from '@nextui-org/react'
 import { ApplicationStatus, ApprovalRole, ApprovalStatus } from '@prisma/client'
@@ -9,19 +10,32 @@ interface ApplicationDetailProps {
 
 export default function ApplicationDetail({ id, onClose }: ApplicationDetailProps) {
   const [application, setApplication] = useState<any>(null)
+  const [employees, setEmployees] = useState<any[]>([])
   const [showRecallModal, setShowRecallModal] = useState(false)
   const [recallCandidates, setRecallCandidates] = useState<any[]>([])
 
   useEffect(() => {
     fetch(`/api/applications/${id}`).then((res) => res.json()).then(setApplication)
+    fetch('/api/employees').then((res) => res.json()).then(setEmployees)
   }, [id])
 
+  const getApproverByRole = (role: string) => {
+    const approver = employees.find((emp) => emp.role === role)
+    return approver?.id
+  }
+
   const handleDepartmentApprove = async () => {
+    const approverId = getApproverByRole('DEPARTMENT_HEAD')
+    if (!approverId) {
+      alert('未找到部门负责人')
+      return
+    }
+
     const response = await fetch(`/api/applications/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        approverId: 'EMP002',
+        approverId,
         role: ApprovalRole.DEPARTMENT_HEAD,
         status: ApprovalStatus.APPROVED,
         comment: '同意申请',
@@ -30,15 +44,25 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
     if (response.ok) {
       const data = await response.json()
       setApplication(data)
+      alert('部门审批通过')
+    } else {
+      const error = await response.json()
+      alert(error.error || '审批失败')
     }
   }
 
   const handleITApprove = async () => {
+    const approverId = getApproverByRole('IT_ADMIN')
+    if (!approverId) {
+      alert('未找到IT管理员')
+      return
+    }
+
     const response = await fetch(`/api/applications/${id}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        approverId: 'EMP006',
+        approverId,
         role: ApprovalRole.IT_ADMIN,
         status: ApprovalStatus.APPROVED,
         comment: '同意分配',
@@ -50,16 +74,28 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
       setShowRecallModal(true)
     } else if (response.ok) {
       setApplication(data.application)
+      alert('许可证分配成功')
+    } else {
+      alert(data.error || '分配失败')
     }
   }
 
   const handleRecall = async (assignmentId: string) => {
     await fetch(`/api/assignments/${assignmentId}/recall`, { method: 'POST' })
     setShowRecallModal(false)
+    alert('许可证已回收')
     await handleITApprove()
   }
 
-  if (!application) return <div>加载中...</div>
+  const handleAuditRecall = async () => {
+    if (application.assignment?.id) {
+      await fetch(`/api/assignments/${application.assignment.id}/recall`, { method: 'POST' })
+      fetch(`/api/applications/${id}`).then((res) => res.json()).then(setApplication)
+      alert('许可证已回收')
+    }
+  }
+
+  if (!application) return <div className="p-8 text-center">加载中...</div>
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -168,7 +204,7 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
                   key={approval.id}
                   className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                 >
-                  <Avatar className="w-8 h-8">{approval.approver?.name[0]}</Avatar>
+                  <Avatar className="w-8 h-8">{approval.approver?.name?.[0] || '?'}</Avatar>
                   <div className="flex-1">
                     <div className="font-medium">
                       {approval.approver?.name} ({getApprovalRoleLabel(approval.role)})
@@ -213,6 +249,10 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
                       : '无'}
                   </div>
                 </div>
+                <div>
+                  <div className="text-sm text-gray-500">状态</div>
+                  <div className="font-medium">{application.assignment.status}</div>
+                </div>
               </div>
             </Card>
           )}
@@ -230,15 +270,17 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
                 IT管理员分配许可证
               </Button>
             )}
-            {application.status === ApplicationStatus.ASSIGNED && (
-              <Button color="danger">回收许可证</Button>
+            {application.status === ApplicationStatus.ASSIGNED && application.assignment && (
+              <Button color="danger" onClick={handleAuditRecall}>
+                审计回收许可证
+              </Button>
             )}
           </div>
         </div>
       </div>
 
       {showRecallModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-bold">许可证不足</h3>
@@ -254,9 +296,9 @@ export default function ApplicationDetail({ id, onClose }: ApplicationDetailProp
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <div className="font-medium">{candidate.employee.name}</div>
+                      <div className="font-medium">{candidate.employee?.name}</div>
                       <div className="text-sm text-gray-500">
-                        {candidate.employee.employeeId}
+                        {candidate.employee?.employeeId}
                       </div>
                     </div>
                     <Button
