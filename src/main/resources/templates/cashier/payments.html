@@ -69,7 +69,7 @@
                         <td><span th:class="['status', ${payment.status}]" th:text="${payment.status}"></span></td>
                         <td th:text="${payment.operator}"></td>
                         <td>
-                            <a th:if="${payment.status == 'pending'}" href="/cashier/payments/{id}/confirm(id=${payment.id})" class="btn">确认缴费</a>
+                            <a th:if="${payment.status == 'pending'}" th:href="@{/cashier/payments/{id}/confirm(id=${payment.id})}" class="btn">确认缴费</a>
                         </td>
                     </tr>
                 </tbody>
