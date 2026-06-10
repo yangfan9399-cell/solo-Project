@@ -1,23 +1,11 @@
 import { json, LoaderFunction } from '@remix-run/node';
-import { useLoaderData, useState, useMemo } from '@remix-run/react';
+import { useLoaderData, useSearchParams } from '@remix-run/react';
 import { prisma } from '~/db.server';
 
 export const loader: LoaderFunction = async () => {
   const items = await prisma.lostItem.findMany({
     include: {
       claimRequests: true,
-    },
-  });
-
-  const byLine = await prisma.lostItem.groupBy({
-    by: ['foundLocation'],
-    _count: {
-      id: true,
-    },
-    orderBy: {
-      _count: {
-        id: 'desc',
-      },
     },
   });
 
@@ -40,6 +28,18 @@ export const loader: LoaderFunction = async () => {
     },
   });
 
+  const byLineData = await prisma.lostItem.groupBy({
+    by: ['foundLocation'],
+    _count: {
+      id: true,
+    },
+    orderBy: {
+      _count: {
+        id: 'desc',
+      },
+    },
+  });
+
   const totalItems = items.length;
   const returnedItems = items.filter((i) => i.status === 'RETURNED').length;
   const expiredItems = items.filter((i) => i.status === 'EXPIRED').length;
@@ -47,7 +47,7 @@ export const loader: LoaderFunction = async () => {
 
   return json({
     items,
-    byLine,
+    byLineData,
     byCategory,
     byStatus,
     totalItems,
@@ -88,76 +88,81 @@ function getLineFromLocation(location: string) {
   return match ? match[1] : '其他';
 }
 
+function calculateStats(items: Array<{ foundAt: Date; status: string; claimRequests: Array<unknown> }>) {
+  const lineMap: Record<string, number> = {};
+  const stationMap: Record<string, number> = {};
+  let totalDays = 0;
+  let claimed = 0;
+  let returned = 0;
+
+  items.forEach((item) => {
+    const line = getLineFromLocation(item.foundLocation);
+    lineMap[line] = (lineMap[line] || 0) + 1;
+    stationMap[item.foundLocation] = (stationMap[item.foundLocation] || 0) + 1;
+    
+    const days = Math.floor((new Date().getTime() - new Date(item.foundAt).getTime()) / (1000 * 60 * 60 * 24));
+    totalDays += days;
+    
+    if (item.claimRequests.length > 0) claimed++;
+    if (item.status === 'RETURNED') returned++;
+  });
+
+  const byLine = Object.entries(lineMap).map(([line, count]) => ({ line, count })).sort((a, b) => b.count - a.count);
+  const byStation = Object.entries(stationMap).map(([foundLocation, count]) => ({ foundLocation, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+  const avgStorageDays = items.length > 0 ? Math.round(totalDays / items.length) : 0;
+  const claimRate = items.length > 0 ? Math.round((claimed / items.length) * 100) : 0;
+  const returnRate = items.length > 0 ? Math.round((returned / items.length) * 100) : 0;
+
+  return { byLine, byStation, avgStorageDays, claimRate, returnRate };
+}
+
 export default function Review() {
-  const { items, byCategory, byStatus, totalItems, returnedItems, expiredItems, claimedItems } = useLoaderData<typeof loader>();
-  const [selectedLine, setSelectedLine] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [storageDaysRange, setStorageDaysRange] = useState<{ min: number; max: number }>({ min: 0, max: 30 });
+  const { items, byCategory, byStatus, totalItems } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const line = getLineFromLocation(item.foundLocation);
-      if (selectedLine !== 'all' && line !== selectedLine) return false;
-      if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
-      
-      const storageDays = Math.floor((new Date().getTime() - new Date(item.foundAt).getTime()) / (1000 * 60 * 60 * 24));
-      if (storageDays < storageDaysRange.min || storageDays > storageDaysRange.max) return false;
-      
-      return true;
-    });
-  }, [items, selectedLine, selectedCategory, storageDaysRange]);
+  const selectedLine = searchParams.get('line') || 'all';
+  const selectedCategory = searchParams.get('category') || 'all';
+  const minDays = parseInt(searchParams.get('minDays') || '0');
+  const maxDays = parseInt(searchParams.get('maxDays') || '30');
 
-  const byLine = useMemo(() => {
-    const lineMap: Record<string, number> = {};
-    filteredItems.forEach((item) => {
-      const line = getLineFromLocation(item.foundLocation);
-      lineMap[line] = (lineMap[line] || 0) + 1;
-    });
-    return Object.entries(lineMap).map(([line, count]) => ({ line, count })).sort((a, b) => b.count - a.count);
-  }, [filteredItems]);
+  const filteredItems = items.filter((item) => {
+    const line = getLineFromLocation(item.foundLocation);
+    if (selectedLine !== 'all' && line !== selectedLine) return false;
+    if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
+    
+    const storageDays = Math.floor((new Date().getTime() - new Date(item.foundAt).getTime()) / (1000 * 60 * 60 * 24));
+    if (storageDays < minDays || storageDays > maxDays) return false;
+    
+    return true;
+  });
 
-  const byStation = useMemo(() => {
-    const stationMap: Record<string, number> = {};
-    filteredItems.forEach((item) => {
-      stationMap[item.foundLocation] = (stationMap[item.foundLocation] || 0) + 1;
-    });
-    return Object.entries(stationMap).map(([foundLocation, count]) => ({ foundLocation, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-  }, [filteredItems]);
-
-  const avgStorageDays = useMemo(() => {
-    if (filteredItems.length === 0) return 0;
-    const totalDays = filteredItems.reduce((sum, item) => {
-      const days = Math.floor((new Date().getTime() - new Date(item.foundAt).getTime()) / (1000 * 60 * 60 * 24));
-      return sum + days;
-    }, 0);
-    return Math.round(totalDays / filteredItems.length);
-  }, [filteredItems]);
-
-  const claimRate = useMemo(() => {
-    if (filteredItems.length === 0) return 0;
-    const claimed = filteredItems.filter((i) => i.claimRequests.length > 0).length;
-    return Math.round((claimed / filteredItems.length) * 100);
-  }, [filteredItems]);
-
-  const returnRate = useMemo(() => {
-    if (filteredItems.length === 0) return 0;
-    const returned = filteredItems.filter((i) => i.status === 'RETURNED').length;
-    return Math.round((returned / filteredItems.length) * 100);
-  }, [filteredItems]);
+  const { byLine, byStation, avgStorageDays, claimRate, returnRate } = calculateStats(filteredItems);
 
   const lines = [...new Set(items.map((item) => getLineFromLocation(item.foundLocation)))];
   const categories = [...new Set(items.map((item) => item.category))];
 
+  const handleFilterChange = (key: string, value: string | number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set(key, String(value));
+    setSearchParams(newParams);
+  };
+
   return (
     <div>
       <div className="filter-bar">
-        <select value={selectedLine} onChange={(e) => setSelectedLine(e.target.value)}>
+        <select 
+          value={selectedLine} 
+          onChange={(e) => handleFilterChange('line', e.target.value)}
+        >
           <option value="all">全部线路</option>
           {lines.map((line) => (
             <option key={line} value={line}>{line}</option>
           ))}
         </select>
-        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+        <select 
+          value={selectedCategory} 
+          onChange={(e) => handleFilterChange('category', e.target.value)}
+        >
           <option value="all">全部类别</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
@@ -167,15 +172,15 @@ export default function Review() {
           <span>保管天数：</span>
           <input
             type="number"
-            value={storageDaysRange.min}
-            onChange={(e) => setStorageDaysRange({ ...storageDaysRange, min: parseInt(e.target.value) || 0 })}
+            value={minDays}
+            onChange={(e) => handleFilterChange('minDays', e.target.value)}
             style={{ width: 60, padding: '4px' }}
           />
           <span>-</span>
           <input
             type="number"
-            value={storageDaysRange.max}
-            onChange={(e) => setStorageDaysRange({ ...storageDaysRange, max: parseInt(e.target.value) || 30 })}
+            value={maxDays}
+            onChange={(e) => handleFilterChange('maxDays', e.target.value)}
             style={{ width: 60, padding: '4px' }}
           />
         </div>

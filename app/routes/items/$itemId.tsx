@@ -96,6 +96,10 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
     case 'return': {
       const notesInput = formData.get('notes') as string;
+      const latestClaim = item.claimRequests[item.claimRequests.length - 1];
+      if (!latestClaim || !latestClaim.verified) {
+        throw new Response('认领信息未通过核验，禁止交还物品', { status: 403 });
+      }
       operatorUser = await prisma.user.findFirst({ where: { role: 'DUTY_MANAGER' } });
       actionText = '确认交还';
       status = 'RETURNED';
