@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计报表 - 入境动物隔离观察与放行系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <nav class="bg-[#1e3a5f] shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'batches:list' %}" class="text-white hover:text-[#f59e0b] transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-white font-bold text-xl">统计报表</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[#f59e0b] text-sm">{{ user.full_name }} ({{ user.get_role_display }})</span>
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-all">
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">总批次数</p>
+                        <p class="text-3xl font-bold text-[#1e3a5f] mt-2">{{ total_batches }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-[#1e3a5f] rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">已放行批次</p>
+                        <p class="text-3xl font-bold text-[#10b981] mt-2">{{ released_batches }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-[#10b981] rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">异常批次</p>
+                        <p class="text-3xl font-bold text-[#ef4444] mt-2">{{ abnormal_batches }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-[#ef4444] rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">按来源国统计</h2>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">来源国</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">批次数</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">异常数</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">异常率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_country %}
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-4 py-3 text-sm">{{ item.origin_country }}</td>
+                                        <td class="px-4 py-3 text-sm font-medium">{{ item.batch_count }}</td>
+                                        <td class="px-4 py-3 text-sm text-red-600">{{ item.abnormal_count }}</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="px-2 py-1 rounded {% if item.abnormal_rate > 20 %}bg-red-100 text-red-700{% elif item.abnormal_rate > 10 %}bg-orange-100 text-orange-700{% else %}bg-green-100 text-green-700{% endif %}">
+                                                {{ item.abnormal_rate }}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无数据</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">按动物类型统计</h2>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">动物类型</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">批次数</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">已放行</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">放行率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in by_animal_type %}
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-4 py-3 text-sm">{{ item.animal_type }}</td>
+                                        <td class="px-4 py-3 text-sm font-medium">{{ item.batch_count }}</td>
+                                        <td class="px-4 py-3 text-sm text-green-600">{{ item.released_count }}</td>
+                                        <td class="px-4 py-3 text-sm">
+                                            {% if item.batch_count > 0 %}
+                                                {% widthratio item.released_count item.batch_count 100 as rate %}
+                                                <span class="px-2 py-1 rounded bg-green-100 text-green-700">
+                                                    {{ rate }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="px-2 py-1 rounded bg-gray-100 text-gray-700">0%</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">暂无数据</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">异常原因分析</h2>
+                </div>
+                <div class="p-6">
+                    {% if by_abnormal_reason %}
+                        <div class="space-y-3">
+                            {% for item in by_abnormal_reason %}
+                                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                    <span class="text-sm text-gray-700">{{ item.abnormal_symptoms|default:"未填写" }}</span>
+                                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                                        {{ item.count }} 次
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>暂无异常记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">隔离天数分布</h2>
+                </div>
+                <div class="p-6">
+                    {% if by_quarantine_days %}
+                        <div class="grid grid-cols-2 gap-4">
+                            {% for item in by_quarantine_days %}
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm text-gray-600">{{ item.days_range }}</span>
+                                        <span class="text-lg font-bold text-[#1e3a5f]">{{ item.batch_count }}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-[#1e3a5f] h-2 rounded-full" 
+                                             style="width: {% if total_batches > 0 %}{% widthratio item.batch_count total_batches 100 %}{% else %}0{% endif %}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>暂无数据</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-[#1e3a5f] px-6 py-4">
+                <h2 class="text-white font-bold">状态分布</h2>
+            </div>
+            <div class="p-6">
+                {% if status_summary %}
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                        {% for item in status_summary %}
+                            <div class="text-center">
+                                <div class="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2
+                                            {% if item.status == 'released' %}bg-green-100{% endif %}
+                                            {% if item.status == 'returned' %}bg-red-100{% endif %}
+                                            {% if item.status == 'extended' %}bg-orange-100{% endif %}
+                                            {% if item.status == 'quarantining' %}bg-blue-100{% endif %}
+                                            {% if item.status == 'reviewing' %}bg-purple-100{% endif %}
+                                            {% if item.status == 'approving' %}bg-yellow-100{% endif %}
+                                            {% if item.status == 'pending' %}bg-gray-100{% endif %}">
+                                    <span class="text-2xl font-bold
+                                                {% if item.status == 'released' %}text-green-700{% endif %}
+                                                {% if item.status == 'returned' %}text-red-700{% endif %}
+                                                {% if item.status == 'extended' %}text-orange-700{% endif %}
+                                                {% if item.status == 'quarantining' %}text-blue-700{% endif %}
+                                                {% if item.status == 'reviewing' %}text-purple-700{% endif %}
+                                                {% if item.status == 'approving' %}text-yellow-700{% endif %}
+                                                {% if item.status == 'pending' %}text-gray-700{% endif %}">
+                                        {{ item.count }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600">
+                                    {% for status_val, status_name in batch_status_choices %}
+                                        {% if status_val == item.status %}{{ status_name }}{% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-gray-500 py-8">
+                        <p>暂无数据</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

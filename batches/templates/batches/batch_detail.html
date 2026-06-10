@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ batch.batch_number }} - 批次详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -21px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1e3a5f;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <nav class="bg-[#1e3a5f] shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'batches:list' %}" class="text-white hover:text-[#f59e0b] transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-white font-bold text-xl">{{ batch.batch_number }}</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[#f59e0b] text-sm">{{ user.full_name }} ({{ user.get_role_display }})</span>
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-all">
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">基本信息</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">批次号:</span>
+                        <span class="font-bold text-[#1e3a5f]">{{ batch.batch_number }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">动物种类:</span>
+                        <span class="font-medium">{{ batch.animal_type }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">数量:</span>
+                        <span class="font-medium">{{ batch.quantity }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">来源国:</span>
+                        <span class="font-medium">{{ batch.origin_country }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">入境日期:</span>
+                        <span class="font-medium">{{ batch.entry_date }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">隔离场:</span>
+                        <span class="font-medium">{{ batch.quarantine_site }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">隔离天数:</span>
+                        <span class="font-medium">{{ quarantine_days }} 天</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">当前状态:</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium
+                                    {% if batch.status == 'released' %}bg-green-100 text-green-700{% endif %}
+                                    {% if batch.status == 'returned' %}bg-red-100 text-red-700{% endif %}
+                                    {% if batch.status == 'extended' %}bg-orange-100 text-orange-700{% endif %}
+                                    {% if batch.status == 'quarantining' %}bg-blue-100 text-blue-700{% endif %}
+                                    {% if batch.status == 'reviewing' %}bg-purple-100 text-purple-700{% endif %}
+                                    {% if batch.status == 'approving' %}bg-yellow-100 text-yellow-700{% endif %}
+                                    {% if batch.status == 'pending' %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ batch.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">创建人:</span>
+                        <span class="font-medium">{{ batch.created_by.full_name }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">证明材料</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-3 rounded-lg {% if batch.vaccine_certificate %}bg-green-50{% else %}bg-red-50{% endif %}">
+                            <div class="flex items-center space-x-3">
+                                {% if batch.vaccine_certificate %}
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% else %}
+                                    <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% endif %}
+                                <span class="{% if batch.vaccine_certificate %}text-green-700{% else %}text-red-700{% endif %} font-medium">疫苗证明</span>
+                            </div>
+                            {% if not batch.vaccine_certificate %}
+                                <span class="text-xs text-red-600 font-bold">⚠ 缺失</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 rounded-lg {% if batch.health_certificate %}bg-green-50{% else %}bg-gray-50{% endif %}">
+                            <div class="flex items-center space-x-3">
+                                {% if batch.health_certificate %}
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% else %}
+                                    <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% endif %}
+                                <span class="{% if batch.health_certificate %}text-green-700{% else %}text-gray-600{% endif %} font-medium">健康证明</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 rounded-lg {% if batch.quarantine_certificate %}bg-green-50{% else %}bg-gray-50{% endif %}">
+                            <div class="flex items-center space-x-3">
+                                {% if batch.quarantine_certificate %}
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% else %}
+                                    <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% endif %}
+                                <span class="{% if batch.quarantine_certificate %}text-green-700{% else %}text-gray-600{% endif %} font-medium">检疫证书</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if user.can_create_batch %}
+                        <form method="post" action="{% url 'batches:upload_document' batch.pk %}" enctype="multipart/form-data" class="space-y-3">
+                            {% csrf_token %}
+                            <select name="document_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <option value="vaccine_certificate">疫苗证明</option>
+                                <option value="health_certificate">健康证明</option>
+                                <option value="quarantine_certificate">检疫证书</option>
+                            </select>
+                            <input type="file" name="file" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <button type="submit" class="w-full bg-[#1e3a5f] text-white py-2 rounded-lg hover:bg-[#2d5a87] transition-all">
+                                上传文档
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">放行决策</h2>
+                </div>
+                <div class="p-6">
+                    {% if not batch.vaccine_certificate %}
+                        <div class="bg-red-100 border border-red-300 rounded-lg p-4 mb-4">
+                            <div class="flex items-center space-x-2 text-red-700">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="font-bold">疫苗证明缺失，无法放行！</span>
+                            </div>
+                            <p class="text-red-600 text-sm mt-2">请上传疫苗证明后方可进行放行操作。</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if missing_feeding %}
+                        <div class="bg-orange-100 border border-orange-300 rounded-lg p-4 mb-4">
+                            <div class="flex items-center space-x-2 text-orange-700">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="font-bold">饲养记录不完整</span>
+                            </div>
+                            <p class="text-orange-600 text-sm mt-2">部分日期缺少饲养记录，建议补充完整后再放行。</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if user.can_approve_release %}
+                        <div class="space-y-3">
+                            <button {% if not can_release %}disabled{% endif %}
+                                    class="w-full py-3 rounded-lg font-medium transition-all
+                                           {% if can_release %}bg-[#10b981] text-white hover:bg-green-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
+                                ✓ 放行
+                            </button>
+                            
+                            <button {% if not can_extend %}disabled{% endif %}
+                                    class="w-full py-3 rounded-lg font-medium transition-all
+                                           {% if can_extend %}bg-[#f59e0b] text-white hover:bg-orange-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
+                                延长隔离
+                            </button>
+                            
+                            <button {% if not can_return %}disabled{% endif %}
+                                    class="w-full py-3 rounded-lg font-medium transition-all
+                                           {% if can_return %}bg-[#ef4444] text-white hover:bg-red-600{% else %}bg-gray-200 text-gray-400 cursor-not-allowed{% endif %}">
+                                退运
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>您没有审批权限</p>
+                            <p class="text-sm mt-2">请联系监管负责人进行审批</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-white font-bold">观察记录</h2>
+                    {% if user.can_write_observation %}
+                        <a href="{% url 'observations:create' batch.pk %}" 
+                           class="bg-[#10b981] text-white px-4 py-2 rounded-lg text-sm hover:bg-green-600 transition-all">
+                            添加记录
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="p-6">
+                    {% if observations %}
+                        <div class="relative pl-8 space-y-4">
+                            {% for obs in observations %}
+                                <div class="timeline-item relative bg-gray-50 rounded-lg p-4 {% if obs.is_abnormal %}border-2 border-red-300{% endif %}">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="font-bold text-[#1e3a5f]">{{ obs.observation_date }}</span>
+                                        {% if obs.is_abnormal %}
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">异常</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-600 space-y-1">
+                                        <div>体温: {{ obs.temperature }}℃ | 食欲: {{ obs.get_appetite_display }}</div>
+                                        <div>精神: {{ obs.get_mental_state_display }} | 排泄: {{ obs.get_excretion_display }}</div>
+                                        {% if obs.abnormal_symptoms %}
+                                            <div class="text-red-600 font-medium">异常症状: {{ obs.abnormal_symptoms }}</div>
+                                        {% endif %}
+                                        <div class="text-xs text-gray-400 mt-2">观察员: {{ obs.observer.full_name }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>暂无观察记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-[#1e3a5f] px-6 py-4">
+                    <h2 class="text-white font-bold">历史节点</h2>
+                </div>
+                <div class="p-6">
+                    {% if status_history %}
+                        <div class="relative pl-8 space-y-4">
+                            {% for history in status_history %}
+                                <div class="timeline-item relative bg-gray-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="font-bold text-[#1e3a5f]">{{ history.changed_at|date:"Y-m-d H:i" }}</span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                            {{ history.get_to_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        {% if history.from_status %}
+                                            从 {{ history.get_from_status_display }} 变更为 {{ history.get_to_status_display }}
+                                        {% else %}
+                                            初始状态: {{ history.get_to_status_display }}
+                                        {% endif %}
+                                        {% if history.notes %}
+                                            <div class="mt-1">{{ history.notes }}</div>
+                                        {% endif %}
+                                        <div class="text-xs text-gray-400 mt-2">操作人: {{ history.changed_by.full_name }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>暂无历史记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

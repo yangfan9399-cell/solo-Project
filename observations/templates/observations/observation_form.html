@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加观察记录 - {{ batch.batch_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <nav class="bg-[#1e3a5f] shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'batches:detail' batch.pk %}" class="text-white hover:text-[#f59e0b] transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-white font-bold text-xl">添加观察记录 - {{ batch.batch_number }}</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-[#f59e0b] text-sm">{{ user.full_name }} ({{ user.get_role_display }})</span>
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="bg-[#ef4444] text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition-all">
+                        登出
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="max-w-3xl mx-auto px-4 py-8">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="bg-[#1e3a5f] px-6 py-4">
+                <h2 class="text-white font-bold">观察信息</h2>
+            </div>
+            
+            <form method="post" action="{% url 'observations:create' batch.pk %}" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="observation_date" class="block text-sm font-medium text-gray-700 mb-2">观察日期 *</label>
+                        <input type="date" 
+                               id="observation_date" 
+                               name="observation_date" 
+                               value="{{ today|date:'Y-m-d' }}"
+                               required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="temperature" class="block text-sm font-medium text-gray-700 mb-2">体温(℃) *</label>
+                        <input type="number" 
+                               id="temperature" 
+                               name="temperature" 
+                               step="0.01"
+                               required
+                               placeholder="例如: 38.5"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="appetite" class="block text-sm font-medium text-gray-700 mb-2">食欲 *</label>
+                        <select id="appetite" 
+                                name="appetite" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                            <option value="normal">正常</option>
+                            <option value="decreased">减少</option>
+                            <option value="none">无</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="mental_state" class="block text-sm font-medium text-gray-700 mb-2">精神状态 *</label>
+                        <select id="mental_state" 
+                                name="mental_state" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                            <option value="active">活跃</option>
+                            <option value="normal">正常</option>
+                            <option value="lethargic">萎靡</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="excretion" class="block text-sm font-medium text-gray-700 mb-2">排泄情况 *</label>
+                        <select id="excretion" 
+                                name="excretion" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                            <option value="normal">正常</option>
+                            <option value="abnormal">异常</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="water_intake" class="block text-sm font-medium text-gray-700 mb-2">饮水情况 *</label>
+                        <input type="text" 
+                               id="water_intake" 
+                               name="water_intake" 
+                               required
+                               placeholder="例如: 正常饮水"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="environment_temp" class="block text-sm font-medium text-gray-700 mb-2">环境温度(℃) *</label>
+                        <input type="number" 
+                               id="environment_temp" 
+                               name="environment_temp" 
+                               step="0.01"
+                               required
+                               placeholder="例如: 25.0"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="environment_humidity" class="block text-sm font-medium text-gray-700 mb-2">环境湿度(%) *</label>
+                        <input type="number" 
+                               id="environment_humidity" 
+                               name="environment_humidity" 
+                               step="0.01"
+                               required
+                               placeholder="例如: 60.0"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="feeding_record" class="block text-sm font-medium text-gray-700 mb-2">饲养记录 *</label>
+                    <textarea id="feeding_record" 
+                              name="feeding_record" 
+                              rows="3"
+                              required
+                              placeholder="记录饲料消耗、饲喂时间等..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent"></textarea>
+                </div>
+                
+                <div>
+                    <label for="abnormal_symptoms" class="block text-sm font-medium text-gray-700 mb-2">异常症状（如有）</label>
+                    <textarea id="abnormal_symptoms" 
+                              name="abnormal_symptoms" 
+                              rows="2"
+                              placeholder="描述发现的异常症状..."
+                              class="w-full px-4 py-3 border border-red-300 rounded-lg focus:ring-2 focus:ring-[#ef4444] focus:border-transparent"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">填写异常症状将自动标记为异常记录</p>
+                </div>
+                
+                <div class="flex justify-end space-x-4 pt-6">
+                    <a href="{% url 'batches:detail' batch.pk %}" 
+                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        取消
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-[#1e3a5f] text-white rounded-lg font-medium hover:bg-[#2d5a87] transition-all">
+                        提交记录
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
