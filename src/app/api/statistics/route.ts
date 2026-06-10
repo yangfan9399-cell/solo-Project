@@ -4,38 +4,49 @@ import pool from '@/lib/pg'
 export async function GET() {
   const client = await pool.connect()
   try {
-    const byDepartment = await client.query(`
-      SELECT d.name, COUNT(a.id) as count
-      FROM "Application" a
-      JOIN "Department" d ON a."departmentId" = d.id
-      GROUP BY d.id, d.name
-    `)
-
-    const bySoftware = await client.query(`
-      SELECT s.name, COUNT(la.id) as usage
-      FROM "Software" s
-      LEFT JOIN "License" l ON l."softwareId" = s.id
-      LEFT JOIN "LicenseAssignment" la ON la."licenseId" = l.id AND la.status = 'ACTIVE'
-      GROUP BY s.id, s.name
-    `)
-
     const byAlertType = await client.query(`
-      SELECT type, COUNT(*) as count
+      SELECT type, COUNT(*) as "id"
       FROM "Alert"
       GROUP BY type
     `)
 
     const softwareStats = await client.query(`
-      SELECT s.name, s."totalSeats", s."usedSeats",
-        ROUND((s."usedSeats"::numeric / NULLIF(s."totalSeats", 0)) * 100, 2) as "usagePercent"
+      SELECT s.id, s.name, s."totalSeats", s."usedSeats"
       FROM "Software" s
     `)
 
-    const departmentStats = await client.query(`
-      SELECT d.name,
-        (SELECT COUNT(*) FROM "Employee" e WHERE e."departmentId" = d.id AND e.status = 'ACTIVE') as "activeEmployees",
-        (SELECT COUNT(*) FROM "Application" a WHERE a."departmentId" = d.id) as "totalApplications"
+    const departments = await client.query(`
+      SELECT d.id, d.name
       FROM "Department" d
+    `)
+
+    const departmentStats = await Promise.all(
+      departments.rows.map(async (dept) => {
+        const employees = await client.query(`
+          SELECT id, name, "employeeId"
+          FROM "Employee"
+          WHERE "departmentId" = $1 AND status = 'ACTIVE'
+        `, [dept.id])
+        
+        const applications = await client.query(`
+          SELECT id, status
+          FROM "Application"
+          WHERE "departmentId" = $1
+        `, [dept.id])
+
+        return {
+          id: dept.id,
+          name: dept.name,
+          employees: employees.rows,
+          applications: applications.rows,
+        }
+      })
+    )
+
+    const alerts = await client.query(`
+      SELECT type, COUNT(*) as "id"
+      FROM "Alert"
+      GROUP BY type
     `)
 
     const licenseStats = await client.query(`
@@ -47,11 +58,9 @@ export async function GET() {
     `)
 
     return NextResponse.json({
-      byDepartment: byDepartment.rows,
-      bySoftware: bySoftware.rows,
-      byAlertType: byAlertType.rows,
+      byAlertType: alerts.rows.map(row => ({ type: row.type, _count: { id: row.id } })),
       softwareStats: softwareStats.rows,
-      departmentStats: departmentStats.rows,
+      departmentStats,
       licenseStats: licenseStats.rows[0],
     })
   } finally {

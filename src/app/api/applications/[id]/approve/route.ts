@@ -93,13 +93,37 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const swRes = await client.query('SELECT id, name, vendor FROM "Software" WHERE id = $1', [application.softwareId])
       const dept = await client.query('SELECT id, name, code FROM "Department" WHERE id = $1', [application.departmentId])
       
-      return NextResponse.json({
+      const responseData: any = {
         ...application,
         status: status === 'APPROVED' ? 'ASSIGNED' : 'REJECTED',
         employee: emp.rows[0] || null,
         software: swRes.rows[0] || null,
         department: dept.rows[0] || null,
-      })
+        approvals: [],
+        assignment: null,
+      }
+      
+      if (status === 'APPROVED' && lic) {
+        const approvals = await client.query(`
+          SELECT ap.*, json_build_object('id', e.id, 'name', e.name, 'employeeId', e."employeeId") as "approver"
+          FROM "Approval" ap
+          LEFT JOIN "Employee" e ON ap."approverId" = e.id
+          WHERE ap."applicationId" = $1
+          ORDER BY ap."createdAt" ASC
+        `, [id])
+        
+        const assignment = await client.query(`
+          SELECT la.*, json_build_object('id', l.id, 'licenseKey', l."licenseKey") as "license"
+          FROM "LicenseAssignment" la
+          LEFT JOIN "License" l ON la."licenseId" = l.id
+          WHERE la."applicationId" = $1
+        `, [id])
+        
+        responseData.approvals = approvals.rows
+        responseData.assignment = assignment.rows[0] || null
+      }
+      
+      return NextResponse.json(responseData)
     }
 
     await client.query('COMMIT')
