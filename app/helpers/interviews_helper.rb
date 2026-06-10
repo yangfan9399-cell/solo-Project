@@ -72,4 +72,29 @@ module InterviewsHelper
     }
     classes[status.to_sym] || 'bg-gray-100 text-gray-800'
   end
+
+  def field_label(field)
+    labels = {
+      'title' => '标题',
+      'content' => '内容',
+      'publish_date' => '发布日期',
+      'channel' => '发布渠道',
+      'respondent_id' => '受访者'
+    }
+    labels[field] || field.humanize
+  end
+
+  def format_value(field, value)
+    case field
+    when 'publish_date'
+      value.present? ? Date.parse(value).strftime('%Y-%m-%d') : '未设置'
+    when 'channel'
+      channel_label(value)
+    when 'respondent_id'
+      respondent = Respondent.find_by(id: value)
+      respondent&.name || '未指定'
+    else
+      value.presence || '空'
+    end
+  end
 end

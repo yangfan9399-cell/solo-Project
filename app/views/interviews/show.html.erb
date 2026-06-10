@@ -16,29 +16,29 @@
         <% elsif @interview.pending_brand_review? %>
           <%= form_with url: brand_review_interview_path(@interview), method: :post do |f| %>
             <%= f.hidden_field :approve, value: 'true' %>
-            <div class="flex gap-2">
-              <textarea name="comment" placeholder="审核意见" class="w-64 px-3 py-2 border rounded-lg"></textarea>
+            <div class="flex gap-2 items-center">
+              <textarea name="comment" placeholder="审核意见" class="w-48 px-3 py-2 border rounded-lg text-sm"></textarea>
               <%= f.submit '通过', class: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700' %>
             </div>
           <% end %>
           <%= form_with url: brand_review_interview_path(@interview), method: :post do |f| %>
-            <div class="flex gap-2">
-              <textarea name="comment" placeholder="退回原因" class="w-64 px-3 py-2 border rounded-lg"></textarea>
-              <%= f.submit '退回', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
+            <div class="flex gap-2 items-center">
+              <textarea name="comment" placeholder="退回原因" class="w-48 px-3 py-2 border rounded-lg text-sm" required></textarea>
+              <%= f.submit '退回', name: 'reject', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
             </div>
           <% end %>
         <% elsif @interview.pending_legal_review? %>
           <%= form_with url: legal_review_interview_path(@interview), method: :post do |f| %>
             <%= f.hidden_field :approve, value: 'true' %>
-            <div class="flex gap-2">
-              <textarea name="comment" placeholder="复核意见" class="w-64 px-3 py-2 border rounded-lg"></textarea>
+            <div class="flex gap-2 items-center">
+              <textarea name="comment" placeholder="复核意见" class="w-48 px-3 py-2 border rounded-lg text-sm"></textarea>
               <%= f.submit '通过', class: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700' %>
             </div>
           <% end %>
           <%= form_with url: legal_review_interview_path(@interview), method: :post do |f| %>
-            <div class="flex gap-2">
-              <textarea name="comment" placeholder="退回原因" class="w-64 px-3 py-2 border rounded-lg"></textarea>
-              <%= f.submit '退回', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
+            <div class="flex gap-2 items-center">
+              <textarea name="comment" placeholder="退回原因" class="w-48 px-3 py-2 border rounded-lg text-sm" required></textarea>
+              <%= f.submit '退回', name: 'reject', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
             </div>
           <% end %>
         <% elsif @interview.pending_publish? %>
@@ -47,15 +47,15 @@
               <%= f.submit '确认发布', class: 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700' %>
             <% end %>
           <% else %>
-            <div class="px-4 py-2 bg-red-100 text-red-800 rounded-lg">
-              <%= '授权文件缺失' unless @interview.authorized? %>
-              <%= '存在未遮盖的敏感信息' if @interview.has_uncovered_sensitive_items? %>
+            <div class="px-4 py-2 bg-red-100 text-red-800 rounded-lg text-sm">
+              <%= '授权文件缺失或未批准' unless @interview.authorized? %>
+              <%= '；存在未遮盖的敏感信息' if @interview.has_uncovered_sensitive_items? %>
             </div>
           <% end %>
           <%= form_with url: publish_review_interview_path(@interview), method: :post do |f| %>
-            <div class="flex gap-2">
-              <textarea name="comment" placeholder="退回原因" class="w-64 px-3 py-2 border rounded-lg"></textarea>
-              <%= f.submit '退回', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
+            <div class="flex gap-2 items-center">
+              <textarea name="comment" placeholder="退回原因" class="w-48 px-3 py-2 border rounded-lg text-sm" required></textarea>
+              <%= f.submit '退回', name: 'reject', class: 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700' %>
             </div>
           <% end %>
         <% elsif @interview.rejected? %>
@@ -69,7 +69,7 @@
       <div class="col-span-2 space-y-6">
         <div class="bg-white rounded-lg shadow-md p-6">
           <h2 class="text-lg font-semibold text-gray-900 mb-4">访谈内容</h2>
-          <div class="prose prose-sm max-w-none">
+          <div class="prose prose-sm max-w-none whitespace-pre-wrap">
             <%= @interview.content %>
           </div>
         </div>
@@ -97,18 +97,38 @@
         <div class="bg-white rounded-lg shadow-md p-6">
           <h2 class="text-lg font-semibold text-gray-900 mb-4">修改记录</h2>
           <div class="space-y-4">
-            <% @change_histories.each do |history| %>
-              <div class="border-b pb-4">
-                <div class="flex justify-between items-center">
-                  <span class="text-sm text-gray-500"><%= history.user&.name %> | <%= history.created_at.strftime('%Y-%m-%d %H:%M') %></span>
+            <% if @change_histories.present? %>
+              <% @change_histories.each do |history| %>
+                <div class="border rounded-lg p-4 bg-gray-50">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-500"><%= history.user&.name %> | <%= history.created_at.strftime('%Y-%m-%d %H:%M') %></span>
+                  </div>
+                  <div class="text-sm text-gray-600 mb-2">
+                    <span class="font-medium">修改字段：</span><%= history.changed_fields.map { |f| field_label(f) }.join(', ') %>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="bg-red-50 p-2 rounded">
+                      <span class="text-red-600 font-medium">原值：</span>
+                      <% history.previous_values.each do |field, value| %>
+                        <div><%= field_label(field) %>：<%= format_value(field, value) %></div>
+                      <% end %>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded">
+                      <span class="text-green-600 font-medium">新值：</span>
+                      <% history.new_values.each do |field, value| %>
+                        <div><%= field_label(field) %>：<%= format_value(field, value) %></div>
+                      <% end %>
+                    </div>
+                  </div>
+                  <% if history.comment.present? %>
+                    <div class="text-sm text-gray-500 mt-2 bg-yellow-50 p-2 rounded">
+                      <span class="font-medium">备注：</span><%= history.comment %>
+                    </div>
+                  <% end %>
                 </div>
-                <div class="text-sm text-gray-600 mt-2">
-                  <span class="font-medium">修改字段：</span><%= history.changed_fields.map { |f| f.humanize }.join(', ') %>
-                </div>
-                <% if history.comment.present? %>
-                  <div class="text-sm text-gray-500 mt-1">备注：<%= history.comment %></div>
-                <% end %>
-              </div>
+              <% end %>
+            <% else %>
+              <div class="text-gray-500 text-center py-4">暂无修改记录</div>
             <% end %>
           </div>
         </div>
@@ -139,24 +159,38 @@
             <div class="space-y-3">
               <div class="flex justify-between">
                 <span class="text-gray-500">文件路径</span>
-                <span><%= @authorization.file_path %></span>
+                <span class="text-sm truncate max-w-32"><%= @authorization.file_path %></span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">状态</span>
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= @authorization.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
-                  <%= @authorization.approved ? '已批准' : '待审核' %>
+                  <%= @authorization.approved ? '已批准' : '待批准' %>
                 </span>
               </div>
+              <% if @authorization.approved_at %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">批准时间</span>
+                  <span class="text-sm"><%= @authorization.approved_at.strftime('%Y-%m-%d') %></span>
+                </div>
+              <% end %>
               <div class="flex justify-between">
                 <span class="text-gray-500">上传人</span>
                 <span><%= @authorization.user&.name %></span>
               </div>
             </div>
+            <% unless @authorization.approved %>
+              <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700">
+                授权文件已上传，需等待法务复核通过后自动批准
+              </div>
+            <% end %>
           <% else %>
+            <div class="p-3 bg-red-50 rounded-lg text-sm text-red-700 mb-4">
+              授权文件缺失，无法发布
+            </div>
             <%= form_with url: upload_authorization_interview_path(@interview), method: :post do |f| %>
               <div class="space-y-3">
-                <input type="text" name="file_path" placeholder="授权文件路径" class="w-full px-3 py-2 border rounded-lg">
-                <%= f.submit '上传授权文件', class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" %>
+                <input type="text" name="file_path" placeholder="授权文件路径" class="w-full px-3 py-2 border rounded-lg" required>
+                <%= f.submit '上传授权文件', class: "w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" %>
               </div>
             <% end %>
           <% end %>
@@ -184,12 +218,15 @@
                 </div>
               </div>
             <% end %>
+            <% if @sensitive_items.empty? %>
+              <div class="text-gray-500 text-center py-2">暂无敏感信息</div>
+            <% end %>
           </div>
           <%= form_with url: add_sensitive_item_interview_path(@interview), method: :post do |f| %>
             <div class="space-y-2 mt-4">
               <input type="text" name="content" placeholder="敏感内容" class="w-full px-3 py-2 border rounded-lg">
               <input type="text" name="position" placeholder="位置描述" class="w-full px-3 py-2 border rounded-lg">
-              <%= f.submit '添加敏感项', class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" %>
+              <%= f.submit '添加敏感项', class: 'w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700' %>
             </div>
           <% end %>
         </div>
@@ -208,6 +245,10 @@
             <div class="flex justify-between">
               <span class="text-gray-500">创建人</span>
               <span><%= @interview.user&.name %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">创建时间</span>
+              <span class="text-sm"><%= @interview.created_at.strftime('%Y-%m-%d %H:%M') %></span>
             </div>
           </div>
         </div>

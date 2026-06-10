@@ -60,6 +60,7 @@ class InterviewsController < ApplicationController
 
   def submit_for_review
     @interview.status = :pending_brand_review
+    @interview.save!
     @interview.review_records.create(
       reviewer: current_user,
       stage: :brand_review,
@@ -71,8 +72,9 @@ class InterviewsController < ApplicationController
   end
 
   def brand_review
-    if params[:approve]
+    if params[:approve] == 'true'
       @interview.status = :pending_legal_review
+      @interview.save!
       @interview.review_records.create(
         reviewer: current_user,
         stage: :brand_review,
@@ -82,6 +84,7 @@ class InterviewsController < ApplicationController
       redirect_to @interview, notice: '品牌审核通过'
     else
       @interview.status = :rejected
+      @interview.save!
       @interview.review_records.create(
         reviewer: current_user,
         stage: :brand_review,
@@ -93,17 +96,24 @@ class InterviewsController < ApplicationController
   end
 
   def legal_review
-    if params[:approve]
+    if params[:approve] == 'true'
       @interview.status = :pending_publish
+      @interview.save!
+      
+      if @interview.authorization
+        @interview.authorization.update(approved: true, approved_at: Time.current)
+      end
+      
       @interview.review_records.create(
         reviewer: current_user,
         stage: :legal_review,
         status: :approved,
         comment: params[:comment]
       )
-      redirect_to @interview, notice: '法务复核通过'
+      redirect_to @interview, notice: '法务复核通过，授权文件已批准'
     else
       @interview.status = :rejected
+      @interview.save!
       @interview.review_records.create(
         reviewer: current_user,
         stage: :legal_review,
@@ -115,7 +125,7 @@ class InterviewsController < ApplicationController
   end
 
   def publish_review
-    if params[:approve]
+    if params[:approve] == 'true'
       @interview.review_records.create(
         reviewer: current_user,
         stage: :publish_review,
@@ -125,6 +135,7 @@ class InterviewsController < ApplicationController
       redirect_to @interview, notice: '发布审核通过'
     else
       @interview.status = :rejected
+      @interview.save!
       @interview.review_records.create(
         reviewer: current_user,
         stage: :publish_review,
@@ -138,6 +149,7 @@ class InterviewsController < ApplicationController
   def publish
     if @interview.can_publish?
       @interview.status = :published
+      @interview.save!
       @interview.review_records.create(
         reviewer: current_user,
         stage: :publish_review,
@@ -147,7 +159,7 @@ class InterviewsController < ApplicationController
       redirect_to @interview, notice: '发布成功'
     else
       errors = []
-      errors << '授权文件缺失' unless @interview.authorized?
+      errors << '授权文件缺失或未批准' unless @interview.authorized?
       errors << '存在未遮盖的敏感信息' if @interview.has_uncovered_sensitive_items?
       errors << '状态不允许发布' unless @interview.pending_publish?
       redirect_to @interview, alert: "发布失败：#{errors.join('；')}"
@@ -156,6 +168,7 @@ class InterviewsController < ApplicationController
 
   def reject
     @interview.status = :rejected
+    @interview.save!
     @interview.review_records.create(
       reviewer: current_user,
       stage: @interview.review_stage,
@@ -187,9 +200,10 @@ class InterviewsController < ApplicationController
     @authorization.update(
       file_path: params[:file_path],
       approved: false,
+      approved_at: nil,
       user: current_user
     )
-    redirect_to @interview, notice: '授权文件已上传'
+    redirect_to @interview, notice: '授权文件已上传，待法务复核批准'
   end
 
   def statistics

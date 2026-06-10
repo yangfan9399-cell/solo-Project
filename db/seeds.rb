@@ -24,12 +24,12 @@ Authorization.create!(
   interview_id: interview1.id,
   file_path: '/documents/authorizations/liming.pdf',
   approved: true,
-  approved_at: Date.today - 10,
+  approved_at: Date.today - 8,
   user_id: 1
 )
 
 ReviewRecord.create!(interview_id: interview1.id, reviewer_id: 2, stage: :brand_review, status: :approved, comment: '内容符合品牌定位', created_at: Date.today - 9)
-ReviewRecord.create!(interview_id: interview1.id, reviewer_id: 3, stage: :legal_review, status: :approved, comment: '授权文件完整', created_at: Date.today - 8)
+ReviewRecord.create!(interview_id: interview1.id, reviewer_id: 3, stage: :legal_review, status: :approved, comment: '授权文件完整，已批准', created_at: Date.today - 8)
 ReviewRecord.create!(interview_id: interview1.id, reviewer_id: 4, stage: :publish_review, status: :approved, comment: '可以发布', created_at: Date.today - 7)
 
 interview2 = Interview.create!(
@@ -42,10 +42,18 @@ interview2 = Interview.create!(
   respondent_id: 2
 )
 
+Authorization.create!(
+  interview_id: interview2.id,
+  file_path: '/documents/authorizations/zhangsan.pdf',
+  approved: true,
+  approved_at: Date.today - 1,
+  user_id: 1
+)
+
 SensitiveItem.create!(interview_id: interview2.id, content: 'AI功能', position: '第2段第3句', start_index: 50, end_index: 54, covered: false)
 
 ReviewRecord.create!(interview_id: interview2.id, reviewer_id: 2, stage: :brand_review, status: :approved, comment: '内容积极正面', created_at: Date.today - 2)
-ReviewRecord.create!(interview_id: interview2.id, reviewer_id: 3, stage: :legal_review, status: :approved, comment: '审核通过', created_at: Date.today - 1)
+ReviewRecord.create!(interview_id: interview2.id, reviewer_id: 3, stage: :legal_review, status: :approved, comment: '审核通过，授权已批准', created_at: Date.today - 1)
 
 interview3 = Interview.create!(
   title: '合作伙伴访谈 - 王五',
@@ -72,8 +80,8 @@ interview4 = Interview.create!(
 Authorization.create!(
   interview_id: interview4.id,
   file_path: '/documents/authorizations/zhaoliu.pdf',
-  approved: true,
-  approved_at: Date.today - 4,
+  approved: false,
+  approved_at: nil,
   user_id: 1
 )
 
@@ -99,4 +107,42 @@ interview6 = Interview.create!(
   respondent_id: 1
 )
 
+interview7 = Interview.create!(
+  title: '年度总结访谈 - 发布日期变更样本',
+  content: '这是年度总结访谈内容，原计划在月初发布，后因审核流程调整，发布日期有所变更。',
+  status: :pending_brand_review,
+  publish_date: Date.today + 5,
+  channel: :wechat,
+  user_id: 1,
+  respondent_id: 1
+)
+
+ChangeHistory.create!(
+  interview_id: interview7.id,
+  user_id: 1,
+  changed_fields: ['publish_date'],
+  previous_values: { 'publish_date' => (Date.today + 10).to_s },
+  new_values: { 'publish_date' => (Date.today + 5).to_s },
+  comment: '因审核流程调整，发布日期从月初改为月中',
+  created_at: Date.today - 1
+)
+
+ChangeHistory.create!(
+  interview_id: interview7.id,
+  user_id: 1,
+  changed_fields: ['title', 'content'],
+  previous_values: { 'title' => '年度总结访谈', 'content' => '这是年度总结访谈内容。' },
+  new_values: { 'title' => '年度总结访谈 - 发布日期变更样本', 'content' => '这是年度总结访谈内容，原计划在月初发布，后因审核流程调整，发布日期有所变更。' },
+  comment: '补充发布日期变更说明',
+  created_at: Date.today - 2
+)
+
 puts "Sample data created successfully!"
+puts "样本数据说明："
+puts "1. interview1 - 正常发布样本（已发布）"
+puts "2. interview2 - 敏感信息未遮盖样本（待发布，有未遮盖敏感项）"
+puts "3. interview3 - 授权缺失样本（被退回）"
+puts "4. interview4 - 待法务复核样本（授权文件待批准）"
+puts "5. interview5 - 待品牌审核样本"
+puts "6. interview6 - 草稿样本"
+puts "7. interview7 - 发布日期变更样本（有修改记录）"
