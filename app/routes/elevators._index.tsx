@@ -2,7 +2,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { prisma } from "~/lib/db.server";
 import { StatusBadge } from "~/components/StatusBadge";
-import { Elevator, Plus, Building2 } from "lucide-react";
+import { Square, Plus, Building2 } from "lucide-react";
 
 export async function loader() {
   const elevators = await prisma.elevator.findMany({
@@ -52,7 +52,7 @@ export default function ElevatorsIndex() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        {elevators.map((elevator) => {
+        {elevators.map((elevator: { id: string; code: string; model: string; status: string; building: { community: { name: string }; name: string }; installDate: string | Date; plans: { status: string; dueDate: string | Date }[]; faults: { emergencyLevel: string; faultType: string }[] }) => {
           const activePlan = elevator.plans[0];
           const activeFault = elevator.faults[0];
 
@@ -65,7 +65,7 @@ export default function ElevatorsIndex() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-primary-50 rounded-lg">
-                    <Elevator className="w-6 h-6 text-primary" />
+                    <Square className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-900">{elevator.code}</h3>
@@ -131,7 +131,7 @@ export default function ElevatorsIndex() {
 
       {elevators.length === 0 && (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <Elevator className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <Square className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 mb-2">暂无电梯</h3>
           <p className="text-slate-500 mb-6">请先添加电梯设备</p>
           <Link

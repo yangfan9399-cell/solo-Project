@@ -24,8 +24,12 @@ export async function loader() {
 export default function FaultsIndex() {
   const { faults } = useLoaderData<typeof loader>();
 
-  const activeFaults = faults.filter((f) => !["已解决", "已归档"].includes(f.status));
-  const resolvedFaults = faults.filter((f) => ["已解决", "已归档"].includes(f.status));
+  const activeFaults = faults.filter(
+    (f: { status: string }) => !["已解决", "已归档"].includes(f.status)
+  );
+  const resolvedFaults = faults.filter(
+    (f: { status: string }) => ["已解决", "已归档"].includes(f.status)
+  );
 
   return (
     <div className="p-8">
@@ -40,7 +44,7 @@ export default function FaultsIndex() {
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">进行中的故障</h2>
         <div className="space-y-4">
-          {activeFaults.map((fault) => (
+          {activeFaults.map((fault: { id: string; isOverdue: boolean; hasComplaint: boolean; emergencyLevel: string; faultType: string; status: string; description: string; elevator: { building: { community: { name: string } }; code: string }; reporter: string; reportDate: string | Date }) => (
             <Link
               key={fault.id}
               to={`/faults/${fault.id}`}
@@ -145,7 +149,7 @@ export default function FaultsIndex() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {resolvedFaults.map((fault) => (
+              {resolvedFaults.map((fault: { id: string; elevator: { code: string; building: { community: { name: string } } }; faultType: string; emergencyLevel: string; reporter: string; reportDate: string | Date; resolvedDate: string | Date | null; status: string }) => (
                 <tr key={fault.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <Link

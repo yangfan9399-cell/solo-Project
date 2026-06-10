@@ -5,7 +5,6 @@ import { StatusBadge } from "~/components/StatusBadge";
 import { Building2, Users, AlertTriangle, Clock } from "lucide-react";
 
 export async function loader() {
-  // Fetch data for kanban boards
   const [plans, faults, communities, maintenanceUnits] = await Promise.all([
     prisma.maintenancePlan.findMany({
       where: { status: { not: "已归档" } },
@@ -46,14 +45,12 @@ export async function loader() {
     }),
   ]);
 
-  // Group faults by type
   const faultTypes = ["电梯困人", "门故障", "通讯故障", "其他"];
   const faultsByType = faultTypes.map((type) => ({
     type,
-    faults: faults.filter((f) => f.faultType === type),
+    faults: faults.filter((f: { faultType: string }) => f.faultType === type),
   }));
 
-  // Group plans by overdue days
   const now = new Date();
   const overdueGroups = [
     { label: "0-3天", min: 0, max: 3, plans: [] as typeof plans },
@@ -62,7 +59,7 @@ export async function loader() {
     { label: "15天以上", min: 16, max: Infinity, plans: [] as typeof plans },
   ];
 
-  plans.forEach((plan) => {
+  plans.forEach((plan: { dueDate: string | Date }) => {
     const daysOverdue = Math.floor((now.getTime() - new Date(plan.dueDate).getTime()) / (1000 * 60 * 60 * 24));
     if (daysOverdue > 0) {
       const group = overdueGroups.find((g) => daysOverdue >= g.min && daysOverdue <= g.max);
@@ -99,12 +96,12 @@ export default function Kanban() {
           按小区聚合
         </h2>
         <div className="grid grid-cols-3 gap-4">
-          {communities.map((community) => {
+          {communities.map((community: { id: string; name: string; buildings: Array<{ elevators: Array<{ length: number }> }> }) => {
             const communityPlans = plans.filter(
-              (p) => p.elevator.building.community.id === community.id
+              (p: { elevator: { building: { community: { id: string } } } }) => p.elevator.building.community.id === community.id
             );
             const overdueCount = communityPlans.filter(
-              (p) => p.riskLevel === "危险" || p.riskLevel === "警告"
+              (p: { riskLevel: string }) => p.riskLevel === "危险" || p.riskLevel === "警告"
             ).length;
 
             return (
@@ -115,7 +112,7 @@ export default function Kanban() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-slate-900">{community.name}</h3>
                   <span className="text-sm text-slate-500">
-                    {community.buildings.reduce((acc, b) => acc + b.elevators.length, 0)} 台电梯
+                    {community.buildings.reduce((acc: number, b: { elevators: { length: number }[] }) => acc + b.elevators.length, 0)} 台电梯
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -148,10 +145,10 @@ export default function Kanban() {
           按维保单位聚合
         </h2>
         <div className="grid grid-cols-4 gap-4">
-          {maintenanceUnits.map((unit) => {
-            const unitPlans = plans.filter((p) => p.maintenanceUnitId === unit.id);
+          {maintenanceUnits.map((unit: { id: string; name: string }) => {
+            const unitPlans = plans.filter((p: { maintenanceUnitId: string }) => p.maintenanceUnitId === unit.id);
             const overdueCount = unitPlans.filter(
-              (p) => p.riskLevel === "危险" || p.riskLevel === "警告"
+              (p: { riskLevel: string }) => p.riskLevel === "危险" || p.riskLevel === "警告"
             ).length;
 
             return (
@@ -186,8 +183,8 @@ export default function Kanban() {
         </h2>
         <div className="grid grid-cols-4 gap-4">
           {faultsByType.map(({ type, faults }) => {
-            const overdueCount = faults.filter((f) => f.isOverdue).length;
-            const complaintCount = faults.filter((f) => f.hasComplaint).length;
+            const overdueCount = faults.filter((f: { isOverdue: boolean }) => f.isOverdue).length;
+            const complaintCount = faults.filter((f: { hasComplaint: boolean }) => f.hasComplaint).length;
 
             return (
               <Link
@@ -257,7 +254,7 @@ export default function Kanban() {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {group.plans.slice(0, 3).map((plan) => (
+                  {group.plans.slice(0, 3).map((plan: { id: string; elevatorId: string; elevator: { code: string; building: { community: { name: string } } } }) => (
                     <Link
                       key={plan.id}
                       to={`/elevators/${plan.elevatorId}`}

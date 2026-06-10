@@ -39,7 +39,6 @@ export async function action({ request }: ActionFunctionArgs) {
     },
   });
 
-  // Create history node
   await prisma.historyNode.create({
     data: {
       elevatorId,
@@ -86,7 +85,7 @@ export default function NewPlan() {
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="">请选择电梯</option>
-                  {elevators.map((elevator) => (
+                  {elevators.map((elevator: { id: string; code: string; building: { community: { name: string }; name: string } }) => (
                     <option key={elevator.id} value={elevator.id}>
                       {elevator.code} - {elevator.building.community.name} {elevator.building.name}
                     </option>
@@ -104,7 +103,7 @@ export default function NewPlan() {
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="">请选择维保单位</option>
-                  {maintenanceUnits.map((unit) => (
+                  {maintenanceUnits.map((unit: { id: string; name: string }) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.name}
                     </option>

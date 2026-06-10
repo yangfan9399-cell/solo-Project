@@ -2,12 +2,12 @@ import { Link, useLocation } from "@remix-run/react";
 import {
   LayoutDashboard,
   Building2,
-  Elevator,
   ClipboardList,
   AlertTriangle,
   Kanban,
   FileWarning,
   Settings,
+  Square,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -16,7 +16,7 @@ interface SidebarProps {
 
 const menuItems = [
   { path: "/", label: "仪表盘", icon: LayoutDashboard },
-  { path: "/elevators", label: "电梯管理", icon: Elevator },
+  { path: "/elevators", label: "电梯管理", icon: Square },
   { path: "/plans", label: "维保计划", icon: ClipboardList },
   { path: "/faults", label: "故障管理", icon: AlertTriangle },
   { path: "/kanban", label: "统计看板", icon: Kanban },
@@ -28,7 +28,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
       <div className="p-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Elevator className="w-6 h-6" />
+            <Square className="w-6 h-6" />
           </div>
           <div>
             <h1 className="font-semibold text-lg">电梯维保</h1>

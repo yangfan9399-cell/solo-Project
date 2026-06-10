@@ -25,8 +25,12 @@ export async function loader() {
 export default function PlansIndex() {
   const { plans } = useLoaderData<typeof loader>();
 
-  const activePlans = plans.filter((p) => !["已归档", "已解决"].includes(p.status));
-  const archivedPlans = plans.filter((p) => ["已归档", "已解决"].includes(p.status));
+  const activePlans = plans.filter(
+    (p: { status: string }) => !["已归档", "已解决"].includes(p.status)
+  );
+  const archivedPlans = plans.filter(
+    (p: { status: string }) => ["已归档", "已解决"].includes(p.status)
+  );
 
   return (
     <div className="p-8">
@@ -61,7 +65,7 @@ export default function PlansIndex() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {activePlans.map((plan) => (
+              {activePlans.map((plan: { id: string; elevatorId: string; elevator: { code: string; building: { community: { name: string } } }; maintenanceUnit: { name: string }; planDate: string | Date; dueDate: string | Date; status: string; riskLevel: string }) => (
                 <tr key={plan.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <Link
@@ -147,7 +151,7 @@ export default function PlansIndex() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {archivedPlans.map((plan) => (
+              {archivedPlans.map((plan: { id: string; elevatorId: string; elevator: { code: string; building: { community: { name: string } } }; maintenanceUnit: { name: string }; planDate: string | Date; dueDate: string | Date; status: string }) => (
                 <tr key={plan.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <Link

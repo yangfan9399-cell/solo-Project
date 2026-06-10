@@ -1,5 +1,5 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { useLoaderData, Link, useActionData, Form } from "@remix-run/react";
 import { prisma } from "~/lib/db.server";
 import { StatusBadge } from "~/components/StatusBadge";
 import { RiskAlert } from "~/components/RiskAlert";
@@ -13,6 +13,9 @@ import {
   FileText,
   Clock,
   User,
+  CheckCircle,
+  XCircle,
+  Send,
 } from "lucide-react";
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -47,18 +50,117 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return json({ elevator });
 }
 
+export async function action({ params, request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const actionType = formData.get("actionType");
+  const planId = formData.get("planId") as string;
+  const items = formData.get("items");
+  const remark = formData.get("remark") as string;
+  const currentUserId = "system-user";
+
+  if (actionType === "submitRecord") {
+    const recordData = JSON.parse(items as string);
+    const plan = await prisma.maintenancePlan.findUnique({
+      where: { id: planId },
+      include: { maintenanceUnit: true },
+    });
+    
+    await prisma.maintenanceRecord.upsert({
+      where: { planId },
+      update: {
+        items: items as string,
+        attachmentUrl: "/uploads/placeholder.jpg",
+      },
+      create: {
+        planId,
+        maintenanceUnitId: plan!.maintenanceUnitId,
+        items: items as string,
+        attachmentUrl: "/uploads/placeholder.jpg",
+        submitDate: new Date(),
+      },
+    });
+
+    await prisma.maintenancePlan.update({
+      where: { id: planId },
+      data: { status: "待复查" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        planId,
+        type: "执行",
+        title: "维保单位提交记录",
+        description: "维保单位已完成维保工作并提交记录",
+        operator: currentUserId,
+        operatorRole: "维保单位",
+      },
+    });
+
+    return redirect(`/elevators/${params.id}`);
+  }
+
+  if (actionType === "review") {
+    const reviewResult = formData.get("reviewResult") as string;
+    
+    await prisma.maintenancePlan.update({
+      where: { id: planId },
+      data: { status: reviewResult === "approve" ? "待确认" : "退回修改" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        planId,
+        type: reviewResult === "approve" ? "复查" : "退回",
+        title: reviewResult === "approve" ? "安全管理员复查通过" : "安全管理员复查退回",
+        description: remark || (reviewResult === "approve" ? "安全管理员复查通过" : "安全管理员复查退回，需修改"),
+        operator: currentUserId,
+        operatorRole: "安全管理员",
+      },
+    });
+
+    return redirect(`/elevators/${params.id}`);
+  }
+
+  if (actionType === "confirm") {
+    const confirmResult = formData.get("confirmResult") as string;
+    
+    await prisma.maintenancePlan.update({
+      where: { id: planId },
+      data: { status: confirmResult === "archive" ? "已归档" : "退回修改" },
+    });
+
+    await prisma.historyNode.create({
+      data: {
+        elevatorId: params.id!,
+        planId,
+        type: confirmResult === "archive" ? "归档" : "退回",
+        title: confirmResult === "archive" ? "项目经理确认归档" : "项目经理退回",
+        description: remark || (confirmResult === "archive" ? "项目经理确认归档" : "项目经理退回，需重新处理"),
+        operator: currentUserId,
+        operatorRole: "项目经理",
+      },
+    });
+
+    return redirect(`/elevators/${params.id}`);
+  }
+
+  return json({ success: true });
+}
+
 export default function ElevatorDetail() {
   const { elevator } = useLoaderData<typeof loader>();
 
   const activePlans = elevator.plans.filter(
-    (p) => !["已归档", "已解决"].includes(p.status)
+    (p: { status: string }) => !["已归档", "已解决"].includes(p.status)
   );
 
   const activeFaults = elevator.faults.filter(
-    (f) => !["已解决", "已归档"].includes(f.status)
+    (f: { status: string }) => !["已解决", "已归档"].includes(f.status)
   );
 
-  const overduePlans = activePlans.filter((p) => p.riskLevel === "危险" || p.riskLevel === "警告");
+  const overduePlans = activePlans.filter((p: { riskLevel: string }) => p.riskLevel === "危险" || p.riskLevel === "警告");
 
   return (
     <div className="p-8">
@@ -137,7 +239,7 @@ export default function ElevatorDetail() {
 
             {activePlans.length > 0 ? (
               <div className="space-y-4">
-                {activePlans.map((plan) => (
+                {activePlans.map((plan: { id: string; riskLevel: string; planDate: string | Date; maintenanceUnit: { name: string }; status: string; dueDate: string | Date; record: { items: string; attachmentUrl?: string } | null }) => (
                   <div
                     key={plan.id}
                     className={`p-4 rounded-lg border ${
@@ -207,6 +309,165 @@ export default function ElevatorDetail() {
                         )}
                       </div>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      {plan.status === "待执行" && (
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium text-slate-700 mb-2">维保单位操作</div>
+                          <Form method="post" className="space-y-3">
+                            <input type="hidden" name="actionType" value="submitRecord" />
+                            <input type="hidden" name="planId" value={plan.id} />
+                            <div className="grid grid-cols-2 gap-2">
+                              <select name="item1" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">门系统检查 - 正常</option>
+                                <option value="异常">门系统检查 - 异常</option>
+                              </select>
+                              <select name="item2" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">曳引机检查 - 正常</option>
+                                <option value="异常">曳引机检查 - 异常</option>
+                              </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <select name="item3" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">安全装置检查 - 正常</option>
+                                <option value="异常">安全装置检查 - 异常</option>
+                              </select>
+                              <select name="item4" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">电气系统检查 - 正常</option>
+                                <option value="异常">电气系统检查 - 异常</option>
+                              </select>
+                            </div>
+                            <input
+                              type="hidden"
+                              name="items"
+                              value='[{"item":"门系统检查","result":"正常"},{"item":"曳引机检查","result":"正常"},{"item":"安全装置检查","result":"正常"},{"item":"电气系统检查","result":"正常"}]'
+                            />
+                            <button
+                              type="submit"
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                            >
+                              <Send className="w-4 h-4" />
+                              提交维保记录
+                            </button>
+                          </Form>
+                        </div>
+                      )}
+
+                      {plan.status === "待复查" && (
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium text-slate-700 mb-2">安全管理员复查</div>
+                          <Form method="post" className="space-y-2">
+                            <input type="hidden" name="actionType" value="review" />
+                            <input type="hidden" name="planId" value={plan.id} />
+                            <textarea
+                              name="remark"
+                              placeholder="复查意见（可选）"
+                              className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                              rows={2}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="submit"
+                                name="reviewResult"
+                                value="approve"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                复查通过
+                              </button>
+                              <button
+                                type="submit"
+                                name="reviewResult"
+                                value="reject"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                退回修改
+                              </button>
+                            </div>
+                          </Form>
+                        </div>
+                      )}
+
+                      {plan.status === "待确认" && (
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium text-slate-700 mb-2">项目经理确认</div>
+                          <Form method="post" className="space-y-2">
+                            <input type="hidden" name="actionType" value="confirm" />
+                            <input type="hidden" name="planId" value={plan.id} />
+                            <textarea
+                              name="remark"
+                              placeholder="确认意见（可选）"
+                              className="w-full px-3 py-2 border border-slate-300 rounded text-sm resize-none"
+                              rows={2}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="submit"
+                                name="confirmResult"
+                                value="archive"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                确认归档
+                              </button>
+                              <button
+                                type="submit"
+                                name="confirmResult"
+                                value="reject"
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                退回
+                              </button>
+                            </div>
+                          </Form>
+                        </div>
+                      )}
+
+                      {plan.status === "退回修改" && (
+                        <div className="space-y-3">
+                          <div className="text-sm font-medium text-amber-700 mb-2">已被退回，需要修改后重新提交</div>
+                          <Form method="post" className="space-y-3">
+                            <input type="hidden" name="actionType" value="submitRecord" />
+                            <input type="hidden" name="planId" value={plan.id} />
+                            <div className="grid grid-cols-2 gap-2">
+                              <select name="item1" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">门系统检查 - 正常</option>
+                                <option value="异常">门系统检查 - 异常</option>
+                              </select>
+                              <select name="item2" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">曳引机检查 - 正常</option>
+                                <option value="异常">曳引机检查 - 异常</option>
+                              </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <select name="item3" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">安全装置检查 - 正常</option>
+                                <option value="异常">安全装置检查 - 异常</option>
+                              </select>
+                              <select name="item4" className="px-3 py-2 border border-slate-300 rounded text-sm">
+                                <option value="正常">电气系统检查 - 正常</option>
+                                <option value="异常">电气系统检查 - 异常</option>
+                              </select>
+                            </div>
+                            <input
+                              type="hidden"
+                              name="items"
+                              value='[{"item":"门系统检查","result":"正常"},{"item":"曳引机检查","result":"正常"},{"item":"安全装置检查","result":"正常"},{"item":"电气系统检查","result":"正常"}]'
+                            />
+                            <button
+                              type="submit"
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
+                            >
+                              <Send className="w-4 h-4" />
+                              重新提交维保记录
+                            </button>
+                          </Form>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -226,7 +487,7 @@ export default function ElevatorDetail() {
 
             {activeFaults.length > 0 ? (
               <div className="space-y-4">
-                {activeFaults.map((fault) => (
+                {activeFaults.map((fault: { id: string; isOverdue: boolean; hasComplaint: boolean; faultType: string; emergencyLevel: string; status: string; description: string; reporter: string; reportDate: string | Date }) => (
                   <Link
                     key={fault.id}
                     to={`/faults/${fault.id}`}

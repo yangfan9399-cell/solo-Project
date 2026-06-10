@@ -4,7 +4,7 @@ import { prisma } from "~/lib/db.server";
 import { StatusBadge } from "~/components/StatusBadge";
 import { RiskAlert } from "~/components/RiskAlert";
 import {
-  Elevator,
+  Square,
   ClipboardList,
   AlertTriangle,
   Clock,
@@ -77,7 +77,7 @@ export default function Index() {
     {
       label: "电梯总数",
       value: stats.totalElevators,
-      icon: Elevator,
+      icon: Square,
       color: "bg-blue-500",
       bgColor: "bg-blue-50",
     },
@@ -163,7 +163,7 @@ export default function Index() {
           </div>
 
           <div className="space-y-4">
-            {recentPlans.map((plan) => (
+            {recentPlans.map((plan: { id: string; elevatorId: string; elevator: { code: string; building: { community: { name: string }; name: string } }; maintenanceUnit: { name: string }; status: string; dueDate: string | Date }) => (
               <Link
                 key={plan.id}
                 to={`/elevators/${plan.elevatorId}`}
@@ -208,7 +208,7 @@ export default function Index() {
           </div>
 
           <div className="space-y-4">
-            {recentFaults.map((fault) => (
+            {recentFaults.map((fault: { id: string; elevator: { code: string; building: { community: { name: string } } }; isOverdue: boolean; hasComplaint: boolean; faultType: string; status: string; description: string }) => (
               <Link
                 key={fault.id}
                 to={`/faults/${fault.id}`}
