@@ -77,7 +77,8 @@ export default function Home() {
     })
     
     if (response.ok) {
-      setOrders(await response.json())
+      const refreshResponse = await fetch('/api/work-orders')
+      setOrders(await refreshResponse.json())
       setShowMergeModal(false)
       setSelectedOrder(null)
       setTargetOrderId('')

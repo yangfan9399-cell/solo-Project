@@ -1,3 +1,6 @@
+import fs from 'fs'
+import path from 'path'
+
 export type WorkOrderStatus = 'PENDING' | 'DISPATCHED' | 'REPAIRED' | 'REVIEWING' | 'COMPLETED' | 'REJECTED'
 export type LeakLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 export type RepairResult = 'FIXED' | 'SUSPECTED_DUPLICATE' | 'VALVE_LOCATION_FAILED' | 'NOT_REPAIRED'
@@ -52,6 +55,10 @@ export interface WorkOrder {
   history: WorkOrderHistory[]
 }
 
+const DB_DIR = path.join(process.cwd(), 'data')
+const WORK_ORDERS_FILE = path.join(DB_DIR, 'workOrders.json')
+const NEXT_SERIAL_FILE = path.join(DB_DIR, 'nextSerial.json')
+
 export const pipeSections: PipeSection[] = [
   { id: 'ps1', name: '管段A-001', area: '东城片区', diameter: 'DN300', material: '铸铁', installationYear: 2005 },
   { id: 'ps2', name: '管段B-002', area: '西城片区', diameter: 'DN200', material: 'PE', installationYear: 2018 },
@@ -66,21 +73,70 @@ export const repairTeams: RepairTeam[] = [
   { id: 'rt3', name: '抢修三队', leaderName: '王师傅', leaderPhone: '13800138003' },
 ]
 
-let workOrders: WorkOrder[] = []
-let nextSerialNumber = 1
-let isInitialized = false
+function ensureDir() {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true })
+  }
+}
+
+function readWorkOrders(): WorkOrder[] {
+  ensureDir()
+  if (!fs.existsSync(WORK_ORDERS_FILE)) {
+    return []
+  }
+  try {
+    const data = fs.readFileSync(WORK_ORDERS_FILE, 'utf-8')
+    const orders = JSON.parse(data)
+    return orders.map((o: WorkOrder) => ({
+      ...o,
+      createdAt: new Date(o.createdAt),
+      updatedAt: new Date(o.updatedAt),
+      history: o.history.map((h: WorkOrderHistory) => ({
+        ...h,
+        createdAt: new Date(h.createdAt),
+      })),
+    }))
+  } catch {
+    return []
+  }
+}
+
+function writeWorkOrders(orders: WorkOrder[]) {
+  ensureDir()
+  fs.writeFileSync(WORK_ORDERS_FILE, JSON.stringify(orders, null, 2))
+}
+
+function readNextSerial(): number {
+  ensureDir()
+  if (!fs.existsSync(NEXT_SERIAL_FILE)) {
+    return 1
+  }
+  try {
+    const data = fs.readFileSync(NEXT_SERIAL_FILE, 'utf-8')
+    return JSON.parse(data).nextSerialNumber || 1
+  } catch {
+    return 1
+  }
+}
+
+function writeNextSerial(num: number) {
+  ensureDir()
+  fs.writeFileSync(NEXT_SERIAL_FILE, JSON.stringify({ nextSerialNumber: num }))
+}
 
 function generateSerialNumber(): string {
   const date = new Date()
   const year = date.getFullYear().toString().slice(2)
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  const seq = String(nextSerialNumber++).padStart(4, '0')
+  const seq = String(readNextSerial()).padStart(4, '0')
+  writeNextSerial(readNextSerial() + 1)
   return `LS${year}${month}${day}${seq}`
 }
 
-function initSampleData() {
-  if (isInitialized) return
+function initSampleDataIfEmpty() {
+  const existingOrders = readWorkOrders()
+  if (existingOrders.length > 0) return
   
   const ps1 = pipeSections[0]
   const ps2 = pipeSections[1]
@@ -93,7 +149,7 @@ function initSampleData() {
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
 
-  workOrders = [
+  const sampleOrders: WorkOrder[] = [
     {
       id: 'wo1',
       serialNumber: 'LS2606080001',
@@ -112,12 +168,13 @@ function initSampleData() {
       repairResult: 'FIXED',
       repairPhotos: ['photo1.jpg', 'photo2.jpg'],
       reviewResult: 'APPROVED',
-      mergedFrom: [],
+      mergedFrom: ['LS2606100007'],
       history: [
         { id: 'h1', workOrderId: 'wo1', action: 'REPORTED', operator: '客服小王', createdAt: twoDaysAgo },
         { id: 'h2', workOrderId: 'wo1', action: 'DISPATCHED', operator: '调度员老李', comment: '派往抢修一队', createdAt: new Date(twoDaysAgo.getTime() + 1 * 60 * 60 * 1000) },
         { id: 'h3', workOrderId: 'wo1', action: 'REPAIRED', operator: '张师傅', comment: '已修复漏水点', createdAt: new Date(twoDaysAgo.getTime() + 4 * 60 * 60 * 1000) },
         { id: 'h4', workOrderId: 'wo1', action: 'REVIEWED', operator: '复核员陈工', comment: '确认恢复供水', createdAt: new Date(twoDaysAgo.getTime() + 6 * 60 * 60 * 1000) },
+        { id: 'h17', workOrderId: 'wo1', action: 'MERGED', operator: '调度员老李', comment: '合并工单 LS2606100007', createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000) },
       ],
     },
     {
@@ -231,8 +288,8 @@ function initSampleData() {
     },
   ]
 
-  nextSerialNumber = 9
-  isInitialized = true
+  writeWorkOrders(sampleOrders)
+  writeNextSerial(9)
 }
 
 export const db = {
@@ -248,8 +305,8 @@ export const db = {
   },
   workOrder: {
     findMany: (args?: { where?: Partial<WorkOrder> }) => {
-      initSampleData()
-      let result = [...workOrders]
+      initSampleDataIfEmpty()
+      let result = [...readWorkOrders()]
       const where = args?.where
       if (where) {
         if (where.status) {
@@ -265,11 +322,11 @@ export const db = {
       return Promise.resolve(result)
     },
     findUnique: (args: { where: { id: string } }) => {
-      initSampleData()
-      return Promise.resolve(workOrders.find(w => w.id === args.where.id) || null)
+      initSampleDataIfEmpty()
+      return Promise.resolve(readWorkOrders().find(w => w.id === args.where.id) || null)
     },
     create: (args: { data: Omit<WorkOrder, 'id' | 'serialNumber' | 'createdAt' | 'updatedAt' | 'history'> }) => {
-      initSampleData()
+      initSampleDataIfEmpty()
       const newOrder: WorkOrder = {
         id: Math.random().toString(36).substr(2, 9),
         serialNumber: generateSerialNumber(),
@@ -287,15 +344,19 @@ export const db = {
         repairPhotos: args.data.repairPhotos || [],
       }
       newOrder.history[0].workOrderId = newOrder.id
-      workOrders.push(newOrder)
+      const orders = readWorkOrders()
+      orders.push(newOrder)
+      writeWorkOrders(orders)
       return Promise.resolve(newOrder)
     },
     update: (args: { where: { id: string }, data: Partial<WorkOrder> }) => {
-      initSampleData()
-      const index = workOrders.findIndex(w => w.id === args.where.id)
+      initSampleDataIfEmpty()
+      const orders = readWorkOrders()
+      const index = orders.findIndex(w => w.id === args.where.id)
       if (index === -1) return Promise.resolve(null)
-      workOrders[index] = { ...workOrders[index], ...args.data, updatedAt: new Date() }
-      return Promise.resolve(workOrders[index])
+      orders[index] = { ...orders[index], ...args.data, updatedAt: new Date() }
+      writeWorkOrders(orders)
+      return Promise.resolve(orders[index])
     },
   },
 }
