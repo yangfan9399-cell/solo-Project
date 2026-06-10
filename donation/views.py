@@ -316,46 +316,43 @@ def review_dashboard(request):
     
     cycle_buckets = []
     bucket_labels = ['3天内', '3-7天', '7-14天', '14天以上']
-    bucket_thresholds = [timedelta(days=3), timedelta(days=7), timedelta(days=14)]
+    thresholds = [timedelta(days=3), timedelta(days=7), timedelta(days=14)]
     
-    previous_threshold = timedelta(days=0)
-    for i, (label, threshold) in enumerate(zip(bucket_labels, bucket_thresholds)):
-        if i == 0:
-            # 3天内: cycle < 3天
-            count = DistributionPlan.objects.filter(
-                status='received',
-                actual_distributed_date__isnull=False
-            ).annotate(
-                cycle=F('receipt__signed_at') - F('actual_distributed_date')
-            ).filter(cycle__lt=threshold).count()
-        elif i < len(bucket_thresholds):
-            # 3-7天: 3天 <= cycle < 7天
-            count = DistributionPlan.objects.filter(
-                status='received',
-                actual_distributed_date__isnull=False
-            ).annotate(
-                cycle=F('receipt__signed_at') - F('actual_distributed_date')
-            ).filter(cycle__gte=previous_threshold, cycle__lt=threshold).count()
-        else:
-            # 14天以上: cycle >= 14天
-            count = DistributionPlan.objects.filter(
-                status='received',
-                actual_distributed_date__isnull=False
-            ).annotate(
-                cycle=F('receipt__signed_at') - F('actual_distributed_date')
-            ).filter(cycle__gte=threshold).count()
-        cycle_buckets.append({'label': label, 'count': count})
-        previous_threshold = threshold
-    
-    # 最后一个桶: 14天以上
-    last_count = DistributionPlan.objects.filter(
+    # 3天内: cycle < 3天
+    count_0_3 = DistributionPlan.objects.filter(
         status='received',
         actual_distributed_date__isnull=False
     ).annotate(
         cycle=F('receipt__signed_at') - F('actual_distributed_date')
-    ).filter(cycle__gte=bucket_thresholds[-1]).count()
-    if cycle_buckets:
-        cycle_buckets[-1]['count'] = last_count
+    ).filter(cycle__lt=thresholds[0]).count()
+    cycle_buckets.append({'label': bucket_labels[0], 'count': count_0_3})
+    
+    # 3-7天: 3天 <= cycle < 7天
+    count_3_7 = DistributionPlan.objects.filter(
+        status='received',
+        actual_distributed_date__isnull=False
+    ).annotate(
+        cycle=F('receipt__signed_at') - F('actual_distributed_date')
+    ).filter(cycle__gte=thresholds[0], cycle__lt=thresholds[1]).count()
+    cycle_buckets.append({'label': bucket_labels[1], 'count': count_3_7})
+    
+    # 7-14天: 7天 <= cycle < 14天
+    count_7_14 = DistributionPlan.objects.filter(
+        status='received',
+        actual_distributed_date__isnull=False
+    ).annotate(
+        cycle=F('receipt__signed_at') - F('actual_distributed_date')
+    ).filter(cycle__gte=thresholds[1], cycle__lt=thresholds[2]).count()
+    cycle_buckets.append({'label': bucket_labels[2], 'count': count_7_14})
+    
+    # 14天以上: cycle >= 14天
+    count_14_plus = DistributionPlan.objects.filter(
+        status='received',
+        actual_distributed_date__isnull=False
+    ).annotate(
+        cycle=F('receipt__signed_at') - F('actual_distributed_date')
+    ).filter(cycle__gte=thresholds[2]).count()
+    cycle_buckets.append({'label': bucket_labels[3], 'count': count_14_plus})
     
     context = {
         'by_project': by_project,

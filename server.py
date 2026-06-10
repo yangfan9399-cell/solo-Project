@@ -1386,12 +1386,18 @@ class RequestHandler(BaseHTTPRequestHandler):
                     ELSE '14天以上'
                 END as cycle_range,
                 COUNT(*) as count,
-                AVG(julianday(r.signed_at) - julianday(dp.actual_distributed_date)) as avg_days
+                AVG(julianday(r.signed_at) - julianday(dp.actual_distributed_date)) as avg_days,
+                CASE 
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 3 THEN 1
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 7 THEN 2
+                    WHEN (julianday(r.signed_at) - julianday(dp.actual_distributed_date)) <= 14 THEN 3
+                    ELSE 4
+                END as sort_order
             FROM DistributionPlan dp
             JOIN Receipt r ON dp.id = r.distribution_id
             WHERE dp.actual_distributed_date IS NOT NULL AND r.signed_at IS NOT NULL
-            GROUP BY cycle_range
-            ORDER BY count DESC
+            GROUP BY cycle_range, sort_order
+            ORDER BY sort_order ASC
         ''')
         by_cycle = cursor.fetchall()
 
