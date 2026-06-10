@@ -44,6 +44,7 @@ export function getStatusColor(status: string): string {
     case "已归档":
       return "bg-emerald-100 text-emerald-700";
     case "已退回":
+    case "退回修改":
       return "bg-red-100 text-red-700";
     case "待处理":
       return "bg-slate-100 text-slate-700";

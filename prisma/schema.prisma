@@ -55,7 +55,7 @@ model MaintenancePlan {
   maintenanceUnit    MaintenanceUnit    @relation(fields: [maintenanceUnitId], references: [id])
   planDate           DateTime
   dueDate            DateTime
-  status             String             @default("待执行") // 待执行/执行中/待复查/已归档/已退回
+  status             String             @default("待执行") // 待执行/执行中/待复查/已归档/退回修改
   riskLevel          String             @default("正常") // 正常/关注/警告/危险
   createdAt          DateTime           @default(now())
   record             MaintenanceRecord?

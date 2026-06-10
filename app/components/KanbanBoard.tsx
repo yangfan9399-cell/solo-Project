@@ -46,7 +46,7 @@ function KanbanColumn({ title, icon: Icon, items, color, linkBase }: KanbanColum
                   item.status === "已归档" ? "bg-emerald-100 text-emerald-700" :
                   item.status === "执行中" ? "bg-blue-100 text-blue-700" :
                   item.status === "待复查" ? "bg-amber-100 text-amber-700" :
-                  item.status === "已退回" ? "bg-red-100 text-red-700" :
+                  item.status === "已退回" || item.status === "退回修改" ? "bg-red-100 text-red-700" :
                   "bg-slate-100 text-slate-700"
                 }`}>
                   {item.status}
