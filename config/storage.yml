@@ -1,0 +1,18 @@
+default: &default
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+test:
+  <<: *default
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+development:
+  <<: *default
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+production:
+  <<: *default
+  service: Disk
+  root: <%= Rails.root.join("storage") %>

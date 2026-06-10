@@ -39,7 +39,19 @@ class ApplicationsController < ApplicationController
   end
 
   def update
-    if @application.update(application_params)
+    if params[:application][:status].present?
+      if @application.update(status: params[:application][:status])
+        @application.application_histories.create(
+          action: "submitted",
+          operator_id: current_user.id,
+          details: "提交审核"
+        )
+        redirect_to @application, notice: "申请已提交审核"
+      else
+        @tracks = Track.all
+        render :edit
+      end
+    elsif @application.update(application_params)
       redirect_to @application, notice: "授权申请已更新"
     else
       @tracks = Track.all
@@ -63,6 +75,11 @@ class ApplicationsController < ApplicationController
   def approve
     unless @application.can_be_approved_by?(current_user)
       redirect_to @application, alert: "权限不足"
+      return
+    end
+
+    if @application.scenario_out_of_range?
+      redirect_to @application, alert: "场景超范围，无法通过审核"
       return
     end
 

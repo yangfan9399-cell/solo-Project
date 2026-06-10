@@ -1,0 +1,59 @@
+<% provide :page_title, "曲库管理" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <%= form_with url: tracks_path, method: :get, local: true, class: "flex items-center space-x-2" do %>
+      <input type="text"
+          name="q"
+          value="<%= params[:q] %>"
+          placeholder="搜索曲目..."
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent">
+      <%= submit_tag "搜索", class: "px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" %>
+    <% end %>
+  </div>
+
+  <div class="text-sm text-gray-500">
+    共 <%= @tracks.count %> 首曲目
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <% @tracks.each do |track| %>
+    <%= link_to track_path(track), class: "bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1" do %>
+      <div class="h-32 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+        <svg class="w-16 h-16 text-white opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+        </svg>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-gray-800 truncate"><%= track.title %></h3>
+        <p class="text-sm text-gray-500 mt-1"><%= track.artist %></p>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-xs text-gray-400"><%= track.genre || "未分类" %></span>
+          <span class="text-xs text-gray-400"><%= track.duration / 60 %>:<%= (track.duration % 60).to_s.rjust(2, '0') %></span>
+        </div>
+        <div class="mt-3 flex flex-wrap gap-1">
+          <% track.track_authorization_scopes.first(3).each do |scope| %>
+            <span class="px-2 py-0.5 text-xs rounded-full <%= scenario_badge(scope.scope_type) %>">
+              <%= scenario_text(scope.scope_type) %>
+            </span>
+          <% end %>
+          <% if track.track_authorization_scopes.count > 3 %>
+            <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+              +<%= track.track_authorization_scopes.count - 3 %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @tracks.empty? %>
+  <div class="text-center py-12 bg-white rounded-xl shadow-sm">
+    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+    </svg>
+    <p class="text-gray-500">暂无曲目</p>
+  </div>
+<% end %>

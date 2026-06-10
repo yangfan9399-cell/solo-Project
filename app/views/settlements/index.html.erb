@@ -1,0 +1,111 @@
+<% provide :page_title, "结算管理" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <%= form_with url: settlements_path, method: :get, local: true, class: "flex items-center space-x-2" do %>
+      <select name="status", class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent">
+        <option value="">全部状态</option>
+        <option value="pending" <%= 'selected' if params[:status] == 'pending' %>>待确认</option>
+        <option value="confirmed" <%= 'selected' if params[:status] == 'confirmed' %>>已确认</option>
+        <option value="disputed" <%= 'selected' if params[:status] == 'disputed' %>>争议中</option>
+        <option value="archived" <%= 'selected' if params[:status] == 'archived' %>>已归档</option>
+      </select>
+      <%= submit_tag "筛选", class: "px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" %>
+    <% end %>
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <div class="text-sm text-gray-500">
+      待确认: <span class="font-medium text-purple-600"><%= @settlements.where(status: "pending").count %></span>
+    </div>
+    <div class="text-sm text-gray-500">
+      争议: <span class="font-medium text-red-600"><%= @settlements.where(status: "disputed").count %></span>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">曲目</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">客户</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">结算金额</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分成比例</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @settlements.each do |settlement| %>
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                  <%= settlement.application.track.title[0] %>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-900"><%= settlement.application.track.title %></p>
+                  <p class="text-xs text-gray-500"><%= settlement.application.track.artist %></p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-gray-900"><%= settlement.application.client_name %></p>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-lg font-bold text-amber-600">¥<%= number_with_delimiter(settlement.total_amount.to_i) %></p>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm">
+                <p class="text-gray-600">版权方: <span class="font-medium"><%= settlement.copyright_holder_share %>%</span></p>
+                <p class="text-gray-600">代理商: <span class="font-medium"><%= settlement.agent_share %>%</span></p>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 text-xs font-medium rounded-full <%= settlement_status_badge(settlement.status) %>">
+                <%= settlement_status_text(settlement.status) %>
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <%= link_to "查看", settlement_path(settlement),
+                  class: "text-blue-600 hover:text-blue-800 text-sm font-medium" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @settlements.empty? %>
+    <div class="text-center py-12">
+      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <p class="text-gray-500">暂无结算记录</p>
+    </div>
+  <% end %>
+</div>
+
+<script>
+function settlement_status_badge(status) {
+  const badges = {
+    pending: 'bg-purple-100 text-purple-700',
+    confirmed: 'bg-green-100 text-green-700',
+    disputed: 'bg-red-100 text-red-700',
+    archived: 'bg-gray-100 text-gray-500'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function settlement_status_text(status) {
+  const texts = {
+    pending: '待确认',
+    confirmed: '已确认',
+    disputed: '争议中',
+    archived: '已归档'
+  };
+  return texts[status] || status;
+}
+</script>

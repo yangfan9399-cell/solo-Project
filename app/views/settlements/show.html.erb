@@ -1,0 +1,208 @@
+<% provide :page_title, "结算详情" %>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">结算金额</h2>
+          <p class="text-gray-500 mt-1">结算编号: ST<%= @settlement.id.to_s.rjust(6, '0') %></p>
+        </div>
+        <span class="px-4 py-2 text-sm font-medium rounded-full <%= settlement_status_badge(@settlement.status) %>">
+          <%= settlement_status_text(@settlement.status) %>
+        </span>
+      </div>
+
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mb-6">
+        <p class="text-sm text-gray-500">结算总金额</p>
+        <p class="text-4xl font-bold text-amber-600 mt-2">
+          ¥<%= number_with_delimiter(@settlement.total_amount.to_i) %>
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-blue-50 rounded-lg p-4">
+          <p class="text-sm text-gray-500 mb-2">版权方分成</p>
+          <p class="text-2xl font-bold text-blue-600">
+            <%= @settlement.copyright_holder_share %>%
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            ¥<%= number_with_delimiter((@settlement.total_amount * @settlement.copyright_holder_share / 100).to_i) %>
+          </p>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4">
+          <p class="text-sm text-gray-500 mb-2">代理商分成</p>
+          <p class="text-2xl font-bold text-green-600">
+            <%= @settlement.agent_share %>%
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            ¥<%= number_with_delimiter((@settlement.total_amount * @settlement.agent_share / 100).to_i) %>
+          </p>
+        </div>
+      </div>
+
+      <% if @settlement.tax_amount.present? %>
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-500">税额</span>
+            <span class="text-sm font-medium text-gray-800">¥<%= number_with_delimiter(@settlement.tax_amount.to_i) %></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @settlement.status == "disputed" && @settlement.dispute_reason.present? %>
+      <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+        <div class="flex items-start">
+          <svg class="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <div class="ml-3 flex-1">
+            <p class="text-sm font-medium text-red-800">争议原因</p>
+            <p class="text-sm text-red-700 mt-1"><%= @settlement.dispute_reason %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">关联授权申请</h3>
+      <%= link_to application_path(@application), class: "block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors" do %>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+              <%= @application.track.title[0] %>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-800"><%= @application.track.title %></p>
+              <p class="text-xs text-gray-500 mt-1">
+                <%= @application.client_name %> · <%= @application.track.artist %>
+              </p>
+            </div>
+          </div>
+          <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge(@application.status) %>">
+            <%= status_text(@application.status) %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <% if @settlement.status == "pending" %>
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">结算操作</h3>
+
+        <div class="space-y-4">
+          <button type="button"
+              onclick="confirmSettlement()"
+              class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+            确认结算
+          </button>
+
+          <div class="border-t pt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">发起争议</label>
+            <textarea id="dispute-reason"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                rows="4"
+                placeholder="请输入争议原因..."></textarea>
+            <button type="button"
+                onclick="submitDispute()"
+                class="w-full mt-3 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+              提交争议
+            </button>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">结算信息</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">创建时间</span>
+          <span class="text-gray-800"><%= @settlement.created_at.strftime("%Y/%m/%d %H:%M") %></span>
+        </div>
+        <% if @settlement.confirmed_at %>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">确认时间</span>
+            <span class="text-gray-800"><%= @settlement.confirmed_at.strftime("%Y/%m/%d %H:%M") %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @settlement.status == "pending" %>
+  <%= form_with url: confirm_settlement_path(@settlement), method: :post, id: "confirm-form", local: true do %>
+  <% end %>
+
+  <%= form_with url: dispute_settlement_path(@settlement), method: :post, id: "dispute-form", local: true do %>
+    <%= hidden_field_tag :dispute_reason, "", id: "dispute-reason-hidden" %>
+  <% end %>
+<% end %>
+
+<script>
+function confirmSettlement() {
+  if (confirm('确认此结算？')) {
+    document.getElementById('confirm-form').submit();
+  }
+}
+
+function submitDispute() {
+  const reason = document.getElementById('dispute-reason').value;
+  if (!reason.trim()) {
+    alert('请输入争议原因');
+    return;
+  }
+  document.getElementById('dispute-reason-hidden').value = reason;
+  document.getElementById('dispute-form').submit();
+}
+
+function settlement_status_badge(status) {
+  const badges = {
+    pending: 'bg-purple-100 text-purple-700',
+    confirmed: 'bg-green-100 text-green-700',
+    disputed: 'bg-red-100 text-red-700',
+    archived: 'bg-gray-100 text-gray-500'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function settlement_status_text(status) {
+  const texts = {
+    pending: '待确认',
+    confirmed: '已确认',
+    disputed: '争议中',
+    archived: '已归档'
+  };
+  return texts[status] || status;
+}
+
+function status_badge(status) {
+  const badges = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending_copyright: 'bg-blue-100 text-blue-700',
+    pending_legal: 'bg-indigo-100 text-indigo-700',
+    pending_finance: 'bg-purple-100 text-purple-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    disputed: 'bg-orange-100 text-orange-700'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function status_text(status) {
+  const texts = {
+    draft: '草稿',
+    pending_copyright: '版权审核中',
+    pending_legal: '法务审核中',
+    pending_finance: '财务审核中',
+    approved: '已通过',
+    rejected: '已驳回',
+    disputed: '争议中'
+  };
+  return texts[status] || status;
+}
+</script>

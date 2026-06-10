@@ -1,0 +1,381 @@
+<% provide :page_title, "授权申请详情" %>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="flex items-start justify-between mb-6">
+        <div class="flex items-center space-x-4">
+          <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+            <%= @application.track.title[0] %>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800"><%= @application.track.title %></h2>
+            <p class="text-gray-500"><%= @application.track.artist %> · <%= @application.track.copyright_holder %></p>
+          </div>
+        </div>
+        <span class="px-4 py-2 text-sm font-medium rounded-full <%= status_badge(@application.status) %>">
+          <%= status_text(@application.status) %>
+        </span>
+      </div>
+
+      <% if @application.scenario_out_of_range? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div class="flex items-start">
+            <svg class="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div class="ml-3 flex-1">
+              <p class="text-sm font-medium text-red-800">场景超范围警告</p>
+              <p class="text-sm text-red-700 mt-1">
+                该曲目授权范围不包含 "<%= scenario_text(@application.usage_scenario) %>" 场景。
+                曲库仅授权：<%= @application.track.track_authorization_scopes.pluck(:scope_type).map { |s| scenario_text(s) }.join("、") %>。
+                <strong>授权确认已被阻断，请调整使用场景或联系版权管理员。</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @application.has_date_conflict? %>
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+          <div class="flex items-start">
+            <svg class="w-6 h-6 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-orange-800">期限冲突警告</p>
+              <p class="text-sm text-orange-700 mt-1">
+                该曲目在申请期限内已有其他授权，存在权利冲突风险。
+              </p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div>
+          <p class="text-sm text-gray-500 mb-1">使用场景</p>
+          <span class="px-2 py-1 text-sm font-medium rounded-full <%= scenario_badge(@application.usage_scenario) %>">
+            <%= scenario_text(@application.usage_scenario) %>
+          </span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 mb-1">授权地域</p>
+          <p class="text-sm font-medium text-gray-800"><%= @application.territory %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 mb-1">授权期限</p>
+          <p class="text-sm font-medium text-gray-800">
+            <%= @application.start_date.strftime("%Y/%m/%d") %>
+            <br>
+            <span class="text-gray-400">至 <%= @application.end_date.strftime("%Y/%m/%d") %></span>
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500 mb-1">预算金额</p>
+          <p class="text-lg font-bold text-amber-600">¥<%= number_with_delimiter(@application.budget.to_i) %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">客户信息</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-500">客户名称</p>
+          <p class="text-sm font-medium text-gray-800"><%= @application.client_name %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">客户行业</p>
+          <p class="text-sm font-medium text-gray-800"><%= @application.client_industry || "未填写" %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">联系人</p>
+          <p class="text-sm font-medium text-gray-800"><%= @application.client_contact || "未填写" %></p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">申请人</p>
+          <p class="text-sm font-medium text-gray-800"><%= @application.user.name %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">审核记录</h3>
+
+      <% if @reviews.any? %>
+        <div class="space-y-4">
+          <% @reviews.each do |review| %>
+            <div class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                <%= review.reviewer.name[0] %>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center space-x-2">
+                  <p class="text-sm font-medium text-gray-800"><%= review.reviewer.name %></p>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full <%= review_badge(review.status) %>">
+                    <%= review_text(review.status) %>
+                  </span>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-600">
+                    <%= review_type_text(review.review_type) %>
+                  </span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1"><%= review.comment %></p>
+                <p class="text-xs text-gray-400 mt-2"><%= review.created_at.strftime("%Y/%m/%d %H:%M") %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-gray-500">
+          <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <p>暂无审核记录</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @contract %>
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">合同信息</h3>
+          <span class="px-3 py-1 text-sm font-medium rounded-full <%= contract_status_badge(@contract.status) %>">
+            <%= contract_status_text(@contract.status) %>
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-500">合同编号</p>
+            <p class="text-sm font-medium text-gray-800"><%= @contract.contract_number %></p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">签署日期</p>
+            <p class="text-sm font-medium text-gray-800"><%= @contract.signed_date&.strftime("%Y/%m/%d") || "未签署" %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <% if @application.can_be_approved_by?(current_user) %>
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">审核操作</h3>
+
+        <% if @application.scenario_out_of_range? %>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p class="text-sm text-red-800 font-medium">场景超范围，无法通过审核</p>
+            <p class="text-xs text-red-600 mt-1">请要求申请人调整使用场景</p>
+          </div>
+        <% else %>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">审核意见</label>
+              <textarea id="review-comment"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  rows="4"
+                  placeholder="请输入审核意见..."></textarea>
+            </div>
+
+            <div class="flex space-x-3">
+              <button type="button"
+                  onclick="submitReview('approved')"
+                  class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                通过
+              </button>
+              <button type="button"
+                  onclick="submitReview('rejected')"
+                  class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                驳回
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% elsif @application.status == "draft" && current_user == @application.user %>
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">提交申请</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          提交后将进入版权管理员审核流程。
+          <% if @application.scenario_out_of_range? %>
+            <span class="text-red-600">注意：该场景可能超出授权范围。</span>
+          <% end %>
+        </p>
+        <%= form_with url: application_path(@application), method: :patch, local: true do %>
+          <%= hidden_field_tag "application[status]", "pending_copyright" %>
+          <%= submit_tag "提交审核",
+              class: "w-full px-4 py-3 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-lg hover:from-blue-800 hover:to-blue-700 transition-all" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">申请信息</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">申请编号</span>
+          <span class="text-gray-800 font-medium">AP<%= @application.id.to_s.rjust(6, '0') %></span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">创建时间</span>
+          <span class="text-gray-800"><%= @application.created_at.strftime("%Y/%m/%d %H:%M") %></span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">更新时间</span>
+          <span class="text-gray-800"><%= @application.updated_at.strftime("%Y/%m/%d %H:%M") %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">历史记录</h3>
+      <div class="space-y-4">
+        <% @histories.each do |history| %>
+          <div class="flex items-start space-x-3">
+            <div class="w-2 h-2 rounded-full bg-gray-400 mt-2"></div>
+            <div>
+              <p class="text-sm text-gray-800"><%= history_text(history.action) %></p>
+              <% if history.details %>
+                <p class="text-xs text-gray-500 mt-1"><%= history.details %></p>
+              <% end %>
+              <p class="text-xs text-gray-400 mt-1"><%= history.created_at.strftime("%Y/%m/%d %H:%M") %></p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @application.can_be_approved_by?(current_user) %>
+  <%= form_with url: approve_application_path(@application), method: :post, id: "review-form", local: true do %>
+    <%= hidden_field_tag :status, "", id: "review-status" %>
+    <%= hidden_field_tag :comment, "", id: "review-comment-hidden" %>
+  <% end %>
+<% end %>
+
+<script>
+function submitReview(status) {
+  const comment = document.getElementById('review-comment').value;
+  if (!comment.trim()) {
+    alert('请输入审核意见');
+    return;
+  }
+
+  document.getElementById('review-status').value = status;
+  document.getElementById('review-comment-hidden').value = comment;
+  document.getElementById('review-form').submit();
+}
+
+function status_badge(status) {
+  const badges = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending_copyright: 'bg-blue-100 text-blue-700',
+    pending_legal: 'bg-indigo-100 text-indigo-700',
+    pending_finance: 'bg-purple-100 text-purple-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    disputed: 'bg-orange-100 text-orange-700'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function status_text(status) {
+  const texts = {
+    draft: '草稿',
+    pending_copyright: '版权审核中',
+    pending_legal: '法务审核中',
+    pending_finance: '财务审核中',
+    approved: '已通过',
+    rejected: '已驳回',
+    disputed: '争议中'
+  };
+  return texts[status] || status;
+}
+
+function scenario_text(scenario) {
+  const texts = {
+    tv_ad: '电视广告',
+    online_video: '线上视频',
+    live_stream: '直播',
+    film: '影视',
+    radio: '广播',
+    other: '其他'
+  };
+  return texts[scenario] || scenario;
+}
+
+function scenario_badge(scenario) {
+  const badges = {
+    tv_ad: 'bg-blue-100 text-blue-700',
+    online_video: 'bg-indigo-100 text-indigo-700',
+    live_stream: 'bg-purple-100 text-purple-700',
+    film: 'bg-orange-100 text-orange-700',
+    radio: 'bg-cyan-100 text-cyan-700',
+    other: 'bg-gray-100 text-gray-700'
+  };
+  return badges[scenario] || 'bg-gray-100 text-gray-700';
+}
+
+function review_badge(status) {
+  const badges = {
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    needs_revision: 'bg-yellow-100 text-yellow-700'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function review_text(status) {
+  const texts = {
+    approved: '通过',
+    rejected: '驳回',
+    needs_revision: '需修改'
+  };
+  return texts[status] || status;
+}
+
+function review_type_text(type) {
+  const texts = {
+    copyright: '版权审核',
+    legal: '法务审核',
+    finance: '财务审核'
+  };
+  return texts[type] || type;
+}
+
+function history_text(action) {
+  const texts = {
+    created: '创建申请',
+    submitted: '提交审核',
+    reviewed: '审核',
+    approved: '审核通过',
+    rejected: '审核驳回',
+    disputed: '发起争议',
+    settled: '结算完成',
+    archived: '归档'
+  };
+  return texts[action] || action;
+}
+
+function contract_status_badge(status) {
+  const badges = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending_signature: 'bg-yellow-100 text-yellow-700',
+    signed: 'bg-green-100 text-green-700',
+    archived: 'bg-gray-100 text-gray-500'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function contract_status_text(status) {
+  const texts = {
+    draft: '草稿',
+    pending_signature: '待签署',
+    signed: '已签署',
+    archived: '已归档'
+  };
+  return texts[status] || status;
+}
+</script>

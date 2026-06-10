@@ -1,0 +1,101 @@
+<% provide :page_title, "授权申请列表" %>
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center space-x-4">
+    <%= form_with url: applications_path, method: :get, local: true, class: "flex items-center space-x-2" do %>
+      <select name="status", class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent">
+        <option value="">全部状态</option>
+        <option value="draft" <%= 'selected' if params[:status] == 'draft' %>>草稿</option>
+        <option value="pending_copyright" <%= 'selected' if params[:status] == 'pending_copyright' %>>版权审核中</option>
+        <option value="pending_legal" <%= 'selected' if params[:status] == 'pending_legal' %>>法务审核中</option>
+        <option value="pending_finance" <%= 'selected' if params[:status] == 'pending_finance' %>>财务审核中</option>
+        <option value="approved" <%= 'selected' if params[:status] == 'approved' %>>已通过</option>
+        <option value="rejected" <%= 'selected' if params[:status] == 'rejected' %>>已驳回</option>
+        <option value="disputed" <%= 'selected' if params[:status] == 'disputed' %>>争议中</option>
+      </select>
+      <%= submit_tag "筛选", class: "px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" %>
+    <% end %>
+  </div>
+
+  <% if current_user.biz_admin? || current_user.admin? %>
+    <%= link_to new_application_path,
+        class: "px-6 py-2 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-lg hover:from-blue-800 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2" do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      <span>新建申请</span>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">曲目</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">客户</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">使用场景</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">授权期限</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">预算</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @applications.each do |app| %>
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                  <%= app.track.title[0] %>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-gray-900"><%= app.track.title %></p>
+                  <p class="text-xs text-gray-500"><%= app.track.artist %></p>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-gray-900"><%= app.client_name %></p>
+              <p class="text-xs text-gray-500"><%= app.client_industry || '未填写' %></p>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 text-xs font-medium rounded-full <%= scenario_badge(app.usage_scenario) %>">
+                <%= scenario_text(app.usage_scenario) %>
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm text-gray-900"><%= app.start_date.strftime("%Y/%m/%d") %></p>
+              <p class="text-xs text-gray-500">至 <%= app.end_date.strftime("%Y/%m/%d") %></p>
+            </td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-medium text-gray-900">¥<%= number_with_delimiter(app.budget.to_i) %></p>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge(app.status) %>">
+                <%= status_text(app.status) %>
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <%= link_to "查看", application_path(app),
+                  class: "text-blue-600 hover:text-blue-800 text-sm font-medium" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @applications.empty? %>
+    <div class="text-center py-12">
+      <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+      </svg>
+      <p class="text-gray-500">暂无授权申请</p>
+      <% if current_user.biz_admin? || current_user.admin? %>
+        <%= link_to "创建第一个申请", new_application_path, class: "mt-4 text-amber-600 hover:text-amber-700" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

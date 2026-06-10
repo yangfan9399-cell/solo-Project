@@ -1,0 +1,190 @@
+<% provide :page_title, @track.title %>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="flex items-start space-x-6">
+        <div class="w-32 h-32 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+          <svg class="w-20 h-20 text-white opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-3xl font-bold text-gray-800"><%= @track.title %></h2>
+          <p class="text-lg text-gray-600 mt-2"><%= @track.artist %></p>
+
+          <div class="grid grid-cols-3 gap-4 mt-6">
+            <div>
+              <p class="text-sm text-gray-500">版权方</p>
+              <p class="text-sm font-medium text-gray-800 mt-1"><%= @track.copyright_holder %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">时长</p>
+              <p class="text-sm font-medium text-gray-800 mt-1">
+                <%= @track.duration / 60 %>:<%= (@track.duration % 60).to_s.rjust(2, '0') %>
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">风格</p>
+              <p class="text-sm font-medium text-gray-800 mt-1"><%= @track.genre || "未分类" %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">授权范围</h3>
+
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">场景</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">地域</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">有效期</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <% @authorization_scopes.each do |scope| %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-4">
+                  <span class="px-2 py-1 text-sm font-medium rounded-full <%= scenario_badge(scope.scope_type) %>">
+                    <%= scenario_text(scope.scope_type) %>
+                  </span>
+                </td>
+                <td class="px-4 py-4 text-sm text-gray-800"><%= scope.territory %></td>
+                <td class="px-4 py-4 text-sm text-gray-800">
+                  <%= scope.valid_from.strftime("%Y/%m/%d") %> -
+                  <%= scope.valid_to.strftime("%Y/%m/%d") %>
+                </td>
+                <td class="px-4 py-4">
+                  <% if scope.valid_to >= Date.current %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">有效</span>
+                  <% else %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-500">已过期</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">最近授权记录</h3>
+
+      <% if @applications.any? %>
+        <div class="space-y-4">
+          <% @applications.each do |app| %>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-sm font-medium text-gray-800"><%= app.client_name %></p>
+                <p class="text-xs text-gray-500 mt-1">
+                  <%= app.start_date.strftime("%Y/%m/%d") %> - <%= app.end_date.strftime("%Y/%m/%d") %>
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge(app.status) %>">
+                  <%= status_text(app.status) %>
+                </span>
+                <p class="text-sm font-medium text-amber-600 mt-1">¥<%= number_with_delimiter(app.budget.to_i) %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-gray-500">
+          <p>暂无授权记录</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">快速操作</h3>
+
+      <% if current_user.biz_admin? || current_user.admin? %>
+        <%= link_to new_application_path(track_id: @track.id),
+            class: "w-full px-4 py-3 bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-lg hover:from-blue-800 hover:to-blue-700 transition-all text-center block" do %>
+          为此曲目创建申请
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">统计信息</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between">
+          <span class="text-sm text-gray-500">总授权次数</span>
+          <span class="text-sm font-medium text-gray-800"><%= @track.applications.count %></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-gray-500">有效授权</span>
+          <span class="text-sm font-medium text-gray-800">
+            <%= @track.applications.where(status: "approved").count %>
+          </span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-gray-500">授权场景数</span>
+          <span class="text-sm font-medium text-gray-800"><%= @authorization_scopes.count %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function scenario_text(scenario) {
+  const texts = {
+    tv_ad: '电视广告',
+    online_video: '线上视频',
+    live_stream: '直播',
+    film: '影视',
+    radio: '广播',
+    other: '其他'
+  };
+  return texts[scenario] || scenario;
+}
+
+function scenario_badge(scenario) {
+  const badges = {
+    tv_ad: 'bg-blue-100 text-blue-700',
+    online_video: 'bg-indigo-100 text-indigo-700',
+    live_stream: 'bg-purple-100 text-purple-700',
+    film: 'bg-orange-100 text-orange-700',
+    radio: 'bg-cyan-100 text-cyan-700',
+    other: 'bg-gray-100 text-gray-700'
+  };
+  return badges[scenario] || 'bg-gray-100 text-gray-700';
+}
+
+function status_badge(status) {
+  const badges = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending_copyright: 'bg-blue-100 text-blue-700',
+    pending_legal: 'bg-indigo-100 text-indigo-700',
+    pending_finance: 'bg-purple-100 text-purple-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    disputed: 'bg-orange-100 text-orange-700'
+  };
+  return badges[status] || 'bg-gray-100 text-gray-700';
+}
+
+function status_text(status) {
+  const texts = {
+    draft: '草稿',
+    pending_copyright: '版权审核中',
+    pending_legal: '法务审核中',
+    pending_finance: '财务审核中',
+    approved: '已通过',
+    rejected: '已驳回',
+    disputed: '争议中'
+  };
+  return texts[status] || status;
+}
+</script>

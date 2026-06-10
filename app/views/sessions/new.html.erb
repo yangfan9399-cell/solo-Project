@@ -1,0 +1,70 @@
+<% provide :page_title, "登录" %>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-amber-400 mb-2">版权音乐平台</h1>
+      <p class="text-gray-400">商用授权申请与场景核验系统</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">用户登录</h2>
+
+      <%= form_with url: auth_login_path, local: true, class: "space-y-6" do |f| %>
+        <div>
+          <%= f.label :email, "邮箱地址", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= f.email_field :email, required: true, autofocus: true,
+              class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all",
+              placeholder: "请输入邮箱" %>
+        </div>
+
+        <div>
+          <%= f.label :password, "密码", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= f.password_field :password, required: true,
+              class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all",
+              placeholder: "请输入密码" %>
+        </div>
+
+        <div class="flex items-center justify-between text-sm">
+          <label class="flex items-center">
+            <input type="checkbox" class="rounded border-gray-300 text-amber-400 focus:ring-amber-400">
+            <span class="ml-2 text-gray-600">记住我</span>
+          </label>
+          <a href="#" class="text-amber-600 hover:text-amber-700">忘记密码？</a>
+        </div>
+
+        <%= f.submit "登录", class: "w-full bg-gradient-to-r from-blue-900 to-blue-800 text-white py-3 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl" %>
+      <% end %>
+
+      <div class="mt-8 pt-6 border-t border-gray-200">
+        <p class="text-sm text-gray-500 text-center mb-4">测试账号</p>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="font-medium text-gray-800">商务经办人</p>
+            <p class="text-gray-500 mt-1">biz@example.com</p>
+            <p class="text-gray-400">biz123</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="font-medium text-gray-800">版权管理员</p>
+            <p class="text-gray-500 mt-1">copyright@example.com</p>
+            <p class="text-gray-400">copyright123</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="font-medium text-gray-800">法务专员</p>
+            <p class="text-gray-500 mt-1">legal@example.com</p>
+            <p class="text-gray-400">legal123</p>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="font-medium text-gray-800">财务专员</p>
+            <p class="text-gray-500 mt-1">finance@example.com</p>
+            <p class="text-gray-400">finance123</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-gray-500 text-sm mt-6">
+      © 2024 版权音乐商用授权申请与播放场景核验平台
+    </p>
+  </div>
+</div>
