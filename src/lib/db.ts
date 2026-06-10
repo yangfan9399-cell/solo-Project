@@ -52,7 +52,7 @@ export interface WorkOrder {
   history: WorkOrderHistory[]
 }
 
-const pipeSections: PipeSection[] = [
+export const pipeSections: PipeSection[] = [
   { id: 'ps1', name: '管段A-001', area: '东城片区', diameter: 'DN300', material: '铸铁', installationYear: 2005 },
   { id: 'ps2', name: '管段B-002', area: '西城片区', diameter: 'DN200', material: 'PE', installationYear: 2018 },
   { id: 'ps3', name: '管段C-003', area: '南城片区', diameter: 'DN400', material: '钢管', installationYear: 1998 },
@@ -60,15 +60,15 @@ const pipeSections: PipeSection[] = [
   { id: 'ps5', name: '管段E-005', area: '中心片区', diameter: 'DN500', material: '钢管', installationYear: 2010 },
 ]
 
-const repairTeams: RepairTeam[] = [
+export const repairTeams: RepairTeam[] = [
   { id: 'rt1', name: '抢修一队', leaderName: '张师傅', leaderPhone: '13800138001' },
   { id: 'rt2', name: '抢修二队', leaderName: '李师傅', leaderPhone: '13800138002' },
   { id: 'rt3', name: '抢修三队', leaderName: '王师傅', leaderPhone: '13800138003' },
 ]
 
 let workOrders: WorkOrder[] = []
-
 let nextSerialNumber = 1
+let isInitialized = false
 
 function generateSerialNumber(): string {
   const date = new Date()
@@ -79,67 +79,9 @@ function generateSerialNumber(): string {
   return `LS${year}${month}${day}${seq}`
 }
 
-export const db = {
-  pipeSection: {
-    findMany: () => Promise.resolve(pipeSections),
-    findUnique: (args: { where: { id: string } }) => 
-      Promise.resolve(pipeSections.find(ps => ps.id === args.where.id) || null),
-  },
-  repairTeam: {
-    findMany: () => Promise.resolve(repairTeams),
-    findUnique: (args: { where: { id: string } }) => 
-      Promise.resolve(repairTeams.find(rt => rt.id === args.where.id) || null),
-  },
-  workOrder: {
-    findMany: (args?: { where?: Partial<WorkOrder> }) => {
-      let result = [...workOrders]
-      const where = args?.where
-      if (where) {
-        if (where.status) {
-          result = result.filter(w => w.status === where.status)
-        }
-        if (where.pipeSectionId) {
-          result = result.filter(w => w.pipeSectionId === where.pipeSectionId)
-        }
-        if (where.dispatchTo) {
-          result = result.filter(w => w.dispatchTo === where.dispatchTo)
-        }
-      }
-      return Promise.resolve(result)
-    },
-    findUnique: (args: { where: { id: string } }) => 
-      Promise.resolve(workOrders.find(w => w.id === args.where.id) || null),
-    create: (args: { data: Omit<WorkOrder, 'id' | 'serialNumber' | 'createdAt' | 'updatedAt' | 'history'> }) => {
-      const newOrder: WorkOrder = {
-        id: Math.random().toString(36).substr(2, 9),
-        serialNumber: generateSerialNumber(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ...args.data,
-        history: [{
-          id: Math.random().toString(36).substr(2, 9),
-          workOrderId: '',
-          action: 'REPORTED',
-          operator: args.data.reporterName,
-          createdAt: new Date(),
-        }],
-        mergedFrom: args.data.mergedFrom || [],
-        repairPhotos: args.data.repairPhotos || [],
-      }
-      newOrder.history[0].workOrderId = newOrder.id
-      workOrders.push(newOrder)
-      return Promise.resolve(newOrder)
-    },
-    update: (args: { where: { id: string }, data: Partial<WorkOrder> }) => {
-      const index = workOrders.findIndex(w => w.id === args.where.id)
-      if (index === -1) return Promise.resolve(null)
-      workOrders[index] = { ...workOrders[index], ...args.data, updatedAt: new Date() }
-      return Promise.resolve(workOrders[index])
-    },
-  },
-}
-
-export async function initSampleData() {
+function initSampleData() {
+  if (isInitialized) return
+  
   const ps1 = pipeSections[0]
   const ps2 = pipeSections[1]
   const ps3 = pipeSections[2]
@@ -151,7 +93,7 @@ export async function initSampleData() {
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
 
-  const sampleOrders: WorkOrder[] = [
+  workOrders = [
     {
       id: 'wo1',
       serialNumber: 'LS2606080001',
@@ -289,6 +231,71 @@ export async function initSampleData() {
     },
   ]
 
-  workOrders = sampleOrders
   nextSerialNumber = 9
+  isInitialized = true
+}
+
+export const db = {
+  pipeSection: {
+    findMany: () => Promise.resolve(pipeSections),
+    findUnique: (args: { where: { id: string } }) => 
+      Promise.resolve(pipeSections.find(ps => ps.id === args.where.id) || null),
+  },
+  repairTeam: {
+    findMany: () => Promise.resolve(repairTeams),
+    findUnique: (args: { where: { id: string } }) => 
+      Promise.resolve(repairTeams.find(rt => rt.id === args.where.id) || null),
+  },
+  workOrder: {
+    findMany: (args?: { where?: Partial<WorkOrder> }) => {
+      initSampleData()
+      let result = [...workOrders]
+      const where = args?.where
+      if (where) {
+        if (where.status) {
+          result = result.filter(w => w.status === where.status)
+        }
+        if (where.pipeSectionId) {
+          result = result.filter(w => w.pipeSectionId === where.pipeSectionId)
+        }
+        if (where.dispatchTo) {
+          result = result.filter(w => w.dispatchTo === where.dispatchTo)
+        }
+      }
+      return Promise.resolve(result)
+    },
+    findUnique: (args: { where: { id: string } }) => {
+      initSampleData()
+      return Promise.resolve(workOrders.find(w => w.id === args.where.id) || null)
+    },
+    create: (args: { data: Omit<WorkOrder, 'id' | 'serialNumber' | 'createdAt' | 'updatedAt' | 'history'> }) => {
+      initSampleData()
+      const newOrder: WorkOrder = {
+        id: Math.random().toString(36).substr(2, 9),
+        serialNumber: generateSerialNumber(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...args.data,
+        history: [{
+          id: Math.random().toString(36).substr(2, 9),
+          workOrderId: '',
+          action: 'REPORTED',
+          operator: args.data.reporterName,
+          createdAt: new Date(),
+        }],
+        mergedFrom: args.data.mergedFrom || [],
+        repairPhotos: args.data.repairPhotos || [],
+      }
+      newOrder.history[0].workOrderId = newOrder.id
+      workOrders.push(newOrder)
+      return Promise.resolve(newOrder)
+    },
+    update: (args: { where: { id: string }, data: Partial<WorkOrder> }) => {
+      initSampleData()
+      const index = workOrders.findIndex(w => w.id === args.where.id)
+      if (index === -1) return Promise.resolve(null)
+      workOrders[index] = { ...workOrders[index], ...args.data, updatedAt: new Date() }
+      return Promise.resolve(workOrders[index])
+    },
+  },
 }

@@ -1,21 +1,11 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData, type HistoryAction } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db, type HistoryAction } from '@/lib/db'
 
 export async function POST(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  await ensureInitialized()
   const body = await request.json()
   const { repairResult, operator, comment, repairPhotos } = body
   const { id } = paramContext.params
-
+  
   const order = await db.workOrder.findUnique({ where: { id } })
   if (!order) return NextResponse.json({ error: '工单不存在' }, { status: 404 })
 
@@ -28,14 +18,12 @@ export async function POST(request: Request, paramContext: any) { // eslint-disa
     createdAt: new Date(),
   }
 
-  const status = repairResult === 'SUSPECTED_DUPLICATE' ? 'REJECTED' : 'REPAIRED'
-
   const updatedOrder = await db.workOrder.update({
     where: { id },
     data: {
-      status,
+      status: 'REPAIRED',
       repairResult,
-      repairPhotos: repairPhotos || order.repairPhotos,
+      repairPhotos: repairPhotos || [],
       history: [...order.history, newHistory],
     },
   })

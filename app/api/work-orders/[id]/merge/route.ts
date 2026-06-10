@@ -1,28 +1,22 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData, type HistoryAction } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db, type HistoryAction } from '@/lib/db'
 
 export async function POST(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  await ensureInitialized()
   const body = await request.json()
   const { targetOrderId, operator, comment } = body
   const { id } = paramContext.params
-
+  
   const sourceOrder = await db.workOrder.findUnique({ where: { id } })
   if (!sourceOrder) return NextResponse.json({ error: '源工单不存在' }, { status: 404 })
 
   const targetOrder = await db.workOrder.findUnique({ where: { id: targetOrderId } })
   if (!targetOrder) return NextResponse.json({ error: '目标工单不存在' }, { status: 404 })
 
-  const newHistory = {
+  if (sourceOrder.id === targetOrder.id) {
+    return NextResponse.json({ error: '不能合并到自己' }, { status: 400 })
+  }
+
+  const targetHistory = {
     id: Math.random().toString(36).substr(2, 9),
     workOrderId: targetOrderId,
     action: 'MERGED' as HistoryAction,
@@ -31,11 +25,11 @@ export async function POST(request: Request, paramContext: any) { // eslint-disa
     createdAt: new Date(),
   }
 
-  await db.workOrder.update({
+  const updatedTarget = await db.workOrder.update({
     where: { id: targetOrderId },
     data: {
       mergedFrom: [...targetOrder.mergedFrom, sourceOrder.serialNumber],
-      history: [...targetOrder.history, newHistory],
+      history: [...targetOrder.history, targetHistory],
     },
   })
 
@@ -57,5 +51,5 @@ export async function POST(request: Request, paramContext: any) { // eslint-disa
     },
   })
 
-  return NextResponse.json({ message: '合并成功' })
+  return NextResponse.json(updatedTarget)
 }

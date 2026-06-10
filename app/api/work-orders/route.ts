@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db } from '@/lib/db'
 
 export async function GET() {
-  await ensureInitialized()
   const orders = await db.workOrder.findMany()
   return NextResponse.json(orders)
 }
 
 export async function POST(request: Request) {
-  await ensureInitialized()
   const body = await request.json()
   const newOrder = await db.workOrder.create({
     data: {

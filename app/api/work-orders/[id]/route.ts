@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db } from '@/lib/db'
 
 export async function GET(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  await ensureInitialized()
   const { id } = paramContext.params
   const order = await db.workOrder.findUnique({ where: { id } })
   if (!order) return NextResponse.json({ error: '工单不存在' }, { status: 404 })
@@ -19,7 +9,6 @@ export async function GET(request: Request, paramContext: any) { // eslint-disab
 }
 
 export async function PUT(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  await ensureInitialized()
   const body = await request.json()
   const { id } = paramContext.params
   const order = await db.workOrder.update({

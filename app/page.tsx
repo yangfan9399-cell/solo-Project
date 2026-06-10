@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Search, Filter, Clock, AlertTriangle, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
+import { Search, Filter, Clock, AlertTriangle, CheckCircle, XCircle, ArrowRight, Merge } from 'lucide-react'
 import type { WorkOrder, WorkOrderStatus, LeakLevel } from '@/lib/db'
 
 const statusLabels: Record<WorkOrderStatus, string> = {
@@ -39,6 +39,10 @@ export default function Home() {
   const [orders, setOrders] = useState<WorkOrder[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<WorkOrderStatus | 'ALL'>('ALL')
+  const [showMergeModal, setShowMergeModal] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<WorkOrder | null>(null)
+  const [targetOrderId, setTargetOrderId] = useState('')
+  const [mergeOperator, setMergeOperator] = useState('')
 
   useEffect(() => {
     fetch('/api/work-orders')
@@ -62,6 +66,33 @@ export default function Home() {
       minute: '2-digit',
     })
   }
+
+  const handleMerge = async () => {
+    if (!selectedOrder || !targetOrderId || !mergeOperator) return
+    
+    const response = await fetch(`/api/work-orders/${selectedOrder.id}/merge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetOrderId, operator: mergeOperator }),
+    })
+    
+    if (response.ok) {
+      setOrders(await response.json())
+      setShowMergeModal(false)
+      setSelectedOrder(null)
+      setTargetOrderId('')
+      setMergeOperator('')
+    }
+  }
+
+  const openMergeModal = (order: WorkOrder) => {
+    setSelectedOrder(order)
+    setShowMergeModal(true)
+  }
+
+  const availableTargetOrders = orders.filter(o => 
+    o.id !== selectedOrder?.id && o.status !== 'REJECTED'
+  )
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -111,6 +142,7 @@ export default function Home() {
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">管段</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">漏损等级</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">状态</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">合并来源</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">创建时间</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">操作</th>
             </tr>
@@ -143,15 +175,35 @@ export default function Home() {
                   </span>
                 </td>
                 <td className="py-4 px-4">
+                  {order.mergedFrom.length > 0 ? (
+                    <div className="text-sm text-gray-500">
+                      合并自: {order.mergedFrom.join(', ')}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">-</span>
+                  )}
+                </td>
+                <td className="py-4 px-4">
                   <span className="inline-flex items-center text-sm text-gray-500">
                     <Clock className="w-3 h-3 mr-1" />
                     {formatDate(order.createdAt)}
                   </span>
                 </td>
                 <td className="py-4 px-4">
-                  <a href={`/detail?id=${order.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm">
-                    查看详情 <ArrowRight className="w-3 h-3" />
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <a href={`/detail?id=${order.id}`} className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm">
+                      查看详情 <ArrowRight className="w-3 h-3" />
+                    </a>
+                    {order.status === 'PENDING' && (
+                      <button
+                        onClick={() => openMergeModal(order)}
+                        className="inline-flex items-center text-orange-600 hover:text-orange-700 text-sm"
+                      >
+                        <Merge className="w-3 h-3 mr-1" />
+                        合并
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -163,6 +215,65 @@ export default function Home() {
         <div className="text-center py-12 text-gray-500">
           <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>暂无符合条件的工单</p>
+        </div>
+      )}
+
+      {showMergeModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">合并工单</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              将工单 <span className="font-mono text-blue-600">{selectedOrder.serialNumber}</span> 合并到目标工单
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">选择目标工单</label>
+              <select
+                value={targetOrderId}
+                onChange={e => setTargetOrderId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">请选择目标工单</option>
+                {availableTargetOrders.map(order => (
+                  <option key={order.id} value={order.id}>
+                    {order.serialNumber} - {order.reporterName} - {statusLabels[order.status]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">操作人</label>
+              <input
+                type="text"
+                placeholder="请输入操作人姓名"
+                value={mergeOperator}
+                onChange={e => setMergeOperator(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowMergeModal(false)
+                  setSelectedOrder(null)
+                  setTargetOrderId('')
+                  setMergeOperator('')
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleMerge}
+                disabled={!targetOrderId || !mergeOperator}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认合并
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

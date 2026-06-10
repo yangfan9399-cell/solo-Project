@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData, type WorkOrder } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db, type WorkOrder } from '@/lib/db'
 
 export async function GET() {
-  await ensureInitialized()
   const orders = await db.workOrder.findMany()
 
   const stats = {

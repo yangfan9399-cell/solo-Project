@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
-import { db, initSampleData } from '@/lib/db'
-
-let initialized = false
-
-async function ensureInitialized() {
-  if (!initialized) {
-    await initSampleData()
-    initialized = true
-  }
-}
+import { db } from '@/lib/db'
 
 export async function GET() {
-  await ensureInitialized()
   const teams = await db.repairTeam.findMany()
   return NextResponse.json(teams)
 }
