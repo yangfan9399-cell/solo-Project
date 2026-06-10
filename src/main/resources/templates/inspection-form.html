@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>设备巡检</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/screenings/{id}(id=${screening.id})}" class="btn btn-secondary">返回详情</a>
+        
+        <div class="card">
+            <h3>设备巡检 - [[${screening.movie.title}]] - [[${screening.hall.name}]]</h3>
+            <form th:action="@{/screenings/inspect/{id}(id=${screening.id})}" method="post">
+                <div class="form-group">
+                    <label>巡检人姓名</label>
+                    <input type="text" name="inspectorName" required placeholder="请输入巡检人姓名">
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>放映机状态</label>
+                        <select name="projectorStatus" required>
+                            <option th:each="status : ${equipmentStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status.getDescription()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>音响系统状态</label>
+                        <select name="audioStatus" required>
+                            <option th:each="status : ${equipmentStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status.getDescription()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>灯光系统状态</label>
+                        <select name="lightingStatus" required>
+                            <option th:each="status : ${equipmentStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status.getDescription()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>空调系统状态</label>
+                        <select name="airConditioningStatus" required>
+                            <option th:each="status : ${equipmentStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status.getDescription()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>座椅状态</label>
+                        <select name="seatingStatus" required>
+                            <option th:each="status : ${equipmentStatuses}" 
+                                    th:value="${status}" 
+                                    th:text="${status.getDescription()}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea name="remarks" placeholder="请输入巡检备注"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-success">提交巡检</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+
+package com.example.cinema.repository;
+
+import com.example.cinema.entity.InspectionRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface InspectionRecordRepository extends JpaRepository<InspectionRecord, Long> {
+    List<InspectionRecord> findByScreeningId(Long screeningId);
+}

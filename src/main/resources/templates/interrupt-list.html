@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>中断记录</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>中断记录</h2>
+            <div>
+                <a th:href="@{/interrupts}" class="btn" th:class="${param.status == null ? 'btn-success' : ''}">全部</a>
+                <a th:href="@{/interrupts/unresolved}" class="btn" th:class="${param.status == 'unresolved' ? 'btn-success' : ''}">未处理</a>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>影院</th>
+                    <th>影厅</th>
+                    <th>影片</th>
+                    <th>中断时间</th>
+                    <th>故障类型</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="interrupt : ${interrupts}">
+                    <td th:text="${interrupt.screening.hall.cinema.name}"></td>
+                    <td th:text="${interrupt.screening.hall.name}"></td>
+                    <td th:text="${interrupt.screening.movie.title}"></td>
+                    <td th:text="${interrupt.interruptTime}"></td>
+                    <td th:text="${interrupt.faultType.getDescription()}"></td>
+                    <td th:text="${interrupt.isResolved ? '已解决' : '未处理'}"></td>
+                    <td>
+                        <a th:if="${!interrupt.isResolved}" th:href="@{/interrupts/resolve/{id}(id=${interrupt.id})}" class="btn btn-success">处理故障</a>
+                        <span th:if="${interrupt.isResolved}" class="btn btn-secondary disabled">已处理</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

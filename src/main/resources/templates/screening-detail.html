@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>场次详情</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/screenings}" class="btn btn-secondary">返回列表</a>
+        
+        <div class="card">
+            <h3>基本信息</h3>
+            <table>
+                <tr>
+                    <td><strong>影院:</strong></td>
+                    <td th:text="${screening.hall.cinema.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>影厅:</strong></td>
+                    <td th:text="${screening.hall.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>影片:</strong></td>
+                    <td th:text="${screening.movie.title}"></td>
+                </tr>
+                <tr>
+                    <td><strong>时长:</strong></td>
+                    <td th:text="${screening.movie.duration} + '分钟'"></td>
+                </tr>
+                <tr>
+                    <td><strong>开始时间:</strong></td>
+                    <td th:text="${screening.startTime}"></td>
+                </tr>
+                <tr>
+                    <td><strong>结束时间:</strong></td>
+                    <td th:text="${screening.endTime}"></td>
+                </tr>
+                <tr>
+                    <td><strong>票价:</strong></td>
+                    <td th:text="'¥' + ${screening.price}"></td>
+                </tr>
+                <tr>
+                    <td><strong>总座位:</strong></td>
+                    <td th:text="${screening.totalSeats}"></td>
+                </tr>
+                <tr>
+                    <td><strong>可售座位:</strong></td>
+                    <td th:text="${screening.availableSeats}"></td>
+                </tr>
+                <tr>
+                    <td><strong>场次状态:</strong></td>
+                    <td th:text="${screening.status.getDescription()}"></td>
+                </tr>
+                <tr>
+                    <td><strong>设备状态:</strong></td>
+                    <td>
+                        <span th:class="${getEquipmentStatusClass(screening.hall.equipmentStatus)}">
+                            [[${screening.hall.equipmentStatus.getDescription()}]]
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>历史节点</h3>
+            <div class="timeline">
+                <div th:each="inspection : ${inspections}" class="timeline-item">
+                    <strong>巡检记录</strong> - [[${inspection.inspectionTime}]]<br>
+                    巡检人: [[${inspection.inspectorName}]]<br>
+                    放映机: [[${inspection.projectorStatus.getDescription()}]] | 
+                    音响: [[${inspection.audioStatus.getDescription()}]] | 
+                    灯光: [[${inspection.lightingStatus.getDescription()}]]<br>
+                    <span th:if="${inspection.remarks}">备注: [[${inspection.remarks}]]</span>
+                </div>
+                <div th:each="interrupt : ${interrupts}" class="timeline-item">
+                    <strong>中断记录</strong> - [[${interrupt.interruptTime}]]<br>
+                    报告人: [[${interrupt.reporterName}]]<br>
+                    故障类型: [[${interrupt.faultType.getDescription()}]]<br>
+                    描述: [[${interrupt.faultDescription}]]<br>
+                    <span th:if="${interrupt.isResolved}">
+                        恢复时间: [[${interrupt.resumeTime}]]<br>
+                        处理结果: [[${interrupt.resolutionNote}]]
+                    </span>
+                    <span th:unless="${interrupt.isResolved}" class="status-fault">未处理</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>中断时长统计</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>中断时间</th>
+                        <th>恢复时间</th>
+                        <th>中断时长(分钟)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="interrupt : ${interrupts}">
+                        <td th:text="${interrupt.interruptTime}"></td>
+                        <td th:text="${interrupt.resumeTime ?: '未恢复'}"></td>
+                        <td>
+                            <span th:if="${interrupt.resumeTime}">
+                                [[${java.time.Duration.between(interrupt.interruptTime, interrupt.resumeTime).toMinutes()}]]
+                            </span>
+                            <span th:unless="${interrupt.resumeTime}" class="status-fault">计算中</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

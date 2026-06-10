@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>场次列表</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>场次列表</h2>
+            <a th:href="@{/screenings/create}" class="btn">新增场次</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>影院</th>
+                    <th>影厅</th>
+                    <th>影片</th>
+                    <th>开始时间</th>
+                    <th>状态</th>
+                    <th>设备状态</th>
+                    <th>售票状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="screening : ${screenings}">
+                    <td th:text="${screening.hall.cinema.name}"></td>
+                    <td th:text="${screening.hall.name}"></td>
+                    <td th:text="${screening.movie.title}"></td>
+                    <td th:text="${screening.startTime}"></td>
+                    <td th:text="${screening.status.getDescription()}"></td>
+                    <td>
+                        <span th:class="${getEquipmentStatusClass(screening.hall.equipmentStatus)}">
+                            [[${screening.hall.equipmentStatus.getDescription()}]]
+                        </span>
+                    </td>
+                    <td th:text="${screening.isSelling ? '售卖中' : '已停售'}"></td>
+                    <td>
+                        <a th:href="@{/screenings/{id}(id=${screening.id})}" class="btn btn-secondary">详情</a>
+                        <a th:if="${screening.status == T(com.example.cinema.entity.ScreeningStatus.SCHEDULED)}" 
+                           th:href="@{/screenings/inspect/{id}(id=${screening.id})}" class="btn">巡检</a>
+                        <a th:if="${screening.status == T(com.example.cinema.entity.ScreeningStatus.PLAYING) || screening.status == T(com.example.cinema.entity.ScreeningStatus.INSPECTED)}" 
+                           th:href="@{/screenings/interrupt/{id}(id=${screening.id})}" class="btn btn-danger">报告中断</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

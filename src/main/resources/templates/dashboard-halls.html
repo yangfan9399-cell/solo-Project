@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>影厅统计</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/}" class="btn btn-secondary">返回看板</a>
+        
+        <h3>影厅中断统计</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>影厅名称</th>
+                    <th>设备状态</th>
+                    <th>中断次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${interruptsByHall}">
+                    <td th:text="${item.hallName}"></td>
+                    <td>
+                        <span th:class="${getEquipmentStatusClass(item.equipmentStatus)}">
+                            [[${item.equipmentStatus.getDescription()}]]
+                        </span>
+                    </td>
+                    <td th:text="${item.interruptCount}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

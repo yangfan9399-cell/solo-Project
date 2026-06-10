@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>数据看板</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="grid">
+            <div class="stat-card">
+                <div class="number" th:text="${dashboardData.totalInterrupts}">0</div>
+                <div class="label">总中断次数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${dashboardData.unresolvedInterrupts}">0</div>
+                <div class="label">未处理中断</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${dashboardData.pendingCompensations}">0</div>
+                <div class="label">待审核补偿</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${dashboardData.totalCompensationAmount}">0</div>
+                <div class="label">累计补偿金额</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>各影院中断统计</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>影院名称</th>
+                        <th>中断次数</th>
+                        <th>累计补偿</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${interruptsByCinema}">
+                        <td th:text="${item.cinemaName}"></td>
+                        <td th:text="${item.interruptCount}"></td>
+                        <td th:text="${item.compensationAmount}"></td>
+                        <td>
+                            <a th:href="@{/dashboard/halls(cinemaId=${item.cinemaId})}" class="btn btn-secondary">查看影厅</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>故障类型分布</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>故障类型</th>
+                        <th>发生次数</th>
+                        <th>累计补偿</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${interruptsByFaultType}">
+                        <td th:text="${item.faultTypeName}"></td>
+                        <td th:text="${item.count}"></td>
+                        <td th:text="${item.compensationAmount}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

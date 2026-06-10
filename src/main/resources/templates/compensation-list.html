@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>补偿管理</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>补偿管理</h2>
+            <div>
+                <a th:href="@{/compensations}" class="btn" th:class="${param.status == null ? 'btn-success' : ''}">全部</a>
+                <a th:href="@{/compensations/pending}" class="btn" th:class="${param.status == 'pending' ? 'btn-success' : ''}">待审核</a>
+                <a th:href="@{/compensations/create}" class="btn btn-success">新增补偿</a>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>影院</th>
+                    <th>影厅</th>
+                    <th>影片</th>
+                    <th>中断时间</th>
+                    <th>受影响人数</th>
+                    <th>补偿金额</th>
+                    <th>补偿类型</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="compensation : ${compensations}">
+                    <td th:text="${compensation.interruptRecord.screening.hall.cinema.name}"></td>
+                    <td th:text="${compensation.interruptRecord.screening.hall.name}"></td>
+                    <td th:text="${compensation.interruptRecord.screening.movie.title}"></td>
+                    <td th:text="${compensation.interruptRecord.interruptTime}"></td>
+                    <td th:text="${compensation.affectedAudienceCount}"></td>
+                    <td th:text="'¥' + ${compensation.compensationAmount}"></td>
+                    <td th:text="${compensation.compensationType}"></td>
+                    <td th:text="${compensation.status.getDescription()}"></td>
+                    <td>
+                        <a th:if="${compensation.status == T(com.example.cinema.entity.CompensationStatus.PENDING)}" 
+                           th:href="@{/compensations/review/{id}(id=${compensation.id})}" class="btn">审核</a>
+                        <a th:if="${compensation.status == T(com.example.cinema.entity.CompensationStatus.COMPLETED) && !compensation.isArchived}" 
+                           th:href="@{/compensations/archive/{id}(id=${compensation.id})}" class="btn btn-secondary">归档</a>
+                        <span th:if="${compensation.isArchived}" class="btn btn-secondary disabled">已归档</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

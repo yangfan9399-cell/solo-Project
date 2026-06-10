@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>审核补偿</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/compensations}" class="btn btn-secondary">返回列表</a>
+        
+        <div class="card">
+            <h3>审核补偿申请</h3>
+            <table>
+                <tr>
+                    <td><strong>影院:</strong></td>
+                    <td th:text="${compensation.interruptRecord.screening.hall.cinema.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>影厅:</strong></td>
+                    <td th:text="${compensation.interruptRecord.screening.hall.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>影片:</strong></td>
+                    <td th:text="${compensation.interruptRecord.screening.movie.title}"></td>
+                </tr>
+                <tr>
+                    <td><strong>中断时间:</strong></td>
+                    <td th:text="${compensation.interruptRecord.interruptTime}"></td>
+                </tr>
+                <tr>
+                    <td><strong>故障类型:</strong></td>
+                    <td th:text="${compensation.interruptRecord.faultType.getDescription()}"></td>
+                </tr>
+                <tr>
+                    <td><strong>受影响人数:</strong></td>
+                    <td th:text="${compensation.affectedAudienceCount}"></td>
+                </tr>
+                <tr>
+                    <td><strong>补偿金额:</strong></td>
+                    <td th:text="'¥' + ${compensation.compensationAmount}"></td>
+                </tr>
+                <tr>
+                    <td><strong>补偿类型:</strong></td>
+                    <td th:text="${compensation.compensationType}"></td>
+                </tr>
+                <tr>
+                    <td><strong>提交人:</strong></td>
+                    <td th:text="${compensation.submitterName}"></td>
+                </tr>
+                <tr>
+                    <td><strong>提交时间:</strong></td>
+                    <td th:text="${compensation.submitTime}"></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>审核处理</h3>
+            <form th:action="@{/compensations/review/{id}(id=${compensation.id})}" method="post">
+                <div class="form-group">
+                    <label>审核人姓名</label>
+                    <input type="text" name="reviewerName" required placeholder="请输入审核人姓名">
+                </div>
+                
+                <div class="form-group">
+                    <label>审核结果</label>
+                    <select name="status" required>
+                        <option th:each="status : ${compensationStatuses}" 
+                                th:value="${status}" 
+                                th:text="${status.getDescription()}">
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>审核备注</label>
+                    <textarea name="reviewNote" placeholder="请输入审核意见"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-success">提交审核</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

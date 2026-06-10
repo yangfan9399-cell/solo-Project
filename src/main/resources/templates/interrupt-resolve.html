@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>处理故障</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/interrupts}" class="btn btn-secondary">返回列表</a>
+        
+        <div class="card">
+            <h3>处理故障 - [[${interrupt.screening.movie.title}]]</h3>
+            <table>
+                <tr>
+                    <td><strong>影院:</strong></td>
+                    <td th:text="${interrupt.screening.hall.cinema.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>影厅:</strong></td>
+                    <td th:text="${interrupt.screening.hall.name}"></td>
+                </tr>
+                <tr>
+                    <td><strong>中断时间:</strong></td>
+                    <td th:text="${interrupt.interruptTime}"></td>
+                </tr>
+                <tr>
+                    <td><strong>故障类型:</strong></td>
+                    <td th:text="${interrupt.faultType.getDescription()}"></td>
+                </tr>
+                <tr>
+                    <td><strong>故障描述:</strong></td>
+                    <td th:text="${interrupt.faultDescription}"></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>填写处理结果</h3>
+            <form th:action="@{/interrupts/resolve/{id}(id=${interrupt.id})}" method="post">
+                <div class="form-group">
+                    <label>处理结果</label>
+                    <textarea name="resolutionNote" required placeholder="请描述故障处理过程和结果"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-success">确认修复</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

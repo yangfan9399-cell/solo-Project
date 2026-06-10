@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新增场次</title>
+    <script>
+        function loadHalls(cinemaId) {
+            fetch('/screenings/halls?cinemaId=' + cinemaId)
+                .then(response => response.json())
+                .then(data => {
+                    const hallSelect = document.getElementById('hallId');
+                    hallSelect.innerHTML = '<option value="">请选择影厅</option>';
+                    data.forEach(hall => {
+                        const option = document.createElement('option');
+                        option.value = hall.id;
+                        option.textContent = hall.name + ' (' + hall.capacity + '座)';
+                        hallSelect.appendChild(option);
+                    });
+                });
+        }
+    </script>
+</head>
+<body>
+    <div th:fragment="content">
+        <a th:href="@{/screenings}" class="btn btn-secondary">返回列表</a>
+        
+        <div class="card">
+            <h3>新增放映场次</h3>
+            <form action="/screenings" method="post">
+                <div class="form-group">
+                    <label>影院</label>
+                    <select name="cinemaId" required onchange="loadHalls(this.value)">
+                        <option value="">请选择影院</option>
+                        <option th:each="cinema : ${cinemas}" th:value="${cinema.id}" th:text="${cinema.name}"></option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>影厅</label>
+                    <select id="hallId" name="hallId" required>
+                        <option value="">请先选择影院</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>影片</label>
+                    <select name="movieId" required>
+                        <option value="">请选择影片</option>
+                        <option th:each="movie : ${movies}" th:value="${movie.id}" th:text="${movie.title}"></option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="datetime-local" name="startTime" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>票价(元)</label>
+                    <input type="number" name="price" required min="0" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label>总座位数</label>
+                    <input type="number" name="totalSeats" required min="1">
+                </div>
+                
+                <button type="submit" class="btn btn-success">创建场次</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
