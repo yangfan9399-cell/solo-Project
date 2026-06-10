@@ -6,17 +6,21 @@
         "dev": "vite"
     },
     "devDependencies": {
+        "@vitejs/plugin-vue": "5.1.4",
         "autoprefixer": "^10.4.20",
         "axios": "^1.7.4",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.47",
-        "rollup": "^4.0.0",
+        "rollup": "2.79.1",
         "tailwindcss": "^3.4.13",
-        "vite": "^6.0.11"
+        "vite": "4.5.5"
     },
     "dependencies": {
         "@inertiajs/vue3": "^3.3.1",
-        "lucide-vue-next": "^0.577.0"
+        "@rollup/wasm-node": "^4.61.1",
+        "lucide-vue-next": "^0.577.0",
+        "vue": "^3.5.35",
+        "vue-loader": "^17.4.2"
     }
 }
