@@ -11,7 +11,7 @@ app:
   allowed_hosts:
     - localhost
     - 127.0.0.1
-  use_sqlite: true
+  use_sqlite: false
 
 business:
   max_budget_per_day: 1000
