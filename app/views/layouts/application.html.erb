@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>连锁餐饮食材临期调拨与报损审核平台</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "inter-font" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="bg-gray-50">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <h1 class="text-xl font-bold text-gray-900">食材临期管理系统</h1>
+            <div class="ml-10 flex space-x-4">
+              <%= link_to "仪表盘", dashboard_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "门店", stores_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "批次", batches_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "调拨", allocations_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "报损", loss_reports_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "区域", regions_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <% if notice %>
+        <div class="mb-4 p-4 bg-green-100 text-green-700 rounded-md"><%= notice %></div>
+      <% end %>
+      <% if alert %>
+        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md"><%= alert %></div>
+      <% end %>
+      <%= yield %>
+    </main>
+  </body>
+</html>

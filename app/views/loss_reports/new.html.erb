@@ -1,0 +1,38 @@
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">新建报损单</h1>
+  <div class="bg-white rounded-lg shadow p-6">
+    <%= form_with model: @loss_report, local: true do |form| %>
+      <div class="space-y-4">
+        <div>
+          <%= form.label :batch_id, "选择批次", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :batch_id,
+            @batches.map { |b| ["#{b.batch_number} - #{b.material.name} (#{b.available_quantity}#{b.material.unit})", b.id] },
+            {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :loss_type, "损耗类型", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :loss_type, LossReport.loss_types.keys.map { |k| [LossReport.human_attribute_name("loss_type.#{k}"), k] }, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :quantity, "损耗数量", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.number_field :quantity, step: "0.01", min: "0.01", class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :reporter_id, "报损人", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :reporter_id, User.all.map { |u| [u.name, u.id] }, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :reason, "报损原因", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.text_area :reason, rows: 3, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <% if @loss_report.allocation_id %>
+          <%= form.hidden_field :allocation_id %>
+        <% end %>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <%= link_to "取消", loss_reports_path, class: "px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300" %>
+        <%= form.submit "创建报损单", class: "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" %>
+      </div>
+    <% end %>
+  </div>
+</div>

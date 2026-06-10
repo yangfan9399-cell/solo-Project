@@ -1,0 +1,57 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold">批次列表</h1>
+    <div class="flex gap-2">
+      <%= link_to "临期预警", batches_path(near_expiry: "true"), class: "px-4 py-2 bg-orange-100 text-orange-800 rounded-md hover:bg-orange-200" %>
+      <%= link_to "新建批次", new_batch_path, class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">批次号</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">物料</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">门店</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">数量</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">效期</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">预警</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @batches.each do |batch| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4"><%= link_to batch.batch_number, batch, class: "text-blue-600 hover:underline" %></td>
+              <td class="px-6 py-4"><%= batch.material.name %></td>
+              <td class="px-6 py-4"><%= batch.store.name %></td>
+              <td class="px-6 py-4"><%= batch.quantity %><%= batch.material.unit %></td>
+              <td class="px-6 py-4">
+                <div><%= batch.expiry_date %></div>
+                <div class="text-xs text-gray-500">
+                  <% if batch.days_until_expiry.present? %>
+                    剩余 <%= batch.days_until_expiry %> 天
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <% if batch.near_expiry? %>
+                  <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">临期</span>
+                <% else %>
+                  <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">正常</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full <%= status_class(batch.status) %>">
+                  <%= batch.status_i18n %>
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

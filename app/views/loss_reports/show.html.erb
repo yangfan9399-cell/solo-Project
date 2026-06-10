@@ -1,0 +1,137 @@
+<div class="space-y-6">
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold"><%= @loss_report.report_number %></h1>
+        <p class="text-gray-500">
+          <%= @loss_report.batch.material.name %> - <%= @loss_report.batch.batch_number %>
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <span class="px-4 py-2 text-sm rounded-full <%= status_class(@loss_report.status) %>">
+          <%= @loss_report.status_i18n %>
+        </span>
+        <% if @loss_report.pending? %>
+          <%= button_to "批准报损", approve_loss_report_path(@loss_report), method: :post, class: "px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" %>
+          <%= button_to "驳回报损", reject_approval_loss_report_path(@loss_report), method: :post, class: "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">报损信息</h2>
+      <dl class="grid grid-cols-2 gap-4">
+        <div>
+          <dt class="text-sm text-gray-500">报损单号</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.report_number %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">报损人</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.reporter.name %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">损耗类型</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.loss_type_i18n %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">损耗数量</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.quantity %><%= @loss_report.batch.material.unit %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">报损时间</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.created_at.strftime("%Y-%m-%d %H:%M") %></dd>
+        </div>
+        <% if @loss_report.reviewer %>
+          <div>
+            <dt class="text-sm text-gray-500">审核人</dt>
+            <dd class="text-sm font-medium"><%= @loss_report.reviewer.name %></dd>
+          </div>
+        <% end %>
+        <div class="col-span-2">
+          <dt class="text-sm text-gray-500">报损原因</dt>
+          <dd class="text-sm font-medium"><%= @loss_report.reason || "-" %></dd>
+        </div>
+        <% if @loss_report.review_comment %>
+          <div class="col-span-2">
+            <dt class="text-sm text-gray-500">审核意见</dt>
+            <dd class="text-sm font-medium"><%= @loss_report.review_comment %></dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">批次信息</h2>
+      <dl class="grid grid-cols-2 gap-4">
+        <div>
+          <dt class="text-sm text-gray-500">批次号</dt>
+          <dd class="text-sm font-medium"><%= @batch.batch_number %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">物料</dt>
+          <dd class="text-sm font-medium"><%= @batch.material.name %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">原数量</dt>
+          <dd class="text-sm font-medium"><%= @batch.quantity %><%= @batch.material.unit %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">报损数量</dt>
+          <dd class="text-sm font-medium text-red-600">-<%= @loss_report.quantity %><%= @batch.material.unit %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">有效期</dt>
+          <dd class="text-sm font-medium"><%= @batch.expiry_date %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">所在门店</dt>
+          <dd class="text-sm font-medium"><%= @batch.store.name %></dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <% if @allocation %>
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">关联调拨</h2>
+      <div class="flex justify-between items-center">
+        <div>
+          <span class="font-medium"><%= @allocation.allocation_number %></span>
+          <span class="ml-2 text-sm text-gray-500">
+            <%= @allocation.source_store.name %> → <%= @allocation.target_store.name %>
+          </span>
+        </div>
+        <%= link_to "查看调拨", @allocation, class: "text-blue-600 hover:underline" %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold mb-4">工作流程节点</h2>
+    <% if @workflow_nodes.any? %>
+      <div class="relative">
+        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div class="space-y-4">
+          <% @workflow_nodes.each do |node| %>
+            <div class="relative flex items-start pl-10">
+              <div class="absolute left-2 w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></div>
+              <div class="flex-1 bg-gray-50 rounded-lg p-3">
+                <div class="flex justify-between">
+                  <span class="font-medium"><%= node.node_type %></span>
+                  <span class="text-sm text-gray-500"><%= node.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+                </div>
+                <% if node.actor %>
+                  <div class="text-sm text-gray-500">操作人: <%= node.actor.name %></div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <p class="text-gray-500 text-sm">暂无流程记录</p>
+    <% end %>
+  </div>
+</div>

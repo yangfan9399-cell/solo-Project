@@ -1,0 +1,32 @@
+<div class="max-w-xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">新建门店</h1>
+  <div class="bg-white rounded-lg shadow p-6">
+    <%= form_with model: @store, local: true do |form| %>
+      <div class="space-y-4">
+        <div>
+          <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :code, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.text_field :code, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :region_id, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :region_id, @regions.map { |r| [r.name, r.id] }, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :address, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.text_field :address, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+        <div>
+          <%= form.label :store_type, class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :store_type, Store.store_types.keys.map { |k| [Store.human_attribute_name("store_type.#{k}"), k] }, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm" %>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <%= form.submit "创建门店", class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" %>
+      </div>
+    <% end %>
+  </div>
+</div>

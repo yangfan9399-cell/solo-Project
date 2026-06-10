@@ -1,0 +1,125 @@
+zh-CN:
+  activerecord:
+    models:
+      region: 区域
+      store: 门店
+      material_category: 物料分类
+      material: 物料
+      batch: 批次
+      allocation: 调拨单
+      allocation_item: 调拨物料
+      loss_report: 报损单
+      workflow_node: 工作节点
+      user: 用户
+    attributes:
+      region:
+        name: 名称
+        code: 编码
+        description: 描述
+      store:
+        name: 名称
+        code: 编码
+        address: 地址
+        store_type: 门店类型
+        status: 状态
+        region: 区域
+      material_category:
+        name: 名称
+        code: 编码
+        parent_code: 父级编码
+      material:
+        name: 名称
+        code: 编码
+        unit: 单位
+        specification: 规格
+        category: 分类
+      batch:
+        batch_number: 批次号
+        production_date: 生产日期
+        expiry_date: 有效期
+        quantity: 数量
+        available_quantity: 可用数量
+        status: 状态
+        warning_level: 预警级别
+        material: 物料
+        store: 门店
+      allocation:
+        allocation_number: 调拨单号
+        status: 状态
+        remark: 备注
+        source_store: 来源门店
+        target_store: 目标门店
+        creator: 创建人
+      allocation_item:
+        quantity: 数量
+        actual_quantity: 实际数量
+        status: 状态
+        rejection_reason: 拒收原因
+      loss_report:
+        report_number: 报损单号
+        loss_type: 损耗类型
+        quantity: 数量
+        status: 状态
+        reason: 原因
+        review_comment: 审核意见
+        batch: 批次
+        allocation: 调拨单
+        reporter: 报损人
+        reviewer: 审核人
+      workflow_node:
+        node_type: 节点类型
+        actor: 操作人
+        metadata: 元数据
+      user:
+        name: 姓名
+        employee_id: 工号
+        role: 角色
+        email: 邮箱
+        phone: 电话
+        store: 门店
+    enums:
+      store:
+        store_type:
+          restaurant: 餐厅
+          warehouse: 仓库
+        status:
+          active: 营业中
+          inactive: 已停业
+      batch:
+        status:
+          in_stock: 在库
+          allocated: 已调拨
+          lost: 已报损
+        warning_level:
+          normal: 正常
+          warning: 预警
+          critical: 紧急
+      allocation:
+        status:
+          pending: 待审批
+          approved: 已批准
+          in_transit: 已发货
+          received: 已收货
+          rejected: 已拒收
+          cancelled: 已取消
+      allocation_item:
+        status:
+          pending: 待处理
+          in_transit: 运输中
+          received: 已收货
+          rejected: 已拒收
+      loss_report:
+        loss_type:
+          near_expiry: 临期报损
+          rejection: 门店拒收
+          quantity_discrepancy: 数量差异
+          damage: 破损
+        status:
+          pending: 待审核
+          approved: 已批准
+          rejected: 已驳回
+      user:
+        role:
+          store_manager: 门店店长
+          warehouse_dispatcher: 仓库调度
+          finance_reviewer: 财务复核

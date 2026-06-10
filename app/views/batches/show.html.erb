@@ -1,0 +1,114 @@
+<div class="space-y-6">
+  <div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold"><%= @batch.batch_number %></h1>
+        <p class="text-gray-500"><%= @batch.material.name %> - <%= @batch.material.category.name %></p>
+      </div>
+      <div>
+        <% if @batch.near_expiry? %>
+          <span class="px-4 py-2 text-sm rounded-full bg-red-100 text-red-800">临期预警</span>
+        <% end %>
+        <span class="px-4 py-2 text-sm rounded-full <%= status_class(@batch.status) %>">
+          <%= @batch.status_i18n %>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">基本信息</h2>
+      <dl class="grid grid-cols-2 gap-4">
+        <div>
+          <dt class="text-sm text-gray-500">物料</dt>
+          <dd class="text-sm font-medium"><%= @batch.material.name %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">规格</dt>
+          <dd class="text-sm font-medium"><%= @batch.material.specification || "-" %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">批次号</dt>
+          <dd class="text-sm font-medium"><%= @batch.batch_number %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">单位</dt>
+          <dd class="text-sm font-medium"><%= @batch.material.unit %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">生产日期</dt>
+          <dd class="text-sm font-medium"><%= @batch.production_date || "-" %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">有效期</dt>
+          <dd class="text-sm font-medium"><%= @batch.expiry_date || "-" %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">总数量</dt>
+          <dd class="text-sm font-medium"><%= @batch.quantity %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">可用数量</dt>
+          <dd class="text-sm font-medium"><%= @batch.available_quantity %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">所在门店</dt>
+          <dd class="text-sm font-medium"><%= @batch.store.name %></dd>
+        </div>
+        <div>
+          <dt class="text-sm text-gray-500">预警级别</dt>
+          <dd class="text-sm font-medium"><%= @batch.warning_level_i18n %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">调拨记录</h2>
+      <% if @allocation_items.any? %>
+        <div class="space-y-3">
+          <% @allocation_items.each do |item| %>
+            <div class="border rounded-lg p-3">
+              <div class="flex justify-between">
+                <span class="font-medium"><%= item.allocation.allocation_number %></span>
+                <span class="text-sm <%= status_class(item.status) %>"><%= item.status_i18n %></span>
+              </div>
+              <div class="text-sm text-gray-500">
+                调拨数量: <%= item.quantity %> / 实际数量: <%= item.actual_quantity || "-" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-gray-500 text-sm">暂无调拨记录</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold mb-4">工作流程节点</h2>
+    <% if @workflow_nodes.any? %>
+      <div class="relative">
+        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div class="space-y-4">
+          <% @workflow_nodes.each do |node| %>
+            <div class="relative flex items-start pl-10">
+              <div class="absolute left-2 w-4 h-4 rounded-full bg-blue-500 border-2 border-white"></div>
+              <div class="flex-1 bg-gray-50 rounded-lg p-3">
+                <div class="flex justify-between">
+                  <span class="font-medium"><%= node.node_type %></span>
+                  <span class="text-sm text-gray-500"><%= node.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+                </div>
+                <% if node.actor %>
+                  <div class="text-sm text-gray-500">操作人: <%= node.actor.name %></div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <p class="text-gray-500 text-sm">暂无流程记录</p>
+    <% end %>
+  </div>
+</div>

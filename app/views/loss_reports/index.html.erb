@@ -1,0 +1,52 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold">报损单列表</h1>
+    <div class="flex gap-2">
+      <%= link_to "待审核", loss_reports_path(status: "pending"), class: "px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200" %>
+      <%= link_to "已审核", loss_reports_path(status: "approved"), class: "px-4 py-2 bg-green-100 text-green-800 rounded-md hover:bg-green-200" %>
+      <%= link_to "新建报损", new_loss_report_path, class: "px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">单号</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">物料</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">批次</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">损耗类型</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">数量</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">报损人</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @loss_reports.each do |report| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4"><%= link_to report.report_number, report, class: "text-blue-600 hover:underline" %></td>
+              <td class="px-6 py-4"><%= report.batch.material.name %></td>
+              <td class="px-6 py-4"><%= report.batch.batch_number %></td>
+              <td class="px-6 py-4"><%= report.loss_type_i18n %></td>
+              <td class="px-6 py-4"><%= report.quantity %><%= report.batch.material.unit %></td>
+              <td class="px-6 py-4"><%= report.reporter.name %></td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full <%= status_class(report.status) %>">
+                  <%= report.status_i18n %>
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <% if report.pending? %>
+                  <%= button_to "批准", approve_loss_report_path(report), method: :post, class: "text-green-600 hover:underline" %>
+                  <%= button_to "驳回", reject_approval_loss_report_path(report), method: :post, class: "text-red-600 hover:underline" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
