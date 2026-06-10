@@ -114,7 +114,7 @@
     <div id="sign-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
         <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%;">
             <h3>签收确认</h3>
-            <form method="post" action="{% url 'distribution_sign' distribution.id %}">
+            <form method="post" action="{% url 'distribution_sign' distribution.id %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="form-group">
                     <label>签收人</label>
@@ -137,6 +137,10 @@
                     </select>
                 </div>
                 {% endif %}
+                <div class="form-group">
+                    <label>签收证据（图片）</label>
+                    <input type="file" name="evidence" accept="image/*">
+                </div>
                 <div class="form-group">
                     <label>备注</label>
                     <textarea name="notes" rows="3"></textarea>

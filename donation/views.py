@@ -195,6 +195,10 @@ def distribution_sign(request, pk):
             discrepancy_reason=request.POST.get('discrepancy_reason'),
         )
         
+        if 'evidence' in request.FILES:
+            receipt.evidence = request.FILES['evidence']
+            receipt.save()
+        
         distribution.status = 'received'
         distribution.save()
         
@@ -314,14 +318,44 @@ def review_dashboard(request):
     bucket_labels = ['3天内', '3-7天', '7-14天', '14天以上']
     bucket_thresholds = [timedelta(days=3), timedelta(days=7), timedelta(days=14)]
     
-    for label, threshold in zip(bucket_labels, bucket_thresholds):
-        count = DistributionPlan.objects.filter(
-            status='received',
-            actual_distributed_date__isnull=False
-        ).annotate(
-            cycle=F('receipt__signed_at') - F('actual_distributed_date')
-        ).filter(cycle__lt=threshold).count()
+    previous_threshold = timedelta(days=0)
+    for i, (label, threshold) in enumerate(zip(bucket_labels, bucket_thresholds)):
+        if i == 0:
+            # 3天内: cycle < 3天
+            count = DistributionPlan.objects.filter(
+                status='received',
+                actual_distributed_date__isnull=False
+            ).annotate(
+                cycle=F('receipt__signed_at') - F('actual_distributed_date')
+            ).filter(cycle__lt=threshold).count()
+        elif i < len(bucket_thresholds):
+            # 3-7天: 3天 <= cycle < 7天
+            count = DistributionPlan.objects.filter(
+                status='received',
+                actual_distributed_date__isnull=False
+            ).annotate(
+                cycle=F('receipt__signed_at') - F('actual_distributed_date')
+            ).filter(cycle__gte=previous_threshold, cycle__lt=threshold).count()
+        else:
+            # 14天以上: cycle >= 14天
+            count = DistributionPlan.objects.filter(
+                status='received',
+                actual_distributed_date__isnull=False
+            ).annotate(
+                cycle=F('receipt__signed_at') - F('actual_distributed_date')
+            ).filter(cycle__gte=threshold).count()
         cycle_buckets.append({'label': label, 'count': count})
+        previous_threshold = threshold
+    
+    # 最后一个桶: 14天以上
+    last_count = DistributionPlan.objects.filter(
+        status='received',
+        actual_distributed_date__isnull=False
+    ).annotate(
+        cycle=F('receipt__signed_at') - F('actual_distributed_date')
+    ).filter(cycle__gte=bucket_thresholds[-1]).count()
+    if cycle_buckets:
+        cycle_buckets[-1]['count'] = last_count
     
     context = {
         'by_project': by_project,
