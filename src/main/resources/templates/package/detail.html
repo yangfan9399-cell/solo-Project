@@ -27,7 +27,7 @@
                 <p class="text-muted">编码: [[${instrumentPackage.packageCode}]]</p>
             </div>
             <div class="col-md-4 text-end">
-                <span th:class="${getBadgeClass(instrumentPackage.status)}" th:text="${getStatusText(instrumentPackage.status)}" class="fs-4"></span>
+                <span th:class="${T(com.example.instrument.util.StatusHelper).getBadgeClass(instrumentPackage.status)}" th:text="${T(com.example.instrument.util.StatusHelper).getStatusText(instrumentPackage.status)}" class="fs-4"></span>
             </div>
         </div>
 
@@ -171,8 +171,8 @@
                             <div th:each="(node, index) : ${historyNodes}" class="timeline-item">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
-                                        <div th:class="${getNodeIconClass(node.type)}" class="w-10 h-10 rounded-full flex items-center justify-center">
-                                            <svg th:class="${getNodeIconColor(node.type)}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <div th:class="${T(com.example.instrument.util.StatusHelper).getNodeIconClass(node.type)}" class="w-10 h-10 rounded-full flex items-center justify-center">
+                                            <svg th:class="${T(com.example.instrument.util.StatusHelper).getNodeIconColor(node.type)}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path th:if="${node.type == 'inventory'}" d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z"></path>
                                                 <path th:if="${node.type == 'sterilization'}" d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                                                 <path th:if="${node.type == 'receive'}" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -187,7 +187,7 @@
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 ms-4">
-                                        <h5 th:text="${getNodeTitle(node.type)}"></h5>
+                                        <h5 th:text="${T(com.example.instrument.util.StatusHelper).getNodeTitle(node.type)}"></h5>
                                         <p class="text-muted">
                                             操作员: [[${node.operator}]] | 时间: [[${#temporals.format(node.time, 'yyyy-MM-dd HH:mm')}]]
                                             <span th:if="${node.result}">| 结果: [[${node.result == 'NORMAL' || node.result == 'ACCEPTED' || node.result == 'APPROVED' ? '通过' : '未通过'}]]</span>
@@ -217,7 +217,7 @@
                             </thead>
                             <tbody>
                                 <tr th:each="record : ${abnormalRecords}">
-                                    <td th:text="${getAbnormalTypeText(record.abnormalType)}"></td>
+                                    <td th:text="${T(com.example.instrument.util.StatusHelper).getAbnormalTypeText(record.abnormalType)}"></td>
                                     <td th:text="${record.reason}"></td>
                                     <td th:text="${record.handler ?: '-'}"></td>
                                     <td>
@@ -235,85 +235,7 @@
         </div>
     </div>
 
-    <script th:inline="javascript">
-        function getBadgeClass(status) {
-            const classes = {
-                'PENDING_INVENTORY': 'badge bg-warning',
-                'INVENTORY_COMPLETED': 'badge bg-info',
-                'PENDING_STERILIZATION': 'badge bg-info',
-                'STERILIZATION_COMPLETED': 'badge bg-info',
-                'PENDING_RECEIVE': 'badge bg-info',
-                'RECEIVED': 'badge bg-info',
-                'PENDING_REVIEW': 'badge bg-info',
-                'RELEASED': 'badge bg-success',
-                'ISSUED': 'badge bg-primary',
-                'RETURNED': 'badge bg-secondary',
-                'ABNORMAL': 'badge bg-danger'
-            };
-            return classes[status] || 'badge bg-secondary';
-        }
 
-        function getStatusText(status) {
-            const texts = {
-                'PENDING_INVENTORY': '待清点',
-                'INVENTORY_COMPLETED': '清点完成',
-                'PENDING_STERILIZATION': '待灭菌',
-                'STERILIZATION_COMPLETED': '灭菌完成',
-                'PENDING_RECEIVE': '待核收',
-                'RECEIVED': '已核收',
-                'PENDING_REVIEW': '待复核',
-                'RELEASED': '已放行',
-                'ISSUED': '已发放',
-                'RETURNED': '已退回',
-                'ABNORMAL': '异常'
-            };
-            return texts[status] || status;
-        }
-
-        function getNodeIconClass(type) {
-            const classes = {
-                'inventory': 'bg-warning',
-                'sterilization': 'bg-primary',
-                'receive': 'bg-info',
-                'review': 'bg-success',
-                'issue': 'bg-green-500'
-            };
-            return classes[type] || 'bg-secondary';
-        }
-
-        function getNodeIconColor(type) {
-            const classes = {
-                'inventory': 'text-white',
-                'sterilization': 'text-white',
-                'receive': 'text-white',
-                'review': 'text-white',
-                'issue': 'text-white'
-            };
-            return classes[type] || 'text-white';
-        }
-
-        function getNodeTitle(type) {
-            const titles = {
-                'inventory': '器械清点',
-                'sterilization': '灭菌登记',
-                'receive': '核收确认',
-                'review': '质控复核',
-                'issue': '发放出库'
-            };
-            return titles[type] || type;
-        }
-
-        function getAbnormalTypeText(type) {
-            const texts = {
-                'INSTRUMENT_MISSING': '器械缺失',
-                'EXPIRED_STERILIZATION': '灭菌过期',
-                'RETURNED_FROM_OPERATING_ROOM': '手术室退回',
-                'DAMAGED_INSTRUMENT': '器械损坏',
-                'OTHER': '其他异常'
-            };
-            return texts[type] || type;
-        }
-    </script>
     <style>
         .timeline-item:not(:last-child) {
             border-bottom: 1px solid #eee;

@@ -31,7 +31,7 @@
                         <option value="">全部状态</option>
                         <option th:each="status : ${statuses}" 
                                 th:value="${status}" 
-                                th:text="${getStatusText(status)}"
+                                th:text="${T(com.example.instrument.util.StatusHelper).getStatusText(status)}"
                                 th:selected="${statusFilter == status}">
                         </option>
                     </select>
@@ -70,7 +70,7 @@
                                 <span th:else>-</span>
                             </td>
                             <td>
-                                <span th:class="${getBadgeClass(pkg.status)}" th:text="${getStatusText(pkg.status)}"></span>
+                                <span th:class="${T(com.example.instrument.util.StatusHelper).getBadgeClass(pkg.status)}" th:text="${T(com.example.instrument.util.StatusHelper).getStatusText(pkg.status)}"></span>
                             </td>
                             <td th:text="${#temporals.format(pkg.updateTime, 'yyyy-MM-dd HH:mm')}"></td>
                             <td>
@@ -83,41 +83,7 @@
         </div>
     </div>
 
-    <script th:inline="javascript">
-        function getBadgeClass(status) {
-            const classes = {
-                'PENDING_INVENTORY': 'badge bg-warning',
-                'INVENTORY_COMPLETED': 'badge bg-info',
-                'PENDING_STERILIZATION': 'badge bg-info',
-                'STERILIZATION_COMPLETED': 'badge bg-info',
-                'PENDING_RECEIVE': 'badge bg-info',
-                'RECEIVED': 'badge bg-info',
-                'PENDING_REVIEW': 'badge bg-info',
-                'RELEASED': 'badge bg-success',
-                'ISSUED': 'badge bg-primary',
-                'RETURNED': 'badge bg-secondary',
-                'ABNORMAL': 'badge bg-danger'
-            };
-            return classes[status] || 'badge bg-secondary';
-        }
 
-        function getStatusText(status) {
-            const texts = {
-                'PENDING_INVENTORY': '待清点',
-                'INVENTORY_COMPLETED': '清点完成',
-                'PENDING_STERILIZATION': '待灭菌',
-                'STERILIZATION_COMPLETED': '灭菌完成',
-                'PENDING_RECEIVE': '待核收',
-                'RECEIVED': '已核收',
-                'PENDING_REVIEW': '待复核',
-                'RELEASED': '已放行',
-                'ISSUED': '已发放',
-                'RETURNED': '已退回',
-                'ABNORMAL': '异常'
-            };
-            return texts[status] || status;
-        }
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

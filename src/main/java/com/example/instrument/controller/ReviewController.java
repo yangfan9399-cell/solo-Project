@@ -1,7 +1,6 @@
 package com.example.instrument.controller;
 
 import com.example.instrument.entity.AbnormalRecord;
-import com.example.instrument.entity.AbnormalRecord.AbnormalType;
 import com.example.instrument.entity.Instrument;
 import com.example.instrument.entity.IssueRecord;
 import com.example.instrument.repository.AbnormalRecordRepository;
@@ -39,8 +38,8 @@ public class ReviewController {
         Map<String, Long> instrumentByType = allInstruments.stream()
                 .collect(Collectors.groupingBy(Instrument::getInstrumentType, Collectors.counting()));
         
-        Map<AbnormalType, Long> abnormalByType = allAbnormals.stream()
-                .collect(Collectors.groupingBy(AbnormalRecord::getAbnormalType, Collectors.counting()));
+        Map<String, Long> abnormalByType = allAbnormals.stream()
+                .collect(Collectors.groupingBy(a -> a.getAbnormalType().name(), Collectors.counting()));
         
         List<Long> turnoverDurations = allIssues.stream()
                 .filter(i -> i.getInstrumentPackage() != null && i.getInstrumentPackage().getCreateTime() != null)
@@ -74,7 +73,7 @@ public class ReviewController {
                             }
                             return dept;
                         },
-                        Collectors.groupingBy(AbnormalRecord::getAbnormalType, Collectors.counting())
+                        Collectors.groupingBy(a -> a.getAbnormalType().name(), Collectors.counting())
                 ))
                 .entrySet().stream()
                 .map(e -> {
@@ -96,7 +95,7 @@ public class ReviewController {
         model.addAttribute("minTurnoverHours", minTurnoverHours);
         model.addAttribute("issueByOperator", issueByOperator);
         model.addAttribute("abnormalByDept", abnormalByDept);
-        model.addAttribute("abnormalTypes", AbnormalType.values());
+
         
         return "review/index";
     }
