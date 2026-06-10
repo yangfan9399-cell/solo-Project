@@ -1,4 +1,3 @@
-
 package com.example.petshipping.controller;
 
 import com.example.petshipping.entity.*;
@@ -12,7 +11,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +83,9 @@ public class BookingController {
     }
     
     @GetMapping("/{id}")
-    public String detail(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id, 
+                        @RequestParam(required = false) String errorMessage,
+                        Model model) {
         Booking booking = bookingService.findById(id);
         List<BookingHistory> history = bookingService.getBookingHistory(id);
         boolean canCheckIn = bookingService.canCheckIn(id);
@@ -93,6 +93,7 @@ public class BookingController {
         model.addAttribute("booking", booking);
         model.addAttribute("history", history);
         model.addAttribute("canCheckIn", canCheckIn);
+        model.addAttribute("errorMessage", errorMessage);
         
         return "booking/detail";
     }
@@ -111,8 +112,12 @@ public class BookingController {
     
     @PostMapping("/{id}/approve-crate")
     public String approveCrate(@PathVariable Long id) {
-        bookingService.approveCrate(id, "交运员小张");
-        return "redirect:/booking/" + id;
+        try {
+            bookingService.approveCrate(id, "交运员小张");
+            return "redirect:/booking/" + id;
+        } catch (IllegalStateException e) {
+            return "redirect:/booking/" + id + "?errorMessage=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+        }
     }
     
     @PostMapping("/{id}/reject-crate")

@@ -119,7 +119,7 @@
                                 <option value="">请选择航班</option>
                                 <option th:each="flight : ${flights}" 
                                         th:value="${flight.id}" 
-                                        th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} -> ${flight.arrivalCity} (' + ${flight.departureTime} + ')">
+                                        th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} + ' -> ' + ${flight.arrivalCity} + ' (' + ${flight.departureTime} + ')'">
                                 </option>
                             </select>
                         </div>

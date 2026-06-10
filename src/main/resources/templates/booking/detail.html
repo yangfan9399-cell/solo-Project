@@ -47,6 +47,7 @@
         .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
         .alert-danger { background: #fee2e2; color: #dc2626; }
         .alert-warning { background: #fef3c7; color: #d97706; }
+        .alert-info { background: #dbeafe; color: #1e40af; }
         .history-list { list-style: none; }
         .history-item { padding: 0.75rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; }
         .history-item:last-child { border-bottom: none; }
@@ -72,6 +73,10 @@
                           th:text="${booking.status.description}"></span>
                 </div>
                 <a href="/booking/list" class="btn btn-secondary">返回列表</a>
+            </div>
+            
+            <div th:if="${errorMessage}" class="alert alert-danger" style="margin-bottom: 1rem;">
+                <strong>操作失败：</strong><span th:text="${errorMessage}"></span>
             </div>
             
             <div class="section">

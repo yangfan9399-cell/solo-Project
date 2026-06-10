@@ -47,7 +47,7 @@
         <div class="card">
             <div class="card-header">
                 <div class="card-title">航班改签</div>
-                <a href="/booking/{id}" th:href="@{/booking/{id}(id=${booking.id})}" class="btn btn-secondary">返回详情</a>
+                <a th:href="@{/booking/{id}(id=${booking.id})}" class="btn btn-secondary">返回详情</a>
             </div>
             
             <div class="section">
@@ -59,7 +59,7 @@
                     </div>
                     <div class="info-item">
                         <div class="info-label">航线</div>
-                        <div class="info-value" th:text="${booking.flight.departureCity} -> ${booking.flight.arrivalCity}"></div>
+                        <div class="info-value" th:text="${booking.flight.departureCity} + ' -> ' + ${booking.flight.arrivalCity}"></div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">出发时间</div>
@@ -81,7 +81,7 @@
                             <option value="">请选择航班</option>
                             <option th:each="flight : ${flights}" 
                                     th:value="${flight.id}" 
-                                    th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} -> ${flight.arrivalCity} (' + ${flight.departureTime} + ')">
+                                    th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} + ' -> ' + ${flight.arrivalCity} + ' (' + ${flight.departureTime} + ')'">
                             </option>
                         </select>
                     </div>
