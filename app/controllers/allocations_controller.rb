@@ -7,7 +7,7 @@ class AllocationsController < ApplicationController
 
   def show
     @allocation = Allocation.find(params[:id])
-    @items = @allocation.items.includes(:batch, :batch => :material)
+    @items = @allocation.items.includes({ batch: :material })
     @workflow_nodes = @allocation.workflow_nodes.order(created_at: :desc)
   end
 

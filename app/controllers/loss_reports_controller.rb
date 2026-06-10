@@ -1,6 +1,6 @@
 class LossReportsController < ApplicationController
   def index
-    @loss_reports = LossReport.includes(:batch, :batch => :material, :reporter, :reviewer).all
+    @loss_reports = LossReport.includes({ batch: :material }, :reporter, :reviewer).all
     @loss_reports = @loss_reports.where(status: params[:status]) if params[:status].present?
     @loss_reports = @loss_reports.order(created_at: :desc)
   end
