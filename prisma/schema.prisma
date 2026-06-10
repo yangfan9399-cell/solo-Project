@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Community {
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  createdAt DateTime  @default(now())
+  buildings Building[]
+}
+
+model Building {
+  id          String     @id @default(uuid())
+  name        String
+  communityId String
+  community   Community  @relation(fields: [communityId], references: [id])
+  createdAt   DateTime   @default(now())
+  elevators   Elevator[]
+}
+
+model Elevator {
+  id          String             @id @default(uuid())
+  code        String
+  model       String
+  buildingId  String
+  building    Building           @relation(fields: [buildingId], references: [id])
+  installDate DateTime
+  status      String             @default("正常") // 正常/维保中/故障
+  createdAt   DateTime           @default(now())
+  plans       MaintenancePlan[]
+  faults      Fault[]
+  history     HistoryNode[]
+}
+
+model MaintenanceUnit {
+  id        String              @id @default(uuid())
+  name      String
+  contact   String
+  createdAt DateTime            @default(now())
+  plans     MaintenancePlan[]
+  records   MaintenanceRecord[]
+}
+
+model MaintenancePlan {
+  id                 String             @id @default(uuid())
+  elevatorId         String
+  elevator           Elevator           @relation(fields: [elevatorId], references: [id])
+  maintenanceUnitId  String
+  maintenanceUnit    MaintenanceUnit    @relation(fields: [maintenanceUnitId], references: [id])
+  planDate           DateTime
+  dueDate            DateTime
+  status             String             @default("待执行") // 待执行/执行中/待复查/已归档/已退回
+  riskLevel          String             @default("正常") // 正常/关注/警告/危险
+  createdAt          DateTime           @default(now())
+  record             MaintenanceRecord?
+  history            HistoryNode[]
+}
+
+model MaintenanceRecord {
+  id                String          @id @default(uuid())
+  planId            String          @unique
+  plan              MaintenancePlan @relation(fields: [planId], references: [id])
+  maintenanceUnitId String
+  maintenanceUnit    MaintenanceUnit @relation(fields: [maintenanceUnitId], references: [id])
+  items             String          // JSON string of maintenance items
+  submitDate        DateTime
+  attachmentUrl      String?
+  createdAt         DateTime        @default(now())
+}
+
+model Fault {
+  id              String       @id @default(uuid())
+  elevatorId      String
+  elevator        Elevator     @relation(fields: [elevatorId], references: [id])
+  faultType       String       // 电梯困人/门故障/通讯故障/其他
+  description     String
+  emergencyLevel  String       @default("一般") // 一般/紧急/非常紧急
+  status          String       @default("待处理") // 待处理/处理中/待复查/已解决
+  reporter        String
+  reportDate      DateTime
+  resolvedDate    DateTime?
+  isOverdue       Boolean      @default(false)
+  hasComplaint    Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  history         HistoryNode[]
+}
+
+model HistoryNode {
+  id           String    @id @default(uuid())
+  elevatorId   String
+  elevator     Elevator @relation(fields: [elevatorId], references: [id])
+  planId      String?
+  plan        MaintenancePlan? @relation(fields: [planId], references: [id])
+  faultId     String?
+  fault       Fault?    @relation(fields: [faultId], references: [id])
+  type        String    // 计划创建/执行/复查/归档/退回/故障登记/故障处理
+  title       String
+  description String?
+  operator    String
+  operatorRole String   // 物业管理员/维保单位/安全管理员/项目经理
+  createdAt   DateTime  @default(now())
+}
