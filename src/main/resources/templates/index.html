@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>电子合同签署系统</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; text-decoration: none; color: #337ab7; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #337ab7; color: white; }
+        .btn-success { background-color: #5cb85c; color: white; }
+        .btn-danger { background-color: #d9534f; color: white; }
+        .btn-warning { background-color: #f0ad4e; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .status-pending { background-color: #f0ad4e; color: white; }
+        .status-signed { background-color: #5cb85c; color: white; }
+        .status-failed { background-color: #d9534f; color: white; }
+        .status-revoked { background-color: #999; color: white; }
+        .status-preserved { background-color: #337ab7; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>电子合同签署失败补签与证据保全系统</h1>
+        <p>合同全生命周期管理平台</p>
+    </div>
+
+    <div class="nav">
+        <a href="/">首页</a>
+        <a href="/contract/list">合同列表</a>
+        <a href="/contract/create">发起合同</a>
+        <a href="/legal/review">法务复核</a>
+        <a href="/evidence/list">证据保全</a>
+        <a href="/statistics">统计分析</a>
+        <a href="/samples">样本展示</a>
+    </div>
+
+    <div class="card">
+        <h2>系统概览</h2>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 36px; font-weight: bold; color: #337ab7;">[[${contracts.size()}]]</div>
+                <div style="color: #666;">合同总数</div>
+            </div>
+            <div style="flex: 1; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 36px; font-weight: bold; color: #5cb85c;">[[${contracts.stream().filter(c -> c.status == 'SIGNED').count()}]]</div>
+                <div style="color: #666;">已签署</div>
+            </div>
+            <div style="flex: 1; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 36px; font-weight: bold; color: #d9534f;">[[${contracts.stream().filter(c -> c.status == 'FAILED').count()}]]</div>
+                <div style="color: #666;">签署失败</div>
+            </div>
+            <div style="flex: 1; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <div style="font-size: 36px; font-weight: bold; color: #337ab7;">[[${contracts.stream().filter(c -> c.status == 'EVIDENCE_PRESERVED').count()}]]</div>
+                <div style="color: #666;">证据已保全</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>最近合同</h2>
+        <table>
+            <tr>
+                <th>合同编号</th>
+                <th>合同名称</th>
+                <th>签署方</th>
+                <th>状态</th>
+                <th>金额</th>
+                <th>操作</th>
+            </tr>
+            <tr th:each="contract : ${contracts}">
+                <td>[[${contract.contractNo}]]</td>
+                <td>[[${contract.title}]]</td>
+                <td>[[${contract.signingParty}]]</td>
+                <td>
+                    <span th:class="status" th:classappend="'status-' + ${contract.status.toString().toLowerCase()}">
+                        [[${contract.status.description}]]
+                    </span>
+                </td>
+                <td>¥[[${contract.amount}]]</td>
+                <td><a href="/contract/[[${contract.id}]]">查看详情</a></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发起合同</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; text-decoration: none; color: #337ab7; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #337ab7; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>发起合同</h1>
+    </div>
+
+    <div class="nav">
+        <a href="/">首页</a>
+        <a href="/contract/list">合同列表</a>
+        <a href="/contract/create">发起合同</a>
+        <a href="/legal/review">法务复核</a>
+        <a href="/evidence/list">证据保全</a>
+        <a href="/statistics">统计分析</a>
+    </div>
+
+    <div class="card">
+        <form action="/contract/create" method="post">
+            <div class="form-group">
+                <label>合同名称</label>
+                <input type="text" name="title" required>
+            </div>
+            <div class="form-group">
+                <label>合同类型</label>
+                <select name="contractType" required>
+                    <option value="采购合同">采购合同</option>
+                    <option value="服务合同">服务合同</option>
+                    <option value="咨询合同">咨询合同</option>
+                    <option value="租赁合同">租赁合同</option>
+                    <option value="技术合同">技术合同</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>签署方</label>
+                <input type="text" name="signingParty" required>
+            </div>
+            <div class="form-group">
+                <label>签署人姓名</label>
+                <input type="text" name="signerName" required>
+            </div>
+            <div class="form-group">
+                <label>签署人手机号</label>
+                <input type="tel" name="signerPhone" required>
+            </div>
+            <div class="form-group">
+                <label>经办人员</label>
+                <select name="operatorId" required>
+                    <option th:each="operator : ${operators}" th:value="${operator.id}" th:text="${operator.realName}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>合同内容</label>
+                <textarea name="content" rows="5"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">提交</button>
+            <a href="/contract/list" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+</body>
+</html>

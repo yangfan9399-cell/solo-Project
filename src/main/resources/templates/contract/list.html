@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>合同列表</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; text-decoration: none; color: #337ab7; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .status-pending { background-color: #f0ad4e; color: white; }
+        .status-signed { background-color: #5cb85c; color: white; }
+        .status-failed { background-color: #d9534f; color: white; }
+        .status-revoked { background-color: #999; color: white; }
+        .status-preserved { background-color: #337ab7; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>合同列表</h1>
+    </div>
+
+    <div class="nav">
+        <a href="/">首页</a>
+        <a href="/contract/list">合同列表</a>
+        <a href="/contract/create">发起合同</a>
+        <a href="/legal/review">法务复核</a>
+        <a href="/evidence/list">证据保全</a>
+        <a href="/statistics">统计分析</a>
+    </div>
+
+    <div class="card">
+        <h2>所有合同</h2>
+        <table>
+            <tr>
+                <th>合同编号</th>
+                <th>合同名称</th>
+                <th>合同类型</th>
+                <th>签署方</th>
+                <th>签署人</th>
+                <th>状态</th>
+                <th>金额</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+            <tr th:each="contract : ${contracts}">
+                <td>[[${contract.contractNo}]]</td>
+                <td>[[${contract.title}]]</td>
+                <td>[[${contract.contractType}]]</td>
+                <td>[[${contract.signingParty}]]</td>
+                <td>[[${contract.signerName}]]</td>
+                <td>
+                    <span th:class="status" th:classappend="'status-' + ${contract.status.toString().toLowerCase()}">
+                        [[${contract.status.description}]]
+                    </span>
+                    <span th:if="${contract.isFrozen}" style="color: red; margin-left: 8px;">(已冻结)</span>
+                </td>
+                <td>¥[[${contract.amount}]]</td>
+                <td>[[${contract.createdAt}]]</td>
+                <td><a href="/contract/[[${contract.id}]]">查看详情</a></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

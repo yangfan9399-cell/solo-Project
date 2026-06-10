@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>样本展示</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .header { background-color: #2c3e50; color: white; padding: 20px; margin-bottom: 20px; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; text-decoration: none; color: #337ab7; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .sample-section { margin-bottom: 30px; padding: 20px; border-left: 4px solid #337ab7; background: #f8f9fa; }
+        .sample-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #337ab7; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .status-pending { background-color: #f0ad4e; color: white; }
+        .status-signed { background-color: #5cb85c; color: white; }
+        .status-failed { background-color: #d9534f; color: white; }
+        .status-revoked { background-color: #999; color: white; }
+        .status-preserved { background-color: #337ab7; color: white; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background-color: #337ab7; color: white; text-decoration: none; }
+        .highlight { background-color: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>预置样本展示</h1>
+    </div>
+
+    <div class="nav">
+        <a href="/">首页</a>
+        <a href="/contract/list">合同列表</a>
+        <a href="/contract/create">发起合同</a>
+        <a href="/legal/review">法务复核</a>
+        <a href="/evidence/list">证据保全</a>
+        <a href="/statistics">统计分析</a>
+        <a href="/samples">样本展示</a>
+    </div>
+
+    <div class="card">
+        <h2>样本说明</h2>
+        <p>系统预置了以下样本数据，用于演示电子合同签署失败补签与证据保全的完整流程：</p>
+    </div>
+
+    <div class="sample-section">
+        <div class="sample-title">样本1：正常签署流程</div>
+        <p><strong>合同编号：</strong>HT20240115NORMAL001</p>
+        <p><strong>合同名称：</strong>设备采购合同（正常签署）</p>
+        <p><strong>合同类型：</strong>采购合同</p>
+        <p><strong>状态：</strong><span class="status status-preserved">证据已保全</span></p>
+        <p><strong>描述：</strong>该样本展示了一份完整的合同签署流程，从发起合同到签署成功，再到证据保全归档。</p>
+        <div class="highlight">
+            <strong>流程节点：</strong>创建合同 → 签署成功 → 证据保全完成
+        </div>
+        <a href="/contract/1" class="btn">查看详情</a>
+    </div>
+
+    <div class="sample-section">
+        <div class="sample-title">样本2：短信验证失败</div>
+        <p><strong>合同编号：</strong>HT20240115SMSFAIL001</p>
+        <p><strong>合同名称：</strong>服务外包合同（短信验证失败）</p>
+        <p><strong>合同类型：</strong>服务合同</p>
+        <p><strong>状态：</strong><span class="status status-failed">签署失败</span></p>
+        <p><strong>失败原因：</strong>短信验证失败 - 验证码输入错误超过3次</p>
+        <p><strong>描述：</strong>该样本展示了签署人在进行短信验证时多次输入错误验证码导致签署失败的场景。</p>
+        <div class="highlight">
+            <strong>流程节点：</strong>创建合同 → 签署失败（短信验证失败）→ 法务复核中
+        </div>
+        <a href="/contract/2" class="btn">查看详情</a>
+    </div>
+
+    <div class="sample-section">
+        <div class="sample-title">样本3：签署人身份不符（已冻结）</div>
+        <p><strong>合同编号：</strong>HT20240115IDFAIL001</p>
+        <p><strong>合同名称：</strong>技术咨询合同（身份不符）</p>
+        <p><strong>合同类型：</strong>咨询合同</p>
+        <p><strong>状态：</strong><span class="status status-failed">签署失败</span> <span style="color: red;">(已冻结)</span></p>
+        <p><strong>失败原因：</strong>签署人身份不符 - 身份证信息与系统登记不符</p>
+        <p><strong>描述：</strong>该样本展示了签署人身份验证失败的场景，系统已自动冻结合同，需要重新认证后才能继续签署。</p>
+        <div class="highlight">
+            <strong>重要规则：</strong>身份不符时系统自动冻结合同，必须先解冻才能进行补签操作。法务复核已拒绝，要求重新认证。
+        </div>
+        <a href="/contract/3" class="btn">查看详情</a>
+    </div>
+
+    <div class="sample-section">
+        <div class="sample-title">样本4：合同撤回</div>
+        <p><strong>合同编号：</strong>HT20240115REVOKE001</p>
+        <p><strong>合同名称：</strong>租赁合同（已撤回）</p>
+        <p><strong>合同类型：</strong>租赁合同</p>
+        <p><strong>状态：</strong><span class="status status-revoked">已撤回</span></p>
+        <p><strong>描述：</strong>该样本展示了业务经办人主动撤回合同的场景。</p>
+        <div class="highlight">
+            <strong>流程节点：</strong>创建合同 → 合同撤回
+        </div>
+        <a href="/contract/4" class="btn">查看详情</a>
+    </div>
+
+    <div class="sample-section">
+        <div class="sample-title">样本5：待签署状态</div>
+        <p><strong>合同编号：</strong>HT20240115PENDING001</p>
+        <p><strong>合同名称：</strong>软件开发合同（待签署）</p>
+        <p><strong>合同类型：</strong>技术合同</p>
+        <p><strong>状态：</strong><span class="status status-pending">待签署</span></p>
+        <p><strong>描述：</strong>该样本展示了一份新发起的合同，等待签署人完成签署。</p>
+        <a href="/contract/5" class="btn">查看详情</a>
+    </div>
+
+    <div class="card">
+        <h2>角色说明</h2>
+        <table>
+            <tr>
+                <th>角色</th>
+                <th>用户名</th>
+                <th>密码</th>
+                <th>职责</th>
+            </tr>
+            <tr>
+                <td>业务经办人</td>
+                <td>operator</td>
+                <td>123456</td>
+                <td>发起合同、撤回合同</td>
+            </tr>
+            <tr>
+                <td>签署人</td>
+                <td>signer</td>
+                <td>123456</td>
+                <td>完成合同签署认证</td>
+            </tr>
+            <tr>
+                <td>法务</td>
+                <td>legal</td>
+                <td>123456</td>
+                <td>复核异常合同</td>
+            </tr>
+            <tr>
+                <td>档案员</td>
+                <td>archivist</td>
+                <td>123456</td>
+                <td>确认证据保全</td>
+            </tr>
+            <tr>
+                <td>管理员</td>
+                <td>admin</td>
+                <td>123456</td>
+                <td>系统管理</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
