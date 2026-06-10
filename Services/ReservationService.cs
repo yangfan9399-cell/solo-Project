@@ -194,9 +194,6 @@ public class ReservationService : IReservationService
             return false;
         }
 
-        var hasRejected = rejectedDocumentIds.Any();
-        var allDocumentsVerified = reservation.SafetyDocuments.Count > 0 && reservation.SafetyDocuments.All(d => d.VerificationStatus == VerificationStatus.Approved);
-
         foreach (var doc in reservation.SafetyDocuments)
         {
             if (approvedDocumentIds.Contains(doc.Id))
@@ -219,10 +216,14 @@ public class ReservationService : IReservationService
         reservation.SafetyOfficerUserId = safetyOfficerUserId;
         reservation.UpdatedAt = DateTime.Now;
 
-        if (hasRejected || reservation.SafetyDocuments.Any(d => d.VerificationStatus == VerificationStatus.Rejected))
+        var hasRejected = reservation.SafetyDocuments.Any(d => d.VerificationStatus == VerificationStatus.Rejected);
+        var hasPending = reservation.SafetyDocuments.Any(d => d.VerificationStatus == VerificationStatus.Pending);
+        var allDocumentsVerified = !hasRejected && !hasPending && reservation.SafetyDocuments.Count > 0;
+
+        if (hasRejected)
         {
-            var missingDocs = reservation.SafetyDocuments.Where(d => d.VerificationStatus == VerificationStatus.Pending || d.VerificationStatus == VerificationStatus.Rejected).Select(d => d.DocumentType.ToString()).ToList();
-            await RejectReservation(reservationId, safetyOfficerUserId, RejectionReasonType.MissingDocuments, $"安全资料缺失或不合格：{string.Join(", ", missingDocs)}");
+            var missingDocs = reservation.SafetyDocuments.Where(d => d.VerificationStatus == VerificationStatus.Rejected).Select(d => d.DocumentType.ToString()).ToList();
+            await RejectReservation(reservationId, safetyOfficerUserId, RejectionReasonType.MissingDocuments, $"安全资料不合格：{string.Join(", ", missingDocs)}");
             return false;
         }
         else if (allDocumentsVerified)
@@ -233,7 +234,8 @@ public class ReservationService : IReservationService
         else
         {
             reservation.Status = ReservationStatus.PendingVerification;
-            await AddHistory(reservationId, ReservationAction.DocumentsVerified, oldStatus, ReservationStatus.PendingVerification, "安全员部分核验资料", safetyOfficerUserId);
+            var pendingCount = reservation.SafetyDocuments.Count(d => d.VerificationStatus == VerificationStatus.Pending);
+            await AddHistory(reservationId, ReservationAction.DocumentsVerified, oldStatus, ReservationStatus.PendingVerification, $"安全员核验资料，{pendingCount}项待补充", safetyOfficerUserId);
         }
 
         await _context.SaveChangesAsync();

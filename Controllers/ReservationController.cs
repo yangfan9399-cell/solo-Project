@@ -258,10 +258,16 @@ public class ReservationController : Controller
     {
         return Enum.GetValues(typeof(HazardClass))
             .Cast<HazardClass>()
-            .Select(c => new SelectListItem
+            .Select(c => 
             {
-                Value = ((int)c).ToString(),
-                Text = c.GetType().GetField(c.ToString())?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false).FirstOrDefault() as System.ComponentModel.DataAnnotations.DisplayAttribute?.Name ?? c.ToString()
+                var fieldInfo = c.GetType().GetField(c.ToString());
+                var displayAttribute = fieldInfo?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+                    .FirstOrDefault() as System.ComponentModel.DataAnnotations.DisplayAttribute;
+                return new SelectListItem
+                {
+                    Value = ((int)c).ToString(),
+                    Text = displayAttribute?.Name ?? c.ToString()
+                };
             })
             .ToList();
     }
