@@ -74,16 +74,16 @@
                     灯光: [[${inspection.lightingStatus.getDescription()}]]<br>
                     <span th:if="${inspection.remarks}">备注: [[${inspection.remarks}]]</span>
                 </div>
-                <div th:each="interrupt : ${interrupts}" class="timeline-item">
-                    <strong>中断记录</strong> - [[${interrupt.interruptTime}]]<br>
-                    报告人: [[${interrupt.reporterName}]]<br>
-                    故障类型: [[${interrupt.faultType.getDescription()}]]<br>
-                    描述: [[${interrupt.faultDescription}]]<br>
-                    <span th:if="${interrupt.isResolved}">
-                        恢复时间: [[${interrupt.resumeTime}]]<br>
-                        处理结果: [[${interrupt.resolutionNote}]]
+                <div th:each="detail : ${interruptDetails}" class="timeline-item">
+                    <strong>中断记录</strong> - [[${detail.interrupt.interruptTime}]]<br>
+                    报告人: [[${detail.interrupt.reporterName}]]<br>
+                    故障类型: [[${detail.interrupt.faultType.getDescription()}]]<br>
+                    描述: [[${detail.interrupt.faultDescription}]]<br>
+                    <span th:if="${detail.interrupt.isResolved}">
+                        恢复时间: [[${detail.interrupt.resumeTime}]]<br>
+                        处理结果: [[${detail.interrupt.resolutionNote}]]
                     </span>
-                    <span th:unless="${interrupt.isResolved}" class="status-fault">未处理</span>
+                    <span th:unless="${detail.interrupt.isResolved}" class="status-fault">未处理</span>
                 </div>
             </div>
         </div>
@@ -99,14 +99,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="interrupt : ${interrupts}">
-                        <td th:text="${interrupt.interruptTime}"></td>
-                        <td th:text="${interrupt.resumeTime ?: '未恢复'}"></td>
+                    <tr th:each="detail : ${interruptDetails}">
+                        <td th:text="${detail.interrupt.interruptTime}"></td>
+                        <td th:text="${detail.interrupt.resumeTime ?: '未恢复'}"></td>
                         <td>
-                            <span th:if="${interrupt.resumeTime}">
-                                [[${java.time.Duration.between(interrupt.interruptTime, interrupt.resumeTime).toMinutes()}]]
-                            </span>
-                            <span th:unless="${interrupt.resumeTime}" class="status-fault">计算中</span>
+                            <span th:if="${detail.durationMinutes != null}" th:text="${detail.durationMinutes}"></span>
+                            <span th:unless="${detail.durationMinutes != null}" class="status-fault">计算中</span>
                         </td>
                     </tr>
                 </tbody>

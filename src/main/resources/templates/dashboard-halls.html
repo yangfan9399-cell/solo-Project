@@ -9,27 +9,40 @@
     <div th:fragment="content">
         <a th:href="@{/}" class="btn btn-secondary">返回看板</a>
         
-        <h3>影厅中断统计</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>影厅名称</th>
-                    <th>设备状态</th>
-                    <th>中断次数</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="item : ${interruptsByHall}">
-                    <td th:text="${item.hallName}"></td>
-                    <td>
-                        <span th:class="${equipmentStatusUtil.getEquipmentStatusClass(item.equipmentStatus)}">
-                            [[${item.equipmentStatus.getDescription()}]]
-                        </span>
-                    </td>
-                    <td th:text="${item.interruptCount}"></td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="card">
+            <h3>影厅中断统计</h3>
+            <div class="form-group">
+                <label>选择影院</label>
+                <select onchange="location.href='/dashboard/halls?cinemaId='+this.value">
+                    <option th:each="cinema : ${cinemas}" 
+                            th:value="${cinema.id}" 
+                            th:text="${cinema.name}"
+                            th:selected="${cinema.id == cinemaId}">
+                    </option>
+                </select>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>影厅名称</th>
+                        <th>设备状态</th>
+                        <th>中断次数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${interruptsByHall}">
+                        <td th:text="${item.hallName}"></td>
+                        <td>
+                            <span th:class="${equipmentStatusUtil.getEquipmentStatusClass(item.equipmentStatus)}">
+                                [[${item.equipmentStatus.getDescription()}]]
+                            </span>
+                        </td>
+                        <td th:text="${item.interruptCount}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

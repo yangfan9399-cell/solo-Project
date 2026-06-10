@@ -10,8 +10,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/screenings")
@@ -50,9 +54,22 @@ public class ScreeningController {
         List<InspectionRecord> inspections = inspectionService.getInspectionRecordsByScreening(id);
         List<InterruptRecord> interrupts = interruptService.getInterruptRecordsByScreening(id);
         
+        List<Map<String, Object>> interruptDetails = new ArrayList<>();
+        for (InterruptRecord interrupt : interrupts) {
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("interrupt", interrupt);
+            if (interrupt.getResumeTime() != null) {
+                long minutes = Duration.between(interrupt.getInterruptTime(), interrupt.getResumeTime()).toMinutes();
+                detail.put("durationMinutes", minutes);
+            } else {
+                detail.put("durationMinutes", null);
+            }
+            interruptDetails.add(detail);
+        }
+        
         model.addAttribute("screening", screening);
         model.addAttribute("inspections", inspections);
-        model.addAttribute("interrupts", interrupts);
+        model.addAttribute("interruptDetails", interruptDetails);
         
         return "screening-detail";
     }

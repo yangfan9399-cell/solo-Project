@@ -2,9 +2,7 @@
 package com.example.cinema.util;
 
 import com.example.cinema.entity.EquipmentStatus;
-import org.springframework.stereotype.Component;
 
-@Component
 public class EquipmentStatusUtil {
 
     public String getEquipmentStatusClass(EquipmentStatus status) {
