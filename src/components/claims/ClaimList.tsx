@@ -1,25 +1,25 @@
 import { Card, CardContent } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Link } from '@tanstack/react-router'
 import { AlertTriangle, Clock } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface ClaimItem {
   id: number
-  batchNumber: string
-  partNumber: string
-  partName: string
-  categoryName: string
-  supplierName: string
-  defectType: string
+  batchNumber: string | null
+  partNumber: string | null
+  partName: string | null
+  categoryName: string | null
+  supplierName: string | null
+  defectType: string | null
   quantityDefective: number
-  claimAmount: number
-  description: string
+  claimAmount: string
+  description: string | null
   status: string
-  batchTraceable: boolean
-  repairDeadline: Date | null
-  repairCompleted: boolean
-  engineerName: string
-  createdAt: Date
+  batchTraceable: boolean | null
+  repairDeadline: string | null
+  repairCompleted: boolean | null
+  engineerName: string | null
+  createdAt: string | null
 }
 
 interface ClaimListProps {
@@ -27,16 +27,16 @@ interface ClaimListProps {
 }
 
 export function ClaimList({ claims }: ClaimListProps) {
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: string | null) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('zh-CN')
   }
 
-  const formatAmount = (amount: number) => {
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })
+  const formatAmount = (amount: string) => {
+    return Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })
   }
 
-  const isOverdue = (deadline: Date | null) => {
+  const isOverdue = (deadline: string | null) => {
     if (!deadline) return false
     return new Date(deadline) < new Date()
   }
@@ -49,14 +49,14 @@ export function ClaimList({ claims }: ClaimListProps) {
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <Link
-                    to={`/claims/${claim.id}`}
+                  <a
+                    href={`/claims/${claim.id}`}
                     className="font-semibold text-primary hover:underline"
                   >
                     索赔 #{claim.id}
-                  </Link>
+                  </a>
                   <StatusBadge status={claim.status} />
-                  {!claim.batchTraceable && (
+                  {claim.batchTraceable === false && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger">
                       <AlertTriangle className="h-3 w-3" />
                       追溯失败

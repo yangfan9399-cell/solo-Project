@@ -3,7 +3,46 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { AlertTriangle, CheckCircle, Clock, FileText, User, Calendar, ChevronRight, Upload, MessageSquare } from 'lucide-react'
-import { ClaimDetail as ClaimDetailType } from '@/api/claims'
+
+interface ClaimDetailType {
+  id: number
+  batchNumber: string | null
+  partNumber: string | null
+  partName: string | null
+  categoryName: string | null
+  supplierName: string | null
+  defectType: string | null
+  quantityDefective: number
+  claimAmount: string
+  description: string | null
+  status: string | null
+  batchTraceable: boolean | null
+  repairDeadline: string | null
+  repairCompleted: boolean | null
+  engineerName: string | null
+  createdAt: string | null
+  updatedAt: string | null
+  evidences: Array<{
+    id: number
+    type: string | null
+    url: string | null
+    description: string | null
+    uploadedAt: string | null
+  }>
+  history: Array<{
+    id: number
+    status: string
+    comment: string | null
+    operator: string | null
+    createdAt: string | null
+  }>
+  supplierResponse: {
+    responseType: string
+    comment: string | null
+    evidenceUrl: string | null
+    createdAt: string | null
+  } | null
+}
 
 interface ClaimDetailProps {
   claim: ClaimDetailType
@@ -19,7 +58,7 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
   const [comment, setComment] = useState('')
   const [responseType, setResponseType] = useState<'accept' | 'reject'>('accept')
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: string | null) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('zh-CN', {
       year: 'numeric',
@@ -28,11 +67,11 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
     })
   }
 
-  const formatAmount = (amount: number) => {
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })
+  const formatAmount = (amount: string) => {
+    return Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })
   }
 
-  const canProcessPayment = claim.batchTraceable
+  const canProcessPayment = claim.batchTraceable !== false
 
   const handleSubmit = () => {
     if (actionType === 'status') {
@@ -56,8 +95,8 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
         <div>
           <h1 className="text-2xl font-bold">索赔 #{claim.id}</h1>
           <div className="flex items-center gap-3 mt-1">
-            <StatusBadge status={claim.status} />
-            {!claim.batchTraceable && (
+            <StatusBadge status={claim.status || 'pending'} />
+            {claim.batchTraceable === false && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger">
                 <AlertTriangle className="h-3 w-3" />
                 批次追溯失败
@@ -241,17 +280,17 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
               </Card>
 
               {claim.repairDeadline && (
-                <Card className={new Date(claim.repairDeadline) < new Date() && !claim.repairCompleted ? 'border-danger' : ''}>
+                <Card className={new Date(claim.repairDeadline) < new Date() && claim.repairCompleted === false ? 'border-danger' : ''}>
                   <CardHeader className="pb-3">
                     <h2 className="text-lg font-semibold">返修期限</h2>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Clock className={`h-4 w-4 ${new Date(claim.repairDeadline) < new Date() && !claim.repairCompleted ? 'text-danger' : 'text-secondary'}`} />
-                        <span className={`text-sm ${new Date(claim.repairDeadline) < new Date() && !claim.repairCompleted ? 'text-danger font-medium' : ''}`}>
+                        <Clock className={`h-4 w-4 ${new Date(claim.repairDeadline) < new Date() && claim.repairCompleted === false ? 'text-danger' : 'text-secondary'}`} />
+                        <span className={`text-sm ${new Date(claim.repairDeadline) < new Date() && claim.repairCompleted === false ? 'text-danger font-medium' : ''}`}>
                           {formatDate(claim.repairDeadline)}
-                          {new Date(claim.repairDeadline) < new Date() && !claim.repairCompleted && ' (已超期)'}
+                          {new Date(claim.repairDeadline) < new Date() && claim.repairCompleted === false && ' (已超期)'}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -263,7 +302,7 @@ export function ClaimDetail({ claim, onUpdateStatus, onSupplierResponse }: Claim
                 </Card>
               )}
 
-              {!claim.batchTraceable && (
+              {claim.batchTraceable === false && (
                 <Card className="border-danger bg-danger/5">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">

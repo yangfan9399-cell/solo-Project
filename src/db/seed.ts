@@ -11,6 +11,10 @@ import {
   supplierResponses
 } from './schema'
 
+function toDateString(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
 async function seed() {
   const supplierData = await db.insert(suppliers).values([
     { name: '上海精密机械有限公司', contact: '张伟', phone: '13812345678', email: 'zhang.wei@shprecision.com', address: '上海市浦东新区张江高科技园区' },
@@ -27,12 +31,12 @@ async function seed() {
   ]).returning()
 
   const partData = await db.insert(parts).values([
-    { partNumber: 'ENG-001', name: '凸轮轴', categoryId: categoryData[0].id, unitPrice: 850.00 },
-    { partNumber: 'ENG-002', name: '活塞环', categoryId: categoryData[0].id, unitPrice: 120.00 },
-    { partNumber: 'CHS-001', name: '减震器', categoryId: categoryData[1].id, unitPrice: 380.00 },
-    { partNumber: 'CHS-002', name: '悬挂臂', categoryId: categoryData[1].id, unitPrice: 520.00 },
-    { partNumber: 'ELC-001', name: '传感器', categoryId: categoryData[2].id, unitPrice: 280.00 },
-    { partNumber: 'BDY-001', name: '前保险杠', categoryId: categoryData[3].id, unitPrice: 680.00 }
+    { partNumber: 'ENG-001', name: '凸轮轴', categoryId: categoryData[0].id, unitPrice: '850.00' },
+    { partNumber: 'ENG-002', name: '活塞环', categoryId: categoryData[0].id, unitPrice: '120.00' },
+    { partNumber: 'CHS-001', name: '减震器', categoryId: categoryData[1].id, unitPrice: '380.00' },
+    { partNumber: 'CHS-002', name: '悬挂臂', categoryId: categoryData[1].id, unitPrice: '520.00' },
+    { partNumber: 'ELC-001', name: '传感器', categoryId: categoryData[2].id, unitPrice: '280.00' },
+    { partNumber: 'BDY-001', name: '前保险杠', categoryId: categoryData[3].id, unitPrice: '680.00' }
   ]).returning()
 
   const defectData = await db.insert(defectTypes).values([
@@ -43,23 +47,29 @@ async function seed() {
     { name: '功能故障', description: '零件功能无法正常实现' }
   ]).returning()
 
-  const batchData = await db.insert(batches).values([
-    { batchNumber: 'B202401001', partId: partData[0].id, supplierId: supplierData[0].id, productionDate: new Date('2024-01-15'), quantity: 500, receivedDate: new Date('2024-01-25'), traceable: true },
-    { batchNumber: 'B202402001', partId: partData[2].id, supplierId: supplierData[1].id, productionDate: new Date('2024-02-10'), quantity: 300, receivedDate: new Date('2024-02-20'), traceable: true },
-    { batchNumber: 'B202403001', partId: partData[4].id, supplierId: supplierData[2].id, productionDate: new Date('2024-03-05'), quantity: 1000, receivedDate: new Date('2024-03-15'), traceable: false },
-    { batchNumber: 'B202404001', partId: partData[1].id, supplierId: supplierData[3].id, productionDate: new Date('2024-04-01'), quantity: 800, receivedDate: new Date('2024-04-10'), traceable: true }
-  ]).returning()
+  const batchRecords = [
+    { batchNumber: 'B202401001', partId: partData[0].id, supplierId: supplierData[0].id, productionDate: toDateString(new Date('2024-01-15')), quantity: 500, receivedDate: toDateString(new Date('2024-01-25')), traceable: true },
+    { batchNumber: 'B202402001', partId: partData[2].id, supplierId: supplierData[1].id, productionDate: toDateString(new Date('2024-02-10')), quantity: 300, receivedDate: toDateString(new Date('2024-02-20')), traceable: true },
+    { batchNumber: 'B202403001', partId: partData[4].id, supplierId: supplierData[2].id, productionDate: toDateString(new Date('2024-03-05')), quantity: 1000, receivedDate: toDateString(new Date('2024-03-15')), traceable: false },
+    { batchNumber: 'B202404001', partId: partData[1].id, supplierId: supplierData[3].id, productionDate: toDateString(new Date('2024-04-01')), quantity: 800, receivedDate: toDateString(new Date('2024-04-10')), traceable: true }
+  ]
 
-  const claimData = await db.insert(claims).values([
+  const batchData = []
+  for (const record of batchRecords) {
+    const result = await db.insert(batches).values(record).returning()
+    batchData.push(result[0])
+  }
+
+  const claimRecords = [
     {
       batchId: batchData[0].id,
       defectTypeId: defectData[0].id,
       quantityDefective: 15,
-      claimAmount: 12750.00,
+      claimAmount: '12750.00',
       description: '凸轮轴尺寸超出公差范围，影响装配精度',
-      status: 'completed',
+      status: 'completed' as const,
       batchTraceable: true,
-      repairDeadline: new Date('2024-02-10'),
+      repairDeadline: toDateString(new Date('2024-02-10')),
       repairCompleted: true,
       engineerName: '赵工程师'
     },
@@ -67,11 +77,11 @@ async function seed() {
       batchId: batchData[1].id,
       defectTypeId: defectData[1].id,
       quantityDefective: 8,
-      claimAmount: 3040.00,
+      claimAmount: '3040.00',
       description: '减震器表面存在明显划痕，影响产品外观',
-      status: 'supplier_response',
+      status: 'supplier_response' as const,
       batchTraceable: true,
-      repairDeadline: new Date('2024-03-01'),
+      repairDeadline: toDateString(new Date('2024-03-01')),
       repairCompleted: false,
       engineerName: '孙工程师'
     },
@@ -79,9 +89,9 @@ async function seed() {
       batchId: batchData[2].id,
       defectTypeId: defectData[2].id,
       quantityDefective: 25,
-      claimAmount: 7000.00,
+      claimAmount: '7000.00',
       description: '传感器材料性能不达标，导致信号不稳定',
-      status: 'under_review',
+      status: 'under_review' as const,
       batchTraceable: false,
       engineerName: '周工程师'
     },
@@ -89,15 +99,21 @@ async function seed() {
       batchId: batchData[3].id,
       defectTypeId: defectData[4].id,
       quantityDefective: 40,
-      claimAmount: 4800.00,
+      claimAmount: '4800.00',
       description: '活塞环安装后无法正常工作，导致发动机异响',
-      status: 'under_review',
+      status: 'under_review' as const,
       batchTraceable: true,
-      repairDeadline: new Date('2024-04-20'),
+      repairDeadline: toDateString(new Date('2024-04-20')),
       repairCompleted: false,
       engineerName: '吴工程师'
     }
-  ]).returning()
+  ]
+
+  const claimData = []
+  for (const record of claimRecords) {
+    const result = await db.insert(claims).values(record).returning()
+    claimData.push(result[0])
+  }
 
   await db.insert(claimEvidences).values([
     { claimId: claimData[0].id, type: '检测报告', url: '/evidence/report1.pdf', description: '第三方检测机构出具的尺寸检测报告' },

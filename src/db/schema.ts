@@ -3,12 +3,10 @@ import {
   serial,
   text,
   varchar,
-  numeric,
   date,
   timestamp,
   boolean,
-  integer,
-  json
+  integer
 } from 'drizzle-orm/pg-core'
 
 export const suppliers = pgTable('suppliers', {
@@ -32,7 +30,7 @@ export const parts = pgTable('parts', {
   partNumber: varchar('part_number', { length: 50 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   categoryId: integer('category_id').references(() => partCategories.id),
-  unitPrice: numeric('unit_price', { precision: 12, scale: 2 }),
+  unitPrice: varchar('unit_price', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow()
 })
 
@@ -56,14 +54,16 @@ export const batches = pgTable('batches', {
 
 export const claimStatus = ['pending', 'supplier_notified', 'supplier_response', 'under_review', 'approved', 'rejected', 'payment_processing', 'completed'] as const
 
+export type ClaimStatus = typeof claimStatus[number]
+
 export const claims = pgTable('claims', {
   id: serial('id').primaryKey(),
   batchId: integer('batch_id').references(() => batches.id).notNull(),
   defectTypeId: integer('defect_type_id').references(() => defectTypes.id).notNull(),
   quantityDefective: integer('quantity_defective').notNull(),
-  claimAmount: numeric('claim_amount', { precision: 12, scale: 2 }).notNull(),
+  claimAmount: varchar('claim_amount', { length: 20 }).notNull(),
   description: text('description'),
-  status: varchar('status', { length: 50 }).$type<typeof claimStatus[number]>().default('pending'),
+  status: varchar('status', { length: 50 }).$type<ClaimStatus>().default('pending'),
   batchTraceable: boolean('batch_traceable').default(true),
   repairDeadline: date('repair_deadline'),
   repairCompleted: boolean('repair_completed').default(false),
@@ -98,5 +98,3 @@ export const supplierResponses = pgTable('supplier_responses', {
   evidenceUrl: text('evidence_url'),
   createdAt: timestamp('created_at').defaultNow()
 })
-
-export type ClaimStatus = typeof claimStatus[number]

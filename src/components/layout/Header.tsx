@@ -1,5 +1,4 @@
 import { Wrench, BarChart3 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 
 export function Header() {
   return (
@@ -17,19 +16,19 @@ export function Header() {
           </div>
           
           <nav className="flex items-center gap-1">
-            <Link
-              to="/"
+            <a
+              href="/"
               className="px-4 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
             >
               索赔列表
-            </Link>
-            <Link
-              to="/report"
+            </a>
+            <a
+              href="/report"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
             >
               <BarChart3 className="h-4 w-4" />
               数据复盘
-            </Link>
+            </a>
           </nav>
         </div>
       </div>

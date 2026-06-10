@@ -1,6 +1,6 @@
 import { db } from '@/db'
 import { claims, batches, parts, suppliers, defectTypes, partCategories } from '@/db/schema'
-import { eq, desc, count, sum, and, sql } from 'drizzle-orm'
+import { eq, desc, count, sum, sql } from 'drizzle-orm'
 
 export interface SupplierSummary {
   supplierId: number
@@ -46,6 +46,7 @@ export async function getSupplierSummary(): Promise<SupplierSummary[]> {
 
   return result.map(item => ({
     ...item,
+    totalAmount: Number(item.totalAmount) || 0,
     avgAmount: item.claimCount > 0 ? Number(item.totalAmount) / item.claimCount : 0
   }))
 }
@@ -65,7 +66,10 @@ export async function getCategorySummary(): Promise<CategorySummary[]> {
     .groupBy(partCategories.id, partCategories.name)
     .orderBy(desc(count(claims.id)))
 
-  return result
+  return result.map(item => ({
+    ...item,
+    totalAmount: Number(item.totalAmount) || 0
+  }))
 }
 
 export async function getDefectTypeSummary(): Promise<DefectTypeSummary[]> {
@@ -81,13 +85,16 @@ export async function getDefectTypeSummary(): Promise<DefectTypeSummary[]> {
     .groupBy(defectTypes.id, defectTypes.name)
     .orderBy(desc(count(claims.id)))
 
-  return result
+  return result.map(item => ({
+    ...item,
+    totalAmount: Number(item.totalAmount) || 0
+  }))
 }
 
 export async function getPeriodSummary(): Promise<PeriodSummary[]> {
   const result = await db
     .select({
-      period: sql`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`.as('period'),
+      period: sql<string>`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`.as('period'),
       claimCount: count(claims.id).as('claimCount'),
       totalAmount: sum(claims.claimAmount).as('totalAmount')
     })
@@ -95,7 +102,10 @@ export async function getPeriodSummary(): Promise<PeriodSummary[]> {
     .groupBy(sql`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`)
     .orderBy(sql`TO_CHAR(${claims.createdAt}, 'YYYY-MM')`)
 
-  return result
+  return result.map(item => ({
+    ...item,
+    totalAmount: Number(item.totalAmount) || 0
+  }))
 }
 
 export interface DashboardStats {
@@ -117,21 +127,21 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const pendingResult = await db
     .select({ count: count(claims.id).as('count') })
     .from(claims)
-    .where(and(eq(claims.status, 'pending')))
+    .where(eq(claims.status, 'pending'))
 
   const reviewResult = await db
     .select({ count: count(claims.id).as('count') })
     .from(claims)
-    .where(and(eq(claims.status, 'under_review')))
+    .where(eq(claims.status, 'under_review'))
 
   const completedResult = await db
     .select({ count: count(claims.id).as('count') })
     .from(claims)
-    .where(and(eq(claims.status, 'completed')))
+    .where(eq(claims.status, 'completed'))
 
   return {
     totalClaims: totalResult[0].totalClaims,
-    totalAmount: Number(totalResult[0].totalAmount),
+    totalAmount: Number(totalResult[0].totalAmount) || 0,
     pendingCount: pendingResult[0].count,
     underReviewCount: reviewResult[0].count,
     completedCount: completedResult[0].count
