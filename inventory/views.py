@@ -352,7 +352,7 @@ def statistics(request):
         'stats_by_college': stats_by_college,
         'stats_by_category': stats_by_category,
         'stats_by_exception': stats_by_exception,
-        'avg_turnover': avg_turnover['avg_days'],
+        'avg_turnover': avg_turnover,
         'low_stock_items': low_stock_items,
     })
 

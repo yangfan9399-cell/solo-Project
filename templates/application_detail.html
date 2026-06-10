@@ -42,9 +42,9 @@
             <div><strong>危险等级：</strong><span class="danger-level-{{ application.consumable.danger_level }}">{{ application.consumable.get_danger_level_display }}</span></div>
             <div><strong>领用数量：</strong>{{ application.requested_quantity }} {{ application.consumable.unit }}</div>
             <div><strong>实际出库：</strong>{{ application.actual_quantity }} {{ application.consumable.unit }}</div>
-            <div><strong>批次：</strong>{{ application.batch.batch_number if application.batch else '-' }}</div>
+            <div><strong>批次：</strong>{% if application.batch %}{{ application.batch.batch_number }}{% else %}-{% endif %}</div>
             <div><strong>用途：</strong>{{ application.purpose|default:'-' }}</div>
-            <div><strong>预计归还：</strong>{{ application.expected_return_date|date:'Y-m-d' if application.expected_return_date else '-' }}</div>
+            <div><strong>预计归还：</strong>{% if application.expected_return_date %}{{ application.expected_return_date|date:'Y-m-d' }}{% else %}-{% endif %}</div>
         </div>
     </div>
 
