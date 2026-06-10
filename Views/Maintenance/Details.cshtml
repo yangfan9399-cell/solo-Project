@@ -1,0 +1,229 @@
+@{
+    ViewData["Title"] = "维修工单详情";
+}
+
+<h2>维修工单详情</h2>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-8">
+                <h3>@Model.OrderCode</h3>
+            </div>
+            <div class="col-md-4 text-right">
+                <span class="badge @GetStatusClass(Model.Status)">@GetStatusText(Model.Status)</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>设备信息</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">设备名称</dt>
+                    <dd class="col-sm-8">@Model.Equipment.Name (@Model.Equipment.Code)</dd>
+                    <dt class="col-sm-4">设备类型</dt>
+                    <dd class="col-sm-8">@Model.Equipment.EquipmentType.Name</dd>
+                    <dt class="col-sm-4">所属产线</dt>
+                    <dd class="col-sm-8">@Model.Equipment.ProductionLine.Name</dd>
+                    <dt class="col-sm-4">设备位置</dt>
+                    <dd class="col-sm-8">@Model.Equipment.Location</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <h4>工单信息</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">创建时间</dt>
+                    <dd class="col-sm-8">@Model.CreateTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dt class="col-sm-4">停机时间</dt>
+                    <dd class="col-sm-8">@(Model.StopTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                    <dt class="col-sm-4">维修开始</dt>
+                    <dd class="col-sm-8">@(Model.RepairStartTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                    <dt class="col-sm-4">维修完成</dt>
+                    <dd class="col-sm-8">@(Model.RepairEndTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                    <dt class="col-sm-4">复产时间</dt>
+                    <dd class="col-sm-8">@(Model.ResumeTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+                    <dt class="col-sm-4">停机时长</dt>
+                    <dd class="col-sm-8">@CalculateDowntime()</dd>
+                    <dt class="col-sm-4">停机损失</dt>
+                    <dd class="col-sm-8">@(Model.DowntimeLoss.HasValue ? $"¥{Model.DowntimeLoss:N2}" : "-")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h4>故障信息</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">故障原因</dt>
+                    <dd class="col-sm-8">@Model.FailureReason</dd>
+                    <dt class="col-sm-4">维修内容</dt>
+                    <dd class="col-sm-8">@Model.RepairContent</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <h4>责任人</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">确认人</dt>
+                    <dd class="col-sm-8">@Model.ConfirmedBy</dd>
+                    <dt class="col-sm-4">维修人</dt>
+                    <dd class="col-sm-8">@Model.RepairedBy</dd>
+                    <dt class="col-sm-4">验收人</dt>
+                    <dd class="col-sm-8">@Model.ReviewedBy</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h4>备件使用</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>备件编号</th>
+                        <th>备件名称</th>
+                        <th>规格</th>
+                        <th>数量</th>
+                        <th>是否可用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sparePart in Model.MaintenanceSpareParts)
+                    {
+                        <tr>
+                            <td>@sparePart.SparePart.Code</td>
+                            <td>@sparePart.SparePart.Name</td>
+                            <td>@sparePart.SparePart.Specification</td>
+                            <td>@sparePart.Quantity</td>
+                            <td>
+                                <span class="badge @(sparePart.IsAvailable ? "bg-success" : "bg-danger")">
+                                    @(sparePart.IsAvailable ? "可用" : "缺料")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.MaintenanceSpareParts.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center">暂无备件记录</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h4>历史节点</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>操作人</th>
+                        <th>操作</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var history in Model.MaintenanceHistories.OrderBy(h => h.OperationTime))
+                    {
+                        <tr>
+                            <td>@history.OperationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@history.Operator</td>
+                            <td>@GetActionText(history.Action)</td>
+                            <td>@history.Remark</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <div class="btn-group">
+                @if (Model.Status == MaintenanceStatus.Created && User.IsInRole("TeamLeader"))
+                {
+                    <a asp-action="ConfirmStop" asp-route-id="@Model.Id" class="btn btn-danger">确认停机</a>
+                }
+                @if (Model.Status == MaintenanceStatus.Stopped && User.IsInRole("Maintenance"))
+                {
+                    <a asp-action="StartRepair" asp-route-id="@Model.Id" class="btn btn-primary">开始维修</a>
+                }
+                @if (Model.Status == MaintenanceStatus.Repairing && User.IsInRole("Maintenance"))
+                {
+                    <a asp-action="CompleteRepair" asp-route-id="@Model.Id" class="btn btn-success">完成维修</a>
+                }
+                @if (Model.Status == MaintenanceStatus.PendingReview && User.IsInRole("Engineer"))
+                {
+                    <a asp-action="Review" asp-route-id="@Model.Id" class="btn btn-warning">验收</a>
+                    @if (ViewBag.CanResume)
+                    {
+                        <a asp-action="ConfirmResume" asp-route-id="@Model.Id" class="btn btn-success">确认复产</a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success disabled" title="备件缺料，无法确认复产">确认复产</button>
+                    }
+                }
+                <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(MaintenanceStatus status)
+    {
+        return status switch
+        {
+            MaintenanceStatus.Created => "bg-secondary",
+            MaintenanceStatus.Stopped => "bg-danger",
+            MaintenanceStatus.Repairing => "bg-primary",
+            MaintenanceStatus.PendingReview => "bg-warning",
+            MaintenanceStatus.Resumed => "bg-success",
+            MaintenanceStatus.Failed => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetStatusText(MaintenanceStatus status)
+    {
+        return status switch
+        {
+            MaintenanceStatus.Created => "已创建",
+            MaintenanceStatus.Stopped => "已停机",
+            MaintenanceStatus.Repairing => "维修中",
+            MaintenanceStatus.PendingReview => "待验收",
+            MaintenanceStatus.Resumed => "已复产",
+            MaintenanceStatus.Failed => "验收失败",
+            _ => "未知"
+        };
+    }
+    
+    string GetActionText(MaintenanceAction action)
+    {
+        return action switch
+        {
+            MaintenanceAction.Created => "创建工单",
+            MaintenanceAction.StopConfirmed => "确认停机",
+            MaintenanceAction.RepairStarted => "开始维修",
+            MaintenanceAction.RepairCompleted => "维修完成",
+            MaintenanceAction.ReviewApproved => "验收通过",
+            MaintenanceAction.ReviewRejected => "验收未通过",
+            MaintenanceAction.Resumed => "确认复产",
+            MaintenanceAction.Rejected => "驳回",
+            _ => "未知"
+        };
+    }
+    
+    string CalculateDowntime()
+    {
+        if (!Model.StopTime.HasValue) return "-";
+        
+        var endTime = Model.ResumeTime ?? DateTime.Now;
+        var downtime = endTime - Model.StopTime.Value;
+        
+        if (downtime.TotalDays >= 1)
+            return $"{(int)downtime.TotalDays}天{downtime.Hours}小时{downtime.Minutes}分钟";
+        if (downtime.TotalHours >= 1)
+            return $"{(int)downtime.TotalHours}小时{downtime.Minutes}分钟";
+        return $"{downtime.Minutes}分钟";
+    }
+}

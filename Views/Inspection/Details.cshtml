@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "点检详情";
+}
+
+<h2>点检详情</h2>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-8">
+                <h3>@Model.InspectionCode</h3>
+            </div>
+            <div class="col-md-4 text-right">
+                <span class="badge @GetStatusClass(Model.Status)">@GetStatusText(Model.Status)</span>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>设备信息</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">设备名称</dt>
+                    <dd class="col-sm-8">@Model.Equipment.Name (@Model.Equipment.Code)</dd>
+                    <dt class="col-sm-4">设备类型</dt>
+                    <dd class="col-sm-8">@Model.Equipment.EquipmentType.Name</dd>
+                    <dt class="col-sm-4">所属产线</dt>
+                    <dd class="col-sm-8">@Model.Equipment.ProductionLine.Name</dd>
+                    <dt class="col-sm-4">设备位置</dt>
+                    <dd class="col-sm-8">@Model.Equipment.Location</dd>
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <h4>点检信息</h4>
+                <dl class="row">
+                    <dt class="col-sm-4">点检时间</dt>
+                    <dd class="col-sm-8">@Model.InspectionTime.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dt class="col-sm-4">上报人</dt>
+                    <dd class="col-sm-8">@Model.ReportedBy</dd>
+                    <dt class="col-sm-4">描述</dt>
+                    <dd class="col-sm-8">@Model.Description</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h4>异常项</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>检查项</th>
+                        <th>标准值</th>
+                        <th>实际值</th>
+                        <th>是否异常</th>
+                        <th>异常描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.InspectionItems)
+                    {
+                        <tr>
+                            <td>@item.ItemName</td>
+                            <td>@item.StandardValue</td>
+                            <td>@item.ActualValue</td>
+                            <td>@(item.IsAbnormal ? "是" : "否")</td>
+                            <td>@item.AbnormalDescription</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <h4>历史节点</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>操作人</th>
+                        <th>操作</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var history in Model.InspectionHistories.OrderBy(h => h.OperationTime))
+                    {
+                        <tr>
+                            <td>@history.OperationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@history.Operator</td>
+                            <td>@GetActionText(history.Action)</td>
+                            <td>@history.Remark</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.MaintenanceOrder != null)
+        {
+            <div class="mt-4">
+                <h4>关联维修工单</h4>
+                <p><a asp-action="Details" asp-controller="Maintenance" asp-route-id="@Model.MaintenanceOrder.Id">
+                    @Model.MaintenanceOrder.OrderCode
+                </a></p>
+            </div>
+        }
+
+        <div class="mt-4">
+            <div class="btn-group">
+                @if (Model.Status == InspectionStatus.Pending && User.IsInRole("TeamLeader"))
+                {
+                    <a asp-action="Confirm" asp-route-id="@Model.Id" class="btn btn-success">确认停机</a>
+                    <a asp-action="Reject" asp-route-id="@Model.Id" class="btn btn-danger">驳回</a>
+                }
+                @if (Model.Status == InspectionStatus.Confirmed && User.IsInRole("TeamLeader"))
+                {
+                    <a asp-action="TransferToMaintenance" asp-route-id="@Model.Id" class="btn btn-primary">转维修</a>
+                }
+                <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(InspectionStatus status)
+    {
+        return status switch
+        {
+            InspectionStatus.Pending => "bg-warning",
+            InspectionStatus.Confirmed => "bg-info",
+            InspectionStatus.Maintenance => "bg-primary",
+            InspectionStatus.Completed => "bg-success",
+            InspectionStatus.Rejected => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetStatusText(InspectionStatus status)
+    {
+        return status switch
+        {
+            InspectionStatus.Pending => "待确认",
+            InspectionStatus.Confirmed => "已确认",
+            InspectionStatus.Maintenance => "维修中",
+            InspectionStatus.Completed => "已完成",
+            InspectionStatus.Rejected => "已驳回",
+            _ => "未知"
+        };
+    }
+    
+    string GetActionText(InspectionAction action)
+    {
+        return action switch
+        {
+            InspectionAction.Reported => "提交点检",
+            InspectionAction.Confirmed => "确认停机",
+            InspectionAction.Rejected => "驳回",
+            InspectionAction.Transferred => "转维修",
+            _ => "未知"
+        };
+    }
+}

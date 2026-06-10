@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "验收维修";
+}
+
+<h2>验收维修工单</h2>
+
+<form asp-action="Review" asp-route-id="@Model.Id" method="post">
+    <div class="form-group">
+        <label>验收结果</label>
+        <div class="form-check">
+            <input type="radio" name="approved" value="true" checked class="form-check-input" />
+            <label class="form-check-label">验收通过</label>
+        </div>
+        <div class="form-check">
+            <input type="radio" name="approved" value="false" class="form-check-input" />
+            <label class="form-check-label">验收不通过</label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>验收意见</label>
+        <textarea name="remark" class="form-control" rows="3"></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">提交验收</button>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">取消</a>
+</form>

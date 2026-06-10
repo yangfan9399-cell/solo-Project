@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "首页";
+}
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">待确认点检</h5>
+                <p class="card-text display-4">@ViewBag.PendingInspections</p>
+                <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-primary">查看</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">待验收维修</h5>
+                <p class="card-text display-4">@ViewBag.PendingMaintenance</p>
+                <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-primary">查看</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">正在维修</h5>
+                <p class="card-text display-4">0</p>
+                <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Repairing" class="btn btn-primary">查看</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">统计分析</h5>
+                <p class="card-text display-4">→</p>
+                <a asp-action="Index" asp-controller="Statistics" class="btn btn-primary">查看</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>快捷操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (User.IsInRole("Operator"))
+                    {
+                        <div class="col-md-3">
+                            <a asp-action="Create" asp-controller="Inspection" class="btn btn-success w-100">
+                                提交点检异常
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("TeamLeader"))
+                    {
+                        <div class="col-md-3">
+                            <a asp-action="Index" asp-controller="Inspection" asp-route-status="Pending" class="btn btn-warning w-100">
+                                确认停机
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("Maintenance"))
+                    {
+                        <div class="col-md-3">
+                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="Stopped" class="btn btn-info w-100">
+                                处理故障
+                            </a>
+                        </div>
+                    }
+                    @if (User.IsInRole("Engineer"))
+                    {
+                        <div class="col-md-3">
+                            <a asp-action="Index" asp-controller="Maintenance" asp-route-status="PendingReview" class="btn btn-primary w-100">
+                                复产验收
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

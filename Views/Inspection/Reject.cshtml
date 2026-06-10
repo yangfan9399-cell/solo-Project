@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "驳回点检";
+}
+
+<h2>驳回点检异常</h2>
+
+<p>确定要驳回点检记录 <strong>@Model.InspectionCode</strong> 吗？</p>
+
+<form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+    <div class="form-group">
+        <label>驳回原因</label>
+        <textarea name="remark" class="form-control" rows="3" required></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-danger">确认驳回</button>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">取消</a>
+</form>

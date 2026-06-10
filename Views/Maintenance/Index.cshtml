@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "维修管理";
+}
+
+<h2>维修工单列表</h2>
+
+<div class="mb-3">
+    <div class="btn-group">
+        <a asp-action="Index" class="btn btn-secondary @(string.IsNullOrEmpty(Request.Query["status"]) ? "active" : "")">全部</a>
+        <a asp-action="Index" asp-route-status="Created" class="btn btn-secondary @(Request.Query["status"] == "Created" ? "active" : "")">已创建</a>
+        <a asp-action="Index" asp-route-status="Stopped" class="btn btn-secondary @(Request.Query["status"] == "Stopped" ? "active" : "")">已停机</a>
+        <a asp-action="Index" asp-route-status="Repairing" class="btn btn-secondary @(Request.Query["status"] == "Repairing" ? "active" : "")">维修中</a>
+        <a asp-action="Index" asp-route-status="PendingReview" class="btn btn-secondary @(Request.Query["status"] == "PendingReview" ? "active" : "")">待验收</a>
+        <a asp-action="Index" asp-route-status="Resumed" class="btn btn-secondary @(Request.Query["status"] == "Resumed" ? "active" : "")">已复产</a>
+        <a asp-action="Index" asp-route-status="Failed" class="btn btn-secondary @(Request.Query["status"] == "Failed" ? "active" : "")">验收失败</a>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>工单号</th>
+            <th>设备</th>
+            <th>产线</th>
+            <th>状态</th>
+            <th>故障原因</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.OrderCode</td>
+                <td>@order.Equipment.Name</td>
+                <td>@order.Equipment.ProductionLine.Name</td>
+                <td>
+                    <span class="badge @GetStatusClass(order.Status)">@GetStatusText(order.Status)</span>
+                </td>
+                <td>@order.FailureReason</td>
+                <td>@order.CreateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-info">详情</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@functions {
+    string GetStatusClass(MaintenanceStatus status)
+    {
+        return status switch
+        {
+            MaintenanceStatus.Created => "bg-secondary",
+            MaintenanceStatus.Stopped => "bg-danger",
+            MaintenanceStatus.Repairing => "bg-primary",
+            MaintenanceStatus.PendingReview => "bg-warning",
+            MaintenanceStatus.Resumed => "bg-success",
+            MaintenanceStatus.Failed => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetStatusText(MaintenanceStatus status)
+    {
+        return status switch
+        {
+            MaintenanceStatus.Created => "已创建",
+            MaintenanceStatus.Stopped => "已停机",
+            MaintenanceStatus.Repairing => "维修中",
+            MaintenanceStatus.PendingReview => "待验收",
+            MaintenanceStatus.Resumed => "已复产",
+            MaintenanceStatus.Failed => "验收失败",
+            _ => "未知"
+        };
+    }
+}

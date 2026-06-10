@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "完成维修";
+}
+
+<h2>完成维修</h2>
+
+<form asp-action="CompleteRepair" asp-route-id="@Model.Id" method="post">
+    <div class="form-group">
+        <label>故障原因</label>
+        <input type="text" name="failureReason" class="form-control" placeholder="请输入故障原因" />
+    </div>
+    
+    <div class="form-group">
+        <label>维修内容</label>
+        <textarea name="repairContent" class="form-control" rows="4" required></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-success">确认完成</button>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">取消</a>
+</form>

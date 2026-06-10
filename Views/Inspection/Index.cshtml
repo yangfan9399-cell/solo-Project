@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "点检管理";
+}
+
+<h2>点检记录列表</h2>
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">新建点检</a>
+    <div class="btn-group ms-2">
+        <a asp-action="Index" class="btn btn-secondary @(string.IsNullOrEmpty(Request.Query["status"]) ? "active" : "")">全部</a>
+        <a asp-action="Index" asp-route-status="Pending" class="btn btn-secondary @(Request.Query["status"] == "Pending" ? "active" : "")">待确认</a>
+        <a asp-action="Index" asp-route-status="Confirmed" class="btn btn-secondary @(Request.Query["status"] == "Confirmed" ? "active" : "")">已确认</a>
+        <a asp-action="Index" asp-route-status="Maintenance" class="btn btn-secondary @(Request.Query["status"] == "Maintenance" ? "active" : "")">维修中</a>
+        <a asp-action="Index" asp-route-status="Completed" class="btn btn-secondary @(Request.Query["status"] == "Completed" ? "active" : "")">已完成</a>
+        <a asp-action="Index" asp-route-status="Rejected" class="btn btn-secondary @(Request.Query["status"] == "Rejected" ? "active" : "")">已驳回</a>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>点检编号</th>
+            <th>设备</th>
+            <th>产线</th>
+            <th>状态</th>
+            <th>点检时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var inspection in Model)
+        {
+            <tr>
+                <td>@inspection.InspectionCode</td>
+                <td>@inspection.Equipment.Name</td>
+                <td>@inspection.Equipment.ProductionLine.Name</td>
+                <td>
+                    <span class="badge @GetStatusClass(inspection.Status)">@GetStatusText(inspection.Status)</span>
+                </td>
+                <td>@inspection.InspectionTime.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@inspection.Id" class="btn btn-sm btn-info">详情</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@functions {
+    string GetStatusClass(InspectionStatus status)
+    {
+        return status switch
+        {
+            InspectionStatus.Pending => "bg-warning",
+            InspectionStatus.Confirmed => "bg-info",
+            InspectionStatus.Maintenance => "bg-primary",
+            InspectionStatus.Completed => "bg-success",
+            InspectionStatus.Rejected => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+    
+    string GetStatusText(InspectionStatus status)
+    {
+        return status switch
+        {
+            InspectionStatus.Pending => "待确认",
+            InspectionStatus.Confirmed => "已确认",
+            InspectionStatus.Maintenance => "维修中",
+            InspectionStatus.Completed => "已完成",
+            InspectionStatus.Rejected => "已驳回",
+            _ => "未知"
+        };
+    }
+}

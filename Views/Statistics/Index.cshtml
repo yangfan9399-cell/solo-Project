@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "统计分析";
+}
+
+<h2>统计分析</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>按产线统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>产线</th>
+                            <th>故障次数</th>
+                            <th>总损失(元)</th>
+                            <th>平均停机(小时)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewBag.ByProductionLine)
+                        {
+                            <tr>
+                                <td>@item.Category</td>
+                                <td>@item.Count</td>
+                                <td>@item.TotalLoss:N2</td>
+                                <td>@item.AvgDowntimeHours:F2</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>按设备类型统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>设备类型</th>
+                            <th>故障次数</th>
+                            <th>总损失(元)</th>
+                            <th>平均停机(小时)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewBag.ByEquipmentType)
+                        {
+                            <tr>
+                                <td>@item.Category</td>
+                                <td>@item.Count</td>
+                                <td>@item.TotalLoss:N2</td>
+                                <td>@item.AvgDowntimeHours:F2</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>按故障原因统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>故障原因</th>
+                            <th>次数</th>
+                            <th>总损失(元)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewBag.ByFailureReason)
+                        {
+                            <tr>
+                                <td>@item.Category</td>
+                                <td>@item.Count</td>
+                                <td>@item.TotalLoss:N2</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>按停机损失统计</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>设备</th>
+                            <th>故障次数</th>
+                            <th>总损失(元)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ViewBag.ByDowntimeLoss)
+                        {
+                            <tr>
+                                <td>@item.Category</td>
+                                <td>@item.Count</td>
+                                <td>@item.TotalLoss:N2</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
