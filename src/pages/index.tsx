@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Search, Filter, Eye, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import { Agreement, AgreementStatus, PaymentStatus } from '@/types'
 import { formatCurrency, formatDate, getStatusText, getStatusColor } from '@/utils/format'
@@ -185,9 +186,9 @@ export default function Home({ agreements }: { agreements: Agreement[] }) {
                       </span>
                     </td>
                     <td className="py-4 px-4">
-                      <Link 
+                      <Link
                         href={`/agreement/${agreement.id}`}
-                        className="flex items-center justify-center gap-1 text-primary-600 hover:text-primary-700 transition-colors"
+                        className="flex items-center gap-1 text-primary-600 hover:text-primary-700 transition-colors no-underline"
                       >
                         <Eye size={16} />
                         <span>查看详情</span>
