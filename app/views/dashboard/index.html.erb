@@ -83,7 +83,7 @@
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="flex items-center space-x-3">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_class(app.status) %>">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full <%= status_badge(app.status) %>">
                       <%= status_text(app.status) %>
                     </span>
                     <h4 class="font-medium text-gray-800"><%= app.track.title %></h4>
@@ -187,45 +187,3 @@
     </div>
   <% end %>
 </div>
-
-<% content_for :view_scripts do %>
-<script>
-function status_class(status) {
-  const classes = {
-    draft: 'bg-gray-100 text-gray-700',
-    pending_copyright: 'bg-blue-100 text-blue-700',
-    pending_legal: 'bg-indigo-100 text-indigo-700',
-    pending_finance: 'bg-purple-100 text-purple-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    disputed: 'bg-orange-100 text-orange-700'
-  };
-  return classes[status] || 'bg-gray-100 text-gray-700';
-}
-
-function status_text(status) {
-  const texts = {
-    draft: '草稿',
-    pending_copyright: '版权审核中',
-    pending_legal: '法务审核中',
-    pending_finance: '财务审核中',
-    approved: '已通过',
-    rejected: '已驳回',
-    disputed: '争议中'
-  };
-  return texts[status] || status;
-}
-
-function scenario_text(scenario) {
-  const texts = {
-    tv_ad: '电视广告',
-    online_video: '线上视频',
-    live_stream: '直播',
-    film: '影视',
-    radio: '广播',
-    other: '其他'
-  };
-  return texts[scenario] || scenario;
-}
-</script>
-<% end %>

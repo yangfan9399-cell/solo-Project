@@ -6,6 +6,8 @@ class Application < ApplicationRecord
   has_one :settlement
   has_many :application_histories
 
+  scope :recent, -> { order(created_at: :desc) }
+
   enum usage_scenario: {
     tv_ad: "tv_ad",
     online_video: "online_video",
