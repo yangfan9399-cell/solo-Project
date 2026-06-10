@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+
+{% block title %}统计报表 - 实验耗材管理系统{% endblock %}
+
+{% block content %}
+    <h2>统计报表</h2>
+
+    <div class="card">
+        <h3>按学院统计</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>学院</th>
+                    <th>申领总数</th>
+                    <th>已归还</th>
+                    <th>逾期</th>
+                    <th>归还率</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_by_college %}
+                <tr>
+                    <td>{{ stat.research_group__college__name }}</td>
+                    <td>{{ stat.total }}</td>
+                    <td>{{ stat.returned }}</td>
+                    <td>{{ stat.overdue }}</td>
+                    <td>{{ stat.returned|div:stat.total|mul:100|floatformat:1 }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>按耗材类别统计</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>类别</th>
+                    <th>申领总数</th>
+                    <th>已归还</th>
+                    <th>逾期</th>
+                    <th>归还率</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_by_category %}
+                <tr>
+                    <td>{{ stat.consumable__category__name }}</td>
+                    <td>{{ stat.total }}</td>
+                    <td>{{ stat.returned }}</td>
+                    <td>{{ stat.overdue }}</td>
+                    <td>{{ stat.returned|div:stat.total|mul:100|floatformat:1 }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>按异常原因统计</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>异常原因</th>
+                    <th>数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats_by_exception %}
+                <tr>
+                    <td>
+                        {% if stat.exception_reason == 'stock_shortage' %}库存不足
+                        {% elif stat.exception_reason == 'qualification_missing' %}危险品资质缺失
+                        {% elif stat.exception_reason == 'overdue' %}逾期未归还
+                        {% else %}其他{% endif %}
+                    </td>
+                    <td>{{ stat.count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="text-align: center;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>周转天数统计</h3>
+        <div style="margin-top: 1rem;">
+            <strong>平均周转天数：</strong>
+            {% if avg_turnover %}{{ avg_turnover|floatformat:1 }} 天{% else %}暂无数据{% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>库存预警</h3>
+        {% if low_stock_items %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>耗材名称</th>
+                    <th>类别</th>
+                    <th>批次号</th>
+                    <th>当前库存</th>
+                    <th>最低库存</th>
+                    <th>存放位置</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in low_stock_items %}
+                <tr>
+                    <td>{{ item.consumable.name }}</td>
+                    <td>{{ item.consumable.category.get_name_display }}</td>
+                    <td>{{ item.batch_number }}</td>
+                    <td style="color: #e74c3c;">{{ item.quantity }}</td>
+                    <td>{{ item.consumable.min_stock }}</td>
+                    <td>{{ item.location }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无库存不足的耗材</p>
+        {% endif %}
+    </div>
+{% endblock %}

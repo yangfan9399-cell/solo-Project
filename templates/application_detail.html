@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}申领详情 - 实验耗材管理系统{% endblock %}
+
+{% block content %}
+    <h2>申领详情 #{{ application.pk }}</h2>
+
+    <div class="card">
+        <h3>基本信息</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+            <div>
+                <strong>状态：</strong>
+                {% if application.status == 'pending' %}
+                <span class="badge badge-pending">待审核</span>
+                {% elif application.status == 'inventory_checked' %}
+                <span class="badge badge-inventory">库存已审核</span>
+                {% elif application.status == 'safety_checked' %}
+                <span class="badge badge-safety">安全已审核</span>
+                {% elif application.status == 'approved' %}
+                <span class="badge badge-approved">已批准</span>
+                {% elif application.status == 'issued' %}
+                <span class="badge badge-issued">已出库</span>
+                {% elif application.status == 'returned' %}
+                <span class="badge badge-returned">已归还</span>
+                {% elif application.status == 'overdue' %}
+                <span class="badge badge-overdue">逾期未归还</span>
+                {% elif application.status == 'rejected' %}
+                <span class="badge badge-rejected">已拒绝</span>
+                {% endif %}
+            </div>
+            <div><strong>申请人：</strong>{{ application.applicant.username }}</div>
+            <div><strong>课题组：</strong>{{ application.research_group.name }}</div>
+            <div><strong>学院：</strong>{{ application.research_group.college.get_name_display }}</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>耗材信息</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+            <div><strong>耗材名称：</strong>{{ application.consumable.name }}</div>
+            <div><strong>类别：</strong>{{ application.consumable.category.get_name_display }}</div>
+            <div><strong>危险等级：</strong><span class="danger-level-{{ application.consumable.danger_level }}">{{ application.consumable.get_danger_level_display }}</span></div>
+            <div><strong>领用数量：</strong>{{ application.requested_quantity }} {{ application.consumable.unit }}</div>
+            <div><strong>实际出库：</strong>{{ application.actual_quantity }} {{ application.consumable.unit }}</div>
+            <div><strong>批次：</strong>{{ application.batch.batch_number if application.batch else '-' }}</div>
+            <div><strong>用途：</strong>{{ application.purpose|default:'-' }}</div>
+            <div><strong>预计归还：</strong>{{ application.expected_return_date|date:'Y-m-d' if application.expected_return_date else '-' }}</div>
+        </div>
+    </div>
+
+    {% if application.status == 'issued' or application.status == 'approved' %}
+    <div class="card">
+        <h3>替代批次</h3>
+        {% if alternatives %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>批次号</th>
+                    <th>库存数量</th>
+                    <th>有效期</th>
+                    <th>存放位置</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alt in alternatives %}
+                <tr>
+                    <td>{{ alt.batch_number }}</td>
+                    <td>{{ alt.quantity }} {{ application.consumable.unit }}</td>
+                    <td>{{ alt.expire_date|date:'Y-m-d' }}</td>
+                    <td>{{ alt.location }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无可用替代批次</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if application.exception_reason %}
+    <div class="card" style="background: #fff3cd;">
+        <h3>异常信息</h3>
+        <div>
+            <strong>异常原因：</strong>
+            {% if application.exception_reason == 'stock_shortage' %}库存不足
+            {% elif application.exception_reason == 'qualification_missing' %}危险品资质缺失
+            {% elif application.exception_reason == 'overdue' %}逾期未归还
+            {% else %}其他{% endif %}
+        </div>
+        <div style="margin-top: 0.5rem;"><strong>备注：</strong>{{ application.exception_note }}</div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h3>审核操作</h3>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+            {% if user.userprofile.role == 'stock_manager' and application.status == 'pending' %}
+            <a href="{% url 'inventory_check' application.pk %}" class="btn btn-primary">库存审核通过</a>
+            {% endif %}
+            {% if user.userprofile.role == 'safety_officer' and application.status == 'inventory_checked' %}
+            <a href="{% url 'safety_check' application.pk %}" class="btn btn-primary">安全审核通过</a>
+            {% endif %}
+            {% if application.status == 'safety_checked' %}
+            <a href="{% url 'approve_application' application.pk %}" class="btn btn-success">批准申请</a>
+            {% endif %}
+            {% if application.status == 'approved' %}
+            <a href="{% url 'issue_application' application.pk %}" class="btn btn-success">确认出库</a>
+            {% endif %}
+            {% if user.userprofile.role == 'lab_manager' and application.status in ['issued', 'overdue'] %}
+            <a href="{% url 'return_application' application.pk %}" class="btn btn-warning">办理归还</a>
+            {% endif %}
+            <a href="{% url 'application_list' %}" class="btn btn-secondary">返回列表</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>历史记录</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>操作人</th>
+                    <th>状态变更</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in history %}
+                <tr>
+                    <td>{{ record.operated_at|date:'Y-m-d H:i' }}</td>
+                    <td>{{ record.operated_by.username }}</td>
+                    <td>{{ record.get_status_before_display }} → {{ record.get_status_after_display }}</td>
+                    <td>{{ record.comment }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">暂无记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}申领列表 - 实验耗材管理系统{% endblock %}
+
+{% block content %}
+    <h2>申领列表</h2>
+    
+    {% if role == 'teacher' %}
+    <a href="{% url 'create_application' %}" class="btn btn-primary" style="margin-bottom: 1rem;">提交新申领</a>
+    {% endif %}
+
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>耗材</th>
+                    <th>课题组</th>
+                    <th>危险等级</th>
+                    <th>领用数量</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td><a href="{% url 'application_detail' app.pk %}">#{{ app.pk }}</a></td>
+                    <td>{{ app.consumable.name }}</td>
+                    <td>{{ app.research_group.name }}</td>
+                    <td><span class="danger-level-{{ app.consumable.danger_level }}">{{ app.consumable.get_danger_level_display }}</span></td>
+                    <td>{{ app.requested_quantity }} {{ app.consumable.unit }}</td>
+                    <td>
+                        {% if app.status == 'pending' %}
+                        <span class="badge badge-pending">待审核</span>
+                        {% elif app.status == 'inventory_checked' %}
+                        <span class="badge badge-inventory">库存已审核</span>
+                        {% elif app.status == 'safety_checked' %}
+                        <span class="badge badge-safety">安全已审核</span>
+                        {% elif app.status == 'approved' %}
+                        <span class="badge badge-approved">已批准</span>
+                        {% elif app.status == 'issued' %}
+                        <span class="badge badge-issued">已出库</span>
+                        {% elif app.status == 'returned' %}
+                        <span class="badge badge-returned">已归还</span>
+                        {% elif app.status == 'overdue' %}
+                        <span class="badge badge-overdue">逾期未归还</span>
+                        {% elif app.status == 'rejected' %}
+                        <span class="badge badge-rejected">已拒绝</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ app.created_at|date:'Y-m-d H:i' }}</td>
+                    <td>
+                        <a href="{% url 'application_detail' app.pk %}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="text-align: center;">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

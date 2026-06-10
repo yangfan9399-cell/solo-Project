@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}实验耗材管理系统{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .header a { color: white; text-decoration: none; }
+        .header h1 { font-size: 1.5rem; }
+        .nav { display: flex; gap: 1rem; }
+        .nav a { padding: 0.5rem 1rem; border-radius: 4px; }
+        .nav a:hover { background: rgba(255,255,255,0.1); }
+        .content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1rem; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #1e8449; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; }
+        .table th { background: #f8f9fa; font-weight: 600; }
+        .table tr:hover { background: #f8f9fa; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .form-group textarea { resize: vertical; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+        .badge-pending { background: #f39c12; color: white; }
+        .badge-inventory { background: #3498db; color: white; }
+        .badge-safety { background: #9b59b6; color: white; }
+        .badge-approved { background: #1abc9c; color: white; }
+        .badge-issued { background: #27ae60; color: white; }
+        .badge-returned { background: #17a2b8; color: white; }
+        .badge-overdue { background: #e74c3c; color: white; }
+        .badge-rejected { background: #6c757d; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { text-align: center; padding: 1.5rem; }
+        .stat-card .number { font-size: 2rem; font-weight: bold; color: #2c3e50; }
+        .stat-card .label { color: #7f8c8d; margin-top: 0.5rem; }
+        .danger-level-I { color: #27ae60; }
+        .danger-level-II { color: #f39c12; }
+        .danger-level-III { color: #e67e22; }
+        .danger-level-IV { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header class="header">
+        <h1><a href="{% url 'dashboard' %}">实验耗材管理系统</a></h1>
+        <nav class="nav">
+            <a href="{% url 'dashboard' %}">首页</a>
+            <a href="{% url 'application_list' %}">申领列表</a>
+            <a href="{% url 'statistics' %}">统计报表</a>
+            <a href="{% url 'low_stock_warning' %}">库存预警</a>
+            {% if user.userprofile.role == 'teacher' %}
+            <a href="{% url 'create_application' %}">提交申领</a>
+            {% endif %}
+            <a href="{% url 'logout' %}">退出登录</a>
+        </nav>
+    </header>
+    {% endif %}
+    <main class="content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

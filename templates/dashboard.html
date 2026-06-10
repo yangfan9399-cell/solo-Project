@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 - 实验耗材管理系统{% endblock %}
+
+{% block content %}
+    <h2>欢迎，{{ user.username }}</h2>
+    <p>您的角色：{{ user.userprofile.get_role_display }}</p>
+    
+    <div class="grid">
+        <div class="card stat-card">
+            <div class="number">{{ pending_count }}</div>
+            <div class="label">待审核</div>
+        </div>
+        <div class="card stat-card">
+            <div class="number">{{ inventory_checked_count }}</div>
+            <div class="label">库存已审核</div>
+        </div>
+        <div class="card stat-card">
+            <div class="number">{{ safety_checked_count }}</div>
+            <div class="label">安全已审核</div>
+        </div>
+        <div class="card stat-card">
+            <div class="number">{{ issued_count }}</div>
+            <div class="label">已出库</div>
+        </div>
+        <div class="card stat-card">
+            <div class="number" style="color: #e74c3c;">{{ overdue_count }}</div>
+            <div class="label">逾期未归还</div>
+        </div>
+        <div class="card stat-card">
+            <div class="number" style="color: #f39c12;">{{ low_stock_items }}</div>
+            <div class="label">库存不足</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>快速操作</h3>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            {% if role == 'teacher' %}
+            <a href="{% url 'create_application' %}" class="btn btn-primary">提交申领</a>
+            {% endif %}
+            {% if role == 'stock_manager' %}
+            <a href="{% url 'application_list' %}" class="btn btn-primary">审核申领</a>
+            {% endif %}
+            {% if role == 'safety_officer' %}
+            <a href="{% url 'application_list' %}" class="btn btn-primary">安全审核</a>
+            {% endif %}
+            {% if role == 'lab_manager' %}
+            <a href="{% url 'application_list' %}" class="btn btn-primary">复核归还</a>
+            {% endif %}
+            <a href="{% url 'statistics' %}" class="btn btn-secondary">统计报表</a>
+            <a href="{% url 'low_stock_warning' %}" class="btn btn-warning">库存预警</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>流程说明</h3>
+        <ul style="margin-left: 1.5rem; margin-top: 1rem; line-height: 1.8;">
+            <li><strong>教师：</strong>提交耗材申领申请</li>
+            <li><strong>库管员：</strong>审核库存是否充足</li>
+            <li><strong>安全员：</strong>核验危险品操作资质</li>
+            <li><strong>实验室负责人：</strong>复核并确认归还</li>
+        </ul>
+    </div>
+{% endblock %}

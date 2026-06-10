@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}办理归还 - 实验耗材管理系统{% endblock %}
+
+{% block content %}
+    <h2>办理归还 #{{ application.pk }}</h2>
+
+    <div class="card">
+        <h3>申领信息</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem;">
+            <div><strong>耗材：</strong>{{ application.consumable.name }}</div>
+            <div><strong>批次：</strong>{{ application.batch.batch_number }}</div>
+            <div><strong>领用数量：</strong>{{ application.actual_quantity }} {{ application.consumable.unit }}</div>
+            <div><strong>申请人：</strong>{{ application.applicant.username }}</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>归还信息</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>归还数量</label>
+                <input type="number" name="returned_quantity" min="1" max="{{ application.actual_quantity }}" required>
+                <p style="color: #666; font-size: 0.9rem;">最大可归还：{{ application.actual_quantity }} {{ application.consumable.unit }}</p>
+            </div>
+            <div class="form-group">
+                <label>状态描述</label>
+                <input type="text" name="condition" placeholder="如：完好、损坏、过期等">
+            </div>
+            <div class="form-group">
+                <label>备注</label>
+                <textarea name="notes" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">确认归还</button>
+            <a href="{% url 'application_detail' application.pk %}" class="btn btn-secondary" style="margin-left: 1rem;">取消</a>
+        </form>
+    </div>
+{% endblock %}
