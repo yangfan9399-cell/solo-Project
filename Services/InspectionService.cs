@@ -61,8 +61,11 @@ namespace EquipmentMaintenanceSystem.Services
             inspection.Status = InspectionStatus.Pending;
             inspection.ReportedTime = DateTime.Now;
             
+            // 1. 先保存点检记录，获得真实 Id
             _context.InspectionRecords.Add(inspection);
+            await _context.SaveChangesAsync();
             
+            // 2. 使用保存后的真实 Id 创建历史记录
             _context.InspectionHistories.Add(new InspectionHistory
             {
                 InspectionRecordId = inspection.Id,
@@ -71,6 +74,16 @@ namespace EquipmentMaintenanceSystem.Services
                 Action = InspectionAction.Reported,
                 Remark = "提交点检异常"
             });
+            
+            // 3. 保存点检项（如果有）
+            if (inspection.InspectionItems != null && inspection.InspectionItems.Any())
+            {
+                foreach (var item in inspection.InspectionItems)
+                {
+                    item.InspectionRecordId = inspection.Id;
+                    _context.InspectionItems.Add(item);
+                }
+            }
             
             await _context.SaveChangesAsync();
             return inspection;
