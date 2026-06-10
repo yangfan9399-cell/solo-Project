@@ -25,9 +25,9 @@ class AnalyticsController < ApplicationController
   def calculate_cycle_stats
     applications = Application.where(created_at: @date_range, status: "approved")
     {
-      avg_cycle_days: applications.average("DATEDIFF(updated_at, created_at)"),
-      min_cycle_days: applications.minimum("DATEDIFF(updated_at, created_at)"),
-      max_cycle_days: applications.maximum("DATEDIFF(updated_at, created_at)")
+      avg_cycle_days: applications.average("(updated_at - created_at)::int"),
+      min_cycle_days: applications.minimum("(updated_at - created_at)::int"),
+      max_cycle_days: applications.maximum("(updated_at - created_at)::int")
     }
   end
 end
