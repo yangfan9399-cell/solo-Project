@@ -16,8 +16,10 @@ class AnalyticsController < ApplicationController
 
   def calculate_exception_stats
     {
-      scenario_out_of_range: Application.where(status: "draft", metadata: { block_reason: "场景超范围" }).count,
-      date_conflict: Application.where(status: "pending_copyright", metadata: { conflict_info: "期限冲突" }).count,
+      scenario_out_of_range: Application.where("metadata ->> 'block_reason' ILIKE ?", "%场景超范围%").count +
+                            Application.where("metadata ->> 'block_reason' ILIKE ?", "%不包含%").count,
+      date_conflict: Application.where("metadata ->> 'conflict_info' ILIKE ?", "%期限冲突%").count +
+                     Application.where("metadata ->> 'conflict_info' ILIKE ?", "%授权重叠%").count,
       settlement_dispute: Settlement.where(status: "disputed").count
     }
   end
@@ -25,9 +27,9 @@ class AnalyticsController < ApplicationController
   def calculate_cycle_stats
     applications = Application.where(created_at: @date_range, status: "approved")
     {
-      avg_cycle_days: applications.average("(updated_at - created_at)::int"),
-      min_cycle_days: applications.minimum("(updated_at - created_at)::int"),
-      max_cycle_days: applications.maximum("(updated_at - created_at)::int")
+      avg_cycle_days: applications.average("EXTRACT(DAY FROM (updated_at - created_at))"),
+      min_cycle_days: applications.minimum("EXTRACT(DAY FROM (updated_at - created_at))"),
+      max_cycle_days: applications.maximum("EXTRACT(DAY FROM (updated_at - created_at))")
     }
   end
 end
