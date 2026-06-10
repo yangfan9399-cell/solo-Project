@@ -36,7 +36,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   const item = await prisma.lostItem.findUnique({
     where: { id: itemId },
     include: {
-      claimRequests: true,
+      claimRequests: {
+        orderBy: { claimedAt: 'asc' },
+      },
     },
   });
 
@@ -96,7 +98,10 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
     case 'return': {
       const notesInput = formData.get('notes') as string;
-      const latestClaim = item.claimRequests[item.claimRequests.length - 1];
+      const sortedClaims = [...item.claimRequests].sort((a, b) => 
+        new Date(b.claimedAt).getTime() - new Date(a.claimedAt).getTime()
+      );
+      const latestClaim = sortedClaims[0];
       if (!latestClaim || !latestClaim.verified) {
         throw new Response('认领信息未通过核验，禁止交还物品', { status: 403 });
       }
