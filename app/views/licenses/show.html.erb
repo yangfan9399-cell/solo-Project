@@ -36,7 +36,22 @@
 <div class="mt-4">
   <%= link_to '编辑', edit_license_path(@license), class: 'btn btn-secondary' %>
   <% if @license.status == 'expired' %>
-    <%= button_to '续约', renew_license_path(@license), method: :post, class: 'btn btn-success' %>
+    <div class="d-inline-block ml-2">
+      <div class="btn-group dropend">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+          续约
+        </button>
+        <div class="dropdown-menu p-3">
+          <%= form_tag renew_license_path(@license), method: :post do %>
+            <div class="mb-2">
+              <label class="form-label">新到期日期</label>
+              <input type="date" name="new_end_date" class="form-control" required min="<%= Date.today.strftime('%Y-%m-%d') %>">
+            </div>
+            <button type="submit" class="btn btn-success">确认续约</button>
+          <% end %>
+        </div>
+      </div>
+    </div>
   <% end %>
   <%= link_to '返回', licenses_path, class: 'btn btn-link' %>
 </div>

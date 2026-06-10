@@ -66,7 +66,9 @@ class UsageScenariosController < ApplicationController
   def legal_review
     @usage_scenario = UsageScenario.find(params[:id])
     
-    if @usage_scenario.approval_status == 'pending'
+    if @usage_scenario.scope_exceeded?
+      redirect_to review_usage_scenario_path(@usage_scenario), alert: '使用范围超限，无法通过审核，请先补充授权'
+    elsif @usage_scenario.approval_status == 'pending'
       @usage_scenario.confirm_by_legal!(@current_user, params[:comment])
       redirect_to review_usage_scenario_path(@usage_scenario), notice: '法务复核完成'
     else
@@ -77,7 +79,9 @@ class UsageScenariosController < ApplicationController
   def operations_confirm
     @usage_scenario = UsageScenario.find(params[:id])
     
-    if @usage_scenario.approval_status == 'legal_reviewed'
+    if @usage_scenario.scope_exceeded?
+      redirect_to review_usage_scenario_path(@usage_scenario), alert: '使用范围超限，无法通过审核，请先补充授权'
+    elsif @usage_scenario.approval_status == 'legal_reviewed'
       @usage_scenario.confirm_by_operations!(@current_user, params[:comment])
       redirect_to review_usage_scenario_path(@usage_scenario), notice: '运营确认完成'
     else
