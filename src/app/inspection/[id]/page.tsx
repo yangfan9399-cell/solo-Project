@@ -65,6 +65,7 @@ interface HistoryNode {
 
 interface InspectionDetail {
   id: number
+  residentId: number
   residentName: string
   phone: string
   address: string
@@ -95,6 +96,11 @@ export default function InspectionDetailPage({
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
   const [showRectificationForm, setShowRectificationForm] = useState(false)
   const [selectedHazardId, setSelectedHazardId] = useState<number | null>(null)
+  const [appointmentFormData, setAppointmentFormData] = useState({
+    servicePersonName: '',
+    scheduledDate: '',
+    notes: '',
+  })
 
   useEffect(() => {
     async function fetchData() {
@@ -113,16 +119,17 @@ export default function InspectionDetailPage({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         inspectionId: detail.id,
-        residentId: detail.residentName,
-        servicePersonName: '客服人员',
-        scheduledDate: new Date().toISOString().split('T')[0],
+        residentId: detail.residentId,
+        servicePersonName: appointmentFormData.servicePersonName || '客服人员',
+        scheduledDate: appointmentFormData.scheduledDate || new Date().toISOString().split('T')[0],
         status: 'pending',
-        notes: '新预约',
+        notes: appointmentFormData.notes,
         isSecondAttempt: detail.status === 'rejected',
       }),
     })
     if (response.ok) {
       setShowAppointmentForm(false)
+      setAppointmentFormData({ servicePersonName: '', scheduledDate: '', notes: '' })
       window.location.reload()
     }
   }
@@ -691,7 +698,8 @@ export default function InspectionDetailPage({
                 <label className="block text-sm font-medium text-gray-700 mb-1">客服人员</label>
                 <input
                   type="text"
-                  defaultValue="客服人员"
+                  value={appointmentFormData.servicePersonName || '客服人员'}
+                  onChange={(e) => setAppointmentFormData({ ...appointmentFormData, servicePersonName: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -699,19 +707,26 @@ export default function InspectionDetailPage({
                 <label className="block text-sm font-medium text-gray-700 mb-1">预约日期</label>
                 <input
                   type="date"
+                  value={appointmentFormData.scheduledDate}
+                  onChange={(e) => setAppointmentFormData({ ...appointmentFormData, scheduledDate: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
                 <textarea
+                  value={appointmentFormData.notes}
+                  onChange={(e) => setAppointmentFormData({ ...appointmentFormData, notes: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={2}
                 />
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowAppointmentForm(false)}
+                  onClick={() => {
+                    setShowAppointmentForm(false)
+                    setAppointmentFormData({ servicePersonName: '', scheduledDate: '', notes: '' })
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
                   取消

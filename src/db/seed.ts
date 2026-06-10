@@ -175,6 +175,7 @@ async function seed() {
     repairmanName: '刘师傅',
     repairDate: '2024-06-05',
     description: '已更换新的燃气软管，长度1.5米',
+    completedAt: new Date('2024-06-05'),
   })
 
   await db.insert(historyNodes).values({

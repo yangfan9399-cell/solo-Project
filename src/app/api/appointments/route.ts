@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { appointments, inspections, historyNodes } from '@/db/schema'
+import { appointments, residents, historyNodes } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 export async function POST(request: Request) {
   const body = await request.json()
 
-  const inspection = await db
-    .select({ id: inspections.id })
-    .from(inspections)
-    .where(eq(inspections.id, body.inspectionId))
+  const resident = await db
+    .select({ id: residents.id })
+    .from(residents)
+    .where(eq(residents.id, body.residentId))
     .limit(1)
 
-  if (!inspection[0]) {
-    return NextResponse.json({ error: 'Inspection not found' }, { status: 404 })
+  if (!resident[0]) {
+    return NextResponse.json({ error: 'Resident not found' }, { status: 404 })
   }
 
   const newAppointment = await db
     .insert(appointments)
     .values({
       inspectionId: body.inspectionId,
-      residentId: inspection[0].id,
+      residentId: body.residentId,
       servicePersonName: body.servicePersonName || '客服人员',
       scheduledDate: body.scheduledDate || new Date().toISOString().split('T')[0],
       status: body.status || 'pending',
