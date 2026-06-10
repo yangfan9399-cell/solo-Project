@@ -351,19 +351,25 @@
 
 @section Scripts {
     <script>
-        document.getElementById('yardAreaSelect').addEventListener('change', function() {
-            var areaId = this.value;
-            var zoneSelect = document.getElementById('isolationZoneSelect');
-            var options = zoneSelect.querySelectorAll('option');
-            
-            options.forEach(function(option) {
-                if (option.value === '') {
-                    option.style.display = '';
-                } else {
-                    var zoneAreaId = option.getAttribute('data-area-id');
-                    option.style.display = (zoneAreaId === areaId || !areaId) ? '' : 'none';
-                }
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+            var yardAreaSelect = document.getElementById('yardAreaSelect');
+            if (yardAreaSelect) {
+                yardAreaSelect.addEventListener('change', function() {
+                    var areaId = this.value;
+                    var zoneSelect = document.getElementById('isolationZoneSelect');
+                    if (zoneSelect) {
+                        var options = zoneSelect.querySelectorAll('option');
+                        options.forEach(function(option) {
+                            if (option.value === '') {
+                                option.style.display = '';
+                            } else {
+                                var zoneAreaId = option.getAttribute('data-area-id');
+                                option.style.display = (zoneAreaId === areaId || !areaId) ? '' : 'none';
+                            }
+                        });
+                    }
+                });
+            }
         });
     </script>
 }
