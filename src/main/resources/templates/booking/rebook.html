@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="base :: layout(~{::content})">
+<body>
+    <div class="content" th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">航班改签</div>
+                <a href="/booking/{id}" th:href="@{/booking/{id}(id=${booking.id})}" class="btn btn-secondary">返回详情</a>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">当前航班</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">航班号</div>
+                        <div class="info-value" th:text="${booking.flight.flightNumber}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">航线</div>
+                        <div class="info-value" th:text="${booking.flight.departureCity} -> ${booking.flight.arrivalCity}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">出发时间</div>
+                        <div class="info-value" th:text="${booking.flight.departureTime}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">改签次数</div>
+                        <div class="info-value" th:text="${booking.rebookingCount}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">选择新航班</div>
+                <form th:action="@{/booking/{id}/rebook(id=${booking.id})}" method="post">
+                    <div class="form-group">
+                        <label>新航班 *</label>
+                        <select name="flightId" class="form-control" required>
+                            <option value="">请选择航班</option>
+                            <option th:each="flight : ${flights}" 
+                                    th:value="${flight.id}" 
+                                    th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} -> ${flight.arrivalCity} (' + ${flight.departureTime} + ')">
+                            </option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary">确认改签</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="base :: layout(~{::content})">
+<body>
+    <div class="content" th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">预约列表</div>
+                <a href="/booking/create" class="btn btn-primary">+ 创建预约</a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>预约编号</th>
+                        <th>宠物信息</th>
+                        <th>航班信息</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td><a th:href="@{/booking/{id}(id=${booking.id})}" th:text="${booking.bookingNumber}"></a></td>
+                        <td>
+                            <div>
+                                <span th:text="${booking.pet.name}"></span>
+                                <span th:text="'-' + ${booking.pet.petType.description}"></span>
+                            </div>
+                            <div th:text="${booking.owner.name}" style="font-size: 0.875rem; color: #666;"></div>
+                        </td>
+                        <td>
+                            <div th:text="${booking.flight.flightNumber}"></div>
+                            <div th:text="${booking.flight.departureCity} + ' -> ' + ${booking.flight.arrivalCity}" style="font-size: 0.875rem; color: #666;"></div>
+                        </td>
+                        <td>
+                            <span th:class="'status status-' + ${booking.status.toString().toLowerCase().replace('_', '-')}" 
+                                  th:text="${booking.status.description}"></span>
+                        </td>
+                        <td th:text="${booking.createdAt}"></td>
+                        <td>
+                            <a href="#" th:href="@{/booking/{id}(id=${booking.id})}" class="btn btn-secondary" style="font-size: 0.875rem; padding: 0.3rem 0.6rem;">详情</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="base :: layout(~{::content})">
+<body>
+    <div class="content" th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">预约详情</div>
+                    <span th:class="'status status-' + ${booking.status.toString().toLowerCase().replace('_', '-')}" 
+                          th:text="${booking.status.description}"></span>
+                </div>
+                <a href="/booking/list" class="btn btn-secondary">返回列表</a>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">预约信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">预约编号</div>
+                        <div class="info-value" th:text="${booking.bookingNumber}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">创建时间</div>
+                        <div class="info-value" th:text="${booking.createdAt}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">创建人</div>
+                        <div class="info-value" th:text="${booking.createdBy}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">改签次数</div>
+                        <div class="info-value" th:text="${booking.rebookingCount}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">宠物信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">宠物名称</div>
+                        <div class="info-value" th:text="${booking.pet.name}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">宠物类型</div>
+                        <div class="info-value" th:text="${booking.pet.petType.description}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">品种</div>
+                        <div class="info-value" th:text="${booking.pet.breed}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">年龄</div>
+                        <div class="info-value" th:text="${booking.pet.age} + '岁'"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">体重</div>
+                        <div class="info-value" th:text="${booking.pet.weight} + 'kg'"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">毛色</div>
+                        <div class="info-value" th:text="${booking.pet.color}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">芯片编号</div>
+                        <div class="info-value" th:text="${booking.pet.microchipId}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">主人信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">姓名</div>
+                        <div class="info-value" th:text="${booking.owner.name}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">身份证号</div>
+                        <div class="info-value" th:text="${booking.owner.idCard}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">联系电话</div>
+                        <div class="info-value" th:text="${booking.owner.phone}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">邮箱</div>
+                        <div class="info-value" th:text="${booking.owner.email}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">地址</div>
+                        <div class="info-value" th:text="${booking.owner.address}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">航班信息</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">航班号</div>
+                        <div class="info-value" th:text="${booking.flight.flightNumber}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">航空公司</div>
+                        <div class="info-value" th:text="${booking.flight.airline}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">出发城市</div>
+                        <div class="info-value" th:text="${booking.flight.departureCity}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">到达城市</div>
+                        <div class="info-value" th:text="${booking.flight.arrivalCity}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">出发时间</div>
+                        <div class="info-value" th:text="${booking.flight.departureTime}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">到达时间</div>
+                        <div class="info-value" th:text="${booking.flight.arrivalTime}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">检疫证明</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">证明编号</div>
+                        <div class="info-value" th:text="${booking.certificate.certificateNumber}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">签发日期</div>
+                        <div class="info-value" th:text="${booking.certificate.issueDate}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">有效期至</div>
+                        <div class="info-value" th:text="${booking.certificate.expiryDate}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">签发机构</div>
+                        <div class="info-value" th:text="${booking.certificate.issuingAuthority}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">兽医姓名</div>
+                        <div class="info-value" th:text="${booking.certificate.vetName}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">审核状态</div>
+                        <div class="info-value" th:text="${booking.certificate.isVerified ? '已审核' : '未审核'}"></div>
+                    </div>
+                </div>
+                <div th:if="${booking.certificate.isExpired()}" class="alert alert-danger">
+                    ⚠️ 检疫证明已过期，禁止交运！
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">航空箱规格</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">长度</div>
+                        <div class="info-value" th:text="${booking.crate.length} + 'cm'"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">宽度</div>
+                        <div class="info-value" th:text="${booking.crate.width} + 'cm'"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">高度</div>
+                        <div class="info-value" th:text="${booking.crate.height} + 'cm'"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">材质</div>
+                        <div class="info-value" th:text="${booking.crate.material}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">通风口</div>
+                        <div class="info-value" th:text="${booking.crate.hasVentilation ? '有' : '无'}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">接尿盘</div>
+                        <div class="info-value" th:text="${booking.crate.hasDripTray ? '有' : '无'}"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">审核状态</div>
+                        <div class="info-value" th:text="${booking.crate.isApproved ? '已确认' : '未确认'}"></div>
+                    </div>
+                    <div class="info-item" th:if="${booking.crate.checkNotes}">
+                        <div class="info-label">审核备注</div>
+                        <div class="info-value" th:text="${booking.crate.checkNotes}"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">操作历史</div>
+                <ul class="history-list">
+                    <li th:each="h : ${history}" class="history-item">
+                        <div>
+                            <div class="history-type" th:text="${h.historyType.description}"></div>
+                            <div th:if="${h.notes}" class="history-meta" th:text="${h.notes}"></div>
+                        </div>
+                        <div class="history-meta">
+                            <div th:text="${h.operator}"></div>
+                            <div th:text="${h.createdAt}"></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="section" style="margin-top: 2rem;">
+                <div class="section-title">操作</div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <form th:if="${booking.status == 'PENDING' || booking.status == 'CERTIFICATE_EXPIRED'}" 
+                          th:action="@{/booking/{id}/verify-certificate(id=${booking.id})}" 
+                          method="post">
+                        <button type="submit" class="btn btn-success">审核检疫证明</button>
+                    </form>
+                    
+                    <form th:if="${booking.status == 'CERTIFICATE_VERIFIED'}" 
+                          th:action="@{/booking/{id}/approve-crate(id=${booking.id})}" 
+                          method="post">
+                        <button type="submit" class="btn btn-success">确认航空箱</button>
+                    </form>
+                    
+                    <form th:if="${booking.status == 'CERTIFICATE_VERIFIED'}" 
+                          th:action="@{/booking/{id}/reject-crate(id=${booking.id})}" 
+                          method="post">
+                        <input type="hidden" name="reason" value="航空箱不合规"/>
+                        <button type="submit" class="btn btn-danger">拒绝航空箱</button>
+                    </form>
+                    
+                    <form th:if="${canCheckIn}" 
+                          th:action="@{/booking/{id}/check-in(id=${booking.id})}" 
+                          method="post">
+                        <button type="submit" class="btn btn-primary">航班交运</button>
+                    </form>
+                    <div th:if="${!canCheckIn && booking.status == 'CRATE_APPROVED' && !booking.certificate.isExpired()}" class="alert alert-warning">
+                        当前状态不允许交运
+                    </div>
+                    
+                    <a th:href="@{/booking/{id}/rebook(id=${booking.id})}" 
+                       th:if="${booking.status != 'CHECKED_IN' && booking.status != 'COMPLETED' && booking.status != 'CANCELLED'}"
+                       class="btn btn-warning">航班改签</a>
+                    
+                    <form th:if="${booking.status != 'CHECKED_IN' && booking.status != 'COMPLETED'}" 
+                          th:action="@{/booking/{id}/cancel(id=${booking.id})}" 
+                          method="post">
+                        <button type="submit" class="btn btn-danger">取消预约</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

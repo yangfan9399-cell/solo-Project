@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="base :: layout(~{::content})">
+<body>
+    <div class="content" th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">创建预约</div>
+                <a href="/booking/list" class="btn btn-secondary">返回列表</a>
+            </div>
+            
+            <form action="/booking/create" method="post">
+                <div class="section">
+                    <div class="section-title">宠物信息</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>宠物名称 *</label>
+                            <input type="text" name="petName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>宠物类型 *</label>
+                            <select name="petType" class="form-control" required>
+                                <option th:each="pt : ${petTypes}" th:value="${pt}" th:text="${pt.description}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>品种</label>
+                            <input type="text" name="petBreed" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>年龄(岁)</label>
+                            <input type="number" name="petAge" class="form-control" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>体重(kg) *</label>
+                            <input type="number" name="petWeight" class="form-control" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>毛色</label>
+                            <input type="text" name="petColor" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>芯片编号</label>
+                            <input type="text" name="microchipId" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">主人信息</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>姓名 *</label>
+                            <input type="text" name="ownerName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>身份证号 *</label>
+                            <input type="text" name="ownerIdCard" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>联系电话 *</label>
+                            <input type="tel" name="ownerPhone" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>邮箱</label>
+                            <input type="email" name="ownerEmail" class="form-control">
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>地址</label>
+                            <input type="text" name="ownerAddress" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">航班信息</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>选择航班 *</label>
+                            <select name="flightId" class="form-control" required>
+                                <option value="">请选择航班</option>
+                                <option th:each="flight : ${flights}" 
+                                        th:value="${flight.id}" 
+                                        th:text="${flight.flightNumber} + ' - ' + ${flight.departureCity} -> ${flight.arrivalCity} (' + ${flight.departureTime} + ')">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">检疫证明</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>证明编号 *</label>
+                            <input type="text" name="certificateNumber" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>签发日期 *</label>
+                            <input type="date" name="issueDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>有效期至 *</label>
+                            <input type="date" name="expiryDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>签发机构 *</label>
+                            <input type="text" name="issuingAuthority" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>兽医姓名</label>
+                            <input type="text" name="vetName" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">航空箱规格</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>长度(cm) *</label>
+                            <input type="number" name="crateLength" class="form-control" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>宽度(cm) *</label>
+                            <input type="number" name="crateWidth" class="form-control" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>高度(cm) *</label>
+                            <input type="number" name="crateHeight" class="form-control" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>材质</label>
+                            <select name="crateMaterial" class="form-control">
+                                <option value="塑料">塑料</option>
+                                <option value="金属">金属</option>
+                                <option value="木质">木质</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: inline; margin-right: 1rem;">
+                                <input type="checkbox" name="hasVentilation" checked> 有通风口
+                            </label>
+                            <label style="display: inline;">
+                                <input type="checkbox" name="hasDripTray"> 有接尿盘
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">创建预约</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

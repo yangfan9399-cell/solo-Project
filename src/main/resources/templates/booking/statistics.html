@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="base :: layout(~{::content})">
+<body>
+    <div class="content" th:fragment="content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">数据复盘</div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${totalBookings}"></div>
+                    <div class="stat-label">总预约数</div>
+                </div>
+            </div>
+            
+            <div class="section" style="margin-top: 2rem;">
+                <div class="section-title">航线分布</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>航线</th>
+                            <th>数量</th>
+                            <th>占比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="(route, count) : ${routeStats}">
+                            <td th:text="${route}"></td>
+                            <td th:text="${count}"></td>
+                            <td th:text="${(count * 100 / totalBookings) + '%'}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">宠物类型分布</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>宠物类型</th>
+                            <th>数量</th>
+                            <th>占比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="(petType, count) : ${petTypeStats}">
+                            <td th:text="${petType.description}"></td>
+                            <td th:text="${count}"></td>
+                            <td th:text="${(count * 100 / totalBookings) + '%'}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">异常原因统计</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>异常原因</th>
+                            <th>数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="(reason, count) : ${exceptionStats}">
+                            <td th:text="${reason}"></td>
+                            <td th:text="${count}"></td>
+                        </tr>
+                        <tr th:if="${exceptionStats.isEmpty()}">
+                            <td colspan="2" style="text-align: center; color: #9ca3af;">暂无异常记录</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">改签次数分布</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>改签次数</th>
+                            <th>数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="(count, bookings) : ${rebookingStats}">
+                            <td th:text="${count == 0 ? '未改签' : count + '次'}"></td>
+                            <td th:text="${bookings}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
