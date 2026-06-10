@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import {
   ArrowLeft,
@@ -13,6 +15,11 @@ import {
   Camera,
   AlertCircle,
   Tag,
+  PhoneCall,
+  Wrench,
+  Check,
+  Power,
+  Plus,
 } from 'lucide-react'
 
 interface Hazard {
@@ -85,6 +92,9 @@ export default function InspectionDetailPage({
 }) {
   const [detail, setDetail] = useState<InspectionDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false)
+  const [showRectificationForm, setShowRectificationForm] = useState(false)
+  const [selectedHazardId, setSelectedHazardId] = useState<number | null>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -95,6 +105,62 @@ export default function InspectionDetailPage({
     }
     fetchData()
   }, [params.id])
+
+  const handleCreateAppointment = async () => {
+    if (!detail) return
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inspectionId: detail.id,
+        residentId: detail.residentName,
+        servicePersonName: '客服人员',
+        scheduledDate: new Date().toISOString().split('T')[0],
+        status: 'pending',
+        notes: '新预约',
+        isSecondAttempt: detail.status === 'rejected',
+      }),
+    })
+    if (response.ok) {
+      setShowAppointmentForm(false)
+      window.location.reload()
+    }
+  }
+
+  const handleSubmitRectification = async () => {
+    if (!selectedHazardId || !detail) return
+    const response = await fetch('/api/rectifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hazardId: selectedHazardId,
+        status: 'completed',
+        repairmanName: '维修师傅',
+        repairDate: new Date().toISOString().split('T')[0],
+        description: '已完成整改',
+      }),
+    })
+    if (response.ok) {
+      setShowRectificationForm(false)
+      setSelectedHazardId(null)
+      window.location.reload()
+    }
+  }
+
+  const handleReview = async (action: 'approve' | 'stop') => {
+    if (!detail) return
+    const response = await fetch('/api/inspections/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inspectionId: detail.id,
+        action,
+      }),
+    })
+    if (response.ok) {
+      window.location.reload()
+    }
+  }
 
   const getHazardLevelConfig = (level: string) => {
     const config = {
@@ -184,22 +250,68 @@ export default function InspectionDetailPage({
     )
   }
 
+  const canCreateAppointment = detail.status !== 'completed'
+  const canSubmitRectification = detail.hazards.some(h => 
+    !detail.rectifications.some(r => r.hazardId === h.id)
+  )
+  const canReview = detail.rectifications.some(r => r.status === 'completed')
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.history.back()}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">安检详情</h1>
-              <p className="text-sm text-gray-500">
-                {detail.community} {detail.building} {detail.floor}楼{detail.room}室
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">安检详情</h1>
+                <p className="text-sm text-gray-500">
+                  {detail.community} {detail.building} {detail.floor}楼{detail.room}室
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {canCreateAppointment && (
+                <button
+                  onClick={() => setShowAppointmentForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  <PhoneCall className="w-4 h-4" />
+                  预约跟进
+                </button>
+              )}
+              {canSubmitRectification && (
+                <button
+                  onClick={() => setShowRectificationForm(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  <Wrench className="w-4 h-4" />
+                  提交整改
+                </button>
+              )}
+              {canReview && (
+                <>
+                  <button
+                    onClick={() => handleReview('approve')}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    <Check className="w-4 h-4" />
+                    复核通过
+                  </button>
+                  <button
+                    onClick={() => handleReview('stop')}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    <Power className="w-4 h-4" />
+                    停气处理
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -306,6 +418,7 @@ export default function InspectionDetailPage({
                   {detail.hazards.map((hazard) => {
                     const levelConfig = getHazardLevelConfig(hazard.level)
                     const LevelIcon = levelConfig.icon
+                    const rectification = detail.rectifications.find(r => r.hazardId === hazard.id)
                     return (
                       <div
                         key={hazard.id}
@@ -323,6 +436,19 @@ export default function InspectionDetailPage({
                               {levelConfig.label}
                             </span>
                           </div>
+                          {rectification && (
+                            <span
+                              className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                rectification.status === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : rectification.status === 'overdue'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              {getRectificationStatusLabel(rectification.status)}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600">{hazard.description}</p>
                         <div className="mt-3 flex gap-2">
@@ -359,71 +485,79 @@ export default function InspectionDetailPage({
                   <h3 className="font-semibold text-gray-900">整改记录</h3>
                 </div>
                 <div className="space-y-4">
-                  {detail.rectifications.map((rect) => (
-                    <div
-                      key={rect.id}
-                      className="border border-gray-100 rounded-lg p-4"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            rect.status === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : rect.status === 'overdue'
-                              ? 'bg-red-100 text-red-800'
-                              : rect.status === 'stopped'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {getRectificationStatusLabel(rect.status)}
-                        </span>
-                      </div>
-                      {rect.repairmanName && (
-                        <div className="text-sm text-gray-600 mb-1">
-                          维修人员: {rect.repairmanName}
+                  {detail.rectifications.map((rect) => {
+                    const hazard = detail.hazards.find(h => h.id === rect.hazardId)
+                    return (
+                      <div
+                        key={rect.id}
+                        className="border border-gray-100 rounded-lg p-4"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                              rect.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : rect.status === 'overdue'
+                                ? 'bg-red-100 text-red-800'
+                                : rect.status === 'stopped'
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {getRectificationStatusLabel(rect.status)}
+                          </span>
+                          {hazard && (
+                            <span className="text-xs text-gray-500">
+                              隐患类型: {getHazardTypeLabel(hazard.type)}
+                            </span>
+                          )}
                         </div>
-                      )}
-                      {rect.repairDate && (
-                        <div className="text-sm text-gray-600 mb-1">
-                          维修日期: {new Date(rect.repairDate).toLocaleDateString()}
-                        </div>
-                      )}
-                      {rect.description && (
-                        <p className="text-sm text-gray-600">{rect.description}</p>
-                      )}
-                      <div className="mt-3 flex gap-4">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">整改前</div>
-                          <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                            {rect.beforePhotos.length > 0 ? (
-                              <img
-                                src={rect.beforePhotos[0]}
-                                alt="整改前"
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            ) : (
-                              <Camera className="w-8 h-8 text-gray-400" />
-                            )}
+                        {rect.repairmanName && (
+                          <div className="text-sm text-gray-600 mb-1">
+                            维修人员: {rect.repairmanName}
+                          </div>
+                        )}
+                        {rect.repairDate && (
+                          <div className="text-sm text-gray-600 mb-1">
+                            维修日期: {new Date(rect.repairDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {rect.description && (
+                          <p className="text-sm text-gray-600">{rect.description}</p>
+                        )}
+                        <div className="mt-3 flex gap-4">
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">整改前</div>
+                            <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
+                              {rect.beforePhotos.length > 0 ? (
+                                <img
+                                  src={rect.beforePhotos[0]}
+                                  alt="整改前"
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <Camera className="w-8 h-8 text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">整改后</div>
+                            <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
+                              {rect.afterPhotos.length > 0 ? (
+                                <img
+                                  src={rect.afterPhotos[0]}
+                                  alt="整改后"
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              ) : (
+                                <Camera className="w-8 h-8 text-gray-400" />
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">整改后</div>
-                          <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                            {rect.afterPhotos.length > 0 ? (
-                              <img
-                                src={rect.afterPhotos[0]}
-                                alt="整改后"
-                                className="w-full h-full object-cover rounded-lg"
-                              />
-                            ) : (
-                              <Camera className="w-8 h-8 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -432,9 +566,19 @@ export default function InspectionDetailPage({
           <div className="space-y-6">
             {detail.appointments.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-blue-500" />
-                  <h3 className="font-semibold text-gray-900">预约记录</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-500" />
+                    <h3 className="font-semibold text-gray-900">预约记录</h3>
+                  </div>
+                  {canCreateAppointment && (
+                    <button
+                      onClick={() => setShowAppointmentForm(true)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-blue-500" />
+                    </button>
+                  )}
                 </div>
                 <div className="space-y-3">
                   {detail.appointments.map((appt) => (
@@ -537,6 +681,118 @@ export default function InspectionDetailPage({
           </div>
         </div>
       </main>
+
+      {showAppointmentForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">创建预约</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">客服人员</label>
+                <input
+                  type="text"
+                  defaultValue="客服人员"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">预约日期</label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                <textarea
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={2}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAppointmentForm(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleCreateAppointment}
+                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  确认创建
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRectificationForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">提交整改</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">选择隐患</label>
+                <select
+                  value={selectedHazardId || ''}
+                  onChange={(e) => setSelectedHazardId(parseInt(e.target.value))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">请选择隐患</option>
+                  {detail.hazards.map(hazard => (
+                    <option key={hazard.id} value={hazard.id}>
+                      {getHazardTypeLabel(hazard.type)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">维修人员</label>
+                <input
+                  type="text"
+                  defaultValue="维修师傅"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">维修日期</label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">整改说明</label>
+                <textarea
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  rows={2}
+                  placeholder="请描述整改内容..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowRectificationForm(false)
+                    setSelectedHazardId(null)
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSubmitRectification}
+                  disabled={!selectedHazardId}
+                  className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  提交整改
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

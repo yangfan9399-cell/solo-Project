@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import {
   Search,
@@ -155,7 +157,7 @@ export default function HomePage() {
                   key={item.id}
                   className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group"
                   onClick={() =>
-                    (window.location.href = `/inspection/${item.id}`)
+                    window.location.href = `/inspection/${item.id}`
                   }
                 >
                   <div className="flex items-start justify-between">

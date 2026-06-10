@@ -1,9 +1,10 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import {
   BarChart3,
   PieChart,
   AlertTriangle,
-  CheckCircle,
   XCircle,
   TrendingUp,
   Clock,
@@ -30,13 +31,21 @@ interface RejectionStat {
   secondAttemptCount: number
 }
 
+interface CycleStat {
+  avgDays: number
+  overdueCount: number
+  completedCount: number
+  pendingCount: number
+}
+
 interface ReviewData {
   communityStats: CommunityStat[]
   hazardTypeStats: HazardTypeStat[]
   rejectionStats: RejectionStat[]
-  totalInspections: { count: number }[]
-  totalHazards: { count: number }[]
-  totalRejections: { count: number }[]
+  cycleStats: CycleStat
+  totalInspections: number
+  totalHazards: number
+  totalRejections: number
 }
 
 export default function ReviewPage() {
@@ -65,14 +74,6 @@ export default function ReviewPage() {
     return labels[type] || type
   }
 
-  const maxHazardCount = Math.max(
-    ...(data?.hazardTypeStats.map((h) => h.count) || [1])
-  )
-
-  const maxRejectCount = Math.max(
-    ...(data?.rejectionStats.map((r) => r.rejectCount) || [1])
-  )
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -92,6 +93,14 @@ export default function ReviewPage() {
       </div>
     )
   }
+
+  const maxHazardCount = Math.max(
+    ...(data.hazardTypeStats.map((h) => h.count) || [1])
+  )
+
+  const maxRejectCount = Math.max(
+    ...(data.rejectionStats.map((r) => r.rejectCount) || [1])
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -119,7 +128,7 @@ export default function ReviewPage() {
               <div>
                 <div className="text-sm text-gray-500 mb-1">总安检数</div>
                 <div className="text-3xl font-bold text-gray-900">
-                  {data.totalInspections[0]?.count || 0}
+                  {data.totalInspections}
                 </div>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -133,7 +142,7 @@ export default function ReviewPage() {
               <div>
                 <div className="text-sm text-gray-500 mb-1">发现隐患</div>
                 <div className="text-3xl font-bold text-red-600">
-                  {data.totalHazards[0]?.count || 0}
+                  {data.totalHazards}
                 </div>
               </div>
               <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -147,7 +156,7 @@ export default function ReviewPage() {
               <div>
                 <div className="text-sm text-gray-500 mb-1">用户拒检</div>
                 <div className="text-3xl font-bold text-orange-600">
-                  {data.totalRejections[0]?.count || 0}
+                  {data.totalRejections}
                 </div>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -159,16 +168,13 @@ export default function ReviewPage() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-500 mb-1">整改完成</div>
+                <div className="text-sm text-gray-500 mb-1">平均整改周期</div>
                 <div className="text-3xl font-bold text-green-600">
-                  {data.communityStats.reduce(
-                    (sum, c) => sum + (c.completedInspections || 0),
-                    0
-                  )}
+                  {data.cycleStats.avgDays}天
                 </div>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+                <Clock className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </div>
@@ -187,13 +193,13 @@ export default function ReviewPage() {
                     <span className="font-medium text-gray-900">{stat.community}</span>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-gray-600">
-                        总数: {stat.totalInspections || 0}
+                        总数: {stat.totalInspections}
                       </span>
                       <span className="text-green-600">
-                        完成: {stat.completedInspections || 0}
+                        完成: {stat.completedInspections}
                       </span>
                       <span className="text-red-600">
-                        拒检: {stat.rejectedInspections || 0}
+                        拒检: {stat.rejectedInspections}
                       </span>
                     </div>
                   </div>
@@ -266,9 +272,9 @@ export default function ReviewPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-gray-900">{stat.community}</span>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-red-600">拒检: {stat.rejectCount || 0}</span>
+                      <span className="text-red-600">拒检: {stat.rejectCount}</span>
                       <span className="text-blue-600">
-                        二次预约: {stat.secondAttemptCount || 0}
+                        二次预约: {stat.secondAttemptCount}
                       </span>
                     </div>
                   </div>
@@ -304,25 +310,33 @@ export default function ReviewPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-green-50 rounded-lg p-4">
                   <div className="text-sm text-green-600 mb-1">平均整改天数</div>
-                  <div className="text-2xl font-bold text-green-700">3.5</div>
+                  <div className="text-2xl font-bold text-green-700">
+                    {data.cycleStats.avgDays}
+                  </div>
                   <div className="flex items-center gap-1 mt-1">
                     <TrendingUp className="w-4 h-4 text-green-600" />
                     <span className="text-xs text-green-600">较上月减少 1.2 天</span>
                   </div>
                 </div>
                 <div className="bg-red-50 rounded-lg p-4">
-                  <div className="text-sm text-red-600 mb-1">逾期率</div>
-                  <div className="text-2xl font-bold text-red-700">25%</div>
-                  <div className="text-xs text-red-600 mt-1">共 1 条逾期记录</div>
+                  <div className="text-sm text-red-600 mb-1">逾期数</div>
+                  <div className="text-2xl font-bold text-red-700">
+                    {data.cycleStats.overdueCount}
+                  </div>
+                  <div className="text-xs text-red-600 mt-1">整改逾期记录</div>
                 </div>
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-sm text-blue-600 mb-1">按时完成率</div>
-                  <div className="text-2xl font-bold text-blue-700">75%</div>
-                  <div className="text-xs text-blue-600 mt-1">3 条按时完成</div>
+                  <div className="text-sm text-blue-600 mb-1">按时完成数</div>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {data.cycleStats.completedCount}
+                  </div>
+                  <div className="text-xs text-blue-600 mt-1">按时完成整改</div>
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="text-sm text-yellow-600 mb-1">待整改</div>
-                  <div className="text-2xl font-bold text-yellow-700">1</div>
+                  <div className="text-sm text-yellow-600 mb-1">待整改数</div>
+                  <div className="text-2xl font-bold text-yellow-700">
+                    {data.cycleStats.pendingCount}
+                  </div>
                   <div className="text-xs text-yellow-600 mt-1">待处理隐患</div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { inspections, residents, hazards, appointments } from '@/db/schema'
+import { inspections, residents, hazards, appointments, rectifications } from '@/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 
 export async function GET() {
@@ -89,6 +89,36 @@ export async function GET() {
     })
   )
 
+  const allRectifications = await db
+    .select({
+      status: rectifications.status,
+      repairDate: rectifications.repairDate,
+      completedAt: rectifications.completedAt,
+    })
+    .from(rectifications)
+
+  const completedRectifications = allRectifications.filter(
+    (r) => r.status === 'completed' && r.repairDate && r.completedAt
+  )
+
+  const totalDays = completedRectifications.reduce((sum, r) => {
+    if (r.repairDate && r.completedAt) {
+      const repairDate = new Date(r.repairDate)
+      const completedAt = new Date(r.completedAt)
+      const diffTime = Math.abs(completedAt.getTime() - repairDate.getTime())
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      return sum + diffDays
+    }
+    return sum
+  }, 0)
+
+  const avgDays = completedRectifications.length > 0
+    ? Math.round(totalDays / completedRectifications.length)
+    : 0
+
+  const overdueCount = allRectifications.filter((r) => r.status === 'overdue').length
+  const pendingCount = allRectifications.filter((r) => r.status === 'pending').length
+
   const totalInspections = await db.select({ count: inspections.id }).from(inspections)
   const totalHazards = await db.select({ count: hazards.id }).from(hazards)
   const totalRejections = await db
@@ -100,9 +130,15 @@ export async function GET() {
     communityStats,
     hazardTypeStats,
     rejectionStats,
-    totalInspections: [{ count: totalInspections.length }],
-    totalHazards: [{ count: totalHazards.length }],
-    totalRejections: [{ count: totalRejections.length }],
+    cycleStats: {
+      avgDays,
+      overdueCount,
+      completedCount: completedRectifications.length,
+      pendingCount,
+    },
+    totalInspections: totalInspections.length,
+    totalHazards: totalHazards.length,
+    totalRejections: totalRejections.length,
   }
 
   return NextResponse.json(result)

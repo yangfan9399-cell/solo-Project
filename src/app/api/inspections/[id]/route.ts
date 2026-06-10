@@ -9,7 +9,7 @@ import {
   appointments,
   historyNodes,
 } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 
 export async function GET(
   _request: Request,
@@ -60,6 +60,7 @@ export async function GET(
     .where(eq(hazards.inspectionId, id))
 
   const hazardIds = hazardList.map((h) => h.id)
+
   const rectList = hazardIds.length > 0
     ? await db
         .select({
@@ -75,6 +76,7 @@ export async function GET(
           createdAt: rectifications.createdAt,
         })
         .from(rectifications)
+        .where(inArray(rectifications.hazardId, hazardIds))
     : []
 
   const apptList = await db
