@@ -50,8 +50,12 @@
   <div class="card-footer">
     <div class="btn-group">
       <% if @report.reissue_requested? %>
-        <%= link_to "批准补打", approve_reissue_admin_report_path(@report), method: :post, class: "btn btn-success" %>
-        <%= link_to "拒绝补打", reject_reissue_admin_report_path(@report), method: :post, class: "btn btn-danger", data: { confirm: "确定拒绝此补打申请?" } %>
+        <%= form_tag approve_reissue_admin_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "批准补打", class: "btn btn-success" %>
+        <% end %>
+        <%= form_tag reject_reissue_admin_report_path(@report), method: :post, class: "d-inline" do %>
+          <%= submit_tag "拒绝补打", class: "btn btn-danger", data: { confirm: "确定拒绝此补打申请?" } %>
+        <% end %>
       <% end %>
       <%= link_to "返回列表", admin_reports_path, class: "btn btn-secondary" %>
     </div>

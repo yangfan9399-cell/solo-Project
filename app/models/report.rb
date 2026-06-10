@@ -68,7 +68,7 @@ class Report < ApplicationRecord
   end
 
   def id_mismatch?
-    history_records.where(operation: "id_mismatch").exists?
+    history_records.where(operation: "exception", remark: "身份证不符").exists? || remark == "id_mismatch"
   end
 
   def add_history(operation, operator, remark = nil)
