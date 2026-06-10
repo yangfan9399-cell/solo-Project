@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>摊位管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .sidebar a.active { background: #667eea; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .btn-danger { background: #dc2626; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f7fafc; font-weight: 600; }
+        .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .status.leased { background: #dcfce7; color: #166534; }
+        .status.available { background: #fef3c7; color: #92400e; }
+        .status.suspended { background: #fee2e2; color: #991b1b; }
+        .actions { display: flex; gap: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/admin/stalls" class="active">摊位管理</a>
+        <a href="/admin/tenants">摊主管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="card">
+            <div class="card-header">
+                <h2>摊位列表</h2>
+                <a href="/admin/stalls/new" class="btn">新建摊位</a>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>摊位编号</th>
+                        <th>区域</th>
+                        <th>经营品类</th>
+                        <th>面积(㎡)</th>
+                        <th>月租(元)</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="stall : ${stalls}">
+                        <td><a th:href="@{/admin/stalls/{id}(id=${stall.id})}" th:text="${stall.stallCode}"></a></td>
+                        <td th:text="${stall.area}"></td>
+                        <td th:text="${stall.category}"></td>
+                        <td th:text="${stall.size}"></td>
+                        <td th:text="${stall.monthlyRent}"></td>
+                        <td><span th:class="['status', ${stall.status}]" th:text="${stall.status}"></span></td>
+                        <td class="actions">
+                            <a th:href="@{/admin/stalls/{id}(id=${stall.id})}" class="btn btn-secondary">详情</a>
+                            <a th:href="@{/admin/stalls/{id}/edit(id=${stall.id})}" class="btn btn-secondary">编辑</a>
+                            <a th:href="@{/admin/stalls/{id}/delete(id=${stall.id})}" class="btn btn-danger">删除</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

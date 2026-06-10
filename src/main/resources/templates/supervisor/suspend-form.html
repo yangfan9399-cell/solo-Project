@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>停租处理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 30px; max-width: 600px; }
+        .card h2 { margin-bottom: 25px; color: #2d3748; }
+        .warning { background: #fee2e2; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #991b1b; }
+        .info-box { background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .btn-danger { background: #dc2626; }
+        .form-actions { display: flex; gap: 10px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/supervisor/violations">违规复核</a>
+        <a href="/supervisor/stalls">摊位管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="card">
+            <h2>停租处理</h2>
+            <div class="warning">
+                <strong>警告:</strong> 此操作将终止该摊位的租赁合同，请谨慎操作！
+            </div>
+            <div class="info-box">
+                <p>摊位编号: <strong th:text="${stall.stallCode}"></strong></p>
+                <p>区域: <strong th:text="${stall.area}"></strong></p>
+                <p>经营品类: <strong th:text="${stall.category}"></strong></p>
+            </div>
+            
+            <form th:action="@{/supervisor/stalls/{id}/suspend(id=${stall.id})}" method="post">
+                <div class="form-group">
+                    <label for="remark">停租原因</label>
+                    <textarea id="remark" name="remark" rows="4" required></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-danger">确认停租</button>
+                    <a th:href="@{/supervisor/stalls/{id}(id=${stall.id})}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

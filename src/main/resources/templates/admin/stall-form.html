@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>摊位表单</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 30px; max-width: 600px; }
+        .card h2 { margin-bottom: 25px; color: #2d3748; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .form-actions { display: flex; gap: 10px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/admin/stalls">摊位管理</a>
+        <a href="/admin/tenants">摊主管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="card">
+            <h2 th:if="${stall.id == null}">新建摊位</h2>
+            <h2 th:else>编辑摊位</h2>
+            
+            <form th:action="@{/admin/stalls}" method="post" th:object="${stall}">
+                <input type="hidden" th:field="*{id}" />
+                
+                <div class="form-group">
+                    <label for="stallCode">摊位编号</label>
+                    <input type="text" id="stallCode" th:field="*{stallCode}" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="area">区域</label>
+                    <select id="area" th:field="*{area}">
+                        <option value="A区">A区</option>
+                        <option value="B区">B区</option>
+                        <option value="C区">C区</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">经营品类</label>
+                    <select id="category" th:field="*{category}">
+                        <option value="蔬菜">蔬菜</option>
+                        <option value="水果">水果</option>
+                        <option value="肉类">肉类</option>
+                        <option value="海鲜">海鲜</option>
+                        <option value="熟食">熟食</option>
+                        <option value="干货">干货</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="size">面积 (㎡)</label>
+                    <input type="number" id="size" th:field="*{size}" step="0.1" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="monthlyRent">月租金 (元)</label>
+                    <input type="number" id="monthlyRent" th:field="*{monthlyRent}" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="tenantId">摊主</label>
+                    <select id="tenantId" th:field="*{tenantId}">
+                        <option value="">未出租</option>
+                        <option th:each="tenant : ${tenants}" th:value="${tenant.id}" th:text="${tenant.name}"></option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">保存</button>
+                    <a href="/admin/stalls" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

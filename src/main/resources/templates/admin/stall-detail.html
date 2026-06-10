@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>摊位详情</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 20px; }
+        .card h3 { margin-bottom: 15px; color: #2d3748; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .btn-danger { background: #dc2626; }
+        .btn-disabled { background: #cbd5e1; cursor: not-allowed; }
+        .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .info-item { display: flex; justify-content: space-between; padding: 10px; background: #f7fafc; border-radius: 8px; }
+        .info-item label { color: #718096; }
+        .info-item value { font-weight: 500; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f7fafc; font-weight: 600; font-size: 13px; }
+        td { font-size: 13px; }
+        .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .status.valid { background: #dcfce7; color: #166534; }
+        .status.expired { background: #fee2e2; color: #991b1b; }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        .status.rectified { background: #dcfce7; color: #166534; }
+        .status.suspended { background: #fee2e2; color: #991b1b; }
+        .status.confirmed { background: #dcfce7; color: #166534; }
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+        .timeline-item { position: relative; margin-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -26px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #667eea; }
+        .timeline-item .type { font-weight: 600; color: #667eea; }
+        .timeline-item .desc { color: #4a5568; }
+        .timeline-item .meta { color: #a0aec0; font-size: 12px; margin-top: 5px; }
+        .actions-bar { margin-bottom: 20px; }
+        .error { color: #dc2626; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/admin/stalls">摊位管理</a>
+        <a href="/admin/tenants">摊主管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="actions-bar">
+            <a href="/admin/stalls" class="btn btn-secondary">返回列表</a>
+            <a th:if="${detail.stall.status == 'available'}" href="/admin/stalls/{id}/lease(id=${detail.stall.id})" class="btn">签订租赁</a>
+            <a th:if="${detail.stall.status == 'leased'}" href="/admin/stalls/{id}/renew(id=${detail.stall.id})" class="btn" th:classappend="${!detail.canRenew ? 'btn-disabled' : ''}" th:disabled="${!detail.canRenew}">续租</a>
+        </div>
+        
+        <div th:if="${param.error == 'license_expired'}" class="error">证照已过期，无法续租！请先更新证照信息。</div>
+        
+        <div class="card">
+            <h3>摊位信息</h3>
+            <div class="info-grid">
+                <div class="info-item"><label>摊位编号</label><value th:text="${detail.stall.stallCode}"></value></div>
+                <div class="info-item"><label>区域</label><value th:text="${detail.stall.area}"></value></div>
+                <div class="info-item"><label>经营品类</label><value th:text="${detail.stall.category}"></value></div>
+                <div class="info-item"><label>面积</label><value th:text="${detail.stall.size} ㎡"></value></div>
+                <div class="info-item"><label>月租金</label><value th:text="${detail.stall.monthlyRent} 元"></value></div>
+                <div class="info-item"><label>状态</label><value th:text="${detail.stall.status}"></value></div>
+                <div class="info-item"><label>租期开始</label><value th:text="${detail.stall.leaseStartDate}"></value></div>
+                <div class="info-item"><label>租期结束</label><value th:text="${detail.stall.leaseEndDate}"></value></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>摊主信息</h3>
+            <div th:if="${detail.tenant != null}" class="info-grid">
+                <div class="info-item"><label>姓名</label><value th:text="${detail.tenant.name}"></value></div>
+                <div class="info-item"><label>身份证号</label><value th:text="${detail.tenant.idCard}"></value></div>
+                <div class="info-item"><label>联系电话</label><value th:text="${detail.tenant.phone}"></value></div>
+                <div class="info-item"><label>地址</label><value th:text="${detail.tenant.address}"></value></div>
+            </div>
+            <div th:else>该摊位尚未出租</div>
+        </div>
+        
+        <div class="card">
+            <h3>缴费记录</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>缴费日期</th>
+                        <th>缴费周期</th>
+                        <th>金额</th>
+                        <th>支付方式</th>
+                        <th>状态</th>
+                        <th>操作人</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="payment : ${detail.paymentRecords}">
+                        <td th:text="${payment.paymentDate}"></td>
+                        <td th:text="${payment.paymentPeriod}"></td>
+                        <td th:text="${payment.amount}"></td>
+                        <td th:text="${payment.paymentMethod}"></td>
+                        <td><span th:class="['status', ${payment.status}]" th:text="${payment.status}"></span></td>
+                        <td th:text="${payment.operator}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>证照信息</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>证照类型</th>
+                        <th>证照编号</th>
+                        <th>签发日期</th>
+                        <th>到期日期</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="license : ${detail.licenses}">
+                        <td th:text="${license.licenseType}"></td>
+                        <td th:text="${license.licenseNumber}"></td>
+                        <td th:text="${license.issueDate}"></td>
+                        <td th:text="${license.expiryDate}"></td>
+                        <td><span th:class="['status', ${license.status}]" th:text="${license.status}"></span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>违规记录</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>违规类型</th>
+                        <th>描述</th>
+                        <th>扣分</th>
+                        <th>记录日期</th>
+                        <th>状态</th>
+                        <th>巡查员</th>
+                        <th>主管备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="violation : ${detail.violationRecords}">
+                        <td th:text="${violation.violationType}"></td>
+                        <td th:text="${violation.description}"></td>
+                        <td th:text="${violation.pointsDeducted}"></td>
+                        <td th:text="${violation.recordDate}"></td>
+                        <td><span th:class="['status', ${violation.status}]" th:text="${violation.status}"></span></td>
+                        <td th:text="${violation.inspector}"></td>
+                        <td th:text="${violation.supervisorRemark}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>历史节点</h3>
+            <div class="timeline">
+                <div th:each="node : ${detail.historyNodes}" class="timeline-item">
+                    <div class="type" th:text="${node.nodeType}"></div>
+                    <div class="desc" th:text="${node.description}"></div>
+                    <div class="meta" th:text="${node.operator} | ${node.createdAt}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>违规复核</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 30px; max-width: 600px; }
+        .card h2 { margin-bottom: 25px; color: #2d3748; }
+        .info-box { background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .info-box p { margin-bottom: 8px; }
+        .info-box p:last-child { margin-bottom: 0; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .form-actions { display: flex; gap: 10px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/supervisor/violations">违规复核</a>
+        <a href="/supervisor/stalls">摊位管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="card">
+            <h2>违规复核</h2>
+            <div class="info-box">
+                <p><strong>摊位编号:</strong> <span th:text="${violation.stallId}"></span></p>
+                <p><strong>违规类型:</strong> <span th:text="${violation.violationType}"></span></p>
+                <p><strong>违规描述:</strong> <span th:text="${violation.description}"></span></p>
+                <p><strong>扣分:</strong> <span th:text="${violation.pointsDeducted}"></span></p>
+                <p><strong>记录日期:</strong> <span th:text="${violation.recordDate}"></span></p>
+                <p><strong>巡查员:</strong> <span th:text="${violation.inspector}"></span></p>
+            </div>
+            
+            <form th:action="@{/supervisor/violations/{id}/review(id=${violation.id})}" method="post">
+                <div class="form-group">
+                    <label for="status">处理结果</label>
+                    <select id="status" name="status" required>
+                        <option value="rectified">已整改</option>
+                        <option value="pending">待整改</option>
+                        <option value="suspended">停租处理</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="remark">备注</label>
+                    <textarea id="remark" name="remark" rows="3"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">确认处理</button>
+                    <a href="/supervisor/violations/pending" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>摊位缴费</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 30px; max-width: 600px; }
+        .card h2 { margin-bottom: 25px; color: #2d3748; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .form-actions { display: flex; gap: 10px; margin-top: 30px; }
+        .info-box { background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <a href="/logout">退出登录</a>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard">仪表盘</a>
+        <a href="/cashier/stalls">摊位列表</a>
+        <a href="/cashier/payments">缴费管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="card">
+            <h2>摊位缴费</h2>
+            <div class="info-box">
+                <p>摊位编号: <strong th:text="${detail.stall.stallCode}"></strong></p>
+                <p>摊主: <strong th:text="${detail.tenant != null ? detail.tenant.name : '无'}"></strong></p>
+                <p>月租金: <strong th:text="${detail.stall.monthlyRent} 元"></strong></p>
+            </div>
+            
+            <form th:action="@{/cashier/stalls/{id}/payment(id=${detail.stall.id})}" method="post" th:object="${payment}">
+                <div class="form-group">
+                    <label for="paymentPeriod">缴费周期</label>
+                    <input type="text" id="paymentPeriod" th:field="*{paymentPeriod}" placeholder="如：2024年3月" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">缴费金额</label>
+                    <input type="number" id="amount" th:field="*{amount}" step="0.01" required />
+                </div>
+                
+                <div class="form-group">
+                    <label for="paymentMethod">支付方式</label>
+                    <select id="paymentMethod" th:field="*{paymentMethod}">
+                        <option value="现金">现金</option>
+                        <option value="转账">转账</option>
+                        <option value="微信">微信</option>
+                        <option value="支付宝">支付宝</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn">确认缴费</button>
+                    <a th:href="@{/cashier/stalls/{id}(id=${detail.stall.id})}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

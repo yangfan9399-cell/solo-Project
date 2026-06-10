@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>农贸市场摊位管理平台 - 仪表盘</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header .user-info { display: flex; align-items: center; gap: 20px; }
+        .header a { color: white; text-decoration: none; }
+        .sidebar { width: 200px; background: #2d3748; min-height: calc(100vh - 65px); padding-top: 20px; float: left; }
+        .sidebar a { display: block; padding: 12px 20px; color: #a0aec0; text-decoration: none; transition: background 0.2s; }
+        .sidebar a:hover { background: #4a5568; color: white; }
+        .sidebar a.active { background: #667eea; color: white; }
+        .main { margin-left: 220px; padding: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #667eea; }
+        .stat-card .label { color: #718096; margin-top: 5px; }
+        .charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .chart-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .chart-card h3 { margin-bottom: 20px; color: #2d3748; }
+        .chart-bar { display: flex; align-items: flex-end; gap: 10px; height: 150px; }
+        .bar-item { flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px 4px 0 0; text-align: center; }
+        .bar-item .label { font-size: 12px; color: #718096; margin-top: 5px; }
+        .bar-item .value { color: white; font-weight: bold; padding-top: 5px; }
+        .logout-btn { background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 6px; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>农贸市场摊位管理平台</h1>
+        <div class="user-info">
+            <span>欢迎, <span th:text="${user.name}"></span> (<span th:text="${user.role}"></span>)</span>
+            <a href="/logout" class="logout-btn">退出登录</a>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <a href="/dashboard" class="active">仪表盘</a>
+        <a th:if="${user.role == 'ADMIN'}" href="/admin/stalls">摊位管理</a>
+        <a th:if="${user.role == 'ADMIN'}" href="/admin/tenants">摊主管理</a>
+        <a th:if="${user.role == 'CASHIER'}" href="/cashier/stalls">摊位列表</a>
+        <a th:if="${user.role == 'CASHIER'}" href="/cashier/payments">缴费管理</a>
+        <a th:if="${user.role == 'INSPECTOR'}" href="/inspector/stalls">摊位巡查</a>
+        <a th:if="${user.role == 'INSPECTOR'}" href="/inspector/violations">违规记录</a>
+        <a th:if="${user.role == 'SUPERVISOR'}" href="/supervisor/violations">违规复核</a>
+        <a th:if="${user.role == 'SUPERVISOR'}" href="/supervisor/stalls">摊位管理</a>
+    </div>
+    
+    <div class="main">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" th:text="${totalStalls}"></div>
+                <div class="label">总摊位数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${totalTenants}"></div>
+                <div class="label">摊主数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${pendingPayments}"></div>
+                <div class="label">待确认缴费</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${pendingViolations}"></div>
+                <div class="label">待复核违规</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" th:text="${expiredLicenses}"></div>
+                <div class="label">过期证照</div>
+            </div>
+        </div>
+        
+        <div class="charts">
+            <div class="chart-card">
+                <h3>摊位区域分布</h3>
+                <div class="chart-bar">
+                    <div th:each="(count, area) : ${stallByArea}" class="bar-item" th:style="'height:' + (count * 10) + 'px;'">
+                        <div class="value" th:text="${count}"></div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div th:each="(count, area) : ${stallByArea}" class="bar-item">
+                        <div class="label" th:text="${area}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>经营品类分布</h3>
+                <div class="chart-bar">
+                    <div th:each="(count, category) : ${stallByCategory}" class="bar-item" th:style="'height:' + (count * 25) + 'px;'">
+                        <div class="value" th:text="${count}"></div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div th:each="(count, category) : ${stallByCategory}" class="bar-item">
+                        <div class="label" th:text="${category}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>摊位状态分布</h3>
+                <div class="chart-bar">
+                    <div th:each="(count, status) : ${stallByStatus}" class="bar-item" th:style="'height:' + (count * 30) + 'px;'">
+                        <div class="value" th:text="${count}"></div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div th:each="(count, status) : ${stallByStatus}" class="bar-item">
+                        <div class="label" th:text="${status}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>违规类型分布</h3>
+                <div class="chart-bar">
+                    <div th:each="(count, type) : ${violationByType}" class="bar-item" th:style="'height:' + (count * 30) + 'px;'">
+                        <div class="value" th:text="${count}"></div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div th:each="(count, type) : ${violationByType}" class="bar-item">
+                        <div class="label" th:text="${type}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
