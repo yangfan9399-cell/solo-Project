@@ -2,7 +2,60 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Clock, User, Phone, MapPin, AlertTriangle, Camera, Merge, Check, XCircle } from 'lucide-react'
-import type { WorkOrder, WorkOrderStatus, LeakLevel, RepairResult, ReviewResult, HistoryAction } from '@/lib/db'
+
+type WorkOrderStatus = 'PENDING' | 'DISPATCHED' | 'REPAIRED' | 'REVIEWING' | 'COMPLETED' | 'REJECTED'
+type LeakLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+type RepairResult = 'FIXED' | 'SUSPECTED_DUPLICATE' | 'VALVE_LOCATION_FAILED' | 'NOT_REPAIRED'
+type ReviewResult = 'APPROVED' | 'REJECTED'
+type HistoryAction = 'REPORTED' | 'DISPATCHED' | 'REPAIRED' | 'REVIEWED' | 'REJECTED' | 'MERGED'
+
+interface PipeSection {
+  id: string
+  name: string
+  area: string
+  diameter: string
+  material: string
+  installationYear?: number
+}
+
+interface RepairTeam {
+  id: string
+  name: string
+  leaderName: string
+  leaderPhone: string
+}
+
+interface WorkOrderHistory {
+  id: string
+  workOrderId: string
+  action: HistoryAction
+  operator: string
+  comment?: string
+  createdAt: Date
+}
+
+interface WorkOrder {
+  id: string
+  serialNumber: string
+  status: WorkOrderStatus
+  reporterName: string
+  reporterPhone: string
+  pipeSectionId: string
+  pipeSection: PipeSection
+  leakLevel: LeakLevel
+  waterStopArea?: string
+  description: string
+  createdAt: Date
+  updatedAt: Date
+  dispatchTo?: string
+  repairTeam?: RepairTeam
+  repairResult?: RepairResult
+  repairPhotos: string[]
+  reviewResult?: ReviewResult
+  reviewComment?: string
+  mergedFrom: string[]
+  history: WorkOrderHistory[]
+}
 
 const statusLabels: Record<WorkOrderStatus, string> = {
   PENDING: '待派单',

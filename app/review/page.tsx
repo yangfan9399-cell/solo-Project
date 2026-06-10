@@ -1,7 +1,47 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, ArrowRight, User } from 'lucide-react'
-import type { WorkOrder, ReviewResult, LeakLevel } from '@/lib/db'
+
+type LeakLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+type ReviewResult = 'APPROVED' | 'REJECTED'
+
+interface PipeSection {
+  id: string
+  name: string
+  area: string
+  diameter: string
+  material: string
+}
+
+interface RepairTeam {
+  id: string
+  name: string
+  leaderName: string
+  leaderPhone: string
+}
+
+interface WorkOrder {
+  id: string
+  serialNumber: string
+  status: string
+  reporterName: string
+  reporterPhone: string
+  pipeSectionId: string
+  pipeSection: PipeSection
+  leakLevel: LeakLevel
+  waterStopArea?: string
+  description: string
+  createdAt: Date
+  updatedAt: Date
+  dispatchTo?: string
+  repairTeam?: RepairTeam
+  repairResult?: string
+  repairPhotos: string[]
+  reviewResult?: ReviewResult
+  reviewComment?: string
+  mergedFrom: string[]
+  history?: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+}
 
 const leakLevelLabels: Record<LeakLevel, string> = {
   LOW: '低',

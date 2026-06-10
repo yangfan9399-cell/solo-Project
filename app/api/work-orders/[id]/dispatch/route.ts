@@ -1,35 +1,26 @@
 import { NextResponse } from 'next/server'
-import { db, type HistoryAction } from '@/lib/db'
+import pool, { initializeDatabase } from '@/lib/db'
 
 export async function POST(request: Request, paramContext: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  await initializeDatabase()
   const body = await request.json()
   const { repairTeamId, operator, comment } = body
   const { id } = paramContext.params
   
-  const repairTeam = await db.repairTeam.findUnique({ where: { id: repairTeamId } })
-  if (!repairTeam) return NextResponse.json({ error: '抢修队不存在' }, { status: 400 })
-
-  const order = await db.workOrder.findUnique({ where: { id } })
-  if (!order) return NextResponse.json({ error: '工单不存在' }, { status: 404 })
-
-  const newHistory = {
-    id: Math.random().toString(36).substr(2, 9),
-    workOrderId: id,
-    action: 'DISPATCHED' as HistoryAction,
-    operator,
-    comment,
-    createdAt: new Date(),
+  const teamResult = await pool.query('SELECT * FROM repair_teams WHERE id = $1', [repairTeamId])
+  if (teamResult.rows.length === 0) {
+    return NextResponse.json({ error: '抢修队不存在' }, { status: 400 })
   }
-
-  const updatedOrder = await db.workOrder.update({
-    where: { id },
-    data: {
-      status: 'DISPATCHED',
-      dispatchTo: repairTeamId,
-      repairTeam,
-      history: [...order.history, newHistory],
-    },
-  })
-
-  return NextResponse.json(updatedOrder)
+  
+  await pool.query(
+    `UPDATE work_orders SET status = 'DISPATCHED', dispatch_to = $1, updated_at = NOW() WHERE id = $2`,
+    [repairTeamId, id]
+  )
+  
+  await pool.query(
+    'INSERT INTO work_order_history (id, work_order_id, action, operator, comment) VALUES ($1, $2, $3, $4, $5)',
+    [`h${Date.now()}`, id, 'DISPATCHED', operator, comment]
+  )
+  
+  return NextResponse.json({ success: true, status: 'DISPATCHED' })
 }
