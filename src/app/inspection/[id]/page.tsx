@@ -101,6 +101,11 @@ export default function InspectionDetailPage({
     scheduledDate: '',
     notes: '',
   })
+  const [rectificationFormData, setRectificationFormData] = useState({
+    repairmanName: '',
+    repairDate: '',
+    description: '',
+  })
 
   useEffect(() => {
     async function fetchData() {
@@ -142,14 +147,15 @@ export default function InspectionDetailPage({
       body: JSON.stringify({
         hazardId: selectedHazardId,
         status: 'completed',
-        repairmanName: '维修师傅',
-        repairDate: new Date().toISOString().split('T')[0],
-        description: '已完成整改',
+        repairmanName: rectificationFormData.repairmanName || '维修师傅',
+        repairDate: rectificationFormData.repairDate || new Date().toISOString().split('T')[0],
+        description: rectificationFormData.description || '已完成整改',
       }),
     })
     if (response.ok) {
       setShowRectificationForm(false)
       setSelectedHazardId(null)
+      setRectificationFormData({ repairmanName: '', repairDate: '', description: '' })
       window.location.reload()
     }
   }
@@ -767,7 +773,8 @@ export default function InspectionDetailPage({
                 <label className="block text-sm font-medium text-gray-700 mb-1">维修人员</label>
                 <input
                   type="text"
-                  defaultValue="维修师傅"
+                  value={rectificationFormData.repairmanName || '维修师傅'}
+                  onChange={(e) => setRectificationFormData({ ...rectificationFormData, repairmanName: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
@@ -775,12 +782,16 @@ export default function InspectionDetailPage({
                 <label className="block text-sm font-medium text-gray-700 mb-1">维修日期</label>
                 <input
                   type="date"
+                  value={rectificationFormData.repairDate}
+                  onChange={(e) => setRectificationFormData({ ...rectificationFormData, repairDate: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">整改说明</label>
                 <textarea
+                  value={rectificationFormData.description}
+                  onChange={(e) => setRectificationFormData({ ...rectificationFormData, description: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   rows={2}
                   placeholder="请描述整改内容..."
@@ -791,6 +802,7 @@ export default function InspectionDetailPage({
                   onClick={() => {
                     setShowRectificationForm(false)
                     setSelectedHazardId(null)
+                    setRectificationFormData({ repairmanName: '', repairDate: '', description: '' })
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
