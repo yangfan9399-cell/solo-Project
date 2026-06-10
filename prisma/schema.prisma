@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WorkOrder {
+  id                  String             @id @default(cuid())
+  serialNumber        String             @unique
+  status              WorkOrderStatus    @default(PENDING)
+  reporterName        String
+  reporterPhone       String
+  pipeSectionId       String
+  pipeSection         PipeSection        @relation(fields: [pipeSectionId], references: [id])
+  leakLevel           LeakLevel
+  waterStopArea       String?
+  description         String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  dispatchTo          String?
+  repairTeam          RepairTeam?        @relation(fields: [dispatchTo], references: [id])
+  repairResult        RepairResult?
+  repairPhotos        String[]
+  reviewResult        ReviewResult?
+  reviewComment       String?
+  mergedFrom          String[]           @default([])
+  history             WorkOrderHistory[]
+}
+
+model PipeSection {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  area          String
+  diameter      String
+  material      String
+  installationYear Int
+  workOrders    WorkOrder[]
+}
+
+model RepairTeam {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  leaderName    String
+  leaderPhone   String
+  workOrders    WorkOrder[]
+}
+
+model WorkOrderHistory {
+  id            String        @id @default(cuid())
+  workOrderId   String
+  workOrder     WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  action        HistoryAction
+  operator      String
+  comment       String?
+  createdAt     DateTime      @default(now())
+}
+
+enum WorkOrderStatus {
+  PENDING
+  DISPATCHED
+  REPAIRED
+  REVIEWING
+  COMPLETED
+  REJECTED
+}
+
+enum LeakLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RepairResult {
+  FIXED
+  SUSPECTED_DUPLICATE
+  VALVE_LOCATION_FAILED
+  NOT_REPAIRED
+}
+
+enum ReviewResult {
+  APPROVED
+  REJECTED
+}
+
+enum HistoryAction {
+  REPORTED
+  DISPATCHED
+  REPAIRED
+  REVIEWED
+  REJECTED
+  MERGED
+}
