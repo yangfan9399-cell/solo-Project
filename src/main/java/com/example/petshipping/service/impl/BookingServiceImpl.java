@@ -144,8 +144,7 @@ public class BookingServiceImpl implements BookingService {
             bookingRepository.save(booking);
             
             createHistory(booking, HistoryType.CRATE_REJECTED, operator, validationErrors.toString());
-            
-            throw new IllegalStateException("航空箱不合规：" + validationErrors);
+            return;
         }
         
         crate.setIsApproved(true);

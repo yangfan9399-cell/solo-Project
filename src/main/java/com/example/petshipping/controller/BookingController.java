@@ -112,12 +112,8 @@ public class BookingController {
     
     @PostMapping("/{id}/approve-crate")
     public String approveCrate(@PathVariable Long id) {
-        try {
-            bookingService.approveCrate(id, "交运员小张");
-            return "redirect:/booking/" + id;
-        } catch (IllegalStateException e) {
-            return "redirect:/booking/" + id + "?errorMessage=" + java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
-        }
+        bookingService.approveCrate(id, "交运员小张");
+        return "redirect:/booking/" + id;
     }
     
     @PostMapping("/{id}/reject-crate")
