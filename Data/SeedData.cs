@@ -286,6 +286,20 @@ public static class SeedData
                     RejectionReasonType = Models.RejectionReasonType.MissingDocuments,
                     RejectionReason = "安全资料缺失：缺少放射性物质运输许可证和MSDS",
                     CreatedAt = now.AddHours(-2)
+                },
+                new Reservation
+                {
+                    ReservationNumber = "RES" + now.ToString("yyyyMMdd") + "006",
+                    HazardousGoodId = goods[0].Id,
+                    YardAreaId = areaB?.Id,
+                    IsolationZoneId = zoneB1?.Id,
+                    ReservationWindowStart = now.AddHours(-3),
+                    ReservationWindowEnd = now.AddHours(5),
+                    Status = ReservationStatus.DocumentsVerified,
+                    ForwarderUserId = forwarderUser.Id,
+                    DispatcherUserId = dispatcherUser.Id,
+                    SafetyOfficerUserId = safetyUser.Id,
+                    CreatedAt = now.AddHours(-3)
                 }
             };
 
@@ -379,7 +393,9 @@ public static class SeedData
                     DocumentType = DocumentType.MSDS,
                     DocumentName = "MSDS_" + reservation.ReservationNumber + ".pdf",
                     FilePath = "/uploads/msds/" + reservation.ReservationNumber + ".pdf",
-                    VerificationStatus = VerificationStatus.Pending,
+                    VerificationStatus = reservation.Status == ReservationStatus.DocumentsVerified ? VerificationStatus.Approved : VerificationStatus.Pending,
+                    VerifiedByUserId = reservation.Status == ReservationStatus.DocumentsVerified ? safetyUser?.Id : null,
+                    VerifiedAt = reservation.Status == ReservationStatus.DocumentsVerified ? reservation.CreatedAt.AddHours(1) : null,
                     CreatedAt = reservation.CreatedAt
                 };
                 var doc2 = new SafetyDocument
@@ -388,7 +404,9 @@ public static class SeedData
                     DocumentType = DocumentType.Declaration,
                     DocumentName = "申报单_" + reservation.ReservationNumber + ".pdf",
                     FilePath = "/uploads/declaration/" + reservation.ReservationNumber + ".pdf",
-                    VerificationStatus = VerificationStatus.Pending,
+                    VerificationStatus = reservation.Status == ReservationStatus.DocumentsVerified ? VerificationStatus.Approved : VerificationStatus.Pending,
+                    VerifiedByUserId = reservation.Status == ReservationStatus.DocumentsVerified ? safetyUser?.Id : null,
+                    VerifiedAt = reservation.Status == ReservationStatus.DocumentsVerified ? reservation.CreatedAt.AddHours(1) : null,
                     CreatedAt = reservation.CreatedAt
                 };
                 context.SafetyDocuments.AddRange(doc1, doc2);
