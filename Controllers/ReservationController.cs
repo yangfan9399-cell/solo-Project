@@ -82,8 +82,17 @@ public class ReservationController : Controller
         }
 
         ViewBag.UserRoles = roles;
-        ViewBag.AvailableZones = await _validationService.GetAvailableZonesForHazardClass(reservation.HazardousGood.HazardClass);
-        ViewBag.AvailableAreas = await _validationService.GetAvailableAreasForHazardClass(reservation.HazardousGood.HazardClass);
+
+        if (reservation.HazardousGood != null)
+        {
+            ViewBag.AvailableZones = await _validationService.GetAvailableZonesForHazardClass(reservation.HazardousGood.HazardClass);
+            ViewBag.AvailableAreas = await _validationService.GetAvailableAreasForHazardClass(reservation.HazardousGood.HazardClass);
+        }
+        else
+        {
+            ViewBag.AvailableZones = new List<IsolationZone>();
+            ViewBag.AvailableAreas = new List<YardArea>();
+        }
 
         return View(reservation);
     }
