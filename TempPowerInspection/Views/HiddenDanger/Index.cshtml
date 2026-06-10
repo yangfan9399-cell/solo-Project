@@ -1,0 +1,100 @@
+@model IEnumerable<HiddenDanger>
+
+@{
+    ViewData["Title"] = "隐患列表";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>隐患列表</h2>
+        <a class="btn btn-primary" asp-action="Create">新增隐患</a>
+    </div>
+
+    <!-- 筛选表单 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">状态</label>
+                    <select name="status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="待整改">待整改</option>
+                        <option value="整改中">整改中</option>
+                        <option value="待复检">待复检</option>
+                        <option value="已通过">已通过</option>
+                        <option value="已送电">已送电</option>
+                        <option value="退回">退回</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">楼栋</label>
+                    <input type="text" name="building" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">班组</label>
+                    <input type="text" name="team" class="form-control" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-secondary me-2">筛选</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">重置</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table id="dataTable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>配电箱</th>
+                        <th>楼栋</th>
+                        <th>班组</th>
+                        <th>隐患类型</th>
+                        <th>隐患等级</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td><strong>@item.DistributionBoxName</strong></td>
+                            <td>@item.BuildingName</td>
+                            <td>@item.TeamName</td>
+                            <td>@item.DangerType</td>
+                            <td>
+                                <span class="badge @item.DangerLevelCssClass">@item.DangerLevelName</span>
+                            </td>
+                            <td>
+                                <span class="badge @item.StatusCssClass">@item.StatusName</span>
+                            </td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">详情</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">编辑</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/zh-Hans.json'
+                },
+                order: [[7, 'desc']]
+            });
+        });
+    </script>
+}

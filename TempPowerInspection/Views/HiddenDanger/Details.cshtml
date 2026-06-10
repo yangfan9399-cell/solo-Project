@@ -1,0 +1,283 @@
+@model HiddenDanger
+
+@{
+    ViewData["Title"] = "隐患详情";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>隐患详情</h2>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：隐患信息 -->
+        <div class="col-md-8">
+            <!-- 基本信息卡片 -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">配电箱信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">配电箱名称</dt>
+                                <dd class="col-sm-8"><strong>@Model.DistributionBoxName</strong></dd>
+
+                                <dt class="col-sm-4">楼栋</dt>
+                                <dd class="col-sm-8">@Model.BuildingName</dd>
+
+                                <dt class="col-sm-4">班组</dt>
+                                <dd class="col-sm-8">@Model.TeamName</dd>
+
+                                <dt class="col-sm-4">隐患类型</dt>
+                                <dd class="col-sm-8">@Model.DangerType</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">隐患等级</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @Model.DangerLevelCssClass fs-6">@Model.DangerLevelName</span>
+                                </dd>
+
+                                <dt class="col-sm-4">送电状态</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge @Model.StatusCssClass fs-6">@Model.StatusName</span>
+                                </dd>
+
+                                <dt class="col-sm-4">创建时间</dt>
+                                <dd class="col-sm-8">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                                <dt class="col-sm-4">创建人</dt>
+                                <dd class="col-sm-8">@Model.CreatedBy</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <hr />
+                    <dl class="row">
+                        <dt class="col-sm-2">隐患描述</dt>
+                        <dd class="col-sm-10">@Model.Description</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- 照片展示 -->
+            <div class="card mb-3">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">巡检照片</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.InspectionPhotos))
+                    {
+                        <div class="row">
+                            @foreach (var photo in Model.InspectionPhotos.Split(','))
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <img src="@photo" class="img-thumbnail" alt="巡检照片" style="height: 150px; object-fit: cover;" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-5">
+                            <img src="~/images/placeholder.png" class="img-fluid" style="max-height: 200px; opacity: 0.5;" />
+                            <p class="mt-2">暂无巡检照片</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- 整改信息 -->
+            @if (Model.Rectification != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">整改信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-2">整改要求</dt>
+                            <dd class="col-sm-10">@Model.Rectification.Requirement</dd>
+
+                            <dt class="col-sm-2">整改状态</dt>
+                            <dd class="col-sm-10">
+                                <span class="badge bg-warning">@Model.Rectification.StatusName</span>
+                            </dd>
+
+                            @if (!string.IsNullOrEmpty(Model.Rectification.Feedback))
+                            {
+                                <dt class="col-sm-2">班组反馈</dt>
+                                <dd class="col-sm-10">@Model.Rectification.Feedback</dd>
+                            }
+                        </dl>
+                        @if (!string.IsNullOrEmpty(Model.Rectification.RectificationPhotos))
+                        {
+                            <hr />
+                            <p><strong>整改照片：</strong></p>
+                            <div class="row">
+                                @foreach (var photo in Model.Rectification.RectificationPhotos.Split(','))
+                                {
+                                    <div class="col-md-4 mb-2">
+                                        <img src="@photo" class="img-thumbnail" alt="整改照片" style="height: 150px; object-fit: cover;" />
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- 审批信息 -->
+            @if (Model.PowerApproval != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-header @Model.PowerApproval.ApprovalResultCssClass text-white">
+                        <h5 class="mb-0">审批信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-2">审批结果</dt>
+                            <dd class="col-sm-10">
+                                <span class="badge @Model.PowerApproval.ApprovalResultCssClass">@Model.PowerApproval.ApprovalResultName</span>
+                            </dd>
+
+                            <dt class="col-sm-2">审批人</dt>
+                            <dd class="col-sm-10">@Model.PowerApproval.ApprovedBy</dd>
+
+                            <dt class="col-sm-2">审批时间</dt>
+                            <dd class="col-sm-10">@Model.PowerApproval.ApprovedAt?.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                            <dt class="col-sm-2">审批意见</dt>
+                            <dd class="col-sm-10">@Model.PowerApproval.Comment</dd>
+
+                            <dt class="col-sm-2">可否送电</dt>
+                            <dd class="col-sm-10">
+                                @if (Model.PowerApproval.CanPowerOn)
+                                {
+                                    <span class="badge bg-success">是</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">否</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            }
+
+            <!-- 操作按钮 -->
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Status == DangerStatus.待整改)
+                    {
+                        <a asp-controller="Rectification" asp-action="Create" asp-route-hiddenDangerId="@Model.Id" class="btn btn-warning">下发整改</a>
+                    }
+                    else if (Model.Status == DangerStatus.整改中 && Model.Rectification != null)
+                    {
+                        <form asp-controller="Rectification" asp-action="SubmitRectification" asp-route-id="@Model.Rectification.Id" method="post" class="d-inline">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <textarea name="Feedback" class="form-control" placeholder="整改反馈说明" rows="2"></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="RectificationPhotos" class="form-control" placeholder="整改照片路径(逗号分隔)" />
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-info w-100">提交复检</button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                    else if (Model.Status == DangerStatus.待复检)
+                    {
+                        @if (Model.PowerApproval == null)
+                        {
+                            <form asp-controller="Approval" asp-action="Create" method="post" class="d-inline">
+                                <input type="hidden" name="HiddenDangerId" value="@Model.Id" />
+                                <input type="text" name="ApprovedBy" placeholder="审批人姓名" required />
+                                <button type="submit" class="btn btn-success">审批通过</button>
+                            </form>
+                        }
+                        else if (Model.PowerApproval.ApprovalResult == ApprovalResult.通过 && Model.PowerApproval.CanPowerOn)
+                        {
+                            <form asp-controller="Approval" asp-action="PowerOn" method="post" class="d-inline">
+                                <input type="hidden" name="hiddenDangerId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-dark btn-lg">确认送电</button>
+                            </form>
+                        }
+                        else if (Model.Status == DangerStatus.退回)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <strong>复检不通过，禁止送电！</strong> 请施工班组重新整改。
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：历史节点时间线 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">历史节点</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.StatusHistories != null && Model.StatusHistories.Any())
+                    {
+                        <div class="timeline">
+                            @foreach (var history in Model.StatusHistories.OrderByDescending(h => h.OperatedAt))
+                            {
+                                <div class="timeline-item mb-3">
+                                    <div class="d-flex">
+                                        <div class="me-3">
+                                                                                        @{
+                                                var historyBadgeClass = history.Status switch
+                                                {
+                                                    DangerStatus.待整改 => "bg-secondary",
+                                                    DangerStatus.整改中 => "bg-primary",
+                                                    DangerStatus.待复检 => "bg-info",
+                                                    DangerStatus.已通过 => "bg-success",
+                                                    DangerStatus.已送电 => "bg-dark",
+                                                    DangerStatus.退回 => "bg-danger",
+                                                    _ => "bg-secondary"
+                                                };
+                                            }
+                                            <span class="badge @historyBadgeClass">@history.StatusName</span>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0"><strong>@history.Operator</strong></p>
+                                            <p class="mb-0 text-muted small">@history.Remark</p>
+                                            <p class="mb-0 text-muted small">@history.OperatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">暂无历史记录</p>
+                    }
+                </div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="card mt-3">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 mb-2">编辑隐患</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger w-100">删除隐患</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

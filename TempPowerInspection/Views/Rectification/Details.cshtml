@@ -1,0 +1,114 @@
+@model Rectification
+
+@{
+    ViewData["Title"] = "整改详情";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>整改详情</h2>
+        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">整改信息</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">关联隐患</dt>
+                        <dd class="col-sm-9">
+                            <a asp-controller="HiddenDanger" asp-action="Details" asp-route-id="@Model.HiddenDangerId">
+                                @Model.HiddenDanger?.DistributionBoxName - @Model.HiddenDanger?.DangerType
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">整改状态</dt>
+                        <dd class="col-sm-9">
+                            @{
+                                var statusClass = Model.Status switch
+                                {
+                                    RectificationStatus.待整改 => "bg-secondary",
+                                    RectificationStatus.整改中 => "bg-primary",
+                                    RectificationStatus.待复检 => "bg-info",
+                                    RectificationStatus.已通过 => "bg-success",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @statusClass">@Model.StatusName</span>
+                        </dd>
+
+                        <dt class="col-sm-3">创建时间</dt>
+                        <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                        <dt class="col-sm-3">创建人</dt>
+                        <dd class="col-sm-9">@Model.CreatedBy</dd>
+
+                        @if (Model.CompletedAt.HasValue)
+                        {
+                            <dt class="col-sm-3">完成时间</dt>
+                            <dd class="col-sm-9">@Model.CompletedAt.Value.ToString("yyyy-MM-dd HH:mm")</dd>
+                        }
+                    </dl>
+                    <hr />
+                    <dl class="row">
+                        <dt class="col-sm-3">整改要求</dt>
+                        <dd class="col-sm-9">@Model.Requirement</dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Feedback))
+                        {
+                            <dt class="col-sm-3">班组反馈</dt>
+                            <dd class="col-sm-9">@Model.Feedback</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.RectificationPhotos))
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">整改照片</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var photo in Model.RectificationPhotos.Split(','))
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <img src="@photo" class="img-thumbnail" alt="整改照片" style="height: 150px; object-fit: cover;" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Status == RectificationStatus.整改中)
+                    {
+                        <form asp-action="SubmitRectification" asp-route-id="@Model.Id" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">整改反馈</label>
+                                <textarea name="Feedback" class="form-control" rows="3" placeholder="说明整改完成情况"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">整改照片路径</label>
+                                <input type="text" name="RectificationPhotos" class="form-control" placeholder="多个路径用逗号分隔" />
+                            </div>
+                            <button type="submit" class="btn btn-info w-100">提交复检</button>
+                        </form>
+                    }
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning w-100 mt-2">编辑</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

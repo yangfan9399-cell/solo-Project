@@ -1,0 +1,108 @@
+@model HiddenDanger
+
+@{
+    ViewData["Title"] = "编辑隐患";
+}
+
+<div class="container">
+    <h2>编辑隐患</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Edit">
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">编辑隐患信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">配电箱名称</label>
+                                <input asp-for="DistributionBoxName" class="form-control" />
+                                <span asp-validation-for="DistributionBoxName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">楼栋名称</label>
+                                <input asp-for="BuildingName" class="form-control" />
+                                <span asp-validation-for="BuildingName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">班组名称</label>
+                                <input asp-for="TeamName" class="form-control" />
+                                <span asp-validation-for="TeamName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">隐患类型</label>
+                                <input asp-for="DangerType" class="form-control" />
+                                <span asp-validation-for="DangerType" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">隐患等级</label>
+                                <select asp-for="DangerLevel" class="form-select">
+                                    <option value="1">轻微</option>
+                                    <option value="2">一般</option>
+                                    <option value="3">严重</option>
+                                </select>
+                                <span asp-validation-for="DangerLevel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">状态</label>
+                                <select asp-for="Status" class="form-select">
+                                    <option value="0">待整改</option>
+                                    <option value="1">整改中</option>
+                                    <option value="2">待复检</option>
+                                    <option value="3">已通过</option>
+                                    <option value="4">已送电</option>
+                                    <option value="5">退回</option>
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">创建人</label>
+                                <input asp-for="CreatedBy" class="form-control" />
+                                <span asp-validation-for="CreatedBy" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">更新人</label>
+                                <input asp-for="UpdatedBy" class="form-control" />
+                                <span asp-validation-for="UpdatedBy" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">隐患描述</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">巡检照片路径</label>
+                            <input asp-for="InspectionPhotos" class="form-control" />
+                            <span asp-validation-for="InspectionPhotos" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

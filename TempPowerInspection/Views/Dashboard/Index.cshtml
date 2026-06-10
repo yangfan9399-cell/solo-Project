@@ -1,0 +1,212 @@
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "看板";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">临电巡检看板</h2>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h3 class="text-primary">@Model.TotalCount</h3>
+                    <p class="mb-0">隐患总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-secondary">
+                <div class="card-body">
+                    <h3 class="text-secondary">@Model.PendingCount</h3>
+                    <p class="mb-0">待整改</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <h3 class="text-info">@Model.InProgressCount</h3>
+                    <p class="mb-0">整改中/待复检</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <h3 class="text-warning">@Model.ReturnedCount</h3>
+                    <p class="mb-0">退回</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h3 class="text-success">@Model.PassedCount</h3>
+                    <p class="mb-0">已通过</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-dark">
+                <div class="card-body">
+                    <h3 class="text-dark">@Model.PoweredOnCount</h3>
+                    <p class="mb-0">已送电</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 按楼栋聚合 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">按楼栋聚合</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>楼栋</th>
+                                <th>总数</th>
+                                <th>待处理</th>
+                                <th>整改中</th>
+                                <th>已完成</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var stat in Model.BuildingStats)
+                            {
+                                <tr>
+                                    <td><strong>@stat.BuildingName</strong></td>
+                                    <td>@stat.TotalCount</td>
+                                    <td><span class="badge bg-secondary">@stat.PendingCount</span></td>
+                                    <td><span class="badge bg-info">@stat.InProgressCount</span></td>
+                                    <td><span class="badge bg-success">@stat.PassedCount</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 按班组聚合 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">按班组聚合</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>班组</th>
+                                <th>隐患总数</th>
+                                <th>待处理</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var stat in Model.TeamStats)
+                            {
+                                <tr>
+                                    <td><strong>@stat.TeamName</strong></td>
+                                    <td>@stat.TotalCount</td>
+                                    <td><span class="badge bg-warning">@stat.PendingCount</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 按隐患类型聚合 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">按隐患类型聚合</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>隐患类型</th>
+                                <th>数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var stat in Model.DangerTypeStats)
+                            {
+                                <tr>
+                                    <td>@stat.DangerType</td>
+                                    <td><span class="badge bg-danger">@stat.Count</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 整改时长统计 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">整改时长统计</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>配电箱</th>
+                                <th>整改时长(天)</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var stat in Model.RectificationDurationStats)
+                            {
+                                <tr>
+                                    <td>@stat.DistributionBoxName</td>
+                                    <td>@stat.DurationDays</td>
+                                    <td>
+                                        @if (stat.IsOverdue)
+                                        {
+                                            <span class="badge bg-danger">超期</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">正常</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-primary" asp-controller="HiddenDanger" asp-action="Create">电工提交巡检</a>
+                    <a class="btn btn-success" asp-controller="Rectification" asp-action="Index">查看整改列表</a>
+                    <a class="btn btn-info" asp-controller="Approval" asp-action="Index">送电审批</a>
+                    <a class="btn btn-secondary" asp-controller="HiddenDanger" asp-action="Index">隐患列表</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

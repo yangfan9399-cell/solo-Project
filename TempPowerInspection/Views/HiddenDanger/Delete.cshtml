@@ -1,0 +1,58 @@
+@model HiddenDanger
+
+@{
+    ViewData["Title"] = "删除隐患";
+}
+
+<div class="container">
+    <h2>删除隐患</h2>
+    <hr />
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">确认删除</h4>
+        <p>您确定要删除以下隐患记录吗？此操作不可恢复。</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">隐患信息</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">配电箱名称</dt>
+                <dd class="col-sm-9">@Model.DistributionBoxName</dd>
+
+                <dt class="col-sm-3">楼栋</dt>
+                <dd class="col-sm-9">@Model.BuildingName</dd>
+
+                <dt class="col-sm-3">班组</dt>
+                <dd class="col-sm-9">@Model.TeamName</dd>
+
+                <dt class="col-sm-3">隐患类型</dt>
+                <dd class="col-sm-9">@Model.DangerType</dd>
+
+                <dt class="col-sm-3">隐患等级</dt>
+                <dd class="col-sm-9">
+                    <span class="badge @Model.DangerLevelCssClass">@Model.DangerLevelName</span>
+                </dd>
+
+                <dt class="col-sm-3">状态</dt>
+                <dd class="col-sm-9">
+                    <span class="badge @Model.StatusCssClass">@Model.StatusName</span>
+                </dd>
+
+                <dt class="col-sm-3">创建时间</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                <dt class="col-sm-3">创建人</dt>
+                <dd class="col-sm-9">@Model.CreatedBy</dd>
+            </dl>
+        </div>
+        <div class="card-footer">
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger">确认删除</button>
+                <a asp-action="Index" class="btn btn-secondary">取消</a>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,95 @@
+@model PowerApproval
+
+@{
+    ViewData["Title"] = "审批详情";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>审批详情</h2>
+        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header @Model.ApprovalResultCssClass text-white">
+                    <h5 class="mb-0">审批信息</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">关联隐患</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.HiddenDanger != null)
+                            {
+                                <a asp-controller="HiddenDanger" asp-action="Details" asp-route-id="@Model.HiddenDangerId">
+                                    @Model.HiddenDanger.DistributionBoxName - @Model.HiddenDanger.DangerType
+                                </a>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">审批结果</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge @Model.ApprovalResultCssClass fs-6">@Model.ApprovalResultName</span>
+                        </dd>
+
+                        <dt class="col-sm-3">审批人</dt>
+                        <dd class="col-sm-9">@Model.ApprovedBy</dd>
+
+                        <dt class="col-sm-3">审批时间</dt>
+                        <dd class="col-sm-9">@Model.ApprovedAt?.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                        <dt class="col-sm-3">可否送电</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.CanPowerOn)
+                            {
+                                <span class="badge bg-success">是</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">否</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">创建时间</dt>
+                        <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                    </dl>
+                    <hr />
+                    <dl class="row">
+                        <dt class="col-sm-3">审批意见</dt>
+                        <dd class="col-sm-9">@Model.Comment</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- 复检不通过警告 -->
+            @if (Model.HiddenDanger != null && Model.HiddenDanger.Status == DangerStatus.退回)
+            {
+                <div class="alert alert-danger" role="alert">
+                    <h4 class="alert-heading">复检不通过，禁止送电！</h4>
+                    <p>该隐患复检未通过，施工班组需要重新整改。</p>
+                    <hr />
+                    <p class="mb-0">请施工班组完成整改后重新提交复检申请。</p>
+                </div>
+            }
+
+            <!-- 可送电操作 -->
+            @if (Model.CanPowerOn && Model.HiddenDanger != null && Model.HiddenDanger.Status != DangerStatus.已送电)
+            {
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">送电操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="PowerOn" method="post">
+                            <input type="hidden" name="hiddenDangerId" value="@Model.HiddenDangerId" />
+                            <button type="submit" class="btn btn-dark btn-lg w-100">
+                                确认送电
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

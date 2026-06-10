@@ -1,0 +1,96 @@
+@model HiddenDanger
+
+@{
+    ViewData["Title"] = "新增隐患";
+}
+
+<div class="container">
+    <h2>电工提交巡检</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Create">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">隐患信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">配电箱名称</label>
+                                <input asp-for="DistributionBoxName" class="form-control" placeholder="例如：A栋-1#箱" />
+                                <span asp-validation-for="DistributionBoxName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">楼栋名称</label>
+                                <input asp-for="BuildingName" class="form-control" placeholder="例如：A栋" />
+                                <span asp-validation-for="BuildingName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">班组名称</label>
+                                <input asp-for="TeamName" class="form-control" placeholder="例如：钢筋班组" />
+                                <span asp-validation-for="TeamName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">隐患类型</label>
+                                <select asp-for="DangerType" class="form-select">
+                                    <option value="">请选择</option>
+                                    <option value="漏保失效">漏保失效</option>
+                                    <option value="电线老化">电线老化</option>
+                                    <option value="私拉乱接">私拉乱接</option>
+                                    <option value="整改照片缺失">整改照片缺失</option>
+                                    <option value="复检不通过">复检不通过</option>
+                                    <option value="其他隐患">其他隐患</option>
+                                </select>
+                                <span asp-validation-for="DangerType" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">隐患等级</label>
+                                <select asp-for="DangerLevel" class="form-select">
+                                    <option value="1">轻微</option>
+                                    <option value="2" selected>一般</option>
+                                    <option value="3">严重</option>
+                                </select>
+                                <span asp-validation-for="DangerLevel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">创建人</label>
+                                <input asp-for="CreatedBy" class="form-control" placeholder="例如：张三(电工)" />
+                                <span asp-validation-for="CreatedBy" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">隐患描述</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">巡检照片路径</label>
+                            <input asp-for="InspectionPhotos" class="form-control" placeholder="多个路径用逗号分隔" />
+                            <span asp-validation-for="InspectionPhotos" class="text-danger"></span>
+                            <small class="text-muted">示例：/images/photo1.jpg,/images/photo2.jpg</small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">提交巡检</button>
+                        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

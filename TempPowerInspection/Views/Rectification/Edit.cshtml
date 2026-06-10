@@ -1,0 +1,69 @@
+@model Rectification
+
+@{
+    ViewData["Title"] = "编辑整改";
+}
+
+<div class="container">
+    <h2>编辑整改</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="Edit">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">编辑整改信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="HiddenDangerId" />
+
+                        <div class="mb-3">
+                            <label class="form-label">整改要求</label>
+                            <textarea asp-for="Requirement" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Requirement" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">整改状态</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="0">待整改</option>
+                                <option value="1">整改中</option>
+                                <option value="2">待复检</option>
+                                <option value="3">已通过</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">班组反馈</label>
+                            <textarea asp-for="Feedback" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Feedback" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">整改照片路径</label>
+                            <input asp-for="RectificationPhotos" class="form-control" />
+                            <span asp-validation-for="RectificationPhotos" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">创建人</label>
+                            <input asp-for="CreatedBy" class="form-control" />
+                            <span asp-validation-for="CreatedBy" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

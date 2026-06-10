@@ -1,0 +1,59 @@
+@model Rectification
+
+@{
+    ViewData["Title"] = "下发整改";
+}
+
+<div class="container">
+    <h2>安全员下发整改</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-8">
+            @if (ViewBag.HiddenDanger != null)
+            {
+                <div class="alert alert-info">
+                    <strong>关联隐患：</strong>
+                    @ViewBag.HiddenDanger.DistributionBoxName - @ViewBag.HiddenDanger.DangerType
+                    (等级: <span class="badge @ViewBag.HiddenDanger.DangerLevelCssClass">@ViewBag.HiddenDanger.DangerLevelName</span>)
+                </div>
+            }
+
+            <form asp-action="Create">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">整改信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">关联隐患ID</label>
+                            <input asp-for="HiddenDangerId" class="form-control" />
+                            <span asp-validation-for="HiddenDangerId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">整改要求</label>
+                            <textarea asp-for="Requirement" class="form-control" rows="4" placeholder="详细说明整改要求"></textarea>
+                            <span asp-validation-for="Requirement" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">创建人</label>
+                            <input asp-for="CreatedBy" class="form-control" placeholder="例如：李四(安全员)" />
+                            <span asp-validation-for="CreatedBy" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-warning">下发整改</button>
+                        <a asp-action="Index" class="btn btn-secondary">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

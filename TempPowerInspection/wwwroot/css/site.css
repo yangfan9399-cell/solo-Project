@@ -1,0 +1,151 @@
+/* CSS Variables */
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #0dcaf0;
+}
+
+/* Body */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.navbar-brand {
+    font-weight: 700;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+}
+
+/* Footer */
+.footer {
+    margin-top: auto;
+}
+
+/* Cards */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #0d6efd;
+    border: 2px solid #fff;
+}
+
+/* Status Badges */
+.badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+/* Tables */
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Forms */
+.form-label {
+    font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 4px;
+}
+
+/* Stats Cards */
+.card.border-primary {
+    border-width: 2px;
+}
+
+.card.border-secondary {
+    border-width: 2px;
+}
+
+.card.border-info {
+    border-width: 2px;
+}
+
+.card.border-warning {
+    border-width: 2px;
+}
+
+.card.border-success {
+    border-width: 2px;
+}
+
+.card.border-dark {
+    border-width: 2px;
+}
+
+/* Photos */
+.img-thumbnail {
+    border-radius: 4px;
+    transition: transform 0.2s;
+}
+
+.img-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+/* Alerts */
+.alert {
+    border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
