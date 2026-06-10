@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Layout } from '@/components/layout/Layout'
+import { Link } from 'react-router-dom'
 import { ClaimList } from '@/components/claims/ClaimList'
 
-interface ClaimItem {
+interface Claim {
   id: number
   batchNumber: string | null
   partNumber: string | null
@@ -13,7 +13,7 @@ interface ClaimItem {
   quantityDefective: number
   claimAmount: string
   description: string | null
-  status: string
+  status: string | null
   batchTraceable: boolean | null
   repairDeadline: string | null
   repairCompleted: boolean | null
@@ -22,7 +22,7 @@ interface ClaimItem {
 }
 
 export function IndexPage() {
-  const [claims, setClaims] = useState<ClaimItem[]>([])
+  const [claims, setClaims] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -40,22 +40,20 @@ export function IndexPage() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-secondary">加载中...</p>
-        </div>
-      </Layout>
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-500">加载中...</p>
+      </div>
     )
   }
 
   return (
-    <Layout>
+    <div>
       <div className="mb-6">
         <h2 className="text-xl font-bold">索赔列表</h2>
-        <p className="text-secondary mt-1">显示所有质量索赔记录</p>
+        <p className="text-gray-500 mt-1">查看所有质量索赔记录</p>
       </div>
       <ClaimList claims={claims} />
-    </Layout>
+    </div>
   )
 }

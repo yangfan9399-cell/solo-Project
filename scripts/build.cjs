@@ -42,7 +42,7 @@ body {
 console.log('Writing CSS...')
 fs.writeFileSync(path.join(distDir, 'index.css'), tailwindCss)
 
-console.log('Building JavaScript...')
+console.log('Building client JavaScript...')
 esbuild.build({
   entryPoints: ['src/main.tsx'],
   bundle: true,

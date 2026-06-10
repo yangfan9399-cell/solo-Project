@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Layout } from '@/components/layout/Layout'
 import { ReportDashboard } from '@/components/report/ReportDashboard'
 
 interface SupplierSummary {
@@ -71,26 +70,24 @@ export function ReportPage() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-secondary">加载中...</p>
-        </div>
-      </Layout>
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-500">加载中...</p>
+      </div>
     )
   }
 
   return (
-    <Layout>
+    <div>
       <Link
         to="/"
-        className="inline-flex items-center gap-1 text-secondary hover:text-primary transition-colors mb-4"
+        className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors mb-4"
       >
         返回索赔列表
       </Link>
       <div className="mb-6">
         <h2 className="text-xl font-bold">数据复盘</h2>
-        <p className="text-secondary mt-1">按供应商、零件类别、缺陷类型和索赔周期聚合统计</p>
+        <p className="text-gray-500 mt-1">按供应商、零件类别、缺陷类型和索赔周期聚合统计</p>
       </div>
       <ReportDashboard
         suppliers={suppliers}
@@ -99,6 +96,6 @@ export function ReportPage() {
         periods={periods}
         stats={stats || { totalClaims: 0, totalAmount: 0, pendingCount: 0, underReviewCount: 0, completedCount: 0 }}
       />
-    </Layout>
+    </div>
   )
 }

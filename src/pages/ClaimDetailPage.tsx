@@ -1,10 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Layout } from '@/components/layout/Layout'
 import { ClaimDetail } from '@/components/claims/ClaimDetail'
-import { ArrowLeft } from 'lucide-react'
 
-interface ClaimDetailType {
+interface Evidence {
+  id: number
+  type: string | null
+  url: string | null
+  description: string | null
+  uploadedAt: string | null
+}
+
+interface History {
+  id: number
+  status: string
+  comment: string | null
+  operator: string | null
+  createdAt: string | null
+}
+
+interface SupplierResponse {
+  responseType: string
+  comment: string | null
+  evidenceUrl: string | null
+  createdAt: string | null
+}
+
+interface ClaimDetailData {
   id: number
   batchNumber: string | null
   partNumber: string | null
@@ -22,31 +43,14 @@ interface ClaimDetailType {
   engineerName: string | null
   createdAt: string | null
   updatedAt: string | null
-  evidences: Array<{
-    id: number
-    type: string | null
-    url: string | null
-    description: string | null
-    uploadedAt: string | null
-  }>
-  history: Array<{
-    id: number
-    status: string
-    comment: string | null
-    operator: string | null
-    createdAt: string | null
-  }>
-  supplierResponse: {
-    responseType: string
-    comment: string | null
-    evidenceUrl: string | null
-    createdAt: string | null
-  } | null
+  evidences: Evidence[]
+  history: History[]
+  supplierResponse: SupplierResponse | null
 }
 
 export function ClaimDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [claim, setClaim] = useState<ClaimDetailType | null>(null)
+  const [claim, setClaim] = useState<ClaimDetailData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -63,64 +67,35 @@ export function ClaimDetailPage() {
       })
   }, [id])
 
-  const handleUpdateStatus = async (status: string, comment: string, operator: string) => {
-    if (!id) return
-    await fetch(`/api/claims/${id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'updateStatus', status, comment, operator })
-    })
-    window.location.reload()
-  }
-
-  const handleSupplierResponse = async (responseType: string, comment: string) => {
-    if (!id) return
-    await fetch(`/api/claims/${id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'supplierResponse', responseType, comment })
-    })
-    window.location.reload()
-  }
-
   if (loading) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-secondary">加载中...</p>
-        </div>
-      </Layout>
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-500">加载中...</p>
+      </div>
     )
   }
 
   if (!claim) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <p className="text-secondary">索赔记录不存在</p>
-          <Link to="/" className="text-primary hover:underline mt-2 inline-block">
-            返回索赔列表
-          </Link>
-        </div>
-      </Layout>
+      <div className="text-center py-12">
+        <p className="text-gray-500">索赔记录不存在</p>
+        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">
+          返回索赔列表
+        </Link>
+      </div>
     )
   }
 
   return (
-    <Layout>
+    <div>
       <Link
         to="/"
-        className="inline-flex items-center gap-1 text-secondary hover:text-primary transition-colors mb-4"
+        className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors mb-4"
       >
-        <ArrowLeft className="h-4 w-4" />
         返回索赔列表
       </Link>
-      <ClaimDetail
-        claim={claim}
-        onUpdateStatus={handleUpdateStatus}
-        onSupplierResponse={handleSupplierResponse}
-      />
-    </Layout>
+      <ClaimDetail claim={claim} />
+    </div>
   )
 }

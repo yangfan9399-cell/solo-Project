@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { AlertTriangle, Clock } from 'lucide-react'
@@ -14,7 +15,7 @@ interface ClaimItem {
   quantityDefective: number
   claimAmount: string
   description: string | null
-  status: string
+  status: string | null
   batchTraceable: boolean | null
   repairDeadline: string | null
   repairCompleted: boolean | null
@@ -49,15 +50,15 @@ export function ClaimList({ claims }: ClaimListProps) {
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <a
-                    href={`/claims/${claim.id}`}
-                    className="font-semibold text-primary hover:underline"
+                  <Link
+                    to={`/claims/${claim.id}`}
+                    className="font-semibold text-blue-600 hover:underline"
                   >
                     索赔 #{claim.id}
-                  </a>
-                  <StatusBadge status={claim.status} />
+                  </Link>
+                  <StatusBadge status={claim.status || ''} />
                   {claim.batchTraceable === false && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger/10 text-danger">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
                       <AlertTriangle className="h-3 w-3" />
                       追溯失败
                     </span>
@@ -66,36 +67,36 @@ export function ClaimList({ claims }: ClaimListProps) {
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div>
-                    <span className="text-secondary">零件：</span>
+                    <span className="text-gray-500">零件：</span>
                     <span className="font-medium">{claim.partName}</span>
-                    <span className="text-secondary ml-1">({claim.partNumber})</span>
+                    <span className="text-gray-500 ml-1">({claim.partNumber})</span>
                   </div>
                   <div>
-                    <span className="text-secondary">批次：</span>
+                    <span className="text-gray-500">批次：</span>
                     <span className="font-medium">{claim.batchNumber}</span>
                   </div>
                   <div>
-                    <span className="text-secondary">供应商：</span>
+                    <span className="text-gray-500">供应商：</span>
                     <span className="font-medium">{claim.supplierName}</span>
                   </div>
                   <div>
-                    <span className="text-secondary">缺陷：</span>
+                    <span className="text-gray-500">缺陷：</span>
                     <span className="font-medium">{claim.defectType}</span>
                   </div>
                 </div>
                 
-                <p className="mt-2 text-sm text-secondary line-clamp-2">{claim.description}</p>
+                <p className="mt-2 text-sm text-gray-500 line-clamp-2">{claim.description}</p>
               </div>
               
               <div className="flex flex-col items-end gap-2">
                 <div className="text-right">
-                  <p className="text-lg font-bold text-danger">¥{formatAmount(claim.claimAmount)}</p>
-                  <p className="text-xs text-secondary">{claim.quantityDefective}件不良</p>
+                  <p className="text-lg font-bold text-red-600">¥{formatAmount(claim.claimAmount)}</p>
+                  <p className="text-xs text-gray-500">{claim.quantityDefective}件不良</p>
                 </div>
                 
-                <div className="flex items-center gap-2 text-xs text-secondary">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   {claim.repairDeadline && (
-                    <span className={cn('flex items-center gap-1', isOverdue(claim.repairDeadline) && 'text-danger')}>
+                    <span className={cn('flex items-center gap-1', isOverdue(claim.repairDeadline) && 'text-red-600')}>
                       <Clock className="h-3 w-3" />
                       {formatDate(claim.repairDeadline)}
                     </span>
@@ -111,7 +112,7 @@ export function ClaimList({ claims }: ClaimListProps) {
       {claims.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-secondary">暂无索赔记录</p>
+            <p className="text-gray-500">暂无索赔记录</p>
           </CardContent>
         </Card>
       )}
