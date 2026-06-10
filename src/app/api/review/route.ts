@@ -89,23 +89,25 @@ export async function GET() {
     })
   )
 
-  const allRectifications = await db
+  const allRectificationsWithDates = await db
     .select({
       status: rectifications.status,
-      repairDate: rectifications.repairDate,
+      inspectionDate: inspections.inspectionDate,
       completedAt: rectifications.completedAt,
     })
     .from(rectifications)
+    .innerJoin(hazards, eq(rectifications.hazardId, hazards.id))
+    .innerJoin(inspections, eq(hazards.inspectionId, inspections.id))
 
-  const completedRectifications = allRectifications.filter(
-    (r) => r.status === 'completed' && r.repairDate && r.completedAt
+  const completedRectifications = allRectificationsWithDates.filter(
+    (r) => r.status === 'completed' && r.inspectionDate && r.completedAt
   )
 
   const totalDays = completedRectifications.reduce((sum, r) => {
-    if (r.repairDate && r.completedAt) {
-      const repairDate = new Date(r.repairDate)
+    if (r.inspectionDate && r.completedAt) {
+      const inspectionDate = new Date(r.inspectionDate)
       const completedAt = new Date(r.completedAt)
-      const diffTime = Math.abs(completedAt.getTime() - repairDate.getTime())
+      const diffTime = Math.abs(completedAt.getTime() - inspectionDate.getTime())
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       return sum + diffDays
     }
@@ -115,6 +117,10 @@ export async function GET() {
   const avgDays = completedRectifications.length > 0
     ? Math.round(totalDays / completedRectifications.length)
     : 0
+
+  const allRectifications = await db
+    .select({ status: rectifications.status })
+    .from(rectifications)
 
   const overdueCount = allRectifications.filter((r) => r.status === 'overdue').length
   const pendingCount = allRectifications.filter((r) => r.status === 'pending').length
