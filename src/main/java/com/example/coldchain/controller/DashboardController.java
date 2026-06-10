@@ -32,6 +32,14 @@ public class DashboardController {
         List<ExceptionRecord> allExceptions = exceptionRecordRepository.findAll();
         List<DisposalRecord> allDisposals = disposalService.findAllDisposals();
 
+        // 运单状态统计
+        Map<WaybillStatus, Long> statusStats = allWaybills.stream()
+                .collect(Collectors.groupingBy(Waybill::getStatus, Collectors.counting()));
+
+        // 运单数量统计
+        long inTransitCount = statusStats.getOrDefault(WaybillStatus.IN_TRANSIT, 0L);
+        long exceptionCount = statusStats.getOrDefault(WaybillStatus.EXCEPTION, 0L);
+
         // 线路统计
         Map<String, Long> routeStats = allWaybills.stream()
                 .collect(Collectors.groupingBy(w -> w.getOrigin() + " -> " + w.getDestination(), Collectors.counting()));
@@ -44,25 +52,22 @@ public class DashboardController {
         Map<ExceptionType, Long> exceptionTypeStats = allExceptions.stream()
                 .collect(Collectors.groupingBy(ExceptionRecord::getExceptionType, Collectors.counting()));
 
-        // 运单状态统计
-        Map<WaybillStatus, Long> statusStats = allWaybills.stream()
-                .collect(Collectors.groupingBy(Waybill::getStatus, Collectors.counting()));
-
         // 处置时长统计：从异常发生到处置完成的时长
         Map<String, Long> disposalDurationStats = calculateDisposalDurationStats(allExceptions, allDisposals);
 
-        long pendingAssessments = compensationService.findPendingAssessments().size();
-        long pendingReviews = compensationService.findPendingReviews().size();
+        long pendingAssessmentsCount = compensationService.findPendingAssessments().size();
+        long pendingReviewsCount = compensationService.findPendingReviews().size();
 
         List<Waybill> abnormalWaybills = waybillService.findAbnormalWaybills();
 
+        model.addAttribute("inTransitCount", inTransitCount);
+        model.addAttribute("exceptionCount", exceptionCount);
         model.addAttribute("routeStats", routeStats);
         model.addAttribute("productTypeStats", productTypeStats);
         model.addAttribute("exceptionTypeStats", exceptionTypeStats);
-        model.addAttribute("statusStats", statusStats);
         model.addAttribute("disposalDurationStats", disposalDurationStats);
-        model.addAttribute("pendingAssessments", pendingAssessments);
-        model.addAttribute("pendingReviews", pendingReviews);
+        model.addAttribute("pendingAssessments", pendingAssessmentsCount);
+        model.addAttribute("pendingReviews", pendingReviewsCount);
         model.addAttribute("abnormalWaybills", abnormalWaybills);
 
         return "dashboard/index";
@@ -79,11 +84,9 @@ public class DashboardController {
         stats.put("4-8小时", 0L);
         stats.put("8小时以上", 0L);
 
-        // 按exceptionId建立关联
         Map<Long, ExceptionRecord> exceptionMap = exceptions.stream()
                 .collect(Collectors.toMap(ExceptionRecord::getId, e -> e));
 
-        // 只统计已处置完成的异常
         for (DisposalRecord disposal : disposals) {
             if ("COMPLETED".equals(disposal.getStatus().name()) && disposal.getDisposalTime() != null) {
                 ExceptionRecord exception = exceptionMap.get(disposal.getExceptionId());
