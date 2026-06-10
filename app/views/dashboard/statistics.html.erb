@@ -38,6 +38,50 @@
   </div>
 </div>
 
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">下架耗时分布</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="text-muted">平均下架耗时：</span>
+          <span class="text-primary font-weight-bold text-lg"><%= @avg_removal_time %> 天</span>
+        </div>
+        <canvas id="removalTimeChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">下架耗时统计</div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>耗时区间(天)</th>
+              <th>数量</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @removal_time_stats.empty? %>
+              <tr>
+                <td colspan="2" class="text-muted">暂无下架记录</td>
+              </tr>
+            <% else %>
+              <% @removal_time_stats.each do |days, count| %>
+                <tr>
+                  <td><%= days %> 天</td>
+                  <td><%= count %></td>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-md-6">
     <div class="card">
@@ -138,6 +182,24 @@
           data: <%= @channel_stats.values.to_json %>,
           backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1']
         }]
+      }
+    });
+
+    new Chart(document.getElementById('removalTimeChart'), {
+      type: 'bar',
+      data: {
+        labels: <%= @removal_time_stats.keys.map(&:to_s).to_json %>,
+        datasets: [{
+          label: '下架数量',
+          data: <%= @removal_time_stats.values.to_json %>,
+          backgroundColor: '#dc3545'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true },
+          x: { title: { display: true, text: '耗时(天)' } }
+        }
       }
     });
   });

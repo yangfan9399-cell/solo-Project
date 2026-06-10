@@ -70,6 +70,20 @@
   </div>
 </div>
 
+<% if @usage_scenario.scope_exceeded? %>
+  <div class="card mb-4 border-danger">
+    <div class="card-header bg-danger text-white">
+      🔴 授权范围超限警告
+    </div>
+    <div class="card-body">
+      <p class="text-danger">当前使用渠道 (<%= channel_label(@usage_scenario.channel) %>) 不在授权范围内！</p>
+      <p class="text-muted">授权渠道：<%= @license.authorized_channels.present? ? JSON.parse(@license.authorized_channels).map { |c| channel_label(c) }.join(', ') : '未设置' %></p>
+      <p class="text-danger">请先补充授权或调整使用渠道，否则无法通过审核。</p>
+      <%= link_to '编辑授权', edit_license_path(@license), class: 'btn btn-danger' %>
+    </div>
+  </div>
+<% end %>
+
 <div class="card mb-4">
   <div class="card-header">审核历史</div>
   <div class="card-body">
@@ -105,7 +119,12 @@
 <div class="card">
   <div class="card-header">审核操作</div>
   <div class="card-body">
-    <% if @usage_scenario.approval_status == 'pending' %>
+    <% if @usage_scenario.scope_exceeded? %>
+      <div class="alert alert-danger">
+        <strong>无法审核通过</strong>：使用范围超限，请先补充授权或调整使用渠道。
+      </div>
+      <%= button_to '拒绝并下架', reject_usage_scenario_path(@usage_scenario), method: :post, class: 'btn btn-danger' %>
+    <% elsif @usage_scenario.approval_status == 'pending' %>
       <div class="mb-3">
         <label class="form-label">审核备注</label>
         <textarea name="comment" class="form-control" rows="3"></textarea>
