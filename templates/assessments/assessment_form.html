@@ -91,7 +91,7 @@
                                     <input type="number" class="form-control" 
                                            name="score_{{ item.id }}" 
                                            min="0" max="{{ item.max_score }}"
-                                           value="{% if scores_dict %}{{ scores_dict.get:item.id.score }}{% endif %}"
+                                           value="{% for s in assessment.scores.all %}{% if s.item.id == item.id %}{{ s.score }}{% endif %}{% endfor %}"
                                            {% if item.is_required %}required{% endif %}>
                                     <small class="text-muted">范围: 0-{{ item.max_score }}</small>
                                 </div>
@@ -99,7 +99,7 @@
                                     <input type="text" class="form-control" 
                                            name="notes_{{ item.id }}" 
                                            placeholder="备注"
-                                           value="{% if scores_dict %}{{ scores_dict.get:item.id.notes }}{% endif %}">
+                                           value="{% for s in assessment.scores.all %}{% if s.item.id == item.id %}{{ s.notes }}{% endif %}{% endfor %}">
                                 </div>
                             </div>
                             {% endfor %}

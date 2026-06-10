@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 from django.db.models.functions import ExtractMonth, ExtractYear
 from collections import defaultdict
 from core.models import Elder
@@ -164,15 +164,15 @@ def get_period_statistics():
             })
     
     upgrade_counts = assessments_with_period.filter(
-        previous_nursing_level__level__lt=models.F('nursing_level__level')
+        previous_nursing_level__level__lt=F('nursing_level__level')
     ).values('year', 'month').annotate(count=Count('id'))
     
     downgrade_counts = assessments_with_period.filter(
-        previous_nursing_level__level__gt=models.F('nursing_level__level')
+        previous_nursing_level__level__gt=F('nursing_level__level')
     ).values('year', 'month').annotate(count=Count('id'))
     
     unchanged_counts = assessments_with_period.filter(
-        previous_nursing_level__level=models.F('nursing_level__level')
+        previous_nursing_level__level=F('nursing_level__level')
     ).values('year', 'month').annotate(count=Count('id'))
     
     upgrade_dict = {f"{uc['year']}-{uc['month']}": uc['count'] for uc in upgrade_counts if uc['year'] and uc['month']}

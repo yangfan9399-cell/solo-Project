@@ -87,7 +87,7 @@
                                     {% if assessment.get_fee_change > 0 %}
                                     <span class="text-danger">+¥{{ assessment.get_fee_change }}</span>
                                     {% elif assessment.get_fee_change < 0 %}
-                                    <span class="text-success">-¥{{ assessment.get_fee_change|abs }}</span>
+                                    <span class="text-success">-¥{{ assessment.get_fee_change_abs }}</span>
                                     {% else %}
                                     <span class="text-muted">无变化</span>
                                     {% endif %}

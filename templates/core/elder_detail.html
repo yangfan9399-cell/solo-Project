@@ -143,7 +143,7 @@
                                     </span>
                                     {% elif assessment.get_fee_change < 0 %}
                                     <span class="text-success">
-                                        -¥{{ assessment.get_fee_change|abs }}
+                                        -¥{{ assessment.get_fee_change_abs }}
                                     </span>
                                     {% else %}
                                     <span class="text-muted">无变化</span>

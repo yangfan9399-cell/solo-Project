@@ -214,13 +214,16 @@ def assessment_edit(request, pk):
     
     nursing_levels = NursingLevel.objects.filter(is_active=True).order_by('level')
     dimensions = AssessmentDimension.objects.filter(is_active=True).prefetch_related('items')
-    scores_dict = {score.item_id: score for score in assessment.scores.all()}
+    
+    score_data = {}
+    for score in assessment.scores.all():
+        score_data[str(score.item_id)] = {'score': score.score, 'notes': score.notes}
     
     context = {
         'assessment': assessment,
         'nursing_levels': nursing_levels,
         'dimensions': dimensions,
-        'scores_dict': scores_dict,
+        'score_data': score_data,
     }
     return render(request, 'assessments/assessment_form.html', context)
 

@@ -215,6 +215,12 @@ class Assessment(models.Model):
             return self.new_monthly_fee - self.previous_monthly_fee
         return None
 
+    def get_fee_change_abs(self):
+        change = self.get_fee_change()
+        if change is not None:
+            return abs(change)
+        return None
+
     def get_level_change_type(self):
         if not self.previous_nursing_level or not self.nursing_level:
             return None
