@@ -105,14 +105,20 @@ public class WebController {
     }
 
     @PostMapping("/contract/{id}/complete")
-    public String completeSigning(@PathVariable Long id) {
-        contractService.completeSigning(id, 2L);
+    public String completeSigning(@PathVariable Long id, @RequestParam String authMethod) {
+        contractService.completeSigning(id, 2L, AuthMethod.valueOf(authMethod));
         return "redirect:/contract/" + id;
     }
 
     @PostMapping("/contract/{id}/revoke")
-    public String revokeContract(@PathVariable Long id) {
-        contractService.revokeContract(id, 1L);
+    public String revokeContract(@PathVariable Long id, @RequestParam String authMethod) {
+        contractService.revokeContract(id, 1L, AuthMethod.valueOf(authMethod));
+        return "redirect:/contract/" + id;
+    }
+
+    @PostMapping("/contract/{id}/reauth")
+    public String reAuthenticate(@PathVariable Long id, @RequestParam String authMethod) {
+        contractService.reAuthenticate(id, 2L, AuthMethod.valueOf(authMethod));
         return "redirect:/contract/" + id;
     }
 

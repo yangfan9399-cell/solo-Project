@@ -3,6 +3,7 @@ package com.example.contract.service;
 import com.example.contract.entity.Contract;
 import com.example.contract.entity.ContractHistory;
 import com.example.contract.entity.SigningRecord;
+import com.example.contract.enums.AuthMethod;
 import com.example.contract.enums.ContractStatus;
 import com.example.contract.enums.FailureReason;
 import com.example.contract.repository.ContractHistoryRepository;
@@ -105,13 +106,14 @@ public class ContractService {
     }
 
     @Transactional
-    public void completeSigning(Long contractId, Long signerId) {
+    public void completeSigning(Long contractId, Long signerId, AuthMethod authMethod) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("合同不存在"));
 
         SigningRecord record = new SigningRecord();
         record.setContractId(contractId);
         record.setSignerId(signerId);
+        record.setAuthMethod(authMethod);
         record.setAuthSuccess(true);
         record.setSigningTime(LocalDateTime.now());
         signingRecordRepository.save(record);
@@ -127,7 +129,7 @@ public class ContractService {
     }
 
     @Transactional
-    public void revokeContract(Long contractId, Long operatorId) {
+    public void revokeContract(Long contractId, Long operatorId, AuthMethod authMethod) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("合同不存在"));
 
@@ -137,6 +139,7 @@ public class ContractService {
         SigningRecord record = new SigningRecord();
         record.setContractId(contractId);
         record.setSignerId(operatorId);
+        record.setAuthMethod(authMethod);
         record.setAuthSuccess(false);
         record.setFailureReason(FailureReason.CONTRACT_REVOKED);
         signingRecordRepository.save(record);
@@ -157,6 +160,34 @@ public class ContractService {
 
         userRepository.findById(operatorId).ifPresent(operator -> {
             addHistory(contractId, operatorId, operator.getRealName(), "UNFREEZE", "合同已解冻，允许重新认证");
+        });
+    }
+
+    @Transactional
+    public void reAuthenticate(Long contractId, Long signerId, AuthMethod authMethod) {
+        Contract contract = contractRepository.findById(contractId)
+                .orElseThrow(() -> new RuntimeException("合同不存在"));
+
+        if (Boolean.TRUE.equals(contract.getIsFrozen())) {
+            throw new RuntimeException("合同已冻结，无法进行重新认证");
+        }
+
+        SigningRecord record = new SigningRecord();
+        record.setContractId(contractId);
+        record.setSignerId(signerId);
+        record.setAuthMethod(authMethod);
+        record.setAuthSuccess(true);
+        record.setSigningTime(LocalDateTime.now());
+        record.setRetryCount(signingRecordRepository.countByContractId(contractId));
+        signingRecordRepository.save(record);
+
+        contract.setStatus(ContractStatus.SIGNED);
+        contract.setSignedAt(LocalDateTime.now());
+        contract.setIsFrozen(false);
+        contractRepository.save(contract);
+
+        userRepository.findById(signerId).ifPresent(signer -> {
+            addHistory(contractId, signerId, signer.getRealName(), "RE_AUTH_SUCCESS", "身份重新认证成功，签署完成");
         });
     }
 

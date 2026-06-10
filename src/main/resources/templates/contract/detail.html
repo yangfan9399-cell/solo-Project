@@ -196,24 +196,65 @@
 
     <div class="card">
         <h2 class="section-title">操作</h2>
-        <form action="/contract/[[${contract.id}]]/retry" method="post" style="display: inline;" th:if="${contract.status == 'FAILED' && !contract.isFrozen}">
-            <button type="submit" class="btn btn-warning">申请补签</button>
-        </form>
-        <span th:if="${contract.status == 'FAILED' && contract.isFrozen}" class="red">合同已冻结，需先完成身份重新认证</span>
         
-        <form action="/contract/[[${contract.id}]]/unfreeze" method="post" style="display: inline;" th:if="${contract.isFrozen}">
-            <button type="submit" class="btn btn-info">解冻合同</button>
+        <div th:if="${contract.status == 'FAILED' && contract.isFrozen}" style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+            <h3 style="color: #856404; margin-top: 0;">⚠️ 身份不符 - 合同已冻结</h3>
+            <p>此合同因签署人身份验证失败已被冻结。</p>
+            <p><strong>处理流程：</strong></p>
+            <ol>
+                <li>档案员确认并解冻合同</li>
+                <li>签署人重新完成身份认证</li>
+                <li>认证成功后自动完成签署</li>
+            </ol>
+        </div>
+
+        <form action="/contract/[[${contract.id}]]/unfreeze" method="post" style="display: inline; margin-right: 10px;" th:if="${contract.isFrozen}">
+            <button type="submit" class="btn btn-info">解冻合同（允许重新认证）</button>
         </form>
         
-        <form action="/contract/[[${contract.id}]]/complete" method="post" style="display: inline;" th:if="${contract.status == 'PENDING'}">
+        <div th:if="${!contract.isFrozen && contract.status == 'FAILED'}" style="margin: 15px 0;">
+            <h3 style="color: #856404;">重新认证补签</h3>
+            <form action="/contract/[[${contract.id}]]/reauth" method="post" style="display: inline;">
+                <div style="margin-bottom: 10px;">
+                    <label style="display: inline-block; margin-right: 10px;">认证方式：</label>
+                    <select name="authMethod" required style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                        <option value="SMS">短信验证</option>
+                        <option value="FACE">人脸识别</option>
+                        <option value="ID_CARD">身份证验证</option>
+                        <option value="WECHAT">微信认证</option>
+                        <option value="ALIPAY">支付宝认证</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">重新认证并签署</button>
+            </form>
+        </div>
+        
+        <form action="/contract/[[${contract.id}]]/complete" method="post" style="display: inline; margin-right: 10px;" th:if="${contract.status == 'PENDING'}">
+            <div style="margin-bottom: 10px;">
+                <label style="display: inline-block; margin-right: 10px;">认证方式：</label>
+                <select name="authMethod" required style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="SMS">短信验证</option>
+                    <option value="FACE">人脸识别</option>
+                    <option value="ID_CARD">身份证验证</option>
+                    <option value="WECHAT">微信认证</option>
+                    <option value="ALIPAY">支付宝认证</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-success">完成签署</button>
         </form>
         
-        <form action="/contract/[[${contract.id}]]/revoke" method="post" style="display: inline;" th:if="${contract.status == 'PENDING' || contract.status == 'FAILED'}">
+        <form action="/contract/[[${contract.id}]]/revoke" method="post" style="display: inline; margin-right: 10px;" th:if="${contract.status == 'PENDING'}">
+            <div style="margin-bottom: 10px;">
+                <label style="display: inline-block; margin-right: 10px;">撤回原因认证：</label>
+                <select name="authMethod" required style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="SMS">短信验证</option>
+                    <option value="FACE">人脸识别</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-danger">撤回合同</button>
         </form>
         
-        <form action="/evidence/[[${contract.id}]]/preserve" method="post" style="display: inline;" th:if="${contract.status != 'EVIDENCE_PRESERVED'}">
+        <form action="/evidence/[[${contract.id}]]/preserve" method="post" style="display: inline;" th:if="${contract.status == 'SIGNED'}">
             <button type="submit" class="btn btn-primary">证据保全</button>
         </form>
     </div>
