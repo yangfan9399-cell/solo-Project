@@ -47,14 +47,12 @@ class ReportsController < ApplicationController
   end
 
   def deliver
-    if @report.can_deliver?
-      if @report.id_mismatch?
-        redirect_to @report, alert: "身份证不符，禁止交付报告"
-      else
-        @report.update!(status: :delivered)
-        @report.add_history("delivered", current_user.name)
-        redirect_to @report, notice: "报告已交付"
-      end
+    if @report.id_mismatch?
+      redirect_to @report, alert: "身份证不符，禁止交付报告"
+    elsif @report.can_deliver?
+      @report.update!(status: :delivered)
+      @report.add_history("delivered", current_user.name)
+      redirect_to @report, notice: "报告已交付"
     else
       redirect_to @report, alert: "当前状态不允许交付"
     end
