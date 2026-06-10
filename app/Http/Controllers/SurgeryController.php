@@ -19,7 +19,7 @@ class SurgeryController extends Controller
     public function create()
     {
         $patients = Patient::all();
-        $implants = Implant::where('is_recalled', false)->where('used_quantity', '<', 'quantity')->get();
+        $implants = Implant::where('is_recalled', false)->whereRaw('used_quantity < quantity')->get();
         return Inertia::render('Surgeries/Create', compact('patients', 'implants'));
     }
 
@@ -36,12 +36,25 @@ class SurgeryController extends Controller
 
         $implant = Implant::find($validated['implant_id']);
         if ($implant->is_recalled) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => '该批次种植体已被召回，无法使用'], 400);
+            }
             return back()->withErrors(['implant_id' => '该批次种植体已被召回，无法使用']);
+        }
+
+        if ($implant->used_quantity >= $implant->quantity) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => '该批次种植体库存不足'], 400);
+            }
+            return back()->withErrors(['implant_id' => '该批次种植体库存不足']);
         }
 
         $surgery = Surgery::create($validated);
         $implant->increment('used_quantity');
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => '手术记录创建成功']);
+        }
         return redirect()->route('surgeries.index');
     }
 

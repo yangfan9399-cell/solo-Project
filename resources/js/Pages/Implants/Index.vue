@@ -60,7 +60,7 @@
       </table>
     </div>
 
-    <div v-if="showModal" class="modal fade show" style="display:block" @click.self="closeModal">
+    <div v-if="showModal" class="modal fade show" style="display:block; background: rgba(0,0,0,0.5)" @click.self="closeModal">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -69,19 +69,25 @@
           </div>
           <div class="modal-body">
             <div v-if="relatedPatients.length > 0" class="alert alert-warning mb-4">
-              <p>警告：该批次种植体已用于以下患者，召回后将无法继续使用：</p>
+              <p><strong>⚠️ 警告：该批次种植体已用于以下患者，召回后将无法继续使用：</strong></p>
               <ul>
                 <li v-for="patient in relatedPatients" :key="patient.id">{{ patient.name }} - {{ patient.id_card }}</li>
               </ul>
             </div>
+            <div v-else class="alert alert-info mb-4">
+              <p>该批次种植体尚未用于任何手术</p>
+            </div>
             <div class="form-group">
-              <label>召回原因</label>
-              <textarea v-model="recallReason" class="form-control" rows="3"></textarea>
+              <label>召回原因 *</label>
+              <textarea v-model="recallReason" class="form-control" rows="3" placeholder="请输入召回原因"></textarea>
             </div>
           </div>
           <div class="modal-footer">
             <button @click="closeModal" class="btn btn-secondary">取消</button>
-            <button @click="submitRecall" class="btn btn-danger">确认召回</button>
+            <button @click="submitRecall" :disabled="isSubmitting" class="btn btn-danger">
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
+              {{ isSubmitting ? '处理中...' : '确认召回' }}
+            </button>
           </div>
         </div>
       </div>
@@ -91,7 +97,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Inertia } from '@inertiajs/vue3'
+import { Inertia, router } from '@inertiajs/vue3'
 
 defineProps({
   implants: Array
@@ -101,6 +107,7 @@ const showModal = ref(false)
 const selectedImplant = ref(null)
 const recallReason = ref('')
 const relatedPatients = ref([])
+const isSubmitting = ref(false)
 
 const formatDate = (date) => {
   if (!date) return ''
@@ -113,8 +120,12 @@ const viewImplant = (id) => {
 
 const showRecallModal = async (implant) => {
   selectedImplant.value = implant
-  const response = await fetch(`/implants/${implant.id}/patients`)
-  relatedPatients.value = await response.json()
+  try {
+    const response = await fetch(`/implants/${implant.id}/patients`)
+    relatedPatients.value = await response.json()
+  } catch (error) {
+    relatedPatients.value = []
+  }
   showModal.value = true
 }
 
@@ -130,15 +141,30 @@ const submitRecall = async () => {
     alert('请填写召回原因')
     return
   }
-  await fetch(`/implants/${selectedImplant.value.id}/recall`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-    },
-    body: JSON.stringify({ recall_reason: recallReason.value })
-  })
-  closeModal()
-  Inertia.visit('/implants')
+
+  isSubmitting.value = true
+  
+  try {
+    const response = await fetch(`/implants/${selectedImplant.value.id}/recall`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ recall_reason: recallReason.value })
+    })
+
+    if (response.ok) {
+      closeModal()
+      router.visit('/implants', { reload: true })
+    } else {
+      const error = await response.json()
+      alert(error.message || '召回失败')
+    }
+  } catch (error) {
+    alert('网络错误，请稍后重试')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>

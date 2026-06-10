@@ -51,6 +51,9 @@ class ImplantController extends Controller
             'recall_date' => now(),
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => '召回成功']);
+        }
         return redirect()->route('implants.index');
     }
 

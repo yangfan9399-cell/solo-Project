@@ -54,7 +54,7 @@
       </table>
     </div>
 
-    <div v-if="showModal" class="modal fade show" style="display:block" @click.self="closeModal">
+    <div v-if="showModal" class="modal fade show" style="display:block; background: rgba(0,0,0,0.5)" @click.self="closeModal">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -64,10 +64,11 @@
           <div class="modal-body">
             <div class="mb-3">
               <p><strong>患者：</strong>{{ selectedRecord?.followUp?.surgery?.patient?.name }}</p>
+              <p><strong>种植体批号：</strong>{{ selectedRecord?.followUp?.surgery?.implant?.batch_number }}</p>
               <p><strong>异常类型：</strong>{{ getAbnormalTypeName(selectedRecord?.type) }}</p>
               <p><strong>异常描述：</strong>{{ selectedRecord?.description }}</p>
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
               <label>复核结果 *</label>
               <select v-model.number="reviewForm.review_status" class="form-control" required>
                 <option value="1">已通过</option>
@@ -76,12 +77,15 @@
             </div>
             <div class="form-group">
               <label>复核备注</label>
-              <textarea v-model="reviewForm.review_notes" class="form-control" rows="2"></textarea>
+              <textarea v-model="reviewForm.review_notes" class="form-control" rows="2" placeholder="请输入复核意见（可选）"></textarea>
             </div>
           </div>
           <div class="modal-footer">
             <button @click="closeModal" class="btn btn-secondary">取消</button>
-            <button @click="submitReview" class="btn btn-primary">确认复核</button>
+            <button @click="submitReview" :disabled="isSubmitting" class="btn btn-primary">
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
+              {{ isSubmitting ? '处理中...' : '确认复核' }}
+            </button>
           </div>
         </div>
       </div>
@@ -91,6 +95,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { router } from '@inertiajs/vue3'
 
 defineProps({
   records: Array
@@ -98,6 +103,7 @@ defineProps({
 
 const showModal = ref(false)
 const selectedRecord = ref(null)
+const isSubmitting = ref(false)
 const reviewForm = reactive({
   review_status: 1,
   review_notes: ''
@@ -148,18 +154,32 @@ const closeModal = () => {
 }
 
 const submitReview = async () => {
-  await fetch(`/abnormal-records/${selectedRecord.value.id}/review`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-    },
-    body: JSON.stringify({
-      review_status: reviewForm.review_status,
-      review_notes: reviewForm.review_notes
+  isSubmitting.value = true
+  
+  try {
+    const response = await fetch(`/abnormal-records/${selectedRecord.value.id}/review`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        review_status: reviewForm.review_status,
+        review_notes: reviewForm.review_notes
+      })
     })
-  })
-  closeModal()
-  window.location.reload()
+
+    if (response.ok) {
+      closeModal()
+      router.visit('/abnormal-records', { reload: true })
+    } else {
+      const error = await response.json()
+      alert(error.message || '复核失败')
+    }
+  } catch (error) {
+    alert('网络错误，请稍后重试')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>

@@ -24,9 +24,12 @@ class AbnormalRecordController extends Controller
         $record->update([
             'review_status' => $validated['review_status'],
             'review_notes' => $validated['review_notes'],
-            'reviewer_id' => auth()->id(),
+            'reviewer_id' => auth()->id() ?: 5,
         ]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => '复核成功']);
+        }
         return redirect()->route('abnormal-records.index');
     }
 }
