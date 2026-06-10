@@ -1,0 +1,18 @@
+<div class="timeline">
+    {% for node in travel.history_nodes.all reversed %}
+    <div class="timeline-item">
+        <div class="d-flex justify-content-between">
+            <div>
+                <span class="fw-medium">{{ node.get_action_type_display }}</span>
+                <span class="text-muted">by {{ node.actor.get_full_name|default:node.actor.username }}</span>
+            </div>
+            <small class="text-muted">{{ node.created_at|date:"Y/m/d H:i" }}</small>
+        </div>
+        {% if node.comment %}
+        <div class="text-muted small mt-1">{{ node.comment }}</div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted text-center py-3 mb-0">暂无操作记录</p>
+    {% endfor %}
+</div>

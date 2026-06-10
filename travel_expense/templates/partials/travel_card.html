@@ -1,0 +1,25 @@
+<div class="card h-100">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</span>
+        <span class="status-badge status-{{ travel.status }}">{{ travel.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+        <div class="mb-2">
+            <i class="bi bi-geo-alt text-muted me-1"></i>
+            {{ travel.destination_city }}
+        </div>
+        <div class="mb-2">
+            <i class="bi bi-calendar text-muted me-1"></i>
+            {{ travel.start_date|date:"m/d" }} - {{ travel.end_date|date:"m/d" }}
+        </div>
+        <div class="mb-0">
+            <i class="bi bi-currency-dollar text-muted me-1"></i>
+            ¥{{ travel.estimated_budget|floatformat:2 }}
+        </div>
+    </div>
+    <div class="card-footer bg-white">
+        <a href="{% url 'travel_detail' travel.id %}" class="btn btn-sm btn-outline-primary w-100">
+            查看详情
+        </a>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}行程预订 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'booking_list' %}">行程预订</a></li>
+            <li class="breadcrumb-item active">预订行程</li>
+        </ol>
+    </nav>
+    <h2 class="mb-1">行程预订</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">差旅信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">申请人</label>
+                        <div class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">目的地</label>
+                        <div class="fw-medium">{{ travel.destination_city }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">出差日期</label>
+                        <div class="fw-medium">{{ travel.start_date|date:"Y/m/d" }} - {{ travel.end_date|date:"Y/m/d" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">预计预算</label>
+                        <div class="fw-medium text-primary">¥{{ travel.estimated_budget|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">预订信息</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="flight_info" class="form-label">航班信息</label>
+                        <textarea class="form-control" id="flight_info" name="flight_info" rows="3" placeholder="如：&#10;航班号: CA1234&#10;起飞时间: 08:00&#10;票价: 800元"></textarea>
+                        <div class="form-text">每行一个信息，格式：标签: 值</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="hotel_info" class="form-label">酒店信息</label>
+                        <textarea class="form-control" id="hotel_info" name="hotel_info" rows="3" placeholder="如：&#10;酒店名称: 如家酒店&#10;入住: 3晚&#10;单价: 400元/晚"></textarea>
+                        <div class="form-text">每行一个信息，格式：标签: 值</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="actual_cost" class="form-label">实际总费用 (元)</label>
+                        {{ form.actual_cost }}
+                        {% if form.actual_cost.errors %}
+                        <div class="text-danger small mt-1">{{ form.actual_cost.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="over_budget_reason" class="form-label">超标原因</label>
+                        {{ form.over_budget_reason }}
+                        <div class="form-text">仅在实际费用超过预算时需要选择</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="over_budget_reason_text" class="form-label">超标说明</label>
+                        {{ form.over_budget_reason_text }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="booking_status" class="form-label">预订状态</label>
+                        {{ form.booking_status }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> 保存预订
+                        </button>
+                        <a href="{% url 'booking_list' %}" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

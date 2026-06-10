@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}申请详情 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'travel_list' %}">我的申请</a></li>
+            <li class="breadcrumb-item active">申请详情</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">差旅申请详情</h4>
+                <span class="status-badge status-{{ travel.status }}">{{ travel.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">申请人</label>
+                            <div class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">部门</label>
+                            <div class="fw-medium">{{ travel.department.name }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">目的地</label>
+                            <div class="fw-medium">{{ travel.destination_city }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">出差日期</label>
+                            <div class="fw-medium">{{ travel.start_date|date:"Y/m/d" }} - {{ travel.end_date|date:"Y/m/d" }}</div>
+                            <div class="small text-muted">共 {{ travel.duration_days }} 天</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">预计预算</label>
+                            <div class="fw-medium text-primary">¥{{ travel.estimated_budget|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-0">
+                            <label class="text-muted small">出差事由</label>
+                            <div class="fw-medium">{{ travel.purpose|linebreaks }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if travel.status == 'draft' and travel.applicant == user %}
+                <hr>
+                <a href="{% url 'travel_submit' travel.id %}" class="btn btn-success">
+                    <i class="bi bi-send"></i> 提交申请
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if travel.booking %}
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-airplane me-2"></i>行程预订信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    {% if travel.booking.flight_info %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <label class="text-muted small d-block">航班信息</label>
+                            {% if travel.booking.flight_info.flight_number %}
+                            <div><i class="bi bi-airplane me-2"></i>航班号: {{ travel.booking.flight_info.flight_number }}</div>
+                            {% endif %}
+                            {% if travel.booking.flight_info.departure_time %}
+                            <div><i class="bi bi-clock me-2"></i>起飞: {{ travel.booking.flight_info.departure_time }}</div>
+                            {% endif %}
+                            {% if travel.booking.flight_info.price %}
+                            <div><i class="bi bi-currency-dollar me-2"></i>票价: {{ travel.booking.flight_info.price }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if travel.booking.hotel_info %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <label class="text-muted small d-block">酒店信息</label>
+                            {% if travel.booking.hotel_info.name %}
+                            <div><i class="bi bi-building me-2"></i>{{ travel.booking.hotel_info.name }}</div>
+                            {% endif %}
+                            {% if travel.booking.hotel_info.nights %}
+                            <div><i class="bi bi-moon me-2"></i>入住: {{ travel.booking.hotel_info.nights }}</div>
+                            {% endif %}
+                            {% if travel.booking.hotel_info.price_per_night %}
+                            <div><i class="bi bi-currency-dollar me-2"></i>单价: {{ travel.booking.hotel_info.price_per_night }}/晚</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="text-muted small">实际费用</label>
+                                <div class="fw-medium text-primary fs-5">¥{{ travel.booking.actual_cost|floatformat:2 }}</div>
+                            </div>
+                            {% if travel.budget_difference %}
+                            <div class="col-md-4">
+                                <label class="text-muted small">预算差异</label>
+                                <div class="fw-medium {% if travel.budget_difference > 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {% if travel.budget_difference > 0 %}+{% endif %}¥{{ travel.budget_difference|floatformat:2 }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if travel.booking.over_budget_reason %}
+                            <div class="col-md-4">
+                                <label class="text-muted small">超标原因</label>
+                                <div class="fw-medium">{{ travel.booking.get_over_budget_reason_display }}</div>
+                                {% if travel.booking.over_budget_reason_text %}
+                                <div class="small text-muted">{{ travel.booking.over_budget_reason_text }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if travel.reimbursement %}
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>报销信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="text-muted small">实际总费用</label>
+                        <div class="fw-medium text-primary fs-5">¥{{ travel.reimbursement.total_actual_cost|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small">票据状态</label>
+                        <div class="mt-2">
+                            {% if travel.reimbursement.receipt_status == 'complete' %}
+                            <span class="badge bg-success">完整</span>
+                            {% elif travel.reimbursement.receipt_status == 'missing' %}
+                            <span class="badge bg-danger">缺失</span>
+                            {% else %}
+                            <span class="badge bg-warning">待补充</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small">复核状态</label>
+                        <div class="mt-2">
+                            {% if travel.reimbursement.review_status == 'approved' %}
+                            <span class="badge bg-success">已通过</span>
+                            {% elif travel.reimbursement.review_status == 'returned' %}
+                            <span class="badge bg-danger">已退回</span>
+                            {% else %}
+                            <span class="badge bg-secondary">待复核</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="text-muted small">票据清单</label>
+                        <div class="d-flex gap-3 mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" disabled {% if travel.reimbursement.has_flight_receipt %}checked{% endif %}>
+                                <label class="form-check-label">机票票据</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" disabled {% if travel.reimbursement.has_hotel_receipt %}checked{% endif %}>
+                                <label class="form-check-label">酒店票据</label>
+                            </div>
+                            {% if travel.reimbursement.has_meal_expense %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" disabled {% if travel.reimbursement.has_meal_receipt %}checked{% endif %}>
+                                <label class="form-check-label">餐饮票据</label>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if travel.reimbursement.missing_receipts %}
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>缺失票据：</strong>{{ travel.reimbursement.missing_receipts }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if travel.reimbursement.finance_comments %}
+                    <div class="col-12">
+                        <label class="text-muted small">财务意见</label>
+                        <div class="fw-medium">{{ travel.reimbursement.finance_comments|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>操作历史</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for node in travel.history_nodes.all reversed %}
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <span class="fw-medium">{{ node.get_action_type_display }}</span>
+                                <span class="text-muted">by {{ node.actor.get_full_name|default:node.actor.username }}</span>
+                            </div>
+                            <small class="text-muted">{{ node.created_at|date:"Y/m/d H:i" }}</small>
+                        </div>
+                        {% if node.comment %}
+                        <div class="text-muted small mt-1">{{ node.comment }}</div>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-3 mb-0">暂无操作记录</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if can_approve %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h5 class="mb-0 text-warning"><i class="bi bi-check-circle me-2"></i>待审批</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'travel_approve' travel.id %}" class="btn btn-warning w-100">
+                    <i class="bi bi-pencil"></i> 审批操作
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if can_book %}
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info bg-opacity-10">
+                <h5 class="mb-0 text-info"><i class="bi bi-calendar-check me-2"></i>待预订</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'travel_booking' travel.id %}" class="btn btn-info w-100">
+                    <i class="bi bi-pencil"></i> 行程预订
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if can_reimburse %}
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success bg-opacity-10">
+                <h5 class="mb-0 text-success"><i class="bi bi-receipt me-2"></i>待报销</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'travel_reimburse' travel.id %}" class="btn btn-success w-100">
+                    <i class="bi bi-pencil"></i> 报销复核
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">申请信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">申请编号</label>
+                    <div class="font-monospace">{{ travel.id }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">创建时间</label>
+                    <div>{{ travel.created_at|date:"Y/m/d H:i" }}</div>
+                </div>
+                <div class="mb-0">
+                    <label class="text-muted small">更新时间</label>
+                    <div>{{ travel.updated_at|date:"Y/m/d H:i" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

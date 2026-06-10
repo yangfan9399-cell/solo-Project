@@ -1,0 +1,21 @@
+{% if actual_cost %}
+<div class="mb-0">
+    <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted">预算:</span>
+        <span>¥{{ estimated_budget|floatformat:2 }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-1">
+        <span class="text-muted">实际:</span>
+        <span class="fw-medium">¥{{ actual_cost|floatformat:2 }}</span>
+    </div>
+    <div class="d-flex justify-content-between">
+        <span class="text-muted">差异:</span>
+        <span class="{% if difference > 0 %}text-danger{% else %}text-success{% endif %} fw-medium">
+            {% if difference > 0 %}+{% endif %}¥{{ difference|floatformat:2 }}
+            {% if percentage > 0 %}(+{{ percentage|floatformat:1 }}%){% endif %}
+        </span>
+    </div>
+</div>
+{% else %}
+<div class="text-muted mb-0">暂无预订信息</div>
+{% endif %}

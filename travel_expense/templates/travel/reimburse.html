@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}报销复核 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'reimbursement_list' %}">报销复核</a></li>
+            <li class="breadcrumb-item active">复核操作</li>
+        </ol>
+    </nav>
+    <h2 class="mb-1">报销复核</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">差旅信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">申请人</label>
+                        <div class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">目的地</label>
+                        <div class="fw-medium">{{ travel.destination_city }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">出差日期</label>
+                        <div class="fw-medium">{{ travel.start_date|date:"Y/m/d" }} - {{ travel.end_date|date:"Y/m/d" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">实际总费用</label>
+                        <div class="fw-medium text-primary fs-5">¥{{ reimbursement.total_actual_cost|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">票据信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert {% if reimbursement.receipt_status == 'complete' %}alert-success{% else %}alert-danger{% endif %}">
+                    <i class="bi bi-{% if reimbursement.receipt_status == 'complete' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                    <strong>票据状态：</strong>
+                    {% if reimbursement.receipt_status == 'complete' %}
+                    完整
+                    {% elif reimbursement.receipt_status == 'missing' %}
+                    缺失
+                    {% else %}
+                    待补充
+                    {% endif %}
+                </div>
+
+                <form method="post" id="reimburse-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">票据清单</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.has_flight_receipt }}
+                                    <label class="form-check-label" for="{{ form.has_flight_receipt.id_for_label }}">机票票据</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.has_hotel_receipt }}
+                                    <label class="form-check-label" for="{{ form.has_hotel_receipt.id_for_label }}">酒店票据</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.has_meal_expense }}
+                                    <label class="form-check-label" for="{{ form.has_meal_expense.id_for_label }}">有餐饮报销</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.has_meal_receipt }}
+                                    <label class="form-check-label" for="{{ form.has_meal_receipt.id_for_label }}">餐饮票据</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="missing_receipts" class="form-label">缺失票据</label>
+                        {{ form.missing_receipts }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="finance_comments" class="form-label">财务意见</label>
+                        {{ form.finance_comments }}
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="submit" name="action" value="check_receipts" class="btn btn-outline-secondary">
+                            <i class="bi bi-search"></i> 检查票据
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="approve" class="btn btn-success" id="btn-approve">
+                            <i class="bi bi-check-circle"></i> 通过报销
+                        </button>
+                        <button type="submit" name="action" value="return" class="btn btn-outline-danger" id="btn-return">
+                            <i class="bi bi-arrow-return-left"></i> 退回报销
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mb-3 mt-3" id="return-comment-section" style="display: none;">
+                    <label for="return_comment" class="form-label">退回原因（必填）</label>
+                    <textarea class="form-control" id="return_comment" name="return_comment" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reimburse-form');
+    const returnSection = document.getElementById('return-comment-section');
+    const btnApprove = document.getElementById('btn-approve');
+    const btnReturn = document.getElementById('btn-return');
+
+    form.addEventListener('submit', function(e) {
+        const action = form.querySelector('button[type="submit"]:focused')?.value;
+        if (action === 'return') {
+            const comment = document.getElementById('return_comment').value;
+            if (!comment.trim()) {
+                e.preventDefault();
+                alert('退回报销时必须填写原因');
+            }
+        }
+    });
+
+    btnReturn?.addEventListener('click', function() {
+        returnSection.style.display = 'block';
+    });
+
+    btnApprove?.addEventListener('click', function() {
+        returnSection.style.display = 'none';
+    });
+});
+</script>
+
+{% if reimbursement.receipt_status == 'missing' %}
+<script>
+document.getElementById('btn-approve').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('票据缺失，禁止通过报销。请先补充票据或退回报销。');
+});
+</script>
+{% endif %}
+{% endblock %}

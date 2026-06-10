@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}审批申请 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'approval_list' %}">待审批</a></li>
+            <li class="breadcrumb-item active">审批操作</li>
+        </ol>
+    </nav>
+    <h2 class="mb-1">审批差旅申请</h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">申请信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">申请人</label>
+                        <div class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">部门</label>
+                        <div class="fw-medium">{{ travel.department.name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">目的地</label>
+                        <div class="fw-medium">{{ travel.destination_city }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">预计预算</label>
+                        <div class="fw-medium text-primary">¥{{ travel.estimated_budget|floatformat:2 }}</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="text-muted small">出差事由</label>
+                        <div class="fw-medium">{{ travel.purpose|linebreaks }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">审批操作</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">选择操作</label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="action" id="action_approve" value="approve" required>
+                            <label class="btn btn-outline-success" for="action_approve">
+                                <i class="bi bi-check-circle"></i> 审批通过
+                            </label>
+
+                            <input type="radio" class="btn-check" name="action" id="action_reject" value="reject">
+                            <label class="btn btn-outline-danger" for="action_reject">
+                                <i class="bi bi-x-circle"></i> 审批驳回
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">审批意见</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="请输入审批意见（驳回时必填）"></textarea>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> 确认提交
+                        </button>
+                        <a href="{% url 'approval_list' %}" class="btn btn-outline-secondary">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

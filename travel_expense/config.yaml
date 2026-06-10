@@ -1,0 +1,21 @@
+database:
+  host: localhost
+  port: 5432
+  name: travel_expense_db
+  username: postgres
+  password: postgres
+
+app:
+  debug: true
+  secret_key: django-insecure-travel-expense-secret-key-2024
+  allowed_hosts:
+    - localhost
+    - 127.0.0.1
+  use_sqlite: true
+
+business:
+  max_budget_per_day: 1000
+  receipt_required_types:
+    - flight
+    - hotel
+  over_budget_threshold: 1.2

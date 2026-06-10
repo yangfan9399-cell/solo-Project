@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}新建申请 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'travel_list' %}">我的申请</a></li>
+            <li class="breadcrumb-item active">新建申请</li>
+        </ol>
+    </nav>
+    <h2 class="mb-1">新建差旅申请</h2>
+</div>
+
+<div class="card">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="destination_city" class="form-label">目的地城市</label>
+                    {{ form.destination_city }}
+                    {% if form.destination_city.errors %}
+                    <div class="text-danger small mt-1">{{ form.destination_city.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">开始日期</label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">结束日期</label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                    <div class="text-danger small mt-1">{{ form.end_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                    <label for="estimated_budget" class="form-label">预计预算 (元)</label>
+                    {{ form.estimated_budget }}
+                    {% if form.estimated_budget.errors %}
+                    <div class="text-danger small mt-1">{{ form.estimated_budget.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-12">
+                    <label for="purpose" class="form-label">出差事由</label>
+                    {{ form.purpose }}
+                    {% if form.purpose.errors %}
+                    <div class="text-danger small mt-1">{{ form.purpose.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> 保存草稿
+                </button>
+                <a href="{% url 'travel_list' %}" class="btn btn-outline-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

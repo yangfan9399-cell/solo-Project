@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}待审批 - 差旅报销管理系统{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-1">待审批列表</h2>
+    <p class="text-muted mb-0">部门：{{ user.department.name }}</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if travels %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>申请人</th>
+                        <th>目的地</th>
+                        <th>日期</th>
+                        <th>预算</th>
+                        <th>申请时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for travel in travels %}
+                    <tr>
+                        <td>
+                            <div class="fw-medium">{{ travel.applicant.get_full_name|default:travel.applicant.username }}</div>
+                        </td>
+                        <td>{{ travel.destination_city }}</td>
+                        <td>
+                            <div>{{ travel.start_date|date:"Y/m/d" }}</div>
+                            <div class="small text-muted">至 {{ travel.end_date|date:"Y/m/d" }}</div>
+                        </td>
+                        <td>¥{{ travel.estimated_budget|floatformat:2 }}</td>
+                        <td>{{ travel.created_at|date:"Y/m/d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'travel_detail' travel.id %}" class="btn btn-sm btn-outline-primary">查看</a>
+                            <a href="{% url 'travel_approve' travel.id %}" class="btn btn-sm btn-warning">审批</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3">暂无待审批申请</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
