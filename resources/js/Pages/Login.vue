@@ -58,10 +58,10 @@ const login = async () => {
   error.value = '';
   
   try {
-    const response = await window.axios.post('/api/login', form);
-    localStorage.setItem('token', response.data.token);
+    const response = await window.axios.post('/api/login', form, {
+      headers: { 'Content-Type': 'application/json' }
+    });
     localStorage.setItem('user', JSON.stringify(response.data.user));
-    window.axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
     window.location.href = '/dashboard';
   } catch (e) {
     error.value = e.response?.data?.error || '登录失败';

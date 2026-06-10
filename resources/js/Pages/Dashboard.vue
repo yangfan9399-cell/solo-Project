@@ -4,7 +4,7 @@
       <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <h1 class="text-xl font-bold text-gray-800">门店巡检整改闭环平台</h1>
         <div class="flex items-center gap-4">
-          <span class="text-gray-600">{{ currentUser?.name }}</span>
+          <span class="text-gray-600">{{ currentUser?.name }} ({{ userRole }})</span>
           <button @click="logout" class="text-red-600 hover:text-red-700">退出</button>
         </div>
       </div>
@@ -16,7 +16,7 @@
           <li><a href="#overview" @click.prevent="activeTab = 'overview'" :class="['cursor-pointer', activeTab === 'overview' ? 'text-blue-400' : 'hover:text-gray-300']">概览</a></li>
           <li><a href="#issues" @click.prevent="activeTab = 'issues'" :class="['cursor-pointer', activeTab === 'issues' ? 'text-blue-400' : 'hover:text-gray-300']">问题列表</a></li>
           <li><a href="#kanban" @click.prevent="activeTab = 'kanban'" :class="['cursor-pointer', activeTab === 'kanban' ? 'text-blue-400' : 'hover:text-gray-300']">看板</a></li>
-          <li><a href="#report" @click.prevent="activeTab = 'report'" :class="['cursor-pointer', activeTab === 'report' ? 'text-blue-400' : 'hover:text-gray-300']">上报问题</a></li>
+          <li v-if="currentUser.is_supervisor"><a href="#report" @click.prevent="activeTab = 'report'" :class="['cursor-pointer', activeTab === 'report' ? 'text-blue-400' : 'hover:text-gray-300']">上报问题</a></li>
         </ul>
       </div>
     </nav>
@@ -98,6 +98,7 @@
             <option value="">全部状态</option>
             <option value="pending">待整改</option>
             <option value="rectifying">整改中</option>
+            <option value="reviewing">待复查</option>
             <option value="reviewed">已复查</option>
             <option value="closed">已闭环</option>
             <option value="rejected">已退回</option>
@@ -142,7 +143,7 @@
       </div>
 
       <div v-else-if="activeTab === 'kanban'">
-        <div class="grid grid-cols-5 gap-4">
+        <div class="grid grid-cols-6 gap-4">
           <div v-for="status in kanbanStatuses" :key="status.value" class="bg-gray-50 rounded-lg p-4">
             <div class="font-semibold text-gray-800 mb-4">{{ status.label }} ({{ getStatusCount(status.value) }})</div>
             <div class="space-y-3">
@@ -200,7 +201,7 @@
         <div class="p-6">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold">问题详情</h3>
-            <button @click="selectedIssue = null" class="text-gray-500 hover:text-gray-700">×</button>
+            <button @click="selectedIssue = null" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
           </div>
 
           <div class="grid grid-cols-2 gap-4 mb-6">
@@ -232,8 +233,14 @@
             <div class="flex gap-2 flex-wrap">
               <div v-for="(photo, index) in selectedIssue.photos" :key="index" 
                    class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span class="text-gray-500">{{ photo }}</span>
+                <span class="text-gray-500 text-xs">{{ photo }}</span>
               </div>
+            </div>
+          </div>
+          <div v-else-if="selectedIssue.status === 'rectifying'" class="mb-6">
+            <label class="block text-gray-500 text-sm">整改照片</label>
+            <div class="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+              <span class="text-gray-500 text-xs">暂无照片</span>
             </div>
           </div>
 
@@ -253,7 +260,7 @@
           </div>
 
           <div class="mb-6">
-            <label class="block text-gray-500 text-sm">历史记录</label>
+            <label class="block text-gray-500 text-sm">处理历史</label>
             <div class="space-y-2">
               <div v-for="history in selectedIssue.histories" :key="history.id" class="flex gap-3">
                 <div class="text-gray-500 text-sm">{{ formatDate(history.created_at) }}</div>
@@ -368,6 +375,14 @@ const currentUser = computed(() => {
   return JSON.parse(localStorage.getItem('user') || '{}');
 });
 
+const userRole = computed(() => {
+  if (currentUser.value.is_supervisor) return '督导';
+  if (currentUser.value.is_store_manager) return '店长';
+  if (currentUser.value.is_region_manager) return '区域经理';
+  if (currentUser.value.is_operation) return '运营负责人';
+  return '未知';
+});
+
 const filter = reactive({
   status: '',
   store_id: ''
@@ -401,6 +416,7 @@ const closeData = reactive({
 const kanbanStatuses = [
   { value: 'pending', label: '待整改' },
   { value: 'rectifying', label: '整改中' },
+  { value: 'reviewing', label: '待复查' },
   { value: 'reviewed', label: '已复查' },
   { value: 'rejected', label: '已退回' },
   { value: 'closed', label: '已闭环' }
@@ -410,6 +426,7 @@ const statusText = (status) => {
   const map = {
     pending: '待整改',
     rectifying: '整改中',
+    reviewing: '待复查',
     reviewed: '已复查',
     closed: '已闭环',
     rejected: '已退回'
@@ -421,6 +438,7 @@ const statusClass = (status) => {
   const map = {
     pending: 'px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm',
     rectifying: 'px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm',
+    reviewing: 'px-2 py-1 bg-orange-100 text-orange-800 rounded text-sm',
     reviewed: 'px-2 py-1 bg-green-100 text-green-800 rounded text-sm',
     closed: 'px-2 py-1 bg-gray-100 text-gray-800 rounded text-sm',
     rejected: 'px-2 py-1 bg-red-100 text-red-800 rounded text-sm'
@@ -455,7 +473,7 @@ const canRectify = (issue) => {
 };
 
 const canReview = (issue) => {
-  return issue.status === 'reviewed' && currentUser.value.is_region_manager;
+  return issue.status === 'reviewing' && currentUser.value.is_region_manager;
 };
 
 const canClose = (issue) => {
@@ -562,23 +580,28 @@ const assignIssue = async () => {
     showAssignModal.value = false;
     await viewIssue(selectedIssue.value.id);
     loadIssues();
+    assignData.rectifier_id = '';
   } catch (e) {
     console.error(e);
   }
 };
 
 const rectifyIssue = async () => {
-  if (!rectifyData.photos) {
+  if (!rectifyData.photos || rectifyData.photos.trim() === '') {
     alert('请先上传整改照片');
     return;
   }
   
   try {
-    await window.axios.post(`/api/issues/${selectedIssue.value.id}/upload-photos`, { photos: rectifyData.photos.split(',') });
+    await window.axios.post(`/api/issues/${selectedIssue.value.id}/upload-photos`, { 
+      photos: rectifyData.photos.split(',').map(p => p.trim()) 
+    });
     await window.axios.post(`/api/issues/${selectedIssue.value.id}/rectify`, { rectify_note: rectifyData.note });
     showRectifyModal.value = false;
     await viewIssue(selectedIssue.value.id);
     loadIssues();
+    rectifyData.note = '';
+    rectifyData.photos = '';
   } catch (e) {
     alert(e.response?.data?.error || '整改失败');
   }
@@ -593,6 +616,8 @@ const reviewIssue = async () => {
     showReviewModal.value = false;
     await viewIssue(selectedIssue.value.id);
     loadIssues();
+    reviewData.note = '';
+    reviewData.approved = true;
   } catch (e) {
     console.error(e);
   }
@@ -604,19 +629,25 @@ const closeIssue = async () => {
     showCloseModal.value = false;
     await viewIssue(selectedIssue.value.id);
     loadIssues();
+    closeData.note = '';
   } catch (e) {
     console.error(e);
   }
 };
 
-const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = '/';
+const logout = async () => {
+  try {
+    await window.axios.post('/api/logout');
+  } catch (e) {
+    console.error(e);
+  } finally {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  }
 };
 
 onMounted(async () => {
-  if (!localStorage.getItem('token')) {
+  if (!localStorage.getItem('user')) {
     window.location.href = '/';
     return;
   }

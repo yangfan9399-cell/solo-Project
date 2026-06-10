@@ -13,10 +13,10 @@ class DashboardController extends Controller
         $user = Auth::user();
         $query = InspectionIssue::query();
 
-        if ($user->isStoreManager()) {
+        if ($user->is_store_manager) {
             $storeIds = $user->managedStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
-        } elseif ($user->isRegionManager()) {
+        } elseif ($user->is_region_manager) {
             $storeIds = $user->regionStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
         }
@@ -25,6 +25,7 @@ class DashboardController extends Controller
             'total' => $query->count(),
             'pending' => $query->where('status', 'pending')->count(),
             'rectifying' => $query->where('status', 'rectifying')->count(),
+            'reviewing' => $query->where('status', 'reviewing')->count(),
             'reviewed' => $query->where('status', 'reviewed')->count(),
             'closed' => $query->where('status', 'closed')->count(),
             'rejected' => $query->where('status', 'rejected')->count(),
@@ -39,9 +40,9 @@ class DashboardController extends Controller
         $user = Auth::user();
         $query = Store::query();
 
-        if ($user->isStoreManager()) {
+        if ($user->is_store_manager) {
             $query->where('manager_id', $user->id);
-        } elseif ($user->isRegionManager()) {
+        } elseif ($user->is_region_manager) {
             $query->where('region_manager_id', $user->id);
         }
 
@@ -66,9 +67,9 @@ class DashboardController extends Controller
         $user = Auth::user();
         $query = Store::query();
 
-        if ($user->isStoreManager()) {
+        if ($user->is_store_manager) {
             $query->where('manager_id', $user->id);
-        } elseif ($user->isRegionManager()) {
+        } elseif ($user->is_region_manager) {
             $query->where('region_manager_id', $user->id);
         }
 
@@ -84,10 +85,10 @@ class DashboardController extends Controller
         $user = Auth::user();
         $query = InspectionIssue::query();
 
-        if ($user->isStoreManager()) {
+        if ($user->is_store_manager) {
             $storeIds = $user->managedStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
-        } elseif ($user->isRegionManager()) {
+        } elseif ($user->is_region_manager) {
             $storeIds = $user->regionStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
         }
@@ -107,10 +108,10 @@ class DashboardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(10);
 
-        if ($user->isStoreManager()) {
+        if ($user->is_store_manager) {
             $storeIds = $user->managedStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
-        } elseif ($user->isRegionManager()) {
+        } elseif ($user->is_region_manager) {
             $storeIds = $user->regionStores()->pluck('id');
             $query->whereIn('store_id', $storeIds);
         }
