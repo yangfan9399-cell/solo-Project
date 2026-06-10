@@ -11,13 +11,7 @@
             <div class="label">待处理</div>
         </div>
         <div class="stats-card">
-            <div class="value">
-                {% if avg_duration %}
-                    {{ avg_duration.days }}天{{ avg_duration.seconds//3600 }}小时
-                {% else %}
-                    0
-                {% endif %}
-            </div>
+            <div class="value">{{ avg_duration_days }}天{{ avg_duration_hours }}小时</div>
             <div class="label">平均处理时长</div>
         </div>
         <div class="stats-card">

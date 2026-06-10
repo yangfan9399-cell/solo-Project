@@ -276,18 +276,28 @@ def kanban(request):
     result_counts = Appeal.objects.values('result').annotate(count=Count('id'))
     
     completed_appeals = Appeal.objects.filter(status__in=['approved', 'rejected'])
-    avg_duration = None
+    avg_duration_days = 0
+    avg_duration_hours = 0
     if completed_appeals.exists():
-        duration = ExpressionWrapper(timezone.now() - F('created_at'), output_field=DurationField())
-        avg_duration_result = completed_appeals.aggregate(avg_duration=duration.avg)
-        avg_duration = avg_duration_result['avg_duration']
+        total_seconds = 0
+        for appeal in completed_appeals:
+            if appeal.updated_at:
+                diff = appeal.updated_at - appeal.created_at
+                total_seconds += diff.total_seconds()
+            else:
+                diff = timezone.now() - appeal.created_at
+                total_seconds += diff.total_seconds()
+        avg_seconds = total_seconds / completed_appeals.count()
+        avg_duration_days = int(avg_seconds // (24 * 3600))
+        avg_duration_hours = int((avg_seconds % (24 * 3600)) // 3600)
     
     context = {
         'site_stats': site_stats,
         'rule_stats': rule_stats,
         'status_counts': status_counts,
         'result_counts': result_counts,
-        'avg_duration': avg_duration,
+        'avg_duration_days': avg_duration_days,
+        'avg_duration_hours': avg_duration_hours,
         'total_appeals': Appeal.objects.count(),
         'pending_count': Appeal.objects.filter(status__in=['pending', 'first_review', 'arbitration']).count(),
         'completed_count': completed_appeals.count()

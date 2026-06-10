@@ -90,6 +90,7 @@
                         hx-post="{% url 'recalculate_trajectory' appeal.id %}"
                         hx-target="#trajectory-container"
                         hx-swap="innerHTML"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                         class="btn btn-sm btn-warning"
                         style="margin-left: 1rem;"
                     >
