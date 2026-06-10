@@ -55,7 +55,7 @@
                 <tr>
                     <td><strong>设备状态:</strong></td>
                     <td>
-                        <span th:class="${getEquipmentStatusClass(screening.hall.equipmentStatus)}">
+                        <span th:class="${equipmentStatusUtil.getEquipmentStatusClass(screening.hall.equipmentStatus)}">
                             [[${screening.hall.equipmentStatus.getDescription()}]]
                         </span>
                     </td>

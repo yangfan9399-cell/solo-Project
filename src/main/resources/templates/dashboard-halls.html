@@ -22,7 +22,7 @@
                 <tr th:each="item : ${interruptsByHall}">
                     <td th:text="${item.hallName}"></td>
                     <td>
-                        <span th:class="${getEquipmentStatusClass(item.equipmentStatus)}">
+                        <span th:class="${equipmentStatusUtil.getEquipmentStatusClass(item.equipmentStatus)}">
                             [[${item.equipmentStatus.getDescription()}]]
                         </span>
                     </td>

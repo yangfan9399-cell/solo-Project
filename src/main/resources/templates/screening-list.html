@@ -32,7 +32,7 @@
                     <td th:text="${screening.startTime}"></td>
                     <td th:text="${screening.status.getDescription()}"></td>
                     <td>
-                        <span th:class="${getEquipmentStatusClass(screening.hall.equipmentStatus)}">
+                        <span th:class="${equipmentStatusUtil.getEquipmentStatusClass(screening.hall.equipmentStatus)}">
                             [[${screening.hall.equipmentStatus.getDescription()}]]
                         </span>
                     </td>

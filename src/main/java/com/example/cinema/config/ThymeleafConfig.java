@@ -1,7 +1,7 @@
 
 package com.example.cinema.config;
 
-import com.example.cinema.entity.EquipmentStatus;
+import com.example.cinema.util.EquipmentStatusUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.extras.java8time.dialect.Java8TimeDialect;
@@ -29,24 +29,7 @@ public class ThymeleafConfig {
     }
 
     @Bean
-    public org.thymeleaf.processor.IProcessor equipmentStatusClassProcessor() {
-        return new org.thymeleaf.processor.AbstractProcessor("") {
-            @Override
-            public int getPrecedence() {
-                return 1000;
-            }
-        };
-    }
-
-    public static String getEquipmentStatusClass(EquipmentStatus status) {
-        if (status == null) {
-            return "status-normal";
-        }
-        return switch (status) {
-            case NORMAL -> "status-normal";
-            case ABNORMAL -> "status-abnormal";
-            case FAULT, REPAIRING -> "status-fault";
-            default -> "status-normal";
-        };
+    public EquipmentStatusUtil equipmentStatusUtil() {
+        return new EquipmentStatusUtil();
     }
 }
