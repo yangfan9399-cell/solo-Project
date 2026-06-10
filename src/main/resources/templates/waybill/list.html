@@ -22,13 +22,16 @@
                     <tr th:each="waybill : ${waybills}">
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}"></a></td>
                         <td th:text="${waybill.origin + ' -> ' + waybill.destination}"></td>
-                        <td th:text="${waybill.productType.getDescription() + ' - ' + waybill.productName}"></td>
+                        <td th:text="${waybill.productType.description + ' - ' + waybill.productName}"></td>
                         <td th:text="${waybill.temperatureMin + '°C ~ ' + waybill.temperatureMax + '°C'}"></td>
-                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.getDescription()}"></span></td>
+                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.description}"></span></td>
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">详情</a></td>
                     </tr>
                 </tbody>
             </table>
+            <div th:if="${#lists.isEmpty(waybills)}" style="text-align: center; padding: 40px; color: #999;">
+                暂无运单数据
+            </div>
         </div>
     </div>
 </body>

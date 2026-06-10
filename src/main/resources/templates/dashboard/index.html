@@ -41,8 +41,11 @@
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" th:text="${waybill.waybillNo}"></a></td>
                         <td th:text="${waybill.origin + ' -> ' + waybill.destination}"></td>
                         <td th:text="${waybill.productName}"></td>
-                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.getDescription()}"></span></td>
+                        <td><span th:class="status-${waybill.status}" th:text="${waybill.status.description}"></span></td>
                         <td><a th:href="@{/waybills/{id}(id=${waybill.id})}" class="btn btn-primary" style="padding:4px 10px;font-size:12px;">查看</a></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(abnormalWaybills)}">
+                        <td colspan="5" style="text-align: center; color: #999; padding: 20px;">暂无异常运单</td>
                     </tr>
                 </tbody>
             </table>
@@ -54,9 +57,12 @@
                 <table>
                     <thead><tr><th>线路</th><th>运单数</th></tr></thead>
                     <tbody>
-                        <tr th:each="(count, route) : ${routeStats}">
-                            <td th:text="${route}"></td>
-                            <td th:text="${count}"></td>
+                        <tr th:each="entry : ${routeStats}">
+                            <td th:text="${entry.key}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(routeStats)}">
+                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
@@ -66,26 +72,49 @@
                 <table>
                     <thead><tr><th>类型</th><th>运单数</th></tr></thead>
                     <tbody>
-                        <tr th:each="(count, type) : ${productTypeStats}">
-                            <td th:text="${type.getDescription()}"></td>
-                            <td th:text="${count}"></td>
+                        <tr th:each="entry : ${productTypeStats}">
+                            <td th:text="${entry.key.description}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(productTypeStats)}">
+                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="card">
-            <h3>异常原因统计</h3>
-            <table>
-                <thead><tr><th>异常类型</th><th>数量</th></tr></thead>
-                <tbody>
-                    <tr th:each="(count, type) : ${exceptionTypeStats}">
-                        <td th:text="${type.getDescription()}"></td>
-                        <td th:text="${count}"></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h3>异常原因统计</h3>
+                <table>
+                    <thead><tr><th>异常类型</th><th>数量</th></tr></thead>
+                    <tbody>
+                        <tr th:each="entry : ${exceptionTypeStats}">
+                            <td th:text="${entry.key.description}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(exceptionTypeStats)}">
+                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h3>处置时长聚合</h3>
+                <table>
+                    <thead><tr><th>时长区间</th><th>处置数量</th></tr></thead>
+                    <tbody>
+                        <tr th:each="entry : ${disposalDurationStats}">
+                            <td th:text="${entry.key}"></td>
+                            <td th:text="${entry.value}"></td>
+                        </tr>
+                        <tr th:if="${#maps.isEmpty(disposalDurationStats)}">
+                            <td colspan="2" style="text-align: center; color: #999;">暂无数据</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </body>

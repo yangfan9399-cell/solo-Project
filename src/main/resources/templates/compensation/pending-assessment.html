@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: body}">
 <head>
-    <title>赔付审核</title>
+    <title>赔付审核 - 待评估</title>
+    <script>
+        function showAssessForm(compensationId) {
+            document.getElementById('assess-form-' + compensationId).style.display = 'block';
+        }
+        function hideAssessForm(compensationId) {
+            document.getElementById('assess-form-' + compensationId).style.display = 'none';
+        }
+    </script>
 </head>
 <body>
     <div th:fragment="content">
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <a th:href="@{/compensation/pending}" class="btn btn-primary" th:class="${activeTab == 'pending' ? 'active' : ''}">待评估</a>
-            <a th:href="@{/compensation/review}" class="btn btn-secondary" th:class="${activeTab == 'review' ? 'active' : ''}">待复核</a>
+            <a th:href="@{/compensation/pending}" class="btn btn-primary">待评估</a>
+            <a th:href="@{/compensation/review}" class="btn btn-secondary">待复核</a>
         </div>
 
         <div class="card">
@@ -19,6 +27,7 @@
                         <th>货损描述</th>
                         <th>损失比例</th>
                         <th>索赔金额</th>
+                        <th>申请时间</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -28,29 +37,36 @@
                         <td th:text="${compensation.damageDescription}"></td>
                         <td th:text="${compensation.damagePercentage + '%'}"></td>
                         <td th:text="'¥' + ${compensation.claimedAmount}"></td>
+                        <td th:text="${#temporals.format(compensation.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
                         <td>
                             <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" 
-                                    onclick="document.getElementById('assess-form-' + ${compensation.id}).style.display='block'">评估</button>
+                                    th:onclick="'showAssessForm(' + ${compensation.id} + ')'">评估</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
+            <div th:if="${#lists.isEmpty(compensations)}" style="text-align: center; padding: 40px; color: #999;">
+                暂无待评估的赔付申请
+            </div>
         </div>
 
         <div th:each="compensation : ${compensations}">
-            <div class="card" id="assess-form-${compensation.id}" style="display: none;">
-                <h4>评估赔付 - 运单ID: ${compensation.waybillId}</h4>
+            <div class="card" th:id="'assess-form-' + ${compensation.id}" style="display: none;">
+                <h4>评估赔付 - 运单 WB<span th:text="${compensation.waybillId}"></span></h4>
                 <form th:action="@{/compensation/{id}/assess(id=${compensation.id})}" method="post">
+                    <div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        <div>索赔金额: <strong th:text="'¥' + ${compensation.claimedAmount}"></strong></div>
+                    </div>
                     <div class="form-group">
                         <label>评估金额 (元)</label>
                         <input type="number" name="assessedAmount" min="0" step="0.01" th:value="${compensation.claimedAmount}"/>
                     </div>
                     <div class="form-group">
                         <label>评估意见</label>
-                        <textarea name="comment" rows="2" placeholder="请输入评估意见..."></textarea>
+                        <textarea name="comment" rows="3" placeholder="请输入评估意见..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">提交评估</button>
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('assess-form-${compensation.id}').style.display='none'">取消</button>
+                    <button type="button" class="btn btn-secondary" th:onclick="'hideAssessForm(' + ${compensation.id} + ')'">取消</button>
                 </form>
             </div>
         </div>
