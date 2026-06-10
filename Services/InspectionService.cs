@@ -63,10 +63,11 @@ namespace EquipmentMaintenanceSystem.Services
             
             _context.InspectionRecords.Add(inspection);
             
-            inspection.InspectionHistories.Add(new InspectionHistory
+            _context.InspectionHistories.Add(new InspectionHistory
             {
+                InspectionRecordId = inspection.Id,
                 OperationTime = DateTime.Now,
-                Operator = inspection.ReportedBy,
+                Operator = inspection.ReportedBy ?? "unknown",
                 Action = InspectionAction.Reported,
                 Remark = "提交点检异常"
             });
@@ -82,8 +83,9 @@ namespace EquipmentMaintenanceSystem.Services
             {
                 inspection.Status = InspectionStatus.Confirmed;
                 
-                inspection.InspectionHistories.Add(new InspectionHistory
+                _context.InspectionHistories.Add(new InspectionHistory
                 {
+                    InspectionRecordId = inspection.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = InspectionAction.Confirmed,
@@ -101,8 +103,9 @@ namespace EquipmentMaintenanceSystem.Services
             {
                 inspection.Status = InspectionStatus.Rejected;
                 
-                inspection.InspectionHistories.Add(new InspectionHistory
+                _context.InspectionHistories.Add(new InspectionHistory
                 {
+                    InspectionRecordId = inspection.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = InspectionAction.Rejected,
@@ -115,14 +118,11 @@ namespace EquipmentMaintenanceSystem.Services
 
         public async Task TransferToMaintenance(int id, string operatorId)
         {
-            var inspection = await _context.InspectionRecords
-                .Include(i => i.Equipment)
-                .FirstOrDefaultAsync(i => i.Id == id);
+            var inspection = await _context.InspectionRecords.FindAsync(id);
             
             if (inspection != null && inspection.Status == InspectionStatus.Confirmed)
             {
-                inspection.Status = InspectionStatus.Maintenance;
-                
+                // 1. 先创建维修工单并保存，获得真实 Id
                 var maintenanceOrder = new MaintenanceOrder
                 {
                     OrderCode = GenerateMaintenanceOrderCode(),
@@ -133,19 +133,24 @@ namespace EquipmentMaintenanceSystem.Services
                 };
                 
                 _context.MaintenanceOrders.Add(maintenanceOrder);
+                await _context.SaveChangesAsync();
                 
+                // 2. 使用保存后的真实 Id 更新点检记录
+                inspection.Status = InspectionStatus.Maintenance;
                 inspection.MaintenanceOrderId = maintenanceOrder.Id;
                 
-                inspection.InspectionHistories.Add(new InspectionHistory
+                _context.InspectionHistories.Add(new InspectionHistory
                 {
+                    InspectionRecordId = inspection.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = InspectionAction.Transferred,
                     Remark = "转维修"
                 });
                 
-                maintenanceOrder.MaintenanceHistories.Add(new MaintenanceHistory
+                _context.MaintenanceHistories.Add(new MaintenanceHistory
                 {
+                    MaintenanceOrderId = maintenanceOrder.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = MaintenanceAction.Created,

@@ -66,8 +66,9 @@ namespace EquipmentMaintenanceSystem.Services
                 order.StopTime = DateTime.Now;
                 order.ConfirmedBy = operatorId;
                 
-                order.MaintenanceHistories.Add(new MaintenanceHistory
+                _context.MaintenanceHistories.Add(new MaintenanceHistory
                 {
+                    MaintenanceOrderId = order.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = MaintenanceAction.StopConfirmed,
@@ -91,9 +92,11 @@ namespace EquipmentMaintenanceSystem.Services
             {
                 order.Status = MaintenanceStatus.Repairing;
                 order.RepairStartTime = DateTime.Now;
+                order.RepairedBy = operatorId;
                 
-                order.MaintenanceHistories.Add(new MaintenanceHistory
+                _context.MaintenanceHistories.Add(new MaintenanceHistory
                 {
+                    MaintenanceOrderId = order.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = MaintenanceAction.RepairStarted,
@@ -112,9 +115,7 @@ namespace EquipmentMaintenanceSystem.Services
 
         public async Task CompleteRepair(int id, string operatorId, string repairContent, List<MaintenanceSparePart> spareParts)
         {
-            var order = await _context.MaintenanceOrders
-                .Include(m => m.MaintenanceSpareParts)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var order = await _context.MaintenanceOrders.FindAsync(id);
             
             if (order != null && order.Status == MaintenanceStatus.Repairing)
             {
@@ -125,21 +126,19 @@ namespace EquipmentMaintenanceSystem.Services
                 
                 foreach (var sparePart in spareParts)
                 {
-                    var existing = order.MaintenanceSpareParts.FirstOrDefault(ms => ms.SparePartId == sparePart.SparePartId);
-                    if (existing == null)
+                    var part = await _context.SpareParts.FindAsync(sparePart.SparePartId);
+                    _context.MaintenanceSpareParts.Add(new MaintenanceSparePart
                     {
-                        var part = await _context.SpareParts.FindAsync(sparePart.SparePartId);
-                        order.MaintenanceSpareParts.Add(new MaintenanceSparePart
-                        {
-                            SparePartId = sparePart.SparePartId,
-                            Quantity = sparePart.Quantity,
-                            IsAvailable = part != null && part.StockQuantity >= sparePart.Quantity
-                        });
-                    }
+                        MaintenanceOrderId = order.Id,
+                        SparePartId = sparePart.SparePartId,
+                        Quantity = sparePart.Quantity,
+                        IsAvailable = part != null && part.StockQuantity >= sparePart.Quantity
+                    });
                 }
                 
-                order.MaintenanceHistories.Add(new MaintenanceHistory
+                _context.MaintenanceHistories.Add(new MaintenanceHistory
                 {
+                    MaintenanceOrderId = order.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = MaintenanceAction.RepairCompleted,
@@ -157,11 +156,11 @@ namespace EquipmentMaintenanceSystem.Services
             {
                 if (approved)
                 {
-                    order.Status = MaintenanceStatus.PendingReview;
                     order.ReviewedBy = operatorId;
                     
-                    order.MaintenanceHistories.Add(new MaintenanceHistory
+                    _context.MaintenanceHistories.Add(new MaintenanceHistory
                     {
+                        MaintenanceOrderId = order.Id,
                         OperationTime = DateTime.Now,
                         Operator = operatorId,
                         Action = MaintenanceAction.ReviewApproved,
@@ -173,8 +172,9 @@ namespace EquipmentMaintenanceSystem.Services
                     order.Status = MaintenanceStatus.Failed;
                     order.ReviewedBy = operatorId;
                     
-                    order.MaintenanceHistories.Add(new MaintenanceHistory
+                    _context.MaintenanceHistories.Add(new MaintenanceHistory
                     {
+                        MaintenanceOrderId = order.Id,
                         OperationTime = DateTime.Now,
                         Operator = operatorId,
                         Action = MaintenanceAction.ReviewRejected,
@@ -205,8 +205,9 @@ namespace EquipmentMaintenanceSystem.Services
                 var downtime = DateTime.Now - stopTime;
                 order.DowntimeLoss = (decimal)(downtime.TotalHours * 800);
                 
-                order.MaintenanceHistories.Add(new MaintenanceHistory
+                _context.MaintenanceHistories.Add(new MaintenanceHistory
                 {
+                    MaintenanceOrderId = order.Id,
                     OperationTime = DateTime.Now,
                     Operator = operatorId,
                     Action = MaintenanceAction.Resumed,
