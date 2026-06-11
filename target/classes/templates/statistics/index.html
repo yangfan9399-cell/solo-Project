@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('统计分析')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <h3 class="mb-4"><i class="bi bi-bar-chart"></i> 统计分析</h3>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card card-hover bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">总工单</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.totalOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">待派工</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.pendingOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">维修中</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.inProgressOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-danger text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">已超期</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.overdueOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">已恢复</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.restoredOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover text-white" style="background-color: #d63384;">
+                <div class="card-body text-center">
+                    <h5 class="card-title">客诉</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.complaintOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> 按楼层统计</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>楼层</th>
+                                <th>工单数量</th>
+                                <th>超期</th>
+                                <th>客诉</th>
+                                <th>平均停卖时长</th>
+                                <th>总费用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stat : ${byFloor}">
+                                <td><strong th:text="${stat.groupName}"></strong></td>
+                                <td th:text="${stat.orderCount}"></td>
+                                <td>
+                                    <span th:if="${stat.overdueCount > 0}" class="badge bg-danger" th:text="${stat.overdueCount}"></span>
+                                    <span th:unless="${stat.overdueCount > 0}">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${stat.complaintCount > 0}" class="badge bg-warning text-dark" th:text="${stat.complaintCount}"></span>
+                                    <span th:unless="${stat.complaintCount > 0}">-</span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(stat.avgOutageHours, 0, 1)} + 'h'"></td>
+                                <td th:text="'¥' + ${#numbers.formatDecimal(stat.totalCost, 0, 2)}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-door-closed"></i> 按房型统计</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>房型</th>
+                                <th>工单数量</th>
+                                <th>超期</th>
+                                <th>客诉</th>
+                                <th>平均停卖时长</th>
+                                <th>总费用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stat : ${byRoomType}">
+                                <td><strong th:text="${stat.groupName}"></strong></td>
+                                <td th:text="${stat.orderCount}"></td>
+                                <td>
+                                    <span th:if="${stat.overdueCount > 0}" class="badge bg-danger" th:text="${stat.overdueCount}"></span>
+                                    <span th:unless="${stat.overdueCount > 0}">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${stat.complaintCount > 0}" class="badge bg-warning text-dark" th:text="${stat.complaintCount}"></span>
+                                    <span th:unless="${stat.complaintCount > 0}">-</span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(stat.avgOutageHours, 0, 1)} + 'h'"></td>
+                                <td th:text="'¥' + ${#numbers.formatDecimal(stat.totalCost, 0, 2)}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-wrench"></i> 按故障类型统计</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>故障类型</th>
+                                <th>工单数量</th>
+                                <th>超期</th>
+                                <th>客诉</th>
+                                <th>平均停卖时长</th>
+                                <th>总费用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stat : ${byFaultType}">
+                                <td><strong th:text="${stat.groupName}"></strong></td>
+                                <td th:text="${stat.orderCount}"></td>
+                                <td>
+                                    <span th:if="${stat.overdueCount > 0}" class="badge bg-danger" th:text="${stat.overdueCount}"></span>
+                                    <span th:unless="${stat.overdueCount > 0}">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${stat.complaintCount > 0}" class="badge bg-warning text-dark" th:text="${stat.complaintCount}"></span>
+                                    <span th:unless="${stat.complaintCount > 0}">-</span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(stat.avgOutageHours, 0, 1)} + 'h'"></td>
+                                <td th:text="'¥' + ${#numbers.formatDecimal(stat.totalCost, 0, 2)}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 按停卖时长统计</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>停卖时长区间</th>
+                                <th>工单数量</th>
+                                <th>超期</th>
+                                <th>客诉</th>
+                                <th>平均停卖时长</th>
+                                <th>总费用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stat : ${byDuration}">
+                                <td><strong th:text="${stat.groupName}"></strong></td>
+                                <td th:text="${stat.orderCount}"></td>
+                                <td>
+                                    <span th:if="${stat.overdueCount > 0}" class="badge bg-danger" th:text="${stat.overdueCount}"></span>
+                                    <span th:unless="${stat.overdueCount > 0}">-</span>
+                                </td>
+                                <td>
+                                    <span th:if="${stat.complaintCount > 0}" class="badge bg-warning text-dark" th:text="${stat.complaintCount}"></span>
+                                    <span th:unless="${stat.complaintCount > 0}">-</span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(stat.avgOutageHours, 0, 1)} + 'h'"></td>
+                                <td th:text="'¥' + ${#numbers.formatDecimal(stat.totalCost, 0, 2)}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

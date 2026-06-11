@@ -1,5 +1,6 @@
 package com.hotel.maintenance.controller;
 
+import com.hotel.maintenance.dto.RoomVo;
 import com.hotel.maintenance.entity.Room;
 import com.hotel.maintenance.enums.RoomStatus;
 import com.hotel.maintenance.service.RoomService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/rooms")
@@ -28,8 +30,9 @@ public class RoomController {
         } else {
             rooms = roomService.findAll();
         }
+        List<RoomVo> vos = rooms.stream().map(RoomVo::from).collect(Collectors.toList());
         model.addAttribute("activeMenu", "rooms");
-        model.addAttribute("rooms", rooms);
+        model.addAttribute("rooms", vos);
         model.addAttribute("statuses", RoomStatus.values());
         model.addAttribute("currentStatus", status);
         return "rooms/list";
@@ -42,7 +45,7 @@ public class RoomController {
             return "redirect:/rooms";
         }
         model.addAttribute("activeMenu", "rooms");
-        model.addAttribute("room", room);
+        model.addAttribute("room", RoomVo.from(room));
         return "rooms/detail";
     }
 }

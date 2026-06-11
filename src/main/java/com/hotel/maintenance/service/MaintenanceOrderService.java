@@ -193,8 +193,14 @@ public class MaintenanceOrderService {
         MaintenanceOrder order = maintenanceOrderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("工单不存在"));
         Employee reviewer = employeeRepository.findById(reviewerId).orElseThrow(() -> new IllegalArgumentException("值班经理不存在"));
 
-        if (order.getStatus() != MaintenanceStatus.CLEANING_PASSED && order.getStatus() != MaintenanceStatus.COMPLAINT_ESCALATED) {
-            throw new IllegalStateException("当前状态不允许复核");
+        boolean statusAllowed = order.getStatus() == MaintenanceStatus.COMPLETED
+                || order.getStatus() == MaintenanceStatus.OVERDUE
+                || order.getStatus() == MaintenanceStatus.CLEANING_FAILED
+                || order.getStatus() == MaintenanceStatus.CLEANING_PASSED
+                || order.getStatus() == MaintenanceStatus.COMPLAINT_ESCALATED;
+
+        if (!statusAllowed) {
+            throw new IllegalStateException("当前状态不允许复核，需先完成维修流程");
         }
 
         if (restore) {
@@ -205,7 +211,7 @@ public class MaintenanceOrderService {
                         .anyMatch(node -> node.getStatus() == MaintenanceStatus.CLEANING_PASSED);
             }
             if (!cleaningPassed) {
-                throw new IllegalStateException("清洁未通过，禁止恢复售卖");
+                throw new IllegalStateException("清洁检查未通过，禁止恢复售卖！请先完成清洁检查，或选择继续停卖。");
             }
         }
 

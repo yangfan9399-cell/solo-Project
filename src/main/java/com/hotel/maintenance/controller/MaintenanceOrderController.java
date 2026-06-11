@@ -1,5 +1,7 @@
 package com.hotel.maintenance.controller;
 
+import com.hotel.maintenance.dto.MaintenanceOrderDetailVo;
+import com.hotel.maintenance.dto.MaintenanceOrderListVo;
 import com.hotel.maintenance.entity.*;
 import com.hotel.maintenance.enums.*;
 import com.hotel.maintenance.service.*;
@@ -13,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/maintenance")
@@ -31,8 +34,11 @@ public class MaintenanceOrderController {
         } else {
             orders = maintenanceOrderService.findAll();
         }
+        List<MaintenanceOrderListVo> orderVos = orders.stream()
+                .map(MaintenanceOrderListVo::from)
+                .collect(Collectors.toList());
         model.addAttribute("activeMenu", "maintenance");
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", orderVos);
         model.addAttribute("statuses", MaintenanceStatus.values());
         model.addAttribute("currentStatus", status);
         return "maintenance/list";
@@ -47,20 +53,21 @@ public class MaintenanceOrderController {
         List<AuditNode> auditNodes = maintenanceOrderService.getAuditNodes(id);
         List<AffectedOrder> affectedOrders = maintenanceOrderService.getAffectedOrders(id);
         List<MaintenanceRecord> records = maintenanceOrderService.getMaintenanceRecords(id);
-        long outageHours = maintenanceOrderService.calculateOutageHours(order);
 
-        model.addAttribute("activeMenu", "maintenance");
-        model.addAttribute("order", order);
-        model.addAttribute("auditNodes", auditNodes);
-        model.addAttribute("affectedOrders", affectedOrders);
-        model.addAttribute("maintenanceRecords", records);
-        model.addAttribute("outageHours", outageHours);
-        boolean cleaningPassed = order.getStatus() == MaintenanceStatus.CLEANING_PASSED;
+        boolean cleaningPassed = "CLEANING_PASSED".equals(order.getStatus().name());
         if (!cleaningPassed) {
             cleaningPassed = auditNodes.stream()
                     .anyMatch(node -> node.getStatus() == MaintenanceStatus.CLEANING_PASSED);
         }
-        model.addAttribute("canRestore", cleaningPassed);
+
+        MaintenanceOrderDetailVo vo = MaintenanceOrderDetailVo.from(order, cleaningPassed);
+        vo.setMaintenanceRecords(records);
+        vo.setAffectedOrders(affectedOrders);
+        vo.setAuditNodes(auditNodes);
+
+        model.addAttribute("activeMenu", "maintenance");
+        model.addAttribute("vo", vo);
+        model.addAttribute("order", order);
         model.addAttribute("housekeepers", employeeService.findHousekeepingSupervisors());
         model.addAttribute("dutyManagers", employeeService.findDutyManagers());
         model.addAttribute("engineers", employeeService.findEngineers());
@@ -172,6 +179,14 @@ public class MaintenanceOrderController {
             if (order == null) {
                 throw new IllegalArgumentException("工单不存在");
             }
+            boolean statusAllowed = order.getStatus() == MaintenanceStatus.COMPLETED
+                    || order.getStatus() == MaintenanceStatus.OVERDUE
+                    || order.getStatus() == MaintenanceStatus.CLEANING_FAILED
+                    || order.getStatus() == MaintenanceStatus.CLEANING_PASSED
+                    || order.getStatus() == MaintenanceStatus.COMPLAINT_ESCALATED;
+            if (!statusAllowed) {
+                throw new IllegalStateException("当前状态不允许复核，需先完成维修流程");
+            }
             if (restore) {
                 boolean cleaningPassed = order.getStatus() == MaintenanceStatus.CLEANING_PASSED;
                 if (!cleaningPassed) {
@@ -180,7 +195,7 @@ public class MaintenanceOrderController {
                             .anyMatch(node -> node.getStatus() == MaintenanceStatus.CLEANING_PASSED);
                 }
                 if (!cleaningPassed) {
-                    throw new IllegalStateException("清洁检查未通过，禁止恢复售卖！请先完成清洁检查。");
+                    throw new IllegalStateException("清洁检查未通过，禁止恢复售卖！请先完成清洁检查，或选择继续停卖。");
                 }
             }
             maintenanceOrderService.reviewRestore(id, reviewerId, restore, reviewComment);
