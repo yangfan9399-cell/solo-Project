@@ -19,35 +19,10 @@ namespace SealManagementSystem
             services.AddControllersWithViews()
                 .AddRazorRuntimeCompilation();
 
-            var useDb = (Configuration["UseDatabase"] ?? "SqlServer").Trim();
-            var sqliteConn = Configuration.GetConnectionString("DefaultConnection");
-            var sqlServerConn = Configuration.GetConnectionString("SqlServerConnection");
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            services.AddDbContextPool<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString, b => b.MigrationsAssembly("SealManagementSystem")));
 
-            Action<DbContextOptionsBuilder> dbConfig;
-            bool sqlServerAvailable = false;
-
-            if (useDb.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    using var testConn = new Microsoft.Data.SqlClient.SqlConnection(sqlServerConn);
-                    testConn.Open();
-                    testConn.Close();
-                    sqlServerAvailable = true;
-                }
-                catch { sqlServerAvailable = false; }
-            }
-
-            if (sqlServerAvailable)
-            {
-                dbConfig = (o) => o.UseSqlServer(sqlServerConn);
-            }
-            else
-            {
-                dbConfig = (o) => o.UseSqlite(sqliteConn);
-            }
-
-            services.AddDbContextPool<ApplicationDbContext>(dbConfig, poolSize: 32);
             services.AddHttpContextAccessor();
 
             services.AddScoped<ISealRepository, SealRepository>();
@@ -65,15 +40,18 @@ namespace SealManagementSystem
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext, ILogger<Startup> logger)
         {
             logger.LogInformation("Using database provider: {provider}", dbContext.Database.ProviderName);
+            logger.LogInformation("Applying migrations and seeding data...");
+
             try
             {
-                dbContext.Database.EnsureCreated();
+                dbContext.Database.Migrate();
                 var count = dbContext.BorrowRequests.Count();
-                logger.LogInformation("Database initialized. BorrowRequests count: {count}", count);
+                logger.LogInformation("Database migrated successfully. BorrowRequests count: {count}", count);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Database initialization error.");
+                logger.LogError(ex, "Database initialization failed.");
+                throw;
             }
 
             app.UseDeveloperExceptionPage();
@@ -81,13 +59,6 @@ namespace SealManagementSystem
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthorization();
-
-            app.Use(async (context, next) =>
-            {
-                var logger = context.RequestServices.GetRequiredService<ILogger<Startup>>();
-                logger.LogInformation("Request: {method} {path}", context.Request.Method, context.Request.Path);
-                await next();
-            });
 
             app.UseEndpoints(endpoints =>
             {

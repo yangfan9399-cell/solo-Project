@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SealManagementSystem")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2af86c72d0d944fe5ba145e6b59ef89800b2ac87")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b019b03031a650d95d7d08fcfa45892c1382ce45")]
 [assembly: System.Reflection.AssemblyProductAttribute("SealManagementSystem")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SealManagementSystem")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
