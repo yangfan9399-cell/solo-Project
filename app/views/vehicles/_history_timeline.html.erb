@@ -1,0 +1,106 @@
+<%
+  node_type_titles = {
+    'maintenance_plan' => '保养计划',
+    'maintenance_start' => '保养开始',
+    'maintenance_complete' => '保养完成',
+    'repair_report' => '维修报告',
+    'repair_start' => '维修开始',
+    'repair_complete' => '维修完成',
+    'inspection' => '车辆检查',
+    'trip_request' => '出车申请',
+    'trip_approved' => '出车通过',
+    'trip_rejected' => '出车驳回',
+    'decommissioned' => '车辆停用',
+    'mileage_update' => '里程更新',
+    'fuel_abnormal' => '油耗异常'
+  }
+  node_svgs = {
+    'maintenance_plan' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    'maintenance_start' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/>',
+    'maintenance_complete' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+    'repair_report' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+    'repair_start' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+    'repair_complete' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    'inspection' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>',
+    'trip_request' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>',
+    'trip_approved' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    'trip_rejected' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    'decommissioned' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>',
+    'mileage_update' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
+    'fuel_abnormal' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'
+  }
+  dot_colors = {
+    'green' => { bg: 'bg-green-500', ring: 'ring-green-200' },
+    'blue' => { bg: 'bg-blue-500', ring: 'ring-blue-200' },
+    'red' => { bg: 'bg-red-500', ring: 'ring-red-200' },
+    'gray' => { bg: 'bg-slate-400', ring: 'ring-slate-200' },
+    'slate' => { bg: 'bg-slate-500', ring: 'ring-slate-200' }
+  }
+%>
+
+<div class="space-y-4">
+  <h3 class="text-base font-semibold text-slate-900">历史节点时间线</h3>
+
+  <% if @history_nodes.any? %>
+    <div class="relative pl-8">
+      <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+      <% @history_nodes.each do |node| %>
+        <% color = node.status_color %>
+        <% dot_style = dot_colors[color] || dot_colors['slate'] %>
+        <%
+          case color
+          when 'green'
+            icon_wrap = 'bg-green-50 border-green-200 text-green-600'
+          when 'blue'
+            icon_wrap = 'bg-blue-50 border-blue-200 text-blue-600'
+          when 'red'
+            icon_wrap = 'bg-red-50 border-red-200 text-red-600'
+          when 'gray'
+            icon_wrap = 'bg-slate-50 border-slate-200 text-slate-600'
+          else
+            icon_wrap = 'bg-slate-50 border-slate-200 text-slate-600'
+          end
+        %>
+        <div class="relative mb-5 last:mb-0">
+          <div class="absolute -left-5 top-0.5 w-4 h-4 rounded-full <%= dot_style[:bg] %> ring-4 <%= dot_style[:ring] %>"></div>
+          <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-start gap-3">
+              <div class="shrink-0 w-10 h-10 rounded-lg border <%= icon_wrap %> flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <%= node_svgs[node.node_type] || '<circle cx="12" cy="12" r="3"/>' %>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                  <h4 class="text-sm font-semibold text-slate-900">
+                    <%= node.title.presence || node_type_titles[node.node_type] || node.node_type %>
+                  </h4>
+                  <span class="text-xs text-slate-500 whitespace-nowrap shrink-0">
+                    <%= node.happened_at ? node.happened_at.strftime('%Y-%m-%d %H:%M') : '-' %>
+                  </span>
+                </div>
+                <p class="text-sm text-slate-600 mb-2 leading-relaxed"><%= node.description %></p>
+                <div class="flex items-center gap-3 text-xs text-slate-500">
+                  <span class="inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <%= node.operator || '系统' %>
+                  </span>
+                  <% if node.operator_role.present? %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                      <%= { 'admin' => '管理员', 'dispatcher' => '调度员', 'team_leader' => '队长', 'repair_station' => '维修站', 'safety_officer' => '安全员', 'system' => '系统' }[node.operator_role] || node.operator_role %>
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-white border border-slate-200 border-dashed rounded-xl p-8 text-center">
+      <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p class="text-sm text-slate-500">暂无历史记录</p>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,147 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">维修记录</h1>
+          <p class="mt-1 text-sm text-gray-500">跟踪所有车辆维修情况、费用与停用时间</p>
+        </div>
+        <%= link_to new_repair_record_path, class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm" do %>
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          新建
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <%= form_with(url: repair_records_path, method: :get, local: true, class: "space-y-4") do %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <%= label_tag :status, "状态筛选", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= select_tag :status, options_for_select(RepairRecord.statuses.keys.map { |k| [t("enums.repair_record.status.#{k}", default: k.humanize), k] }, params[:status]), { include_blank: "全部状态", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" } %>
+          </div>
+          <div>
+            <%= label_tag :vehicle_id, "车辆筛选", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= collection_select :vehicle, :id, Vehicle.order(:plate_number), :id, :plate_number, { selected: params[:vehicle_id], include_blank: "全部车辆" }, { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" } %>
+          </div>
+          <div>
+            <%= label_tag :repair_type, "维修类型", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= select_tag :repair_type, options_for_select(RepairRecord.repair_types.keys.map { |k| [t("enums.repair_record.repair_type.#{k}", default: k.humanize), k] }, params[:repair_type]), { include_blank: "全部类型", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" } %>
+          </div>
+          <div class="flex items-end gap-2">
+            <%= link_to "重置", repair_records_path, class: "flex-1 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm text-center" %>
+            <%= submit_tag "筛选", class: "flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">报修日期</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">车牌号</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">车队</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">类型</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">异常原因</th>
+              <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">停用天数</th>
+              <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">费用合计</th>
+              <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200" id="repair-records">
+            <% @repair_records.each do |record| %>
+              <% is_unfinished = !record.completed? && !record.cancelled? %>
+              <tr class="<%= is_unfinished ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-gray-50' %> transition-colors" id="<%= dom_id(record) %>">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900"><%= record.report_date.strftime('%Y-%m-%d') %></span>
+                    <% if record.is_urgent? %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">紧急</span>
+                    <% end %>
+                    <% if is_unfinished %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">未完成</span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm font-medium text-gray-900"><%= record.vehicle&.plate_number %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm text-gray-600"><%= record.vehicle&.fleet&.name %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% type_color = case record.repair_type
+                                  when 'breakdown' then 'bg-red-100 text-red-800'
+                                  when 'preventive' then 'bg-blue-100 text-blue-800'
+                                  when 'accident' then 'bg-orange-100 text-orange-800'
+                                  else 'bg-gray-100 text-gray-800'
+                                  end %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= type_color %>">
+                    <%= t("enums.repair_record.repair_type.#{record.repair_type}", default: record.repair_type.humanize) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% status_color = case record.status
+                                    when 'reported' then 'bg-gray-100 text-gray-800'
+                                    when 'diagnosing' then 'bg-yellow-100 text-yellow-800'
+                                    when 'in_progress' then 'bg-blue-100 text-blue-800'
+                                    when 'parts_pending' then 'bg-purple-100 text-purple-800'
+                                    when 'completed' then 'bg-green-100 text-green-800'
+                                    when 'cancelled' then 'bg-gray-100 text-gray-500'
+                                    else 'bg-gray-100 text-gray-800'
+                                    end %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= status_color %>">
+                    <%= t("enums.repair_record.status.#{record.status}", default: record.status.humanize) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm text-gray-600 max-w-xs truncate" title="<%= record.issue_description %>">
+                    <%= record.issue_description.presence || record.abnormal_reason.presence || "—" %>
+                  </p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <% days = record.decommission_days_calculated %>
+                  <span class="<%= days > 0 ? 'text-sm font-semibold text-gray-900' : 'text-sm text-gray-400' %>">
+                    <%= days > 0 ? "#{days} 天" : "—" %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right">
+                  <% if record.total_cost.present? && record.total_cost > 0 %>
+                    <span class="text-sm font-semibold text-gray-900">¥ <%= number_with_delimiter(sprintf("%.2f", record.total_cost)) %></span>
+                  <% else %>
+                    <span class="text-sm text-gray-400">—</span>
+                  <% end %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex items-center justify-end gap-2">
+                    <%= link_to "查看", repair_record_path(record), class: "text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors" %>
+                    <% if is_unfinished %>
+                      <%= link_to "编辑", edit_repair_record_path(record), class: "text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors" %>
+                      <% unless record.completed? %>
+                        <%= button_to "完成", complete_repair_record_path(record), method: :patch, class: "text-green-600 hover:text-green-800 px-3 py-1.5 rounded-md hover:bg-green-50 transition-colors" %>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <% if @repair_records.empty? %>
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <h3 class="mt-4 text-sm font-medium text-gray-900">暂无维修记录</h3>
+          <p class="mt-1 text-sm text-gray-500">点击上方按钮创建新的维修记录</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

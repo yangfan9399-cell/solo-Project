@@ -1,0 +1,144 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">保养计划</h1>
+          <p class="mt-1 text-sm text-gray-500">管理车辆保养计划，跟踪进度与超期状态</p>
+        </div>
+        <%= link_to new_maintenance_plan_path, class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm" do %>
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          新建
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <%= form_with(url: maintenance_plans_path, method: :get, local: true, class: "space-y-4") do %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <%= label_tag :status, "状态筛选", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= select_tag :status, options_for_select(MaintenancePlan.statuses.keys.map { |k| [t("enums.maintenance_plan.status.#{k}", default: k.humanize), k] }, params[:status]), { include_blank: "全部状态", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" } %>
+          </div>
+          <div>
+            <%= label_tag :vehicle_id, "车辆筛选", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= collection_select :vehicle, :id, Vehicle.order(:plate_number), :id, :plate_number, { selected: params[:vehicle_id], include_blank: "全部车辆" }, { class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" } %>
+          </div>
+          <div>
+            <%= label_tag :start_date, "开始日期", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= date_field_tag :start_date, params[:start_date], class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" %>
+          </div>
+          <div>
+            <%= label_tag :end_date, "结束日期", class: "block text-sm font-medium text-gray-700 mb-1.5" %>
+            <%= date_field_tag :end_date, params[:end_date], class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 text-sm" %>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <div class="flex items-center">
+            <%= check_box_tag :overdue, "true", params[:overdue] == "true", class: "h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" %>
+            <%= label_tag :overdue, "只显示超期", class: "ml-2 text-sm text-gray-700 font-medium" %>
+          </div>
+          <div class="flex-1"></div>
+          <div class="flex gap-2">
+            <%= link_to "重置", maintenance_plans_path, class: "px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm" %>
+            <%= submit_tag "筛选", class: "px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm cursor-pointer" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">计划日期</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">车牌号</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">车队</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">类型</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">进度</th>
+              <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200" id="maintenance-plans">
+            <% @maintenance_plans.each do |plan| %>
+              <% is_overdue = plan.overdue? %>
+              <tr class="<%= is_overdue ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50' %> transition-colors" id="<%= dom_id(plan) %>">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900"><%= plan.planned_date.strftime('%Y-%m-%d') %></span>
+                    <% if is_overdue %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">超期</span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm text-gray-900"><%= plan.vehicle&.plate_number %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm text-gray-600"><%= plan.vehicle&.fleet&.name %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% type_color = case plan.maintenance_type
+                                  when 'routine' then 'bg-blue-100 text-blue-800'
+                                  when 'comprehensive' then 'bg-purple-100 text-purple-800'
+                                  when 'emergency' then 'bg-orange-100 text-orange-800'
+                                  else 'bg-gray-100 text-gray-800'
+                                  end %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= type_color %>">
+                    <%= t("enums.maintenance_plan.maintenance_type.#{plan.maintenance_type}", default: plan.maintenance_type.humanize) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% status_color = case plan.status
+                                    when 'pending' then 'bg-yellow-100 text-yellow-800'
+                                    when 'in_progress' then 'bg-blue-100 text-blue-800'
+                                    when 'completed' then 'bg-green-100 text-green-800'
+                                    when 'overdue' then 'bg-red-100 text-red-800'
+                                    when 'cancelled' then 'bg-gray-100 text-gray-800'
+                                    else 'bg-gray-100 text-gray-800'
+                                    end %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= status_color %>">
+                    <%= t("enums.maintenance_plan.status.#{plan.status}", default: plan.status.humanize) %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="w-32">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs text-gray-600">完成</span>
+                      <span class="text-xs font-semibold text-gray-900"><%= plan.progress_percentage %>%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div class="h-2 rounded-full transition-all duration-300 <%= plan.progress_percentage == 100 ? 'bg-green-500' : 'bg-blue-500' %>" style="width: <%= plan.progress_percentage %>%"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex items-center justify-end gap-2">
+                    <%= link_to "查看", maintenance_plan_path(plan), class: "text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors" %>
+                    <% if plan.pending? || plan.overdue? %>
+                      <%= button_to "开始", maintenance_plan_path(plan, maintenance_plan: { status: :in_progress }), method: :patch, class: "text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors" %>
+                    <% end %>
+                    <% if plan.in_progress? && plan.all_items_completed? %>
+                      <%= button_to "完成", maintenance_plan_path(plan, maintenance_plan: { status: :completed }), method: :patch, class: "text-green-600 hover:text-green-800 px-3 py-1.5 rounded-md hover:bg-green-50 transition-colors" %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <% if @maintenance_plans.empty? %>
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <h3 class="mt-4 text-sm font-medium text-gray-900">暂无保养计划</h3>
+          <p class="mt-1 text-sm text-gray-500">点击上方按钮创建新的保养计划</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

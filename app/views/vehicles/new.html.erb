@@ -1,0 +1,29 @@
+<% content_for :title, '新增车辆' %>
+
+<div class="min-h-screen bg-slate-50">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex items-center gap-2 mb-5">
+      <%= link_to vehicles_path, class: 'inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 transition' do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        返回列表
+      <% end %>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-6 sm:px-8 py-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-900">新增车辆</h1>
+            <p class="mt-0.5 text-sm text-slate-500">填写车辆基本信息以创建新的车辆档案</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 sm:px-8 py-6">
+        <%= render 'form', vehicle: @vehicle %>
+      </div>
+    </div>
+  </div>
+</div>

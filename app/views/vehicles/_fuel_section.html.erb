@@ -1,0 +1,98 @@
+<%
+  standard_fuel = @vehicle.vehicle_model&.standard_fuel_consumption
+%>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">油耗记录列表</h3>
+      <p class="text-xs text-slate-500 mt-0.5">
+        <% if standard_fuel.present? %>标准油耗：<span class="font-medium text-slate-700"><%= standard_fuel %> L/100km</span><% end %>
+        <% if @abnormal_fuel_count > 0 %>
+          <span class="ml-3 text-red-600 font-medium">异常记录：<%= @abnormal_fuel_count %> 条</span>
+        <% end %>
+      </p>
+    </div>
+    <%= link_to new_fuel_record_path(vehicle_id: @vehicle.id), class: 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition' do %>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      登记油耗
+    <% end %>
+  </div>
+
+  <% if @fuel_records.any? %>
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">日期</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">起始里程</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">结束里程</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">行驶里程</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">加油量</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">百公里油耗</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">费用</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">备注</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @fuel_records.each do |record| %>
+            <tr class="<%= record.is_abnormal? ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-slate-50' %> transition-colors">
+              <td class="px-4 py-3 whitespace-nowrap text-slate-900"><%= record.record_date %></td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                <%= record.start_mileage ? "#{number_with_delimiter(record.start_mileage.to_i)}" : '-' %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                <%= record.end_mileage ? "#{number_with_delimiter(record.end_mileage.to_i)}" : '-' %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700 font-medium">
+                <% if record.mileage_distance > 0 %>
+                  <%= number_with_delimiter(record.mileage_distance.to_i) %> km
+                <% else %>
+                  -
+                <% end %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                <%= record.fuel_amount ? "#{record.fuel_amount} L" : '-' %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right">
+                <% if record.fuel_consumption.present? %>
+                  <span class="<%= record.is_abnormal? ? 'text-red-600 font-bold' : 'text-slate-700 font-medium' %>">
+                    <%= record.fuel_consumption %> L
+                    <% if standard_fuel.present? %>
+                      <% diff = record.fuel_consumption - standard_fuel %>
+                      <% if diff > 0 %>
+                        <span class="<%= record.is_abnormal? ? 'text-red-500' : 'text-orange-500' %> text-xs">(+<%= diff.round(2) %>)</span>
+                      <% elsif diff < 0 %>
+                        <span class="text-green-500 text-xs">(<%= diff.round(2) %>)</span>
+                      <% end %>
+                    <% end %>
+                  </span>
+                  <% if record.is_abnormal? %>
+                    <svg class="w-4 h-4 inline-block ml-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="油耗异常"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <% end %>
+                <% else %>
+                  -
+                <% end %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700">
+                <%= record.fuel_cost ? "¥#{number_with_delimiter(record.fuel_cost.to_i)}" : '-' %>
+              </td>
+              <td class="px-4 py-3 text-slate-600 max-w-xs">
+                <% if record.is_abnormal? && record.abnormal_note.present? %>
+                  <span class="text-red-600 text-xs"><%= record.abnormal_note %></span>
+                <% else %>
+                  <span class="text-slate-400 text-xs"><%= record.recorded_by.present? ? "登记人：#{record.recorded_by}" : '-' %></span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-white border border-slate-200 border-dashed rounded-xl p-8 text-center">
+      <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <p class="text-sm text-slate-500">暂无油耗记录</p>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,94 @@
+<%
+  repair_type_texts = { 'breakdown' => '故障维修', 'preventive' => '预防性维修', 'accident' => '事故维修' }
+  repair_status_colors = {
+    'reported' => 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
+    'diagnosing' => 'bg-purple-100 text-purple-800 ring-purple-600/20',
+    'in_progress' => 'bg-blue-100 text-blue-800 ring-blue-600/20',
+    'parts_pending' => 'bg-orange-100 text-orange-800 ring-orange-600/20',
+    'completed' => 'bg-green-100 text-green-800 ring-green-600/20',
+    'cancelled' => 'bg-gray-100 text-gray-800 ring-gray-600/20'
+  }
+  repair_status_texts = {
+    'reported' => '已报告',
+    'diagnosing' => '诊断中',
+    'in_progress' => '维修中',
+    'parts_pending' => '待配件',
+    'completed' => '已完成',
+    'cancelled' => '已取消'
+  }
+%>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h3 class="text-base font-semibold text-slate-900">维修记录列表</h3>
+    <button type="button" onclick="document.getElementById('new_repair_modal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      创建维修
+    </button>
+  </div>
+
+  <% if @repair_records.any? %>
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">报告日期</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">开始日期</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">结束日期</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">类型</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">状态</th>
+            <th class="px-4 py-3 text-right font-semibold text-slate-700 whitespace-nowrap">费用</th>
+            <th class="px-4 py-3 text-center font-semibold text-slate-700 whitespace-nowrap">停用天数</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700">异常原因</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @repair_records.each do |record| %>
+            <tr class="hover:bg-slate-50 transition-colors <%= record.abnormal_reason.present? ? 'bg-red-50/30' : '' %>">
+              <td class="px-4 py-3 whitespace-nowrap text-slate-900"><%= record.report_date %></td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-700"><%= record.start_date || '-' %></td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-700"><%= record.end_date || '-' %></td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                <% if record.is_urgent? %>
+                  <span class="inline-flex items-center gap-1 text-red-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    <%= repair_type_texts[record.repair_type] || record.repair_type %>
+                  </span>
+                <% else %>
+                  <%= repair_type_texts[record.repair_type] || record.repair_type %>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <%= repair_status_colors[record.status] %>">
+                  <%= repair_status_texts[record.status] %>
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-right text-slate-700 font-medium">
+                <%= record.total_cost ? "¥#{number_with_delimiter(record.total_cost.to_i)}" : '-' %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-center text-slate-700">
+                <% if record.decommission_days_calculated > 0 %>
+                  <span class="<%= record.decommission_days_calculated > 7 ? 'text-orange-600 font-medium' : '' %>"><%= record.decommission_days_calculated %> 天</span>
+                <% else %>
+                  -
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-slate-600 max-w-xs">
+                <% if record.abnormal_reason.present? %>
+                  <span class="text-red-600 text-xs"><%= record.abnormal_reason %></span>
+                <% else %>
+                  <span class="text-slate-400 text-xs"><%= record.issue_description&.truncate(30) || '-' %></span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-white border border-slate-200 border-dashed rounded-xl p-8 text-center">
+      <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <p class="text-sm text-slate-500">暂无维修记录</p>
+    </div>
+  <% end %>
+</div>

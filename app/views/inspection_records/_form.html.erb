@@ -1,0 +1,99 @@
+<% inspection_items = [
+  { key: 'brakes', label: '制动系统', icon: '🛑' },
+  { key: 'tires', label: '轮胎', icon: '🛞' },
+  { key: 'lights', label: '灯光', icon: '💡' },
+  { key: 'steering', label: '转向系统', icon: '🎯' },
+  { key: 'oil', label: '机油', icon: '🛢️' },
+  { key: 'water', label: '水箱/冷却液', icon: '💧' },
+  { key: 'cleaning', label: '清洁状况', icon: '✨' }
+] %>
+
+<%= form_with(model: inspection_record, class: "space-y-6") do |form| %>
+  <% if inspection_record.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h3 class="text-red-800 font-semibold mb-2"><%= pluralize(inspection_record.errors.count, "个错误") %> 禁止保存：</h3>
+      <ul class="list-disc list-inside text-red-700 text-sm">
+        <% inspection_record.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <%= form.label :vehicle_id, "选择车辆", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.collection_select :vehicle_id, @vehicles, :id, :plate_number, { include_blank: "请选择车辆" }, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2" %>
+    </div>
+
+    <div>
+      <%= form.label :inspector, "检查人", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.text_field :inspector, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2", placeholder: "输入检查人姓名" %>
+    </div>
+
+    <div>
+      <%= form.label :inspection_date, "检查日期", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.date_field :inspection_date, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2" %>
+    </div>
+
+    <div>
+      <%= form.label :inspection_type, "检查类型", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.select :inspection_type, InspectionRecord.inspection_types.keys.map { |k| [t("enums.inspection_record.inspection_type.#{k}", default: k.humanize), k] }, { include_blank: "请选择类型" }, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2" %>
+    </div>
+
+    <div>
+      <%= form.label :overall_result, "总体结果", class: "block text-sm font-medium text-gray-700 mb-2" %>
+      <%= form.select :overall_result, InspectionRecord.overall_results.keys.map { |k| [t("enums.inspection_record.overall_result.#{k}", default: k.humanize), k] }, { include_blank: "请选择结果" }, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2" %>
+    </div>
+  </div>
+
+  <div class="border-t border-gray-200 pt-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">检查项目（每项选择：正常 / 异常 / 待检）</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <% inspection_items.each do |item| %>
+        <% field_name = "#{item[:key]}_status" %>
+        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors bg-gray-50/50">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-2xl"><%= item[:icon] %></span>
+            <span class="text-sm font-semibold text-gray-900"><%= item[:label] %></span>
+          </div>
+          <div class="flex gap-2">
+            <% %w[正常 异常 待检].each do |val| %>
+              <% checked = inspection_record.send(field_name) == val %>
+              <% base_class = "flex-1 px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all duration-200 text-center cursor-pointer" %>
+              <% active_class = case val
+                               when '正常' then checked ? "bg-green-500 text-white border-green-500 shadow-sm" : "bg-white text-green-700 border-green-200 hover:border-green-400 hover:bg-green-50"
+                               when '异常' then checked ? "bg-red-500 text-white border-red-500 shadow-sm" : "bg-white text-red-700 border-red-200 hover:border-red-400 hover:bg-red-50"
+                               else checked ? "bg-gray-500 text-white border-gray-500 shadow-sm" : "bg-white text-gray-700 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                               end %>
+              <%= label_tag "#{field_name}_#{val}", class: "#{base_class} #{active_class}" do %>
+                <%= radio_button_tag "inspection_record[#{field_name}]", val, checked, class: "sr-only", id: "#{field_name}_#{val}" %>
+                <%= val %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :issues_found, "问题描述", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <%= form.text_area :issues_found, rows: 4, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2", placeholder: "如有问题，请详细描述发现的问题和隐患..." %>
+  </div>
+
+  <div>
+    <%= form.label :suggestions, "建议 / 整改措施", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <%= form.text_area :suggestions, rows: 3, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2", placeholder: "输入整改建议或后续处理建议..." %>
+  </div>
+
+  <div>
+    <%= form.label :remarks, "备注", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <%= form.text_area :remarks, rows: 2, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2", placeholder: "输入备注信息..." %>
+  </div>
+
+  <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+    <%= link_to "取消", inspection_records_path, class: "px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" %>
+    <%= form.submit "保存检查记录", class: "px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer" %>
+  </div>
+<% end %>

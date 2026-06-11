@@ -1,0 +1,188 @@
+<% inspection_items = [
+  { key: 'brakes', label: '制动系统', icon: '🛑', desc: '刹车、制动液、刹车片等' },
+  { key: 'tires', label: '轮胎', icon: '🛞', desc: '轮胎磨损、气压、备胎' },
+  { key: 'lights', label: '灯光', icon: '💡', desc: '全车灯光及信号灯' },
+  { key: 'steering', label: '转向系统', icon: '🎯', desc: '方向盘、转向助力' },
+  { key: 'oil', label: '机油', icon: '🛢️', desc: '机油液位、品质' },
+  { key: 'water', label: '水箱/冷却液', icon: '💧', desc: '冷却液液位及冰点' },
+  { key: 'cleaning', label: '清洁状况', icon: '✨', desc: '车内车外清洁卫生' }
+] %>
+
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <div class="flex items-center gap-3">
+        <%= link_to inspection_records_path, class: "text-gray-500 hover:text-gray-700 transition-colors" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <% end %>
+        <h1 class="text-2xl font-bold text-gray-900">检查记录详情</h1>
+      </div>
+    </div>
+
+    <% if notice %>
+      <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-800 text-sm"><%= notice %></p>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="text-red-800 text-sm"><%= alert %></p>
+      </div>
+    <% end %>
+
+    <div id="<%= dom_id(@inspection_record) %>">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-emerald-50">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-3 mb-2 flex-wrap">
+                <h2 class="text-xl font-bold text-gray-900">检查记录 #<%= @inspection_record.id %></h2>
+                <% result_color = case @inspection_record.overall_result
+                                 when 'pass' then 'bg-green-100 text-green-800'
+                                 when 'fail' then 'bg-red-100 text-red-800'
+                                 when 'conditional' then 'bg-yellow-100 text-yellow-800'
+                                 else 'bg-gray-100 text-gray-800'
+                                 end %>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= result_color %>">
+                  <%= t("enums.inspection_record.overall_result.#{@inspection_record.overall_result}", default: @inspection_record.overall_result.humanize) %>
+                </span>
+                <% if @inspection_record.failed_items.any? %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    <%= @inspection_record.failed_items.count %> 项异常
+                  </span>
+                <% end %>
+              </div>
+              <% type_color = case @inspection_record.inspection_type
+                              when 'pre_departure' then 'text-green-600'
+                              when 'routine' then 'text-blue-600'
+                              when 'special' then 'text-purple-600'
+                              else 'text-gray-600'
+                              end %>
+              <p class="text-sm text-gray-600">
+                <span class="font-medium <%= type_color %>"><%= t("enums.inspection_record.inspection_type.#{@inspection_record.inspection_type}", default: @inspection_record.inspection_type.humanize) %></span>
+                · 车辆：<span class="font-medium text-gray-900"><%= @inspection_record.vehicle&.plate_number %></span>
+                · 车队：<span class="text-gray-700"><%= @inspection_record.vehicle&.fleet&.name %></span>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <%= link_to "编辑", edit_inspection_record_path(@inspection_record), class: "inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">检查日期</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @inspection_record.inspection_date.strftime('%Y-%m-%d') %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">检查人</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @inspection_record.inspector %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">异常项数</p>
+            <p class="text-lg font-semibold <%= @inspection_record.failed_items.any? ? 'text-red-600' : 'text-green-600' %>">
+              <%= @inspection_record.failed_items.count %> / 7
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">待检项</p>
+            <p class="text-lg font-semibold text-gray-600">
+              <% pending = inspection_items.count { |i| @inspection_record.send("#{i[:key]}_status") == '待检' } %>
+              <%= pending %> / 7
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">7项检查结果</h3>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <% inspection_items.each do |item| %>
+              <% status = @inspection_record.send("#{item[:key]}_status") %>
+              <% status_class = case status
+                               when '正常' then 'border-green-300 bg-green-50'
+                               when '异常' then 'border-red-300 bg-red-50'
+                               else 'border-gray-300 bg-gray-50'
+                               end %>
+              <% badge_class = case status
+                              when '正常' then 'bg-green-500 text-white'
+                              when '异常' then 'bg-red-500 text-white'
+                              else 'bg-gray-400 text-white'
+                              end %>
+              <% dot_class = case status
+                            when '正常' then 'bg-green-500'
+                            when '异常' then 'bg-red-500'
+                            else 'bg-gray-400'
+                            end %>
+              <div class="border-2 rounded-xl p-4 <%= status_class %> transition-all hover:shadow-md">
+                <div class="flex items-start justify-between mb-2">
+                  <span class="text-3xl"><%= item[:icon] %></span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold <%= badge_class %>">
+                    <%= status.presence || '待检' %>
+                  </span>
+                </div>
+                <h4 class="text-base font-bold text-gray-900 mb-1"><%= item[:label] %></h4>
+                <p class="text-xs text-gray-500 mb-2"><%= item[:desc] %></p>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full <%= dot_class %>"></span>
+                  <span class="text-xs font-medium text-gray-600">
+                    <% status_label = status.presence || '待检' %>
+                    <%= case status_label
+                       when '正常' then '状态良好'
+                       when '异常' then '需要处理'
+                       else '尚未检查'
+                       end %>
+                  </span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <% if @inspection_record.issues_found.present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+            <h3 class="text-lg font-semibold text-red-800 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              问题描述
+            </h3>
+          </div>
+          <div class="px-6 py-4">
+            <p class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"><%= @inspection_record.issues_found %></p>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @inspection_record.suggestions.present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+          <div class="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+            <h3 class="text-lg font-semibold text-yellow-800 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              建议 / 整改措施
+            </h3>
+          </div>
+          <div class="px-6 py-4">
+            <p class="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"><%= @inspection_record.suggestions %></p>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @inspection_record.remarks.present? %>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">备注</h3>
+          </div>
+          <div class="px-6 py-4">
+            <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed"><%= @inspection_record.remarks %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

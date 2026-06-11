@@ -1,0 +1,100 @@
+<%= form_with model: vehicle, local: true do |f| %>
+  <% if vehicle.errors.any? %>
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+      <h3 class="text-sm font-bold text-red-900 mb-2 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        表单包含 <%= vehicle.errors.count %> 个错误
+      </h3>
+      <ul class="space-y-1">
+        <% vehicle.errors.full_messages.each do |msg| %>
+          <li class="text-sm text-red-700 flex items-start gap-1.5">
+            <span class="mt-0.5">•</span><%= msg %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+    <div class="space-y-6">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">基本信息</h3>
+        <div class="space-y-4">
+          <div>
+            <%= f.label :plate_number, '车牌号', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+            <%= f.text_field :plate_number, required: true, placeholder: '如：粤A12345', class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none' %>
+          </div>
+          <div>
+            <%= f.label :vin_number, '车架号(VIN)', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+            <%= f.text_field :vin_number, placeholder: '17位车架号', class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none' %>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <%= f.label :fleet_id, '所属车队', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.collection_select :fleet_id, Fleet.order(:name), :id, :name, { include_blank: '请选择车队' }, { required: true, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' } %>
+            </div>
+            <div>
+              <%= f.label :vehicle_model_id, '车型', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.collection_select :vehicle_model_id, VehicleModel.order(:brand, :name), :id, :display_name, { include_blank: '请选择车型' }, { required: true, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' } %>
+            </div>
+          </div>
+          <div>
+            <%= f.label :route_id, '所属线路', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+            <%= f.collection_select :route_id, Route.order(:name), :id, :name, { include_blank: '请选择线路' }, { required: true, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' } %>
+          </div>
+          <div>
+            <%= f.label :status, '车辆状态', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+            <%= f.select :status, options_for_select([['正常', 'available'], ['保养中', 'in_maintenance'], ['维修中', 'under_repair'], ['待复核', 'pending_review'], ['停用', 'decommissioned']], vehicle.status || 'available'), {}, { required: true, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">运营信息</h3>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <%= f.label :driver_name, '司机姓名', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.text_field :driver_name, placeholder: '指定司机姓名', class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none' %>
+            </div>
+            <div>
+              <%= f.label :current_mileage, '当前里程(km)', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.number_field :current_mileage, min: 0, step: 1, placeholder: '0', class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none' %>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <%= f.label :purchase_date, '购买日期', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.date_field :purchase_date, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' %>
+            </div>
+            <div>
+              <%= f.label :manufacture_date, '出厂日期', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.date_field :manufacture_date, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' %>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <%= f.label :last_maintenance_date, '上次保养日期', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.date_field :last_maintenance_date, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' %>
+            </div>
+            <div>
+              <%= f.label :next_maintenance_date, '下次保养日期', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+              <%= f.date_field :next_maintenance_date, class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white' %>
+            </div>
+          </div>
+          <div>
+            <%= f.label :remarks, '备注', class: 'block text-sm font-semibold text-slate-700 mb-1.5' %>
+            <%= f.text_area :remarks, rows: 3, placeholder: '其他备注信息...', class: 'w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none' %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between">
+    <%= link_to '取消', vehicles_path, class: 'px-5 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition' %>
+    <%= f.submit class: 'px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow-md transition-all' %>
+  </div>
+<% end %>

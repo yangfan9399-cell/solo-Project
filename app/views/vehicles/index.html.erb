@@ -1,0 +1,92 @@
+<% content_for :title, '车辆管理' %>
+
+<div class="min-h-screen bg-slate-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">车辆管理</h1>
+          <p class="mt-1 text-sm text-slate-500">共 <span class="font-semibold text-slate-700"><%= @total_count %></span> 辆车</p>
+        </div>
+        <%= link_to new_vehicle_path, class: 'inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm hover:shadow-md transition-all text-sm' do %>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          新增车辆
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm">
+      <form method="get" action="<%= vehicles_path %>" data-turbo-frame="vehicles_grid" class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-slate-700">状态：</label>
+          <select name="status" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[120px]" data-turbo-frame="vehicles_grid" data-action="change->this.form.requestSubmit()">
+            <option value="">全部</option>
+            <option value="available" <%= 'selected' if params[:status] == 'available' %>>正常</option>
+            <option value="in_maintenance" <%= 'selected' if params[:status] == 'in_maintenance' %>>保养中</option>
+            <option value="under_repair" <%= 'selected' if params[:status] == 'under_repair' %>>维修中</option>
+            <option value="pending_review" <%= 'selected' if params[:status] == 'pending_review' %>>待复核</option>
+            <option value="decommissioned" <%= 'selected' if params[:status] == 'decommissioned' %>>停用</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-slate-700">车队：</label>
+          <select name="fleet_id" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[160px]" data-turbo-frame="vehicles_grid" data-action="change->this.form.requestSubmit()">
+            <option value="">全部车队</option>
+            <% Fleet.order(:name).each do |fleet| %>
+              <option value="<%= fleet.id %>" <%= 'selected' if params[:fleet_id].to_s == fleet.id.to_s %>><%= fleet.name %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+          <% if params[:status].present? || params[:fleet_id].present? %>
+            <%= link_to '重置筛选', vehicles_path, class: 'px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition' %>
+          <% end %>
+        </div>
+      </form>
+    </div>
+
+    <%= turbo_frame_tag 'vehicles_grid' do %>
+      <% if @vehicles.any? %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+          <% @vehicles.each do |vehicle| %>
+            <%= render 'vehicles/vehicle_card', vehicle: vehicle %>
+          <% end %>
+        </div>
+
+        <% if @total_pages > 1 %>
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-slate-600">
+                第 <span class="font-medium"><%= @current_page %></span> / <span class="font-medium"><%= @total_pages %></span> 页
+              </p>
+              <div class="flex items-center gap-2">
+                <% if @current_page > 1 %>
+                  <%= link_to vehicles_path(status: params[:status], fleet_id: params[:fleet_id], page: @current_page - 1), class: 'px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition' do %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  <% end %>
+                <% end %>
+                <% if @current_page < @total_pages %>
+                  <%= link_to vehicles_path(status: params[:status], fleet_id: params[:fleet_id], page: @current_page + 1), class: 'px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition' do %>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="bg-white border border-slate-200 rounded-2xl p-12 shadow-sm text-center">
+          <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+          </svg>
+          <h3 class="text-lg font-medium text-slate-900 mb-2">暂无车辆数据</h3>
+          <p class="text-sm text-slate-500 mb-6">当前筛选条件下没有找到车辆记录</p>
+          <%= link_to new_vehicle_path, class: 'inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-all text-sm' do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            新增车辆
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

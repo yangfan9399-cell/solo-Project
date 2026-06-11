@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <div class="flex items-center gap-3">
+        <%= link_to fuel_records_path, class: "text-gray-500 hover:text-gray-700 transition-colors" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <% end %>
+        <h1 class="text-2xl font-bold text-gray-900">油耗记录详情</h1>
+      </div>
+    </div>
+
+    <% if notice %>
+      <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-800 text-sm"><%= notice %></p>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="text-red-800 text-sm"><%= alert %></p>
+      </div>
+    <% end %>
+
+    <div id="<%= dom_id(@fuel_record) %>">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-sky-50 to-blue-50">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-3 mb-2 flex-wrap">
+                <h2 class="text-xl font-bold text-gray-900">加油记录 #<%= @fuel_record.id %></h2>
+                <% if @fuel_record.is_abnormal? %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    <span class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span>
+                    油耗异常
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <span class="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>
+                    油耗正常
+                  </span>
+                <% end %>
+              </div>
+              <p class="text-sm text-gray-600">
+                车辆：<span class="font-medium text-gray-900"><%= @fuel_record.vehicle&.plate_number %></span>
+                · 车队：<span class="text-gray-700"><%= @fuel_record.vehicle&.fleet&.name %></span>
+                <% if @fuel_record.fuel_type.present? %>
+                  · <span class="text-gray-700"><%= @fuel_record.fuel_type %></span>
+                <% end %>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <%= link_to "编辑", edit_fuel_record_path(@fuel_record), class: "inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" %>
+            </div>
+          </div>
+        </div>
+
+        <% if @fuel_record.is_abnormal? && @fuel_record.abnormal_note.present? %>
+          <div class="px-6 py-4 border-b border-gray-200 bg-red-50/80">
+            <p class="text-xs font-medium text-red-600 uppercase tracking-wider mb-1">⚠️ 异常说明</p>
+            <p class="text-sm text-red-800"><%= @fuel_record.abnormal_note %></p>
+          </div>
+        <% end %>
+
+        <div class="px-6 py-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">加油日期</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @fuel_record.record_date.strftime('%Y-%m-%d') %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">加油量</p>
+            <p class="text-lg font-semibold text-gray-900">
+              <%= @fuel_record.fuel_amount.present? ? "#{sprintf("%.2f", @fuel_record.fuel_amount)} L" : "—" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">加油金额</p>
+            <p class="text-lg font-semibold text-gray-900">
+              <%= @fuel_record.fuel_cost.present? ? "¥ #{number_with_delimiter(sprintf("%.2f", @fuel_record.fuel_cost))}" : "—" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">行驶里程</p>
+            <% distance = @fuel_record.mileage_distance %>
+            <p class="text-lg font-semibold text-gray-900">
+              <%= distance > 0 ? "#{number_with_delimiter(distance)} km" : "—" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">起始里程</p>
+            <p class="text-sm font-medium text-gray-800">
+              <%= @fuel_record.start_mileage.present? ? "#{number_with_delimiter(sprintf("%.1f", @fuel_record.start_mileage))} km" : "—" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">当前里程</p>
+            <p class="text-sm font-medium text-gray-800">
+              <%= @fuel_record.end_mileage.present? ? "#{number_with_delimiter(sprintf("%.1f", @fuel_record.end_mileage))} km" : "—" %>
+            </p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">百公里油耗</p>
+            <% if @fuel_record.fuel_consumption.present? %>
+              <p class="text-lg font-bold <%= @fuel_record.is_abnormal? ? 'text-red-600' : 'text-green-600' %>">
+                <%= sprintf("%.2f", @fuel_record.fuel_consumption) %> L
+              </p>
+              <% standard = @fuel_record.vehicle&.vehicle_model&.standard_fuel_consumption %>
+              <% if standard.present? %>
+                <p class="text-xs text-gray-400">标准: <%= standard %> L</p>
+              <% end %>
+            <% else %>
+              <p class="text-lg font-semibold text-gray-400">—</p>
+            <% end %>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">记录人</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @fuel_record.recorded_by.presence || "未指定" %></p>
+          </div>
+        </div>
+
+        <% if @fuel_record.gas_station.present? %>
+          <div class="px-6 py-4 border-t border-gray-200">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">加油站</p>
+            <p class="text-sm font-medium text-gray-900"><%= @fuel_record.gas_station %></p>
+          </div>
+        <% end %>
+
+        <% if @fuel_record.notes.present? %>
+          <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">备注</p>
+            <p class="text-sm text-gray-700 whitespace-pre-wrap"><%= @fuel_record.notes %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

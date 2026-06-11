@@ -1,0 +1,316 @@
+<% content_for(:title, "复盘分析") %>
+
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900">复盘分析</h1>
+      <p class="mt-1 text-sm text-gray-500">车队运营数据综合分析与统计</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-500">总维修数</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @summary_stats.total_repairs %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-red-500">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-500">总停用天数</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @summary_stats.total_decommission_days %> <span class="text-sm font-normal text-gray-500">天</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-500">平均停用天数</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @summary_stats.avg_decommission_days %> <span class="text-sm font-normal text-gray-500">天</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-500">异常油耗记录</p>
+            <p class="text-2xl font-bold text-gray-900"><%= @summary_stats.abnormal_fuel_count %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="border-b border-gray-200">
+        <nav class="flex -mb-px" aria-label="Tabs">
+          <% current_tab = params[:tab] || 'by_fleet' %>
+          <% tabs = [
+            { key: 'by_fleet', label: '按车队', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
+            { key: 'by_model', label: '按车型', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+            { key: 'by_reason', label: '按异常原因', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
+            { key: 'decommission', label: '停用时长分布', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }
+          ] %>
+          <% tabs.each do |tab| %>
+            <% active = current_tab == tab[:key] %>
+            <%= link_to analytics_path(tab: tab[:key]), class: "#{active ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} flex items-center px-6 py-4 text-sm font-medium border-b-2 transition-colors" do %>
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= tab[:icon] %>" />
+              </svg>
+              <%= tab[:label] %>
+            <% end %>
+          <% end %>
+        </nav>
+      </div>
+
+      <div class="p-6">
+        <% current_tab = params[:tab] || 'by_fleet' %>
+
+        <% if current_tab == 'by_fleet' %>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900">按车队统计</h3>
+            <%= link_to '查看详细列表', by_fleet_analytics_path, class: 'text-sm text-blue-600 hover:text-blue-800' %>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车队名</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">车辆数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">出车次数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">维修次数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">总停用天数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">平均油耗 (L/100km)</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% @by_fleet_cards.each_with_index do |fleet, index| %>
+                  <tr class="<%= index.even? ? 'bg-white' : 'bg-gray-50' %>">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900"><%= fleet.name %></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        <%= fleet.vehicle_count %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><%= fleet.trip_count %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><%= fleet.repair_count %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <% if fleet.total_decommission_days.to_i > 0 %>
+                        <span class="text-sm font-medium text-red-600"><%= fleet.total_decommission_days %> 天</span>
+                      <% else %>
+                        <span class="text-sm text-gray-500"><%= fleet.total_decommission_days %> 天</span>
+                      <% end %>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <% avg_fuel = fleet.avg_fuel_consumption.to_f.round(2) %>
+                      <% if avg_fuel > 0 %>
+                        <span class="text-sm font-medium <%= avg_fuel > 25 ? 'text-orange-600' : 'text-green-600' %>">
+                          <%= avg_fuel %>
+                        </span>
+                      <% else %>
+                        <span class="text-sm text-gray-400">-</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+        <% elsif current_tab == 'by_model' %>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900">按车型统计</h3>
+            <%= link_to '查看详细列表', by_model_analytics_path, class: 'text-sm text-blue-600 hover:text-blue-800' %>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车型分类</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">品牌 + 车型名</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">车辆数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">出车次数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">维修次数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">平均油耗 (L/100km)</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% @by_model_cards.each_with_index do |model, index| %>
+                  <tr class="<%= index.even? ? 'bg-white' : 'bg-gray-50' %>">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <% category_map = {
+                        'garbage_truck' => { label: '垃圾车', color: 'bg-green-100 text-green-800' },
+                        'sweeper' => { label: '清扫车', color: 'bg-blue-100 text-blue-800' },
+                        'sprinkler' => { label: '洒水车', color: 'bg-cyan-100 text-cyan-800' },
+                        'vacuum_truck' => { label: '吸污车', color: 'bg-purple-100 text-purple-800' },
+                        'transport' => { label: '运输车', color: 'bg-yellow-100 text-yellow-800' },
+                        'other' => { label: '其他', color: 'bg-gray-100 text-gray-800' }
+                      } %>
+                      <% cat = category_map[model.category] || { label: model.category, color: 'bg-gray-100 text-gray-800' } %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= cat[:color] %>">
+                        <%= cat[:label] %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900"><%= model.brand %> <%= model.name %></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        <%= model.vehicle_count %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><%= model.trip_count %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900"><%= model.repair_count %></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <% avg_fuel = model.avg_fuel_consumption.to_f.round(2) %>
+                      <% if avg_fuel > 0 %>
+                        <span class="text-sm font-medium <%= avg_fuel > 25 ? 'text-orange-600' : 'text-green-600' %>">
+                          <%= avg_fuel %>
+                        </span>
+                      <% else %>
+                        <span class="text-sm text-gray-400">-</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+        <% elsif current_tab == 'by_reason' %>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900">按异常原因统计</h3>
+            <%= link_to '查看详细列表', by_reason_analytics_path, class: 'text-sm text-blue-600 hover:text-blue-800' %>
+          </div>
+          <% total_count = @by_reason_cards.sum { |r| r.reason_count.to_i } %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">异常原因</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">发生次数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">占比</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">平均停用天数</th>
+                  <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">最长停用天数</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% @by_reason_cards.each_with_index do |reason, index| %>
+                  <tr class="<%= index.even? ? 'bg-white' : 'bg-gray-50' %>">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 mr-2">
+                          #<%= index + 1 %>
+                        </span>
+                        <span class="text-sm font-medium text-gray-900"><%= reason.abnormal_reason %></span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <span class="text-lg font-bold text-gray-900"><%= reason.reason_count %></span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <% percentage = total_count > 0 ? (reason.reason_count.to_f / total_count * 100).round(1) : 0 %>
+                      <div class="flex items-center">
+                        <div class="w-32 bg-gray-200 rounded-full h-2.5 mr-3">
+                          <div class="bg-blue-600 h-2.5 rounded-full" style="width: <%= percentage %>%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700"><%= percentage %>%</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <% avg_days = reason.avg_decommission_days.to_f.round(1) %>
+                      <span class="text-sm font-medium <%= avg_days > 7 ? 'text-red-600' : 'text-gray-900' %>">
+                        <%= avg_days %> 天
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                      <% reason_records = RepairRecord.where(abnormal_reason: reason.abnormal_reason).where.not(decommission_days: nil) %>
+                      <% max_days = reason_records.maximum(:decommission_days).to_i %>
+                      <span class="text-sm font-medium <%= max_days > 10 ? 'text-red-600' : 'text-gray-900' %>">
+                        <%= max_days %> 天
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if @by_reason_cards.empty? %>
+                  <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                      暂无异常原因统计数据
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+        <% elsif current_tab == 'decommission' %>
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-900">停用时长分布</h3>
+            <%= link_to '查看详细列表', decommission_analytics_path, class: 'text-sm text-blue-600 hover:text-blue-800' %>
+          </div>
+          <% max_count = @decommission_cards.map { |d| d.count }.max || 1 %>
+          <% max_count = 1 if max_count == 0 %>
+          <div class="bg-gray-50 rounded-lg p-8">
+            <div class="flex items-end justify-center space-x-8 h-64">
+              <% colors = ['bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-red-500'] %>
+              <% @decommission_cards.each_with_index do |item, index| %>
+                <% height_percent = max_count > 0 ? (item.count.to_f / max_count * 100).round : 5 %>
+                <div class="flex flex-col items-center" style="width: 100px;">
+                  <div class="text-sm font-semibold text-gray-700 mb-2"><%= item.count %></div>
+                  <div class="w-full rounded-t-lg <%= colors[index] %> transition-all duration-500" style="height: <%= height_percent %>%; min-height: 20px;"></div>
+                  <div class="mt-3 text-center">
+                    <div class="text-sm font-medium text-gray-900"><%= item.range %></div>
+                    <div class="text-xs text-gray-500"><%= max_count > 0 ? (item.count.to_f / max_count * 100).round(1) : 0 %>%</div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            <div class="mt-8 border-t border-gray-200 pt-6">
+              <div class="grid grid-cols-4 gap-4 text-center">
+                <% labels = [
+                  { range: '<3天', desc: '短期维修', color: 'text-green-600', bg: 'bg-green-100' },
+                  { range: '3-7天', desc: '中期维修', color: 'text-blue-600', bg: 'bg-blue-100' },
+                  { range: '7-15天', desc: '长期维修', color: 'text-yellow-600', bg: 'bg-yellow-100' },
+                  { range: '>15天', desc: '超长维修', color: 'text-red-600', bg: 'bg-red-100' }
+                ] %>
+                <% labels.each do |label| %>
+                  <div class="<%= label[:bg] %> rounded-lg p-3">
+                    <div class="text-sm font-semibold <%= label[:color] %>"><%= label[:range] %></div>
+                    <div class="text-xs text-gray-600 mt-1"><%= label[:desc] %></div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

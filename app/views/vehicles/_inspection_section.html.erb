@@ -1,0 +1,74 @@
+<%
+  inspection_type_texts = { 'pre_departure' => '出车前检查', 'routine' => '例行检查', 'special' => '专项检查' }
+  result_colors = {
+    'pass' => 'bg-green-100 text-green-800 ring-green-600/20',
+    'fail' => 'bg-red-100 text-red-800 ring-red-600/20',
+    'conditional' => 'bg-yellow-100 text-yellow-800 ring-yellow-600/20'
+  }
+  result_texts = { 'pass' => '通过', 'fail' => '未通过', 'conditional' => '有条件通过' }
+%>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h3 class="text-base font-semibold text-slate-900">检查记录列表</h3>
+    <%= link_to new_inspection_record_path(vehicle_id: @vehicle.id), class: 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition' do %>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      新增检查
+    <% end %>
+  </div>
+
+  <% if @inspection_records.any? %>
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">日期</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">类型</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">检查人</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700 whitespace-nowrap">结果</th>
+            <th class="px-4 py-3 text-left font-semibold text-slate-700">发现问题</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @inspection_records.each do |record| %>
+            <tr class="<%= record.fail? ? 'bg-red-50/50 hover:bg-red-50' : (record.conditional? ? 'bg-yellow-50/50 hover:bg-yellow-50' : 'hover:bg-slate-50') %> transition-colors">
+              <td class="px-4 py-3 whitespace-nowrap text-slate-900">
+                <%= record.inspection_date ? record.inspection_date.strftime('%Y-%m-%d') : '-' %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-700">
+                <%= inspection_type_texts[record.inspection_type] || record.inspection_type %>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap text-slate-700"><%= record.inspector %></td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <%= result_colors[record.overall_result] %>">
+                  <%= record.passed? && !record.fail? ? '✓ ' : (record.fail? ? '✕ ' : '⚠ ') %>
+                  <%= result_texts[record.overall_result] %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-slate-600 max-w-md">
+                <% if record.issues_found.present? %>
+                  <span class="<%= record.fail? ? 'text-red-600' : 'text-orange-600' %> text-xs"><%= record.issues_found %></span>
+                <% elsif record.failed_items.any? %>
+                  <div class="flex flex-wrap gap-1">
+                    <% record.failed_items.each do |item| %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-50 text-red-700 border border-red-200">
+                        <%= { 'brakes' => '刹车', 'tires' => '轮胎', 'lights' => '灯光', 'steering' => '转向', 'oil' => '机油', 'water' => '水箱', 'cleaning' => '清洁' }[item[:item]] || item[:item] %>
+                      </span>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span class="text-slate-400 text-xs">无问题</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-white border border-slate-200 border-dashed rounded-xl p-8 text-center">
+      <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      <p class="text-sm text-slate-500">暂无检查记录</p>
+    </div>
+  <% end %>
+</div>

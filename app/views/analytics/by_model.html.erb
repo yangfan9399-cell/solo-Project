@@ -1,0 +1,116 @@
+<% content_for(:title, "按车型统计 - 复盘分析") %>
+
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+      <div class="flex items-center space-x-4 mb-2">
+        <%= link_to '← 返回复盘分析', analytics_path(tab: 'by_model'), class: 'text-sm text-blue-600 hover:text-blue-800' %>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900">按车型统计</h1>
+      <p class="mt-1 text-sm text-gray-500">各车型运营数据详细统计</p>
+    </div>
+
+    <% grouped_by_category = @by_model.group_by { |m| m.category } %>
+
+    <% grouped_by_category.each do |category, models| %>
+      <% category_map = {
+        'garbage_truck' => { label: '垃圾车', color: 'bg-green-500', desc: '垃圾清运车辆' },
+        'sweeper' => { label: '清扫车', color: 'bg-blue-500', desc: '道路清扫车辆' },
+        'sprinkler' => { label: '洒水车', color: 'bg-cyan-500', desc: '洒水降尘车辆' },
+        'vacuum_truck' => { label: '吸污车', color: 'bg-purple-500', desc: '吸污作业车辆' },
+        'transport' => { label: '运输车', color: 'bg-yellow-500', desc: '货物运输车辆' },
+        'other' => { label: '其他', color: 'bg-gray-500', desc: '其他类型车辆' }
+      } %>
+      <% cat = category_map[category] || { label: category, color: 'bg-gray-500', desc: '' } %>
+
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="h-8 w-1.5 <%= cat[:color] %> rounded mr-4"></div>
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900"><%= cat[:label] %></h2>
+              <p class="text-xs text-gray-500"><%= cat[:desc] %></p>
+            </div>
+          </div>
+          <span class="text-sm text-gray-500"><%= models.size %> 种车型 · <%= models.sum { |m| m.vehicle_count.to_i } %> 辆车</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">品牌</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车型名</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">车辆数</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">出车次数</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">维修次数</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">总停用天数</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">平均油耗</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">每车日均出车</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <% models.each_with_index do |model, index| %>
+                <tr class="<%= index.even? ? 'bg-white' : 'bg-gray-50' %> hover:bg-blue-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800">
+                      <%= model.brand %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900"><%= model.name %></div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                      <%= model.vehicle_count %>
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <div class="text-sm font-semibold text-gray-900"><%= model.trip_count %></div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <% repair_rate = model.vehicle_count.to_i > 0 ? (model.repair_count.to_f / model.vehicle_count.to_i).round(1) : 0 %>
+                    <div class="text-sm font-semibold <%= repair_rate > 3 ? 'text-red-600' : repair_rate > 1.5 ? 'text-yellow-600' : 'text-green-600' %>">
+                      <%= model.repair_count %>
+                    </div>
+                    <div class="text-xs text-gray-500">平均 <%= repair_rate %> 次/车</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <% decommission = model.total_decommission_days.to_i %>
+                    <% avg_decommission = model.repair_count.to_i > 0 ? (decommission.to_f / model.repair_count.to_i).round(1) : 0 %>
+                    <div class="text-sm font-semibold text-gray-900"><%= decommission %> 天</div>
+                    <div class="text-xs text-gray-500">平均 <%= avg_decommission %> 天/次</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <% avg_fuel = model.avg_fuel_consumption.to_f.round(2) %>
+                    <% if avg_fuel > 0 %>
+                      <div class="text-sm font-semibold <%= avg_fuel > 25 ? 'text-orange-600' : 'text-green-600' %>">
+                        <%= avg_fuel %> L/100km
+                      </div>
+                    <% else %>
+                      <span class="text-sm text-gray-400">-</span>
+                    <% end %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <% daily_trips = model.vehicle_count.to_i > 0 ? (model.trip_count.to_f / model.vehicle_count.to_i / 30).round(2) : 0 %>
+                    <div class="text-sm font-semibold text-gray-900"><%= daily_trips %></div>
+                    <div class="text-xs text-gray-500">次/天</div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @by_model.empty? %>
+      <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无数据</h3>
+        <p class="mt-1 text-sm text-gray-500">目前没有车型统计数据</p>
+      </div>
+    <% end %>
+  </div>
+</div>

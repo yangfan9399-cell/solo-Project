@@ -1,0 +1,14 @@
+<% content_for(:title, "新建出车申请") %>
+
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center space-x-4 mb-6">
+      <%= link_to '← 返回列表', trip_records_path, class: 'text-sm text-blue-600 hover:text-blue-800' %>
+      <h1 class="text-3xl font-bold text-gray-900">新建出车申请</h1>
+    </div>
+
+    <%= form_with(model: @trip_record, local: true) do |form| %>
+      <%= render partial: 'form', locals: { form: form } %>
+    <% end %>
+  </div>
+</div>

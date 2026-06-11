@@ -1,0 +1,154 @@
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <div class="flex items-center gap-3">
+        <%= link_to repair_records_path, class: "text-gray-500 hover:text-gray-700 transition-colors" do %>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <% end %>
+        <h1 class="text-2xl font-bold text-gray-900">维修记录详情</h1>
+      </div>
+    </div>
+
+    <% if notice %>
+      <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-800 text-sm"><%= notice %></p>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="text-red-800 text-sm"><%= alert %></p>
+      </div>
+    <% end %>
+
+    <div id="<%= dom_id(@repair_record) %>">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-amber-50">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-3 mb-2 flex-wrap">
+                <h2 class="text-xl font-bold text-gray-900">维修单 #<%= @repair_record.id %></h2>
+                <% status_color = case @repair_record.status
+                                  when 'reported' then 'bg-gray-100 text-gray-800'
+                                  when 'diagnosing' then 'bg-yellow-100 text-yellow-800'
+                                  when 'in_progress' then 'bg-blue-100 text-blue-800'
+                                  when 'parts_pending' then 'bg-purple-100 text-purple-800'
+                                  when 'completed' then 'bg-green-100 text-green-800'
+                                  when 'cancelled' then 'bg-gray-100 text-gray-500'
+                                  else 'bg-gray-100 text-gray-800'
+                                  end %>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color %>">
+                  <%= t("enums.repair_record.status.#{@repair_record.status}", default: @repair_record.status.humanize) %>
+                </span>
+                <% if @repair_record.is_urgent? %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    紧急维修
+                  </span>
+                <% end %>
+              </div>
+              <% type_color = case @repair_record.repair_type
+                              when 'breakdown' then 'text-red-600'
+                              when 'preventive' then 'text-blue-600'
+                              when 'accident' then 'text-orange-600'
+                              else 'text-gray-600'
+                              end %>
+              <p class="text-sm text-gray-600">
+                <span class="font-medium <%= type_color %>"><%= t("enums.repair_record.repair_type.#{@repair_record.repair_type}", default: @repair_record.repair_type.humanize) %></span>
+                · 车辆：<span class="font-medium text-gray-900"><%= @repair_record.vehicle&.plate_number %></span>
+                · 车队：<span class="text-gray-700"><%= @repair_record.vehicle&.fleet&.name %></span>
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <% unless @repair_record.completed? || @repair_record.cancelled? %>
+                <%= button_to "标记完成", complete_repair_record_path(@repair_record), method: :patch, class: "inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm" %>
+              <% end %>
+              <% if %w[reported diagnosing].include?(@repair_record.status) %>
+                <%= button_to "开始诊断", repair_record_path(@repair_record, repair_record: { status: :diagnosing }), method: :patch, class: "inline-flex items-center px-4 py-2 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors shadow-sm" %>
+              <% end %>
+              <% if %w[diagnosing parts_pending].include?(@repair_record.status) %>
+                <%= button_to "开始维修", repair_record_path(@repair_record, repair_record: { status: :in_progress }), method: :patch, class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm" %>
+              <% end %>
+              <%= link_to "编辑", edit_repair_record_path(@repair_record), class: "inline-flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">报修日期</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @repair_record.report_date.strftime('%Y-%m-%d') %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">开始日期</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @repair_record.start_date.present? ? @repair_record.start_date.strftime('%Y-%m-%d') : "未开始" %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">结束日期</p>
+            <p class="text-lg font-semibold text-gray-900"><%= @repair_record.end_date.present? ? @repair_record.end_date.strftime('%Y-%m-%d') : "进行中" %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">停用天数</p>
+            <p class="text-lg font-semibold text-gray-900">
+              <% days = @repair_record.decommission_days_calculated %>
+              <%= days > 0 ? "#{days} 天" : "0 天" %>
+            </p>
+          </div>
+        </div>
+
+        <div class="px-6 py-5 border-t border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">配件费用</p>
+            <p class="text-lg font-semibold text-gray-900">¥ <%= @repair_record.parts_cost.present? ? number_with_delimiter(sprintf("%.2f", @repair_record.parts_cost)) : "0.00" %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">工时费用</p>
+            <p class="text-lg font-semibold text-gray-900">¥ <%= @repair_record.labor_cost.present? ? number_with_delimiter(sprintf("%.2f", @repair_record.labor_cost)) : "0.00" %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">费用合计</p>
+            <p class="text-xl font-bold text-orange-600">¥ <%= @repair_record.total_cost.present? ? number_with_delimiter(sprintf("%.2f", @repair_record.total_cost)) : "0.00" %></p>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">维修技师</p>
+            <p class="text-sm font-medium text-gray-900"><%= @repair_record.technician.presence || "未指定" %></p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">维修站点</p>
+            <p class="text-sm font-medium text-gray-900"><%= @repair_record.location.presence || @repair_record.repair_station.presence || "未指定" %></p>
+          </div>
+        </div>
+
+        <% if @repair_record.issue_description.present? || @repair_record.abnormal_reason.present? %>
+          <div class="px-6 py-4 border-t border-gray-200 bg-red-50/50">
+            <p class="text-xs font-medium text-red-600 uppercase tracking-wider mb-2">异常原因 / 问题描述</p>
+            <p class="text-sm text-gray-800 whitespace-pre-wrap"><%= @repair_record.issue_description.presence || @repair_record.abnormal_reason %></p>
+          </div>
+        <% end %>
+
+        <% if @repair_record.diagnosis.present? %>
+          <div class="px-6 py-4 border-t border-gray-200">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">诊断结果</p>
+            <p class="text-sm text-gray-800 whitespace-pre-wrap"><%= @repair_record.diagnosis %></p>
+          </div>
+        <% end %>
+
+        <% if @repair_record.solution.present? %>
+          <div class="px-6 py-4 border-t border-gray-200">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">解决方案</p>
+            <p class="text-sm text-gray-800 whitespace-pre-wrap"><%= @repair_record.solution %></p>
+          </div>
+        <% end %>
+
+        <% if @repair_record.notes.present? %>
+          <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">备注</p>
+            <p class="text-sm text-gray-700 whitespace-pre-wrap"><%= @repair_record.notes %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,238 @@
+<% content_for(:title, "停用时长分布 - 复盘分析") %>
+
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+      <div class="flex items-center space-x-4 mb-2">
+        <%= link_to '← 返回复盘分析', analytics_path(tab: 'decommission'), class: 'text-sm text-blue-600 hover:text-blue-800' %>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900">停用时长分布</h1>
+      <p class="mt-1 text-sm text-gray-500">维修停用时长详细分布与明细</p>
+    </div>
+
+    <% total_count = @decommission.sum { |d| d.count } %>
+    <% max_count = @decommission.map { |d| d.count }.max || 1 %>
+    <% max_count = 1 if max_count == 0 %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-6">停用时长柱状图</h2>
+        <div class="bg-gray-50 rounded-xl p-8">
+          <div class="flex items-end justify-around h-72">
+            <% colors = ['bg-green-500 hover:bg-green-600', 'bg-blue-500 hover:bg-blue-600', 'bg-yellow-500 hover:bg-yellow-600', 'bg-red-500 hover:bg-red-600'] %>
+            <% border_colors = ['ring-green-300', 'ring-blue-300', 'ring-yellow-300', 'ring-red-300'] %>
+            <% labels = ['短期维修', '中期维修', '长期维修', '超长维修'] %>
+            <% @decommission.each_with_index do |item, index| %>
+              <% height_percent = max_count > 0 ? (item.count.to_f / max_count * 100).round : 5 %>
+              <% percentage = total_count > 0 ? (item.count.to_f / total_count * 100).round(1) : 0 %>
+              <div class="flex flex-col items-center group" style="width: 140px;">
+                <div class="text-xs font-medium text-gray-500 mb-1"><%= labels[index] %></div>
+                <div class="text-2xl font-bold text-gray-800 mb-3"><%= item.count %></div>
+                <div class="w-full relative">
+                  <div class="w-full <%= colors[index] %> rounded-t-xl transition-all duration-700 ring-2 ring-opacity-0 group-hover:ring-opacity-100 <%= border_colors[index] %> shadow-lg cursor-pointer" style="height: <%= [height_percent * 2, 40].max %>px;"></div>
+                  <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-900 text-white text-xs rounded-md px-3 py-2 whitespace-nowrap pointer-events-none z-10">
+                    <div class="font-semibold"><%= item.range %>: <%= item.count %> 次</div>
+                    <div class="text-gray-300">占比 <%= percentage %>%</div>
+                  </div>
+                </div>
+                <div class="mt-4 text-center">
+                  <div class="text-lg font-bold text-gray-900"><%= item.range %></div>
+                  <div class="mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= index == 3 ? 'bg-red-100 text-red-800' : index == 2 ? 'bg-yellow-100 text-yellow-800' : index == 1 ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' %>">
+                      <%= percentage %>%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <% cards = [
+            { range: '<3天', label: '短期维修', desc: '小修小补，快速解决', color: 'green' },
+            { range: '3-7天', label: '中期维修', desc: '常规维修，零配件更换', color: 'blue' },
+            { range: '7-15天', label: '长期维修', desc: '较大故障，维修周期长', color: 'yellow' },
+            { range: '>15天', label: '超长维修', desc: '重大故障/等待配件', color: 'red' }
+          ] %>
+          <% cards.each do |card| %>
+            <div class="rounded-lg p-4 bg-<%= card[:color] %>-50 border border-<%= card[:color] %>-100">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-bold text-<%= card[:color] %>-700"><%= card[:range] %></span>
+                <span class="h-2 w-2 rounded-full bg-<%= card[:color] %>-500"></span>
+              </div>
+              <p class="text-xs font-medium text-<%= card[:color] %>-600 mt-1"><%= card[:label] %></p>
+              <p class="text-xs text-gray-500 mt-1"><%= card[:desc] %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">分布汇总</h3>
+          <div class="space-y-4">
+            <% @decommission.each_with_index do |item, index| %>
+              <% percentage = total_count > 0 ? (item.count.to_f / total_count * 100).round(1) : 0 %>
+              <% bar_colors = ['bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-red-500'] %>
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-sm font-medium text-gray-700"><%= item.range %></span>
+                  <span class="text-sm text-gray-500"><%= item.count %> 次 (<%= percentage %>%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div class="h-3 rounded-full <%= bar_colors[index] %> transition-all duration-700" style="width: <%= percentage %>%"></div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">关键指标</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-xs text-gray-500">维修记录总数</p>
+                <p class="text-xl font-bold text-gray-900"><%= total_count %></p>
+              </div>
+              <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+            </div>
+
+            <% weighted_avg = total_count > 0 ? @decommission.map { |d| d.count * case d.range when '<3天' then 1.5 when '3-7天' then 5 when '7-15天' then 11 when '>15天' then 20 else 0 end }.sum / total_count.to_f : 0 %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-xs text-gray-500">加权平均停用</p>
+                <p class="text-xl font-bold <%= weighted_avg > 7 ? 'text-red-600' : 'text-green-600' %>"><%= weighted_avg.round(1) %> 天</p>
+              </div>
+              <div class="h-10 w-10 <%= weighted_avg > 7 ? 'bg-red-100' : 'bg-green-100' %> rounded-full flex items-center justify-center">
+                <svg class="h-5 w-5 <%= weighted_avg > 7 ? 'text-red-600' : 'text-green-600' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            <% short_count = @decommission.first&.count || 0 %>
+            <% short_rate = total_count > 0 ? (short_count.to_f / total_count * 100).round(1) : 0 %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-xs text-gray-500">短期维修率</p>
+                <p class="text-xl font-bold <%= short_rate > 70 ? 'text-green-600' : short_rate > 50 ? 'text-yellow-600' : 'text-red-600' %>"><%= short_rate %>%</p>
+              </div>
+              <div class="h-10 w-10 <%= short_rate > 70 ? 'bg-green-100' : short_rate > 50 ? 'bg-yellow-100' : 'bg-red-100' %> rounded-full flex items-center justify-center">
+                <svg class="h-5 w-5 <%= short_rate > 70 ? 'text-green-600' : short_rate > 50 ? 'text-yellow-600' : 'text-red-600' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+
+            <% long_count = @decommission.last(2).sum { |d| d.count } %>
+            <% long_rate = total_count > 0 ? (long_count.to_f / total_count * 100).round(1) : 0 %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <p class="text-xs text-gray-500">长期维修率</p>
+                <p class="text-xl font-bold <%= long_rate > 30 ? 'text-red-600' : long_rate > 15 ? 'text-yellow-600' : 'text-green-600' %>"><%= long_rate %>%</p>
+              </div>
+              <div class="h-10 w-10 <%= long_rate > 30 ? 'bg-red-100' : long_rate > 15 ? 'bg-yellow-100' : 'bg-green-100' %> rounded-full flex items-center justify-center">
+                <svg class="h-5 w-5 <%= long_rate > 30 ? 'text-red-600' : long_rate > 15 ? 'text-yellow-600' : 'text-green-600' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">近期维修停用明细</h2>
+        <span class="text-sm text-gray-500">最近完成的维修记录</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维修单</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车辆</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维修类型</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问题描述</th>
+              <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">停用天数</th>
+              <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">时长区间</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">维修时间</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% recent_repairs = RepairRecord.completed.where.not(decommission_days: nil).order(end_date: :desc, updated_at: :desc).limit(20) %>
+            <% recent_repairs.each_with_index do |repair, index| %>
+              <% days = repair.decommission_days.to_i %>
+              <% range = days < 3 ? '<3天' : days < 7 ? '3-7天' : days < 15 ? '7-15天' : '>15天' %>
+              <% range_index = days < 3 ? 0 : days < 7 ? 1 : days < 15 ? 2 : 3 %>
+              <% range_colors = [
+                'bg-green-100 text-green-800',
+                'bg-blue-100 text-blue-800',
+                'bg-yellow-100 text-yellow-800',
+                'bg-red-100 text-red-800'
+              ] %>
+              <tr class="<%= index.even? ? 'bg-white' : 'bg-gray-50' %> hover:bg-blue-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm font-medium text-blue-600">#<%= repair.id %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-sm font-medium text-gray-900"><%= repair.vehicle&.plate_number %></span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <% type_map = {
+                    'breakdown' => { label: '故障维修', color: 'bg-red-50 text-red-700' },
+                    'preventive' => { label: '预防性维修', color: 'bg-blue-50 text-blue-700' },
+                    'accident' => { label: '事故维修', color: 'bg-orange-50 text-orange-700' }
+                  } %>
+                  <% type = type_map[repair.repair_type] || { label: repair.repair_type, color: 'bg-gray-50 text-gray-700' } %>
+                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium <%= type[:color] %>">
+                    <%= type[:label] %>
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm text-gray-700 line-clamp-2"><%= repair.issue_description %></p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="text-lg font-bold <%= days > 7 ? 'text-red-600' : days > 3 ? 'text-yellow-600' : 'text-green-600' %>">
+                    <%= days %>
+                  </span>
+                  <span class="text-xs text-gray-500">天</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= range_colors[range_index] %>">
+                    <%= range %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <% if repair.start_date && repair.end_date %>
+                    <%= repair.start_date.strftime('%m/%d') %> - <%= repair.end_date.strftime('%m/%d') %>
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            <% if recent_repairs.empty? %>
+              <tr>
+                <td colspan="7" class="px-6 py-12 text-center">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 class="mt-2 text-sm font-medium text-gray-900">暂无维修记录</h3>
+                  <p class="mt-1 text-sm text-gray-500">目前没有已完成的维修记录</p>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
