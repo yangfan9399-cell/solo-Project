@@ -37,13 +37,7 @@ export async function getCampusStatistics(): Promise<CampusStats[]> {
     include: {
       courses: {
         include: {
-          schedules: {
-            where: {
-              status: {
-                in: [ScheduleStatus.COMPLETED, ScheduleStatus.SETTLED],
-              },
-            },
-          },
+          schedules: true,
         },
       },
     },

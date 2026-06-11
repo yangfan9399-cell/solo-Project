@@ -11,7 +11,10 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "prisma db seed",
-    "db:setup": "prisma generate && prisma migrate dev --name init && prisma db seed"
+    "db:setup": "prisma generate && prisma migrate dev --name init && prisma db seed",
+    "fix:native": "node scripts/fix-native-modules.js",
+    "setup": "bash scripts/start-dev.sh",
+    "postinstall": "node scripts/fix-native-modules.js 2>/dev/null || true"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
