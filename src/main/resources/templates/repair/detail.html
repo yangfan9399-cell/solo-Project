@@ -271,7 +271,8 @@
                 <label>超时原因</label>
                 <select name="reason" required>
                     <option value="">请选择原因</option>
-                    <option th:each="r : ${T(com.campus.dormrepair.enums.TimeoutReason).values()}"
+                    <option th:if="${timeoutReasons != null}"
+                            th:each="r : ${timeoutReasons}"
                             th:value="${r.name()}"
                             th:text="${r.label}"></option>
                 </select>
@@ -296,7 +297,8 @@
                 <label>满意度</label>
                 <select name="satisfaction" required>
                     <option value="">请选择满意度</option>
-                    <option th:each="s : ${T(com.campus.dormrepair.enums.SatisfactionLevel).values()}"
+                    <option th:if="${satisfactionLevels != null}"
+                            th:each="s : ${satisfactionLevels}"
                             th:value="${s.name()}"
                             th:text="${s.label} + ' (' + ${s.score} + '分)'"></option>
                 </select>

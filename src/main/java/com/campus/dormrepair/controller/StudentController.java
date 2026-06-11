@@ -66,6 +66,8 @@ public class StudentController {
         model.addAttribute("histories", repairService.findHistoriesByRepairId(id));
         model.addAttribute("parts", repairService.findPartsByRepairId(id));
         model.addAttribute("currentUser", user);
+        model.addAttribute("canClose", repairService.canClose(repair));
+        model.addAttribute("isDissatisfied", repairService.isDissatisfied(repair));
         return "repair/detail";
     }
 }

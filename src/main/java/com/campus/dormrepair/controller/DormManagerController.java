@@ -80,6 +80,8 @@ public class DormManagerController {
         model.addAttribute("parts", repairService.findPartsByRepairId(id));
         model.addAttribute("repairmen", repairmen);
         model.addAttribute("currentUser", user);
+        model.addAttribute("canClose", repairService.canClose(repair));
+        model.addAttribute("isDissatisfied", repairService.isDissatisfied(repair));
         return "repair/detail";
     }
 }

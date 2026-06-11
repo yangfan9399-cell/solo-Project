@@ -37,8 +37,6 @@ public interface RepairRepository extends JpaRepository<Repair, Long> {
            "WHERE r.timeoutReason IS NOT NULL GROUP BY r.timeoutReason")
     List<Object[]> countByTimeoutReason();
 
-    @Query("SELECT r FROM Repair r WHERE r.status IN " +
-           "('COMPLETED', 'REVIEWED', 'CLOSED', 'TIMEOUT', 'PARTS_SHORTAGE') " +
-           "AND r.repairDurationMinutes IS NOT NULL")
+    @Query("SELECT r FROM Repair r WHERE r.repairDurationMinutes IS NOT NULL")
     List<Repair> findCompletedWithDuration();
 }

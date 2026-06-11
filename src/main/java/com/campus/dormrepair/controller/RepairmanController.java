@@ -97,6 +97,8 @@ public class RepairmanController {
         model.addAttribute("parts", repairService.findPartsByRepairId(id));
         model.addAttribute("timeoutReasons", TimeoutReason.values());
         model.addAttribute("currentUser", user);
+        model.addAttribute("canClose", repairService.canClose(repair));
+        model.addAttribute("isDissatisfied", repairService.isDissatisfied(repair));
         return "repair/detail";
     }
 }
