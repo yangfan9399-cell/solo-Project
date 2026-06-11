@@ -1,0 +1,113 @@
+@model (BorrowRequest request, ReturnViewModel form)
+@{
+    ViewData["Title"] = "归还登记";
+    var req = Model.request;
+    var form = Model.form;
+}
+
+<div class="mb-4">
+    <a href="/Return/BorrowedList" class="text-muted text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>返回外借列表
+    </a>
+</div>
+
+<h4 class="mb-4"><i class="bi bi-box-arrow-in-left me-2 text-info"></i>归还登记 - @req.RequestCode</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">借用信息</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="detail-label">印章</div>
+                    <div class="detail-value fw-bold">@req.Seal?.SealName</div>
+                    <small class="text-muted">@req.Seal?.SealCode</small>
+                </div>
+                <div class="mb-2">
+                    <div class="detail-label">借用人</div>
+                    <div class="detail-value">@req.Applicant?.UserName (@req.Applicant?.EmployeeId)</div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="detail-label">实际借用日期</div>
+                        <div class="detail-value">@(req.ActualBorrowDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">计划归还日期</div>
+                        <div class="detail-value">
+                            @req.PlannedReturnDate:yyyy-MM-dd
+                            @if (DateTime.Now > req.PlannedReturnDate)
+                            { <span class="badge bg-danger ms-1">超期 @(Math.Max(0, (int)(DateTime.Now - req.PlannedReturnDate).TotalDays)) 天</span> }
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="detail-label">已借用时长</div>
+                    <div class="display-6 text-primary fw-bold">@req.BorrowDuration <small class="text-muted h6">天</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">用印核对</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="detail-label">申请的用印范围</div>
+                    <div class="card card-body bg-light py-2 small">
+                        @req.UsageScope
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="detail-label">关联合同</div>
+                    <div class="detail-value">@req.Contract?.ContractName</div>
+                    <small class="text-muted">@req.Contract?.ContractCode</small>
+                </div>
+                <div class="alert alert-warning small">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <strong>行政人员请注意：</strong>请核对印章完好性，询问实际使用情况并记录。风控复核时将核对用印范围是否一致。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-info">
+    <div class="card-header bg-info text-white">
+        <i class="bi bi-pencil-square me-2"></i>归还登记
+    </div>
+    <div class="card-body">
+        <form asp-action="RegisterReturn" method="post">
+            <input type="hidden" asp-for="form.BorrowRequestId" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">实际归还时间</label>
+                <input asp-for="form.ActualReturnDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="form.ActualReturnDate" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">归还备注</label>
+                <textarea asp-for="form.ReturnRemark" class="form-control" rows="3" placeholder="请记录印章归还时的状态、使用情况说明等..."></textarea>
+                <span asp-validation-for="form.ReturnRemark" class="text-danger"></span>
+            </div>
+
+            @if (req.IsOverdue)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-diamond me-1"></i>
+                    <strong>超期提示：</strong>本次借用已超期 <strong>@(Math.Max(0, (int)(DateTime.Now - req.PlannedReturnDate).TotalDays)) 天</strong>，系统将自动记录超期异常，待风控复核确认。
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-info text-white px-4">
+                    <i class="bi bi-check-lg me-1"></i>确认归还登记
+                </button>
+                <a href="/Return/BorrowedList" class="btn btn-outline-secondary px-4">取消</a>
+            </div>
+        </form>
+    </div>
+</div>

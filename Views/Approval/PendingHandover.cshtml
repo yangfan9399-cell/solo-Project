@@ -1,0 +1,60 @@
+@model IEnumerable<BorrowRequest>
+@{
+    ViewData["Title"] = "待行政交接";
+}
+
+<div class="mb-4">
+    <h4 class="mb-0"><i class="bi bi-box-arrow-right me-2 text-primary"></i>行政交接</h4>
+    <small class="text-muted">法务审核通过后，行政人员进行印章实物交接</small>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>申请编号</th>
+                        <th>印章</th>
+                        <th>合同</th>
+                        <th>借用人</th>
+                        <th>联系方式</th>
+                        <th>申请时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model)
+                    {
+                        <tr>
+                            <td><code>@req.RequestCode</code></td>
+                            <td>
+                                <div><strong>@req.Seal?.SealName</strong></div>
+                                <small class="text-muted">@req.Seal?.SealCode</small>
+                            </td>
+                            <td><small>@req.Contract?.ContractName</small></td>
+                            <td>
+                                <div>@req.Applicant?.UserName</div>
+                                <small class="text-muted">@req.Applicant?.Department?.DepartmentName</small>
+                            </td>
+                            <td><small>@req.Applicant?.Phone</small></td>
+                            <td><small>@req.CreatedAt:yyyy-MM-dd HH:mm</small></td>
+                            <td>
+                                <a href="/Approval/AdminHandover/@req.BorrowRequestId" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-box-arrow-right me-1"></i>办理交接
+                                </a>
+                                <a href="/BorrowRequest/Details/@req.BorrowRequestId" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-check2-circle me-1"></i>暂无待交接记录</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

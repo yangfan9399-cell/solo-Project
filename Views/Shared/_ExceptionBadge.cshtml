@@ -1,0 +1,20 @@
+@model ExceptionReason
+@{
+    if (Model == ExceptionReason.None)
+    {
+        <span class="badge bg-success">正常</span>
+    }
+    else
+    {
+        var (cls, text) = Model switch
+        {
+            ExceptionReason.ContractMissing => ("bg-danger", "合同缺失"),
+            ExceptionReason.Overdue => ("bg-warning text-dark", "超期未还"),
+            ExceptionReason.ScopeMismatch => ("bg-primary", "用印范围不符"),
+            ExceptionReason.SealDamaged => ("bg-secondary", "印章损坏"),
+            ExceptionReason.Other => ("bg-secondary", "其他"),
+            _ => ("bg-secondary", "未知")
+        };
+        <span class="badge @cls">@text</span>
+    }
+}

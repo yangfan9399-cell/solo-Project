@@ -1,0 +1,99 @@
+@model BorrowRequest
+@{
+    ViewData["Title"] = "行政交接";
+}
+
+<div class="mb-4">
+    <a href="/Approval/PendingHandover" class="text-muted text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>返回待交接列表
+    </a>
+</div>
+
+<h4 class="mb-4"><i class="bi bi-box-arrow-right me-2 text-primary"></i>印章交接确认 - @Model.RequestCode</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">印章信息</div>
+            <div class="card-body">
+                <div class="mb-3 p-3 bg-light rounded text-center">
+                    <i class="bi bi-stamp display-4 text-primary"></i>
+                    <h5 class="mt-2 mb-0">@Model.Seal?.SealName</h5>
+                    <small class="text-muted">@Model.Seal?.SealCode</small>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="detail-label">印章类型</div>
+                        <div class="detail-value">@await Html.PartialAsync("_SealType", Model.Seal?.SealType ?? SealType.CompanySeal)</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">保管部门</div>
+                        <div class="detail-value">@Model.Seal?.Department?.DepartmentName</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">交接信息</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="detail-label">借用人</div>
+                    <div class="detail-value fw-bold">@Model.Applicant?.UserName</div>
+                    <small class="text-muted">@Model.Applicant?.EmployeeId · @Model.Applicant?.Department?.DepartmentName</small>
+                </div>
+                <div class="mb-2">
+                    <div class="detail-label">联系电话</div>
+                    <div class="detail-value">@Model.Applicant?.Phone</div>
+                </div>
+                <div class="mb-2">
+                    <div class="detail-label">关联合同</div>
+                    <div class="detail-value">@Model.Contract?.ContractName</div>
+                    <small class="text-muted">@Model.Contract?.ContractCode</small>
+                </div>
+                <div class="mb-2 row g-2">
+                    <div class="col-6">
+                        <div class="detail-label">计划借用</div>
+                        <div class="detail-value">@Model.PlannedBorrowDate:yyyy-MM-dd</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">计划归还</div>
+                        <div class="detail-value">@Model.PlannedReturnDate:yyyy-MM-dd</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="detail-label">用印范围</div>
+                    <div class="card card-body bg-light py-2 small">
+                        @Model.UsageScope
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-primary">
+    <div class="card-header bg-primary text-white">
+        <i class="bi bi-check2-square me-2"></i>交接确认
+    </div>
+    <div class="card-body">
+        <form asp-action="AdminHandover" method="post">
+            <input type="hidden" name="id" value="@Model.BorrowRequestId" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-1"></i>
+                请确认印章实物已交借给 <strong>@Model.Applicant?.UserName</strong>，交接后印章状态将变更为「外借中」。
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-check-lg me-1"></i>确认交接完成
+                </button>
+                <a href="/Approval/PendingHandover" class="btn btn-outline-secondary px-4">取消</a>
+            </div>
+        </form>
+    </div>
+</div>

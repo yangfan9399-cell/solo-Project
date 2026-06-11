@@ -1,0 +1,89 @@
+@model IEnumerable<BorrowRequest>
+@{
+    ViewData["Title"] = "待法务审核";
+}
+
+<div class="mb-4">
+    <h4 class="mb-0"><i class="bi bi-clipboard-check me-2 text-warning"></i>法务审核</h4>
+    <small class="text-muted">审核合同完整性与合规性</small>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>申请编号</th>
+                        <th>印章</th>
+                        <th>合同</th>
+                        <th>合同状态</th>
+                        <th>借用人</th>
+                        <th>申请时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model)
+                    {
+                        <tr>
+                            <td><code>@req.RequestCode</code></td>
+                            <td>
+                                <div><strong>@req.Seal?.SealName</strong></div>
+                                <small class="text-muted">@await Html.PartialAsync("_SealType", req.Seal?.SealType ?? SealType.CompanySeal)</small>
+                            </td>
+                            <td>
+                                <div>@req.Contract?.ContractName</div>
+                                <small class="text-muted">@req.Contract?.ContractCode</small>
+                            </td>
+                            <td>
+                                @{
+                                    var cs = req.Contract?.Status ?? ContractStatus.Draft;
+                                    var cb = cs switch
+                                    {
+                                        ContractStatus.Reviewed => "bg-success",
+                                        ContractStatus.Signed => "bg-primary",
+                                        ContractStatus.Missing => "bg-danger",
+                                        ContractStatus.PendingReview => "bg-warning text-dark",
+                                        _ => "bg-secondary"
+                                    };
+                                    var ct = cs switch
+                                    {
+                                        ContractStatus.Draft => "草稿",
+                                        ContractStatus.PendingReview => "待审核",
+                                        ContractStatus.Reviewed => "已审核",
+                                        ContractStatus.Signed => "已签署",
+                                        ContractStatus.Missing => "缺失",
+                                        _ => "未知"
+                                    };
+                                    <span class="badge @cb">@ct</span>
+                                }
+                                @if (req.Contract?.Status == ContractStatus.Missing)
+                                {
+                                    <div><small class="text-danger">⚠ 合同缺失，禁止外借</small></div>
+                                }
+                            </td>
+                            <td>
+                                <div>@req.Applicant?.UserName</div>
+                                <small class="text-muted">@req.Applicant?.Department?.DepartmentName</small>
+                            </td>
+                            <td><small>@req.CreatedAt:yyyy-MM-dd HH:mm</small></td>
+                            <td>
+                                <a href="/Approval/LegalReview/@req.BorrowRequestId" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil-square me-1"></i>审核
+                                </a>
+                                <a href="/BorrowRequest/Details/@req.BorrowRequestId" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-check2-circle me-1"></i>暂无待审核记录</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

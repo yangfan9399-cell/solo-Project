@@ -1,0 +1,290 @@
+@model BorrowRequestDetailViewModel
+@{
+    ViewData["Title"] = "申请详情";
+    var req = Model.Request;
+}
+
+<div class="mb-4">
+    <a href="javascript:history.back()" class="text-muted text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>返回列表
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-journal-text me-2 text-primary"></i>申请详情</h4>
+        <div class="d-flex align-items-center gap-2 mt-2">
+            <code class="text-muted">@req.RequestCode</code>
+            @await Html.PartialAsync("_StatusBadge", req.Status)
+            @if (req.ExceptionReason != ExceptionReason.None)
+            { @await Html.PartialAsync("_ExceptionBadge", req.ExceptionReason) }
+            @if (req.IsOverdue && req.Status != BorrowStatus.Returned && req.Status != BorrowStatus.Cancelled && req.Status != BorrowStatus.ReturnException)
+            { <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>已超期</span> }
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (req.Status == BorrowStatus.PendingLegal)
+        {
+            <a href="/Approval/LegalReview/@req.BorrowRequestId" class="btn btn-warning">法务审核</a>
+        }
+        @if (req.Status == BorrowStatus.PendingHandover)
+        {
+            <a href="/Approval/AdminHandover/@req.BorrowRequestId" class="btn btn-primary">行政交接</a>
+        }
+        @if (req.Status == BorrowStatus.Borrowed)
+        {
+            <a href="/Return/RegisterReturn/@req.BorrowRequestId" class="btn btn-info">归还登记</a>
+        }
+        @if (req.Status == BorrowStatus.PendingRiskReview)
+        {
+            <a href="/Return/RiskReview/@req.BorrowRequestId" class="btn btn-warning">风控复核</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-stamp me-2"></i>印章信息</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="detail-label">印章名称</div>
+                        <div class="detail-value">@req.Seal?.SealName</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">印章编号</div>
+                        <div class="detail-value"><code>@req.Seal?.SealCode</code></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">印章类型</div>
+                        <div class="detail-value">@await Html.PartialAsync("_SealType", req.Seal?.SealType ?? SealType.CompanySeal)</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">所属部门</div>
+                        <div class="detail-value">@req.Seal?.Department?.DepartmentName</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-earmark-text me-2"></i>合同信息</span>
+                @if (req.Contract?.Status == ContractStatus.Missing)
+                { <span class="badge bg-danger">合同缺失</span> }
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="detail-label">合同名称</div>
+                        <div class="detail-value">@req.Contract?.ContractName</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">合同编号</div>
+                        <div class="detail-value"><code>@req.Contract?.ContractCode</code></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">合同金额</div>
+                        <div class="detail-value">@((req.Contract != null && req.Contract.ContractAmount.HasValue) ? "¥" + req.Contract.ContractAmount.Value.ToString("N2") : "-")</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">签约对方</div>
+                        <div class="detail-value">@(req.Contract?.ContractParty ?? "-")</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">合同状态</div>
+                        <div class="detail-value">
+                            @{
+                                var cs = req.Contract?.Status ?? ContractStatus.Draft;
+                                var cb = cs switch
+                                {
+                                    ContractStatus.Reviewed => "bg-success",
+                                    ContractStatus.Signed => "bg-primary",
+                                    ContractStatus.Missing => "bg-danger",
+                                    ContractStatus.PendingReview => "bg-warning text-dark",
+                                    _ => "bg-secondary"
+                                };
+                                var ct = cs switch
+                                {
+                                    ContractStatus.Draft => "草稿",
+                                    ContractStatus.PendingReview => "待审核",
+                                    ContractStatus.Reviewed => "已审核",
+                                    ContractStatus.Signed => "已签署",
+                                    ContractStatus.Missing => "缺失",
+                                    _ => "未知"
+                                };
+                                <span class="badge @cb">@ct</span>
+                            }
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(req.Contract?.ContractSummary))
+                    {
+                        <div class="col-12">
+                            <div class="detail-label">合同摘要</div>
+                            <div class="detail-value small">@req.Contract.ContractSummary</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-person me-2"></i>借用人信息</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="detail-label">姓名</div>
+                        <div class="detail-value">@req.Applicant?.UserName</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">工号</div>
+                        <div class="detail-value">@req.Applicant?.EmployeeId</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">所属部门</div>
+                        <div class="detail-value">@req.Applicant?.Department?.DepartmentName</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">联系电话</div>
+                        <div class="detail-value">@req.Applicant?.Phone</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-calendar3 me-2"></i>时间与用印信息</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="detail-label">计划借用日期</div>
+                        <div class="detail-value">@req.PlannedBorrowDate:yyyy-MM-dd</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">计划归还日期</div>
+                        <div class="detail-value">
+                            @req.PlannedReturnDate:yyyy-MM-dd
+                            @if (req.IsOverdue && req.Status != BorrowStatus.Returned && req.Status != BorrowStatus.Cancelled)
+                            { <span class="badge bg-danger ms-1">超期</span> }
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">实际借用日期</div>
+                        <div class="detail-value">@(req.ActualBorrowDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">实际归还日期</div>
+                        <div class="detail-value">@(req.ActualReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </div>
+                    @if (req.ActualBorrowDate.HasValue)
+                    {
+                        <div class="col-6">
+                            <div class="detail-label">实际借用时长</div>
+                            <div class="detail-value">@req.BorrowDuration 天</div>
+                        </div>
+                    }
+                    <div class="col-12">
+                        <div class="detail-label">用印范围</div>
+                        <div class="card card-body bg-light py-2">
+                            <small>@req.UsageScope</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (req.ExceptionReason != ExceptionReason.None)
+{
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <i class="bi bi-exclamation-triangle me-2"></i>异常信息
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="detail-label">异常类型</div>
+                    <div>@await Html.PartialAsync("_ExceptionBadge", req.ExceptionReason)</div>
+                </div>
+                <div class="col-md-9">
+                    <div class="detail-label">异常描述</div>
+                    <div class="text-danger">@req.ExceptionDescription</div>
+                </div>
+                @if (!string.IsNullOrEmpty(req.RiskReviewRemark))
+                {
+                    <div class="col-12">
+                        <div class="detail-label">风控复核意见</div>
+                        <div class="card card-body bg-light py-2">
+                            <small>@req.RiskReviewRemark</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-diagram-3 me-2"></i>审批流程节点</div>
+    <div class="card-body">
+        <div class="timeline">
+            @foreach (var node in Model.ApprovalNodes)
+            {
+                var statusClass = node.Result switch
+                {
+                    NodeResult.Approved => "approved",
+                    NodeResult.Rejected => "rejected",
+                    _ => "pending"
+                };
+                var nodeText = node.NodeType switch
+                {
+                    NodeType.Submit => "提交申请",
+                    NodeType.LegalReview => "法务审核",
+                    NodeType.AdminHandover => "行政交接",
+                    NodeType.ReturnRegister => "归还登记",
+                    NodeType.RiskReview => "风控复核",
+                    _ => "未知节点"
+                };
+                var resultText = node.Result switch
+                {
+                    NodeResult.Approved => "<span class='text-success'>通过</span>",
+                    NodeResult.Rejected => "<span class='text-danger'>驳回</span>",
+                    _ => "<span class='text-muted'>待处理</span>"
+                };
+                <div class="timeline-item @statusClass">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">
+                                @nodeText
+                                <small class="text-muted ms-2">@@ @node.CreatedAt:yyyy-MM-dd HH:mm</small>
+                            </h6>
+                            <div class="small">
+                                处理人：@(node.Operator?.UserName ?? "-")
+                                <span class="mx-2">|</span>
+                                结果：@Html.Raw(resultText)
+                                @if (node.ProcessedAt.HasValue)
+                                { <span class="mx-2">|</span> <text>处理时间：@node.ProcessedAt.Value:yyyy-MM-dd HH:mm</text> }
+                            </div>
+                            @if (!string.IsNullOrEmpty(node.Remark))
+                            {
+                                <div class="mt-2 p-2 bg-light rounded small">
+                                    <i class="bi bi-chat-left-text me-1"></i>@node.Remark
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

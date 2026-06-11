@@ -1,0 +1,13 @@
+@model SealType
+@{
+    var text = Model switch
+    {
+        SealType.CompanySeal => "公章",
+        SealType.ContractSeal => "合同专用章",
+        SealType.FinanceSeal => "财务专用章",
+        SealType.LegalPersonSeal => "法人章",
+        SealType.InvoiceSeal => "发票专用章",
+        _ => "未知"
+    };
+    <span>@text</span>
+}

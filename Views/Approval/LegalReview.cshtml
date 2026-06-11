@@ -1,0 +1,131 @@
+@model BorrowRequest
+@{
+    ViewData["Title"] = "法务审核";
+}
+
+<div class="mb-4">
+    <a href="/Approval/PendingLegal" class="text-muted text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>返回待审核列表
+    </a>
+</div>
+
+<h4 class="mb-4"><i class="bi bi-clipboard-check me-2 text-warning"></i>法务审核 - @Model.RequestCode</h4>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">合同信息</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="detail-label">合同名称</div>
+                    <div class="detail-value fw-bold">@Model.Contract?.ContractName</div>
+                </div>
+                <div class="mb-2">
+                    <div class="detail-label">合同编号</div>
+                    <div class="detail-value"><code>@Model.Contract?.ContractCode</code></div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="detail-label">合同状态</div>
+                        @{
+                            var cs = Model.Contract?.Status ?? ContractStatus.Draft;
+                            var cb = cs switch
+                            {
+                                ContractStatus.Reviewed => "bg-success",
+                                ContractStatus.Signed => "bg-primary",
+                                ContractStatus.Missing => "bg-danger",
+                                ContractStatus.PendingReview => "bg-warning text-dark",
+                                _ => "bg-secondary"
+                            };
+                            var ct = cs switch
+                            {
+                                ContractStatus.Draft => "草稿",
+                                ContractStatus.PendingReview => "待审核",
+                                ContractStatus.Reviewed => "已审核",
+                                ContractStatus.Signed => "已签署",
+                                ContractStatus.Missing => "缺失",
+                                _ => "未知"
+                            };
+                            <span class="badge @cb">@ct</span>
+                        }
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">合同金额</div>
+                        <div class="detail-value">@((Model.Contract != null && Model.Contract.ContractAmount.HasValue) ? "¥" + Model.Contract.ContractAmount.Value.ToString("N2") : "-")</div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Contract?.ContractSummary))
+                {
+                    <div class="mt-3">
+                        <div class="detail-label">合同摘要</div>
+                        <div class="small">@Model.Contract.ContractSummary</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">用印信息</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <div class="detail-label">印章</div>
+                    <div class="detail-value fw-bold">@Model.Seal?.SealName</div>
+                    <small class="text-muted">@Model.Seal?.SealCode - @await Html.PartialAsync("_SealType", Model.Seal?.SealType ?? SealType.CompanySeal)</small>
+                </div>
+                <div class="mb-2 row g-2">
+                    <div class="col-6">
+                        <div class="detail-label">计划借用</div>
+                        <div class="detail-value">@Model.PlannedBorrowDate:yyyy-MM-dd</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-label">计划归还</div>
+                        <div class="detail-value">@Model.PlannedReturnDate:yyyy-MM-dd</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="detail-label">用印范围</div>
+                    <div class="card card-body bg-light py-2 small">
+                        @Model.UsageScope
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-warning">
+    <div class="card-header bg-warning text-dark">
+        <i class="bi bi-pencil-square me-2"></i>审核意见
+    </div>
+    <div class="card-body">
+        <form asp-action="LegalReview" method="post">
+            <input type="hidden" name="id" value="@Model.BorrowRequestId" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">审核备注</label>
+                <textarea name="remark" class="form-control" rows="4" placeholder="请填写审核意见..."></textarea>
+            </div>
+
+            @if (Model.Contract?.Status == ContractStatus.Missing)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <strong>警告：</strong>该合同状态为「缺失」，根据系统规则应予以驳回。
+                </div>
+            }
+
+            <div class="d-flex gap-2">
+                <button type="submit" name="isApproved" value="true" class="btn btn-success px-4" @(Model.Contract?.Status == ContractStatus.Missing ? "disabled" : "")>
+                    <i class="bi bi-check-lg me-1"></i>审核通过
+                </button>
+                <button type="submit" name="isApproved" value="false" class="btn btn-danger px-4">
+                    <i class="bi bi-x-lg me-1"></i>审核驳回
+                </button>
+                <a href="/Approval/PendingLegal" class="btn btn-outline-secondary px-4">取消</a>
+            </div>
+        </form>
+    </div>
+</div>

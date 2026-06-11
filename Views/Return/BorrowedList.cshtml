@@ -1,0 +1,68 @@
+@model IEnumerable<BorrowRequest>
+@{
+    ViewData["Title"] = "外借中列表";
+}
+
+<div class="mb-4">
+    <h4 class="mb-0"><i class="bi bi-box-seam me-2 text-secondary"></i>归还登记</h4>
+    <small class="text-muted">印章使用完成后进行归还登记</small>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>申请编号</th>
+                        <th>印章</th>
+                        <th>借用人</th>
+                        <th>借用日期</th>
+                        <th>计划归还</th>
+                        <th>借用时长</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model)
+                    {
+                        var duration = (int)(DateTime.Now - (req.ActualBorrowDate ?? req.PlannedBorrowDate)).TotalDays;
+                        var overdueRow = req.IsOverdue ? "table-warning" : "";
+                        <tr class="@overdueRow">
+                            <td><code>@req.RequestCode</code></td>
+                            <td>
+                                <div><strong>@req.Seal?.SealName</strong></div>
+                                <small class="text-muted">@req.Seal?.SealCode</small>
+                            </td>
+                            <td>
+                                <div>@req.Applicant?.UserName</div>
+                                <small class="text-muted">@req.Applicant?.Department?.DepartmentName</small>
+                            </td>
+                            <td><small>@(req.ActualBorrowDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</small></td>
+                            <td>
+                                <small>@req.PlannedReturnDate:yyyy-MM-dd</small>
+                                @if (req.IsOverdue)
+                                { <div><span class="badge bg-danger mt-1">已超期 @(Math.Max(0, (int)(DateTime.Now - req.PlannedReturnDate).TotalDays)) 天</span></div> }
+                            </td>
+                            <td><strong class="@(duration > 7 ? "text-warning" : "")">@duration 天</strong></td>
+                            <td>@await Html.PartialAsync("_StatusBadge", req.Status)</td>
+                            <td>
+                                <a href="/Return/RegisterReturn/@req.BorrowRequestId" class="btn btn-sm btn-info text-white">
+                                    <i class="bi bi-box-arrow-in-left me-1"></i>登记归还
+                                </a>
+                                <a href="/BorrowRequest/Details/@req.BorrowRequestId" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-check2-circle me-1"></i>当前没有外借中的印章</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

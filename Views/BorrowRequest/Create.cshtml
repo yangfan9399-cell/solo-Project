@@ -1,0 +1,97 @@
+@model CreateBorrowRequestViewModel
+@{
+    ViewData["Title"] = "新建借用申请";
+}
+
+<div class="mb-4">
+    <a href="/BorrowRequest" class="text-muted text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>返回列表
+    </a>
+</div>
+
+<h4 class="mb-4"><i class="bi bi-plus-circle me-2 text-primary"></i>新建印章外借申请</h4>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create" method="post" class="card">
+            <div class="card-header">填写申请信息</div>
+            <div class="card-body">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">选择印章 <span class="text-danger">*</span></label>
+                    <select asp-for="SealId" class="form-select" required>
+                        <option value="">-- 请选择印章 --</option>
+                        @foreach (var seal in Model.AvailableSeals)
+                        {
+                            <option value="@seal.SealId">@seal.SealName (@seal.SealCode) - @await Html.PartialAsync("_SealType", seal.SealType)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="SealId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">选择合同 <span class="text-danger">*</span></label>
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        提示：<strong>状态为「缺失」的合同禁止外借</strong>，仅显示已审核或已签署的合同。
+                    </div>
+                    <select asp-for="ContractId" class="form-select" required>
+                        <option value="">-- 请选择合同 --</option>
+                        @foreach (var contract in Model.AvailableContracts)
+                        {
+                            <option value="@contract.ContractId">@contract.ContractName (@contract.ContractCode) - @(contract.ContractAmount.HasValue ? "¥" + contract.ContractAmount.Value.ToString("N0") : "")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="ContractId" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">计划借用日期 <span class="text-danger">*</span></label>
+                        <input asp-for="PlannedBorrowDate" type="date" class="form-control" required />
+                        <span asp-validation-for="PlannedBorrowDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">计划归还日期 <span class="text-danger">*</span></label>
+                        <input asp-for="PlannedReturnDate" type="date" class="form-control" required />
+                        <span asp-validation-for="PlannedReturnDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">用印范围说明 <span class="text-danger">*</span></label>
+                    <textarea asp-for="UsageScope" class="form-control" rows="5" required
+                              placeholder="请详细说明用印范围，包括：文件名称、页码、盖章位置、盖章份数等信息。
+例如：XX合同第3、5、7页签字盖章处，正本2份，副本1份。"></textarea>
+                    <span asp-validation-for="UsageScope" class="text-danger"></span>
+                    <div class="form-text">详细的用印范围说明有助于快速通过审核，并作为风控复核的重要依据。</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-send me-1"></i>提交申请
+                    </button>
+                    <a href="/BorrowRequest" class="btn btn-outline-secondary px-4">取消</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top:24px">
+            <div class="card-header bg-light">
+                <i class="bi bi-info-circle me-1 text-primary"></i>申请须知
+            </div>
+            <div class="card-body small">
+                <ol class="ps-3 mb-0">
+                    <li class="mb-2">请确保合同文件完整且已通过法务审核，<strong class="text-danger">合同缺失将禁止外借</strong>。</li>
+                    <li class="mb-2">用印范围务必填写详细，风控复核时将核对实际使用情况。</li>
+                    <li class="mb-2">申请提交后依次经过：<strong>法务审核 → 行政交接 → 使用 → 归还登记 → 风控复核</strong>。</li>
+                    <li class="mb-2">请在计划归还日期前归还，<strong class="text-warning">超期将记录异常</strong>并影响后续申请。</li>
+                    <li class="mb-2">如用印超出申请范围，需<strong class="text-primary">补充审批流程</strong>。</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>

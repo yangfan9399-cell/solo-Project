@@ -1,0 +1,17 @@
+@model BorrowStatus
+@{
+    var (cls, text) = Model switch
+    {
+        BorrowStatus.PendingLegal => ("bg-warning text-dark", "待法务审核"),
+        BorrowStatus.LegalApproved => ("bg-info", "法务审核通过"),
+        BorrowStatus.LegalRejected => ("bg-danger", "法务审核驳回"),
+        BorrowStatus.PendingHandover => ("bg-primary", "待行政交接"),
+        BorrowStatus.Borrowed => ("bg-secondary", "外借中"),
+        BorrowStatus.PendingRiskReview => ("bg-warning text-dark", "待风控复核"),
+        BorrowStatus.Returned => ("bg-success", "已归还"),
+        BorrowStatus.ReturnException => ("bg-danger", "归还异常"),
+        BorrowStatus.Cancelled => ("bg-secondary", "已取消"),
+        _ => ("bg-secondary", "未知")
+    };
+}
+<span class="badge @cls">@text</span>
