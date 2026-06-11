@@ -11,7 +11,7 @@ class InspectionRecordsController < ApplicationController
     if @inspection_record.save
       update_return_order_inspection_result
       @return_order.complete_inspection!
-      redirect_to @return_order, notice: '质检记录创建成功'
+      redirect_to @return_order, notice: '质检记录创建成功', status: :see_other
     else
       render :new, status: :unprocessable_entity
     end

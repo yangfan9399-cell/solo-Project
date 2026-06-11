@@ -44,54 +44,36 @@ class ReturnOrdersController < ApplicationController
 
   def approve_by_customer_service
     @return_order.approve_by_customer_service!
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
-    end
+    redirect_to @return_order, notice: '客服已受理退货申请', status: :see_other
   end
 
   def receive_by_warehouse
     @return_order.receive_by_warehouse!
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
-    end
+    redirect_to @return_order, notice: '仓库已收到退货商品', status: :see_other
   end
 
   def review_by_operation
     @return_order.review_by_operation!
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
-    end
+    redirect_to @return_order, notice: '运营已复核完成', status: :see_other
   end
 
   def resale
     begin
       @return_order.resale!
+      redirect_to @return_order, notice: '商品已二次上架销售', status: :see_other
     rescue AASM::InvalidTransition
-      flash[:alert] = '商品缺失时禁止二次上架'
-    end
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
+      redirect_to @return_order, alert: '商品缺失时禁止二次上架', status: :see_other
     end
   end
 
   def report_loss
     @return_order.report_loss!
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
-    end
+    redirect_to @return_order, notice: '商品已做报损处理', status: :see_other
   end
 
   def raise_dispute
     @return_order.raise_dispute!
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @return_order }
-    end
+    redirect_to @return_order, notice: '已发起退款争议处理', status: :see_other
   end
 
   private

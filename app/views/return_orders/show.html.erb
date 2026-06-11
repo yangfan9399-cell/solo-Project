@@ -2,191 +2,193 @@
 
 <%= link_to "← 返回列表", return_orders_path, class: "back-link" %>
 
-<div class="page-header">
-  <h1 class="page-title">
-    退货单详情
-    <%= return_order_status_tag(@return_order) %>
-  </h1>
-</div>
+<%= turbo_frame_tag "return_order_#{@return_order.id}" do %>
+  <div class="page-header">
+    <h1 class="page-title">
+      退货单详情
+      <%= return_order_status_tag(@return_order) %>
+    </h1>
+  </div>
 
-<div class="actions-bar">
-  <div class="btn-group">
-    <% if @return_order.pending? %>
-      <%= button_to "客服受理", approve_by_customer_service_return_order_path(@return_order), method: :patch, class: "btn btn-primary" %>
-      <%= button_to "发起争议", raise_dispute_return_order_path(@return_order), method: :patch, class: "btn btn-danger", data: { confirm: "确定要发起争议吗？" } %>
-    <% elsif @return_order.customer_service_approved? %>
-      <%= button_to "仓库收货", receive_by_warehouse_return_order_path(@return_order), method: :patch, class: "btn btn-success" %>
-    <% elsif @return_order.warehouse_received? %>
-      <%= link_to "录入质检", new_return_order_inspection_record_path(@return_order), class: "btn btn-warning" %>
-    <% elsif @return_order.inspected? %>
-      <%= button_to "运营复核", review_by_operation_return_order_path(@return_order), method: :patch, class: "btn btn-primary" %>
-      <%= button_to "发起争议", raise_dispute_return_order_path(@return_order), method: :patch, class: "btn btn-danger", data: { confirm: "确定要发起争议吗？" } %>
-    <% elsif @return_order.reviewed? %>
-      <% if @return_order.missing_items? %>
-        <%= button_tag "二次上架", class: "btn btn-success", disabled: true, title: "商品缺失，无法二次上架" %>
-        <span style="color: #f56c6c; font-size: 13px; align-self: center;">商品缺失件，无法二次上架</span>
-      <% else %>
-        <%= button_to "二次上架", resale_return_order_path(@return_order), method: :patch, class: "btn btn-success" %>
+  <div class="actions-bar">
+    <div class="btn-group">
+      <% if @return_order.pending? %>
+        <%= button_to "客服受理", approve_by_customer_service_return_order_path(@return_order), method: :patch, class: "btn btn-primary", form: { data: { turbo: true } } %>
+        <%= button_to "发起争议", raise_dispute_return_order_path(@return_order), method: :patch, class: "btn btn-danger", form: { data: { turbo: true, turbo_confirm: "确定要发起争议吗？" } } %>
+      <% elsif @return_order.customer_service_approved? %>
+        <%= button_to "仓库收货", receive_by_warehouse_return_order_path(@return_order), method: :patch, class: "btn btn-success", form: { data: { turbo: true } } %>
+      <% elsif @return_order.warehouse_received? %>
+        <%= link_to "录入质检", new_return_order_inspection_record_path(@return_order), class: "btn btn-warning" %>
+      <% elsif @return_order.inspected? %>
+        <%= button_to "运营复核", review_by_operation_return_order_path(@return_order), method: :patch, class: "btn btn-primary", form: { data: { turbo: true } } %>
+        <%= button_to "发起争议", raise_dispute_return_order_path(@return_order), method: :patch, class: "btn btn-danger", form: { data: { turbo: true, turbo_confirm: "确定要发起争议吗？" } } %>
+      <% elsif @return_order.reviewed? %>
+        <% if @return_order.missing_items? %>
+          <%= button_tag "二次上架", class: "btn btn-success", disabled: true, title: "商品缺失，无法二次上架" %>
+          <span style="color: #f56c6c; font-size: 13px; align-self: center;">商品缺失件，无法二次上架</span>
+        <% else %>
+          <%= button_to "二次上架", resale_return_order_path(@return_order), method: :patch, class: "btn btn-success", form: { data: { turbo: true } } %>
+        <% end %>
+        <%= button_to "报损", report_loss_return_order_path(@return_order), method: :patch, class: "btn btn-danger", form: { data: { turbo: true, turbo_confirm: "确定要报损吗？" } } %>
       <% end %>
-      <%= button_to "报损", report_loss_return_order_path(@return_order), method: :patch, class: "btn btn-danger", data: { confirm: "确定要报损吗？" } %>
-    <% end %>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-title">基本信息</div>
-  <div class="info-grid">
-    <div class="info-item">
-      <span class="info-label">退货单号：</span>
-      <span class="info-value"><%= @return_order.return_no %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">申请时间：</span>
-      <span class="info-value"><%= format_datetime(@return_order.created_at) %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">退货原因：</span>
-      <span class="info-value"><%= @return_order.reason %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">客户备注：</span>
-      <span class="info-value"><%= @return_order.customer_note.presence || "-" %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">退款金额：</span>
-      <span class="info-value"><%= format_amount(@return_order.refund_amount) %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">是否缺失件：</span>
-      <span class="info-value"><%= @return_order.missing_items? ? "是" : "否" %></span>
     </div>
   </div>
-</div>
 
-<div class="card">
-  <div class="card-title">订单信息</div>
-  <div class="info-grid">
-    <div class="info-item">
-      <span class="info-label">订单号：</span>
-      <span class="info-value"><%= @return_order.order.order_no %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">商品名：</span>
-      <span class="info-value"><%= @return_order.product.name %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">SKU：</span>
-      <span class="info-value"><%= @return_order.product.sku %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">品类：</span>
-      <span class="info-value"><%= @return_order.product.category %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">单价：</span>
-      <span class="info-value"><%= format_amount(@return_order.product.original_price) %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">数量：</span>
-      <span class="info-value"><%= @return_order.order.quantity %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">订单总额：</span>
-      <span class="info-value"><%= format_amount(@return_order.order.total_amount) %></span>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-title">主播场次</div>
-  <div class="info-grid">
-    <div class="info-item">
-      <span class="info-label">主播名称：</span>
-      <span class="info-value"><%= @return_order.anchor.name %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">直播场次标题：</span>
-      <span class="info-value"><%= @return_order.live_session.title %></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">直播时间：</span>
-      <span class="info-value"><%= format_datetime(@return_order.live_session.started_at) %></span>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-title">质检信息</div>
-  <% if @inspection_record.present? %>
+  <div class="card">
+    <div class="card-title">基本信息</div>
     <div class="info-grid">
       <div class="info-item">
-        <span class="info-label">质检人：</span>
-        <span class="info-value"><%= @inspection_record.inspector_name %></span>
+        <span class="info-label">退货单号：</span>
+        <span class="info-value"><%= @return_order.return_no %></span>
       </div>
       <div class="info-item">
-        <span class="info-label">成色：</span>
-        <span class="info-value"><%= condition_label(@inspection_record.condition) %></span>
+        <span class="info-label">申请时间：</span>
+        <span class="info-value"><%= format_datetime(@return_order.created_at) %></span>
       </div>
       <div class="info-item">
-        <span class="info-label">缺失件数：</span>
-        <span class="info-value"><%= @inspection_record.missing_items_count %></span>
+        <span class="info-label">退货原因：</span>
+        <span class="info-value"><%= @return_order.reason %></span>
       </div>
       <div class="info-item">
-        <span class="info-label">质检评分：</span>
-        <span class="info-value"><%= @inspection_record.quality_score %> / 100</span>
+        <span class="info-label">客户备注：</span>
+        <span class="info-value"><%= @return_order.customer_note.presence || "-" %></span>
       </div>
-      <div class="info-item" style="grid-column: 1 / -1;">
-        <span class="info-label">破损描述：</span>
-        <span class="info-value"><%= @inspection_record.damage_description.presence || "-" %></span>
+      <div class="info-item">
+        <span class="info-label">退款金额：</span>
+        <span class="info-value"><%= format_amount(@return_order.refund_amount) %></span>
       </div>
-      <div class="info-item" style="grid-column: 1 / -1;">
-        <span class="info-label">最终判定：</span>
-        <span class="info-value"><%= final_decision_label(@inspection_record.final_decision) %></span>
-      </div>
-      <div class="info-item" style="grid-column: 1 / -1;">
-        <span class="info-label">质检照片：</span>
+      <div class="info-item">
+        <span class="info-label">是否缺失件：</span>
+        <span class="info-value"><%= @return_order.missing_items? ? "是" : "否" %></span>
       </div>
     </div>
-    <div class="photos-grid" style="margin-top: 8px; margin-left: 100px;">
-      <% if @inspection_record.photos.present? && @inspection_record.photos.any? %>
-        <% @inspection_record.photos.each do |_photo| %>
+  </div>
+
+  <div class="card">
+    <div class="card-title">订单信息</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">订单号：</span>
+        <span class="info-value"><%= @return_order.order.order_no %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">商品名：</span>
+        <span class="info-value"><%= @return_order.product.name %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">SKU：</span>
+        <span class="info-value"><%= @return_order.product.sku %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">品类：</span>
+        <span class="info-value"><%= @return_order.product.category %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">单价：</span>
+        <span class="info-value"><%= format_amount(@return_order.product.original_price) %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">数量：</span>
+        <span class="info-value"><%= @return_order.order.quantity %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">订单总额：</span>
+        <span class="info-value"><%= format_amount(@return_order.order.total_amount) %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">主播场次</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="info-label">主播名称：</span>
+        <span class="info-value"><%= @return_order.anchor.name %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">直播场次标题：</span>
+        <span class="info-value"><%= @return_order.live_session.title %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">直播时间：</span>
+        <span class="info-value"><%= format_datetime(@return_order.live_session.started_at) %></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">质检信息</div>
+    <% if @inspection_record.present? %>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">质检人：</span>
+          <span class="info-value"><%= @inspection_record.inspector_name %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">成色：</span>
+          <span class="info-value"><%= condition_label(@inspection_record.condition) %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">缺失件数：</span>
+          <span class="info-value"><%= @inspection_record.missing_items_count %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">质检评分：</span>
+          <span class="info-value"><%= @inspection_record.quality_score %> / 100</span>
+        </div>
+        <div class="info-item" style="grid-column: 1 / -1;">
+          <span class="info-label">破损描述：</span>
+          <span class="info-value"><%= @inspection_record.damage_description.presence || "-" %></span>
+        </div>
+        <div class="info-item" style="grid-column: 1 / -1;">
+          <span class="info-label">最终判定：</span>
+          <span class="info-value"><%= final_decision_label(@inspection_record.final_decision) %></span>
+        </div>
+        <div class="info-item" style="grid-column: 1 / -1;">
+          <span class="info-label">质检照片：</span>
+        </div>
+      </div>
+      <div class="photos-grid" style="margin-top: 8px; margin-left: 100px;">
+        <% if @inspection_record.photos.present? && @inspection_record.photos.any? %>
+          <% @inspection_record.photos.each do |_photo| %>
+            <div class="photo-placeholder">质检照片占位</div>
+          <% end %>
+        <% else %>
           <div class="photo-placeholder">质检照片占位</div>
         <% end %>
-      <% else %>
-        <div class="photo-placeholder">质检照片占位</div>
-      <% end %>
-    </div>
-  <% else %>
-    <div style="color: #909399; padding: 20px 0;">
-      暂无质检记录
-      <% if @return_order.warehouse_received? %>
-        <%= link_to "录入质检", new_return_order_inspection_record_path(@return_order), class: "btn-link" %>
-      <% end %>
-    </div>
-  <% end %>
-</div>
+      </div>
+    <% else %>
+      <div style="color: #909399; padding: 20px 0;">
+        暂无质检记录
+        <% if @return_order.warehouse_received? %>
+          <%= link_to "录入质检", new_return_order_inspection_record_path(@return_order), class: "btn-link" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
 
-<div class="card">
-  <div class="card-title">状态历史</div>
-  <% if @return_order.status_histories.present? %>
-    <div class="timeline">
-      <% @return_order.status_histories.ordered.each do |history| %>
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
-          <div class="timeline-time"><%= format_datetime(history.created_at) %></div>
-          <div class="timeline-content">
-            <% if history.from_status.present? %>
-              <%= StatusHistory.status_label(history.from_status) %> → 
-            <% end %>
-            <strong><%= StatusHistory.status_label(history.to_status) %></strong>
-            <% if history.event_label.present? %>
-              <span style="color: #909399; font-weight: normal;">（<%= history.event_label %>）</span>
-            <% end %>
+  <div class="card">
+    <div class="card-title">状态历史</div>
+    <% if @return_order.status_histories.present? %>
+      <div class="timeline">
+        <% @return_order.status_histories.ordered.each do |history| %>
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-time"><%= format_datetime(history.created_at) %></div>
+            <div class="timeline-content">
+              <% if history.from_status.present? %>
+                <%= StatusHistory.status_label(history.from_status) %> → 
+              <% end %>
+              <strong><%= StatusHistory.status_label(history.to_status) %></strong>
+              <% if history.event_label.present? %>
+                <span style="color: #909399; font-weight: normal;">（<%= history.event_label %>）</span>
+              <% end %>
+            </div>
           </div>
-        </div>
-      <% end %>
-    </div>
-  <% else %>
-    <div style="color: #909399; padding: 20px 0;">暂无状态变更记录</div>
-  <% end %>
-</div>
+        <% end %>
+      </div>
+    <% else %>
+      <div style="color: #909399; padding: 20px 0;">暂无状态变更记录</div>
+    <% end %>
+  </div>
+<% end %>
