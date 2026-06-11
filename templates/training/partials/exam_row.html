@@ -23,7 +23,9 @@
     </td>
     <td>
         <button 
-            onclick="alert('请刷新页面后重新编辑')"
+            hx-get="{% url 'update_exam' exam.id %}"
+            hx-target="#modal-body"
+            onclick="document.getElementById('exam-edit-modal').style.display='flex'"
             class="btn btn-sm btn-primary">编辑</button>
     </td>
 </tr>

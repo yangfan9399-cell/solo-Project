@@ -114,15 +114,18 @@
                 {% endif %}
                 {% if user.role == 'training_admin' %}
                 <a href="{% url 'course_list' %}" class="{% if request.resolver_match.url_name == 'course_list' %}active{% endif %}">📚 课程管理</a>
+                <a href="{% url 'schedule_list' %}" class="{% if request.resolver_match.url_name == 'schedule_list' or request.resolver_match.url_name == 'schedule_create' or request.resolver_match.url_name == 'schedule_edit' %}active{% endif %}">📅 培训排班</a>
                 <a href="{% url 'enrollment_list' %}" class="{% if request.resolver_match.url_name == 'enrollment_list' %}active{% endif %}">📝 报名审核</a>
                 <a href="{% url 'certificate_list' %}" class="{% if request.resolver_match.url_name == 'certificate_list' %}active{% endif %}">🎓 证书管理</a>
                 <a href="{% url 'analytics' %}" class="{% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">📈 数据复盘</a>
                 {% endif %}
                 {% if user.role == 'instructor' %}
+                <a href="{% url 'schedule_list' %}" class="{% if request.resolver_match.url_name == 'schedule_list' %}active{% endif %}">📅 我的课程</a>
                 <a href="{% url 'enrollment_list' %}" class="{% if request.resolver_match.url_name == 'enrollment_list' %}active{% endif %}">👥 学员列表</a>
                 <a href="{% url 'analytics' %}" class="{% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">📈 数据复盘</a>
                 {% endif %}
                 {% if user.role == 'hr' %}
+                <a href="{% url 'schedule_list' %}" class="{% if request.resolver_match.url_name == 'schedule_list' %}active{% endif %}">📅 培训排班</a>
                 <a href="{% url 'enrollment_list' %}" class="{% if request.resolver_match.url_name == 'enrollment_list' %}active{% endif %}">📝 报名记录</a>
                 <a href="{% url 'certificate_list' %}" class="{% if request.resolver_match.url_name == 'certificate_list' %}active{% endif %}">🎓 证书管理</a>
                 <a href="{% url 'analytics' %}" class="{% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">📈 数据复盘</a>
