@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('提交故障')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="bi bi-plus-circle"></i> 提交故障停卖申请</h3>
+        <a href="/maintenance" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">故障信息</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/maintenance/submit" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">选择房间 <span class="text-danger">*</span></label>
+                            <select class="form-select" name="roomId" required>
+                                <option value="">请选择房间</option>
+                                <option th:each="room : ${rooms}"
+                                        th:value="${room.id}"
+                                        th:text="${room.roomNumber + ' (' + room.roomType + ', ' + room.floor + '楼, ¥' + room.pricePerNight + '/晚)'}"></option>
+                            </select>
+                            <div class="form-text">仅显示可售卖状态的房间</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">故障类型 <span class="text-danger">*</span></label>
+                            <select class="form-select" name="faultType" required>
+                                <option value="">请选择故障类型</option>
+                                <option th:each="ft : ${faultTypes}"
+                                        th:value="${ft.name()}"
+                                        th:text="${ft.description}"></option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">故障描述 <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="description" rows="4"
+                                      placeholder="请详细描述故障情况，包括发现时间、具体现象、影响范围等..." required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">提交人 <span class="text-danger">*</span></label>
+                            <select class="form-select" name="reporterId" required>
+                                <option value="">请选择提交人</option>
+                                <option th:each="r : ${receptionists}"
+                                        th:value="${r.id}"
+                                        th:text="${r.name + ' (工号: ' + r.employeeNo + ')'}"></option>
+                            </select>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>注意：</strong>提交后该房间将立即被标记为故障停卖状态，系统将自动通知工程部处理。
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/maintenance" class="btn btn-secondary">取消</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> 提交故障
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

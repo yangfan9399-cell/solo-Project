@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('房间管理')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <h3 class="mb-4"><i class="bi bi-door-closed"></i> 房间管理</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form class="row g-3" method="get" action="/rooms">
+                <div class="col-md-3">
+                    <label class="form-label">状态筛选</label>
+                    <select class="form-select" name="status">
+                        <option value="">全部状态</option>
+                        <option th:each="s : ${statuses}"
+                                th:value="${s.name()}"
+                                th:text="${s.description}"
+                                th:selected="${currentStatus != null and currentStatus.name() == s.name()}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> 筛选
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="/rooms" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle"></i> 重置
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-3" th:each="room : ${rooms}">
+            <div class="card card-hover">
+                <div class="card-body text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                         th:style="'width: 60px; height: 60px; background-color: ' + ${room.status == T(com.hotel.maintenance.enums.RoomStatus).AVAILABLE ? '#d4edda' : '#f8d7da'} + ';'">
+                        <i class="bi bi-door-closed fs-2"
+                           th:classappend="${room.status == T(com.hotel.maintenance.enums.RoomStatus).AVAILABLE ? 'text-success' : 'text-danger'}"></i>
+                    </div>
+                    <h5 th:text="${room.roomNumber}"></h5>
+                    <p class="mb-1">
+                        <small class="text-muted" th:text="${room.floor} + 'F / ' + ${room.roomType}"></small>
+                    </p>
+                    <p class="mb-2">
+                        <span class="text-primary fw-bold" th:text="'¥' + ${#numbers.formatDecimal(room.pricePerNight, 0, 2)} + '/晚'"></span>
+                    </p>
+                    <span class="badge rounded-pill status-badge"
+                          th:class="'bg-' + ${#strings.toLowerCase(room.status.name())}"
+                          th:text="${room.status.description}"></span>
+                    <div class="mt-3">
+                        <a th:href="@{/rooms/{id}(id=${room.id})}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-eye"></i> 查看详情
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12" th:if="${#lists.isEmpty(rooms)}">
+            <div class="card">
+                <div class="card-body text-center py-5 text-muted">
+                    <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                    暂无房间数据
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

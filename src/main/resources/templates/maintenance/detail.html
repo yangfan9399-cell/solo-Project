@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('工单详情')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>
+            <i class="bi bi-receipt"></i> 工单详情
+            <span class="badge rounded-pill status-badge ms-2"
+                  th:class="'bg-' + ${#strings.toLowerCase(order.status.name())}"
+                  th:text="${order.status.description}"></span>
+        </h3>
+        <a href="/maintenance" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted w-30">工单编号</th>
+                                    <td><span class="fw-bold" th:text="${order.orderNo}"></span></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">房间号</th>
+                                    <td>
+                                        <i class="bi bi-door-closed"></i>
+                                        <span class="fw-bold" th:text="${order.room.roomNumber}"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">楼层/房型</th>
+                                    <td th:text="${order.room.floor} + 'F / ' + ${order.room.roomType}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">房价</th>
+                                    <td th:text="'¥' + ${#numbers.formatDecimal(order.room.pricePerNight, 0, 2)} + '/晚'"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted w-30">故障类型</th>
+                                    <td><span class="fw-bold" th:text="${order.faultType.description}"></span></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">提交人</th>
+                                    <td th:text="${order.reporter.name} + ' (' + ${order.reporter.role.description} + ')'"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">提交时间</th>
+                                    <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">停卖时长</th>
+                                    <td>
+                                        <span class="badge bg-warning" th:text="${outageHours + '小时'}"></span>
+                                        <small class="text-muted d-block">
+                                            从 <span th:text="${#temporals.format(order.outOfServiceTime, 'MM-dd HH:mm')}"></span> 至今
+                                        </small>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> 故障描述</h6>
+                        <p class="mb-0" th:text="${order.faultDescription}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3" th:if="${order.engineer != null}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-wrench"></i> 维修信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted w-30">维修工程师</th>
+                                    <td>
+                                        <i class="bi bi-person-gear"></i>
+                                        <span th:text="${order.engineer.name}"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">预计完成</th>
+                                    <td th:text="${order.estimatedRepairTime != null ? #temporals.format(order.estimatedRepairTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">实际开始</th>
+                                    <td th:text="${order.actualRepairStartTime != null ? #temporals.format(order.actualRepairStartTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">实际完成</th>
+                                    <td th:text="${order.actualRepairEndTime != null ? #temporals.format(order.actualRepairEndTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-12">
+                            <h6 class="text-muted">维修报告</h6>
+                            <p th:text="${order.repairReport != null ? order.repairReport : '暂无'}"></p>
+                        </div>
+                    </div>
+                    <div class="row mt-2" th:if="${!#lists.isEmpty(maintenanceRecords)}">
+                        <div class="col-md-12">
+                            <h6 class="text-muted">维修记录明细</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>时间段</th>
+                                            <th>工作内容</th>
+                                            <th>配件</th>
+                                            <th>人工费</th>
+                                            <th>配件费</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="r : ${maintenanceRecords}">
+                                            <td>
+                                                <small th:text="${#temporals.format(r.workStartTime, 'HH:mm')} + ' - ' + ${r.workEndTime != null ? #temporals.format(r.workEndTime, 'HH:mm') : '进行中'}"></small>
+                                            </td>
+                                            <td th:text="${r.workDescription}"></td>
+                                            <td th:text="${r.partsUsed != null ? r.partsUsed : '-'}"></td>
+                                            <td th:text="${r.laborCost != null ? '¥' + r.laborCost : '-'}"></td>
+                                            <td th:text="${r.partsCost != null ? '¥' + r.partsCost : '-'}"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3" th:if="${order.housekeeper != null}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-magic"></i> 清洁检查</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted w-30">检查人</th>
+                                    <td>
+                                        <i class="bi bi-person-check"></i>
+                                        <span th:text="${order.housekeeper.name} + ' (' + ${order.housekeeper.role.description} + ')'"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">检查时间</th>
+                                    <td th:text="${order.cleaningCheckTime != null ? #temporals.format(order.cleaningCheckTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">检查结果</th>
+                                    <td>
+                                        <span th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PASSED}" class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> 清洁通过
+                                        </span>
+                                        <span th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_FAILED}" class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> 清洁未通过
+                                        </span>
+                                        <span th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PENDING}" class="badge bg-warning">
+                                            <i class="bi bi-clock"></i> 待清洁
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-12">
+                            <h6 class="text-muted">清洁检查报告</h6>
+                            <p th:text="${order.cleaningReport != null ? order.cleaningReport : '暂无'}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3" th:if="${order.reviewer != null}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-check2-square"></i> 复核结果</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th class="text-muted w-30">复核人</th>
+                                    <td>
+                                        <i class="bi bi-person-badge"></i>
+                                        <span th:text="${order.reviewer.name} + ' (' + ${order.reviewer.role.description} + ')'"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">复核时间</th>
+                                    <td th:text="${order.reviewTime != null ? #temporals.format(order.reviewTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">复核结果</th>
+                                    <td>
+                                        <span th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).RESTORED}" class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> 恢复售卖
+                                        </span>
+                                        <span th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).REJECTED}" class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> 继续停卖
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">恢复时间</th>
+                                    <td th:text="${order.restoreTime != null ? #temporals.format(order.restoreTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-12">
+                            <h6 class="text-muted">复核意见</h6>
+                            <p th:text="${order.reviewComment != null ? order.reviewComment : '暂无'}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3" th:if="${order.complaint}">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-diamond"></i> 客诉信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">客诉描述</h6>
+                        <p class="mb-0" th:text="${order.complaintDescription}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> 受影响订单</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>订单号</th>
+                                <th>客人姓名</th>
+                                <th>入住/离店</th>
+                                <th>订单金额</th>
+                                <th>处理方式</th>
+                                <th>赔偿金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="ao : ${affectedOrders}">
+                                <td><span class="fw-bold" th:text="${ao.orderNo}"></span></td>
+                                <td th:text="${ao.guestName}"></td>
+                                <td>
+                                    <small th:text="${#temporals.format(ao.checkInDate, 'MM-dd')} + ' ~ ' + ${#temporals.format(ao.checkOutDate, 'MM-dd')}"></small>
+                                </td>
+                                <td th:text="${ao.orderAmount != null ? '¥' + ao.orderAmount : '-'}"></td>
+                                <td>
+                                    <span class="badge bg-info" th:text="${ao.handlingMethod}"></span>
+                                </td>
+                                <td th:text="${ao.compensationAmount != null ? '¥' + ao.compensationAmount : '-'}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(affectedOrders)}">
+                                <td colspan="6" class="text-center py-3 text-muted">
+                                    <i class="bi bi-inbox"></i> 暂无受影响订单
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 历史审核节点</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline ms-3">
+                        <div class="timeline-item" th:each="node : ${auditNodes}">
+                            <div class="ms-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="badge rounded-pill status-badge me-2"
+                                              th:class="'bg-' + ${#strings.toLowerCase(node.status.name())}"
+                                              th:text="${node.status.description}"></span>
+                                        <small class="text-muted" th:text="${node.operatorRole.description}"></small>
+                                        <span class="fw-bold ms-1" th:text="${node.operator.name}"></span>
+                                    </div>
+                                    <small class="text-muted" th:text="${#temporals.format(node.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></small>
+                                </div>
+                                <p class="mt-1 mb-0" th:text="${node.comment}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> 操作面板</h5>
+                </div>
+                <div class="card-body">
+
+                    <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).SUBMITTED}" class="mb-3">
+                        <h6 class="text-muted">派工给工程师</h6>
+                        <form th:action="@{/maintenance/{id}/assign(id=${order.id})}" method="post">
+                            <div class="mb-2">
+                                <select class="form-select" name="engineerId" required>
+                                    <option value="">选择工程师</option>
+                                    <option th:each="e : ${engineers}" th:value="${e.id}" th:text="${e.name}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <input type="datetime-local" class="form-control" name="estimatedTime" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-person-plus"></i> 派工
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).ASSIGNED}" class="mb-3">
+                        <form th:action="@{/maintenance/{id}/start-repair(id=${order.id})}" method="post">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-play-circle"></i> 开始维修
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).IN_PROGRESS}" class="mb-3">
+                        <h6 class="text-muted">完成维修</h6>
+                        <form th:action="@{/maintenance/{id}/complete-repair(id=${order.id})}" method="post">
+                            <div class="mb-2">
+                                <textarea class="form-control" name="repairReport" rows="3" placeholder="维修报告" required></textarea>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col">
+                                    <input type="number" step="0.01" class="form-control" name="laborCost" placeholder="人工费">
+                                </div>
+                                <div class="col">
+                                    <input type="number" step="0.01" class="form-control" name="partsCost" placeholder="配件费">
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" name="partsUsed" placeholder="使用配件">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-check-circle"></i> 完成维修
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLETED or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).OVERDUE or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_FAILED}" class="mb-3">
+                        <h6 class="text-muted">清洁检查</h6>
+                        <form th:action="@{/maintenance/{id}/check-cleaning(id=${order.id})}" method="post">
+                            <div class="mb-2">
+                                <select class="form-select" name="housekeeperId" required>
+                                    <option value="">选择客房主管</option>
+                                    <option th:each="h : ${housekeepers}" th:value="${h.id}" th:text="${h.name}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <select class="form-select" name="passed" required>
+                                    <option value="true">清洁通过</option>
+                                    <option value="false">清洁未通过</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <textarea class="form-control" name="cleaningReport" rows="2" placeholder="清洁检查报告" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-info w-100">
+                                <i class="bi bi-check2-square"></i> 提交检查结果
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${(order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PASSED or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED) and !canRestore}" class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>注意：</strong>清洁未通过，禁止恢复售卖！
+                    </div>
+
+                    <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PASSED or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED}" class="mb-3">
+                        <h6 class="text-muted">值班经理复核</h6>
+                        <form th:action="@{/maintenance/{id}/review(id=${order.id})}" method="post">
+                            <div class="mb-2">
+                                <select class="form-select" name="reviewerId" required>
+                                    <option value="">选择值班经理</option>
+                                    <option th:each="m : ${dutyManagers}" th:value="${m.id}" th:text="${m.name}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <select class="form-select" name="restore" required>
+                                    <option value="true" th:disabled="${!canRestore}">恢复售卖</option>
+                                    <option value="false">继续停卖</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <textarea class="form-control" name="reviewComment" rows="2" placeholder="复核意见" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" th:disabled="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED and canRestore == false ? false : false}">
+                                <i class="bi bi-pencil-square"></i> 提交复核
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${order.status != T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED and order.status != T(com.hotel.maintenance.enums.MaintenanceStatus).RESTORED and order.status != T(com.hotel.maintenance.enums.MaintenanceStatus).REJECTED}" class="mb-3">
+                        <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#complaintModal">
+                            <i class="bi bi-exclamation-diamond"></i> 升级客诉
+                        </button>
+                    </div>
+
+                    <div th:if="${order.status != T(com.hotel.maintenance.enums.MaintenanceStatus).RESTORED and order.status != T(com.hotel.maintenance.enums.MaintenanceStatus).REJECTED}" class="mb-3">
+                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#affectedOrderModal">
+                            <i class="bi bi-plus-circle"></i> 添加受影响订单
+                        </button>
+                    </div>
+
+                    <div class="mb-3" th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).OVERDUE}">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>维修超期！</strong> 已超过预计完成时间
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-house"></i> 房间状态</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                         style="width: 80px; height: 80px; background-color: #e3f2fd;">
+                        <i class="bi bi-door-closed display-4 text-primary"></i>
+                    </div>
+                    <h5 th:text="${order.room.roomNumber}"></h5>
+                    <span class="badge rounded-pill status-badge"
+                          th:class="'bg-' + ${#strings.toLowerCase(order.room.status.name())}"
+                          th:text="${order.room.status.description}"></span>
+                    <div class="mt-3 text-start">
+                        <small class="text-muted d-block">房型：<span th:text="${order.room.roomType}"></span></small>
+                        <small class="text-muted d-block">楼层：<span th:text="${order.room.floor}"></span>楼</small>
+                        <small class="text-muted d-block">可住：<span th:text="${order.room.capacity}"></span>人</small>
+                        <small class="text-muted d-block">房价：<span th:text="'¥' + ${#numbers.formatDecimal(order.room.pricePerNight, 0, 2)}"></span>/晚</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="complaintModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/maintenance/{id}/escalate-complaint(id=${order.id})}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-diamond"></i> 升级客诉</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">客诉描述</label>
+                        <textarea class="form-control" name="complaintDescription" rows="4" placeholder="请描述客诉详情..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger">确认升级</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="affectedOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form th:action="@{/maintenance/{id}/add-affected-order(id=${order.id})}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> 添加受影响订单</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">订单编号 *</label>
+                            <input type="text" class="form-control" name="orderNo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">客人姓名 *</label>
+                            <input type="text" class="form-control" name="guestName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">客人电话 *</label>
+                            <input type="text" class="form-control" name="guestPhone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">订单金额</label>
+                            <input type="number" step="0.01" class="form-control" name="orderAmount">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">入住日期 *</label>
+                            <input type="date" class="form-control" name="checkInDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">离店日期 *</label>
+                            <input type="date" class="form-control" name="checkOutDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">处理方式 *</label>
+                            <select class="form-select" name="handlingMethod" required>
+                                <option value="">请选择</option>
+                                <option value="换房">换房</option>
+                                <option value="升级">升级房型</option>
+                                <option value="退款">全额退款</option>
+                                <option value="赔偿">现金赔偿</option>
+                                <option value="优惠券">优惠券补偿</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">赔偿金额</label>
+                            <input type="number" step="0.01" class="form-control" name="compensationAmount">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">备注</label>
+                            <textarea class="form-control" name="remark" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('房间详情')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>
+            <i class="bi bi-door-closed"></i> 房间详情
+            <span class="badge rounded-pill status-badge ms-2"
+                  th:class="'bg-' + ${#strings.toLowerCase(room.status.name())}"
+                  th:text="${room.status.description}"></span>
+        </h3>
+        <a href="/rooms" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                             style="width: 100px; height: 100px; background-color: #e3f2fd;">
+                            <i class="bi bi-door-closed display-1 text-primary"></i>
+                        </div>
+                        <h2 th:text="${room.roomNumber}"></h2>
+                    </div>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th class="text-muted w-30">房间号</th>
+                            <td><span class="fw-bold" th:text="${room.roomNumber}"></span></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">楼层</th>
+                            <td th:text="${room.floor} + '楼'"></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">房型</th>
+                            <td><span class="badge bg-info" th:text="${room.roomType}"></span></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">可住人数</th>
+                            <td><i class="bi bi-people"></i> <span th:text="${room.capacity}"></span>人</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">房价</th>
+                            <td><span class="text-primary fw-bold" th:text="'¥' + ${#numbers.formatDecimal(room.pricePerNight, 0, 2)} + '/晚'"></span></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">位置</th>
+                            <td th:text="${room.location != null ? room.location : '-'}"></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">当前状态</th>
+                            <td>
+                                <span class="badge rounded-pill status-badge"
+                                      th:class="'bg-' + ${#strings.toLowerCase(room.status.name())}"
+                                      th:text="${room.status.description}"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle"></i> 状态说明</h6>
+                <ul class="mb-0 small">
+                    <li><span class="badge bg-success">可售卖</span> - 房间正常，可接受预订</li>
+                    <li><span class="badge bg-secondary">故障停卖</span> - 已提交故障，等待派工</li>
+                    <li><span class="badge bg-warning text-dark">维修中</span> - 工程师正在处理</li>
+                    <li><span class="badge bg-warning">待清洁</span> - 维修完成，等待清洁检查</li>
+                    <li><span class="badge bg-success">清洁完成</span> - 清洁检查通过</li>
+                    <li><span class="badge bg-primary">待复核</span> - 等待值班经理复核</li>
+                </ul>
+            </div>
+
+            <div class="card mt-3" th:if="${room.status != T(com.hotel.maintenance.enums.RoomStatus).AVAILABLE}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 操作</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/maintenance/submit" class="btn btn-outline-primary disabled">
+                        该房间当前不可用，查看维修工单
+                    </a>
+                </div>
+            </div>
+            <div class="card mt-3" th:if="${room.status == T(com.hotel.maintenance.enums.RoomStatus).AVAILABLE}">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-wrench"></i> 操作</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/maintenance/submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 提交故障申请
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

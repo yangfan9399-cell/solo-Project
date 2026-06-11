@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' - 酒店客房维修管理系统'">酒店客房维修管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { padding-top: 60px; }
+        .sidebar { min-height: calc(100vh - 60px); }
+        .status-badge { padding: 0.35em 0.65em; font-size: 0.75em; }
+        .timeline { border-left: 2px solid #dee2e6; margin-left: 10px; }
+        .timeline-item { position: relative; margin-bottom: 1rem; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0d6efd;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #0d6efd;
+        }
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .bg-submitted { background-color: #6c757d; }
+        .bg-assigned { background-color: #0dcaf0; }
+        .bg-in_progress { background-color: #fd7e14; }
+        .bg-completed { background-color: #198754; }
+        .bg-overdue { background-color: #dc3545; }
+        .bg-cleaning_pending { background-color: #ffc107; }
+        .bg-cleaning_failed { background-color: #f0ad4e; }
+        .bg-cleaning_passed { background-color: #20c997; }
+        .bg-complaint_escalated { background-color: #d63384; }
+        .bg-restored { background-color: #0d6efd; }
+        .bg-rejected { background-color: #6f42c1; }
+    </style>
+</head>
+<body>
+
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-hospital"></i> 酒店客房维修管理系统
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}" th:classappend="${#request.requestURI == '/' ? 'active' : ''}">
+                        <i class="bi bi-speedometer2"></i> 仪表盘
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/maintenance}" th:classappend="${#request.requestURI.startsWith('/maintenance') ? 'active' : ''}">
+                        <i class="bi bi-list-task"></i> 维修工单
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/rooms}" th:classappend="${#request.requestURI.startsWith('/rooms') ? 'active' : ''}">
+                        <i class="bi bi-door-closed"></i> 房间管理
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/statistics}" th:classappend="${#request.requestURI.startsWith('/statistics') ? 'active' : ''}">
+                        <i class="bi bi-bar-chart"></i> 统计分析
+                    </a>
+                </li>
+            </ul>
+            <span class="navbar-text">
+                <i class="bi bi-clock"></i> <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd HH:mm:ss')}"></span>
+            </span>
+        </div>
+    </div>
+</nav>
+
+<div th:fragment="alerts" class="container mt-3">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<div th:fragment="footer" class="text-center text-muted py-3 mt-5 border-top">
+    <small>酒店客房维修停卖与恢复售卖审核系统 &copy; 2024</small>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head th:replace="~{fragments/layout :: head('仪表盘')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: alerts}"></div>
+
+<div class="container mt-4">
+    <h3 class="mb-4"><i class="bi bi-speedometer2"></i> 运营仪表盘</h3>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card card-hover bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">总工单</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.totalOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">待派工</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.pendingOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">维修中</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.inProgressOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-danger text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">已超期</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.overdueOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">已恢复</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.restoredOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-hover bg-pink text-white" style="background-color: #d63384;">
+                <div class="card-body text-center">
+                    <h5 class="card-title">客诉</h5>
+                    <h2 class="display-6" th:text="${dashboardStats.complaintOrders}">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-task"></i> 最新工单</h5>
+                    <a href="/maintenance/submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> 提交故障
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>工单编号</th>
+                                <th>房间</th>
+                                <th>故障类型</th>
+                                <th>状态</th>
+                                <th>提交人</th>
+                                <th>维修人</th>
+                                <th>提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${recentOrders}">
+                                <td><span class="fw-bold" th:text="${order.orderNo}"></span></td>
+                                <td>
+                                    <i class="bi bi-door-closed"></i>
+                                    <span th:text="${order.room.roomNumber}"></span>
+                                    <small class="text-muted d-block" th:text="${order.room.roomType}"></small>
+                                </td>
+                                <td th:text="${order.faultType.description}"></td>
+                                <td>
+                                    <span class="badge rounded-pill status-badge"
+                                          th:class="'bg-' + ${#strings.toLowerCase(order.status.name())}"
+                                          th:text="${order.status.description}"></span>
+                                </td>
+                                <td th:text="${order.reporter.name}"></td>
+                                <td th:text="${order.engineer != null ? order.engineer.name : '-'}"></td>
+                                <td>
+                                    <small th:text="${#temporals.format(order.createdAt, 'MM-dd HH:mm')}"></small>
+                                </td>
+                                <td>
+                                    <a th:href="@{/maintenance/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> 详情
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 业务流程说明</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-standing fs-4"></i>
+                            </div>
+                            <h6>前台</h6>
+                            <small class="text-muted">提交故障</small>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-4"></i>
+                        <div class="text-center">
+                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                <i class="bi bi-wrench fs-4"></i>
+                            </div>
+                            <h6>工程部</h6>
+                            <small class="text-muted">维修处理</small>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-4"></i>
+                        <div class="text-center">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                <i class="bi bi-magic fs-4"></i>
+                            </div>
+                            <h6>客房主管</h6>
+                            <small class="text-muted">清洁检查</small>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-4"></i>
+                        <div class="text-center">
+                            <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-check fs-4"></i>
+                            </div>
+                            <h6>值班经理</h6>
+                            <small class="text-muted">复核恢复</small>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-4"></i>
+                        <div class="text-center">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 50px; height: 50px;">
+                                <i class="bi bi-check2-circle fs-4"></i>
+                            </div>
+                            <h6>完成</h6>
+                            <small class="text-muted">恢复售卖</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>
