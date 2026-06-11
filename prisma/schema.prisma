@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Campus {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courses    Course[]
+  classrooms Classroom[]
+  schedules  Schedule[]
+  users      User[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String
+  campusId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campus                Campus?        @relation(fields: [campusId], references: [id])
+  schedules             Schedule[]     @relation("TeacherSchedules")
+  approvals             Approval[]
+  settlementsAsTeacher  Settlement[]   @relation("SettlementTeacher")
+  settlementsAsReviewer Settlement[]   @relation("SettlementReviewer")
+  historyNodes          HistoryNode[]  @relation("HistoryNodeOperator")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int
+  price       Float
+  maxStudents Int
+  campusId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campus            Campus             @relation(fields: [campusId], references: [id])
+  schedules         Schedule[]
+  courseEnrollments CourseEnrollment[]
+}
+
+model Classroom {
+  id        String   @id @default(cuid())
+  name      String
+  capacity  Int
+  campusId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campus    Campus     @relation(fields: [campusId], references: [id])
+  schedules Schedule[]
+}
+
+model Student {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments CourseEnrollment[]
+  attendances Attendance[]
+}
+
+model CourseEnrollment {
+  id        String   @id @default(cuid())
+  courseId  String
+  studentId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course  Course  @relation(fields: [courseId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+  @@unique([courseId, studentId])
+}
+
+model Schedule {
+  id            String        @id @default(cuid())
+  courseId      String
+  teacherId     String
+  classroomId   String
+  campusId      String
+  startTime     DateTime
+  endTime       DateTime
+  status        String        @default("DRAFT")
+  conflictType  String        @default("NONE")
+  conflictNote  String?
+  actualHours   Float?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  course        Course        @relation(fields: [courseId], references: [id])
+  teacher       User          @relation("TeacherSchedules", fields: [teacherId], references: [id])
+  classroom     Classroom     @relation(fields: [classroomId], references: [id])
+  campus        Campus        @relation(fields: [campusId], references: [id])
+  approvals     Approval[]
+  attendances   Attendance[]
+  settlement    Settlement?
+  historyNodes  HistoryNode[]
+}
+
+model Approval {
+  id           String   @id @default(cuid())
+  scheduleId   String
+  approverId   String
+  status       String
+  note         String?
+  approvedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  schedule     Schedule @relation(fields: [scheduleId], references: [id])
+  approver     User     @relation(fields: [approverId], references: [id])
+}
+
+model Attendance {
+  id              String   @id @default(cuid())
+  scheduleId      String
+  studentId       String
+  status          String   @default("PRESENT")
+  checkInTime     DateTime?
+  checkOutTime    DateTime?
+  leaveReason     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  schedule        Schedule @relation(fields: [scheduleId], references: [id])
+  student         Student  @relation(fields: [studentId], references: [id])
+  @@unique([scheduleId, studentId])
+}
+
+model Settlement {
+  id              String   @id @default(cuid())
+  scheduleId      String   @unique
+  teacherId       String
+  totalHours      Float
+  hourlyRate      Float
+  totalAmount     Float
+  deductions      Float    @default(0)
+  netAmount       Float
+  status          String   @default("PENDING")
+  reviewerId      String?
+  reviewedAt      DateTime?
+  paidAt          DateTime?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  schedule        Schedule @relation(fields: [scheduleId], references: [id])
+  teacher         User     @relation("SettlementTeacher", fields: [teacherId], references: [id])
+  reviewer        User?    @relation("SettlementReviewer", fields: [reviewerId], references: [id])
+}
+
+model HistoryNode {
+  id           String   @id @default(cuid())
+  scheduleId   String
+  status       String
+  operatorId   String?
+  note         String?
+  createdAt    DateTime @default(now())
+
+  schedule     Schedule @relation(fields: [scheduleId], references: [id])
+  operator     User?    @relation("HistoryNodeOperator", fields: [operatorId], references: [id])
+}
