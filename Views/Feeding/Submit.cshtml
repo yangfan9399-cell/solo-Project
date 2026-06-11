@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <div id="anomaly-section" style="display:none;">
+        <div id="anomaly-section" style="display:@(Model.HasUnresolvedOxygenAnomaly || !Model.IsNormal ? "block" : "none");">
             <div class="form-row">
                 <div class="form-group">
                 <label asp-for="AnomalyType">异常类型</label>
@@ -114,14 +114,13 @@
     }
     document.getElementById('IsNormal')?.addEventListener('change', toggleAnomalySection);
     window.addEventListener('load', function() {
-        var hasOxygenAnomaly = @(Model.HasUnresolvedOxygenAnomaly ? "true" : "false") === 'true';
+        var hasOxygenAnomaly = @(Model.HasUnresolvedOxygenAnomaly ? "true" : "false");
         var checkbox = document.getElementById('IsNormal');
         var anomalyTypeSelect = document.getElementById('AnomalyType');
-        if (hasOxygenAnomaly && checkbox) {
-            checkbox.checked = false;
+        if (hasOxygenAnomaly) {
+            if (checkbox) checkbox.checked = false;
             if (anomalyTypeSelect) {
-                var lowOxygenValue = '@((int)AnomalyType.LowDissolvedOxygen)';
-                anomalyTypeSelect.value = lowOxygenValue;
+                anomalyTypeSelect.value = '@((int)AnomalyType.LowDissolvedOxygen)';
             }
         }
         toggleAnomalySection();
