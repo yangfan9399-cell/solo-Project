@@ -16,6 +16,7 @@ public class HomeController {
 
     @GetMapping
     public String index(Model model) {
+        model.addAttribute("activeMenu", "home");
         model.addAttribute("dashboardStats", maintenanceOrderService.getDashboardStats());
         model.addAttribute("recentOrders", maintenanceOrderService.findAll());
         return "index";

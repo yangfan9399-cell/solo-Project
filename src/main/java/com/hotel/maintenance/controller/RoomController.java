@@ -28,6 +28,7 @@ public class RoomController {
         } else {
             rooms = roomService.findAll();
         }
+        model.addAttribute("activeMenu", "rooms");
         model.addAttribute("rooms", rooms);
         model.addAttribute("statuses", RoomStatus.values());
         model.addAttribute("currentStatus", status);
@@ -40,6 +41,7 @@ public class RoomController {
         if (room == null) {
             return "redirect:/rooms";
         }
+        model.addAttribute("activeMenu", "rooms");
         model.addAttribute("room", room);
         return "rooms/detail";
     }

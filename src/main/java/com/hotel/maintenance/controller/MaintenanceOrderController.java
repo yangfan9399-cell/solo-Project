@@ -31,6 +31,7 @@ public class MaintenanceOrderController {
         } else {
             orders = maintenanceOrderService.findAll();
         }
+        model.addAttribute("activeMenu", "maintenance");
         model.addAttribute("orders", orders);
         model.addAttribute("statuses", MaintenanceStatus.values());
         model.addAttribute("currentStatus", status);
@@ -48,6 +49,7 @@ public class MaintenanceOrderController {
         List<MaintenanceRecord> records = maintenanceOrderService.getMaintenanceRecords(id);
         long outageHours = maintenanceOrderService.calculateOutageHours(order);
 
+        model.addAttribute("activeMenu", "maintenance");
         model.addAttribute("order", order);
         model.addAttribute("auditNodes", auditNodes);
         model.addAttribute("affectedOrders", affectedOrders);
@@ -67,6 +69,7 @@ public class MaintenanceOrderController {
 
     @GetMapping("/submit")
     public String showSubmitForm(Model model) {
+        model.addAttribute("activeMenu", "maintenance");
         model.addAttribute("rooms", roomService.findAvailableRooms());
         model.addAttribute("faultTypes", FaultType.values());
         model.addAttribute("receptionists", employeeService.findReceptionists());
@@ -165,6 +168,21 @@ public class MaintenanceOrderController {
                                 @RequestParam String reviewComment,
                                 RedirectAttributes redirectAttributes) {
         try {
+            MaintenanceOrder order = maintenanceOrderService.findById(id);
+            if (order == null) {
+                throw new IllegalArgumentException("工单不存在");
+            }
+            if (restore) {
+                boolean cleaningPassed = order.getStatus() == MaintenanceStatus.CLEANING_PASSED;
+                if (!cleaningPassed) {
+                    List<AuditNode> auditNodes = maintenanceOrderService.getAuditNodes(id);
+                    cleaningPassed = auditNodes.stream()
+                            .anyMatch(node -> node.getStatus() == MaintenanceStatus.CLEANING_PASSED);
+                }
+                if (!cleaningPassed) {
+                    throw new IllegalStateException("清洁检查未通过，禁止恢复售卖！请先完成清洁检查。");
+                }
+            }
             maintenanceOrderService.reviewRestore(id, reviewerId, restore, reviewComment);
             redirectAttributes.addFlashAttribute("success", restore ? "已恢复售卖" : "已继续停卖");
         } catch (Exception e) {

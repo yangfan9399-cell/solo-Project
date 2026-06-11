@@ -392,14 +392,13 @@
                         </form>
                     </div>
 
-                    <div th:if="${(order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PASSED or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED) and !canRestore}" class="alert alert-warning mb-3">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <strong>注意：</strong>清洁未通过，禁止恢复售卖！
-                    </div>
-
                     <div th:if="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).CLEANING_PASSED or order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED}" class="mb-3">
                         <h6 class="text-muted">值班经理复核</h6>
-                        <form th:action="@{/maintenance/{id}/review(id=${order.id})}" method="post">
+                        <div th:if="${!canRestore}" class="alert alert-danger mb-3">
+                            <i class="bi bi-exclamation-octagon-fill"></i>
+                            <strong>禁止恢复售卖：</strong>清洁检查未通过，请先完成清洁检查！
+                        </div>
+                        <form th:action="@{/maintenance/{id}/review(id=${order.id})}" method="post" id="reviewForm" onsubmit="return validateReviewForm()">
                             <div class="mb-2">
                                 <select class="form-select" name="reviewerId" required>
                                     <option value="">选择值班经理</option>
@@ -407,15 +406,19 @@
                                 </select>
                             </div>
                             <div class="mb-2">
-                                <select class="form-select" name="restore" required>
-                                    <option value="true" th:disabled="${!canRestore}">恢复售卖</option>
+                                <select class="form-select" id="restoreSelect" name="restore" required>
+                                    <option value="">请选择</option>
+                                    <option value="true" th:disabled="${!canRestore}" th:classappend="${!canRestore} ? 'text-muted'">恢复售卖</option>
                                     <option value="false">继续停卖</option>
                                 </select>
+                                <small th:if="${!canRestore}" class="text-danger">
+                                    <i class="bi bi-info-circle"></i> 清洁未通过，"恢复售卖"选项已禁用
+                                </small>
                             </div>
                             <div class="mb-2">
                                 <textarea class="form-control" name="reviewComment" rows="2" placeholder="复核意见" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100" th:disabled="${order.status == T(com.hotel.maintenance.enums.MaintenanceStatus).COMPLAINT_ESCALATED and canRestore == false ? false : false}">
+                            <button type="submit" class="btn btn-primary w-100">
                                 <i class="bi bi-pencil-square"></i> 提交复核
                             </button>
                         </form>
@@ -556,5 +559,34 @@
 </div>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
+<script th:inline="javascript">
+    var canRestore = [[${canRestore}]];
+    function validateReviewForm() {
+        var restoreSelect = document.getElementById('restoreSelect');
+        var selectedValue = restoreSelect.value;
+        if (selectedValue === 'true' && !canRestore) {
+            alert('清洁检查未通过，禁止恢复售卖！请先完成清洁检查。');
+            restoreSelect.focus();
+            return false;
+        }
+        if (selectedValue === '') {
+            alert('请选择复核结果！');
+            restoreSelect.focus();
+            return false;
+        }
+        return true;
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var restoreSelect = document.getElementById('restoreSelect');
+        if (restoreSelect) {
+            restoreSelect.addEventListener('change', function() {
+                if (this.value === 'true' && !canRestore) {
+                    alert('清洁检查未通过，禁止选择恢复售卖！');
+                    this.value = '';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

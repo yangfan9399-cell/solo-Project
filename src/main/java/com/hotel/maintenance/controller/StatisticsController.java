@@ -24,6 +24,7 @@ public class StatisticsController {
         List<StatisticsDto> byFaultType = maintenanceOrderService.getStatisticsByFaultType();
         List<StatisticsDto> byDuration = maintenanceOrderService.getStatisticsByOutageDuration();
 
+        model.addAttribute("activeMenu", "statistics");
         model.addAttribute("byFloor", byFloor);
         model.addAttribute("byRoomType", byRoomType);
         model.addAttribute("byFaultType", byFaultType);
