@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>统计报表 - 后勤主管</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #262626;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 8px;
+        }
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bar-label {
+            width: 100px;
+            font-size: 13px;
+            color: #595959;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1890ff, #40a9ff);
+            border-radius: 3px;
+            width: 0;
+            transition: width 0.5s ease;
+        }
+        .bar-fill.timeout {
+            background: linear-gradient(90deg, #fa8c16, #ffa940);
+        }
+        .bar-fill.duration {
+            background: linear-gradient(90deg, #52c41a, #95de64);
+        }
+        .bar-value {
+            width: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #262626;
+            text-align: right;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>校园宿舍报修系统 - 后勤主管</h1>
+    <div class="user-info">
+        <span>欢迎，<span th:text="${currentUser.realName}"></span></span>
+        <a href="/supervisor/repairs">报修列表</a>
+        <a href="/logout">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>统计报表</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>按楼栋统计</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>楼栋</th>
+                        <th>总数</th>
+                        <th>已完成</th>
+                        <th>超时</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="s : ${buildingStats}">
+                        <td th:text="${s.building}"></td>
+                        <td th:text="${s.totalCount}"></td>
+                        <td th:text="${s.completedCount}"></td>
+                        <td th:text="${s.timeoutCount}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(buildingStats)}">
+                        <td colspan="4" style="text-align: center; color: #999;">暂无数据</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stat-card">
+                <h3>按故障类型统计</h3>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>故障类型</th>
+                        <th>数量</th>
+                        <th>平均时长(分)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="s : ${faultTypeStats}">
+                        <td th:text="${s.faultTypeLabel}"></td>
+                        <td th:text="${s.count}"></td>
+                        <td th:text="${#numbers.formatDecimal(s.avgRepairMinutes, 0, 1)}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(faultTypeStats)}">
+                        <td colspan="3" style="text-align: center; color: #999;">暂无数据</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stat-card">
+                <h3>超时原因分布</h3>
+                <div class="bar-chart" id="timeoutChart">
+                    <div class="bar-item" th:each="s : ${timeoutStats}" th:attr="data-count=${s.count}">
+                        <span class="bar-label" th:text="${s.timeoutReasonLabel}"></span>
+                        <div class="bar-track">
+                            <div class="bar-fill timeout"></div>
+                        </div>
+                        <span class="bar-value" th:text="${s.count}"></span>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(timeoutStats)}" style="text-align: center; color: #999; padding: 20px;">
+                    暂无数据
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <h3>维修时长分布</h3>
+                <div class="bar-chart" id="durationChart">
+                    <div class="bar-item" th:each="s : ${durationStats}" th:attr="data-count=${s.count}">
+                        <span class="bar-label" th:text="${s.durationRange}"></span>
+                        <div class="bar-track">
+                            <div class="bar-fill duration"></div>
+                        </div>
+                        <span class="bar-value" th:text="${s.count}"></span>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(durationStats)}" style="text-align: center; color: #999; padding: 20px;">
+                    暂无数据
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function renderBarChart(chartId) {
+        const chart = document.getElementById(chartId);
+        if (!chart) return;
+        const items = chart.querySelectorAll('.bar-item');
+        let max = 0;
+        items.forEach(item => {
+            const count = parseInt(item.dataset.count) || 0;
+            if (count > max) max = count;
+        });
+        if (max === 0) max = 1;
+        items.forEach(item => {
+            const count = parseInt(item.dataset.count) || 0;
+            const fill = item.querySelector('.bar-fill');
+            if (fill) {
+                fill.style.width = ((count / max) * 100) + '%';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderBarChart('timeoutChart');
+        renderBarChart('durationChart');
+    });
+</script>
+</body>
+</html>

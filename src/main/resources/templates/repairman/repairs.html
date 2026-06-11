@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维修任务 - 维修工端</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>校园宿舍报修系统 - 维修工端</h1>
+    <div class="user-info">
+        <span>欢迎，<span th:text="${currentUser.realName}"></span></span>
+        <a href="/logout">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>我的维修任务</h2>
+
+        <div class="filter-bar">
+            <form method="get" action="/repairman/repairs" style="display: flex; gap: 10px; align-items: flex-end;">
+                <div class="form-group" style="margin-bottom: 0; min-width: 150px;">
+                    <label>状态筛选</label>
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="">全部状态</option>
+                        <option th:each="s : ${statuses}"
+                                th:value="${s.name()}"
+                                th:text="${s.label}"
+                                th:selected="${s == selectedStatus}"></option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${param.error}" class="alert alert-error">
+            <span th:text="${param.error}"></span>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>报修单号</th>
+                <th>楼栋/宿舍</th>
+                <th>故障类型</th>
+                <th>学生</th>
+                <th>状态</th>
+                <th>派单时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="repair : ${repairs}">
+                <td th:text="${repair.orderNo}"></td>
+                <td th:text="${repair.building} + ' ' + ${repair.roomNo}"></td>
+                <td th:text="${repair.faultType.label}"></td>
+                <td th:text="${repair.studentName}"></td>
+                <td>
+                    <span class="status-badge"
+                          th:class="'status-badge status-' + ${#strings.toLowerCase(repair.status.name())}"
+                          th:text="${repair.status.label}"></span>
+                </td>
+                <td th:text="${repair.assignTime != null ? #temporals.format(repair.assignTime, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                <td>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <a th:href="@{/repairman/repair/{id}(id=${repair.id})}" class="btn btn-sm btn-default">详情</a>
+                        <form th:if="${repair.status.name() == 'ASSIGNED'
+                                or repair.status.name() == 'PARTS_SHORTAGE'
+                                or repair.status.name() == 'TIMEOUT'}"
+                              method="post" th:action="@{/repairman/start/{id}(id=${repair.id})}" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-primary">开始维修</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(repairs)}">
+                <td colspan="7" style="text-align: center; color: #999;">暂无任务</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

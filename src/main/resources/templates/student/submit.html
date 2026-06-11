@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提交报修 - 学生端</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>校园宿舍报修系统 - 学生端</h1>
+    <div class="user-info">
+        <span>欢迎，<span th:text="${currentUser.realName}"></span></span>
+        <a href="/logout">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>提交报修</h2>
+        <form method="post" action="/student/submit">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>楼栋</label>
+                    <select name="building" required>
+                        <option value="">请选择楼栋</option>
+                        <option value="1号楼">1号楼</option>
+                        <option value="2号楼">2号楼</option>
+                        <option value="3号楼">3号楼</option>
+                        <option value="4号楼">4号楼</option>
+                        <option value="5号楼">5号楼</option>
+                        <option value="6号楼">6号楼</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>宿舍号</label>
+                    <input type="text" name="roomNo" placeholder="如：201" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>故障类型</label>
+                <select name="faultType" required>
+                    <option value="">请选择故障类型</option>
+                    <option th:each="type : ${faultTypes}"
+                            th:value="${type.name()}"
+                            th:text="${type.label}"></option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>故障描述</label>
+                <textarea name="description" rows="4" placeholder="请详细描述故障情况..." required></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">提交报修</button>
+                <a href="/student/repairs" class="btn btn-default">返回</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

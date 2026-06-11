@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的报修 - 学生端</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>校园宿舍报修系统 - 学生端</h1>
+    <div class="user-info">
+        <span>欢迎，<span th:text="${currentUser.realName}"></span></span>
+        <a href="/logout">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>我的报修单</h2>
+            <a href="/student/submit" class="btn btn-primary">提交报修</a>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>报修单号</th>
+                <th>楼栋/宿舍</th>
+                <th>故障类型</th>
+                <th>状态</th>
+                <th>提交时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="repair : ${repairs}">
+                <td th:text="${repair.orderNo}"></td>
+                <td th:text="${repair.building} + ' ' + ${repair.roomNo}"></td>
+                <td th:text="${repair.faultType.label}"></td>
+                <td>
+                    <span class="status-badge"
+                          th:class="'status-badge status-' + ${#strings.toLowerCase(repair.status.name())}"
+                          th:text="${repair.status.label}"></span>
+                </td>
+                <td th:text="${#temporals.format(repair.submitTime, 'yyyy-MM-dd HH:mm')}"></td>
+                <td>
+                    <a th:href="@{/student/repair/{id}(id=${repair.id})}" class="btn btn-sm btn-default">查看详情</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(repairs)}">
+                <td colspan="6" style="text-align: center; color: #999;">暂无报修单</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
