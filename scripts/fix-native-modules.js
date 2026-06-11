@@ -1,8 +1,11 @@
 import { execSync } from "child_process";
-import { existsSync, readdirSync, statSync, renameSync, unlinkSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { join, dirname } from "path";
+import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 
-console.log("Fixing native module code signatures...");
+const nodeModulesDir = join(process.cwd(), "node_modules");
+if (!existsSync(nodeModulesDir)) {
+  process.exit(0);
+}
 
 function findNodeFiles(dir, results = []) {
   try {
@@ -16,113 +19,45 @@ function findNodeFiles(dir, results = []) {
         } else if (file.endsWith(".node")) {
           results.push(fullPath);
         }
-      } catch (e) {
-        // skip
-      }
+      } catch (e) {}
     }
-  } catch (e) {
-    // skip
-  }
+  } catch (e) {}
   return results;
 }
 
-function patchRollupNativeLoader() {
+const nodeFiles = findNodeFiles(nodeModulesDir);
+
+for (const file of nodeFiles) {
   try {
-    const rollupNativePath = join(process.cwd(), "node_modules", "rollup", "dist", "native.js");
-    if (!existsSync(rollupNativePath)) {
-      console.log("Rollup native.js not found, skipping rollup patch");
-      return;
-    }
-
-    let content = readFileSync(rollupNativePath, "utf8");
-
-    if (content.includes("FORCE_WASM_FALLBACK_PATCHED")) {
-      console.log("Rollup already patched for WASM fallback");
-      return;
-    }
-
-    const patch = `
-// FORCE_WASM_FALLBACK_PATCHED
-// Force WASM fallback to avoid macOS code signing issues
-function requireWithFriendlyError(id) {
-  try {
-    throw new Error('Force WASM fallback');
-  } catch (e) {
-    return requireWasmFallback();
-  }
-}
-`;
-
-    content = content.replace(
-      /function requireWithFriendlyError[\s\S]*?^function/m,
-      patch + "function"
-    );
-
-    if (!content.includes("FORCE_WASM_FALLBACK_PATCHED")) {
-      content = "// FORCE_WASM_FALLBACK_PATCHED\n" + content;
-      content = content.replace(
-        /requireWithFriendlyError\([^)]+\)/g,
-        "requireWasmFallback()"
-      );
-    }
-
-    writeFileSync(rollupNativePath, content);
-    console.log("Patched rollup to use WASM fallback");
-  } catch (e) {
-    console.log("Rollup patch failed:", e.message);
-  }
+    execSync(`xattr -r -d com.apple.quarantine "${file}" 2>/dev/null || true`);
+  } catch (e) {}
 }
 
+for (const file of nodeFiles) {
+  try {
+    execSync(`/usr/bin/codesign --force --deep --sign - "${file}" 2>/dev/null`);
+  } catch (e) {}
+}
+
+const nativeJsPath = join(nodeModulesDir, "rollup", "dist", "native.js");
+if (existsSync(nativeJsPath)) {
+  let content = readFileSync(nativeJsPath, "utf8");
+  if (!content.includes("WASM_FALLBACK_PATCH_APPLIED")) {
+    const originalLine = `const { parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16 } = requireWithFriendlyError(
+\texistsSync(path.join(__dirname, localName)) ? localName : \`@rollup/rollup-\${packageBase}\`
+);`;
+    const patchedLine = `// WASM_FALLBACK_PATCH_APPLIED
+let parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16;
 try {
-  const nodeModulesDir = join(process.cwd(), "node_modules");
-  if (!existsSync(nodeModulesDir)) {
-    console.log("No node_modules directory found, skipping");
-    process.exit(0);
-  }
-
-  const nodeFiles = findNodeFiles(nodeModulesDir);
-  console.log(`Found ${nodeFiles.length} native modules`);
-
-  for (const file of nodeFiles) {
-    if (!existsSync(file)) continue;
-
-    try {
-      execSync(`xattr -r -d com.apple.quarantine "${file}" 2>/dev/null || true`);
-    } catch (e) {
-      // ignore
-    }
-
-    try {
-      const dylibFile = file.replace(/\.node$/, ".dylib");
-      if (existsSync(dylibFile)) {
-        execSync(`xattr -r -d com.apple.quarantine "${dylibFile}" 2>/dev/null || true`);
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  console.log("Removed quarantine attributes");
-
-  let signFailed = false;
-  for (const file of nodeFiles) {
-    if (!existsSync(file)) continue;
-
-    try {
-      execSync(`/usr/bin/codesign --force --deep --sign - "${file}" 2>/dev/null`);
-      console.log(`  Signed: ${file}`);
-    } catch (e) {
-      console.log(`  Skip (codesign failed): ${file}`);
-      signFailed = true;
-    }
-  }
-
-  if (signFailed) {
-    console.log("\nSome modules failed to sign, patching rollup for WASM fallback...");
-    patchRollupNativeLoader();
-  }
-
-  console.log("\nNative module fix complete");
+\t({ parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16 } = requireWithFriendlyError(
+\t\texistsSync(path.join(__dirname, localName)) ? localName : \`@rollup/rollup-\${packageBase}\`
+\t));
 } catch (e) {
-  console.log("No native modules to fix or error occurred:", e.message);
+\t({ parse, parseAsync, xxhashBase64Url, xxhashBase36, xxhashBase16 } = require('@rollup/wasm-node/dist/native.js'));
+}`;
+    content = content.replace(originalLine, patchedLine);
+    writeFileSync(nativeJsPath, content);
+  }
 }
+
+console.log("Native module fix complete");

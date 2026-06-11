@@ -14,19 +14,19 @@
     "db:setup": "prisma generate && prisma migrate dev --name init && prisma db seed",
     "fix:native": "node scripts/fix-native-modules.js",
     "setup": "bash scripts/start-dev.sh",
-    "postinstall": "node scripts/fix-native-modules.js 2>/dev/null || true"
+    "postinstall": "node scripts/fix-native-modules.js"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "@remix-run/node": "^2.12.0",
     "@remix-run/react": "^2.12.0",
     "@remix-run/serve": "^2.12.0",
+    "@rollup/wasm-node": "^4.61.1",
     "date-fns": "^3.6.0",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.12.7",
-    "sqlite3": "^6.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
