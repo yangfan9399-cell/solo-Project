@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报修详情</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+    <h1>校园宿舍报修系统</h1>
+    <div class="user-info">
+        <span>欢迎，<span th:text="${currentUser.realName}"></span></span>
+        <a href="/logout">退出</a>
+    </div>
+</div>
+
+<div class="container">
+    <div th:if="${param.error}" class="alert alert-error">
+        <span th:text="${param.error}"></span>
+    </div>
+
+    <div th:if="${repair.status.name() == 'DISSATISFIED'}" class="alert alert-warning">
+        ⚠️ 学生不满意，禁止直接关闭，请重新派单处理
+    </div>
+
+    <div class="card">
+        <h2>报修单详情</h2>
+
+        <div class="action-bar">
+            <button class="btn btn-default" onclick="history.back()">返回列表</button>
+
+            <div th:if="${currentUser.role.name() == 'DORM_MANAGER' and repair.status.name() == 'SUBMITTED'}">
+                <form method="post" th:action="@{/dorm-manager/assign/{id}(id=${repair.id})}" style="display: inline;">
+                    <select name="repairmanId" required onchange="this.form.submit()">
+                        <option value="">选择维修工派单</option>
+                        <option th:each="r : ${repairmen}"
+                                th:value="${r.id}"
+                                th:text="${r.realName}"></option>
+                    </select>
+                </form>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'REPAIRMAN' and (repair.status.name() == 'ASSIGNED'
+                    or repair.status.name() == 'PARTS_SHORTAGE'
+                    or repair.status.name() == 'TIMEOUT')}">
+                <form method="post" th:action="@{/repairman/start/{id}(id=${repair.id})}" style="display: inline;">
+                    <button type="submit" class="btn btn-primary">开始维修</button>
+                </form>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'REPAIRMAN' and repair.status.name() == 'IN_PROGRESS'}">
+                <button type="button" class="btn btn-warning" onclick="openModal('partsShortageModal')">配件缺货</button>
+                <button type="button" class="btn btn-success" onclick="openModal('completeModal')">完成维修</button>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'LOGISTICS_SUPERVISOR' and (repair.status.name() == 'IN_PROGRESS'
+                    or repair.status.name() == 'ASSIGNED'
+                    or repair.status.name() == 'PARTS_SHORTAGE')}">
+                <button type="button" class="btn btn-warning" onclick="openModal('timeoutModal')">标记超时</button>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'LOGISTICS_SUPERVISOR' and (repair.status.name() == 'COMPLETED'
+                    or repair.status.name() == 'DISSATISFIED')}">
+                <button type="button" class="btn btn-primary" onclick="openModal('reviewModal')">回访评价</button>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'LOGISTICS_SUPERVISOR' and repair.status.name() == 'REVIEWED'}">
+                <form method="post" th:action="@{/supervisor/close/{id}(id=${repair.id})}" style="display: inline;">
+                    <button type="submit" class="btn btn-success">关闭报修</button>
+                </form>
+            </div>
+
+            <div th:if="${currentUser.role.name() == 'LOGISTICS_SUPERVISOR' and repair.status.name() == 'DISSATISFIED'}">
+                <button type="button" class="btn btn-warning" onclick="openModal('reopenModal')">重新派单</button>
+            </div>
+        </div>
+
+        <h3 style="margin: 15px 0 10px; font-size: 16px;">基本信息</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="label">报修单号</span>
+                <span class="value" th:text="${repair.orderNo}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">当前状态</span>
+                <span class="status-badge"
+                      th:class="'status-badge status-' + ${#strings.toLowerCase(repair.status.name())}"
+                      th:text="${repair.status.label}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">楼栋</span>
+                <span class="value" th:text="${repair.building}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">宿舍号</span>
+                <span class="value" th:text="${repair.roomNo}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">故障类型</span>
+                <span class="value" th:text="${repair.faultType.label}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">提交时间</span>
+                <span class="value" th:text="${#temporals.format(repair.submitTime, 'yyyy-MM-dd HH:mm')}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">学生姓名</span>
+                <span class="value" th:text="${repair.studentName}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">联系电话</span>
+                <span class="value" th:text="${repair.studentPhone}"></span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <span class="label">故障描述</span>
+                <span class="value" th:text="${repair.description}"></span>
+            </div>
+        </div>
+
+        <h3 style="margin: 20px 0 10px; font-size: 16px;">维修信息</h3>
+        <div class="detail-grid">
+            <div class="detail-item">
+                <span class="label">派单人</span>
+                <span class="value" th:text="${repair.dormManager != null ? repair.dormManager.realName : '-'}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">派单时间</span>
+                <span class="value" th:text="${repair.assignTime != null ? #temporals.format(repair.assignTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">维修人员</span>
+                <span class="value" th:text="${repair.repairmanName ?: '-'}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">开始时间</span>
+                <span class="value" th:text="${repair.startTime != null ? #temporals.format(repair.startTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">完成时间</span>
+                <span class="value" th:text="${repair.completeTime != null ? #temporals.format(repair.completeTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+            </div>
+            <div class="detail-item">
+                <span class="label">维修时长</span>
+                <span class="value" th:text="${repair.repairDurationMinutes != null ? (repair.repairDurationMinutes + ' 分钟') : '-'}"></span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <span class="label">维修备注</span>
+                <span class="value" th:text="${repair.repairNote ?: '-'}"></span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <span class="label">使用配件</span>
+                <span class="value" th:text="${repair.partsUsed ?: '-'}"></span>
+            </div>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(parts)}">
+            <h3 style="margin: 20px 0 10px; font-size: 16px;">配件清单</h3>
+            <table>
+                <thead>
+                <tr>
+                    <th>配件名称</th>
+                    <th>数量</th>
+                    <th>单位</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="part : ${parts}">
+                    <td th:text="${part.partName}"></td>
+                    <td th:text="${part.quantity}"></td>
+                    <td th:text="${part.unit}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${repair.timeoutReason != null}">
+            <h3 style="margin: 20px 0 10px; font-size: 16px; color: #f5222d;">超时信息</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="label">超时原因</span>
+                    <span class="value" th:text="${repair.timeoutReason.label}"></span>
+                </div>
+                <div class="detail-item" style="grid-column: span 2;">
+                    <span class="label">超时详情</span>
+                    <span class="value" th:text="${repair.timeoutDetail}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${repair.satisfaction != null}">
+            <h3 style="margin: 20px 0 10px; font-size: 16px;">回访评价</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="label">回访人</span>
+                    <span class="value" th:text="${repair.reviewer != null ? repair.reviewer.realName : '-'}"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">回访时间</span>
+                    <span class="value" th:text="${repair.reviewTime != null ? #temporals.format(repair.reviewTime, 'yyyy-MM-dd HH:mm') : '-'}"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">满意度</span>
+                    <span class="value" th:text="${repair.satisfaction.label}"></span>
+                </div>
+                <div class="detail-item" style="grid-column: span 2;">
+                    <span class="label">评价意见</span>
+                    <span class="value" th:text="${repair.reviewComment ?: '-'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin: 20px 0 10px; font-size: 16px;">处理历史</h3>
+        <div class="timeline">
+            <div class="timeline-item" th:each="h : ${histories}">
+                <div class="time" th:text="${#temporals.format(h.operateTime, 'yyyy-MM-dd HH:mm:ss')}"></div>
+                <div class="title">
+                    <span class="status-badge"
+                          th:class="'status-badge status-' + ${#strings.toLowerCase(h.status.name())}"
+                          th:text="${h.status.label}"></span>
+                    <span style="margin-left: 10px; color: #8c8c8c; font-weight: normal;"
+                          th:text="'操作人：' + ${h.operatorName}"></span>
+                </div>
+                <div class="desc" th:text="${h.remark}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="partsShortageModal" class="modal">
+    <div class="modal-content">
+        <h3>标记配件缺货</h3>
+        <form method="post" th:action="@{/repairman/parts-shortage/{id}(id=${repair.id})}">
+            <div class="form-group">
+                <label>缺货说明</label>
+                <textarea name="remark" rows="3" required placeholder="请描述缺少的配件..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-default" onclick="closeModal('partsShortageModal')">取消</button>
+                <button type="submit" class="btn btn-warning">确认缺货</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="completeModal" class="modal">
+    <div class="modal-content">
+        <h3>完成维修</h3>
+        <form method="post" th:action="@{/repairman/complete/{id}(id=${repair.id})}">
+            <div class="form-group">
+                <label>维修备注</label>
+                <textarea name="repairNote" rows="3" required placeholder="请描述维修情况..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>使用配件</label>
+                <input type="text" name="partsUsed" placeholder="如：水龙头1个，水管2米">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-default" onclick="closeModal('completeModal')">取消</button>
+                <button type="submit" class="btn btn-success">确认完成</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="timeoutModal" class="modal">
+    <div class="modal-content">
+        <h3>标记维修超时</h3>
+        <form method="post" th:action="@{/supervisor/timeout/{id}(id=${repair.id})}">
+            <div class="form-group">
+                <label>超时原因</label>
+                <select name="reason" required>
+                    <option value="">请选择原因</option>
+                    <option th:if="${timeoutReasons != null}"
+                            th:each="r : ${timeoutReasons}"
+                            th:value="${r.name()}"
+                            th:text="${r.label}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>详细说明</label>
+                <textarea name="detail" rows="3" required placeholder="请详细描述超时情况..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-default" onclick="closeModal('timeoutModal')">取消</button>
+                <button type="submit" class="btn btn-warning">确认超时</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <h3>回访评价</h3>
+        <form method="post" th:action="@{/supervisor/review/{id}(id=${repair.id})}">
+            <div class="form-group">
+                <label>满意度</label>
+                <select name="satisfaction" required>
+                    <option value="">请选择满意度</option>
+                    <option th:if="${satisfactionLevels != null}"
+                            th:each="s : ${satisfactionLevels}"
+                            th:value="${s.name()}"
+                            th:text="${s.label} + ' (' + ${s.score} + '分)'"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>评价意见</label>
+                <textarea name="reviewComment" rows="3" placeholder="请输入评价意见..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-default" onclick="closeModal('reviewModal')">取消</button>
+                <button type="submit" class="btn btn-primary">提交回访</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="reopenModal" class="modal">
+    <div class="modal-content">
+        <h3>重新派单</h3>
+        <form method="post" th:action="@{/supervisor/reopen/{id}(id=${repair.id})}">
+            <div class="form-group">
+                <label>重新派单原因</label>
+                <textarea name="reason" rows="3" required placeholder="请描述重新派单的原因..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-default" onclick="closeModal('reopenModal')">取消</button>
+                <button type="submit" class="btn btn-warning">确认重新派单</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+        }
+    }
+</script>
+</body>
+</html>

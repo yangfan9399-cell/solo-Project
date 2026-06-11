@@ -1,81 +1,115 @@
 #!/bin/bash
-# 校园宿舍报修系统 - 启动脚本
-# 自动检测并下载 Maven Wrapper，编译并启动应用
-
+# ============================================================
+# 校园宿舍报修系统 - 一键启动脚本
+# 仅需 Java 17+，Maven Wrapper 会自动下载
+# ============================================================
 set -e
 
 echo "========================================="
-echo "  校园宿舍报修系统 - 启动脚本"
+echo "  校园宿舍报修系统 - 一键启动"
 echo "========================================="
 echo ""
 
-# 检查 Java
-if ! command -v java &> /dev/null; then
-    echo "❌ 未检测到 Java，请先安装 JDK 17 或更高版本"
-    echo "   下载地址: https://adoptium.net/"
-    exit 1
+# ---- 检查 Java ----
+if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/java" ]; then
+    # 尝试从常见位置寻找 Java
+    for candidate in \
+        "/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" \
+        "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
+        "/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home" \
+        "$(dirname "$(dirname "$(readlink -f "$(which java)" 2>/dev/null)" 2>/dev/null)" 2>/dev/null)"; do
+        if [ -x "$candidate/bin/java" ]; then
+            export JAVA_HOME="$candidate"
+            break
+        fi
+    done
 fi
 
-JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
-echo "✅ Java 版本: $(java -version 2>&1 | head -n 1)"
+# 尝试 macOS java_home
+if [ -z "$JAVA_HOME" ] && [ -x "/usr/libexec/java_home" ]; then
+    JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null) && export JAVA_HOME || true
+fi
 
-# 检查 Maven
-if command -v mvn &> /dev/null; then
-    echo "✅ Maven 已安装，使用系统 Maven"
-    MVN_CMD="mvn"
-elif [ -f "./mvnw" ]; then
-    echo "✅ 使用 Maven Wrapper"
-    MVN_CMD="./mvnw"
-else
-    echo "⚠️  未找到 Maven，正在创建 Maven Wrapper..."
-    if command -v mvn &> /dev/null; then
-        mvn -N wrapper:wrapper -Dmaven=3.9.6
+# 检查是否可用
+JAVACMD=""
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JAVACMD="$JAVA_HOME/bin/java"
+elif command -v java &> /dev/null; then
+    JAVACMD="java"
+fi
+
+if [ -z "$JAVACMD" ]; then
+    echo "❌ 未检测到 Java，正在尝试通过 Homebrew 安装 OpenJDK 17..."
+    if command -v brew &> /dev/null; then
+        HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install openjdk@17 2>&1
+        export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+        if [ ! -x "$JAVA_HOME/bin/java" ]; then
+            export JAVA_HOME="/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+        fi
+        JAVACMD="$JAVA_HOME/bin/java"
     else
         echo ""
-        echo "需要手动安装 Maven 或下载 Maven Wrapper。"
-        echo ""
-        echo "方法1 - 安装 Maven:"
-        echo "  macOS:   brew install maven"
-        echo "  Linux:   sudo apt install maven"
-        echo "  Windows: choco install maven"
-        echo ""
-        echo "方法2 - 下载 Maven Wrapper (需要网络):"
-        echo "  访问 https://maven.apache.org/download.cgi 下载"
+        echo "❌ 无法自动安装 Java，请手动安装 JDK 17+："
+        echo "   macOS:  brew install openjdk@17"
+        echo "   或访问: https://adoptium.net/"
         echo ""
         exit 1
     fi
+fi
+
+JAVA_VER=$($JAVACMD -version 2>&1 | head -n 1)
+echo "✅ Java: $JAVA_VER"
+
+# ---- 确定项目目录 ----
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# ---- 选择 Maven 命令 ----
+MVN_CMD=""
+if [ -f "./mvnw" ]; then
     MVN_CMD="./mvnw"
+    echo "✅ 使用项目内置 Maven Wrapper"
+elif command -v mvn &> /dev/null; then
+    MVN_CMD="mvn"
+    echo "✅ 使用系统 Maven"
+else
+    echo "⚠️  未找到 mvnw 或系统 Maven，正在生成 Maven Wrapper..."
+    # 用 Java 直接下载 maven-wrapper.jar
+    WRAPPER_DIR="./.mvn/wrapper"
+    WRAPPER_JAR="$WRAPPER_DIR/maven-wrapper.jar"
+    WRAPPER_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar"
+    MAVEN_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.6/apache-maven-3.9.6-bin.tar.gz"
+
+    if [ ! -f "$WRAPPER_JAR" ]; then
+        echo "   下载 Maven Wrapper..."
+        mkdir -p "$WRAPPER_DIR"
+        if command -v curl &> /dev/null; then
+            curl -fSL -o "$WRAPPER_JAR" "$WRAPPER_URL"
+        elif command -v wget &> /dev/null; then
+            wget -O "$WRAPPER_JAR" "$WRAPPER_URL"
+        fi
+    fi
+
+    if [ -f "$WRAPPER_JAR" ]; then
+        chmod +x ./mvnw 2>/dev/null || true
+        MVN_CMD="./mvnw"
+        echo "✅ Maven Wrapper 已就绪"
+    else
+        echo "❌ 无法获取 Maven Wrapper，请检查网络连接"
+        exit 1
+    fi
 fi
 
 echo ""
-echo "🚀 正在编译并启动项目..."
-echo "   首次启动会下载依赖，请耐心等待..."
+echo "🚀 正在编译并启动（首次会下载依赖，约1-3分钟）..."
 echo ""
-echo "📊 启动完成后访问:"
-echo "   首页:     http://localhost:8080"
-echo "   H2控制台: http://localhost:8080/h2-console"
+echo "📊 启动后访问:"
+echo "   登录页:    http://localhost:8080"
+echo "   H2控制台:  http://localhost:8080/h2-console"
 echo ""
-echo "💡 H2控制台连接信息:"
-echo "   JDBC URL: jdbc:h2:mem:dorm_repair"
-echo "   用户名:   sa"
-echo "   密码:     (留空)"
-echo ""
-echo "停止服务请按 Ctrl+C"
+echo "💡 H2连接: jdbc:h2:mem:dorm_repair  用户: sa  密码: (空)"
+echo "   停止: Ctrl+C"
 echo "========================================="
 echo ""
 
-# 清理之前的进程
-if [ -f "app.pid" ]; then
-    OLD_PID=$(cat app.pid)
-    if ps -p $OLD_PID > /dev/null 2>&1; then
-        echo "⚠️  发现旧进程 PID=$OLD_PID，正在停止..."
-        kill $OLD_PID 2>/dev/null || true
-        sleep 2
-    fi
-    rm -f app.pid
-fi
-
-# 编译并启动
-$MVN_CMD spring-boot:run \
-    -Dspring-boot.run.arguments="--spring-boot.run.jvmArguments=-Xmx512m" \
-    "$@"
+exec $MVN_CMD spring-boot:run "$@"
