@@ -22,6 +22,10 @@
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="CageId" />
         <input type="hidden" asp-for="HasUnresolvedOxygenAnomaly" />
+        @if (Model.HasUnresolvedOxygenAnomaly)
+        {
+            <input type="hidden" asp-for="IsNormal" value="false" />
+        }
 
         <div class="form-info-bar">
             <span>📍 网箱：<strong>@Model.CageCode</strong></span>
@@ -71,14 +75,14 @@
         <div id="anomaly-section" style="display:none;">
             <div class="form-row">
                 <div class="form-group">
-                    <label asp-for="AnomalyType">异常类型</label>
-                    <select asp-for="AnomalyType" class="form-control">
-                        <option value="@((int)AnomalyType.InsufficientFeed)">饲料不足</option>
-                        <option value="@((int)AnomalyType.LowDissolvedOxygen)">溶氧异常</option>
-                        <option value="@((int)AnomalyType.DiseaseSuspected)">病害疑似</option>
-                    </select>
-                    <span asp-validation-for="AnomalyType" class="text-danger"></span>
-                </div>
+                <label asp-for="AnomalyType">异常类型</label>
+                <select asp-for="AnomalyType" id="AnomalyType" class="form-control">
+                    <option value="@((int)AnomalyType.InsufficientFeed)">饲料不足</option>
+                    <option value="@((int)AnomalyType.LowDissolvedOxygen)">溶氧异常</option>
+                    <option value="@((int)AnomalyType.DiseaseSuspected)">病害疑似</option>
+                </select>
+                <span asp-validation-for="AnomalyType" class="text-danger"></span>
+            </div>
             </div>
         </div>
 
@@ -110,11 +114,11 @@
     }
     document.getElementById('IsNormal')?.addEventListener('change', toggleAnomalySection);
     window.addEventListener('load', function() {
-        var hasOxygenAnomaly = @(Model.HasUnresolvedOxygenAnomaly ? "true" : "false").toLowerCase() === 'true';
+        var hasOxygenAnomaly = @(Model.HasUnresolvedOxygenAnomaly ? "true" : "false") === 'true';
         var checkbox = document.getElementById('IsNormal');
+        var anomalyTypeSelect = document.getElementById('AnomalyType');
         if (hasOxygenAnomaly && checkbox) {
             checkbox.checked = false;
-            var anomalyTypeSelect = document.getElementById('AnomalyType');
             if (anomalyTypeSelect) {
                 var lowOxygenValue = '@((int)AnomalyType.LowDissolvedOxygen)';
                 anomalyTypeSelect.value = lowOxygenValue;
