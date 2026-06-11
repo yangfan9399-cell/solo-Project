@@ -1,50 +1,103 @@
 @model DashboardViewModel
 @{
     ViewData["Title"] = "数据看板";
+    string SealTypeStr(SealType t) => t switch
+    {
+        SealType.CompanySeal => "公章",
+        SealType.ContractSeal => "合同专用章",
+        SealType.FinanceSeal => "财务专用章",
+        SealType.LegalPersonSeal => "法人章",
+        SealType.InvoiceSeal => "发票专用章",
+        _ => "未知"
+    };
+    string ExceptionStr(ExceptionReason r) => r switch
+    {
+        ExceptionReason.ContractMissing => "合同缺失",
+        ExceptionReason.Overdue => "超期未还",
+        ExceptionReason.ScopeMismatch => "用印范围不符",
+        ExceptionReason.SealDamaged => "印章损坏",
+        ExceptionReason.Other => "其他",
+        _ => "未知"
+    };
+    string ExceptionBadge(ExceptionReason r) => r switch
+    {
+        ExceptionReason.ContractMissing => "bg-danger",
+        ExceptionReason.Overdue => "bg-warning text-dark",
+        ExceptionReason.ScopeMismatch => "bg-primary",
+        ExceptionReason.SealDamaged => "bg-secondary",
+        _ => "bg-secondary"
+    };
+    string StatusBadge(BorrowStatus s) => s switch
+    {
+        BorrowStatus.PendingLegal => "bg-warning text-dark",
+        BorrowStatus.LegalApproved => "bg-info",
+        BorrowStatus.LegalRejected => "bg-danger",
+        BorrowStatus.PendingHandover => "bg-primary",
+        BorrowStatus.Borrowed => "bg-secondary",
+        BorrowStatus.PendingRiskReview => "bg-warning text-dark",
+        BorrowStatus.Returned => "bg-success",
+        BorrowStatus.ReturnException => "bg-danger",
+        BorrowStatus.Cancelled => "bg-secondary",
+        _ => "bg-secondary"
+    };
+    string StatusStr(BorrowStatus s) => s switch
+    {
+        BorrowStatus.PendingLegal => "待法务审核",
+        BorrowStatus.LegalApproved => "法务审核通过",
+        BorrowStatus.LegalRejected => "法务审核驳回",
+        BorrowStatus.PendingHandover => "待行政交接",
+        BorrowStatus.Borrowed => "外借中",
+        BorrowStatus.PendingRiskReview => "待风控复核",
+        BorrowStatus.Returned => "已归还",
+        BorrowStatus.ReturnException => "归还异常",
+        BorrowStatus.Cancelled => "已取消",
+        _ => "未知"
+    };
 }
 
 <div class="mb-4">
     <h4 class="mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>数据看板</h4>
-    <small class="text-muted">印章外借审批与归还核验全景视图</small>
+    <small class="text-muted">印章外借审批与归还核验全景视图 · 共 @Model.TotalRequests 条申请记录</small>
 </div>
 
+<!-- 核心指标卡片 -->
 <div class="row g-3 mb-4">
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-primary-grad">
             <div class="stat-number">@Model.TotalRequests</div>
             <div class="stat-label">总申请数</div>
             <i class="bi bi-files stat-icon"></i>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-warning-grad">
             <div class="stat-number">@Model.PendingLegal</div>
             <div class="stat-label">待法务审核</div>
             <i class="bi bi-hourglass-split stat-icon"></i>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-info-grad">
             <div class="stat-number">@Model.Borrowed</div>
             <div class="stat-label">外借中</div>
             <i class="bi bi-box-seam stat-icon"></i>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-secondary-grad">
             <div class="stat-number">@Model.PendingRisk</div>
             <div class="stat-label">待风控复核</div>
             <i class="bi bi-shield-exclamation stat-icon"></i>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-success-grad">
             <div class="stat-number">@Model.ReturnedNormal</div>
             <div class="stat-label">正常归还</div>
             <i class="bi bi-check-circle stat-icon"></i>
         </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 col-sm-4 col-6">
         <div class="stat-card bg-danger-grad">
             <div class="stat-number">@Model.ReturnException</div>
             <div class="stat-label">归还异常</div>
@@ -53,6 +106,7 @@
     </div>
 </div>
 
+<!-- 聚合看板：部门 + 印章类型 -->
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card h-100">
@@ -68,25 +122,33 @@
                                 <th class="text-center">总次数</th>
                                 <th class="text-center">正常</th>
                                 <th class="text-center">异常</th>
-                                <th>异常率</th>
+                                <th style="width:200px">异常率</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model.DepartmentStats)
+                            @if (Model.DepartmentStats.Any())
                             {
-                                var rate = item.TotalCount > 0 ? (decimal)item.ExceptionCount / item.TotalCount * 100 : 0;
-                                <tr>
-                                    <td>@item.DepartmentName</td>
-                                    <td class="text-center"><strong>@item.TotalCount</strong></td>
-                                    <td class="text-center"><span class="text-success">@item.NormalCount</span></td>
-                                    <td class="text-center"><span class="text-danger">@item.ExceptionCount</span></td>
-                                    <td style="width:200px">
-                                        <div class="progress-bar-chart">
-                                            <div class="fill @(rate > 30 ? "bg-danger" : rate > 10 ? "bg-warning" : "bg-success")" style="width:@(rate)%" ></div>
-                                            <span class="progress-label">@rate.ToString("0.0")%</span>
-                                        </div>
-                                    </td>
-                                </tr>
+                                @foreach (var item in Model.DepartmentStats)
+                                {
+                                    var rate = item.TotalCount > 0 ? Math.Round((decimal)item.ExceptionCount / item.TotalCount * 100, 1) : 0;
+                                    var barColor = rate > 30 ? "bg-danger" : rate > 10 ? "bg-warning" : "bg-success";
+                                    <tr>
+                                        <td>@item.DepartmentName</td>
+                                        <td class="text-center"><strong>@item.TotalCount</strong></td>
+                                        <td class="text-center text-success">@item.NormalCount</td>
+                                        <td class="text-center text-danger">@item.ExceptionCount</td>
+                                        <td>
+                                            <div class="progress-bar-chart">
+                                                <div class="fill @barColor" style="width:@(rate)%" ></div>
+                                                <span class="progress-label">@rate%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">暂无数据</td></tr>
                             }
                         </tbody>
                     </table>
@@ -107,23 +169,30 @@
                             <tr>
                                 <th>印章类型</th>
                                 <th class="text-center">使用次数</th>
-                                <th class="text-center">可用数量</th>
+                                <th class="text-center">可用</th>
                                 <th class="text-center">外借中</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model.SealTypeStats)
+                            @if (Model.SealTypeStats.Any())
                             {
-                                <tr>
-                                    <td><i class="bi bi-stamp me-1 text-muted"></i>@item.SealTypeName</td>
-                                    <td class="text-center"><strong>@item.TotalCount</strong></td>
-                                    <td class="text-center"><span class="badge bg-success">@item.Available</span></td>
-                                    <td class="text-center">
-                                        @if (item.Borrowed > 0)
-                                        { <span class="badge bg-warning text-dark">@item.Borrowed</span> }
-                                        else { <span class="text-muted">-</span> }
-                                    </td>
-                                </tr>
+                                @foreach (var item in Model.SealTypeStats)
+                                {
+                                    <tr>
+                                        <td><i class="bi bi-stamp me-1 text-muted"></i>@SealTypeStr(item.SealType)</td>
+                                        <td class="text-center"><strong>@item.TotalCount</strong></td>
+                                        <td class="text-center"><span class="badge bg-success">@item.Available</span></td>
+                                        <td class="text-center">
+                                            @if (item.Borrowed > 0)
+                                            { <span class="badge bg-warning text-dark">@item.Borrowed</span> }
+                                            else { <span class="text-muted">-</span> }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">暂无数据</td></tr>
                             }
                         </tbody>
                     </table>
@@ -133,6 +202,7 @@
     </div>
 </div>
 
+<!-- 聚合看板：异常原因 + 借用时长 -->
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="card h-100">
@@ -145,28 +215,34 @@
                         <thead>
                             <tr>
                                 <th>异常类型</th>
-                                <th class="text-center">数量</th>
-                                <th>占比</th>
+                                <th class="text-center" style="width:80px">数量</th>
+                                <th style="width:220px">占比</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model.ExceptionStats)
+                            @if (Model.ExceptionStats.Any(e => e.Count > 0))
                             {
-                                var badgeCls = item.Reason switch
+                                @foreach (var item in Model.ExceptionStats)
                                 {
-                                    ExceptionReason.ContractMissing => "bg-danger",
-                                    ExceptionReason.Overdue => "bg-warning text-dark",
-                                    ExceptionReason.ScopeMismatch => "bg-primary",
-                                    _ => "bg-secondary"
-                                };
+                                    if (item.Count == 0) continue;
+                                    <tr>
+                                        <td><span class="badge @ExceptionBadge(item.Reason)">@ExceptionStr(item.Reason)</span></td>
+                                        <td class="text-center"><strong>@item.Count</strong></td>
+                                        <td>
+                                            <div class="progress-bar-chart">
+                                                <div class="fill @ExceptionBadge(item.Reason)" style="width:@item.Percentage%" ></div>
+                                                <span class="progress-label">@item.Percentage%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
                                 <tr>
-                                    <td><span class="badge @badgeCls">@item.ReasonName</span></td>
-                                    <td class="text-center"><strong>@item.Count</strong></td>
-                                    <td style="width:200px">
-                                        <div class="progress-bar-chart">
-                                            <div class="fill @badgeCls" style="width:@item.Percentage%" ></div>
-                                            <span class="progress-label">@item.Percentage%</span>
-                                        </div>
+                                    <td colspan="3" class="text-center py-3">
+                                        <i class="bi bi-check-circle text-success me-1"></i>
+                                        <span class="text-success">当前无异常记录</span>
                                     </td>
                                 </tr>
                             }
@@ -184,28 +260,36 @@
             </div>
             <div class="card-body">
                 @{
-                    var maxCount = Model.DurationStats.Any() ? Model.DurationStats.Max(x => x.Count) : 1;
+                    var maxCount = Model.DurationStats.Any() ? Model.DurationStats.Max(x => x.Count) : 0;
                 }
-                <div class="d-flex flex-column gap-2">
-                    @foreach (var item in Model.DurationStats)
-                    {
-                        var width = maxCount > 0 ? (decimal)item.Count / maxCount * 100 : 0;
-                        <div class="d-flex align-items-center">
-                            <div style="width:100px" class="text-muted small">@item.DurationRange</div>
-                            <div class="flex-grow-1 mx-2">
-                                <div class="progress-bar-chart">
-                                    <div class="fill bg-info" style="width:@(width)%" ></div>
+                @if (maxCount > 0)
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var item in Model.DurationStats)
+                        {
+                            var width = maxCount > 0 ? Math.Round((decimal)item.Count / maxCount * 100, 1) : 0;
+                            <div class="d-flex align-items-center">
+                                <div style="width:100px" class="text-muted small">@item.DurationRange</div>
+                                <div class="flex-grow-1 mx-2">
+                                    <div class="progress-bar-chart">
+                                        <div class="fill bg-info" style="width:@(width)%" ></div>
+                                    </div>
                                 </div>
+                                <div style="width:50px;text-align:right" class="fw-bold">@item.Count</div>
                             </div>
-                            <div style="width:50px;text-align:right" class="fw-bold">@item.Count</div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">暂无数据</div>
+                }
             </div>
         </div>
     </div>
 </div>
 
+<!-- 最近申请 + 异常记录 -->
 <div class="row g-3">
     <div class="col-md-6">
         <div class="card h-100">
@@ -225,14 +309,23 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var req in Model.RecentRequests)
+                            @if (Model.RecentRequests.Any())
                             {
-                                <tr onclick="location.href='/BorrowRequest/Details/@req.BorrowRequestId'" style="cursor:pointer">
-                                    <td><code>@req.RequestCode</code></td>
-                                    <td>@req.Applicant?.UserName</td>
-                                    <td><small>@req.Seal?.SealName</small></td>
-                                    <td>@await Html.PartialAsync("_StatusBadge", req.Status)</td>
-                                </tr>
+                                @foreach (var req in Model.RecentRequests)
+                                {
+                                    var user = req.Applicant != null ? req.Applicant.UserName : "-";
+                                    var seal = req.Seal != null ? req.Seal.SealName : "-";
+                                    <tr onclick="location.href='/BorrowRequest/Details/@req.BorrowRequestId'" style="cursor:pointer">
+                                        <td><code>@req.RequestCode</code></td>
+                                        <td>@user</td>
+                                        <td><small>@seal</small></td>
+                                        <td><span class="badge @StatusBadge(req.Status)">@StatusStr(req.Status)</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-4">暂无记录</td></tr>
                             }
                         </tbody>
                     </table>
@@ -254,22 +347,29 @@
                                 <th>申请编号</th>
                                 <th>借用人</th>
                                 <th>异常类型</th>
-                                <th>详情</th>
+                                <th>说明</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var req in Model.ExceptionRequests)
+                            @if (Model.ExceptionRequests.Any())
                             {
-                                <tr onclick="location.href='/BorrowRequest/Details/@req.BorrowRequestId'" style="cursor:pointer">
-                                    <td><code>@req.RequestCode</code></td>
-                                    <td>@req.Applicant?.UserName</td>
-                                    <td>@await Html.PartialAsync("_ExceptionBadge", req.ExceptionReason)</td>
-                                    <td><small class="text-muted">@(req.ExceptionDescription?.Length > 30 ? req.ExceptionDescription.Substring(0, 30) + "..." : req.ExceptionDescription)</small></td>
-                                </tr>
+                                @foreach (var req in Model.ExceptionRequests)
+                                {
+                                    var user = req.Applicant != null ? req.Applicant.UserName : "-";
+                                    var desc = !string.IsNullOrEmpty(req.ExceptionDescription)
+                                        ? (req.ExceptionDescription.Length > 30 ? req.ExceptionDescription.Substring(0, 30) + "..." : req.ExceptionDescription)
+                                        : "-";
+                                    <tr onclick="location.href='/BorrowRequest/Details/@req.BorrowRequestId'" style="cursor:pointer">
+                                        <td><code>@req.RequestCode</code></td>
+                                        <td>@user</td>
+                                        <td><span class="badge @ExceptionBadge(req.ExceptionReason)">@ExceptionStr(req.ExceptionReason)</span></td>
+                                        <td><small class="text-muted">@desc</small></td>
+                                    </tr>
+                                }
                             }
-                            @if (!Model.ExceptionRequests.Any())
+                            else
                             {
-                                <tr><td colspan="4" class="text-center text-muted py-4">暂无异常记录</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-check2-circle text-success me-1"></i>暂无异常记录</td></tr>
                             }
                         </tbody>
                     </table>

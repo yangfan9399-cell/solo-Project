@@ -16,19 +16,39 @@ namespace SealManagementSystem
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            services.AddControllersWithViews()
+                .AddRazorRuntimeCompilation();
 
-            var useDatabase = Configuration["UseDatabase"] ?? "Sqlite";
-            if (useDatabase.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+            var useDb = (Configuration["UseDatabase"] ?? "SqlServer").Trim();
+            var sqliteConn = Configuration.GetConnectionString("DefaultConnection");
+            var sqlServerConn = Configuration.GetConnectionString("SqlServerConnection");
+
+            Action<DbContextOptionsBuilder> dbConfig;
+            bool sqlServerAvailable = false;
+
+            if (useDb.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
             {
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("SqlServerConnection")));
+                try
+                {
+                    using var testConn = new Microsoft.Data.SqlClient.SqlConnection(sqlServerConn);
+                    testConn.Open();
+                    testConn.Close();
+                    sqlServerAvailable = true;
+                }
+                catch { sqlServerAvailable = false; }
+            }
+
+            if (sqlServerAvailable)
+            {
+                dbConfig = (o) => o.UseSqlServer(sqlServerConn);
             }
             else
             {
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+                dbConfig = (o) => o.UseSqlite(sqliteConn);
             }
+
+            services.AddDbContextPool<ApplicationDbContext>(dbConfig, poolSize: 32);
+            services.AddHttpContextAccessor();
 
             services.AddScoped<ISealRepository, SealRepository>();
             services.AddScoped<IContractRepository, ContractRepository>();
@@ -42,24 +62,32 @@ namespace SealManagementSystem
             services.AddScoped<IDashboardService, DashboardService>();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext, ILogger<Startup> logger)
         {
-            dbContext.Database.EnsureCreated();
-
-            if (env.IsDevelopment())
+            logger.LogInformation("Using database provider: {provider}", dbContext.Database.ProviderName);
+            try
             {
-                app.UseDeveloperExceptionPage();
+                dbContext.Database.EnsureCreated();
+                var count = dbContext.BorrowRequests.Count();
+                logger.LogInformation("Database initialized. BorrowRequests count: {count}", count);
             }
-            else
+            catch (Exception ex)
             {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
+                logger.LogError(ex, "Database initialization error.");
             }
 
-            app.UseHttpsRedirection();
+            app.UseDeveloperExceptionPage();
+
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthorization();
+
+            app.Use(async (context, next) =>
+            {
+                var logger = context.RequestServices.GetRequiredService<ILogger<Startup>>();
+                logger.LogInformation("Request: {method} {path}", context.Request.Method, context.Request.Path);
+                await next();
+            });
 
             app.UseEndpoints(endpoints =>
             {
