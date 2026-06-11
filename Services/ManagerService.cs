@@ -66,7 +66,7 @@ public class ManagerService : IManagerService
         return await _context.Cages
             .Include(c => c.SeaArea)
             .Include(c => c.FishSpecies)
-            .Where(c => c.CurrentAnomaly != AnomalyType.None && c.CurrentStatus != DisposalStatus.Completed)
+            .Where(c => c.CurrentAnomaly != AnomalyType.None && c.CurrentStatus == DisposalStatus.Pending)
             .OrderBy(c => c.AnomalyReportedAt)
             .Select(c => new CageAnomalyDetail
             {
@@ -90,9 +90,22 @@ public class ManagerService : IManagerService
         var cage = await _context.Cages.FindAsync(model.CageId);
         if (cage == null) return false;
 
+        var originalAnomaly = cage.CurrentAnomaly;
+
         if (model.IsApproved)
         {
-            cage.CurrentStatus = DisposalStatus.Approved;
+            if (cage.CurrentAnomaly == AnomalyType.LowDissolvedOxygen
+                || cage.CurrentAnomaly == AnomalyType.InsufficientFeed)
+            {
+                cage.CurrentStatus = DisposalStatus.Completed;
+                cage.CurrentAnomaly = AnomalyType.None;
+                cage.CurrentAnomalyNote = null;
+                cage.AnomalyReportedAt = null;
+            }
+            else
+            {
+                cage.CurrentStatus = DisposalStatus.Approved;
+            }
         }
         else
         {
@@ -131,20 +144,31 @@ public class ManagerService : IManagerService
             NodeType = model.IsApproved ? "场长确认处置" : "场长退回",
             Timestamp = DateTime.UtcNow,
             Description = model.IsApproved
-                ? $"场长确认处置：{cage.CurrentAnomaly}处置方案已批准，备注：{model.ManagerNote}"
-                : $"场长退回：{cage.CurrentAnomaly}，备注：{model.ManagerNote}",
-            RelatedAnomaly = cage.CurrentAnomaly,
+                ? (originalAnomaly == AnomalyType.LowDissolvedOxygen || originalAnomaly == AnomalyType.InsufficientFeed
+                    ? $"场长确认处置完成：{originalAnomaly}已处理恢复正常，备注：{model.ManagerNote}"
+                    : $"场长确认处置：{originalAnomaly}处置方案已批准，备注：{model.ManagerNote}")
+                : $"场长退回：{originalAnomaly}，备注：{model.ManagerNote}",
+            RelatedAnomaly = originalAnomaly,
             StatusAfter = cage.CurrentStatus,
             RelatedRecordType = "ManagerApproval"
         };
 
         _context.WorkflowNodes.Add(node);
 
-        if (model.IsApproved && cage.CurrentAnomaly == AnomalyType.LowDissolvedOxygen)
+        if (model.IsApproved && originalAnomaly == AnomalyType.LowDissolvedOxygen)
         {
-        }
-        else if (!model.IsApproved)
-        {
+            var recoveryNode = new WorkflowNode
+            {
+                CageId = model.CageId,
+                OperatorId = model.ManagerId,
+                NodeType = "异常恢复",
+                Timestamp = DateTime.UtcNow,
+                Description = $"溶氧异常已通过场长审批处置，网箱恢复正常生产状态",
+                RelatedAnomaly = AnomalyType.None,
+                StatusAfter = DisposalStatus.Completed,
+                RelatedRecordType = "System"
+            };
+            _context.WorkflowNodes.Add(recoveryNode);
         }
 
         await _context.SaveChangesAsync();

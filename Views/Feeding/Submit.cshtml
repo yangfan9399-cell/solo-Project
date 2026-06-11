@@ -13,7 +13,7 @@
     <div class="alert alert-danger">
         <strong>⚠️ 警告：</strong> @Model.AnomalyWarning
         <br />
-        <small>请先处理溶氧异常后再进行正常投喂，或选择标记为异常投喂。</small>
+        <small>当前已自动切换为异常投喂模式，请选择异常类型后提交记录。</small>
     </div>
 }
 
@@ -57,8 +57,12 @@
         <div class="form-row">
             <div class="form-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" asp-for="IsNormal" />
+                    <input type="checkbox" asp-for="IsNormal" id="IsNormal" @(Model.HasUnresolvedOxygenAnomaly ? "disabled" : "") />
                     <span>正常投喂（无异常情况）</span>
+                    @if (Model.HasUnresolvedOxygenAnomaly)
+                    {
+                        <span class="text-danger" style="margin-left:8px;font-size:12px;">（存在溶氧异常，已禁用）</span>
+                    }
                 </label>
                 <span asp-validation-for="IsNormal" class="text-danger"></span>
             </div>
@@ -87,7 +91,7 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary" @(Model.HasUnresolvedOxygenAnomaly ? "disabled" : "")>💾 提交投喂记录</button>
+            <button type="submit" class="btn btn-primary">💾 提交投喂记录</button>
             <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">取消</a>
         </div>
     </form>
@@ -97,18 +101,26 @@
 
 @section Scripts {
 <script>
-    document.getElementById('IsNormal')?.addEventListener('change', function() {
-        var anomalySection = document.getElementById('anomaly-section');
-        if (anomalySection) {
-            anomalySection.style.display = this.checked ? 'none' : 'block';
-        }
-    });
-    window.addEventListener('load', function() {
+    function toggleAnomalySection() {
         var checkbox = document.getElementById('IsNormal');
         var anomalySection = document.getElementById('anomaly-section');
         if (checkbox && anomalySection) {
             anomalySection.style.display = checkbox.checked ? 'none' : 'block';
         }
+    }
+    document.getElementById('IsNormal')?.addEventListener('change', toggleAnomalySection);
+    window.addEventListener('load', function() {
+        var hasOxygenAnomaly = @(Model.HasUnresolvedOxygenAnomaly ? "true" : "false").toLowerCase() === 'true';
+        var checkbox = document.getElementById('IsNormal');
+        if (hasOxygenAnomaly && checkbox) {
+            checkbox.checked = false;
+            var anomalyTypeSelect = document.getElementById('AnomalyType');
+            if (anomalyTypeSelect) {
+                var lowOxygenValue = '@((int)AnomalyType.LowDissolvedOxygen)';
+                anomalyTypeSelect.value = lowOxygenValue;
+            }
+        }
+        toggleAnomalySection();
     });
 </script>
 }
