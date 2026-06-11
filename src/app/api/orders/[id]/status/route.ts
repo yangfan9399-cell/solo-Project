@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getOrderById, updateOrderStatus, addProof, addOrderHistory, getProofsByOrderId } from '@/lib/data';
+import { initDatabase } from '@/db/init';
+import { getOrderById, updateOrderStatus, addProof, addOrderHistory, getLatestProofVersion } from '@/db/queries';
+import type { OrderStatus, RejectReason } from '@/db/schema';
 
 const STATUS_FLOW: Record<string, string[]> = {
   draft: ['submitted'],
@@ -13,19 +15,21 @@ const STATUS_FLOW: Record<string, string[]> = {
 };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  await initDatabase();
+
   const { id } = await params;
   const orderId = parseInt(id);
 
   const body = await request.json();
   const { action, remark, operatorId, operatorName, rejectReason, returnReason, proofImageUrl, proofRemark, colorDeviation } = body;
 
-  const order = getOrderById(orderId);
+  const order = await getOrderById(orderId);
   if (!order) {
     return NextResponse.json({ error: '订单不存在' }, { status: 404 });
   }
 
-  const currentStatus = order.status;
-  let newStatus: string;
+  const currentStatus = order.status as OrderStatus;
+  let newStatus: OrderStatus;
 
   switch (action) {
     case 'submit':
@@ -41,10 +45,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
       newStatus = 'proof_uploaded';
 
-      const proofs = getProofsByOrderId(orderId);
-      const newVersion = proofs.length > 0 ? proofs[0].version + 1 : 1;
+      const latestVersion = await getLatestProofVersion(orderId);
+      const newVersion = latestVersion + 1;
 
-      addProof({
+      await addProof({
         orderId,
         version: newVersion,
         imageUrl: proofImageUrl || `/proofs/po${orderId}-v${newVersion}.svg`,
@@ -93,26 +97,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: '未知操作' }, { status: 400 });
   }
 
-  const updates: any = {};
-  if (rejectReason) {
-    updates.rejectReason = rejectReason;
+  const updates: {
+    rejectReason?: RejectReason | null;
+    rejectRemark?: string | null;
+    returnReason?: string | null;
+  } = {};
+
+  if (rejectReason !== undefined) {
+    updates.rejectReason = rejectReason as RejectReason;
   }
-  if (remark && action === 'customer_reject') {
+  if (action === 'customer_reject' && remark) {
     updates.rejectRemark = remark;
   }
-  if (returnReason) {
+  if (returnReason !== undefined) {
     updates.returnReason = returnReason;
   }
 
-  updateOrderStatus(orderId, newStatus, updates);
+  await updateOrderStatus(orderId, newStatus, updates);
 
-  addOrderHistory({
+  await addOrderHistory(
     orderId,
-    status: newStatus,
-    operatorId: operatorId || 1,
-    operatorName: operatorName || '系统',
-    remark: remark || getDefaultRemark(action),
-  });
+    newStatus,
+    operatorId || 1,
+    operatorName || '系统',
+    remark || getDefaultRemark(action)
+  );
 
   return NextResponse.json({ success: true, status: newStatus });
 }

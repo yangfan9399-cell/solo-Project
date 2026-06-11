@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getCustomers } from '@/lib/data';
+import { initDatabase } from '@/db/init';
+import { db } from '@/db';
+import { customers } from '@/db/schema';
 
 export async function GET() {
-  const customers = getCustomers();
-  return NextResponse.json(customers);
+  await initDatabase();
+  const result = await db.select().from(customers);
+  return NextResponse.json(result);
 }

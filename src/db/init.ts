@@ -1,6 +1,7 @@
 import { db } from './index';
-import { seedDatabase } from './seed';
 import { users, customers, orders, proofs, orderHistory } from './schema';
+import { eq, desc, sql } from 'drizzle-orm';
+import type { OrderStatus } from './schema';
 
 let initialized = false;
 
@@ -8,91 +9,297 @@ export async function initDatabase() {
   if (initialized) return;
 
   try {
-    db.run(`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
         role TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
+        email VARCHAR(255) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
 
-    db.run(`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS customers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        contact_person TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        email TEXT,
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        contact_person VARCHAR(100) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        email VARCHAR(255),
         address TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
 
-    db.run(`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_no TEXT NOT NULL UNIQUE,
-        customer_id INTEGER NOT NULL,
-        product_name TEXT NOT NULL,
+        id SERIAL PRIMARY KEY,
+        order_no VARCHAR(50) NOT NULL UNIQUE,
+        customer_id INTEGER NOT NULL REFERENCES customers(id),
+        product_name VARCHAR(200) NOT NULL,
         category TEXT NOT NULL,
         quantity INTEGER NOT NULL,
-        paper_type TEXT NOT NULL,
-        paper_weight TEXT,
-        size TEXT NOT NULL,
-        craft TEXT NOT NULL,
-        color_mode TEXT NOT NULL,
+        paper_type VARCHAR(100) NOT NULL,
+        paper_weight VARCHAR(50),
+        size VARCHAR(100) NOT NULL,
+        craft VARCHAR(200) NOT NULL,
+        color_mode VARCHAR(50) NOT NULL,
         description TEXT,
         status TEXT NOT NULL DEFAULT 'draft',
-        delivery_date TEXT NOT NULL,
-        original_delivery_date TEXT,
-        sales_id INTEGER NOT NULL,
-        designer_id INTEGER,
+        delivery_date TIMESTAMP NOT NULL,
+        original_delivery_date TIMESTAMP,
+        sales_id INTEGER NOT NULL REFERENCES users(id),
+        designer_id INTEGER REFERENCES users(id),
         reject_reason TEXT,
         reject_remark TEXT,
         return_reason TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        FOREIGN KEY (customer_id) REFERENCES customers(id),
-        FOREIGN KEY (sales_id) REFERENCES users(id),
-        FOREIGN KEY (designer_id) REFERENCES users(id)
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
 
-    db.run(`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS proofs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id INTEGER NOT NULL,
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER NOT NULL REFERENCES orders(id),
         version INTEGER NOT NULL DEFAULT 1,
-        image_url TEXT NOT NULL,
+        image_url VARCHAR(500) NOT NULL,
         remark TEXT,
-        uploaded_by INTEGER NOT NULL,
-        color_deviation TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        FOREIGN KEY (order_id) REFERENCES orders(id),
-        FOREIGN KEY (uploaded_by) REFERENCES users(id)
+        uploaded_by INTEGER NOT NULL REFERENCES users(id),
+        color_deviation VARCHAR(500),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
 
-    db.run(`
+    await db.execute(sql`
       CREATE TABLE IF NOT EXISTS order_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id INTEGER NOT NULL,
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER NOT NULL REFERENCES orders(id),
         status TEXT NOT NULL,
-        operator_id INTEGER,
-        operator_name TEXT NOT NULL,
+        operator_id INTEGER REFERENCES users(id),
+        operator_name VARCHAR(100) NOT NULL,
         remark TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        FOREIGN KEY (order_id) REFERENCES orders(id),
-        FOREIGN KEY (operator_id) REFERENCES users(id)
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
 
-    await seedDatabase();
+    const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
+    if (Number(userCount[0].count) === 0) {
+      await seedDatabase();
+    }
+
     initialized = true;
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error;
   }
+}
+
+async function seedDatabase() {
+  const now = new Date();
+  const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  const daysLater = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+  await db.insert(users).values([
+    { id: 1, name: '张经理', role: 'sales', email: 'zhang@print.com' },
+    { id: 2, name: '李设计师', role: 'designer', email: 'li@print.com' },
+    { id: 3, name: '王主管', role: 'production_manager', email: 'wang@print.com' },
+    { id: 4, name: '陈客户', role: 'customer', email: 'chen@customer.com' },
+    { id: 5, name: '刘客户', role: 'customer', email: 'liu@customer.com' },
+    { id: 6, name: '赵客户', role: 'customer', email: 'zhao@customer.com' },
+  ]);
+
+  await db.insert(customers).values([
+    { id: 1, name: '星辰科技有限公司', contactPerson: '陈总', phone: '13800138001', email: 'chen@xingchen.com', address: '北京市朝阳区科技园区A座' },
+    { id: 2, name: '明月贸易有限公司', contactPerson: '刘经理', phone: '13800138002', email: 'liu@mingyue.com', address: '上海市浦东新区贸易大厦B座' },
+    { id: 3, name: '朝阳传媒集团', contactPerson: '赵总监', phone: '13800138003', email: 'zhao@chaoyang.com', address: '广州市天河区传媒中心C座' },
+  ]);
+
+  await db.insert(orders).values([
+    {
+      id: 1,
+      orderNo: 'PO202606001',
+      customerId: 1,
+      productName: '企业宣传画册',
+      category: 'brochure',
+      quantity: 5000,
+      paperType: '铜版纸',
+      paperWeight: '250g',
+      size: 'A4',
+      craft: '覆膜+烫金',
+      colorMode: 'CMYK四色',
+      description: '企业年度宣传画册，包含公司简介、产品介绍、案例展示等',
+      status: 'order_placed',
+      deliveryDate: daysLater(10),
+      originalDeliveryDate: daysLater(10),
+      salesId: 1,
+      designerId: 2,
+      createdAt: daysAgo(7),
+      updatedAt: daysAgo(1),
+    },
+    {
+      id: 2,
+      orderNo: 'PO202606002',
+      customerId: 2,
+      productName: '产品海报',
+      category: 'poster',
+      quantity: 2000,
+      paperType: '哑粉纸',
+      paperWeight: '200g',
+      size: '60x90cm',
+      craft: '过油',
+      colorMode: 'CMYK四色',
+      description: '新品发布海报，颜色要求较高，需与品牌色一致',
+      status: 'customer_rejected',
+      deliveryDate: daysLater(15),
+      originalDeliveryDate: daysLater(15),
+      salesId: 1,
+      designerId: 2,
+      rejectReason: 'color_deviation',
+      rejectRemark: '蓝色偏差较大，与品牌标准色Pantone 2945C有明显差异',
+      createdAt: daysAgo(5),
+      updatedAt: daysAgo(1),
+    },
+    {
+      id: 3,
+      orderNo: 'PO202606003',
+      customerId: 3,
+      productName: '商务名片',
+      category: 'business_card',
+      quantity: 10000,
+      paperType: '特种纸',
+      paperWeight: '300g',
+      size: '90x54mm',
+      craft: '烫银+击凸',
+      colorMode: '专色',
+      description: '管理层商务名片，高端质感',
+      status: 'proof_uploaded',
+      deliveryDate: daysLater(20),
+      originalDeliveryDate: daysLater(20),
+      salesId: 1,
+      designerId: 2,
+      createdAt: daysAgo(3),
+      updatedAt: daysAgo(2),
+    },
+    {
+      id: 4,
+      orderNo: 'PO202606004',
+      customerId: 1,
+      productName: '产品包装盒',
+      category: 'packaging',
+      quantity: 3000,
+      paperType: '白卡纸',
+      paperWeight: '350g',
+      size: '20x15x8cm',
+      craft: '覆膜+UV',
+      colorMode: 'CMYK四色',
+      description: '新款产品外包装盒',
+      status: 'production_review',
+      deliveryDate: daysLater(5),
+      originalDeliveryDate: daysLater(12),
+      salesId: 1,
+      designerId: 2,
+      createdAt: daysAgo(10),
+      updatedAt: daysAgo(0),
+    },
+    {
+      id: 5,
+      orderNo: 'PO202606005',
+      customerId: 2,
+      productName: '宣传单页',
+      category: 'flyer',
+      quantity: 10000,
+      paperType: '铜版纸',
+      paperWeight: '157g',
+      size: 'A4双面',
+      craft: '折页',
+      colorMode: 'CMYK四色',
+      description: '促销活动宣传单页',
+      status: 'submitted',
+      deliveryDate: daysLater(25),
+      originalDeliveryDate: daysLater(25),
+      salesId: 1,
+      designerId: null,
+      createdAt: daysAgo(1),
+      updatedAt: daysAgo(1),
+    },
+    {
+      id: 6,
+      orderNo: 'PO202606006',
+      customerId: 3,
+      productName: '企业画册',
+      category: 'booklet',
+      quantity: 2000,
+      paperType: '哑粉纸',
+      paperWeight: '200g封面+157g内页',
+      size: 'A4',
+      craft: '锁线胶装',
+      colorMode: 'CMYK四色',
+      description: '企业形象画册，共32页',
+      status: 'order_returned',
+      deliveryDate: daysLater(30),
+      originalDeliveryDate: daysLater(20),
+      salesId: 1,
+      designerId: 2,
+      returnReason: '交期需要重新评估，当前产能紧张',
+      createdAt: daysAgo(8),
+      updatedAt: daysAgo(2),
+    },
+  ]);
+
+  await db.insert(proofs).values([
+    { id: 1, orderId: 1, version: 1, imageUrl: '/proofs/po1-v1.svg', remark: '第一版打样', uploadedBy: 2, createdAt: daysAgo(6) },
+    { id: 2, orderId: 1, version: 2, imageUrl: '/proofs/po1-v2.svg', remark: '根据客户反馈调整字体和版式', uploadedBy: 2, createdAt: daysAgo(4) },
+    { id: 3, orderId: 2, version: 1, imageUrl: '/proofs/po2-v1.svg', remark: '海报第一版，蓝色系', uploadedBy: 2, colorDeviation: '蓝色偏紫', createdAt: daysAgo(4) },
+    { id: 4, orderId: 3, version: 1, imageUrl: '/proofs/po3-v1.svg', remark: '名片打样，烫银效果', uploadedBy: 2, createdAt: daysAgo(2) },
+    { id: 5, orderId: 4, version: 1, imageUrl: '/proofs/po4-v1.svg', remark: '包装盒第一版打样', uploadedBy: 2, createdAt: daysAgo(8) },
+    { id: 6, orderId: 4, version: 2, imageUrl: '/proofs/po4-v2.svg', remark: '调整交期后最终版', uploadedBy: 2, createdAt: daysAgo(1) },
+    { id: 7, orderId: 6, version: 1, imageUrl: '/proofs/po6-v1.svg', remark: '画册第一版', uploadedBy: 2, createdAt: daysAgo(6) },
+  ]);
+
+  await db.insert(orderHistory).values([
+    { orderId: 1, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(7) },
+    { orderId: 1, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求，等待设计打样', createdAt: daysAgo(7) },
+    { orderId: 1, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传第一版打样', createdAt: daysAgo(6) },
+    { orderId: 1, status: 'customer_rejected', operatorId: 4, operatorName: '陈客户', remark: '字体需要调整，版式需要优化', createdAt: daysAgo(5) },
+    { orderId: 1, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传第二版打样，调整字体和版式', createdAt: daysAgo(4) },
+    { orderId: 1, status: 'customer_confirmed', operatorId: 4, operatorName: '陈客户', remark: '确认样稿，可以下单', createdAt: daysAgo(3) },
+    { orderId: 1, status: 'production_review', operatorId: 3, operatorName: '王主管', remark: '进入生产复核', createdAt: daysAgo(2) },
+    { orderId: 1, status: 'order_placed', operatorId: 3, operatorName: '王主管', remark: '复核通过，正式下单生产', createdAt: daysAgo(1) },
+
+    { orderId: 2, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(5) },
+    { orderId: 2, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求', createdAt: daysAgo(5) },
+    { orderId: 2, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传海报打样', createdAt: daysAgo(4) },
+    { orderId: 2, status: 'customer_rejected', operatorId: 5, operatorName: '刘客户', remark: '颜色偏差：蓝色与品牌标准色有明显差异', createdAt: daysAgo(2) },
+
+    { orderId: 3, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(3) },
+    { orderId: 3, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求', createdAt: daysAgo(3) },
+    { orderId: 3, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传名片打样', createdAt: daysAgo(2) },
+
+    { orderId: 4, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(10) },
+    { orderId: 4, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求', createdAt: daysAgo(10) },
+    { orderId: 4, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传第一版打样', createdAt: daysAgo(8) },
+    { orderId: 4, status: 'customer_confirmed', operatorId: 4, operatorName: '陈客户', remark: '样稿确认', createdAt: daysAgo(6) },
+    { orderId: 4, status: 'production_review', operatorId: 3, operatorName: '王主管', remark: '进入复核', createdAt: daysAgo(5) },
+    { orderId: 4, status: 'order_returned', operatorId: 3, operatorName: '王主管', remark: '交期紧张，需要与客户协商延期', createdAt: daysAgo(4) },
+    { orderId: 4, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '交期调整后重新上传确认', createdAt: daysAgo(1) },
+    { orderId: 4, status: 'customer_confirmed', operatorId: 4, operatorName: '陈客户', remark: '同意新交期，确认样稿', createdAt: daysAgo(0) },
+    { orderId: 4, status: 'production_review', operatorId: 3, operatorName: '王主管', remark: '再次进入生产复核', createdAt: daysAgo(0) },
+
+    { orderId: 5, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(1) },
+    { orderId: 5, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求', createdAt: daysAgo(1) },
+
+    { orderId: 6, status: 'draft', operatorId: 1, operatorName: '张经理', remark: '创建订单', createdAt: daysAgo(8) },
+    { orderId: 6, status: 'submitted', operatorId: 1, operatorName: '张经理', remark: '提交需求', createdAt: daysAgo(8) },
+    { orderId: 6, status: 'proof_uploaded', operatorId: 2, operatorName: '李设计师', remark: '上传画册打样', createdAt: daysAgo(6) },
+    { orderId: 6, status: 'customer_confirmed', operatorId: 6, operatorName: '赵客户', remark: '确认样稿', createdAt: daysAgo(4) },
+    { orderId: 6, status: 'production_review', operatorId: 3, operatorName: '王主管', remark: '进入复核', createdAt: daysAgo(3) },
+    { orderId: 6, status: 'order_returned', operatorId: 3, operatorName: '王主管', remark: '交期需要重新评估，当前产能紧张', createdAt: daysAgo(2) },
+  ]);
+
+  await db.execute(sql`SELECT setval('users_id_seq', 6)`);
+  await db.execute(sql`SELECT setval('customers_id_seq', 3)`);
+  await db.execute(sql`SELECT setval('orders_id_seq', 6)`);
+  await db.execute(sql`SELECT setval('proofs_id_seq', 7)`);
+  await db.execute(sql`SELECT setval('order_history_id_seq', 30)`);
 }

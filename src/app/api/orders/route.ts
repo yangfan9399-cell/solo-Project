@@ -1,84 +1,91 @@
 import { NextResponse } from 'next/server';
-import { getOrders, getCustomerById, getUserById, createOrder, addOrderHistory } from '@/lib/data';
+import { initDatabase } from '@/db/init';
+import { db } from '@/db';
+import { orders, customers, users } from '@/db/schema';
+import { eq, desc, like, and, sql } from 'drizzle-orm';
 
 export async function GET(request: Request) {
+  await initDatabase();
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const customerId = searchParams.get('customerId');
   const category = searchParams.get('category');
   const search = searchParams.get('search');
 
-  let orders = getOrders();
+  let whereConditions: any[] = [];
 
   if (status && status !== 'all') {
-    orders = orders.filter((o) => o.status === status);
+    whereConditions.push(eq(orders.status, status as any));
   }
   if (customerId) {
-    orders = orders.filter((o) => o.customerId === parseInt(customerId));
+    whereConditions.push(eq(orders.customerId, parseInt(customerId)));
   }
   if (category && category !== 'all') {
-    orders = orders.filter((o) => o.category === category);
+    whereConditions.push(eq(orders.category, category as any));
   }
   if (search) {
-    const searchLower = search.toLowerCase();
-    orders = orders.filter(
-      (o) =>
-        o.productName.toLowerCase().includes(searchLower) ||
-        o.orderNo.toLowerCase().includes(searchLower)
+    whereConditions.push(
+      sql`(${orders.productName} LIKE ${'%' + search + '%'} OR ${orders.orderNo} LIKE ${'%' + search + '%'})`
     );
   }
 
-  const result = orders.map((order) => {
-    const customer = getCustomerById(order.customerId);
-    const sales = getUserById(order.salesId);
-    return {
-      id: order.id,
-      orderNo: order.orderNo,
-      productName: order.productName,
-      category: order.category,
-      quantity: order.quantity,
-      status: order.status,
-      deliveryDate: order.deliveryDate,
-      originalDeliveryDate: order.originalDeliveryDate,
-      customerName: customer?.name || '未知客户',
-      salesName: sales?.name || '未知业务员',
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-    };
-  });
+  const where = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+  const result = await db
+    .select({
+      id: orders.id,
+      orderNo: orders.orderNo,
+      productName: orders.productName,
+      category: orders.category,
+      quantity: orders.quantity,
+      status: orders.status,
+      deliveryDate: orders.deliveryDate,
+      originalDeliveryDate: orders.originalDeliveryDate,
+      customerName: customers.name,
+      salesName: users.name,
+      createdAt: orders.createdAt,
+      updatedAt: orders.updatedAt,
+    })
+    .from(orders)
+    .leftJoin(customers, eq(orders.customerId, customers.id))
+    .leftJoin(users, eq(orders.salesId, users.id))
+    .where(where)
+    .orderBy(desc(orders.createdAt));
 
   return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {
+  await initDatabase();
+
   const body = await request.json();
 
-  const order = createOrder({
+  const now = new Date();
+  const orderNo = 'PO' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(Math.floor(Math.random() * 900) + 100);
+
+  const result = await db.insert(orders).values({
+    orderNo,
     customerId: body.customerId,
     productName: body.productName,
     category: body.category,
     quantity: body.quantity,
     paperType: body.paperType,
-    paperWeight: body.paperWeight,
+    paperWeight: body.paperWeight || null,
     size: body.size,
     craft: body.craft,
     colorMode: body.colorMode,
-    description: body.description,
-    deliveryDate: body.deliveryDate,
+    description: body.description || null,
+    status: body.status || 'draft',
+    deliveryDate: new Date(body.deliveryDate),
+    originalDeliveryDate: new Date(body.deliveryDate),
     salesId: body.salesId || 1,
     designerId: body.designerId || 2,
-    status: body.status || 'draft',
-  });
+  }).returning();
 
   if (body.status && body.status !== 'draft') {
-    addOrderHistory({
-      orderId: order.id,
-      status: body.status,
-      operatorId: body.salesId || 1,
-      operatorName: '张经理',
-      remark: '创建订单',
-    });
+    const { addOrderHistory } = await import('@/db/init');
   }
 
-  return NextResponse.json(order);
+  return NextResponse.json(result[0]);
 }

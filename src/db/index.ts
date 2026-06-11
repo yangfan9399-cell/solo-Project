@@ -1,12 +1,11 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from './schema';
-import path from 'path';
-import fs from 'fs';
 
-const dbPath = path.join(process.cwd(), 'sqlite.db');
+const pool = new Pool({
+  connectionString: 'postgres://localhost:5432/printflow',
+});
 
-const sqlite = new Database(dbPath);
-export const db = drizzle(sqlite, { schema });
+export const db = drizzle(pool, { schema });
 
 export type Db = typeof db;

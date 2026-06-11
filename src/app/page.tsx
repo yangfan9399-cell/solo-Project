@@ -43,10 +43,6 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleCreateOrder = () => {
-    alert('创建订单功能演示 - 实际项目中会跳转到创建表单');
-  };
-
   return (
     <div>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -54,15 +50,15 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-gray-900">订单列表</h1>
           <p className="text-sm text-gray-500 mt-1">管理印刷品打样、确认与下单全流程</p>
         </div>
-        <button
-          onClick={handleCreateOrder}
+        <Link
+          href="/orders/new"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           新建订单
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
