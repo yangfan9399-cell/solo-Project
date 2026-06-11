@@ -1,0 +1,49 @@
+<% content_for(:title, "新建退货单") %>
+
+<%= link_to "← 返回列表", return_orders_path, class: "back-link" %>
+
+<div class="page-header">
+  <h1 class="page-title">新建退货单</h1>
+</div>
+
+<div class="card">
+  <%= form_with model: @return_order, local: true do |f| %>
+    <% if @return_order.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 24px;">
+        <strong><%= pluralize(@return_order.errors.count, "个") %>错误禁止了此退货单的保存：</strong>
+        <ul>
+          <% @return_order.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="info-grid">
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :order_id, "订单号", style: "font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500;" %>
+        <%= f.select :order_id, @orders.map { |o| ["#{o.order_no} - #{o.product.name}", o.id] }, { include_blank: "请选择订单" }, class: "form-control" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :reason, "退货原因", style: "font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500;" %>
+        <%= f.text_area :reason, class: "form-control", rows: 4, placeholder: "请输入退货原因" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :customer_note, "客户备注", style: "font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500;" %>
+        <%= f.text_area :customer_note, class: "form-control", rows: 3, placeholder: "请输入客户备注（选填）" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / 2;">
+        <%= f.label :refund_amount, "退款金额", style: "font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500;" %>
+        <%= f.number_field :refund_amount, class: "form-control", step: "0.01", min: "0", placeholder: "请输入退款金额" %>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <%= f.submit "提交退货单", class: "btn btn-primary" %>
+      <%= link_to "取消", return_orders_path, class: "btn btn-info" %>
+    </div>
+  <% end %>
+</div>

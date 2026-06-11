@@ -1,0 +1,99 @@
+<% content_for(:title, "统计") %>
+
+<div class="page-header">
+  <h1 class="page-title">统计面板</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value"><%= @overall_stats[:total_count] %></div>
+    <div class="stat-label">总退货单数</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= @overall_stats[:completed_count] %></div>
+    <div class="stat-label">已处理完成</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= percentage(@overall_stats[:resale_rate] * 100) %></div>
+    <div class="stat-label">再售率</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">按主播统计</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>主播名</th>
+        <th>退货数</th>
+        <th>再售数</th>
+        <th>再售率</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stats_by_anchor.each do |stat| %>
+        <tr>
+          <td><%= stat.anchor_name %></td>
+          <td><%= stat.total_count %></td>
+          <td><%= stat.resold_count %></td>
+          <td><%= percentage(stat.resale_rate.to_f * 100) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% if @stats_by_anchor.empty? %>
+    <div style="text-align: center; padding: 20px; color: #909399;">暂无数据</div>
+  <% end %>
+</div>
+
+<div class="card">
+  <div class="card-title">按品类统计</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>品类名</th>
+        <th>退货数</th>
+        <th>再售数</th>
+        <th>再售率</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stats_by_category.each do |stat| %>
+        <tr>
+          <td><%= stat.category %></td>
+          <td><%= stat.total_count %></td>
+          <td><%= stat.resold_count %></td>
+          <td><%= percentage(stat.resale_rate.to_f * 100) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% if @stats_by_category.empty? %>
+    <div style="text-align: center; padding: 20px; color: #909399;">暂无数据</div>
+  <% end %>
+</div>
+
+<div class="card">
+  <div class="card-title">按退货原因统计</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>退货原因</th>
+        <th>数量</th>
+        <th>占比</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @stats_by_reason.each do |stat| %>
+        <tr>
+          <td><%= stat.reason %></td>
+          <td><%= stat.count %></td>
+          <td><%= percentage((stat.count.to_f / @overall_stats[:total_count]) * 100) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% if @stats_by_reason.empty? %>
+    <div style="text-align: center; padding: 20px; color: #909399;">暂无数据</div>
+  <% end %>
+</div>

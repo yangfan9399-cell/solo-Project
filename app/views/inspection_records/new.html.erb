@@ -1,0 +1,64 @@
+<% content_for(:title, "录入质检 - #{@return_order.return_no}") %>
+
+<%= link_to "← 返回退货单详情", return_order_path(@return_order), class: "back-link" %>
+
+<div class="page-header">
+  <h1 class="page-title">录入质检 - 退货单 <%= @return_order.return_no %></h1>
+</div>
+
+<div class="card">
+  <%= form_with model: [@return_order, @inspection_record], local: true do |f| %>
+    <% if @inspection_record.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 24px;">
+        <strong><%= pluralize(@inspection_record.errors.count, "个") %>错误禁止了此质检记录的保存：</strong>
+        <ul>
+          <% @inspection_record.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="info-grid">
+      <div class="form-group" style="grid-column: 1 / 2;">
+        <%= f.label :inspector_name, "质检人姓名" %>
+        <%= f.text_field :inspector_name, class: "form-control", placeholder: "请输入质检人姓名" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 2 / -1;">
+        <%= f.label :condition, "成色" %>
+        <%= f.select :condition, condition_options, { include_blank: "请选择成色" }, class: "form-control" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / 2;">
+        <%= f.label :missing_items_count, "缺失件数" %>
+        <%= f.number_field :missing_items_count, class: "form-control", min: "0", value: 0 %>
+      </div>
+
+      <div class="form-group" style="grid-column: 2 / -1;">
+        <%= f.label :quality_score, "质检评分（1-100）" %>
+        <%= f.number_field :quality_score, class: "form-control", min: "1", max: "100", placeholder: "请输入1-100的评分" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :damage_description, "破损描述" %>
+        <%= f.text_area :damage_description, class: "form-control", rows: 4, placeholder: "请输入破损描述（如无破损可留空）" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :final_decision, "最终判定" %>
+        <%= f.select :final_decision, final_decision_options, { include_blank: "请选择最终判定" }, class: "form-control" %>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <%= f.label :photos_text, "照片URLs（每行一个URL，将存入photos JSON数组）" %>
+        <%= f.text_area :photos_text, class: "form-control", rows: 5, placeholder: "https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg" %>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <%= f.submit "提交质检结果", class: "btn btn-primary" %>
+      <%= link_to "取消", return_order_path(@return_order), class: "btn btn-info" %>
+    </div>
+  <% end %>
+</div>

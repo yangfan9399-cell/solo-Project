@@ -1,0 +1,62 @@
+<% content_for(:title, "退货单列表") %>
+
+<div class="page-header">
+  <h1 class="page-title">退货单列表</h1>
+  <%= link_to "新建退货单", new_return_order_path, class: "btn btn-primary" %>
+</div>
+
+<div class="card">
+  <%= form_tag return_orders_path, method: :get, class: "filter-form" do %>
+    <div class="form-group">
+      <%= label_tag :status, "状态" %>
+      <%= select_tag :status, options_for_select(return_order_status_options, params[:status]), include_blank: "全部状态", class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <%= label_tag :anchor_id, "主播" %>
+      <%= select_tag :anchor_id, options_for_select(anchor_options, params[:anchor_id]), include_blank: "全部主播", class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <%= label_tag :category, "品类" %>
+      <%= select_tag :category, options_for_select(category_options, params[:category]), include_blank: "全部品类", class: "form-control" %>
+    </div>
+    <div class="form-group">
+      <%= submit_tag "筛选", class: "btn btn-primary" %>
+      <%= link_to "重置", return_orders_path, class: "btn btn-info" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>退货单号</th>
+        <th>订单号</th>
+        <th>商品名称</th>
+        <th>主播</th>
+        <th>退款金额</th>
+        <th>状态</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @return_orders.each do |ro| %>
+        <tr>
+          <td><%= ro.return_no %></td>
+          <td><%= ro.order.order_no %></td>
+          <td><%= ro.product.name %></td>
+          <td><%= ro.anchor.name %></td>
+          <td><%= format_amount(ro.refund_amount) %></td>
+          <td><%= return_order_status_tag(ro) %></td>
+          <td><%= link_to "查看详情", return_order_path(ro), class: "btn-link" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <% if @return_orders.empty? %>
+    <div style="text-align: center; padding: 40px; color: #909399;">
+      暂无退货单数据
+    </div>
+  <% end %>
+</div>
