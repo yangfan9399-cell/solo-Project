@@ -1,0 +1,40 @@
+<tr id="schedule-row-{{ item.schedule.id }}">
+    <td>{{ item.schedule.course.name }}</td>
+    <td>{{ item.schedule.instructor.get_full_name|default:item.schedule.instructor.username|default:"-" }}</td>
+    <td>{{ item.schedule.start_date }} ~ {{ item.schedule.end_date }}</td>
+    <td>{{ item.schedule.location|default:"-" }}</td>
+    <td>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="progress-bar" style="width: 80px;">
+                <div class="fill" style="width: {% widthratio item.enrolled_count item.schedule.max_students 100 %}%;"></div>
+            </div>
+            <span>{{ item.enrolled_count }}/{{ item.schedule.max_students }}</span>
+        </div>
+    </td>
+    <td>
+        {% if item.schedule.is_active %}
+        <span class="badge badge-success">已启用</span>
+        {% else %}
+        <span class="badge badge-secondary">已停用</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if user.role == 'instructor' and item.schedule.instructor == user %}
+        <a href="{% url 'attendance_manage' item.schedule.id %}" class="btn btn-sm btn-secondary">签到</a>
+        <a href="{% url 'exam_manage' item.schedule.id %}" class="btn btn-sm btn-primary">考试</a>
+        {% endif %}
+        {% if user.role == 'training_admin' %}
+        <a href="{% url 'schedule_edit' item.schedule.id %}" class="btn btn-sm btn-secondary">编辑</a>
+        <button 
+            hx-post="{% url 'schedule_toggle' item.schedule.id %}"
+            hx-target="#schedule-row-{{ item.schedule.id }}"
+            hx-swap="outerHTML"
+            class="btn btn-sm {% if item.schedule.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if item.schedule.is_active %}停用{% else %}启用{% endif %}
+        </button>
+        {% endif %}
+        {% if user.role == 'hr' or user.role == 'training_admin' %}
+        <a href="{% url 'enrollment_list' %}?schedule={{ item.schedule.id }}" class="btn btn-sm btn-info">学员</a>
+        {% endif %}
+    </td>
+</tr>

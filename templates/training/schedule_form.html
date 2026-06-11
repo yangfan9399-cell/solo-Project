@@ -1,0 +1,70 @@
+{% extends "training/base.html" %}
+
+{% block title %}{% if mode == 'create' %}创建排班{% else %}编辑排班{% endif %} - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">
+    {% if mode == 'create' %}📅 创建培训排班{% else %}✏️ 编辑培训排班{% endif %}
+</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>课程 *</label>
+                <select name="course" required>
+                    <option value="">请选择课程</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if schedule and schedule.course_id == course.id %}selected{% endif %}>{{ course.name }} ({{ course.duration_hours }}课时)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>讲师</label>
+                <select name="instructor">
+                    <option value="">请选择讲师</option>
+                    {% for instructor in instructors %}
+                    <option value="{{ instructor.id }}" {% if schedule and schedule.instructor_id == instructor.id %}selected{% endif %}>{{ instructor.get_full_name|default:instructor.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>开始日期 *</label>
+                <input type="date" name="start_date" value="{{ schedule.start_date|date:'Y-m-d'|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label>结束日期 *</label>
+                <input type="date" name="end_date" value="{{ schedule.end_date|date:'Y-m-d'|default:'' }}" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>培训地点</label>
+                <input type="text" name="location" value="{{ schedule.location|default:'' }}" placeholder="如：培训室A / 线上会议">
+            </div>
+            <div class="form-group">
+                <label>最大人数</label>
+                <input type="number" name="max_students" value="{{ schedule.max_students|default:30 }}" min="1" max="200">
+            </div>
+        </div>
+        {% if mode == 'edit' %}
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" name="is_active" {% if schedule.is_active %}checked{% endif %}>
+                启用此排班
+            </label>
+        </div>
+        {% endif %}
+        <div style="text-align: right; margin-top: 1.5rem;">
+            <a href="{% url 'schedule_list' %}" class="btn btn-secondary">取消</a>
+            <button type="submit" class="btn btn-primary">
+                {% if mode == 'create' %}创建排班{% else %}保存修改{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

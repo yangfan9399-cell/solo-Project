@@ -1,0 +1,98 @@
+{% extends "training/base.html" %}
+
+{% block title %}培训排班 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📅 培训排班</h2>
+
+<div class="filters">
+    <span>课程：</span>
+    <select onchange="window.location.href='?course=' + this.value + '&status={{ status_filter }}'">
+        <option value="">全部课程</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}" {% if course_filter == course.id|stringformat:"s" %}selected{% endif %}>{{ course.name }}</option>
+        {% endfor %}
+    </select>
+    <span>状态：</span>
+    <select onchange="window.location.href='?course={{ course_filter }}&status=' + this.value">
+        <option value="">全部状态</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>已启用</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>已停用</option>
+    </select>
+    <div style="margin-left: auto;">
+        {% if user.role == 'training_admin' %}
+        <a href="{% url 'schedule_create' %}" class="btn btn-primary">+ 创建排班</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    {% if schedules_with_stats %}
+    <table>
+        <thead>
+            <tr>
+                <th>课程名称</th>
+                <th>讲师</th>
+                <th>培训时间</th>
+                <th>地点</th>
+                <th>报名人数</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="schedule-table">
+            {% for item in schedules_with_stats %}
+            <tr id="schedule-row-{{ item.schedule.id }}">
+                <td>{{ item.schedule.course.name }}</td>
+                <td>{{ item.schedule.instructor.get_full_name|default:item.schedule.instructor.username|default:"-" }}</td>
+                <td>{{ item.schedule.start_date }} ~ {{ item.schedule.end_date }}</td>
+                <td>{{ item.schedule.location|default:"-" }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="progress-bar" style="width: 80px;">
+                            <div class="fill" style="width: {% widthratio item.enrolled_count item.schedule.max_students 100 %}%;"></div>
+                        </div>
+                        <span>{{ item.enrolled_count }}/{{ item.schedule.max_students }}</span>
+                    </div>
+                </td>
+                <td>
+                    {% if item.schedule.is_active %}
+                    <span class="badge badge-success">已启用</span>
+                    {% else %}
+                    <span class="badge badge-secondary">已停用</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.role == 'instructor' and item.schedule.instructor == user %}
+                    <a href="{% url 'attendance_manage' item.schedule.id %}" class="btn btn-sm btn-secondary">签到</a>
+                    <a href="{% url 'exam_manage' item.schedule.id %}" class="btn btn-sm btn-primary">考试</a>
+                    {% endif %}
+                    {% if user.role == 'training_admin' %}
+                    <a href="{% url 'schedule_edit' item.schedule.id %}" class="btn btn-sm btn-secondary">编辑</a>
+                    <button 
+                        hx-post="{% url 'schedule_toggle' item.schedule.id %}"
+                        hx-target="#schedule-row-{{ item.schedule.id }}"
+                        hx-swap="outerHTML"
+                        class="btn btn-sm {% if item.schedule.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                        {% if item.schedule.is_active %}停用{% else %}启用{% endif %}
+                    </button>
+                    {% endif %}
+                    {% if user.role == 'hr' or user.role == 'training_admin' %}
+                    <a href="{% url 'enrollment_list' %}?schedule={{ item.schedule.id }}" class="btn btn-sm btn-info">学员</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无排班记录</p>
+        {% if user.role == 'training_admin' %}
+        <a href="{% url 'schedule_create' %}" class="btn btn-primary" style="margin-top: 1rem;">创建排班</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

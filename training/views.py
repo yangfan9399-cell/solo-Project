@@ -582,6 +582,175 @@ def revoke_certificate(request, certificate_id):
 
 
 @login_required
+def schedule_list(request):
+    if request.user.role not in [Role.TRAINING_ADMIN, Role.HR]:
+        return redirect('dashboard')
+
+    course_filter = request.GET.get('course', '')
+    status_filter = request.GET.get('status', '')
+
+    schedules = TrainingSchedule.objects.select_related('course', 'instructor').order_by('-start_date')
+
+    if course_filter:
+        schedules = schedules.filter(course_id=course_filter)
+    if status_filter == 'active':
+        schedules = schedules.filter(is_active=True)
+    elif status_filter == 'inactive':
+        schedules = schedules.filter(is_active=False)
+
+    schedules_with_stats = []
+    for s in schedules:
+        schedules_with_stats.append({
+            'schedule': s,
+            'enrolled_count': s.enrolled_count(),
+        })
+
+    courses = Course.objects.filter(is_active=True)
+
+    context = {
+        'schedules_with_stats': schedules_with_stats,
+        'courses': courses,
+        'course_filter': course_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'training/schedule_list.html', context)
+
+
+@login_required
+def schedule_create(request):
+    if request.user.role != Role.TRAINING_ADMIN:
+        return redirect('dashboard')
+
+    courses = Course.objects.filter(is_active=True)
+    instructors = User.objects.filter(role=Role.INSTRUCTOR)
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        instructor_id = request.POST.get('instructor')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        location = request.POST.get('location', '')
+        max_students = request.POST.get('max_students', 30)
+
+        try:
+            course = Course.objects.get(id=course_id)
+            instructor = User.objects.get(id=instructor_id) if instructor_id else None
+
+            from datetime import datetime
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+            if start > end:
+                messages.error(request, '开始日期不能晚于结束日期')
+                return render(request, 'training/schedule_form.html', {
+                    'courses': courses,
+                    'instructors': instructors,
+                    'mode': 'create',
+                })
+
+            schedule = TrainingSchedule.objects.create(
+                course=course,
+                instructor=instructor,
+                start_date=start,
+                end_date=end,
+                location=location,
+                max_students=int(max_students),
+                is_active=True,
+            )
+
+            messages.success(request, f'排班创建成功：{schedule}')
+            return redirect('schedule_list')
+
+        except Exception as e:
+            messages.error(request, f'创建失败：{str(e)}')
+
+    context = {
+        'courses': courses,
+        'instructors': instructors,
+        'mode': 'create',
+    }
+    return render(request, 'training/schedule_form.html', context)
+
+
+@login_required
+def schedule_edit(request, schedule_id):
+    if request.user.role != Role.TRAINING_ADMIN:
+        return redirect('dashboard')
+
+    schedule = get_object_or_404(TrainingSchedule, id=schedule_id)
+    courses = Course.objects.filter(is_active=True)
+    instructors = User.objects.filter(role=Role.INSTRUCTOR)
+
+    if request.method == 'POST':
+        course_id = request.POST.get('course')
+        instructor_id = request.POST.get('instructor')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        location = request.POST.get('location', '')
+        max_students = request.POST.get('max_students', 30)
+        is_active = request.POST.get('is_active') == 'on'
+
+        try:
+            from datetime import datetime
+            start = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+            if start > end:
+                messages.error(request, '开始日期不能晚于结束日期')
+                return render(request, 'training/schedule_form.html', {
+                    'schedule': schedule,
+                    'courses': courses,
+                    'instructors': instructors,
+                    'mode': 'edit',
+                })
+
+            schedule.course_id = course_id
+            schedule.instructor_id = instructor_id if instructor_id else None
+            schedule.start_date = start
+            schedule.end_date = end
+            schedule.location = location
+            schedule.max_students = int(max_students)
+            schedule.is_active = is_active
+            schedule.save()
+
+            messages.success(request, '排班更新成功')
+            return redirect('schedule_list')
+
+        except Exception as e:
+            messages.error(request, f'更新失败：{str(e)}')
+
+    context = {
+        'schedule': schedule,
+        'courses': courses,
+        'instructors': instructors,
+        'mode': 'edit',
+    }
+    return render(request, 'training/schedule_form.html', context)
+
+
+@login_required
+def schedule_toggle(request, schedule_id):
+    if request.user.role != Role.TRAINING_ADMIN:
+        return JsonResponse({'success': False, 'error': '无权限'}, status=403)
+
+    schedule = get_object_or_404(TrainingSchedule, id=schedule_id)
+
+    if request.method == 'POST':
+        schedule.is_active = not schedule.is_active
+        schedule.save()
+        messages.success(request, f'排班已{"启用" if schedule.is_active else "停用"}')
+
+        if request.headers.get('HX-Request'):
+            return render(request, 'training/partials/schedule_row.html', {
+                'item': {'schedule': schedule, 'enrolled_count': schedule.enrolled_count()},
+            })
+
+        return redirect('schedule_list')
+
+    return JsonResponse({'success': False})
+
+
+@login_required
 def analytics_view(request):
     if request.user.role not in [Role.HR, Role.TRAINING_ADMIN]:
         return redirect('dashboard')

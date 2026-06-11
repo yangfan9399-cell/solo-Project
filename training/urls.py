@@ -5,6 +5,10 @@ from .views import EnrollmentApprovalView
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('courses/', views.course_list, name='course_list'),
+    path('schedules/', views.schedule_list, name='schedule_list'),
+    path('schedules/create/', views.schedule_create, name='schedule_create'),
+    path('schedules/<int:schedule_id>/edit/', views.schedule_edit, name='schedule_edit'),
+    path('schedules/<int:schedule_id>/toggle/', views.schedule_toggle, name='schedule_toggle'),
     path('enroll/<int:schedule_id>/', views.enroll_course, name='enroll_course'),
     path('my-enrollments/', views.my_enrollments, name='my_enrollments'),
     path('enrollment/<int:enrollment_id>/', views.enrollment_detail, name='enrollment_detail'),
