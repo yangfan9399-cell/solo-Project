@@ -23,6 +23,10 @@ class RepairRecord < ApplicationRecord
   scope :unfinished, -> { where.not(status: [:completed, :cancelled]) }
   scope :active_for_vehicle, ->(vehicle_id) { where(vehicle_id: vehicle_id).unfinished }
 
+  def may_complete?
+    !completed? && !cancelled?
+  end
+
   def decommission_days_calculated
     return decommission_days if decommission_days.present?
     return 0 unless start_date

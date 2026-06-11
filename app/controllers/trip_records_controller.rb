@@ -60,6 +60,12 @@ class TripRecordsController < ApplicationController
       return
     end
 
+    issues = @trip_record.blocking_issues
+    if issues.any?
+      redirect_to @trip_record, alert: "无法批准出车，存在#{issues.count}项阻止：#{issues.join('；')}"
+      return
+    end
+
     ActiveRecord::Base.transaction do
       @trip_record.update!(
         review_status: :approved,
