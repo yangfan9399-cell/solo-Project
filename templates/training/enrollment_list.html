@@ -1,0 +1,78 @@
+{% extends "training/base.html" %}
+
+{% block title %}报名审核 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📝 报名记录</h2>
+
+<div class="filters">
+    <span>筛选：</span>
+    <select onchange="window.location.href='?status=' + this.value">
+        <option value="">全部状态</option>
+        {% for value, label in EnrollmentStatus.choices %}
+        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="card">
+    {% if enrollments %}
+    <table>
+        <thead>
+            <tr>
+                <th>员工</th>
+                <th>课程</th>
+                <th>讲师</th>
+                <th>培训时间</th>
+                <th>报名时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="enrollment-table">
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.username }}</td>
+                <td>{{ enrollment.schedule.course.name }}</td>
+                <td>{{ enrollment.schedule.instructor.get_full_name|default:enrollment.schedule.instructor.username }}</td>
+                <td>{{ enrollment.schedule.start_date }} ~ {{ enrollment.schedule.end_date }}</td>
+                <td>{{ enrollment.applied_at|date:"Y-m-d H:i" }}</td>
+                <td id="status-{{ enrollment.id }}">
+                    {% if enrollment.status == 'pending' %}
+                    <span class="badge badge-warning">待审核</span>
+                    {% elif enrollment.status == 'approved' %}
+                    <span class="badge badge-success">已通过</span>
+                    {% elif enrollment.status == 'rejected' %}
+                    <span class="badge badge-danger">已拒绝</span>
+                    {% elif enrollment.status == 'cancelled' %}
+                    <span class="badge badge-secondary">已取消</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'enrollment_detail' enrollment.id %}" class="btn btn-sm btn-secondary">详情</a>
+                    {% if user.role == 'training_admin' and enrollment.status == 'pending' %}
+                    <button 
+                        hx-post="{% url 'enrollment_action' enrollment.id 'approve' %}"
+                        hx-target="#status-{{ enrollment.id }}"
+                        hx-swap="innerHTML"
+                        class="btn btn-sm btn-success">通过</button>
+                    <button 
+                        hx-post="{% url 'enrollment_action' enrollment.id 'reject' %}"
+                        hx-target="#status-{{ enrollment.id }}"
+                        hx-swap="innerHTML"
+                        class="btn btn-sm btn-danger"
+                        onclick="return confirm('确定要拒绝此报名吗？')">拒绝</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无报名记录</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

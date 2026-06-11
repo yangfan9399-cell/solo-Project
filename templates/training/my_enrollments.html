@@ -1,0 +1,86 @@
+{% extends "training/base.html" %}
+
+{% block title %}我的报名 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📝 我的报名</h2>
+
+<div class="card">
+    {% if enrollments %}
+    <table>
+        <thead>
+            <tr>
+                <th>课程名称</th>
+                <th>讲师</th>
+                <th>培训时间</th>
+                <th>报名时间</th>
+                <th>状态</th>
+                <th>考试状态</th>
+                <th>证书</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.schedule.course.name }}</td>
+                <td>{{ enrollment.schedule.instructor.get_full_name|default:enrollment.schedule.instructor.username }}</td>
+                <td>{{ enrollment.schedule.start_date }} ~ {{ enrollment.schedule.end_date }}</td>
+                <td>{{ enrollment.applied_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {% if enrollment.status == 'pending' %}
+                    <span class="badge badge-warning">待审核</span>
+                    {% elif enrollment.status == 'approved' %}
+                    <span class="badge badge-success">已通过</span>
+                    {% elif enrollment.status == 'rejected' %}
+                    <span class="badge badge-danger">已拒绝</span>
+                    {% elif enrollment.status == 'cancelled' %}
+                    <span class="badge badge-secondary">已取消</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% with exam=enrollment.exam %}
+                    {% if exam %}
+                        {% if exam.status == 'not_taken' %}
+                        <span class="badge badge-secondary">未考试</span>
+                        {% elif exam.status == 'passed' %}
+                        <span class="badge badge-success">已通过 ({{ exam.score }}分)</span>
+                        {% elif exam.status == 'failed' %}
+                        <span class="badge badge-danger">未通过</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="badge badge-secondary">-</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    {% with cert=enrollment.certificate %}
+                    {% if cert %}
+                        {% if cert.status == 'pending' %}
+                        <span class="badge badge-warning">待发证</span>
+                        {% elif cert.status == 'issued' %}
+                        <span class="badge badge-success">已发证</span>
+                        {% elif cert.status == 'revoked' %}
+                        <span class="badge badge-danger">已撤回</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="badge badge-secondary">-</span>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
+                    <a href="{% url 'enrollment_detail' enrollment.id %}" class="btn btn-sm btn-secondary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无报名记录</p>
+        <a href="{% url 'course_list' %}" class="btn btn-primary" style="margin-top: 1rem;">去报名课程</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

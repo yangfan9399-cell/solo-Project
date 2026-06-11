@@ -1,0 +1,85 @@
+{% extends "training/base.html" %}
+
+{% block title %}考试管理 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📝 考试管理</h2>
+
+<div class="card">
+    <h3>{{ schedule.course.name }}</h3>
+    <p style="color: #718096; margin-top: 0.5rem;">
+        讲师：{{ schedule.instructor.get_full_name|default:schedule.instructor.username }}
+        &nbsp;|&nbsp;
+        及格分数：{{ schedule.course.pass_score }} 分
+    </p>
+</div>
+
+<div class="card">
+    {% if exam_data %}
+    <table>
+        <thead>
+            <tr>
+                <th>员工</th>
+                <th>考试状态</th>
+                <th>分数</th>
+                <th>考试日期</th>
+                <th>未通过原因</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="exam-table">
+            {% for item in exam_data %}
+            <tr id="exam-row-{{ item.exam.id }}">
+                <td>{{ item.enrollment.employee.get_full_name|default:item.enrollment.employee.username }}</td>
+                <td>
+                    {% if item.exam.status == 'not_taken' %}
+                    <span class="badge badge-secondary">未考试</span>
+                    {% elif item.exam.status == 'passed' %}
+                    <span class="badge badge-success">已通过</span>
+                    {% elif item.exam.status == 'failed' %}
+                    <span class="badge badge-danger">未通过</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.exam.score|default:"-" }}</td>
+                <td>{{ item.exam.exam_date|default:"-" }}</td>
+                <td>
+                    {% if item.exam.failure_reason %}
+                        {% if item.exam.failure_reason == 'score_too_low' %}分数不足
+                        {% elif item.exam.failure_reason == 'absent_too_much' %}缺勤过多
+                        {% elif item.exam.failure_reason == 'cheating' %}作弊
+                        {% else %}其他
+                        {% endif %}
+                    {% else %}-
+                    {% endif %}
+                </td>
+                <td>
+                    <button 
+                        hx-get="{% url 'update_exam' item.exam.id %}"
+                        hx-target="#modal-body"
+                        onclick="document.getElementById('exam-edit-modal').style.display='flex'"
+                        class="btn btn-sm btn-primary">编辑</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div id="exam-edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑考试成绩</h3>
+                <button class="modal-close" onclick="document.getElementById('exam-edit-modal').style.display='none'">&times;</button>
+            </div>
+            <div id="modal-body">
+                <p>加载中...</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无学员</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "training/base.html" %}
+
+{% block title %}数据复盘 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📈 数据复盘</h2>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">取证平均周期</div>
+        <div class="value">{{ cycle.avg_days }} <span style="font-size: 1rem; font-weight: normal;">天</span></div>
+    </div>
+    <div class="stat-card success">
+        <div class="label">最短取证周期</div>
+        <div class="value">{{ cycle.min_days }} <span style="font-size: 1rem; font-weight: normal;">天</span></div>
+    </div>
+    <div class="stat-card warning">
+        <div class="label">最长取证周期</div>
+        <div class="value">{{ cycle.max_days }} <span style="font-size: 1rem; font-weight: normal;">天</span></div>
+    </div>
+    <div class="stat-card info">
+        <div class="label">已发证总数</div>
+        <div class="value">{{ cycle.total }} <span style="font-size: 1rem; font-weight: normal;">个</span></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>按部门统计</h2>
+    {% if by_dept %}
+    <table>
+        <thead>
+            <tr>
+                <th>部门</th>
+                <th>培训人数</th>
+                <th>通过人数</th>
+                <th>未通过人数</th>
+                <th>取证人数</th>
+                <th>通过率</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in by_dept %}
+            <tr>
+                <td>{{ item.department }}</td>
+                <td>{{ item.total }}</td>
+                <td style="color: #48bb78;">{{ item.passed }}</td>
+                <td style="color: #f56565;">{{ item.failed }}</td>
+                <td style="color: #667eea;">{{ item.certified }}</td>
+                <td>
+                    {% if item.total > 0 %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="progress-bar" style="width: 100px;">
+                            <div class="fill" style="width: {% widthratio item.passed item.total 100 %}%;"></div>
+                        </div>
+                        <span>{% widthratio item.passed item.total 100 %}%</span>
+                    </div>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无数据</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>按课程统计</h2>
+    {% if by_course %}
+    <table>
+        <thead>
+            <tr>
+                <th>课程名称</th>
+                <th>培训人数</th>
+                <th>通过人数</th>
+                <th>未通过人数</th>
+                <th>取证人数</th>
+                <th>通过率</th>
+                <th>取证率</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in by_course %}
+            <tr>
+                <td>{{ item.course }}</td>
+                <td>{{ item.total }}</td>
+                <td style="color: #48bb78;">{{ item.passed }}</td>
+                <td style="color: #f56565;">{{ item.failed }}</td>
+                <td style="color: #667eea;">{{ item.certified }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="progress-bar" style="width: 80px;">
+                            <div class="fill" style="width: {{ item.pass_rate }}%;"></div>
+                        </div>
+                        <span>{{ item.pass_rate }}%</span>
+                    </div>
+                </td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div class="progress-bar" style="width: 80px;">
+                            <div class="fill" style="width: {{ item.cert_rate }}%; background: #48bb78;"></div>
+                        </div>
+                        <span>{{ item.cert_rate }}%</span>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无数据</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>未通过原因分布</h2>
+    {% if by_reason %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for item in by_reason %}
+        <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>{{ item.label }}</span>
+                <span>{{ item.count }} 人 ({{ item.percentage }}%)</span>
+            </div>
+            <div class="progress-bar">
+                <div class="fill" style="width: {{ item.percentage }}%; 
+                    {% if item.label == '分数不足' %}background: #f56565;
+                    {% elif item.label == '缺勤过多' %}background: #ed8936;
+                    {% elif item.label == '作弊' %}background: #9f7aea;
+                    {% else %}background: #718096;
+                    {% endif %}"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无数据</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

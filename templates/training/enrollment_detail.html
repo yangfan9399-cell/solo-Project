@@ -1,0 +1,242 @@
+{% extends "training/base.html" %}
+
+{% block title %}报名详情 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📋 报名详情</h2>
+
+<div class="card">
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">员工姓名</div>
+            <div class="value">{{ enrollment.employee.get_full_name|default:enrollment.employee.username }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">用户名</div>
+            <div class="value">{{ enrollment.employee.username }}</div>
+        </div>
+        {% if profile %}
+        <div class="detail-item">
+            <div class="label">工号</div>
+            <div class="value">{{ profile.employee_id }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">部门</div>
+            <div class="value">{{ profile.department.name|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">职位</div>
+            <div class="value">{{ profile.position|default:"-" }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>📚 课程信息</h2>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">课程名称</div>
+            <div class="value">{{ enrollment.schedule.course.name }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">讲师</div>
+            <div class="value">{{ enrollment.schedule.instructor.get_full_name|default:enrollment.schedule.instructor.username }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">培训时间</div>
+            <div class="value">{{ enrollment.schedule.start_date }} ~ {{ enrollment.schedule.end_date }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">培训地点</div>
+            <div class="value">{{ enrollment.schedule.location|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">课时</div>
+            <div class="value">{{ enrollment.schedule.course.duration_hours }} 小时</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">及格分数</div>
+            <div class="value">{{ enrollment.schedule.course.pass_score }} 分</div>
+        </div>
+    </div>
+    {% if enrollment.schedule.course.description %}
+    <div style="margin-top: 1rem;">
+        <div class="label" style="font-size: 0.85rem; color: #718096; margin-bottom: 0.25rem;">课程描述</div>
+        <div>{{ enrollment.schedule.course.description }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>✅ 签到记录</h2>
+    {% if attendances %}
+    <table>
+        <thead>
+            <tr>
+                <th>日期</th>
+                <th>状态</th>
+                <th>签到时间</th>
+                <th>确认人</th>
+                <th>备注</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for att in attendances %}
+            <tr>
+                <td>{{ att.check_date }}</td>
+                <td>
+                    {% if att.status == 'present' %}
+                    <span class="badge badge-success">已签到</span>
+                    {% elif att.status == 'absent' %}
+                    <span class="badge badge-danger">缺勤</span>
+                    {% elif att.status == 'late' %}
+                    <span class="badge badge-warning">迟到</span>
+                    {% else %}
+                    <span class="badge badge-secondary">未签到</span>
+                    {% endif %}
+                </td>
+                <td>{{ att.check_in_time|date:"Y-m-d H:i"|default:"-" }}</td>
+                <td>{{ att.checked_by.get_full_name|default:att.checked_by.username|default:"-" }}</td>
+                <td>{{ att.remark|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无签到记录</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📝 考试成绩</h2>
+    {% if exam %}
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">考试状态</div>
+            <div class="value">
+                {% if exam.status == 'not_taken' %}
+                <span class="badge badge-secondary">未考试</span>
+                {% elif exam.status == 'passed' %}
+                <span class="badge badge-success">已通过</span>
+                {% elif exam.status == 'failed' %}
+                <span class="badge badge-danger">未通过</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">考试分数</div>
+            <div class="value">{{ exam.score|default:"-" }} 分</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">考试日期</div>
+            <div class="value">{{ exam.exam_date|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">确认人</div>
+            <div class="value">{{ exam.confirmed_by.get_full_name|default:exam.confirmed_by.username|default:"-" }}</div>
+        </div>
+        {% if exam.failure_reason %}
+        <div class="detail-item">
+            <div class="label">未通过原因</div>
+            <div class="value">
+                {% if exam.failure_reason == 'score_too_low' %}分数不足
+                {% elif exam.failure_reason == 'absent_too_much' %}缺勤过多
+                {% elif exam.failure_reason == 'cheating' %}作弊
+                {% else %}其他
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% if exam.remark %}
+    <div style="margin-top: 1rem;">
+        <div class="label" style="font-size: 0.85rem; color: #718096; margin-bottom: 0.25rem;">备注</div>
+        <div>{{ exam.remark }}</div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <p>暂无考试记录</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>🎓 证书信息</h2>
+    {% if certificate %}
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="label">证书编号</div>
+            <div class="value" style="font-family: monospace; font-weight: 600;">{{ certificate.certificate_no }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">证书状态</div>
+            <div class="value">
+                {% if certificate.status == 'pending' %}
+                <span class="badge badge-warning">待发证</span>
+                {% elif certificate.status == 'issued' %}
+                <span class="badge badge-success">已发证</span>
+                {% elif certificate.status == 'revoked' %}
+                <span class="badge badge-danger">已撤回</span>
+                {% elif certificate.status == 'rejected' %}
+                <span class="badge badge-secondary">发证驳回</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="label">发证日期</div>
+            <div class="value">{{ certificate.issued_date|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">发证HR</div>
+            <div class="value">{{ certificate.issued_by.get_full_name|default:certificate.issued_by.username|default:"-" }}</div>
+        </div>
+        {% if certificate.status == 'revoked' %}
+        <div class="detail-item">
+            <div class="label">撤回日期</div>
+            <div class="value">{{ certificate.revoked_date|default:"-" }}</div>
+        </div>
+        <div class="detail-item">
+            <div class="label">撤回人</div>
+            <div class="value">{{ certificate.revoked_by.get_full_name|default:certificate.revoked_by.username|default:"-" }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% if certificate.revoke_reason %}
+    <div style="margin-top: 1rem;">
+        <div class="label" style="font-size: 0.85rem; color: #718096; margin-bottom: 0.25rem;">撤回原因</div>
+        <div style="color: #e53e3e;">{{ certificate.revoke_reason }}</div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <p>暂无证书信息</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>📜 历史节点</h2>
+    {% if timeline %}
+    <div class="timeline">
+        {% for item in timeline %}
+        <div class="timeline-item">
+            <div class="time">{{ item.time|date:"Y-m-d H:i"|default:"-" }}</div>
+            <div class="event">{{ item.event }}</div>
+            {% if item.actor %}
+            <div class="actor">操作人：{{ item.actor.get_full_name|default:item.actor.username }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无历史记录</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

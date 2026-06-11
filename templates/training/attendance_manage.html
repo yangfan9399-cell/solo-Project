@@ -1,0 +1,80 @@
+{% extends "training/base.html" %}
+
+{% block title %}签到管理 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">✅ 签到管理</h2>
+
+<div class="card">
+    <h3>{{ schedule.course.name }}</h3>
+    <p style="color: #718096; margin-top: 0.5rem;">
+        讲师：{{ schedule.instructor.get_full_name|default:schedule.instructor.username }}
+        &nbsp;|&nbsp;
+        时间：{{ schedule.start_date }} ~ {{ schedule.end_date }}
+        &nbsp;|&nbsp;
+        地点：{{ schedule.location|default:"-" }}
+    </p>
+</div>
+
+<div class="card">
+    <div class="tabs" style="overflow-x: auto; flex-wrap: nowrap;">
+        {% for date in date_list %}
+        <a href="?date={{ date|date:'Y-m-d' }}" class="{% if check_date == date %}active{% endif %}" style="white-space: nowrap;">
+            {{ date|date:"m月d日" }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if attendance_data %}
+    <table>
+        <thead>
+            <tr>
+                <th>员工</th>
+                <th>签到状态</th>
+                <th>签到时间</th>
+                <th>备注</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="attendance-table">
+            {% for item in attendance_data %}
+            <tr id="attendance-row-{{ item.attendance.id }}">
+                <td>{{ item.enrollment.employee.get_full_name|default:item.enrollment.employee.username }}</td>
+                <td>
+                    {% if item.attendance.status == 'present' %}
+                    <span class="badge badge-success">已签到</span>
+                    {% elif item.attendance.status == 'absent' %}
+                    <span class="badge badge-danger">缺勤</span>
+                    {% elif item.attendance.status == 'late' %}
+                    <span class="badge badge-warning">迟到</span>
+                    {% else %}
+                    <span class="badge badge-secondary">未签到</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.attendance.check_in_time|date:"H:i"|default:"-" }}</td>
+                <td>{{ item.attendance.remark|default:"-" }}</td>
+                <td>
+                    <form 
+                        hx-post="{% url 'update_attendance' item.attendance.id %}"
+                        hx-target="#attendance-row-{{ item.attendance.id }}"
+                        hx-swap="outerHTML"
+                        style="display: inline;">
+                        <select name="status" onchange="this.form.submit()">
+                            {% for value, label in AttendanceStatus.choices %}
+                            <option value="{{ value }}" {% if item.attendance.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无学员</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

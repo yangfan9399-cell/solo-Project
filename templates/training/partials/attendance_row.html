@@ -1,0 +1,30 @@
+<tr id="attendance-row-{{ attendance.id }}">
+    <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.username }}</td>
+    <td>
+        {% if attendance.status == 'present' %}
+        <span class="badge badge-success">已签到</span>
+        {% elif attendance.status == 'absent' %}
+        <span class="badge badge-danger">缺勤</span>
+        {% elif attendance.status == 'late' %}
+        <span class="badge badge-warning">迟到</span>
+        {% else %}
+        <span class="badge badge-secondary">未签到</span>
+        {% endif %}
+    </td>
+    <td>{{ attendance.check_in_time|date:"H:i"|default:"-" }}</td>
+    <td>{{ attendance.remark|default:"-" }}</td>
+    <td>
+        <form 
+            hx-post="{% url 'update_attendance' attendance.id %}"
+            hx-target="#attendance-row-{{ attendance.id }}"
+            hx-swap="outerHTML"
+            style="display: inline;">
+            {% csrf_token %}
+            <select name="status" onchange="this.form.submit()">
+                {% for value, label in AttendanceStatus.choices %}
+                <option value="{{ value }}" {% if attendance.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </td>
+</tr>

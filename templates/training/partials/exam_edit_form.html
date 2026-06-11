@@ -1,0 +1,32 @@
+<form 
+    hx-post="{% url 'update_exam' exam.id %}"
+    hx-target="#exam-row-{{ exam.id }}"
+    hx-swap="outerHTML"
+    onsubmit="document.getElementById('exam-edit-modal').style.display='none'">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>考试分数</label>
+        <input type="number" name="score" value="{{ exam.score|default:'' }}" min="0" max="100" required>
+    </div>
+    <div class="form-group">
+        <label>考试日期</label>
+        <input type="date" name="exam_date" value="{{ exam.exam_date|date:'Y-m-d'|default:'' }}">
+    </div>
+    <div class="form-group">
+        <label>未通过原因（如未通过）</label>
+        <select name="failure_reason">
+            <option value="">- 无 -</option>
+            {% for value, label in FailureReason.choices %}
+            <option value="{{ value }}" {% if exam.failure_reason == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label>备注</label>
+        <textarea name="remark" rows="2">{{ exam.remark|default:'' }}</textarea>
+    </div>
+    <div style="text-align: right;">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('exam-edit-modal').style.display='none'">取消</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+    </div>
+</form>

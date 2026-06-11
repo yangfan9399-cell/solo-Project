@@ -1,0 +1,177 @@
+{% extends "training/base.html" %}
+
+{% block title %}首页 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">欢迎回来，{{ user.get_full_name|default:user.username }} 👋</h2>
+
+{% if user.role == 'employee' %}
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">已报名课程</div>
+        <div class="value">{{ total_enrollments }}</div>
+    </div>
+    <div class="stat-card success">
+        <div class="label">通过考试</div>
+        <div class="value">{{ passed_exams }}</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="label">获得证书</div>
+        <div class="value">{{ my_certificates }}</div>
+    </div>
+    <div class="stat-card info">
+        <div class="label">可报名课程</div>
+        <div class="value">{{ active_courses }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>我的最近报名</h2>
+    {% if my_enrollments %}
+    <table>
+        <thead>
+            <tr>
+                <th>课程名称</th>
+                <th>讲师</th>
+                <th>培训时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enrollment in my_enrollments %}
+            <tr>
+                <td>{{ enrollment.schedule.course.name }}</td>
+                <td>{{ enrollment.schedule.instructor.get_full_name|default:enrollment.schedule.instructor.username }}</td>
+                <td>{{ enrollment.schedule.start_date }} ~ {{ enrollment.schedule.end_date }}</td>
+                <td>
+                    {% if enrollment.status == 'pending' %}
+                    <span class="badge badge-warning">待审核</span>
+                    {% elif enrollment.status == 'approved' %}
+                    <span class="badge badge-success">已通过</span>
+                    {% elif enrollment.status == 'rejected' %}
+                    <span class="badge badge-danger">已拒绝</span>
+                    {% elif enrollment.status == 'cancelled' %}
+                    <span class="badge badge-secondary">已取消</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'enrollment_detail' enrollment.id %}" class="btn btn-sm btn-secondary">查看详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无报名记录</p>
+        <a href="{% url 'course_list' %}" class="btn btn-primary" style="margin-top: 1rem;">去报名课程</a>
+    </div>
+    {% endif %}
+</div>
+
+{% elif user.role == 'training_admin' %}
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">课程总数</div>
+        <div class="value">{{ total_courses }}</div>
+    </div>
+    <div class="stat-card success">
+        <div class="label">进行中排班</div>
+        <div class="value">{{ active_schedules }}</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="label">待审核报名</div>
+        <div class="value">{{ pending_enrollments }}</div>
+    </div>
+    <div class="stat-card info">
+        <div class="label">总报名数</div>
+        <div class="value">{{ total_enrollments }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>快速操作</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'enrollment_list' %}?status=pending" class="btn btn-primary">审核报名</a>
+        <a href="{% url 'analytics' %}" class="btn btn-secondary">查看数据复盘</a>
+    </div>
+</div>
+
+{% elif user.role == 'instructor' %}
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="label">我的课程</div>
+        <div class="value">{{ my_schedules|length }}</div>
+    </div>
+    <div class="stat-card success">
+        <div class="label">学员总数</div>
+        <div class="value">{{ students_count }}</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="label">待批改考试</div>
+        <div class="value">{{ pending_exams }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>我的课程排班</h2>
+    {% if my_schedules %}
+    <table>
+        <thead>
+            <tr>
+                <th>课程名称</th>
+                <th>时间</th>
+                <th>地点</th>
+                <th>已报名</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in my_schedules %}
+            <tr>
+                <td>{{ schedule.course.name }}</td>
+                <td>{{ schedule.start_date }} ~ {{ schedule.end_date }}</td>
+                <td>{{ schedule.location|default:"-" }}</td>
+                <td>{{ schedule.enrolled_count }}/{{ schedule.max_students }}</td>
+                <td>
+                    <a href="{% url 'attendance_manage' schedule.id %}" class="btn btn-sm btn-secondary">签到管理</a>
+                    <a href="{% url 'exam_manage' schedule.id %}" class="btn btn-sm btn-primary">考试管理</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无课程排班</p>
+    </div>
+    {% endif %}
+</div>
+
+{% elif user.role == 'hr' %}
+<div class="stats-grid">
+    <div class="stat-card warning">
+        <div class="label">待发证</div>
+        <div class="value">{{ pending_certificates }}</div>
+    </div>
+    <div class="stat-card success">
+        <div class="label">已发证</div>
+        <div class="value">{{ issued_certificates }}</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="label">已撤回</div>
+        <div class="value">{{ revoked_certificates }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>快速操作</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'certificate_list' %}?status=pending" class="btn btn-primary">证书审核</a>
+        <a href="{% url 'analytics' %}" class="btn btn-secondary">数据复盘</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

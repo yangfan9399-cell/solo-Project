@@ -1,0 +1,29 @@
+<tr id="exam-row-{{ exam.id }}">
+    <td>{{ enrollment.employee.get_full_name|default:enrollment.employee.username }}</td>
+    <td>
+        {% if exam.status == 'not_taken' %}
+        <span class="badge badge-secondary">未考试</span>
+        {% elif exam.status == 'passed' %}
+        <span class="badge badge-success">已通过</span>
+        {% elif exam.status == 'failed' %}
+        <span class="badge badge-danger">未通过</span>
+        {% endif %}
+    </td>
+    <td>{{ exam.score|default:"-" }}</td>
+    <td>{{ exam.exam_date|default:"-" }}</td>
+    <td>
+        {% if exam.failure_reason %}
+            {% if exam.failure_reason == 'score_too_low' %}分数不足
+            {% elif exam.failure_reason == 'absent_too_much' %}缺勤过多
+            {% elif exam.failure_reason == 'cheating' %}作弊
+            {% else %}其他
+            {% endif %}
+        {% else %}-
+        {% endif %}
+    </td>
+    <td>
+        <button 
+            onclick="alert('请刷新页面后重新编辑')"
+            class="btn btn-sm btn-primary">编辑</button>
+    </td>
+</tr>

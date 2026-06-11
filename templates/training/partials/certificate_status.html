@@ -1,0 +1,9 @@
+{% if certificate.status == 'pending' %}
+<span class="badge badge-warning">待发证</span>
+{% elif certificate.status == 'issued' %}
+<span class="badge badge-success">已发证</span>
+{% elif certificate.status == 'revoked' %}
+<span class="badge badge-danger">已撤回</span>
+{% elif certificate.status == 'rejected' %}
+<span class="badge badge-secondary">发证驳回</span>
+{% endif %}

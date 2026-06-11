@@ -1,0 +1,9 @@
+{% if enrollment.status == 'pending' %}
+<span class="badge badge-warning">待审核</span>
+{% elif enrollment.status == 'approved' %}
+<span class="badge badge-success">已通过</span>
+{% elif enrollment.status == 'rejected' %}
+<span class="badge badge-danger">已拒绝</span>
+{% elif enrollment.status == 'cancelled' %}
+<span class="badge badge-secondary">已取消</span>
+{% endif %}

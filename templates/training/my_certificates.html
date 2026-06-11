@@ -1,0 +1,52 @@
+{% extends "training/base.html" %}
+
+{% block title %}我的证书 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">🎓 我的证书</h2>
+
+<div class="card">
+    {% if certificates %}
+    <table>
+        <thead>
+            <tr>
+                <th>证书编号</th>
+                <th>课程</th>
+                <th>状态</th>
+                <th>发证日期</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in certificates %}
+            <tr>
+                <td style="font-family: monospace;">{{ cert.certificate_no }}</td>
+                <td>{{ cert.enrollment.schedule.course.name }}</td>
+                <td>
+                    {% if cert.status == 'pending' %}
+                    <span class="badge badge-warning">待发证</span>
+                    {% elif cert.status == 'issued' %}
+                    <span class="badge badge-success">已发证</span>
+                    {% elif cert.status == 'revoked' %}
+                    <span class="badge badge-danger">已撤回</span>
+                    {% elif cert.status == 'rejected' %}
+                    <span class="badge badge-secondary">发证驳回</span>
+                    {% endif %}
+                </td>
+                <td>{{ cert.issued_date|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'enrollment_detail' cert.enrollment.id %}" class="btn btn-sm btn-secondary">详情</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无证书</p>
+        <a href="{% url 'course_list' %}" class="btn btn-primary" style="margin-top: 1rem;">去报名课程</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

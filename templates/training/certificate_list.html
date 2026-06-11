@@ -1,0 +1,106 @@
+{% extends "training/base.html" %}
+
+{% block title %}证书管理 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">🎓 证书管理</h2>
+
+<div class="filters">
+    <span>筛选：</span>
+    <select onchange="window.location.href='?status=' + this.value">
+        <option value="">全部状态</option>
+        {% for value, label in CertificateStatus.choices %}
+        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="card">
+    {% if certificates %}
+    <table>
+        <thead>
+            <tr>
+                <th>证书编号</th>
+                <th>员工</th>
+                <th>课程</th>
+                <th>状态</th>
+                <th>发证日期</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cert in certificates %}
+            <tr id="cert-row-{{ cert.id }}">
+                <td style="font-family: monospace;">{{ cert.certificate_no }}</td>
+                <td>{{ cert.enrollment.employee.get_full_name|default:cert.enrollment.employee.username }}</td>
+                <td>{{ cert.enrollment.schedule.course.name }}</td>
+                <td id="cert-status-{{ cert.id }}">
+                    {% if cert.status == 'pending' %}
+                    <span class="badge badge-warning">待发证</span>
+                    {% elif cert.status == 'issued' %}
+                    <span class="badge badge-success">已发证</span>
+                    {% elif cert.status == 'revoked' %}
+                    <span class="badge badge-danger">已撤回</span>
+                    {% elif cert.status == 'rejected' %}
+                    <span class="badge badge-secondary">发证驳回</span>
+                    {% endif %}
+                </td>
+                <td>{{ cert.issued_date|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'enrollment_detail' cert.enrollment.id %}" class="btn btn-sm btn-secondary">详情</a>
+                    {% if user.role == 'hr' %}
+                        {% if cert.status == 'pending' %}
+                        <button 
+                            hx-post="{% url 'issue_certificate' cert.id %}"
+                            hx-target="#cert-status-{{ cert.id }}"
+                            hx-swap="innerHTML"
+                            class="btn btn-sm btn-success">发证</button>
+                        {% elif cert.status == 'issued' %}
+                        <button 
+                            onclick="showRevokeModal({{ cert.id }})"
+                            class="btn btn-sm btn-danger">撤回</button>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>暂无证书记录</p>
+    </div>
+    {% endif %}
+</div>
+
+<div id="revoke-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>撤回证书</h3>
+            <button class="modal-close" onclick="document.getElementById('revoke-modal').style.display='none'">&times;</button>
+        </div>
+        <form id="revoke-form" method="post" hx-post="" hx-target="" hx-swap="innerHTML">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>撤回原因</label>
+                <textarea name="reason" rows="3" required></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('revoke-modal').style.display='none'">取消</button>
+                <button type="submit" class="btn btn-danger" onclick="document.getElementById('revoke-modal').style.display='none'">确认撤回</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showRevokeModal(certId) {
+    const modal = document.getElementById('revoke-modal');
+    const form = document.getElementById('revoke-form');
+    form.setAttribute('hx-post', '/certificate/' + certId + '/revoke/');
+    form.setAttribute('hx-target', '#cert-status-' + certId);
+    modal.style.display = 'flex';
+}
+</script>
+
+{% endblock %}

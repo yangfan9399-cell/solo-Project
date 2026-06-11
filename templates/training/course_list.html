@@ -1,0 +1,57 @@
+{% extends "training/base.html" %}
+
+{% block title %}课程列表 - 企业培训管理系统{% endblock %}
+
+{% block content %}
+<h2 class="page-title">📚 课程列表</h2>
+
+{% if schedules %}
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for item in schedules %}
+    <div class="course-card">
+        <div>
+            <h3>{{ item.course.name }}</h3>
+            <div class="meta">
+                <span>讲师：{{ item.schedule.instructor.get_full_name|default:item.schedule.instructor.username }}</span>
+                <span style="margin: 0 0.5rem;">|</span>
+                <span>课时：{{ item.course.duration_hours }} 小时</span>
+                <span style="margin: 0 0.5rem;">|</span>
+                <span>及格分：{{ item.course.pass_score }} 分</span>
+            </div>
+            <div class="meta">
+                <span>📅 {{ item.schedule.start_date }} ~ {{ item.schedule.end_date }}</span>
+                <span style="margin: 0 0.5rem;">|</span>
+                <span>📍 {{ item.schedule.location|default:"待定" }}</span>
+                <span style="margin: 0 0.5rem;">|</span>
+                <span>👥 {{ item.enrolled_count }}/{{ item.schedule.max_students }} 人</span>
+            </div>
+            {% if item.course.description %}
+            <p style="margin-top: 0.5rem; color: #718096; font-size: 0.9rem;">{{ item.course.description }}</p>
+            {% endif %}
+        </div>
+        <div>
+            {% if user.role == 'employee' %}
+                {% if item.is_enrolled %}
+                <span class="badge badge-success">已报名</span>
+                {% else %}
+                    {% if item.enrolled_count >= item.schedule.max_students %}
+                    <span class="badge badge-secondary">已满员</span>
+                    {% else %}
+                    <form method="post" action="{% url 'enroll_course' item.schedule.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">立即报名</button>
+                    </form>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <p>暂无可报名的课程</p>
+</div>
+{% endif %}
+
+{% endblock %}
