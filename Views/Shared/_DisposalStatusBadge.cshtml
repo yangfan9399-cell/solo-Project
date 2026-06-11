@@ -1,0 +1,21 @@
+@model OceanFarm.Models.DisposalStatus
+
+@{
+    var statusClass = Model switch
+    {
+        DisposalStatus.Pending => "badge-warning",
+        DisposalStatus.Approved => "badge-primary",
+        DisposalStatus.Rejected => "badge-danger",
+        DisposalStatus.Completed => "badge-success",
+        _ => "badge-secondary"
+    };
+    var statusText = Model switch
+    {
+        DisposalStatus.Pending => "待处置",
+        DisposalStatus.Approved => "已批准",
+        DisposalStatus.Rejected => "已退回",
+        DisposalStatus.Completed => "已完成",
+        _ => "未知"
+    };
+}
+<span class="badge @statusClass">@statusText</span>

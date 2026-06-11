@@ -1,0 +1,23 @@
+@model OceanFarm.Models.DiseaseStatus
+
+@{
+    var statusClass = Model switch
+    {
+        DiseaseStatus.Reported => "badge-warning",
+        DiseaseStatus.Reviewed => "badge-info",
+        DiseaseStatus.Confirmed => "badge-danger",
+        DiseaseStatus.Rejected => "badge-secondary",
+        DiseaseStatus.Resolved => "badge-success",
+        _ => "badge-secondary"
+    };
+    var statusText = Model switch
+    {
+        DiseaseStatus.Reported => "已报告",
+        DiseaseStatus.Reviewed => "已复核",
+        DiseaseStatus.Confirmed => "已确认",
+        DiseaseStatus.Rejected => "已驳回",
+        DiseaseStatus.Resolved => "已解决",
+        _ => "未知"
+    };
+}
+<span class="badge @statusClass">@statusText</span>

@@ -1,0 +1,49 @@
+@model IEnumerable<CageAnomalyDetail>
+@{
+    ViewData["Title"] = "场长审批列表";
+}
+
+<div class="page-header">
+    <h1>📋 场长审批 - 待处置异常</h1>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">← 返回看板</a>
+</div>
+
+<div class="panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>网箱</th>
+                <th>海区</th>
+                <th>鱼种</th>
+                <th>异常类型</th>
+                <th>处置状态</th>
+                <th>异常说明</th>
+                <th>报告时间</th>
+                <th>已持续</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.CageCode</strong></td>
+                    <td>@item.SeaAreaName</td>
+                    <td>@item.FishSpeciesName</td>
+                    <td>@await Html.PartialAsync("_AnomalyBadge", item.AnomalyType)</td>
+                    <td>@await Html.PartialAsync("_DisposalStatusBadge", item.Status)</td>
+                    <td>@item.Note</td>
+                    <td>@item.ReportedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="@(item.DurationHours > 24 ? "text-danger" : "")">@item.DurationHours 小时</td>
+                    <td>
+                        <a asp-controller="Manager" asp-action="Disposal" asp-route-cageId="@item.CageId" class="btn btn-sm btn-primary">处理</a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted">暂无待处置异常 ✅</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

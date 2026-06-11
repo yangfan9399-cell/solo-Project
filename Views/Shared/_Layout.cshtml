@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 海洋牧场巡检与投喂管理系统</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo">🐟</span>
+                <span>海洋牧场管理系统</span>
+            </div>
+            <div class="nav-links">
+                <a asp-controller="Home" asp-action="Index" class="nav-link">📊 看板</a>
+                <a asp-controller="Cage" asp-action="Index" class="nav-link">🔲 网箱管理</a>
+                <a asp-controller="Veterinary" asp-action="Index" class="nav-link">⚕️ 兽医复核</a>
+                <a asp-controller="Manager" asp-action="Index" class="nav-link">📋 场长审批</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <p>&copy; @DateTime.Now.Year 海洋牧场智能巡检与投喂异常管理系统</p>
+    </footer>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

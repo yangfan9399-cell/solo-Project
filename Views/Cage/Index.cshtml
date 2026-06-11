@@ -1,0 +1,45 @@
+@model IEnumerable<CageListViewModel>
+@{
+    ViewData["Title"] = "网箱列表";
+}
+
+<div class="page-header">
+    <h1>🔲 网箱管理</h1>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">← 返回看板</a>
+</div>
+
+<div class="panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>网箱编号</th>
+                <th>海区</th>
+                <th>鱼种</th>
+                <th>数量</th>
+                <th>均重(kg)</th>
+                <th>投放日期</th>
+                <th>当前状态</th>
+                <th>处置状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cage in Model)
+            {
+                <tr class="@(cage.CurrentAnomaly != AnomalyType.None ? "row-warning" : "")">
+                    <td><strong>@cage.Code</strong></td>
+                    <td>@cage.SeaAreaName</td>
+                    <td>@cage.FishSpeciesName</td>
+                    <td>@cage.FishCount.ToString("N0") 尾</td>
+                    <td>@cage.AverageWeightKg</td>
+                    <td>@cage.StockingDate.ToString("yyyy-MM-dd")</td>
+                    <td>@await Html.PartialAsync("_AnomalyBadge", cage.CurrentAnomaly)</td>
+                    <td>@await Html.PartialAsync("_DisposalStatusBadge", cage.CurrentStatus)</td>
+                    <td>
+                        <a asp-controller="Cage" asp-action="Details" asp-route-id="@cage.Id" class="btn btn-sm btn-primary">详情</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

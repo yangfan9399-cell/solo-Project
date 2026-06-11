@@ -1,0 +1,257 @@
+@model CageDetailViewModel
+@{
+    ViewData["Title"] = "网箱详情 - " + Model.Code;
+}
+
+<div class="page-header">
+    <h1>🔲 网箱详情 - @Model.Code</h1>
+    <div>
+        <a asp-controller="Cage" asp-action="Index" class="btn btn-secondary">← 网箱列表</a>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="panel cage-info-panel">
+        <h3>📦 网箱基本信息</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">网箱编号</span>
+                <span class="info-value"><strong>@Model.Code</strong></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">所属海区</span>
+                <span class="info-value">🌊 @Model.SeaAreaName</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">养殖鱼种</span>
+                <span class="info-value">🐟 @Model.FishSpeciesName</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">存鱼数量</span>
+                <span class="info-value">@Model.FishCount.ToString("N0") 尾</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">平均体重</span>
+                <span class="info-value">@Model.AverageWeightKg kg</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">总重量</span>
+                <span class="info-value">@Model.TotalWeightKg.ToString("N0") kg</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">网箱容积</span>
+                <span class="info-value">@Model.VolumeCubicMeters m³</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">投放日期</span>
+                <span class="info-value">@Model.StockingDate.ToString("yyyy-MM-dd") (@Model.StockingDays天)</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">当前异常</span>
+                <span class="info-value">@await Html.PartialAsync("_AnomalyBadge", Model.CurrentAnomaly)</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">处置状态</span>
+                <span class="info-value">@await Html.PartialAsync("_DisposalStatusBadge", Model.CurrentStatus)</span>
+            </div>
+            <div class="info-item full-width">
+                <span class="info-label">异常说明</span>
+                <span class="info-value">@(Model.CurrentAnomalyNote ?? "无异常")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">异常报告时间</span>
+                <span class="info-value">@(Model.AnomalyReportedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">最低溶氧阈值</span>
+                <span class="info-value">@Model.OptimalMinDissolvedOxygen mg/L</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">预计日投喂量</span>
+                <span class="info-value">@Model.ExpectedDailyFeedKg kg</span>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <a asp-controller="Patrol" asp-action="Record" asp-route-cageId="@Model.Id" class="btn btn-primary">💧 记录水质</a>
+            <a asp-controller="Feeding" asp-action="Submit" asp-route-cageId="@Model.Id" class="btn btn-success">🍽️ 提交投喂</a>
+            @if (Model.CurrentAnomaly != AnomalyType.None)
+            {
+                <a asp-controller="Manager" asp-action="Disposal" asp-route-cageId="@Model.Id" class="btn btn-warning">📋 场长处置</a>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="panel">
+        <h3>💧 近期水质记录</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>记录时间</th>
+                    <th>巡检员</th>
+                    <th>水温(°C)</th>
+                    <th>溶氧(mg/L)</th>
+                    <th>pH值</th>
+                    <th>盐度</th>
+                    <th>浊度</th>
+                    <th>状态</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var wq in Model.LatestWaterQuality)
+                {
+                    var oxygenLow = wq.DissolvedOxygen < Model.OptimalMinDissolvedOxygen;
+                    <tr class="@(wq.AnomalyType != AnomalyType.None ? "row-warning" : "")">
+                        <td>@wq.RecordedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@wq.InspectorName</td>
+                        <td>@wq.Temperature</td>
+                        <td class="@(oxygenLow ? "text-danger font-bold" : "")">@wq.DissolvedOxygen</td>
+                        <td>@wq.Ph</td>
+                        <td>@wq.Salinity</td>
+                        <td>@wq.Turbidity</td>
+                        <td>@await Html.PartialAsync("_AnomalyBadge", wq.AnomalyType)</td>
+                        <td>@wq.Remarks</td>
+                    </tr>
+                }
+                @if (!Model.LatestWaterQuality.Any())
+                {
+                    <tr><td colspan="9" class="text-center text-muted">暂无水质记录</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <h3>🍽️ 近期投喂记录</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>投喂时间</th>
+                    <th>投喂员</th>
+                    <th>投喂量(kg)</th>
+                    <th>饲料类型</th>
+                    <th>状态</th>
+                    <th>异常类型</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fr in Model.LatestFeedingRecords)
+                {
+                    <tr class="@(fr.Status != FeedingStatus.Normal ? "row-warning" : "")">
+                        <td>@fr.FeedingTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@fr.OperatorName</td>
+                        <td>@fr.FeedAmountKg</td>
+                        <td>@fr.FeedType</td>
+                        <td>@await Html.PartialAsync("_FeedingStatusBadge", fr.Status)</td>
+                        <td>@await Html.PartialAsync("_AnomalyBadge", fr.AnomalyType)</td>
+                        <td>@fr.Remarks</td>
+                    </tr>
+                }
+                @if (!Model.LatestFeedingRecords.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted">暂无投喂记录</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="detail-section">
+    <div class="panel">
+        <h3>⚕️ 病害报告</h3>
+        @if (Model.DiseaseReports.Any())
+        {
+            <div class="disease-grid">
+                @foreach (var dr in Model.DiseaseReports)
+                {
+                    <div class="disease-card">
+                        <div class="disease-header">
+                            <span class="disease-date">@dr.ReportedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                            @await Html.PartialAsync("_DiseaseStatusBadge", dr.Status)
+                        </div>
+                        <div class="disease-body">
+                            <div class="disease-photo">
+                                @if (!string.IsNullOrEmpty(dr.PhotoUrl))
+                                {
+                                    <div class="photo-placeholder">
+                                        <div class="photo-icon">📷</div>
+                                        <div class="photo-label">病害照片占位</div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="photo-placeholder">
+                                        <div class="photo-icon">🖼️</div>
+                                        <div class="photo-label">暂无照片</div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="disease-info">
+                                <p><strong>报告人：</strong>@dr.ReporterName</p>
+                                <p><strong>症状：</strong>@dr.Symptoms</p>
+                                <p><strong>死亡数量：</strong><span class="text-danger">@dr.DeadFishCount 尾</span></p>
+                                <p><strong>异常数量：</strong><span class="text-warning">@dr.AbnormalFishCount 尾</span></p>
+                                @if (dr.Status != DiseaseStatus.Reported)
+                                {
+                                    <hr />
+                                    <p><strong>兽医：</strong>@dr.VeterinarianName</p>
+                                    <p><strong>复核时间：</strong>@dr.ReviewedAt?.ToString("yyyy-MM-dd HH:mm")</p>
+                                    <p><strong>诊断结果：</strong><span class="text-danger">@dr.DiagnosedDisease</span></p>
+                                    <p><strong>兽医意见：</strong>@dr.VeterinaryOpinion</p>
+                                    <p><strong>治疗建议：</strong>@dr.RecommendedTreatment</p>
+                                    @if (!string.IsNullOrEmpty(dr.ManagerNote))
+                                    {
+                                        <p><strong>场长批示：</strong>@dr.ManagerNote</p>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        @if (dr.Status == DiseaseStatus.Reported)
+                        {
+                            <div class="disease-footer">
+                                <a asp-controller="Veterinary" asp-action="Review" asp-route-id="@dr.Id" class="btn btn-sm btn-primary">兽医复核</a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center">暂无病害报告</p>
+        }
+    </div>
+</div>
+
+<div class="panel">
+    <h3>📜 流程历史节点</h3>
+    <div class="timeline">
+        @foreach (var node in Model.WorkflowHistory)
+        {
+            <div class="timeline-item">
+                <div class="timeline-dot @(node.RelatedAnomaly != AnomalyType.None ? "dot-danger" : "dot-success")"></div>
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="timeline-type">@node.NodeType</span>
+                        <span class="timeline-time">@node.Timestamp.ToString("yyyy-MM-dd HH:mm")</span>
+                    </div>
+                    <div class="timeline-desc">@node.Description</div>
+                    <div class="timeline-meta">
+                        <span>操作人：@node.OperatorName</span>
+                        @if (node.StatusAfter.HasValue)
+                        {
+                            <span>处置后状态：@await Html.PartialAsync("_DisposalStatusBadge", node.StatusAfter.Value)</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        @if (!Model.WorkflowHistory.Any())
+        {
+            <p class="text-muted text-center">暂无流程记录</p>
+        }
+    </div>
+</div>

@@ -1,0 +1,177 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "监控看板";
+}
+
+<div class="dashboard-header">
+    <h1>📊 海洋牧场监控看板</h1>
+    <p class="subtitle">实时监控网箱状态、异常情况与处置进度</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card stat-total">
+        <div class="stat-icon">🔲</div>
+        <div class="stat-info">
+            <div class="stat-value">@Model.TotalCages</div>
+            <div class="stat-label">网箱总数</div>
+        </div>
+    </div>
+    <div class="stat-card stat-normal">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+            <div class="stat-value">@Model.NormalCages</div>
+            <div class="stat-label">正常网箱</div>
+        </div>
+    </div>
+    <div class="stat-card stat-anomaly">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+            <div class="stat-value">@Model.AnomalyCages</div>
+            <div class="stat-label">异常网箱</div>
+        </div>
+    </div>
+    <div class="stat-card stat-pending">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info">
+            <div class="stat-value">@Model.PendingDisposal</div>
+            <div class="stat-label">待处置</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="panel">
+        <h3>🌊 按海区分布</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>海区</th>
+                    <th>网箱数</th>
+                    <th>异常数</th>
+                    <th>异常率</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.BySeaArea)
+                {
+                    <tr>
+                        <td>@item.SeaAreaName</td>
+                        <td>@item.TotalCages</td>
+                        <td class="@(item.AnomalyCages > 0 ? "text-danger" : "")">@item.AnomalyCages</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill @(item.AnomalyRate > 30 ? "bg-danger" : item.AnomalyRate > 10 ? "bg-warning" : "bg-success")" style="width:@item.AnomalyRate%"></div>
+                            </div>
+                            <span class="progress-text">@item.AnomalyRate%</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <h3>🐟 按鱼种分布</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>鱼种</th>
+                    <th>网箱数</th>
+                    <th>异常数</th>
+                    <th>异常率</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ByFishSpecies)
+                {
+                    <tr>
+                        <td>@item.SpeciesName</td>
+                        <td>@item.TotalCages</td>
+                        <td class="@(item.AnomalyCages > 0 ? "text-danger" : "")">@item.AnomalyCages</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill @(item.AnomalyRate > 30 ? "bg-danger" : item.AnomalyRate > 10 ? "bg-warning" : "bg-success")" style="width:@item.AnomalyRate%"></div>
+                            </div>
+                            <span class="progress-text">@item.AnomalyRate%</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <h3>🔍 异常原因分布</h3>
+        <div class="anomaly-chart">
+            @foreach (var item in Model.ByAnomalyType)
+            {
+                <div class="anomaly-row">
+                    <div class="anomaly-label">
+                        @item.AnomalyTypeName
+                        <span class="anomaly-count">@item.Count 件</span>
+                    </div>
+                    <div class="progress-bar large">
+                        <div class="progress-fill @(item.AnomalyType == AnomalyType.LowDissolvedOxygen ? "bg-danger" : item.AnomalyType == AnomalyType.InsufficientFeed ? "bg-warning" : "bg-dark")" style="width:@item.Percentage%"></div>
+                    </div>
+                    <span class="progress-text">@item.Percentage%</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>⏱️ 处置时长分布</h3>
+        <div class="anomaly-chart">
+            @foreach (var item in Model.ByDisposalDuration)
+            {
+                <div class="anomaly-row">
+                    <div class="anomaly-label">
+                        @item.DurationRange
+                        <span class="anomaly-count">@item.Count 件</span>
+                    </div>
+                    <div class="progress-bar large">
+                        <div class="progress-fill @(item.DurationRange.Contains(">") ? "bg-danger" : item.DurationRange.Contains("1-3") ? "bg-warning" : "bg-success")" style="width:@item.Percentage%"></div>
+                    </div>
+                    <span class="progress-text">@item.Percentage%</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <h3>📋 最近异常记录</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>网箱</th>
+                <th>海区</th>
+                <th>鱼种</th>
+                <th>异常类型</th>
+                <th>处置状态</th>
+                <th>报告时间</th>
+                <th>已持续</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.RecentAnomalies)
+            {
+                <tr>
+                    <td><strong>@item.CageCode</strong></td>
+                    <td>@item.SeaAreaName</td>
+                    <td>@item.FishSpeciesName</td>
+                    <td>@await Html.PartialAsync("_AnomalyBadge", item.AnomalyType)</td>
+                    <td>@await Html.PartialAsync("_DisposalStatusBadge", item.Status)</td>
+                    <td>@item.ReportedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="@(item.DurationHours > 24 ? "text-danger" : "")">@item.DurationHours 小时</td>
+                    <td><a asp-controller="Cage" asp-action="Details" asp-route-id="@item.CageId" class="btn btn-sm btn-primary">查看详情</a></td>
+                </tr>
+            }
+            @if (!Model.RecentAnomalies.Any())
+            {
+                <tr><td colspan="8" class="text-center text-muted">暂无异常记录</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

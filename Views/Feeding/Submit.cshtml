@@ -1,0 +1,114 @@
+@model SubmitFeedingViewModel
+@{
+    ViewData["Title"] = "提交投喂 - " + Model.CageCode;
+}
+
+<div class="page-header">
+    <h1>🍽️ 提交投喂记录</h1>
+    <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">← 返回详情</a>
+</div>
+
+@if (Model.HasUnresolvedOxygenAnomaly)
+{
+    <div class="alert alert-danger">
+        <strong>⚠️ 警告：</strong> @Model.AnomalyWarning
+        <br />
+        <small>请先处理溶氧异常后再进行正常投喂，或选择标记为异常投喂。</small>
+    </div>
+}
+
+<div class="panel form-panel">
+    <form asp-action="Submit" method="post" class="form-container">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CageId" />
+        <input type="hidden" asp-for="HasUnresolvedOxygenAnomaly" />
+
+        <div class="form-info-bar">
+            <span>📍 网箱：<strong>@Model.CageCode</strong></span>
+            <span>🕐 投喂时间：<strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</strong></span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="OperatorId">投喂员</label>
+                <select asp-for="OperatorId" class="form-control">
+                    @foreach (var op in Model.Operators)
+                    {
+                        <option value="@op.Id">@op.FullName</option>
+                    }
+                </select>
+                <span asp-validation-for="OperatorId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="FeedAmountKg">投喂量 (kg)</label>
+                <input asp-for="FeedAmountKg" class="form-control" step="0.1" min="0" max="1000" />
+                <span asp-validation-for="FeedAmountKg" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FeedType">饲料类型</label>
+                <input asp-for="FeedType" class="form-control" />
+                <span asp-validation-for="FeedType" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" asp-for="IsNormal" />
+                    <span>正常投喂（无异常情况）</span>
+                </label>
+                <span asp-validation-for="IsNormal" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div id="anomaly-section" style="display:none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label asp-for="AnomalyType">异常类型</label>
+                    <select asp-for="AnomalyType" class="form-control">
+                        <option value="@((int)AnomalyType.InsufficientFeed)">饲料不足</option>
+                        <option value="@((int)AnomalyType.LowDissolvedOxygen)">溶氧异常</option>
+                        <option value="@((int)AnomalyType.DiseaseSuspected)">病害疑似</option>
+                    </select>
+                    <span asp-validation-for="AnomalyType" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label asp-for="Remarks">备注</label>
+                <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="说明投喂情况、异常原因等..."></textarea>
+                <span asp-validation-for="Remarks" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" @(Model.HasUnresolvedOxygenAnomaly ? "disabled" : "")>💾 提交投喂记录</button>
+            <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+@section Scripts {
+<script>
+    document.getElementById('IsNormal')?.addEventListener('change', function() {
+        var anomalySection = document.getElementById('anomaly-section');
+        if (anomalySection) {
+            anomalySection.style.display = this.checked ? 'none' : 'block';
+        }
+    });
+    window.addEventListener('load', function() {
+        var checkbox = document.getElementById('IsNormal');
+        var anomalySection = document.getElementById('anomaly-section');
+        if (checkbox && anomalySection) {
+            anomalySection.style.display = checkbox.checked ? 'none' : 'block';
+        }
+    });
+</script>
+}

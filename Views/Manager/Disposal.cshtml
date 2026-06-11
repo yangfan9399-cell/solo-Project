@@ -1,0 +1,106 @@
+@model ManagerDisposalViewModel
+@{
+    ViewData["Title"] = "场长处置 - " + Model.CageCode;
+}
+
+<div class="page-header">
+    <h1>📋 场长处置异常</h1>
+    <a asp-controller="Manager" asp-action="Index" class="btn btn-secondary">← 返回列表</a>
+</div>
+
+<div class="panel form-panel">
+    <form asp-action="Disposal" method="post" class="form-container">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CageId" />
+
+        <div class="form-info-bar">
+            <span>📍 网箱：<strong>@Model.CageCode</strong></span>
+        </div>
+
+        <div class="sub-section">
+            <h4>⚠️ 异常信息</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">异常类型</span>
+                    <span class="info-value">@await Html.PartialAsync("_AnomalyBadge", Model.CurrentAnomaly)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">当前状态</span>
+                    <span class="info-value">@await Html.PartialAsync("_DisposalStatusBadge", Model.CurrentStatus)</span>
+                </div>
+                <div class="info-item full-width">
+                    <span class="info-label">异常说明</span>
+                    <span class="info-value text-danger">@Model.AnomalyNote</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.PendingDiseaseReports.Any())
+        {
+            <div class="sub-section">
+                <h4>⚕️ 关联病害报告</h4>
+                @foreach (var dr in Model.PendingDiseaseReports)
+                {
+                    <div class="disease-card">
+                        <div class="disease-header">
+                            <span>@dr.ReportedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                            @await Html.PartialAsync("_DiseaseStatusBadge", dr.Status)
+                        </div>
+                        <div class="disease-info">
+                            <p><strong>报告人：</strong>@dr.ReporterName</p>
+                            <p><strong>症状：</strong>@dr.Symptoms</p>
+                            <p><strong>诊断：</strong>@dr.DiagnosedDisease</p>
+                            <p><strong>兽医意见：</strong>@dr.VeterinaryOpinion</p>
+                            <p><strong>治疗建议：</strong>@dr.RecommendedTreatment</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <hr />
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="ManagerId">场长</label>
+                <select asp-for="ManagerId" class="form-control">
+                    @foreach (var mgr in Model.Managers)
+                    {
+                        <option value="@mgr.Id">@mgr.FullName</option>
+                    }
+                </select>
+                <span asp-validation-for="ManagerId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="radio-label">
+                    <input type="radio" asp-for="IsApproved" value="true" checked />
+                    <span>✅ 批准处置方案</span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label class="radio-label">
+                    <input type="radio" asp-for="IsApproved" value="false" />
+                    <span>❌ 退回重新处理</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label asp-for="ManagerNote">场长批示</label>
+                <textarea asp-for="ManagerNote" class="form-control" rows="4" placeholder="批准或退回的原因、具体处置要求等..."></textarea>
+                <span asp-validation-for="ManagerNote" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 提交处置意见</button>
+            <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+<div asp-validation-summary="All" class="text-danger"></div>

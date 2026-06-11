@@ -1,0 +1,81 @@
+@model RecordWaterQualityViewModel
+@{
+    ViewData["Title"] = "记录水质 - " + Model.CageCode;
+}
+
+<div class="page-header">
+    <h1>💧 记录水质巡检数据</h1>
+    <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">← 返回详情</a>
+</div>
+
+<div class="panel form-panel">
+    <form asp-action="Record" method="post" class="form-container">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CageId" />
+
+        <div class="form-info-bar">
+            <span>📍 网箱：<strong>@Model.CageCode</strong></span>
+            <span>🕐 记录时间：<strong>@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</strong></span>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="InspectorId">巡检员</label>
+                <select asp-for="InspectorId" class="form-control">
+                    @foreach (var inspector in Model.Inspectors)
+                    {
+                        <option value="@inspector.Id">@inspector.FullName</option>
+                    }
+                </select>
+                <span asp-validation-for="InspectorId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Temperature">水温 (°C)</label>
+                <input asp-for="Temperature" class="form-control" step="0.1" min="0" max="40" />
+                <span asp-validation-for="Temperature" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DissolvedOxygen">溶氧 (mg/L)</label>
+                <input asp-for="DissolvedOxygen" class="form-control" step="0.1" min="0" max="20" />
+                <span class="form-hint">正常值：≥ 5.0 mg/L，低于此值将自动标记异常</span>
+                <span asp-validation-for="DissolvedOxygen" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label asp-for="Ph">pH值</label>
+                <input asp-for="Ph" class="form-control" step="0.1" min="0" max="14" />
+                <span asp-validation-for="Ph" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Salinity">盐度 (‰)</label>
+                <input asp-for="Salinity" class="form-control" step="0.1" min="0" max="40" />
+                <span asp-validation-for="Salinity" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Turbidity">浊度 (NTU)</label>
+                <input asp-for="Turbidity" class="form-control" step="0.1" min="0" max="100" />
+                <span asp-validation-for="Turbidity" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label asp-for="Remarks">备注</label>
+                <textarea asp-for="Remarks" class="form-control" rows="3" placeholder="记录异常情况、处理措施等..."></textarea>
+                <span asp-validation-for="Remarks" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 提交记录</button>
+            <a asp-controller="Cage" asp-action="Details" asp-route-id="@Model.CageId" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+<div asp-validation-summary="All" class="text-danger"></div>

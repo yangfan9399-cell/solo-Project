@@ -1,0 +1,21 @@
+@model OceanFarm.Models.FeedingStatus
+
+@{
+    var statusClass = Model switch
+    {
+        FeedingStatus.Pending => "badge-warning",
+        FeedingStatus.Normal => "badge-success",
+        FeedingStatus.Abnormal => "badge-danger",
+        FeedingStatus.Cancelled => "badge-secondary",
+        _ => "badge-secondary"
+    };
+    var statusText = Model switch
+    {
+        FeedingStatus.Pending => "待确认",
+        FeedingStatus.Normal => "正常",
+        FeedingStatus.Abnormal => "异常",
+        FeedingStatus.Cancelled => "已取消",
+        _ => "未知"
+    };
+}
+<span class="badge @statusClass">@statusText</span>

@@ -1,0 +1,47 @@
+@model IEnumerable<CageAnomalyDetail>
+@{
+    ViewData["Title"] = "兽医复核列表";
+}
+
+<div class="page-header">
+    <h1>⚕️ 兽医复核 - 待处理病害报告</h1>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">← 返回看板</a>
+</div>
+
+<div class="panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>网箱</th>
+                <th>海区</th>
+                <th>鱼种</th>
+                <th>异常情况</th>
+                <th>处置状态</th>
+                <th>报告时间</th>
+                <th>已持续</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.CageCode</strong></td>
+                    <td>@item.SeaAreaName</td>
+                    <td>@item.FishSpeciesName</td>
+                    <td>@item.Note</td>
+                    <td>@await Html.PartialAsync("_DisposalStatusBadge", item.Status)</td>
+                    <td>@item.ReportedAt?.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="@(item.DurationHours > 24 ? "text-danger" : "")">@item.DurationHours 小时</td>
+                    <td>
+                        <a asp-controller="Veterinary" asp-action="Review" asp-route-id="@item.DiseaseReportId" class="btn btn-sm btn-primary">开始复核</a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" class="text-center text-muted">暂无待复核的病害报告 ✅</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,21 @@
+@model OceanFarm.Models.AnomalyType
+
+@{
+    var statusClass = Model switch
+    {
+        AnomalyType.None => "badge-success",
+        AnomalyType.LowDissolvedOxygen => "badge-danger",
+        AnomalyType.InsufficientFeed => "badge-warning",
+        AnomalyType.DiseaseSuspected => "badge-dark",
+        _ => "badge-secondary"
+    };
+    var statusText = Model switch
+    {
+        AnomalyType.None => "正常",
+        AnomalyType.LowDissolvedOxygen => "溶氧异常",
+        AnomalyType.InsufficientFeed => "饲料不足",
+        AnomalyType.DiseaseSuspected => "病害疑似",
+        _ => "未知"
+    };
+}
+<span class="badge @statusClass">@statusText</span>
