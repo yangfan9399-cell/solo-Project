@@ -4,32 +4,49 @@
 
 ---
 
-## 🚀 快速启动（最简单方式）
+## 🚀 快速启动（无需安装 Maven）
 
 ### 前置条件
-- 安装 **JDK 17** 或更高版本（下载：https://adoptium.net/）
-- 安装 **Maven 3.9+**（macOS: `brew install maven`，或下载：https://maven.apache.org/）
+- 只需 **JDK 17** 或更高版本：
+  - **macOS**（Homebrew）：`brew install openjdk@17`
+  - **通用下载**：https://adoptium.net/
+- ✅ **不需要安装 Maven** — 项目内置 Maven Wrapper，首次启动自动下载
 
-### 方式一：使用启动脚本（推荐）
+---
 
-**macOS / Linux:**
+### 方式一：一键启动脚本（推荐）
+
+**macOS / Linux：**
 ```bash
 cd q-174
+chmod +x start.sh   # 首次执行前加权限（如需要）
 ./start.sh
 ```
 
-**Windows:**
+**Windows：**
 ```cmd
 cd q-174
 start.bat
 ```
 
-### 方式二：手动命令启动
+---
+
+### 方式二：使用 Maven Wrapper 命令启动
+
+**所有平台通用，直接运行项目内的 mvnw：**
 
 ```bash
 cd q-174
-mvn spring-boot:run
+./mvnw spring-boot:run          # macOS / Linux
+mvnw.cmd spring-boot:run        # Windows
 ```
+
+> 💡 **首次启动说明**：
+> - `mvnw`（Maven Wrapper）会自动下载 Maven 3.9.6（约 10MB）和项目依赖（约 150MB）
+> - 首次启动耗时约 1-3 分钟，之后再次启动只需 5-10 秒
+> - Maven 会被缓存到 `~/.m2` 目录，不占用项目空间
+
+---
 
 ### 启动后访问
 
@@ -153,7 +170,9 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 
 ```
 q-174/
-├── start.sh / start.bat          # 启动脚本
+├── start.sh / start.bat          # 一键启动脚本（推荐）
+├── mvnw / mvnw.cmd               # Maven Wrapper（无需安装 Maven）
+├── .mvn/wrapper/                 # Maven 分发自动下载配置
 ├── pom.xml                       # Maven 配置
 └── src/main/
     ├── java/com/campus/dormrepair/
