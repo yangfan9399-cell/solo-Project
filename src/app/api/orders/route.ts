@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { initDatabase } from '@/db/init';
 import { db } from '@/db';
 import { orders, customers, users } from '@/db/schema';
-import { eq, desc, like, and, sql } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
+import { addOrderHistory } from '@/db/queries';
+import type { OrderStatus } from '@/db/schema';
 
 export async function GET(request: Request) {
   await initDatabase();
@@ -62,30 +64,47 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   const now = new Date();
-  const orderNo = 'PO' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(Math.floor(Math.random() * 900) + 100);
+  const orderNo =
+    'PO' +
+    now.getFullYear() +
+    String(now.getMonth() + 1).padStart(2, '0') +
+    String(Math.floor(Math.random() * 900) + 100);
 
-  const result = await db.insert(orders).values({
-    orderNo,
-    customerId: body.customerId,
-    productName: body.productName,
-    category: body.category,
-    quantity: body.quantity,
-    paperType: body.paperType,
-    paperWeight: body.paperWeight || null,
-    size: body.size,
-    craft: body.craft,
-    colorMode: body.colorMode,
-    description: body.description || null,
-    status: body.status || 'draft',
-    deliveryDate: new Date(body.deliveryDate),
-    originalDeliveryDate: new Date(body.deliveryDate),
-    salesId: body.salesId || 1,
-    designerId: body.designerId || 2,
-  }).returning();
+  const requestedStatus = (body.status || 'draft') as OrderStatus;
 
-  if (body.status && body.status !== 'draft') {
-    const { addOrderHistory } = await import('@/db/init');
+  const result = await db
+    .insert(orders)
+    .values({
+      orderNo,
+      customerId: body.customerId,
+      productName: body.productName,
+      category: body.category,
+      quantity: body.quantity,
+      paperType: body.paperType,
+      paperWeight: body.paperWeight || null,
+      size: body.size,
+      craft: body.craft,
+      colorMode: body.colorMode,
+      description: body.description || null,
+      status: requestedStatus,
+      deliveryDate: new Date(body.deliveryDate),
+      originalDeliveryDate: new Date(body.deliveryDate),
+      salesId: body.salesId || 1,
+      designerId: body.designerId || 2,
+    })
+    .returning();
+
+  const createdOrder = result[0];
+
+  if (requestedStatus && requestedStatus !== 'draft') {
+    await addOrderHistory(
+      createdOrder.id,
+      requestedStatus,
+      body.salesId || 1,
+      body.operatorName || '张经理',
+      requestedStatus === 'submitted' ? '提交订单' : '创建订单'
+    );
   }
 
-  return NextResponse.json(result[0]);
+  return NextResponse.json(createdOrder);
 }

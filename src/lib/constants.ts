@@ -1,4 +1,4 @@
-import type { OrderStatus, ProductCategory, RejectReason, UserRole } from './schema';
+import type { OrderStatus, ProductCategory, RejectReason, UserRole } from '@/db/schema';
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
   draft: '草稿',

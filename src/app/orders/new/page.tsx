@@ -68,22 +68,12 @@ export default function NewOrder() {
           status: 'submitted',
           salesId: 1,
           designerId: 2,
+          operatorName: '张经理',
         }),
       });
 
       if (res.ok) {
         const order = await res.json();
-
-        await fetch(`/api/orders/${order.id}/status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'submit',
-            operatorId: 1,
-            operatorName: '张经理',
-          }),
-        });
-
         router.push(`/orders/${order.id}`);
       } else {
         const err = await res.json();
