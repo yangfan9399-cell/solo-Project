@@ -4,22 +4,15 @@
 
 {% block content %}
 <div x-data="{
-    selectedRecord: null,
+    selectedRecordId: null,
     showDetail: false,
-    showRejectModal: false,
-    currentRecordId: null,
     async loadRecord(id) {
-        this.currentRecordId = id;
-        const url = '{% url 'access_control:review_page' %}?record_id=' + id;
-        const response = await fetch(url, {
-            headers: { 'HX-Request': 'true' }
-        });
-        this.selectedRecord = await response.text();
+        this.selectedRecordId = id;
         this.showDetail = true;
-    },
-    openRejectModal() {
-        if (!this.currentRecordId) return;
-        this.showRejectModal = true;
+        setTimeout(() => {
+            document.getElementById('review-detail-container').innerHTML = '';
+            htmx.trigger('#review-detail-loader', 'load', {id: id});
+        }, 10);
     }
 }">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -66,7 +59,8 @@
                                 <a href="#" @click.prevent="loadRecord({{ record.id }})"
                                    class="list-group-item list-group-item-action border-0 py-3
                                           {% if record.is_overdue %}list-group-item-warning{% endif %}
-                                          {% if record.is_blocked %}list-group-item-danger{% endif %}">
+                                          {% if record.is_blocked %}list-group-item-danger{% endif %}"
+                                   :class="{ 'active': selectedRecordId == {{ record.id }} }">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -105,7 +99,8 @@
                             <div class="list-group list-group-flush">
                                 {% for record in approved_records %}
                                 <a href="#" @click.prevent="loadRecord({{ record.id }})"
-                                   class="list-group-item list-group-item-action border-0 py-3 list-group-item-success">
+                                   class="list-group-item list-group-item-action border-0 py-3 list-group-item-success"
+                                   :class="{ 'active': selectedRecordId == {{ record.id }} }">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -133,7 +128,8 @@
                             <div class="list-group list-group-flush">
                                 {% for record in rejected_records %}
                                 <a href="#" @click.prevent="loadRecord({{ record.id }})"
-                                   class="list-group-item list-group-item-action border-0 py-3 list-group-item-danger">
+                                   class="list-group-item list-group-item-action border-0 py-3 list-group-item-danger"
+                                   :class="{ 'active': selectedRecordId == {{ record.id }} }">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -175,42 +171,15 @@
                 </div>
             </div>
 
-            <div x-show="showDetail" x-transition>
-                <div x-html="selectedRecord"></div>
-            </div>
-        </div>
-    </div>
-
-    <div x-show="showRejectModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display:none;">
-        <div class="card" style="width: 100%; max-width: 600px;">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-x-circle me-2 text-danger"></i>退回补证</h5>
-                <button @click="showRejectModal = false" class="btn-close"></button>
-            </div>
-            <div class="card-body">
-                <form :action="'/api/records/' + currentRecordId + '/review-reject/'"
-                      method="post"
-                      @submit="showRejectModal = false">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">退回原因</label>
-                        <textarea name="reject_reason" class="form-control" rows="4" required
-                                  placeholder="请详细说明需要补充的材料或修改的内容..."></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">补救路径</label>
-                        <textarea name="remedial_path" class="form-control" rows="2"
-                                  placeholder="请说明需要采取的补救措施..."></textarea>
-                    </div>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <button type="button" @click="showRejectModal = false" class="btn btn-secondary">
-                            取消
-                        </button>
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-send me-2"></i>确认退回
-                        </button>
-                    </div>
-                </form>
+            <div x-show="showDetail" x-transition id="review-detail-wrapper">
+                <div id="review-detail-loader"
+                     hx-get="{% url 'access_control:review_page' %}"
+                     hx-target="#review-detail-container"
+                     hx-swap="innerHTML"
+                     hx-trigger="load from:body"
+                     hx-headers='{"HX-Request": "true"}'>
+                </div>
+                <div id="review-detail-container"></div>
             </div>
         </div>
     </div>
@@ -228,6 +197,37 @@
                 tabTrigger.show()
             })
         })
+    });
+
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+        if (evt.detail.triggeringEvent && evt.detail.triggeringEvent.detail && evt.detail.triggeringEvent.detail.id) {
+            evt.detail.parameters['record_id'] = evt.detail.triggeringEvent.detail.id;
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.detail.target.id === 'review-detail-container') {
+            if (window.Alpine) {
+                Alpine.initTree(evt.detail.target);
+            }
+            var forms = evt.detail.target.querySelectorAll('form');
+            forms.forEach(function(form) {
+                if (form.getAttribute('hx-post') || form.getAttribute('hx-get')) {
+                    htmx.process(form);
+                }
+            });
+        }
+        if (evt.detail.target.id === 'detail-container') {
+            if (window.Alpine) {
+                Alpine.initTree(evt.detail.target);
+            }
+            var forms = evt.detail.target.querySelectorAll('form');
+            forms.forEach(function(form) {
+                if (form.getAttribute('hx-post') || form.getAttribute('hx-get')) {
+                    htmx.process(form);
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
