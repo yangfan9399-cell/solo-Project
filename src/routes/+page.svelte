@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { recordStore, filteredRecords, venues } from '$lib/stores/recordStore';
   import {
     formatDate,
@@ -13,46 +16,91 @@
   } from '$lib/utils/format';
   import { RecordStatus, RecordType } from '$lib/types';
 
-  function drillDownByStatus(status: string) {
-    if (status === 'ALL') {
-      recordStore.setFilters({ status: 'ALL' });
-    } else {
-      recordStore.setFilters({ status });
+  let initialized = false;
+
+  onMount(() => {
+    const params = new URLSearchParams($page.url.search);
+    const status = params.get('status') || 'ALL';
+    const type = params.get('type') || 'ALL';
+    const venue = params.get('venue') || 'ALL';
+    const search = params.get('search') || '';
+
+    recordStore.setFilters({ status, type, venue, search });
+    initialized = true;
+
+    if ($recordStore.records.length === 0) {
+      recordStore.fetchRecords();
     }
+  });
+
+  function updateUrl(filters: Record<string, string>) {
+    if (!initialized) return;
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== 'ALL' && value !== '') {
+        params.set(key, value);
+      }
+    });
+    const query = params.toString();
+    const newUrl = query ? `/?${query}` : '/';
+    goto(newUrl, { replaceState: true, noScroll: true });
+  }
+
+  function drillDownByStatus(status: string) {
+    const newFilters = {
+      ...$recordStore.filters,
+      status: status || 'ALL'
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   function drillDownByType(type: string) {
-    if (type === 'ALL') {
-      recordStore.setFilters({ type: 'ALL' });
-    } else {
-      recordStore.setFilters({ type });
-    }
+    const newFilters = {
+      ...$recordStore.filters,
+      type: type || 'ALL'
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   function drillDownByVenue(venue: string) {
-    if (venue === 'ALL') {
-      recordStore.setFilters({ venue: 'ALL' });
-    } else {
-      recordStore.setFilters({ venue });
-    }
+    const newFilters = {
+      ...$recordStore.filters,
+      venue: venue || 'ALL'
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   function clearFilters() {
-    recordStore.setFilters({
+    const newFilters = {
       status: 'ALL',
       type: 'ALL',
       venue: 'ALL',
       search: ''
-    });
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   function handleFilterChange(field: string, value: string) {
-    recordStore.setFilters({ [field]: value });
+    const newFilters = {
+      ...$recordStore.filters,
+      [field]: value
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   async function handleSearch(e: Event) {
     const input = e.target as HTMLInputElement;
-    recordStore.setFilters({ search: input.value });
+    const newFilters = {
+      ...$recordStore.filters,
+      search: input.value
+    };
+    recordStore.setFilters(newFilters);
+    updateUrl(newFilters);
   }
 
   function refreshData() {

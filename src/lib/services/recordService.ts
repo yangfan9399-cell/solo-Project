@@ -1,6 +1,6 @@
 import prisma from '$lib/prisma';
 import type { RecordWithRelations, StatisticsData, ProcessingAction, ReviewAction } from '$lib/types';
-import { RecordStatus, FieldChangeType, RecordType } from '$lib/types';
+import { RecordStatus, FieldChangeType, RecordType, UserRole } from '$lib/types';
 import type { Prisma } from '@prisma/client';
 
 export const recordIncludes = {
@@ -124,6 +124,15 @@ export async function processRecord(
   handlerId: string,
   action: ProcessingAction
 ): Promise<RecordWithRelations | null> {
+  const handler = await prisma.user.findUnique({ where: { id: handlerId } });
+  if (!handler) {
+    throw new Error('400:处理人不存在');
+  }
+
+  if (handler.role !== UserRole.FIELD_HANDLER && handler.role !== UserRole.ADMIN) {
+    throw new Error('400:只有一线处理人或管理员可以执行处理操作');
+  }
+
   const record = await prisma.equipmentRecord.findUnique({ where: { id: recordId } });
   if (!record || record.isArchived) {
     return null;
@@ -163,21 +172,39 @@ export async function processRecord(
     if (action.basisAdopted) {
       updateData.basisAdopted = action.basisAdopted;
     }
-    if (action.amount !== undefined) {
-      updateData.amount = action.amount;
-    }
-    if (action.scheduledTime) {
-      updateData.scheduledTime = action.scheduledTime;
-    }
-    if (action.actualTime) {
-      updateData.actualTime = action.actualTime;
-    }
     if (action.conclusion) {
       updateData.conclusion = action.conclusion;
     }
 
+    if (handler.role === UserRole.ADMIN) {
+      if (action.amount !== undefined) {
+        updateData.amount = action.amount;
+      }
+      if (action.scheduledTime) {
+        updateData.scheduledTime = action.scheduledTime;
+      }
+      if (action.actualTime) {
+        updateData.actualTime = action.actualTime;
+      }
+      if (action.responsibleParty) {
+        updateData.responsibleParty = action.responsibleParty;
+      }
+    }
+
     if (action.fieldChanges && action.fieldChanges.length > 0) {
+      const isAdmin = handler.role === UserRole.ADMIN;
       for (const change of action.fieldChanges) {
+        const isCriticalChange = [
+          FieldChangeType.CRITICAL_TIME,
+          FieldChangeType.RESPONSIBLE_PARTY,
+          FieldChangeType.AMOUNT,
+          FieldChangeType.EVIDENCE_CONCLUSION
+        ].includes(change.changeType);
+
+        if (isCriticalChange && !isAdmin) {
+          continue;
+        }
+
         await tx.diffTracker.create({
           data: {
             recordId,
@@ -188,12 +215,7 @@ export async function processRecord(
             newValue: change.newValue,
             diffDescription: change.diffDescription,
             changedById: handlerId,
-            affectsSummary: [
-              FieldChangeType.CRITICAL_TIME,
-              FieldChangeType.RESPONSIBLE_PARTY,
-              FieldChangeType.AMOUNT,
-              FieldChangeType.EVIDENCE_CONCLUSION
-            ].includes(change.changeType)
+            affectsSummary: isCriticalChange
           }
         });
       }
@@ -232,6 +254,15 @@ export async function reviewRecord(
   reviewerId: string,
   action: ReviewAction
 ): Promise<RecordWithRelations | null> {
+  const reviewer = await prisma.user.findUnique({ where: { id: reviewerId } });
+  if (!reviewer) {
+    throw new Error('400:复核人不存在');
+  }
+
+  if (reviewer.role !== UserRole.QUALITY_REVIEWER && reviewer.role !== UserRole.ADMIN) {
+    throw new Error('400:只有质控复核人或管理员可以执行复核操作');
+  }
+
   const record = await prisma.equipmentRecord.findUnique({ where: { id: recordId } });
   if (!record || record.isArchived) {
     return null;
@@ -325,6 +356,15 @@ export async function reprocessRecord(
   handlerId: string,
   reason: string
 ): Promise<RecordWithRelations | null> {
+  const handler = await prisma.user.findUnique({ where: { id: handlerId } });
+  if (!handler) {
+    throw new Error('400:操作人不存在');
+  }
+
+  if (handler.role !== UserRole.QUALITY_REVIEWER && handler.role !== UserRole.ADMIN) {
+    throw new Error('400:只有质控复核人或管理员可以执行重新处理操作');
+  }
+
   const record = await prisma.equipmentRecord.findUnique({ where: { id: recordId } });
   if (!record || !record.isArchived) {
     return null;

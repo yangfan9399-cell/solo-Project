@@ -14,19 +14,27 @@
   import { RecordStatus, RecordType, FieldChangeType } from '$lib/types';
   import type { RecordWithRelations, DiffWithRelations } from '$lib/types';
 
+  function buildFilterUrl(filters: Record<string, string>): string {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== 'ALL' && value !== '') {
+        params.set(key, value);
+      }
+    });
+    const query = params.toString();
+    return query ? `/?${query}` : '/';
+  }
+
   function drillDownByStatus(status: string) {
-    recordStore.setFilters({ status });
-    window.location.href = '/';
+    window.location.href = buildFilterUrl({ status: status || 'ALL' });
   }
 
   function drillDownByType(type: string) {
-    recordStore.setFilters({ type });
-    window.location.href = '/';
+    window.location.href = buildFilterUrl({ type: type || 'ALL' });
   }
 
   function drillDownByVenue(venue: string) {
-    recordStore.setFilters({ venue });
-    window.location.href = '/';
+    window.location.href = buildFilterUrl({ venue: venue || 'ALL' });
   }
 
   function goToRecord(id: string) {
