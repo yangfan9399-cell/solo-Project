@@ -1,0 +1,349 @@
+@model ProcessViewModel
+@{
+    ViewData["Title"] = "处理台 - " + Model.RecordNo;
+    ViewData["Crumbs"] = $"首页 / <a href='{Url.Action("Index", "Records")}'>记录列表</a> / <a href='{Url.Action("Detail", "Records", new { id = Model.Id })}'>{Model.RecordNo}</a> / 处理台";
+}
+
+@if (Model.IsArchived)
+{
+    <div class="archived-banner">
+        本记录已归档，仅可查看。如需修改请点击下方"重新处理"（将生成新的节点）。
+    </div>
+}
+else if (Model.IsReadOnly)
+{
+    <div class="readonly-banner">
+        当前角色对此记录仅具备只读权限，无操作入口。
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.BlockingReason))
+{
+    <div class="blocking-panel">
+        <h4>当前阻断：无法进入下一流程</h4>
+        <div class="label">阻断原因</div>
+        <div class="val">@Model.BlockingReason</div>
+        @if (!string.IsNullOrEmpty(Model.RemedyPath))
+        {
+            <div class="label">补救路径（按步骤执行即可解除阻断）</div>
+            <ol>
+                @foreach (var step in Model.RemedyPath.Split(new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()))
+                {
+                    if (!string.IsNullOrWhiteSpace(step)) { <li>@step</li> }
+                }
+            </ol>
+        }
+        @if (!string.IsNullOrEmpty(Model.DiffFields))
+        {
+            <div class="label">触发阻断的差异字段</div>
+            <div class="val" style="font-family:ui-monospace, Menlo, monospace; background:#fef2f2; padding:6px 10px; border-radius:4px; display:inline-block;">@Model.DiffFields</div>
+        }
+    </div>
+}
+
+<div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:20px;">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3>📝 业务信息</h3>
+                <div style="display:flex; gap:8px;">
+                    <span class="badge @Model.CategoryBadgeClass">@Model.CategoryText</span>
+                    <span class="badge @Model.StatusBadgeClass">@Model.StatusText</span>
+                    <span class="badge bg-secondary">责任人：@Model.CurrentResponsibleName</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>记录编号</label>
+                        <input class="form-readonly" value="@Model.RecordNo" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input class="form-readonly" value="@Model.Title" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>会议室</label>
+                        <input class="form-readonly" value="@Model.MeetingRoom" readonly />
+                    </div>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>设备名称</label>
+                        <input class="form-readonly" value="@Model.EquipmentName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>设备编号</label>
+                        <input class="form-readonly" value="@Model.EquipmentCode" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>设备原值</label>
+                        <input class="form-readonly" value="￥@Model.OriginalValue.ToString("F2")" readonly />
+                    </div>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>借用人</label>
+                        <input class="form-readonly" value="@Model.BorrowerName" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>借用部门</label>
+                        <input class="form-readonly" value="@Model.BorrowerDept" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>借用日期</label>
+                        <input class="form-readonly" value="@Model.BorrowDate.ToString("yyyy-MM-dd HH:mm")" readonly />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>是否损坏</label>
+                        <input class="form-readonly" value="@(Model.HasDamage ? "是" : "否")" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>实际归还日期</label>
+                        @if (Model.CanFieldEdit && !Model.IsArchived)
+                        {
+                            <input type="datetime-local" name="actualReturnDate" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+                        }
+                        else
+                        {
+                            <input class="form-readonly" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")" readonly />
+                        }
+                    </div>
+                </div>
+                @if (Model.HasDamage)
+                {
+                    <div class="form-group">
+                        <label>损坏描述</label>
+                        <textarea class="form-readonly" readonly>@Model.DamageDescription</textarea>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.CanFieldEdit && !Model.IsArchived)
+        {
+            <form asp-action="Supplement" asp-controller="Process" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🛠 现场人员操作区 — 补充业务记录 / 现场说明 / 证据附件</h3>
+                        <span class="badge bg-primary">仅现场人员可编辑</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>现场说明 / 业务记录补充 <span class="muted small">（此区仅限补充业务描述、现场情况说明）</span></label>
+                            <textarea name="fieldDescription" placeholder="请补充现场核验情况，包括设备检查细节、当事人说明、照片拍摄情况等…">@Model.FieldDescription</textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>应赔偿金额（元）</label>
+                                <input type="number" step="0.01" name="compensationAmount" value="@(Model.CompensationAmount ?? 0)" />
+                                <div class="form-help">修改后将触发差异同步：列表摘要、详情结论、复盘统计全部自动更新</div>
+                            </div>
+                            <div class="form-group">
+                                <label>实际赔偿金额（元）</label>
+                                @if (Model.CanReview)
+                                {
+                                    <input type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
+                                }
+                                else
+                                {
+                                    <input class="form-readonly" value="@(Model.ActualCompensation.HasValue ? "￥" + Model.ActualCompensation.Value.ToString("F2") : "待复核人确认")" readonly />
+                                }
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>操作备注</label>
+                            <textarea name="remark" placeholder="请输入本次操作的备注说明，将写入节点历史…"></textarea>
+                        </div>
+                        <div class="form-help">
+                            🔒 说明：现场人员仅可修改<b>现场说明</b>、<b>赔偿金额</b>、<b>实际归还时间</b>；
+                            <b>结论 / 依据 / 状态</b>需由复核人确认或通过"提交复核"流转。
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="actions-bar">
+                            <button type="submit" class="btn btn-primary">💾 保存补充内容</button>
+                            <button type="submit" class="btn btn-success" formaction="@Url.Action("Submit", "Process")" formmethod="post">📨 保存并提交复核</button>
+                            <a class="btn btn-secondary" href="@Url.Action("Detail", "Records", new { id = Model.Id })">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+
+        @if (Model.CanReview && !Model.IsArchived)
+        {
+            <div class="card" style="border:2px solid #3b82f6;">
+                <div class="card-header" style="background:#eff6ff;">
+                    <h3>✅ 主管复核人操作区 — 确认结论 / 退回补证 / 归档</h3>
+                    <span class="badge bg-primary">复核人专属</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>处理结论</label>
+                            <textarea form="approveForm" name="conclusion" placeholder="请确认或修改最终结论">@Model.Conclusion</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>采用依据</label>
+                            <textarea form="approveForm" name="basis" placeholder="请引用制度依据">@Model.Basis</textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>实际赔偿金额（元）</label>
+                            <input form="approveForm" type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
+                        </div>
+                        <div class="form-group">
+                            <label>操作备注</label>
+                            <textarea form="approveForm" name="remark" placeholder="请填写本次复核意见…"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="actions-bar">
+                        <form id="approveForm" asp-action="Approve" asp-controller="Process" method="post" style="display:contents;">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success">✅ 复核通过</button>
+                        </form>
+                        <form asp-action="Archive" asp-controller="Process" method="post" onsubmit="return confirm('确认归档？归档后记录只读，如需修改需走重新处理流程。');">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="remark" value="复核通过并归档" />
+                            <button type="submit" class="btn btn-secondary" style="background:#059669;color:#fff;border-color:#059669;">📦 复核通过并归档</button>
+                        </form>
+                        <button type="button" class="btn btn-warning" onclick="document.getElementById('returnPanel').style.display = (document.getElementById('returnPanel').style.display == 'none' ? '' : 'none');">↩ 退回补证</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="returnPanel" class="card" style="border:2px solid #f59e0b; display:none;">
+                <div class="card-header" style="background:#fef3c7;">
+                    <h3>↩ 退回补证 — 填写阻断信息</h3>
+                </div>
+                <form asp-action="Return" asp-controller="Process" method="post">
+                    <div class="card-body">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-group">
+                            <label>阻断原因（必填）</label>
+                            <textarea name="blockingReason" required placeholder="请详细描述阻断流转的原因，例如：证据链缺失、指标超限、时间异常等"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>补救路径（必填，分步说明）</label>
+                            <textarea name="remedyPath" required placeholder="① ...&#10;② ...&#10;③ ..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>退回理由 / 备注</label>
+                            <textarea name="remark" placeholder="请填写退回原因和补证要求"></textarea>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-warning">⚠ 确认退回补证</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('returnPanel').style.display='none';">取消</button>
+                    </div>
+                </form>
+            </div>
+        }
+
+        @if (Model.IsArchived)
+        {
+            <div class="card">
+                <div class="card-header"><h3>📦 已归档记录操作</h3></div>
+                <form asp-action="Reopen" asp-controller="Process" method="post" onsubmit="return confirm('确认重新处理？将生成新的节点，但保留历史节点。');">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>重新处理理由</label>
+                            <textarea name="remark" required placeholder="请填写重新处理的原因"></textarea>
+                        </div>
+                        <div class="form-help">归档后记录只读；重新处理将生成新的节点，原归档节点保留在历史中。</div>
+                        <input type="hidden" name="id" value="@Model.Id" />
+                    </div>
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">🔄 重新处理（生成新节点）</button>
+                    </div>
+                </form>
+            </div>
+        }
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header"><h3>📎 证据附件</h3></div>
+            <div class="card-body">
+                @if (Model.Evidences.Any())
+                {
+                    <div class="evidence-list">
+                        @foreach (var ev in Model.Evidences)
+                        {
+                            <div class="ev-card @(!ev.IsValid ? "invalid" : "")">
+                                <div class="ev-icon">@(ev.EvidenceType switch {
+                                    EvidenceType.Photo => "🖼",
+                                    EvidenceType.Video => "🎬",
+                                    EvidenceType.Document => "📄",
+                                    EvidenceType.SignForm => "✍",
+                                    _ => "📎"
+                                })</div>
+                                <div class="ev-name">@ev.FileName</div>
+                                <div class="ev-meta">@EnumDisplay.GetEvidenceTypeText(ev.EvidenceType) · @ev.UploadedByName</div>
+                                <div class="ev-desc">@ev.Description</div>
+                                @if (!ev.IsValid) { <div class="small" style="color:#dc2626;">❌ @ev.InvalidReason</div> }
+                            </div>
+                        }
+                    </div>
+                    if (Model.CanFieldEdit && !Model.IsArchived)
+                    {
+                        <div style="margin-top:12px; padding:10px; background:#f0fdf4; border:1px dashed #86efac; border-radius:6px; font-size:12.5px; color:#065f46;">
+                            📌 现场人员可在此区域补充证据附件（本演示省略上传实现，数据已预置）
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="muted small">暂无证据附件</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>🔀 差异快照（字段变更历史）</h3></div>
+            <div class="card-body" style="padding:0;">
+                @if (Model.Snapshots.Any())
+                {
+                    <table class="diff-table">
+                        <thead><tr><th>字段</th><th>变更前</th><th>变更后</th><th>操作</th></tr></thead>
+                        <tbody>
+                            @foreach (var s in Model.Snapshots.OrderByDescending(x => x.ChangedAt))
+                            {
+                                <tr>
+                                    <td style="font-weight:600;">@s.FieldDisplayName</td>
+                                    <td><span class="diff-old">@(string.IsNullOrEmpty(s.BeforeValue) ? "(空)" : s.BeforeValue)</span></td>
+                                    <td><span class="diff-new">@(string.IsNullOrEmpty(s.AfterValue) ? "(空)" : s.AfterValue)</span></td>
+                                    <td>
+                                        <div class="small">@s.ChangedByName</div>
+                                        <div class="small muted">@s.ChangedAt.ToString("MM-dd HH:mm")</div>
+                                        @if (!string.IsNullOrEmpty(s.ChangeReason)) { <div class="small" style="color:#6366f1;">@s.ChangeReason</div> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="muted small" style="padding:20px;">暂无变更记录</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="actions-bar">
+                    <a class="btn btn-secondary" href="@Url.Action("Index", "Records")">返回列表</a>
+                    <a class="btn btn-secondary" href="@Url.Action("Detail", "Records", new { id = Model.Id })">查看详情</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

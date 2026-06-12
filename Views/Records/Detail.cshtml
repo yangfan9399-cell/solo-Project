@@ -1,0 +1,220 @@
+@model RecordDetailViewModel
+@{
+    ViewData["Title"] = "记录详情 - " + Model.Record.RecordNo;
+    ViewData["Crumbs"] = $"首页 / <a href='{Url.Action("Index", "Records")}'>记录列表</a> / {Model.Record.RecordNo}";
+    var r = Model.Record;
+}
+
+@if (Model.IsReadOnly)
+{
+    <div class="@(r.IsArchived ? "archived-banner" : "readonly-banner")">
+        @(r.IsArchived ? "本记录已归档，仅可查看。如需修改请联系主管进行重新处理（将生成新的节点）。" : "当前角色对此记录仅具备只读权限。")
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(r.BlockingReason))
+{
+    <div class="blocking-panel">
+        <h4>当前阻断：阻断流转</h4>
+        <div class="label">阻断原因</div>
+        <div class="val">@r.BlockingReason</div>
+        @if (!string.IsNullOrEmpty(r.RemedyPath))
+        {
+            <div class="label">补救路径</div>
+            <ol>
+                @foreach (var step in r.RemedyPath.Split(new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()))
+                {
+                    if (!string.IsNullOrWhiteSpace(step)) { <li>@step</li> }
+                }
+            </ol>
+        }
+    </div>
+}
+
+<div style="display:grid; grid-template-columns: 1.6fr 1fr; gap:20px;">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3>📋 基础信息</h3>
+                <div style="display:flex; gap:8px;">
+                    <span class="badge @Model.CategoryBadgeClass">@Model.CategoryText</span>
+                    <span class="badge @Model.StatusBadgeClass">@Model.StatusText</span>
+                    @if (r.IsArchived) { <span class="badge bg-success">已归档</span> }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="kv-grid">
+                    <div class="kv-item"><div class="k">记录编号</div><div class="v row-no">@r.RecordNo</div></div>
+                    <div class="kv-item"><div class="k">来源系统</div><div class="v">@r.SourceSystem</div></div>
+                    <div class="kv-item"><div class="k">标题</div><div class="v">@r.Title</div></div>
+                    <div class="kv-item"><div class="k">当前责任人</div><div class="v" style="color:#6366f1;font-weight:600;">@r.CurrentResponsibleName (@r.CurrentResponsibleId)</div></div>
+                    <div class="kv-item"><div class="k">会议室</div><div class="v">@r.MeetingRoom</div></div>
+                    <div class="kv-item"><div class="k">设备</div><div class="v">@r.EquipmentName</div></div>
+                    <div class="kv-item"><div class="k">设备编号</div><div class="v row-no">@r.EquipmentCode</div></div>
+                    <div class="kv-item"><div class="k">设备原值</div><div class="v money">￥@r.OriginalValue.ToString("F2")</div></div>
+                    <div class="kv-item"><div class="k">借用人</div><div class="v">@r.BorrowerName</div></div>
+                    <div class="kv-item"><div class="k">借用部门</div><div class="v">@r.BorrowerDept</div></div>
+                    <div class="kv-item"><div class="k">借用日期</div><div class="v">@r.BorrowDate.ToString("yyyy-MM-dd HH:mm")</div></div>
+                    <div class="kv-item"><div class="k">应还日期</div><div class="v">@r.DueReturnDate.ToString("yyyy-MM-dd HH:mm")</div></div>
+                    <div class="kv-item"><div class="k">实际归还</div><div class="v">@(r.ActualReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "—")</div></div>
+                    <div class="kv-item"><div class="k">是否损坏</div><div class="v">@(r.HasDamage ? "❌ 是" : "✅ 否")</div></div>
+                    <div class="kv-item"><div class="k">应赔偿金额</div><div class="v money">@(r.CompensationAmount.HasValue ? "￥" + r.CompensationAmount.Value.ToString("F2") : "—")</div></div>
+                    <div class="kv-item"><div class="k">实际赔偿</div><div class="v money">@(r.ActualCompensation.HasValue ? "￥" + r.ActualCompensation.Value.ToString("F2") : "待确认")</div></div>
+                </div>
+
+                @if (r.HasDamage)
+                {
+                    <h4 class="section-title" style="margin-top:20px;">损坏描述</h4>
+                    <p style="line-height:1.8; color:#374151;">@r.DamageDescription</p>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>📝 处理结论与依据</h3></div>
+            <div class="card-body">
+                <h4 class="section-title">现场说明</h4>
+                <p style="line-height:1.8; color:#374151;">@(string.IsNullOrEmpty(r.FieldDescription) ? "<span class='muted'>未填写</span>" : r.FieldDescription)</p>
+
+                <h4 class="section-title" style="margin-top:16px;">处理结论</h4>
+                <div class="conclusion-box">@(string.IsNullOrEmpty(r.Conclusion) ? "<span class='muted'>待处理</span>" : r.Conclusion)</div>
+
+                <h4 class="section-title" style="margin-top:16px;">采用依据</h4>
+                <div class="basis-box">@(string.IsNullOrEmpty(r.Basis) ? "<span class='muted'>未填写</span>" : r.Basis)</div>
+
+                @if (!string.IsNullOrEmpty(r.DiffFields))
+                {
+                    <h4 class="section-title" style="margin-top:16px;">差异字段摘要</h4>
+                    <p style="line-height:1.9; color:#374151; font-family:ui-monospace, Menlo, monospace; font-size:12.5px; background:#f8fafc; padding:10px 14px; border-radius:6px;">@r.DiffFields</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header"><h3>👤 操作人信息</h3></div>
+            <div class="card-body">
+                <div class="kv-grid">
+                    <div class="kv-item"><div class="k">创建人</div><div class="v">@r.CreatedByName (@r.CreatedById)</div></div>
+                    <div class="kv-item"><div class="k">创建时间</div><div class="v">@r.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div></div>
+                    <div class="kv-item"><div class="k">最后更新</div><div class="v">@r.LastUpdatedByName (@r.LastUpdatedById)</div></div>
+                    <div class="kv-item"><div class="k">更新时间</div><div class="v">@(r.LastUpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</div></div>
+                    @if (r.IsArchived)
+                    {
+                        <div class="kv-item"><div class="k">归档时间</div><div class="v">@r.ArchivedAt?.ToString("yyyy-MM-dd HH:mm")</div></div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>📎 证据附件 (@Model.Evidences.Count)</h3></div>
+            <div class="card-body">
+                @if (Model.Evidences.Any())
+                {
+                    <div class="evidence-list">
+                        @foreach (var ev in Model.Evidences)
+                        {
+                            <div class="ev-card @(!ev.IsValid ? "invalid" : "")">
+                                <div class="ev-icon">@(ev.EvidenceType switch {
+                                    EvidenceType.Photo => "🖼",
+                                    EvidenceType.Video => "🎬",
+                                    EvidenceType.Document => "📄",
+                                    EvidenceType.SignForm => "✍",
+                                    _ => "📎"
+                                })</div>
+                                <div class="ev-name">@ev.FileName</div>
+                                <div class="ev-meta">@EnumDisplay.GetEvidenceTypeText(ev.EvidenceType) · @(ev.FileSize / 1024)KB · @ev.UploadedByName</div>
+                                <div class="ev-meta">@ev.UploadedAt.ToString("MM-dd HH:mm")</div>
+                                <div class="ev-desc">@ev.Description</div>
+                                @if (!ev.IsValid) { <div class="small" style="color:#dc2626; margin-top:4px;">❌ @ev.InvalidReason</div> }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="muted small">暂无证据附件</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>🔀 字段变更差异（处理前后）</h3></div>
+            <div class="card-body" style="padding:0;">
+                @if (Model.DiffFields.Any())
+                {
+                    <table class="diff-table">
+                        <thead><tr><th>字段</th><th>变更前</th><th>变更后</th><th>原因 / 操作人</th></tr></thead>
+                        <tbody>
+                            @foreach (var d in Model.DiffFields)
+                            {
+                                <tr>
+                                    <td style="font-weight:600;">@d.FieldDisplayName</td>
+                                    <td><span class="diff-old">@(string.IsNullOrEmpty(d.BeforeValue) ? "(空)" : d.BeforeValue)</span></td>
+                                    <td><span class="diff-new">@(string.IsNullOrEmpty(d.AfterValue) ? "(空)" : d.AfterValue)</span></td>
+                                    <td>
+                                        <div style="color:#374151;">@(string.IsNullOrEmpty(d.ChangeReason) ? "—" : d.ChangeReason)</div>
+                                        <div class="small muted">@d.ChangedByName · @d.ChangedAt.ToString("MM-dd HH:mm")</div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="muted small" style="padding:20px;">暂无字段变更</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="actions-bar">
+                    <a class="btn btn-secondary" href="@Url.Action("Index", "Records")">返回列表</a>
+                    <div class="spacer"></div>
+                    <a class="btn btn-primary" href="@Url.Action("Index", "Process", new { id = r.Id })">进入处理台</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>🧭 完整流转历史（@Model.Nodes.Count 个节点）</h3></div>
+    <div class="card-body">
+        <div class="timeline">
+            @foreach (var n in Model.Nodes.OrderBy(x => x.Sequence))
+            {
+                var typeCls = n.NodeType switch {
+                    NodeType.Acceptance => "type-acceptance",
+                    NodeType.ProcessUpdate => "type-process",
+                    NodeType.Review => "type-review",
+                    NodeType.ReturnSupplement => "type-return",
+                    NodeType.Archive => "type-archive",
+                    NodeType.Reopen => "type-reopen",
+                    _ => "type-process"
+                };
+                <div class="tl-node @typeCls">
+                    <div class="tl-head">
+                        <span class="tl-title">@n.NodeTitle</span>
+                        <span class="badge @EnumDisplay.GetStatusBadgeClass(n.ToStatus ?? RecordStatus.Processing)">
+                            @(n.FromStatus.HasValue ? EnumDisplay.GetStatusText(n.FromStatus.Value) : "创建")
+                            → @EnumDisplay.GetStatusText(n.ToStatus ?? RecordStatus.Processing)
+                        </span>
+                        <span class="tl-operator">👤 @n.OperatorName <span class="muted">(@EnumDisplay.GetRoleText(n.OperatorRole))</span></span>
+                        <span class="tl-time">@n.OperatedAt.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                        <span class="badge bg-secondary">节点 #@n.Sequence</span>
+                    </div>
+                    <div class="tl-remark">@(string.IsNullOrEmpty(n.Remark) ? "<em class='muted'>未填写备注</em>" : n.Remark)</div>
+                    @if (!string.IsNullOrEmpty(n.ChangedFields))
+                    {
+                        <div class="tl-changes">变更字段：@n.ChangedFields</div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

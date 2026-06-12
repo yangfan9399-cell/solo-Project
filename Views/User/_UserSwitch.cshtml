@@ -1,0 +1,27 @@
+@model UserSwitchViewModel
+@if (Model != null && Model.Users.Any())
+{
+    <form asp-action="DoSwitch" asp-controller="User" method="post">
+        <select name="userId" id="userSwitch">
+            @foreach (var u in Model.Users)
+            {
+                var sel = u.UserId == Model.CurrentUserId ? "selected" : "";
+                <option value="@u.UserId" data-name="@u.UserName" data-role="@((int)u.Role)" @sel>
+                    @u.UserName (@EnumDisplay.GetRoleText(u.Role))
+                </option>
+            }
+        </select>
+        <input type="hidden" name="userName" id="userNameInput" />
+        <input type="hidden" name="role" id="userRoleInput" />
+        <button type="submit" onclick="return setUserFields();">切换身份</button>
+    </form>
+    <script>
+        function setUserFields() {
+            var sel = document.getElementById('userSwitch');
+            var opt = sel.options[sel.selectedIndex];
+            document.getElementById('userNameInput').value = opt.dataset.name;
+            document.getElementById('userRoleInput').value = opt.dataset.role;
+            return true;
+        }
+    </script>
+}

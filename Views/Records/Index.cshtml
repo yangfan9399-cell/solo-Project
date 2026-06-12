@@ -1,0 +1,103 @@
+@model IEnumerable<RecordListViewModel>
+@{
+    ViewData["Title"] = "核验记录列表";
+    ViewData["Crumbs"] = "首页 / 记录列表";
+    var fStatus = ViewData["FilterStatus"] as RecordStatus?;
+    var fCat = ViewData["FilterCategory"] as SampleCategory?;
+    var keyword = ViewData["Keyword"] as string;
+}
+
+<div class="filter-bar">
+    <form asp-action="Index" asp-controller="Records" method="get" style="display:contents;">
+        <label>状态</label>
+        <select name="status">
+            <option value="">全部</option>
+            <option value="10" @(fStatus == RecordStatus.PendingAcceptance ? "selected" : "")>待受理</option>
+            <option value="20" @(fStatus == RecordStatus.Processing ? "selected" : "")>处理中</option>
+            <option value="30" @(fStatus == RecordStatus.PendingReview ? "selected" : "")>待复核</option>
+            <option value="35" @(fStatus == RecordStatus.ReturnedForSupplement ? "selected" : "")>退回补证</option>
+            <option value="40" @(fStatus == RecordStatus.Archived ? "selected" : "")>已归档</option>
+        </select>
+        <label>分类</label>
+        <select name="category">
+            <option value="">全部</option>
+            <option value="1" @(fCat == SampleCategory.NormalRelease ? "selected" : "")>正常放行</option>
+            <option value="2" @(fCat == SampleCategory.MetricExceeded ? "selected" : "")>指标超限</option>
+            <option value="3" @(fCat == SampleCategory.EvidenceMissing ? "selected" : "")>证据缺失</option>
+            <option value="4" @(fCat == SampleCategory.ApprovalTimeout ? "selected" : "")>审批超时</option>
+        </select>
+        <label>关键字</label>
+        <input type="text" name="keyword" value="@keyword" placeholder="编号/设备/借用人/标题" />
+        <button type="submit" class="btn btn-primary btn-sm">筛选</button>
+        <a href="@Url.Action("Index", "Records")" class="btn btn-secondary btn-sm">重置</a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>共 @Model.Count() 条记录</h3>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>标题 / 设备</th>
+                    <th>借用人</th>
+                    <th>分类</th>
+                    <th>状态</th>
+                    <th>当前责任人</th>
+                    <th>摘要（含结论）</th>
+                    <th>赔偿金额</th>
+                    <th>创建</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="row-no">@r.RecordNo</td>
+                        <td>
+                            <div class="row-title">@r.Title</div>
+                            <div class="small muted">@r.EquipmentName</div>
+                            @if (r.IsArchived)
+                            {
+                                <div style="margin-top:2px;"><span class="badge bg-success">已归档 只读</span></div>
+                            }
+                        </td>
+                        <td>
+                            <div>@r.BorrowerName</div>
+                            <div class="small muted">@r.BorrowerDept</div>
+                        </td>
+                        <td><span class="badge @r.CategoryBadgeClass">@r.SampleCategoryText</span></td>
+                        <td><span class="badge @r.StatusBadgeClass">@r.StatusText</span></td>
+                        <td>@r.CurrentResponsibleName</td>
+                        <td class="summary" style="max-width:420px;">
+                            @r.Summary
+                            @if (r.HasBlocking)
+                            {
+                                <div style="margin-top:6px;"><span class="block-tag">⚠ @r.BlockingReason</span></div>
+                            }
+                        </td>
+                        <td class="money">
+                            @if (r.CompensationAmount.HasValue && r.CompensationAmount > 0)
+                            {
+                                <div>￥@r.CompensationAmount.Value.ToString("F2")</div>
+                            }
+                            else
+                            {
+                                <span class="muted">—</span>
+                            }
+                        </td>
+                        <td class="small muted">@r.CreatedAt.ToString("MM-dd HH:mm")</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" href="@Url.Action("Detail", "Records", new { id = r.Id })">详情</a>
+                            <a class="btn btn-sm btn-secondary" href="@Url.Action("Index", "Process", new { id = r.Id })">处理</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 会议室设备借用赔偿核验系统</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+@{
+    var currentController = this.ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var dbCtx = Context.RequestServices.GetService(typeof(MeetingRoomEquipment.Data.ApplicationDbContext)) as MeetingRoomEquipment.Data.ApplicationDbContext;
+    var userSvc = Context.RequestServices.GetService(typeof(MeetingRoomEquipment.Services.ICurrentUserService)) as MeetingRoomEquipment.Services.ICurrentUserService;
+    List<MeetingRoomEquipment.Models.User> userList = null;
+    string curUser = "未登录";
+    string curRoleText = "未知";
+    if (userSvc != null)
+    {
+        curUser = userSvc.UserName;
+        curRoleText = userSvc.Role switch {
+            MeetingRoomEquipment.Models.UserRole.FieldStaff => "现场人员",
+            MeetingRoomEquipment.Models.UserRole.Reviewer => "主管复核人",
+            MeetingRoomEquipment.Models.UserRole.Admin => "系统管理员",
+            _ => "未知"
+        };
+    }
+    if (dbCtx != null)
+    {
+        userList = dbCtx.Users.Where(u => u.IsActive).OrderBy(u => u.UserId).ToList();
+    }
+}
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-brand">🏢 设备赔偿核验</div>
+        <nav class="sidebar-nav">
+            <a href="@Url.Action("Index", "Dashboard")" class="@(currentController == "Dashboard" ? "active" : "")">📊 看板总览</a>
+            <a href="@Url.Action("Index", "Records")" class="@(currentController == "Records" ? "active" : "")">📋 记录列表</a>
+            <a href="@Url.Action("Index", "Process", new { id = 2 })" class="@(currentController == "Process" ? "active" : "")">🛠 处理台</a>
+            <a href="@Url.Action("Index", "Review")" class="@(currentController == "Review" ? "active" : "")">🔍 复盘统计</a>
+        </nav>
+        <div class="sidebar-user">
+            <div class="u-name">@curUser</div>
+            <div>角色：@curRoleText</div>
+            @if (userList != null && userList.Any())
+            {
+                <form asp-action="DoSwitch" asp-controller="User" method="post">
+                    <select name="userId" id="userSwitch" style="width:100%; padding:4px 6px; border-radius:4px; border:1px solid #475569; background:#1e293b; color:#e2e8f0; font-size:12px; margin-top:8px;">
+                        @foreach (var u in userList)
+                        {
+                            var sel = u.UserId == (userSvc?.UserId ?? "") ? "selected" : "";
+                            var roleName = u.Role == MeetingRoomEquipment.Models.UserRole.FieldStaff ? "现场人员" : u.Role == MeetingRoomEquipment.Models.UserRole.Reviewer ? "主管复核人" : "管理员";
+                            <option value="@u.UserId" data-name="@u.UserName" data-role="@((int)u.Role)" @sel>
+                                @u.UserName (@roleName)
+                            </option>
+                        }
+                    </select>
+                    <input type="hidden" name="userName" id="userNameInput" />
+                    <input type="hidden" name="role" id="userRoleInput" />
+                    <button type="submit" onclick="return setUserFields();" style="margin-top:6px; width:100%; padding:5px; background:#3b82f6; border:none; border-radius:4px; color:#fff; font-size:12px; cursor:pointer;">切换身份</button>
+                </form>
+                <script>
+                    function setUserFields() {
+                        var sel = document.getElementById('userSwitch');
+                        var opt = sel.options[sel.selectedIndex];
+                        document.getElementById('userNameInput').value = opt.dataset.name;
+                        document.getElementById('userRoleInput').value = opt.dataset.role;
+                        return true;
+                    }
+                </script>
+            }
+        </div>
+    </aside>
+    <div class="main">
+        <header class="topbar">
+            <div>
+                <h1>@ViewData["Title"]</h1>
+                <div class="crumbs">@Html.Raw(ViewData["Crumbs"]?.ToString() ?? "")</div>
+            </div>
+            <div>
+                <span class="small muted">@DateTime.Now.ToString("yyyy-MM-dd HH:mm")</span>
+            </div>
+        </header>
+        <div class="content">
+            @RenderBody()
+        </div>
+    </div>
+</div>
+</body>
+</html>

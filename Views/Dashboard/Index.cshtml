@@ -1,0 +1,154 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "看板总览";
+    ViewData["Crumbs"] = "首页 / 看板总览";
+}
+
+<div class="stat-grid">
+    <a class="stat-card drill-link" href="@Url.Action("Index", "Records")">
+        <span class="tag" style="background:#3b82f6"></span>
+        <div class="label">记录总数</div>
+        <div class="num">@Model.TotalCount</div>
+        <div class="small muted">全部核验记录</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("Index", "Records", new { status = (int)RecordStatus.Processing })">
+        <span class="tag" style="background:#3b82f6"></span>
+        <div class="label">处理中</div>
+        <div class="num">@Model.Processing</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("Index", "Records", new { status = (int)RecordStatus.PendingReview })">
+        <span class="tag" style="background:#f59e0b"></span>
+        <div class="label">待复核</div>
+        <div class="num">@Model.PendingReview</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("Index", "Records", new { status = (int)RecordStatus.ReturnedForSupplement })">
+        <span class="tag" style="background:#ef4444"></span>
+        <div class="label">退回补证</div>
+        <div class="num">@Model.ReturnedForSupplement</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("Index", "Records", new { status = (int)RecordStatus.Archived })">
+        <span class="tag" style="background:#10b981"></span>
+        <div class="label">已归档</div>
+        <div class="num">@Model.Archived</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.MetricExceeded })">
+        <span class="tag" style="background:#ef4444"></span>
+        <div class="label">阻断异常</div>
+        <div class="num">@Model.BlockedCount</div>
+        <div class="small muted">指标超限 / 证据缺失 / 超时</div>
+    </a>
+</div>
+
+<div class="stat-grid">
+    <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.NormalRelease })">
+        <span class="tag" style="background:#10b981"></span>
+        <div class="label">正常放行</div>
+        <div class="num">@Model.NormalCount</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.MetricExceeded })">
+        <span class="tag" style="background:#ef4444"></span>
+        <div class="label">指标超限</div>
+        <div class="num">@Model.MetricExceededCount</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.EvidenceMissing })">
+        <span class="tag" style="background:#f59e0b"></span>
+        <div class="label">证据缺失</div>
+        <div class="num">@Model.EvidenceMissingCount</div>
+    </a>
+    <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.ApprovalTimeout })">
+        <span class="tag" style="background:#f97316"></span>
+        <div class="label">审批超时</div>
+        <div class="num">@Model.ApprovalTimeoutCount</div>
+    </a>
+    <div class="stat-card">
+        <span class="tag" style="background:#dc2626"></span>
+        <div class="label">应赔偿合计</div>
+        <div class="num money">￥@Model.TotalCompensation.ToString("F2")</div>
+    </div>
+    <div class="stat-card">
+        <span class="tag" style="background:#059669"></span>
+        <div class="label">实际到账合计</div>
+        <div class="num money">￥@Model.ActualCompensationTotal.ToString("F2")</div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+    <div class="card">
+        <div class="card-header"><h3>🚨 超时预警记录</h3></div>
+        <div class="card-body">
+            @if (Model.OverdueRecords.Any())
+            {
+                <table>
+                    <thead><tr><th>编号</th><th>标题</th><th>分类</th><th>当前责任人</th><th>更新时间</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var r in Model.OverdueRecords)
+                        {
+                            <tr>
+                                <td class="row-no">@r.RecordNo</td>
+                                <td class="row-title">@r.Title</td>
+                                <td><span class="badge @r.CategoryBadgeClass">@r.SampleCategoryText</span></td>
+                                <td>@r.CurrentResponsibleName</td>
+                                <td class="small muted">@r.LastUpdatedAt?.ToString("MM-dd HH:mm")</td>
+                                <td><a class="btn btn-sm btn-primary" href="@Url.Action("Detail", "Records", new { id = r.Id })">查看</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="muted small">暂无超时记录 ✅</div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>📈 月度趋势</h3></div>
+        <div class="card-body">
+            <div class="chart-bar">
+                @foreach (var m in Model.MonthlyStats)
+                {
+                    var max = Model.MonthlyStats.Max(x => x.Count);
+                    var h = max > 0 ? (double)m.Count / max * 100 : 0;
+                    <div class="bar">
+                        <div class="num-label">@m.Count</div>
+                        <div class="fill" style="height:@(h)%; min-height:4px;"></div>
+                        <div class="lbl">@m.MonthText</div>
+                    </div>
+                }
+            </div>
+            <div class="small muted" style="margin-top:12px; text-align:center;">单位：笔</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>🕒 最近更新记录</h3></div>
+    <div class="card-body">
+        <table>
+            <thead><tr><th>编号</th><th>标题</th><th>分类</th><th>状态</th><th>摘要</th><th>责任人</th><th>赔偿</th><th>更新</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var r in Model.RecentRecords)
+                {
+                    <tr>
+                        <td class="row-no">@r.RecordNo</td>
+                        <td class="row-title">@r.Title</td>
+                        <td><span class="badge @r.CategoryBadgeClass">@r.SampleCategoryText</span></td>
+                        <td><span class="badge @r.StatusBadgeClass">@r.StatusText</span></td>
+                        <td class="summary" style="max-width:360px;">
+                            @r.Summary
+                            @if (r.HasBlocking)
+                            {
+                                <div style="margin-top:4px;"><span class="block-tag">⚠ 阻断</span></div>
+                            }
+                        </td>
+                        <td>@r.CurrentResponsibleName</td>
+                        <td class="money">@(r.CompensationAmount > 0 ? "￥" + r.CompensationAmount?.ToString("F2") : "—")</td>
+                        <td class="small muted">@r.LastUpdatedAt?.ToString("MM-dd HH:mm")</td>
+                        <td><a class="btn btn-sm btn-secondary" href="@Url.Action("Detail", "Records", new { id = r.Id })">详情</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

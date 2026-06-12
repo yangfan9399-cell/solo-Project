@@ -1,0 +1,135 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "复盘统计";
+    ViewData["Crumbs"] = "首页 / 复盘统计";
+}
+
+<div class="card">
+    <div class="card-header"><h3>📊 全量状态分布（点击任意卡片钻取具体记录）</h3></div>
+    <div class="card-body">
+        <div class="stat-grid">
+            @foreach (var s in Model.StatusStats)
+            {
+                <a class="stat-card drill-link" href="@Url.Action("ByStatus", "Review", new { status = (int)s.Status })">
+                    <span class="tag" style="background:@(s.BadgeClass.Replace("bg-", "") == "success" ? "#10b981" : s.BadgeClass.Replace("bg-", "") == "danger" ? "#ef4444" : s.BadgeClass.Replace("bg-", "") == "warning" ? "#f59e0b" : s.BadgeClass.Replace("bg-", "") == "primary" ? "#3b82f6" : "#64748b")"></span>
+                    <div class="label">@s.StatusText</div>
+                    <div class="num">@s.Count</div>
+                    <div class="small muted">点击钻取 →</div>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>🧩 样本分类分布（含四类异常样本）</h3></div>
+    <div class="card-body">
+        <div class="stat-grid">
+            @foreach (var c in Model.CategoryStats)
+            {
+                var color = c.Category switch {
+                    SampleCategory.NormalRelease => "#10b981",
+                    SampleCategory.MetricExceeded => "#ef4444",
+                    SampleCategory.EvidenceMissing => "#f59e0b",
+                    SampleCategory.ApprovalTimeout => "#f97316",
+                    _ => "#64748b"
+                };
+                <a class="stat-card drill-link" href="@Url.Action("ByCategory", "Review", new { category = (int)c.Category })">
+                    <span class="tag" style="background:@color"></span>
+                    <div class="label">@c.CategoryText</div>
+                    <div class="num">@c.Count</div>
+                    <div class="small muted">点击钻取 →</div>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+    <div class="card">
+        <div class="card-header"><h3>🏢 部门维度统计（点击钻取）</h3></div>
+        <div class="card-body" style="padding:0;">
+            @if (Model.DepartmentStats.Any())
+            {
+                <table>
+                    <thead><tr><th>部门</th><th>记录数</th><th>应赔偿合计</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var d in Model.DepartmentStats)
+                        {
+                            <tr>
+                                <td style="font-weight:600;">@d.Department</td>
+                                <td>@d.Count</td>
+                                <td class="money">￥@d.Compensation.ToString("F2")</td>
+                                <td><a class="btn btn-sm btn-primary" href="@Url.Action("ByDepartment", "Review", new { department = d.Department })">钻取</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="muted small" style="padding:20px;">暂无数据</div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>📈 月度赔偿金额趋势</h3></div>
+        <div class="card-body">
+            <div class="chart-bar">
+                @foreach (var m in Model.MonthlyStats)
+                {
+                    var max = Model.MonthlyStats.Any() ? Model.MonthlyStats.Max(x => (double)x.Compensation) : 0;
+                    var h = max > 0 ? (double)m.Compensation / max * 100 : 0;
+                    <div class="bar">
+                        <div class="num-label">@(m.Compensation > 0 ? "￥" + m.Compensation.ToString("F0") : "")</div>
+                        <div class="fill" style="height:@(h)%; min-height:4px; background:linear-gradient(180deg,#fca5a5,#ef4444);"></div>
+                        <div class="lbl">@m.MonthText</div>
+                    </div>
+                }
+            </div>
+            <div class="small muted" style="margin-top:12px; text-align:center;">单位：元（点击钻取列表页中各记录可查看详情）</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>🔍 复盘指标摘要</h3></div>
+    <div class="card-body">
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="tag" style="background:#3b82f6"></span>
+                <div class="label">总记录数</div>
+                <div class="num">@Model.TotalCount</div>
+            </div>
+            <div class="stat-card">
+                <span class="tag" style="background:#ef4444"></span>
+                <div class="label">阻断异常数</div>
+                <div class="num">@Model.BlockedCount</div>
+                <a href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.MetricExceeded })" class="small">钻取异常 →</a>
+            </div>
+            <div class="stat-card">
+                <span class="tag" style="background:#f97316"></span>
+                <div class="label">审批超时数</div>
+                <div class="num">@Model.ApprovalTimeoutCount</div>
+                <a href="@Url.Action("ByCategory", "Review", new { category = (int)SampleCategory.ApprovalTimeout })" class="small">钻取超时 →</a>
+            </div>
+            <div class="stat-card">
+                <span class="tag" style="background:#dc2626"></span>
+                <div class="label">应赔偿合计</div>
+                <div class="num money">￥@Model.TotalCompensation.ToString("F2")</div>
+            </div>
+            <div class="stat-card">
+                <span class="tag" style="background:#059669"></span>
+                <div class="label">实际赔偿合计</div>
+                <div class="num money">￥@Model.ActualCompensationTotal.ToString("F2")</div>
+            </div>
+            <div class="stat-card">
+                <span class="tag" style="background:#10b981"></span>
+                <div class="label">归档率</div>
+                <div class="num">@(Model.TotalCount > 0 ? Math.Round((double)Model.Archived / Model.TotalCount * 100, 1) : 0)%</div>
+                <a href="@Url.Action("ByStatus", "Review", new { status = (int)RecordStatus.Archived })" class="small">钻取已归档 →</a>
+            </div>
+        </div>
+    </div>
+</div>
