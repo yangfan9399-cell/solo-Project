@@ -353,14 +353,14 @@
             <p class="text-sm text-gray-500 mb-3">退回补充材料，流程回到处理中</p>
             <div class="mb-3">
               <textarea
-                v-model="approveForm.reject_remark"
+                v-model="approveForm.return_remark"
                 rows="2"
                 placeholder="请输入退回原因"
                 class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
               ></textarea>
             </div>
             <button
-              @click="submitApprove('reject')"
+              @click="submitApprove('return')"
               :disabled="record.status !== 'reviewing'"
               class="w-full px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -605,7 +605,7 @@ const attachmentForm = reactive({
 
 const approveForm = reactive({
   approve_remark: '',
-  reject_remark: '',
+  return_remark: '',
   archive_remark: '',
 });
 
@@ -692,10 +692,10 @@ const submitAttachment = () => {
 const submitApprove = (action) => {
   let remark = '';
   if (action === 'approve') remark = approveForm.approve_remark;
-  else if (action === 'reject') remark = approveForm.reject_remark;
+  else if (action === 'return') remark = approveForm.return_remark;
   else if (action === 'archive') remark = approveForm.archive_remark;
 
-  if (action === 'reject' && !remark.trim()) {
+  if (action === 'return' && !remark.trim()) {
     alert('请输入退回原因');
     return;
   }
@@ -706,7 +706,7 @@ const submitApprove = (action) => {
     {
       onSuccess: () => {
         approveForm.approve_remark = '';
-        approveForm.reject_remark = '';
+        approveForm.return_remark = '';
         approveForm.archive_remark = '';
       }
     }
