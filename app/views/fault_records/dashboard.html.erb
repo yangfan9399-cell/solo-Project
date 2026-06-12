@@ -1,4 +1,5 @@
 <% content_for :title, "复盘看板 - 站台门故障抢修系统" %>
+<%= turbo_stream_from "fault_records_updates" %>
 
 <div class="space-y-6">
   <div class="flex items-center justify-between">
@@ -11,13 +12,25 @@
     </div>
   </div>
 
+  <%= turbo_frame_tag "dashboard_stats" do %>
+    <% @status_counts ||= FaultRecord.status_counts %>
+    <% @abnormal_counts ||= FaultRecord.abnormal_type_counts %>
+    <% @line_counts ||= FaultRecord.line_fault_counts %>
+    <% @daily_counts ||= FaultRecord.daily_fault_counts(14) %>
+    <%= render "fault_records/dashboard_stats", status_counts: @status_counts, abnormal_counts: @abnormal_counts, line_counts: @line_counts, daily_counts: @daily_counts %>
+  <% end %>
+
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <% total = FaultRecord.count %>
+    <% archived = FaultRecord.archived_records.count %>
+    <% abnormal = FaultRecord.abnormal.count %>
+    <% avg = FaultRecord.avg_processing_duration %>
     <%= link_to fault_records_path, class: "bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-indigo-300 transition-all block group" do %>
       <div class="flex items-center justify-between mb-2">
         <span class="text-sm font-medium text-slate-500">总工单数</span>
         <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
       </div>
-      <div class="text-3xl font-bold text-slate-800"><%= @total_records %></div>
+      <div class="text-3xl font-bold text-slate-800"><%= total %></div>
       <p class="text-xs text-slate-400 mt-1">点击查看全部 →</p>
     <% end %>
 
@@ -26,8 +39,8 @@
         <span class="text-sm font-medium text-slate-500">已归档</span>
         <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
       </div>
-      <div class="text-3xl font-bold text-slate-800"><%= @archived_count %></div>
-      <div class="text-xs text-emerald-600 mt-1">归档率 <%= @total_records > 0 ? ((@archived_count.to_f / @total_records) * 100).round(1) : 0 %>%</div>
+      <div class="text-3xl font-bold text-slate-800"><%= archived %></div>
+      <div class="text-xs text-emerald-600 mt-1">归档率 <%= total > 0 ? ((archived.to_f / total) * 100).round(1) : 0 %>%</div>
     <% end %>
 
     <%= link_to fault_records_path(q: { abnormal_type_not_eq: FaultRecord.abnormal_types[:normal] }), class: "bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-rose-300 transition-all block group" do %>
@@ -35,8 +48,8 @@
         <span class="text-sm font-medium text-slate-500">异常工单</span>
         <svg class="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       </div>
-      <div class="text-3xl font-bold text-slate-800"><%= @abnormal_count %></div>
-      <div class="text-xs text-rose-600 mt-1">异常率 <%= @total_records > 0 ? ((@abnormal_count.to_f / @total_records) * 100).round(1) : 0 %>%</div>
+      <div class="text-3xl font-bold text-slate-800"><%= abnormal %></div>
+      <div class="text-xs text-rose-600 mt-1">异常率 <%= total > 0 ? ((abnormal.to_f / total) * 100).round(1) : 0 %>%</div>
     <% end %>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -44,7 +57,7 @@
         <span class="text-sm font-medium text-slate-500">平均处理耗时</span>
         <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
-      <div class="text-3xl font-bold text-slate-800"><%= (@avg_duration / 60.0).round(1) %></div>
+      <div class="text-3xl font-bold text-slate-800"><%= (avg / 60.0).round(1) %></div>
       <p class="text-xs text-slate-400 mt-1">小时/单</p>
     </div>
   </div>

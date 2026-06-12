@@ -72,16 +72,8 @@ class FaultRecordsController < ApplicationController
 
     if @fault_record.update(fault_record_params)
       @fault_record.log_info_update(operator: current_user, comment: params[:comment]) if params[:comment].present?
-
-      respond_to do |format|
-        format.html { redirect_to @fault_record, notice: "记录已更新" }
-        format.turbo_stream do
-          render turbo_stream: [
-            turbo_stream.replace("list_row_#{@fault_record.id}", partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
-            turbo_stream.replace("flash_notices", partial: "shared/flash")
-          ]
-        end
-      end
+      broadcast_list_updates(@fault_record)
+      redirect_to @fault_record, notice: "记录已更新"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -169,26 +161,25 @@ class FaultRecordsController < ApplicationController
   private
 
   def respond_to_fault_record_update(notice_message)
-    @status_counts = FaultRecord.status_counts
-    @abnormal_counts = FaultRecord.abnormal_type_counts
-    @line_counts = FaultRecord.line_fault_counts
-    @daily_counts = FaultRecord.daily_fault_counts(14)
+    broadcast_list_updates(@fault_record)
+    redirect_to @fault_record, notice: notice_message
+  end
 
-    respond_to do |format|
-      format.html { redirect_to @fault_record, notice: notice_message }
-      format.turbo_stream do
-        flash[:notice] = notice_message
-        render turbo_stream: [
-          turbo_stream.replace("list_row_#{@fault_record.id}", partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
-          turbo_stream.replace("flash_notices", partial: "shared/flash"),
-          turbo_stream.replace("dashboard_stats", partial: "fault_records/dashboard_stats",
-            status_counts: @status_counts,
-            abnormal_counts: @abnormal_counts,
-            line_counts: @line_counts,
-            daily_counts: @daily_counts)
-        ]
-      end
-    end
+  def broadcast_list_updates(fault_record)
+    status_counts = FaultRecord.status_counts
+    abnormal_counts = FaultRecord.abnormal_type_counts
+    line_counts = FaultRecord.line_fault_counts
+    daily_counts = FaultRecord.daily_fault_counts(14)
+
+    Turbo::StreamsChannel.broadcast_replace_to "fault_records_updates",
+      target: "list_row_#{fault_record.id}",
+      partial: "fault_records/fault_record",
+      locals: { fault_record: fault_record }
+
+    Turbo::StreamsChannel.broadcast_replace_to "fault_records_updates",
+      target: "dashboard_stats",
+      partial: "fault_records/dashboard_stats",
+      locals: { status_counts: status_counts, abnormal_counts: abnormal_counts, line_counts: line_counts, daily_counts: daily_counts }
   end
 
   def set_fault_record
