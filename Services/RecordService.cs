@@ -573,6 +573,7 @@ public class RecordService : IRecordService
         StatusText = EnumDisplay.GetStatusText(r.Status),
         StatusBadgeClass = EnumDisplay.GetStatusBadgeClass(r.Status),
         SampleCategory = r.SampleCategory,
+        SampleCategoryText = EnumDisplay.GetCategoryText(r.SampleCategory),
         CategoryText = EnumDisplay.GetCategoryText(r.SampleCategory),
         CategoryBadgeClass = EnumDisplay.GetCategoryBadgeClass(r.SampleCategory),
         BorrowerName = r.BorrowerName,
@@ -584,9 +585,11 @@ public class RecordService : IRecordService
         CompensationAmount = r.CompensationAmount,
         ActualCompensation = r.ActualCompensation,
         HasBlocking = !string.IsNullOrEmpty(r.BlockingReason),
+        BlockingReason = r.BlockingReason,
         Conclusion = r.Conclusion,
         CurrentResponsibleName = r.CurrentResponsibleName,
         LastUpdatedAt = r.LastUpdatedAt,
+        IsArchived = r.IsArchived,
         Summary = BuildSummary(r)
     };
 

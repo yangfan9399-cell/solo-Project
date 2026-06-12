@@ -9,17 +9,22 @@ public class RecordListViewModel
     public string Title { get; set; } = string.Empty;
     public SampleCategory SampleCategory { get; set; }
     public string SampleCategoryText { get; set; } = string.Empty;
+    public string CategoryText { get; set; } = string.Empty;
     public RecordStatus Status { get; set; }
     public string StatusText { get; set; } = string.Empty;
     public string StatusBadgeClass { get; set; } = string.Empty;
     public string CategoryBadgeClass { get; set; } = string.Empty;
     public string EquipmentName { get; set; } = string.Empty;
+    public string MeetingRoom { get; set; } = string.Empty;
     public string BorrowerName { get; set; } = string.Empty;
     public string BorrowerDept { get; set; } = string.Empty;
     public string CurrentResponsibleName { get; set; } = string.Empty;
     public decimal? CompensationAmount { get; set; }
+    public decimal? ActualCompensation { get; set; }
+    public bool HasDamage { get; set; }
     public bool HasBlocking { get; set; }
     public string? BlockingReason { get; set; }
+    public string? Conclusion { get; set; }
     public string Summary { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? LastUpdatedAt { get; set; }

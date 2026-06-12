@@ -104,8 +104,7 @@ else if (Model.IsReadOnly)
                         <label>实际归还日期</label>
                         @if (Model.CanReview && !Model.IsArchived)
                         {
-                            <input form="approveForm" type="datetime-local" name="actualReturnDate" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-ddTHH:mm"))" />
-                            <input form="archiveForm" type="hidden" name="actualReturnDate" id="archiveActualReturnDate" />
+                            <input id="inputActualReturnDate" type="datetime-local" name="actualReturnDate" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-ddTHH:mm"))" form="approveForm" />
                             <div class="form-help">复核人确认后自动同步到列表/详情/复盘</div>
                         }
                         else
@@ -126,8 +125,7 @@ else if (Model.IsReadOnly)
                         <label>应赔偿金额（元）</label>
                         @if (Model.CanReview && !Model.IsArchived)
                         {
-                            <input form="approveForm" type="number" step="0.01" name="compensationAmount" value="@(Model.CompensationAmount ?? 0)" />
-                            <input form="archiveForm" type="hidden" name="compensationAmount" id="archiveCompensationAmount" />
+                            <input id="inputCompensationAmount" type="number" step="0.01" name="compensationAmount" value="@(Model.CompensationAmount ?? 0)" form="approveForm" />
                             <div class="form-help">修改后触发差异同步</div>
                         }
                         else
@@ -139,8 +137,7 @@ else if (Model.IsReadOnly)
                         <label>实际赔偿金额（元）</label>
                         @if (Model.CanReview && !Model.IsArchived)
                         {
-                            <input form="approveForm" type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
-                            <input form="archiveForm" type="hidden" name="actualCompensation" id="archiveActualCompensation" />
+                            <input id="inputActualCompensation" type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" form="approveForm" />
                             <div class="form-help">修改后触发差异同步</div>
                         }
                         else
@@ -235,29 +232,32 @@ else if (Model.IsReadOnly)
                         <div class="form-row">
                             <div class="form-group">
                                 <label>处理结论</label>
-                                <textarea name="conclusion" placeholder="请确认或修改最终结论">@Model.Conclusion</textarea>
+                                <textarea id="inputConclusion" name="conclusion" placeholder="请确认或修改最终结论">@Model.Conclusion</textarea>
                             </div>
                             <div class="form-group">
                                 <label>采用依据</label>
-                                <textarea name="basis" placeholder="请引用制度依据，如：《设备借用管理办法》第 5.2 条">@Model.Basis</textarea>
+                                <textarea id="inputBasis" name="basis" placeholder="请引用制度依据，如：《设备借用管理办法》第 5.2 条">@Model.Basis</textarea>
                             </div>
                         </div>
                         <div class="form-group">
                             <label>复核操作备注</label>
-                            <textarea name="remark" placeholder="请填写本次复核意见，将写入节点历史…"></textarea>
+                            <textarea id="inputRemark" name="remark" placeholder="请填写本次复核意见，将写入节点历史…"></textarea>
                         </div>
                     </div>
                     <div class="card-footer">
                         <div class="actions-bar">
-                            <button type="submit" class="btn btn-success" onclick="syncReviewerFields();">✅ 复核通过</button>
+                            <button type="submit" class="btn btn-success">✅ 复核通过</button>
                 </form>
 
-                            <form id="archiveForm" asp-action="Archive" asp-controller="Process" method="post" onsubmit="return confirm('确认归档？归档后记录只读，如需修改需走重新处理流程。');">
+                            <form id="archiveForm" asp-action="Archive" asp-controller="Process" method="post" onsubmit="return syncAndConfirmArchive();">
                                 <input type="hidden" name="id" value="@Model.Id" />
                                 <input type="hidden" name="remark" value="复核通过并归档" />
                                 <input type="hidden" name="conclusion" id="archiveConclusion" />
                                 <input type="hidden" name="basis" id="archiveBasis" />
-                                <button type="submit" class="btn btn-secondary" style="background:#059669;color:#fff;border-color:#059669;" onclick="syncReviewerFields();">📦 复核通过并归档</button>
+                                <input type="hidden" name="compensationAmount" id="archiveCompensationAmount" />
+                                <input type="hidden" name="actualCompensation" id="archiveActualCompensation" />
+                                <input type="hidden" name="actualReturnDate" id="archiveActualReturnDate" />
+                                <button type="submit" class="btn btn-secondary" style="background:#059669;color:#fff;border-color:#059669;">📦 复核通过并归档</button>
                             </form>
 
                             <button type="button" class="btn btn-warning" onclick="document.getElementById('returnPanel').style.display = (document.getElementById('returnPanel').style.display == 'none' ? '' : 'none');">↩ 退回补证</button>
@@ -408,20 +408,13 @@ else if (Model.IsReadOnly)
 </div>
 
 <script>
-    function syncReviewerFields() {
-        var src = document.getElementById('approveForm');
-        function valOf(n) { var el = src.querySelector('[name="' + n + '"]'); return el ? el.value : ''; }
-        var map = {
-            conclusion: 'archiveConclusion',
-            basis: 'archiveBasis',
-            compensationAmount: 'archiveCompensationAmount',
-            actualCompensation: 'archiveActualCompensation',
-            actualReturnDate: 'archiveActualReturnDate'
-        };
-        for (var k in map) {
-            var tgt = document.getElementById(map[k]);
-            if (tgt) tgt.value = valOf(k);
-        }
-        return true;
+    function syncAndConfirmArchive() {
+        var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+        document.getElementById('archiveConclusion').value = g('inputConclusion');
+        document.getElementById('archiveBasis').value = g('inputBasis');
+        document.getElementById('archiveCompensationAmount').value = g('inputCompensationAmount');
+        document.getElementById('archiveActualCompensation').value = g('inputActualCompensation');
+        document.getElementById('archiveActualReturnDate').value = g('inputActualReturnDate');
+        return confirm('确认归档？归档后记录只读，如需修改需走重新处理流程。');
     }
 </script>
