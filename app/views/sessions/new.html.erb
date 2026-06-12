@@ -1,0 +1,61 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div>
+      <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-600">
+        <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        高校成绩更正申请审核系统
+      </h2>
+      <p class="mt-2 text-center text-sm text-gray-600">
+        请选择用户登录
+      </p>
+    </div>
+
+    <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <%= form_tag login_path do %>
+        <div class="space-y-6">
+          <div>
+            <%= label_tag :name, '选择用户', class: 'block text-sm font-medium text-gray-700' %>
+            <div class="mt-1 grid grid-cols-2 gap-3">
+              <% User.all.each do |user| %>
+                <label class="relative cursor-pointer">
+                  <%= radio_button_tag :name, user.name, false, class: 'peer sr-only' %>
+                  <div class="p-4 border-2 border-gray-200 rounded-lg peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition-all">
+                    <div class="flex items-center space-x-3">
+                      <span class="w-3 h-3 rounded-full <%= user.quality_reviewer? ? 'bg-purple-500' : 'bg-blue-500' %>"></span>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900"><%= user.name %></p>
+                        <p class="text-xs text-gray-500"><%= user.role_i18n %></p>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <div>
+            <%= label_tag :password, '密码', class: 'block text-sm font-medium text-gray-700' %>
+            <div class="mt-1">
+              <%= password_field_tag :password, 'password123', class: 'appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm' %>
+              <p class="mt-1 text-xs text-gray-500">默认密码: password123</p>
+            </div>
+          </div>
+
+          <div>
+            <%= submit_tag '登录系统', class: 'w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="text-center text-xs text-gray-500">
+      <p>预置用户：</p>
+      <p>张老师（一线处理人）| 王老师（一线处理人）</p>
+      <p>李主任（质控复核人）| 赵副主任（质控复核人）</p>
+    </div>
+  </div>
+</div>

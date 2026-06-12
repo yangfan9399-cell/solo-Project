@@ -1,0 +1,91 @@
+<%= content_for :title, '申请列表 - 高校成绩更正申请审核系统' %>
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">申请列表</h1>
+    <div class="flex space-x-3">
+      <% if policy(GradeCorrection).new? %>
+        <%= link_to new_grade_correction_path, class: 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500' do %>
+          <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新增申请
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render 'dashboard/statistics', statistics: GradeCorrection.statistics %>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <%= search_form_for @q, url: filter_grade_corrections_path, method: :get, class: 'space-y-4' do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <%= f.label :application_no_or_student_name_or_student_id_or_course_name_cont, '关键字搜索', class: 'block text-sm font-medium text-gray-700' %>
+            <%= f.search_field :application_no_or_student_name_or_student_id_or_course_name_cont, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '申请号/姓名/学号/课程' %>
+          </div>
+          <div>
+            <%= f.label :status_eq, '状态', class: 'block text-sm font-medium text-gray-700' %>
+            <%= f.select :status_eq, GradeCorrection.aasm.states.map { |s| [GradeCorrection.status_i18n(s.name), s.name.to_s] }, { include_blank: '全部' }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+          <div>
+            <%= f.label :source_eq, '来源', class: 'block text-sm font-medium text-gray-700' %>
+            <%= f.select :source_eq, GradeCorrection.sources.map { |k, v| [GradeCorrection.source_i18n(k), v] }, { include_blank: '全部' }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+          <div>
+            <%= f.label :current_owner_id_eq, '责任人', class: 'block text-sm font-medium text-gray-700' %>
+            <%= f.select :current_owner_id_eq, User.all.map { |u| [u.display_name, u.id] }, { include_blank: '全部' }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+        </div>
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+              <%= check_box_tag 'by_block', '1', params[:by_block].present?, class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+              <span class="ml-2 text-sm text-gray-700">仅显示有阻断原因</span>
+            </label>
+            <label class="inline-flex items-center">
+              <%= f.check_box :notification_confirmed_eq, class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500', checked_value: false, unchecked_value: nil %>
+              <span class="ml-2 text-sm text-gray-700">仅显示通知未确认</span>
+            </label>
+          </div>
+          <div class="flex space-x-3">
+            <%= link_to '重置', grade_corrections_path, class: 'px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500' %>
+            <%= f.submit '搜索', class: 'px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="divide-y divide-gray-200">
+      <% if @grade_corrections.any? %>
+        <%= turbo_frame_tag :grade_corrections_list do %>
+          <% @grade_corrections.each do |gc| %>
+            <%= render 'grade_corrections/grade_correction', grade_correction: gc %>
+          <% end %>
+        <% end %>
+      <% else %>
+        <div class="px-6 py-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">没有找到申请记录</h3>
+          <p class="mt-1 text-sm text-gray-500">尝试调整筛选条件</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @pagy && @pagy.pages > 1 %>
+      <div class="px-6 py-4 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+          <div class="text-sm text-gray-700">
+            显示 <%= @pagy.from %> - <%= @pagy.to %> 条，共 <%= @pagy.count %> 条
+          </div>
+          <div class="text-sm">
+            <%== pagy_nav(@pagy) %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

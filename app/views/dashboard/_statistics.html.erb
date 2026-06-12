@@ -1,0 +1,52 @@
+<%= turbo_frame_tag 'statistics_dashboard' do %>
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+    <%= link_to grade_corrections_path, class: "bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-gray-900"><%= statistics[:total] %></div>
+        <div class="text-xs text-gray-500 mt-1">全部</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'pending' }), class: "bg-yellow-50 rounded-lg shadow-sm border border-yellow-200 p-4 hover:bg-yellow-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-yellow-600"><%= statistics[:pending] %></div>
+        <div class="text-xs text-yellow-700 mt-1">待受理</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'processing' }), class: "bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-4 hover:bg-blue-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-600"><%= statistics[:processing] %></div>
+        <div class="text-xs text-blue-700 mt-1">处理中</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'reviewing' }), class: "bg-purple-50 rounded-lg shadow-sm border border-purple-200 p-4 hover:bg-purple-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-purple-600"><%= statistics[:reviewing] %></div>
+        <div class="text-xs text-purple-700 mt-1">复核中</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'archived' }), class: "bg-green-50 rounded-lg shadow-sm border border-green-200 p-4 hover:bg-green-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600"><%= statistics[:archived] %></div>
+        <div class="text-xs text-green-700 mt-1">已归档</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'rejected' }), class: "bg-red-50 rounded-lg shadow-sm border border-red-200 p-4 hover:bg-red-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-red-600"><%= statistics[:rejected] %></div>
+        <div class="text-xs text-red-700 mt-1">已驳回</div>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'returned' }), class: "bg-orange-50 rounded-lg shadow-sm border border-orange-200 p-4 hover:bg-orange-100 transition-colors" do %>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-orange-600"><%= statistics[:returned] %></div>
+        <div class="text-xs text-orange-700 mt-1">已退回</div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

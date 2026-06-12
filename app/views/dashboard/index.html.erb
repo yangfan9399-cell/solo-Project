@@ -1,0 +1,105 @@
+<%= content_for :title, '数据看板 - 高校成绩更正申请审核系统' %>
+
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">数据看板</h1>
+    <div class="flex space-x-3">
+      <% if policy(GradeCorrection).new? %>
+        <%= link_to new_grade_correction_path, class: 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500' do %>
+          <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新增申请
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render 'dashboard/statistics', statistics: @statistics %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">最新申请</h2>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <%= turbo_frame_tag :grade_corrections_list do %>
+            <% @grade_corrections.each do |gc| %>
+              <%= render 'grade_corrections/grade_correction', grade_correction: gc %>
+            <% end %>
+          <% end %>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200">
+          <%= link_to '查看全部申请', grade_corrections_path, class: 'text-blue-600 hover:text-blue-800 text-sm font-medium' %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">待处理预警</h3>
+        </div>
+        <div class="p-4 space-y-3">
+          <%= link_to grade_corrections_path(q: { status_eq: 'pending' }), class: 'block p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg border border-yellow-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-yellow-800">待受理</span>
+              <span class="text-lg font-bold text-yellow-600"><%= @statistics[:pending] %></span>
+            </div>
+          <% end %>
+          <%= link_to grade_corrections_path(q: { status_eq: 'processing' }), class: 'block p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-blue-800">处理中</span>
+              <span class="text-lg font-bold text-blue-600"><%= @statistics[:processing] %></span>
+            </div>
+          <% end %>
+          <%= link_to grade_corrections_path(q: { status_eq: 'reviewing' }), class: 'block p-3 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-purple-800">待复核</span>
+              <span class="text-lg font-bold text-purple-600"><%= @statistics[:reviewing] %></span>
+            </div>
+          <% end %>
+          <%= link_to grade_corrections_path(q: { status_eq: 'returned' }), class: 'block p-3 bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-orange-800">已退回</span>
+              <span class="text-lg font-bold text-orange-600"><%= @statistics[:returned] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">异常关注</h3>
+        </div>
+        <div class="p-4 space-y-3">
+          <%= link_to grade_corrections_path(q: { notification_confirmed_eq: false }), class: 'block p-3 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-red-800">通知未确认</span>
+              <span class="text-lg font-bold text-red-600"><%= @statistics[:notification_unconfirmed] %></span>
+            </div>
+          <% end %>
+          <%= link_to grade_corrections_path(by_block: '1'), class: 'block p-3 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors' do %>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-red-800">存在阻断原因</span>
+              <span class="text-lg font-bold text-red-600"><%= @statistics[:with_block] %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">处理效率</h3>
+        </div>
+        <div class="p-4">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-green-600"><%= @statistics[:average_processing_days] %></div>
+            <div class="text-sm text-gray-500">平均处理天数</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

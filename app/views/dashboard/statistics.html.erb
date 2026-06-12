@@ -1,0 +1,307 @@
+<%= content_for :title, '复盘统计' %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">复盘统计</h1>
+      <p class="mt-1 text-sm text-gray-500">全面统计分析，点击任意统计项可钻取查看具体记录</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <%= link_to grade_corrections_path(q: { status_eq: 'pending' }), class: 'bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow' do %>
+      <div class="px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500">待处理</p>
+            <p class="mt-1 text-3xl font-bold text-yellow-600"><%= @pending_count %></p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">点击查看所有待处理申请 →</p>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'processing' }), class: 'bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow' do %>
+      <div class="px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500">处理中</p>
+            <p class="mt-1 text-3xl font-bold text-blue-600"><%= @processing_count %></p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">点击查看所有处理中申请 →</p>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'reviewing' }), class: 'bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow' do %>
+      <div class="px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500">复核中</p>
+            <p class="mt-1 text-3xl font-bold text-purple-600"><%= @reviewing_count %></p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">点击查看所有复核中申请 →</p>
+      </div>
+    <% end %>
+
+    <%= link_to grade_corrections_path(q: { status_eq: 'archived' }), class: 'bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow' do %>
+      <div class="px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500">已归档</p>
+            <p class="mt-1 text-3xl font-bold text-green-600"><%= @archived_count %></p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">点击查看所有已归档申请 →</p>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">按申请来源统计</h2>
+      </div>
+      <div class="px-6 py-4 divide-y divide-gray-200">
+        <% @source_counts.each do |source, count| %>
+          <% next if count == 0 %>
+          <%= link_to grade_corrections_path(q: { source_eq: GradeCorrection.sources[source.to_s] }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+            <div class="flex items-center">
+              <div class="w-3 h-3 rounded-full 
+                <% if source == 'student' %>bg-blue-500
+                <% elsif source == 'teacher' %>bg-green-500
+                <% elsif source == 'academic_affairs' %>bg-purple-500
+                <% else %>bg-gray-500<% end %> mr-3"></div>
+              <span class="text-sm font-medium text-gray-900"><%= GradeCorrection.source_i18n(source) %></span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-sm font-bold text-gray-900"><%= count %></span>
+              <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">按证据结论统计</h2>
+      </div>
+      <div class="px-6 py-4 divide-y divide-gray-200">
+        <% @evidence_counts.each do |ec, count| %>
+          <% next if count == 0 %>
+          <%= link_to grade_corrections_path(q: { evidence_conclusion_eq: GradeCorrection.evidence_conclusions[ec.to_s] }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+            <div class="flex items-center">
+              <div class="w-3 h-3 rounded-full 
+                <% if ec == 'sufficient' %>bg-green-500
+                <% elsif ec == 'insufficient' %>bg-red-500
+                <% else %>bg-yellow-500<% end %> mr-3"></div>
+              <span class="text-sm font-medium text-gray-900"><%= GradeCorrection.evidence_conclusion_i18n(ec) %></span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-sm font-bold text-gray-900"><%= count %></span>
+              <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">异常情况统计</h2>
+      </div>
+      <div class="px-6 py-4 divide-y divide-gray-200">
+        <%= link_to grade_corrections_path(q: { status_eq: 'rejected' }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+          <div class="flex items-center">
+            <div class="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
+            <span class="text-sm font-medium text-gray-900">已驳回</span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-bold text-red-600"><%= @rejected_count %></span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        <% end %>
+
+        <%= link_to grade_corrections_path(q: { status_eq: 'returned' }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+          <div class="flex items-center">
+            <div class="w-3 h-3 rounded-full bg-orange-500 mr-3"></div>
+            <span class="text-sm font-medium text-gray-900">已退回补证</span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-bold text-orange-600"><%= @returned_count %></span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        <% end %>
+
+        <%= link_to grade_corrections_path(q: { notification_confirmed_false: '1' }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+          <div class="flex items-center">
+            <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
+            <span class="text-sm font-medium text-gray-900">通知未确认</span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-bold text-yellow-600"><%= @unconfirmed_count %></span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        <% end %>
+
+        <%= link_to grade_corrections_path(q: { block_reason_not_null: '1' }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+          <div class="flex items-center">
+            <div class="w-3 h-3 rounded-full bg-red-600 mr-3"></div>
+            <span class="text-sm font-medium text-gray-900">存在阻断原因</span>
+          </div>
+          <div class="flex items-center">
+            <span class="text-sm font-bold text-red-600"><%= @blocked_count %></span>
+            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">按责任人统计</h2>
+      </div>
+      <div class="px-6 py-4 divide-y divide-gray-200">
+        <% @assignee_counts.each do |user, count| %>
+          <% next if count == 0 %>
+          <%= link_to grade_corrections_path(q: { current_assignee_id_eq: user.id }), class: 'flex items-center justify-between py-3 hover:bg-gray-50 -mx-6 px-6' do %>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                <span class="text-xs font-medium text-gray-600"><%= user.name[0] %></span>
+              </div>
+              <div>
+                <span class="text-sm font-medium text-gray-900"><%= user.name %></span>
+                <span class="ml-2 text-xs text-gray-500">(<%= user.role_i18n %>)</span>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <span class="text-sm font-bold text-gray-900"><%= count %></span>
+              <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">成绩变更分布</h2>
+      </div>
+      <div class="px-6 py-4">
+        <div class="space-y-3">
+          <% @score_diff_ranges.each do |range, count| %>
+            <div class="flex items-center">
+              <span class="text-sm text-gray-600 w-24"><%= range %></span>
+              <div class="flex-1 bg-gray-200 rounded-full h-4 mx-3">
+                <div class="bg-blue-600 h-4 rounded-full" style="width: <%= [count * 10, 100].min %>%"></div>
+              </div>
+              <span class="text-sm font-medium text-gray-900 w-8 text-right"><%= count %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">金额分布</h2>
+      </div>
+      <div class="px-6 py-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-500">总涉及金额</p>
+            <p class="mt-1 text-2xl font-bold text-red-600">¥<%= number_with_precision @total_amount, precision: 2 %></p>
+          </div>
+          <div class="text-center p-4 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-500">平均金额</p>
+            <p class="mt-1 text-2xl font-bold text-orange-600">¥<%= number_with_precision @avg_amount, precision: 2 %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">处理时效统计</h2>
+    </div>
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-600">平均处理时长</p>
+          <p class="mt-1 text-3xl font-bold text-blue-700"><%= @avg_processing_hours.to_i %></p>
+          <p class="text-xs text-blue-500 mt-1">小时</p>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <p class="text-sm text-green-600">最快处理</p>
+          <p class="mt-1 text-3xl font-bold text-green-700"><%= @min_processing_hours.to_i %></p>
+          <p class="text-xs text-green-500 mt-1">小时</p>
+        </div>
+        <div class="text-center p-4 bg-red-50 rounded-lg">
+          <p class="text-sm text-red-600">最慢处理</p>
+          <p class="mt-1 text-3xl font-bold text-red-700"><%= @max_processing_hours.to_i %></p>
+          <p class="text-xs text-red-500 mt-1">小时</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">关键字段变更统计</h2>
+    </div>
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <% @field_change_counts.each do |field, count| %>
+          <% next if count == 0 %>
+          <% field_name = DiffRecord::FIELD_LABELS[field] || field %>
+          <%= link_to grade_corrections_path, class: 'text-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors' do %>
+            <p class="text-sm text-gray-500"><%= field_name %>变更</p>
+            <p class="mt-1 text-2xl font-bold text-blue-600"><%= count %></p>
+            <p class="text-xs text-gray-400 mt-1">次</p>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

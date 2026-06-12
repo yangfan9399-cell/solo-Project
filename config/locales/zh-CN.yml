@@ -1,0 +1,78 @@
+zh-CN:
+  activerecord:
+    models:
+      user: '用户'
+      grade_correction: '成绩更正申请'
+      processing_node: '处理节点'
+      diff_record: '差异记录'
+      attachment: '附件'
+    attributes:
+      grade_correction:
+        application_no: '申请编号'
+        student_name: '学生姓名'
+        student_id: '学号'
+        course_name: '课程名称'
+        course_code: '课程代码'
+        original_score: '原始成绩'
+        corrected_score: '更正成绩'
+        application_reason: '申请原因'
+        source: '来源'
+        applicant: '申请人'
+        application_date: '申请日期'
+        current_owner: '当前责任人'
+        status: '状态'
+        conclusion: '处理结论'
+        block_reason: '阻断原因'
+        remedy_path: '补救路径'
+        evidence_conclusion: '证据结论'
+        notification_confirmed: '通知确认'
+        amount: '涉及金额'
+        responsible_party: '责任对象'
+        critical_time: '关键时间'
+        created_at: '创建时间'
+        updated_at: '更新时间'
+      processing_node:
+        node_type: '节点类型'
+        operator: '操作人'
+        content: '处理内容'
+        status: '状态'
+        on_site_explanation: '现场说明'
+        business_record: '业务记录'
+        created_at: '操作时间'
+      diff_record:
+        field_name: '字段名称'
+        old_value: '原值'
+        new_value: '新值'
+        operator: '操作人'
+      attachment:
+        file_name: '文件名'
+        file_type: '文件类型'
+        description: '描述'
+        evidence_type: '证据类型'
+      user:
+        name: '姓名'
+        role: '角色'
+    enums:
+      grade_correction:
+        status:
+          pending: '待受理'
+          accepted: '已受理'
+          processing: '处理中'
+          reviewing: '复核中'
+          archived: '已归档'
+          rejected: '已驳回'
+          returned: '已退回'
+        source:
+          student: '学生申请'
+          teacher: '教师申请'
+          academic_affairs: '教务处发起'
+          online: '在线申请'
+          offline: '线下申请'
+          email: '邮件申请'
+  date:
+    formats:
+      default: '%Y-%m-%d'
+  time:
+    formats:
+      default: '%Y-%m-%d %H:%M:%S'
+      short: '%m-%d %H:%M'

@@ -1,0 +1,297 @@
+<%= content_for :title, "处理台 - #{@grade_correction.application_no}" %>
+
+<div class="space-y-6">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-xl font-bold text-gray-900">处理台</h1>
+            <span class="text-lg text-gray-500"><%= @grade_correction.application_no %></span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color_class(@grade_correction.status) %>">
+              <%= @grade_correction.status_i18n %>
+            </span>
+          </div>
+          <p class="mt-1 text-sm text-gray-500"><%= @grade_correction.course_name %> · <%= @grade_correction.student_name %></p>
+        </div>
+        <div class="flex space-x-3">
+          <%= link_to '查看详情', @grade_correction, class: 'px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-200 bg-gray-50">
+      <div>
+        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">学生信息</h3>
+        <p class="text-sm font-medium text-gray-900"><%= @grade_correction.student_name %></p>
+        <p class="text-sm text-gray-500"><%= @grade_correction.student_id %></p>
+      </div>
+      <div>
+        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">课程信息</h3>
+        <p class="text-sm font-medium text-gray-900"><%= @grade_correction.course_name %></p>
+        <p class="text-sm text-gray-500"><%= @grade_correction.course_code %></p>
+      </div>
+      <div>
+        <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">成绩变更</h3>
+        <p class="text-sm">
+          <span class="text-gray-500"><%= @grade_correction.original_score %></span>
+          <span class="mx-2 text-gray-400">→</span>
+          <span class="font-medium text-blue-600"><%= @grade_correction.corrected_score %></span>
+          <span class="ml-2 text-green-600">(+<%= @grade_correction.score_diff %>)</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">操作区</h2>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <% if @grade_correction.pending? && policy(@grade_correction).accept? %>
+            <%= form_tag accept_grade_correction_path(@grade_correction), method: :post, class: 'space-y-4' do %>
+              <div>
+                <h3 class="text-sm font-medium text-gray-700 mb-2">受理申请</h3>
+                <p class="text-sm text-gray-500 mb-3">确认申请材料齐全，符合受理条件。</p>
+                <%= text_area_tag :content, nil, placeholder: '受理说明（可选）', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <%= submit_tag '受理申请', class: 'w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+            <% end %>
+          <% end %>
+
+          <% if @grade_correction.accepted? && policy(@grade_correction).start_processing? %>
+            <%= form_tag start_processing_grade_correction_path(@grade_correction), method: :post, class: 'space-y-4' do %>
+              <div>
+                <h3 class="text-sm font-medium text-gray-700 mb-2">开始处理</h3>
+                <p class="text-sm text-gray-500 mb-3">接手处理此申请。</p>
+                <%= text_area_tag :content, nil, placeholder: '处理说明（可选）', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <%= submit_tag '开始处理', class: 'w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+            <% end %>
+          <% end %>
+
+          <% if @grade_correction.processing? && policy(@grade_correction).submit_for_review? %>
+            <%= form_tag submit_for_review_grade_correction_path(@grade_correction), method: :post, class: 'space-y-4' do %>
+              <div>
+                <h3 class="text-sm font-medium text-gray-700 mb-2">提交复核</h3>
+                <p class="text-sm text-gray-500 mb-3">处理完成，提交质控复核人审核。</p>
+                <%= text_area_tag :content, nil, placeholder: '处理结论和说明', rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <%= submit_tag '提交复核', class: 'w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700' %>
+            <% end %>
+          <% end %>
+
+          <% if @grade_correction.returned? && policy(@grade_correction).reprocess? %>
+            <%= form_tag reprocess_grade_correction_path(@grade_correction), method: :post, class: 'space-y-4' do %>
+              <div>
+                <h3 class="text-sm font-medium text-gray-700 mb-2">重新处理</h3>
+                <p class="text-sm text-gray-500 mb-3">已补充材料，重新开始处理。</p>
+                <%= text_area_tag :content, nil, placeholder: '重新处理说明', rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <%= submit_tag '重新处理', class: 'w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+            <% end %>
+          <% end %>
+
+          <% if policy(@grade_correction).add_business_record? && !@grade_correction.archived? && !@grade_correction.rejected? %>
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="text-sm font-medium text-gray-700 mb-3">补充业务记录</h3>
+              <%= form_tag add_business_record_grade_correction_path(@grade_correction), method: :post, class: 'space-y-3' do %>
+                <div>
+                  <%= text_area_tag :content, nil, placeholder: '处理内容说明', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= label_tag :business_record, '业务记录', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= text_area_tag :business_record, nil, placeholder: '详细业务记录', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= label_tag :on_site_explanation, '现场说明', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= text_area_tag :on_site_explanation, nil, placeholder: '现场核实情况说明', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <%= submit_tag '添加记录', class: 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if policy(@grade_correction).add_attachment? && !@grade_correction.archived? && !@grade_correction.rejected? %>
+            <div class="border-t border-gray-200 pt-4">
+              <h3 class="text-sm font-medium text-gray-700 mb-3">添加证据附件</h3>
+              <%= form_tag add_attachment_grade_correction_path(@grade_correction), method: :post, class: 'space-y-3' do %>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <%= label_tag :file_name, '文件名', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= text_field_tag :file_name, nil, placeholder: '证据文件名', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                  </div>
+                  <div>
+                    <%= label_tag :file_type, '文件类型', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= text_field_tag :file_type, 'application/pdf', placeholder: '如 application/pdf', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <%= label_tag :evidence_type, '证据类型', class: 'block text-sm font-medium text-gray-700' %>
+                    <%= select_tag :evidence_type, options_for_select(Attachment::EVIDENCE_TYPES.map { |k, v| [v, k] }), class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                  </div>
+                </div>
+                <div>
+                  <%= label_tag :description, '描述', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= text_area_tag :description, nil, placeholder: '证据描述说明', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <%= submit_tag '添加附件', class: 'w-full px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if @grade_correction.archived? || @grade_correction.rejected? %>
+            <div class="text-center py-8 text-gray-500">
+              <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <p>此申请已<%= @grade_correction.archived? ? '归档' : '驳回' %>，为只读状态。</p>
+              <% if policy(@grade_correction).reopen? %>
+                <%= form_tag reopen_grade_correction_path(@grade_correction), method: :post, class: 'mt-4' do %>
+                  <%= text_area_tag :content, nil, placeholder: '重新打开说明', rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm mb-3' %>
+                  <%= submit_tag '重新打开申请', class: 'px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700' %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">编辑关键字段</h2>
+          <p class="text-sm text-gray-500 mt-1">修改以下字段将自动记录变更历史</p>
+        </div>
+        <div class="px-6 py-4">
+          <% if policy(@grade_correction).edit? %>
+            <%= form_for @grade_correction do |f| %>
+              <div class="space-y-4">
+                <div>
+                  <%= f.label :critical_time, '关键时间', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.datetime_field :critical_time, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :responsible_party, '责任对象', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :responsible_party, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :amount, '涉及金额', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.number_field :amount, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :evidence_conclusion, '证据结论', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.select :evidence_conclusion, GradeCorrection.evidence_conclusions.map { |k, v| [GradeCorrection.evidence_conclusion_i18n(v), k] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :block_reason, '阻断原因', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_area :block_reason, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :remedy_path, '补救路径', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_area :remedy_path, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm' %>
+                </div>
+                <%= f.submit '保存修改', class: 'w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8 text-gray-500">
+              <p>您没有权限编辑此申请的关键字段。</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <% if @diff_records.any? %>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">字段变更记录</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @diff_records.each do |diff| %>
+              <div class="px-6 py-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-900"><%= diff.field_label %></span>
+                  <span class="text-xs text-gray-500"><%= format_time(diff.created_at) %></span>
+                </div>
+                <div class="mt-1 text-sm">
+                  <span class="text-gray-500"><%= diff.old_value.presence || '空' %></span>
+                  <svg class="inline w-4 h-4 mx-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                  <span class="text-blue-600 font-medium"><%= diff.new_value %></span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">操作人: <%= diff.operator&.name %></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @attachments.any? %>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">证据附件 (<%= @attachments.count %>)</h2>
+          </div>
+          <div class="divide-y divide-gray-200">
+            <% @attachments.each do |att| %>
+              <div class="px-6 py-3">
+                <div class="flex items-start space-x-3">
+                  <svg class="h-8 w-8 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900"><%= att.file_name %></p>
+                    <p class="text-xs text-gray-500">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                        <%= att.evidence_type_i18n %>
+                      </span>
+                      <%= att.file_type %>
+                    </p>
+                    <% if att.description.present? %>
+                      <p class="text-xs text-gray-400 mt-1"><%= att.description %></p>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">处理节点</h2>
+        </div>
+        <div class="px-6 py-4 max-h-96 overflow-y-auto">
+          <div class="relative">
+            <% @grade_correction.processing_nodes.each_with_index do |node, index| %>
+              <div class="flex items-start mb-4 last:mb-0">
+                <div class="flex flex-col items-center mr-3">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center bg-gray-200 text-gray-600 text-xs font-medium">
+                    <%= index + 1 %>
+                  </div>
+                  <% if index < @grade_correction.processing_nodes.size - 1 %>
+                    <div class="w-0.5 h-full bg-gray-200 mt-1"></div>
+                  <% end %>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-900"><%= node.node_type_i18n %></span>
+                    <span class="text-xs text-gray-500"><%= format_time(node.created_at) %></span>
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1"><%= node.content %></p>
+                  <p class="text-xs text-gray-400 mt-1"><%= node.operator&.name %></p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

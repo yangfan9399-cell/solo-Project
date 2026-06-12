@@ -1,0 +1,47 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  application_no: MyString
+  student_name: MyString
+  student_id: MyString
+  course_name: MyString
+  course_code: MyString
+  original_score: 9.99
+  corrected_score: 9.99
+  application_reason: MyText
+  source: MyString
+  applicant: MyString
+  application_date: 2026-06-13
+  current_owner_id: 
+  status: MyString
+  conclusion: MyText
+  block_reason: MyText
+  remedy_path: MyText
+  evidence_conclusion: MyString
+  notification_confirmed: false
+  amount: 9.99
+  responsible_party: MyString
+  critical_time: 2026-06-13 06:38:44
+
+two:
+  application_no: MyString
+  student_name: MyString
+  student_id: MyString
+  course_name: MyString
+  course_code: MyString
+  original_score: 9.99
+  corrected_score: 9.99
+  application_reason: MyText
+  source: MyString
+  applicant: MyString
+  application_date: 2026-06-13
+  current_owner_id: 
+  status: MyString
+  conclusion: MyText
+  block_reason: MyText
+  remedy_path: MyText
+  evidence_conclusion: MyString
+  notification_confirmed: false
+  amount: 9.99
+  responsible_party: MyString
+  critical_time: 2026-06-13 06:38:44

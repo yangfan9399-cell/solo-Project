@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  grade_correction: one
+  processing_node: one
+  file_name: MyString
+  file_type: MyString
+  description: MyText
+  evidence_type: MyString
+
+two:
+  grade_correction: two
+  processing_node: two
+  file_name: MyString
+  file_type: MyString
+  description: MyText
+  evidence_type: MyString

@@ -1,0 +1,411 @@
+<%= content_for :title, "#{@grade_correction.application_no} - 成绩更正申请详情" %>
+
+<%= turbo_frame_tag dom_id(@grade_correction) do %>
+  <div class="space-y-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center space-x-3">
+              <h1 class="text-xl font-bold text-gray-900"><%= @grade_correction.application_no %></h1>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                <%= case @grade_correction.status
+                    when 'pending' then 'bg-yellow-100 text-yellow-800'
+                    when 'accepted' then 'bg-blue-100 text-blue-800'
+                    when 'processing' then 'bg-blue-100 text-blue-800'
+                    when 'reviewing' then 'bg-purple-100 text-purple-800'
+                    when 'archived' then 'bg-green-100 text-green-800'
+                    when 'rejected' then 'bg-red-100 text-red-800'
+                    when 'returned' then 'bg-orange-100 text-orange-800'
+                    else 'bg-gray-100 text-gray-800'
+                    end %>">
+                <%= @grade_correction.status_i18n %>
+              </span>
+              <% if @grade_correction.archived? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  只读归档
+                </span>
+              <% end %>
+            </div>
+            <p class="mt-1 text-sm text-gray-500"><%= @grade_correction.course_name %> · <%= @grade_correction.student_name %></p>
+          </div>
+          <div class="flex space-x-3">
+            <%= link_to '返回列表', grade_corrections_path, class: 'px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+            <% if policy(@grade_correction).processing? && !@grade_correction.archived? && !@grade_correction.rejected? %>
+              <%= link_to '进入处理', processing_grade_correction_path(@grade_correction), class: 'px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+            <% end %>
+            <% if policy(@grade_correction).review? && (@grade_correction.reviewing? || @grade_correction.archived? || @grade_correction.rejected?) %>
+              <%= link_to '复核操作', review_grade_correction_path(@grade_correction), class: 'px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700' %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-200">
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 mb-3">来源信息</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">来源渠道</span>
+              <span class="font-medium"><%= @grade_correction.source_i18n %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">申请人</span>
+              <span class="font-medium"><%= @grade_correction.applicant %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">申请日期</span>
+              <span class="font-medium"><%= @grade_correction.application_date %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">提交时间</span>
+              <span class="font-medium"><%= format_time(@grade_correction.created_at) %></span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 mb-3">责任信息</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">当前责任人</span>
+              <span class="font-medium">
+                <% if @grade_correction.current_owner %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <%= @grade_correction.current_owner.display_name %>
+                  </span>
+                <% else %>
+                  <span class="text-gray-400">未分配</span>
+                <% end %>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">责任对象</span>
+              <span class="font-medium text-orange-600"><%= @grade_correction.responsible_party.presence || '-' %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">关键时间</span>
+              <span class="font-medium text-red-600"><%= @grade_correction.critical_time ? format_time(@grade_correction.critical_time) : '-' %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">涉及金额</span>
+              <span class="font-medium text-red-600"><%= number_to_currency(@grade_correction.amount, unit: '¥') if @grade_correction.amount.present? && @grade_correction.amount > 0 %></span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 mb-3">关键对象</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">学生姓名</span>
+              <span class="font-medium"><%= @grade_correction.student_name %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">学号</span>
+              <span class="font-medium"><%= @grade_correction.student_id %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">课程名称</span>
+              <span class="font-medium"><%= @grade_correction.course_name %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">课程代码</span>
+              <span class="font-medium"><%= @grade_correction.course_code %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-medium text-gray-500 mb-3">申请原因</h3>
+        <p class="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg"><%= @grade_correction.application_reason %></p>
+      </div>
+
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">处理前后差异</h3>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="text-center">
+              <div class="text-xs text-gray-500 mb-1">原始成绩</div>
+              <div class="text-3xl font-bold text-gray-600 line-through"><%= @grade_correction.original_score %></div>
+            </div>
+            <div class="text-center flex items-center justify-center">
+              <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+              <div class="ml-2 text-left">
+                <div class="text-xs text-gray-500">差异</div>
+                <div class="text-xl font-bold <%= @grade_correction.score_diff > 0 ? 'text-green-600' : 'text-red-600' %>">
+                  <%= @grade_correction.score_diff > 0 ? '+' : '' %><%= @grade_correction.score_diff %>
+                </div>
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs text-gray-500 mb-1">更正成绩</div>
+              <div class="text-3xl font-bold text-blue-600"><%= @grade_correction.corrected_score %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if @grade_correction.evidence_conclusion.present? %>
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-sm font-medium text-gray-500 mb-3">采用依据</h3>
+          <div class="flex items-center space-x-4">
+            <span class="text-sm text-gray-700">证据结论：</span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+              <%= case @grade_correction.evidence_conclusion
+                  when 'sufficient' then 'bg-green-100 text-green-800'
+                  when 'insufficient' then 'bg-red-100 text-red-800'
+                  when 'pending' then 'bg-yellow-100 text-yellow-800'
+                  else 'bg-gray-100 text-gray-800'
+                  end %>">
+              <%= @grade_correction.evidence_conclusion_i18n %>
+            </span>
+            <% if @attachments.any? %>
+              <span class="text-sm text-gray-500">
+                附件 <%= @attachments.count %> 份
+              </span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @grade_correction.has_block_reason? %>
+        <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+          <h3 class="text-sm font-medium text-red-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            阻断原因
+          </h3>
+          <div class="text-sm text-red-800 bg-white p-3 rounded-lg border border-red-200 whitespace-pre-line"><%= @grade_correction.block_reason %></div>
+        </div>
+      <% end %>
+
+      <% if @grade_correction.remedy_path.present? %>
+        <div class="px-6 py-4 border-b border-gray-200 bg-orange-50">
+          <h3 class="text-sm font-medium text-orange-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            补救路径
+          </h3>
+          <div class="text-sm text-orange-800 bg-white p-3 rounded-lg border border-orange-200 whitespace-pre-line"><%= @grade_correction.remedy_path %></div>
+        </div>
+      <% end %>
+
+      <% if @grade_correction.conclusion.present? %>
+        <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+          <h3 class="text-sm font-medium text-green-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            处理结论
+          </h3>
+          <div class="text-sm text-green-800 bg-white p-3 rounded-lg border border-green-200"><%= @grade_correction.conclusion %></div>
+        </div>
+      <% end %>
+
+      <% unless @grade_correction.notification_confirmed? %>
+        <div class="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span class="text-sm font-medium text-yellow-800">通知未确认</span>
+            </div>
+            <span class="text-xs text-yellow-600">需学生确认收到通知后方可归档</span>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @diff_records.any? %>
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-sm font-medium text-gray-500 mb-3">关键字段变更记录</h3>
+          <div class="bg-gray-50 rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">字段</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">原值</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">新值</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作人</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <% @diff_records.each do |diff| %>
+                  <tr>
+                    <td class="px-4 py-2 text-sm font-medium text-gray-900"><%= diff.field_label %></td>
+                    <td class="px-4 py-2 text-sm text-gray-500"><%= diff.old_value.presence || '空' %></td>
+                    <td class="px-4 py-2 text-sm text-blue-600 font-medium"><%= diff.new_value %></td>
+                    <td class="px-4 py-2 text-sm text-gray-500"><%= diff.operator&.name %></td>
+                    <td class="px-4 py-2 text-sm text-gray-500"><%= format_time(diff.created_at) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @attachments.any? %>
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-sm font-medium text-gray-500 mb-3">证据附件</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <% @attachments.each do |att| %>
+              <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate"><%= att.file_name %></p>
+                    <p class="text-xs text-gray-500"><%= att.evidence_type_i18n %> · <%= att.file_type %></p>
+                    <% if att.description.present? %>
+                      <p class="text-xs text-gray-400 mt-1"><%= att.description %></p>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="px-6 py-4">
+        <h3 class="text-sm font-medium text-gray-500 mb-4">操作人</h3>
+        <div class="flex flex-wrap gap-2">
+          <% @grade_correction.all_operators.each do |op| %>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+              <span class="w-2 h-2 rounded-full mr-2 <%= op.quality_reviewer? ? 'bg-purple-500' : 'bg-blue-500' %>"></span>
+              <%= op.display_name %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">历史节点</h2>
+      </div>
+      <div class="px-6 py-4">
+        <div class="relative">
+          <% @grade_correction.processing_nodes.each_with_index do |node, index| %>
+            <div class="flex items-start mb-6 last:mb-0">
+              <div class="flex flex-col items-center mr-4">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center
+                  <%= case node.node_type
+                      when 'create' then 'bg-gray-100 text-gray-600'
+                      when 'accept' then 'bg-blue-100 text-blue-600'
+                      when 'processing' then 'bg-blue-100 text-blue-600'
+                      when 'submit_review' then 'bg-purple-100 text-purple-600'
+                      when 'approve' then 'bg-green-100 text-green-600'
+                      when 'reject' then 'bg-red-100 text-red-600'
+                      when 'return' then 'bg-orange-100 text-orange-600'
+                      when 'reprocess' then 'bg-blue-100 text-blue-600'
+                      else 'bg-gray-100 text-gray-600'
+                      end %>">
+                  <% if node.node_type == 'create' %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  <% elsif node.node_type == 'approve' %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  <% elsif node.node_type == 'reject' %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  <% else %>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  <% end %>
+                </div>
+                <% if index < @grade_correction.processing_nodes.size - 1 %>
+                  <div class="w-0.5 h-full bg-gray-200 mt-2"></div>
+                <% end %>
+              </div>
+              <div class="flex-1 bg-gray-50 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-gray-900">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                      <%= case node.status
+                          when 'pending' then 'bg-yellow-100 text-yellow-800'
+                          when 'accepted' then 'bg-blue-100 text-blue-800'
+                          when 'processing' then 'bg-blue-100 text-blue-800'
+                          when 'reviewing' then 'bg-purple-100 text-purple-800'
+                          when 'archived' then 'bg-green-100 text-green-800'
+                          when 'rejected' then 'bg-red-100 text-red-800'
+                          when 'returned' then 'bg-orange-100 text-orange-800'
+                          else 'bg-gray-100 text-gray-800'
+                          end %>">
+                      <%= node.node_type_i18n %>
+                    </span>
+                  </h4>
+                  <div class="text-xs text-gray-500">
+                    <%= format_time(node.created_at) %>
+                  </div>
+                </div>
+                <p class="text-sm text-gray-700 mb-2"><%= node.content %></p>
+                <div class="flex items-center text-xs text-gray-500 space-x-4">
+                  <span>操作人: <%= node.operator&.display_name %></span>
+                  <% if node.business_record.present? %>
+                    <span class="text-blue-600">有业务记录</span>
+                  <% end %>
+                  <% if node.on_site_explanation.present? %>
+                    <span class="text-orange-600">有现场说明</span>
+                  <% end %>
+                  <% if node.has_attachments? %>
+                    <span class="text-purple-600">有附件</span>
+                  <% end %>
+                </div>
+                <% if node.business_record.present? %>
+                  <div class="mt-2 p-2 bg-white rounded border border-gray-200">
+                    <p class="text-xs text-gray-500 mb-1">业务记录</p>
+                    <p class="text-sm text-gray-700"><%= node.business_record %></p>
+                  </div>
+                <% end %>
+                <% if node.on_site_explanation.present? %>
+                  <div class="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
+                    <p class="text-xs text-orange-600 mb-1">现场说明</p>
+                    <p class="text-sm text-orange-800"><%= node.on_site_explanation %></p>
+                  </div>
+                <% end %>
+                <% if node.has_diff_records? %>
+                  <div class="mt-2">
+                    <p class="text-xs text-gray-500 mb-1">字段变更</p>
+                    <div class="space-y-1">
+                      <% node.diff_records.each do |diff| %>
+                        <p class="text-xs text-gray-600"><%= diff.diff_summary %></p>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+                <% if node.has_attachments? %>
+                  <div class="mt-2">
+                    <p class="text-xs text-gray-500 mb-1">相关附件</p>
+                    <div class="space-y-1">
+                      <% node.attachments.each do |att| %>
+                        <p class="text-xs text-purple-600">• <%= att.file_name %> (<%= att.evidence_type_i18n %>)</p>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,160 @@
+<%= content_for :title, "编辑申请 - #{@grade_correction.application_no}" %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">编辑成绩更正申请</h1>
+          <p class="mt-1 text-sm text-gray-500">申请编号：<%= @grade_correction.application_no %></p>
+        </div>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= status_color_class(@grade_correction.status) %>">
+          <%= @grade_correction.status_i18n %>
+        </span>
+      </div>
+    </div>
+
+    <% if @grade_correction.archived? || @grade_correction.rejected? %>
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900">此申请已<%= @grade_correction.archived? ? '归档' : '驳回' %></h3>
+        <p class="mt-2 text-sm text-gray-500">归档或驳回的申请为只读状态，不可编辑。如需修改请先重新打开申请。</p>
+        <div class="mt-6">
+          <%= link_to '返回详情', @grade_correction, class: 'px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+        </div>
+      </div>
+    <% else %>
+      <div class="px-6 py-4">
+        <%= form_for @grade_correction do |f| %>
+          <% if @grade_correction.errors.any? %>
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h2 class="text-sm font-medium text-red-800 mb-2">请修正以下错误：</h2>
+              <ul class="list-disc list-inside text-sm text-red-600 space-y-1">
+                <% @grade_correction.errors.full_messages.each do |msg| %>
+                  <li><%= msg %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <%= f.label :application_no, '申请编号', class: 'block text-sm font-medium text-gray-700' %>
+                <%= f.text_field :application_no, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <div>
+                <%= f.label :source, '申请来源', class: 'block text-sm font-medium text-gray-700' %>
+                <%= f.select :source, GradeCorrection.sources.map { |k, v| [GradeCorrection.source_i18n(k), k] }, { include_blank: '请选择来源' }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <%= f.label :applicant, '申请人', class: 'block text-sm font-medium text-gray-700' %>
+                <%= f.text_field :applicant, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+              <div>
+                <%= f.label :application_date, '申请日期', class: 'block text-sm font-medium text-gray-700' %>
+                <%= f.date_field :application_date, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">学生信息</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <%= f.label :student_name, '学生姓名 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :student_name, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :student_id, '学号 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :student_id, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">课程信息</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <%= f.label :course_name, '课程名称 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :course_name, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :course_code, '课程代码 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :course_code, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">成绩信息</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <%= f.label :original_score, '原始成绩 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.number_field :original_score, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :corrected_score, '更正后成绩 *', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.number_field :corrected_score, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <%= f.label :application_reason, '申请原因 *', class: 'block text-sm font-medium text-gray-700' %>
+              <%= f.text_area :application_reason, rows: 4, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">关键追踪字段</h3>
+              <p class="text-sm text-gray-500 mb-4">以下字段修改将自动记录变更历史，列表、详情和统计将同步更新</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <%= f.label :critical_time, '关键时间', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.datetime_field :critical_time, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :responsible_party, '责任对象', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_field :responsible_party, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm' %>
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <%= f.label :amount, '涉及金额', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.number_field :amount, step: '0.01', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :evidence_conclusion, '证据结论', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.select :evidence_conclusion, GradeCorrection.evidence_conclusions.map { |k, v| [GradeCorrection.evidence_conclusion_i18n(k), k] }, { include_blank: '请选择证据结论' }, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">异常处理（如适用）</h3>
+              <div class="space-y-6">
+                <div>
+                  <%= f.label :block_reason, '阻断原因', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_area :block_reason, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm' %>
+                </div>
+                <div>
+                  <%= f.label :remedy_path, '补救路径', class: 'block text-sm font-medium text-gray-700' %>
+                  <%= f.text_area :remedy_path, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm' %>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <%= link_to '取消', @grade_correction, class: 'px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
+              <%= f.submit '保存修改', class: 'px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
