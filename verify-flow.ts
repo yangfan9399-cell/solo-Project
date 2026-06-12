@@ -9,7 +9,6 @@ import {
   getOrderDetail,
   getOrderList,
 } from "./lib/data-service";
-import { getRawDB, useInMemoryFallback } from "./lib/prisma";
 import { UserRole, OrderStatus, NodeType } from "./lib/types";
 
 type Passed = { name: string; ok: true; note?: string };
@@ -50,14 +49,7 @@ async function main() {
   console.log("=== 水库闸门调度系统 · 自动化链路验证 ===");
   console.log();
 
-  // 确保走内存数据层
-  const db = getRawDB();
-  console.log(
-    useInMemoryFallback()
-      ? "✅ 已启用：内存数据层（不依赖 Prisma 原生二进制）"
-      : "ℹ️  连接到真实 PostgreSQL"
-  );
-  console.log(`📦 当前订单数：${db.dispatchOrders.size}`);
+  console.log("ℹ️  连接到真实 PostgreSQL");
 
   // ========== 准备 ==========
   // 找到 PENDING_ACCEPT 的记录

@@ -525,11 +525,37 @@ async function main() {
     }),
   ]);
 
+  console.log("创建样本5：待受理...");
+  const order5 = await prisma.dispatchOrder.create({
+    data: {
+      orderNo: "SLUICE-20260612-0005",
+      title: "5号闸门汛前检修调度",
+      content: "汛前检修，调整5号闸门开度至2.5米，下泄流量控制在600m³/s。",
+      source: "防洪调度中心",
+      sourceDept: "调度科",
+      sampleCategory: SampleCategory.NORMAL_CLOSE,
+      gateNo: "G-005",
+      reservoirName: "碧溪水库",
+      targetOpening: 2.5,
+      targetFlow: 600,
+      amount: 95000,
+      planExecuteTime: d(0),
+      responsibleUnit: "闸门运维三班",
+      responsiblePerson: "周班长",
+      status: OrderStatus.PENDING_ACCEPT,
+      isArchived: false,
+      summary: "碧溪水库 G-005 - 5号闸门汛前检修调度",
+      createdAt: d(0),
+      updatedAt: d(0),
+    },
+  });
+
   console.log("样本数据创建完成！");
   console.log("  正常闭环: ", order1.orderNo);
   console.log("  关键材料缺失: ", order2.orderNo);
   console.log("  责任对象不一致: ", order3.orderNo);
   console.log("  复核退回: ", order4.orderNo);
+  console.log("  待受理: ", order5.orderNo);
 }
 
 main()
