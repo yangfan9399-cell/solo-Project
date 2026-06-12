@@ -16,6 +16,10 @@
         });
         this.selectedRecord = await response.text();
         this.showDetail = true;
+    },
+    openRejectModal() {
+        if (!this.currentRecordId) return;
+        this.showRejectModal = true;
     }
 }">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -177,21 +181,26 @@
         </div>
     </div>
 
-    <div x-show="showRejectModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div x-show="showRejectModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display:none;">
         <div class="card" style="width: 100%; max-width: 600px;">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-x-circle me-2 text-danger"></i>退回补证</h5>
                 <button @click="showRejectModal = false" class="btn-close"></button>
             </div>
             <div class="card-body">
-                <form hx-post="{% url 'access_control:api_review_reject' 0 %}"
-                      hx-target="body"
+                <form :action="'/api/records/' + currentRecordId + '/review-reject/'"
+                      method="post"
                       @submit="showRejectModal = false">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label">退回原因</label>
                         <textarea name="reject_reason" class="form-control" rows="4" required
                                   placeholder="请详细说明需要补充的材料或修改的内容..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">补救路径</label>
+                        <textarea name="remedial_path" class="form-control" rows="2"
+                                  placeholder="请说明需要采取的补救措施..."></textarea>
                     </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <button type="button" @click="showRejectModal = false" class="btn btn-secondary">

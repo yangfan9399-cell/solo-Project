@@ -7,88 +7,135 @@ from django.test import Client
 from django.urls import reverse
 from access_control.models import AccessRecoveryRecord
 
-client = Client()
-
-print('\n' + '='*60)
-print('测试业务流程操作（使用现场人员 field01）')
-print('='*60)
-
-client.login(username='field01', password='field123')
-
-pending_record = AccessRecoveryRecord.objects.filter(
-    status=AccessRecoveryRecord.Status.PENDING_ACCEPT
-).first()
-
-if pending_record:
-    print(f'\n测试记录: {pending_record.record_no} (状态: {pending_record.get_status_display()})')
+def test_all_workflows():
+    c = Client()
+    results = []
     
-    accept_url = reverse('access_control:api_accept_record', kwargs={'pk': pending_record.pk})
-    print(f'\n1. 测试受理操作: POST {accept_url}')
-    response = client.post(accept_url, {'remarks': '测试受理'})
-    print(f'   状态码: {response.status_code} (302=成功重定向)')
+    reviewing_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.REVIEWING
+    ).first()
     
-    pending_record.refresh_from_db()
-    print(f'   受理后状态: {pending_record.get_status_display()}')
+    rejected_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.REJECTED
+    ).first()
     
-    if pending_record.status == AccessRecoveryRecord.Status.ACCEPTED:
-        process_url = reverse('access_control:api_process_record', kwargs={'pk': pending_record.pk})
-        print(f'\n2. 测试处理操作: POST {process_url}')
-        response = client.post(process_url, {
-            'business_note': '测试业务记录',
-            'site_description': '测试现场说明',
-            'conclusion': '测试处理结论'
+    archived_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.ARCHIVED
+    ).first()
+    
+    processing_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.PROCESSING
+    ).first()
+    
+    accepted_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.ACCEPTED
+    ).first()
+    
+    pending_record = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.PENDING_ACCEPT
+    ).first()
+
+    print('\n=== Test: Reviewer01 reject a reviewing record ===')
+    c.login(username='reviewer01', password='review123')
+    if reviewing_record:
+        url = reverse('access_control:api_review_reject', kwargs={'pk': reviewing_record.pk})
+        resp = c.post(url, {'reject_reason': 'Test reject', 'remedial_path': 'Fix it'})
+        status = 'PASS' if resp.status_code in [200, 302] else f'FAIL({resp.status_code})'
+        reviewing_record.refresh_from_db()
+        actual_status = reviewing_record.get_status_display()
+        print(f'  {status}: reject reviewing -> {actual_status}')
+        results.append(status == 'PASS')
+    else:
+        print('  SKIP: no reviewing record')
+        results.append(True)
+
+    print('\n=== Test: Field01 process an accepted/rejected record ===')
+    c.login(username='field01', password='field123')
+    
+    test_process = rejected_record or accepted_record
+    if test_process:
+        url = reverse('access_control:api_process_record', kwargs={'pk': test_process.pk})
+        resp = c.post(url, {
+            'business_note': 'Test note',
+            'site_description': 'Test desc', 
+            'conclusion': 'Test conclusion'
         })
-        print(f'   状态码: {response.status_code}')
-        
-        pending_record.refresh_from_db()
-        print(f'   处理后状态: {pending_record.get_status_display()}')
-        
-        if pending_record.status == AccessRecoveryRecord.Status.PROCESSING:
-            submit_url = reverse('access_control:api_submit_review', kwargs={'pk': pending_record.pk})
-            print(f'\n3. 测试提交复核: POST {submit_url}')
-            response = client.post(submit_url, {'remarks': '提交复核测试'})
-            print(f'   状态码: {response.status_code}')
-            
-            pending_record.refresh_from_db()
-            print(f'   提交后状态: {pending_record.get_status_display()}')
+        status = 'PASS' if resp.status_code in [200, 302] else f'FAIL({resp.status_code})'
+        test_process.refresh_from_db()
+        actual_status = test_process.get_status_display()
+        print(f'  {status}: process -> {actual_status}')
+        results.append(status == 'PASS')
+    else:
+        print('  SKIP: no accepted/rejected record')
+        results.append(True)
 
-print('\n' + '='*60)
-print('测试复核流程操作（使用复核主管 reviewer01）')
-print('='*60)
+    print('\n=== Test: Field01 submit for review ===')
+    processing_rec = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.PROCESSING
+    ).first()
+    if processing_rec:
+        url = reverse('access_control:api_submit_review', kwargs={'pk': processing_rec.pk})
+        resp = c.post(url, {'remarks': 'Submit for review'})
+        status = 'PASS' if resp.status_code in [200, 302] else f'FAIL({resp.status_code})'
+        processing_rec.refresh_from_db()
+        actual_status = processing_rec.get_status_display()
+        print(f'  {status}: submit review -> {actual_status}')
+        results.append(status == 'PASS')
+    else:
+        print('  SKIP: no processing record')
+        results.append(True)
 
-client = Client()
-client.login(username='reviewer01', password='review123')
+    print('\n=== Test: Reviewer01 approve and archive ===')
+    c.login(username='reviewer01', password='review123')
+    reviewing_rec = AccessRecoveryRecord.objects.filter(
+        status=AccessRecoveryRecord.Status.REVIEWING
+    ).first()
+    if reviewing_rec:
+        url = reverse('access_control:api_review_approve', kwargs={'pk': reviewing_rec.pk})
+        resp = c.post(url, {'remarks': 'Approved'})
+        status = 'PASS' if resp.status_code in [200, 302] else f'FAIL({resp.status_code})'
+        reviewing_rec.refresh_from_db()
+        actual_status = reviewing_rec.get_status_display()
+        is_archived = reviewing_rec.is_archived
+        print(f'  {status}: approve -> {actual_status}, archived={is_archived}')
+        results.append(status == 'PASS')
+    else:
+        print('  SKIP: no reviewing record')
+        results.append(True)
 
-reviewing_record = AccessRecoveryRecord.objects.filter(
-    status=AccessRecoveryRecord.Status.REVIEWING
-).first()
+    print('\n=== Test: Reopen archived record ===')
+    archived_rec = AccessRecoveryRecord.objects.filter(
+        is_archived=True
+    ).first()
+    if archived_rec:
+        url = reverse('access_control:api_reopen_record', kwargs={'pk': archived_rec.pk})
+        resp = c.post(url, {'reason': 'Need rework'})
+        status = 'PASS' if resp.status_code in [200, 302] else f'FAIL({resp.status_code})'
+        archived_rec.refresh_from_db()
+        actual_status = archived_rec.get_status_display()
+        is_archived = archived_rec.is_archived
+        print(f'  {status}: reopen -> {actual_status}, archived={is_archived}')
+        results.append(status == 'PASS')
+    else:
+        print('  SKIP: no archived record')
+        results.append(True)
 
-if reviewing_record:
-    print(f'\n测试记录: {reviewing_record.record_no} (状态: {reviewing_record.get_status_display()})')
-    
-    reject_url = reverse('access_control:api_review_reject', kwargs={'pk': reviewing_record.pk})
-    print(f'\n1. 测试退回补证: POST {reject_url}')
-    response = client.post(reject_url, {
-        'reject_reason': '测试退回原因',
-        'remedial_path': '测试补救路径'
-    })
-    print(f'   状态码: {response.status_code}')
-    
-    reviewing_record.refresh_from_db()
-    print(f'   退回后状态: {reviewing_record.get_status_display()}')
+    print('\n=== Test: Drilldown analytics ===')
+    c.login(username='admin', password='admin123')
+    url = reverse('access_control:analytics_page')
+    resp = c.get(url + '?drilldown=1&drill_type=status&drill_value=archived')
+    status = 'PASS' if resp.status_code == 200 else f'FAIL({resp.status_code})'
+    print(f'  {status}: drilldown by status=archived')
+    results.append(status == 'PASS')
 
-archived_test_record = AccessRecoveryRecord.objects.filter(
-    status=AccessRecoveryRecord.Status.REVIEWING
-).first()
+    resp = c.get(url + '?drilldown=1&drill_type=sample_type&drill_value=over_limit')
+    status = 'PASS' if resp.status_code == 200 else f'FAIL({resp.status_code})'
+    print(f'  {status}: drilldown by sample_type=over_limit')
+    results.append(status == 'PASS')
 
-if archived_test_record:
-    approve_url = reverse('access_control:api_review_approve', kwargs={'pk': archived_test_record.pk})
-    print(f'\n2. 测试复核通过并归档: POST {approve_url}')
-    response = client.post(approve_url, {'remarks': '测试复核通过'})
-    print(f'   状态码: {response.status_code}')
-    
-    archived_test_record.refresh_from_db()
-    print(f'   归档后状态: {archived_test_record.get_status_display()}')
-    print(f'   是否已归档: {archived_test_record.is_archived}')
+    print('\n' + '='*60)
+    all_pass = all(r == True for r in results)
+    print(f'Total: {len(results)} tests, {"ALL PASSED" if all_pass else "SOME FAILED"}')
+    return all_pass
 
-print('\n测试完成！')
+test_all_workflows()

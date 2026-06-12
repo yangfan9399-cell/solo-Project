@@ -674,7 +674,7 @@ def api_process_record(request, pk):
             for error in errors:
                 messages.error(request, f'{field}: {error}')
 
-    return redirect('record_detail', pk=pk)
+    return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -738,7 +738,7 @@ def api_review_reject(request, pk):
             for error in errors:
                 messages.error(request, f'{field}: {error}')
 
-    return redirect('record_detail', pk=pk)
+    return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -783,7 +783,7 @@ def api_reopen_record(request, pk):
             for error in errors:
                 messages.error(request, f'{field}: {error}')
 
-    return redirect('record_detail', pk=pk)
+    return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -832,7 +832,7 @@ def api_upload_evidence(request, pk):
             'record': record
         })
 
-    return redirect('record_detail', pk=pk)
+    return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
