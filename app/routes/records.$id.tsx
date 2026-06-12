@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { AppLayout } from "~/components/AppLayout";
-import { getMockRecordDetail } from "~/services/mockData";
+import { getRecordDetail, getCurrentUserInfo } from "~/services/dataService";
 import { STATUS_MAP, EXCEPTION_TYPE_MAP, NODE_TYPE_MAP, formatDateTime, cn, formatFileSize } from "~/utils/constants";
 import type { RecordDetail, NodeDetail } from "~/types";
 import { STATUS, NODE_TYPES, EXCEPTION_TYPES } from "~/db/schema";
@@ -16,13 +16,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const id = parseInt(params.id || "0");
-  const record = getMockRecordDetail(id);
+  const { record, dbMode } = await getRecordDetail(id);
+  const user = await getCurrentUserInfo();
 
   if (!record) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  return json({ record });
+  return json({ record, dbMode, user });
 }
 
 function Section({ title, icon, children, action }: { title: string; icon: string; children: React.ReactNode; action?: React.ReactNode }) {
@@ -167,7 +168,7 @@ function TimelineNode({ node, isFirst, isLast }: { node: NodeDetail; isFirst: bo
 }
 
 export default function RecordDetail() {
-  const { record } = useLoaderData<typeof loader>();
+  const { record, dbMode, user } = useLoaderData<typeof loader>();
   const typedRecord = record as RecordDetail;
 
   const statusInfo = STATUS_MAP[typedRecord.status] || {
@@ -188,8 +189,14 @@ export default function RecordDetail() {
     <AppLayout
       title={`核验详情 - ${typedRecord.recordNo}`}
       subtitle={typedRecord.summary}
+      user={user}
       actions={
         <div className="flex items-center gap-2">
+          {!dbMode && (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+              ⚠️ 演示模式（Mock 数据）
+            </span>
+          )}
           {typedRecord.isArchived ? (
             <>
               <span className="badge bg-slate-200 text-slate-700">

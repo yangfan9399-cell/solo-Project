@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData, useSearchParams } from "@remix-run/react";
 import { AppLayout } from "~/components/AppLayout";
-import { getMockRecords, getMockDashboardStats } from "~/services/mockData";
+import { getRecords, getStats, getCurrentUserInfo } from "~/services/dataService";
 import { STATUS_MAP, EXCEPTION_TYPE_MAP, formatDateTime, cn, formatDate } from "~/utils/constants";
 import type { RecordSummary, DashboardStats } from "~/types";
 import { STATUS, EXCEPTION_TYPES } from "~/db/schema";
@@ -19,10 +19,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const exceptionType = url.searchParams.get("exceptionType") || undefined;
   const search = url.searchParams.get("search") || undefined;
 
-  const records = getMockRecords({ status, exceptionType, search });
-  const stats = getMockDashboardStats();
+  const [{ records, dbMode }, { stats }, user] = await Promise.all([
+    getRecords({ status, exceptionType, search }),
+    getStats(),
+    getCurrentUserInfo(),
+  ]);
 
-  return json({ records, stats });
+  return json({ records, stats, dbMode, user });
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -44,7 +47,7 @@ function ExceptionBadge({ type }: { type: string }) {
 }
 
 export default function Records() {
-  const { records, stats } = useLoaderData<typeof loader>();
+  const { records, stats, dbMode, user } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const typedRecords = records as RecordSummary[];
   const typedStats = stats as DashboardStats;
@@ -84,8 +87,14 @@ export default function Records() {
     <AppLayout
       title="核验记录"
       subtitle={`共 ${typedRecords.length} 条记录`}
+      user={user}
       actions={
         <div className="flex items-center gap-3">
+          {!dbMode && (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+              ⚠️ 演示模式（Mock 数据）
+            </span>
+          )}
           <div className="relative">
             <input
               type="text"

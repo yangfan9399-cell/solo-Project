@@ -7,6 +7,14 @@ interface NavItem {
   icon: string;
 }
 
+interface SidebarProps {
+  user?: {
+    displayName: string;
+    department: string;
+    role: string;
+  };
+}
+
 const navItems: NavItem[] = [
   { to: "/", label: "工作台", icon: "🏠" },
   { to: "/records", label: "核验记录", icon: "📋" },
@@ -14,7 +22,19 @@ const navItems: NavItem[] = [
   { to: "/dashboard", label: "复盘看板", icon: "📊" },
 ];
 
-export function Sidebar() {
+const ROLE_LABELS: Record<string, string> = {
+  applicant: "申请人",
+  handler: "处理人",
+  reviewer: "复核人",
+  archivist: "归档员",
+};
+
+export function Sidebar({ user }: SidebarProps) {
+  const displayName = user?.displayName || "李明";
+  const department = user?.department || "检验检疫科";
+  const roleLabel = user?.role ? ROLE_LABELS[user.role] || user.role : "处理人";
+  const initial = displayName.charAt(0);
+
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col h-full">
       <div className="p-6 border-b border-slate-700">
@@ -58,11 +78,11 @@ export function Sidebar() {
           <p className="text-xs text-slate-400 mb-2">当前角色</p>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-sm font-bold">
-              李
+              {initial}
             </div>
             <div>
-              <p className="text-sm font-medium">李明</p>
-              <p className="text-xs text-slate-400">检验检疫科 · 处理人</p>
+              <p className="text-sm font-medium">{displayName}</p>
+              <p className="text-xs text-slate-400">{department} · {roleLabel}</p>
             </div>
           </div>
         </div>

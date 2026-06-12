@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import { AppLayout } from "~/components/AppLayout";
-import { getMockRecordDetail } from "~/services/mockData";
+import { getRecordDetail, updateRecord, addNodeToRecord, getCurrentUserInfo } from "~/services/dataService";
 import { STATUS_MAP, EXCEPTION_TYPE_MAP, NODE_TYPE_MAP, formatDateTime, cn, formatFileSize } from "~/utils/constants";
 import type { RecordDetail, NodeDetail } from "~/types";
 import { STATUS, NODE_TYPES, EXCEPTION_TYPES, ROLES } from "~/db/schema";
@@ -17,13 +17,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const id = parseInt(params.id || "0");
-  const record = getMockRecordDetail(id);
+  const { record, dbMode } = await getRecordDetail(id);
 
   if (!record) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  return json({ record });
+  const user = await getCurrentUserInfo();
+
+  return json({ record, dbMode, user });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -31,13 +33,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
 
-  const { updateMockRecord, addMockNode } = await import("~/services/mockData");
-  const record = getMockRecordDetail(recordId);
+  const { record } = await getRecordDetail(recordId);
   if (!record) return json({ error: "记录不存在" }, { status: 404 });
 
   if (intent === "accept") {
     const comment = formData.get("comment") as string;
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.ACCEPT,
       nodeName: "受理登记",
@@ -47,7 +48,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       sequence: record.nodes.length + 1,
       isReProcess: false,
     });
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.PROCESSING,
       currentHandler: "李明",
       currentHandlerName: "李明",
@@ -65,7 +66,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     if (siteDescription) fullComment += `现场说明：${siteDescription}\n`;
     if (comment) fullComment += `备注：${comment}`;
 
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.SUPPLEMENT,
       nodeName: "补充材料",
@@ -77,7 +78,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     });
 
     if (record.status === STATUS.RETURNED) {
-      updateMockRecord(recordId, {
+      updateRecord(recordId, {
         status: STATUS.PENDING_REVIEW,
         currentHandler: "王芳",
         currentHandlerName: "王芳",
@@ -91,7 +92,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const comment = formData.get("comment") as string;
     const basis = formData.get("basis") as string;
 
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.PROCESS,
       nodeName: "现场核验",
@@ -103,7 +104,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       isReProcess: record.exceptionType === EXCEPTION_TYPES.RE_PROCESS,
     });
 
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.PENDING_REVIEW,
       currentHandler: "王芳",
       currentHandlerName: "王芳",
@@ -118,7 +119,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const conclusion = formData.get("conclusion") as string;
     const basis = formData.get("basis") as string;
 
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.REVIEW,
       nodeName: "复核审批",
@@ -130,7 +131,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       isReProcess: record.exceptionType === EXCEPTION_TYPES.RE_PROCESS,
     });
 
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.REVIEWED,
       conclusion,
       currentHandler: "陈杰",
@@ -145,7 +146,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const blockReason = formData.get("blockReason") as string;
     const remedyPath = formData.get("remedyPath") as string;
 
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.RETURN,
       nodeName: "复核退回",
@@ -156,7 +157,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       isReProcess: false,
     });
 
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.RETURNED,
       blockReason,
       remedyPath,
@@ -168,7 +169,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (intent === "archive") {
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.ARCHIVE,
       nodeName: "归档结案",
@@ -179,7 +180,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       isReProcess: false,
     });
 
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.ARCHIVED,
       isArchived: true,
       archivedAt: new Date().toISOString(),
@@ -191,7 +192,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (intent === "reprocess") {
     const lastNode = record.nodes[record.nodes.length - 1];
 
-    addMockNode(recordId, {
+    addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.RE_PROCESS,
       nodeName: "重新处理-启动",
@@ -210,7 +211,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       snapshotAfter: { status: "processing", conclusion: "原结论撤销，重新核验" },
     });
 
-    updateMockRecord(recordId, {
+    updateRecord(recordId, {
       status: STATUS.PROCESSING,
       isArchived: false,
       exceptionType: EXCEPTION_TYPES.RE_PROCESS,
@@ -261,7 +262,7 @@ function TimelineMini({ nodes }: { nodes: NodeDetail[] }) {
 }
 
 export default function ProcessingDetail() {
-  const { record } = useLoaderData<typeof loader>();
+  const { record, dbMode, user } = useLoaderData<typeof loader>();
   const typedRecord = record as RecordDetail;
   const fetcher = useFetcher();
   const navigate = useNavigate();
@@ -310,8 +311,14 @@ export default function ProcessingDetail() {
     <AppLayout
       title={`处理：${typedRecord.recordNo}`}
       subtitle={typedRecord.summary}
+      user={user}
       actions={
         <div className="flex items-center gap-2">
+          {!dbMode && (
+            <span className="badge bg-amber-100 text-amber-700">
+              🎯 演示模式
+            </span>
+          )}
           <Link to={`/records/${typedRecord.id}`} className="btn-secondary">
             📋 查看详情
           </Link>

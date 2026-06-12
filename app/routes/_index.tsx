@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { AppLayout } from "~/components/AppLayout";
-import { getMockDashboardStats } from "~/services/mockData";
+import { getStats, getCurrentUserInfo } from "~/services/dataService";
 import { STATUS_MAP, EXCEPTION_TYPE_MAP, formatDateTime, cn } from "~/utils/constants";
 import type { DashboardStats } from "~/types";
 import { STATUS, EXCEPTION_TYPES } from "~/db/schema";
@@ -15,8 +15,8 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader(_args: LoaderFunctionArgs) {
-  const stats = getMockDashboardStats();
-  return json({ stats });
+  const [{ stats, dbMode }, user] = await Promise.all([getStats(), getCurrentUserInfo()]);
+  return json({ stats, dbMode, user });
 }
 
 function StatCard({
@@ -61,17 +61,25 @@ function StatCard({
 }
 
 export default function Index() {
-  const { stats } = useLoaderData<typeof loader>();
+  const { stats, dbMode, user } = useLoaderData<typeof loader>();
   const typedStats = stats as DashboardStats;
 
   return (
     <AppLayout
       title="工作台"
-      subtitle="欢迎回来，李明 · 今日待处理 3 项"
+      subtitle={`欢迎回来，${user.displayName} · 今日待处理 ${typedStats.pending} 项`}
+      user={user}
       actions={
-        <button className="btn-primary">
-          <span className="mr-2">＋</span>新建核验
-        </button>
+        <div className="flex items-center gap-3">
+          {!dbMode && (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+              ⚠️ 演示模式（Mock 数据）
+            </span>
+          )}
+          <button className="btn-primary">
+            <span className="mr-2">＋</span>新建核验
+          </button>
+        </div>
       }
     >
       <div className="space-y-6">

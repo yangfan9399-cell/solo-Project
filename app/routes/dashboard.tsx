@@ -3,7 +3,7 @@ import { json } from "@remix-run/node";
 import { Link, useLoaderData, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import { AppLayout } from "~/components/AppLayout";
-import { getMockDashboardStats, getMockRecords } from "~/services/mockData";
+import { getStats, getRecords, getCurrentUserInfo } from "~/services/dataService";
 import { STATUS_MAP, EXCEPTION_TYPE_MAP, formatDateTime, cn } from "~/utils/constants";
 import type { DashboardStats, RecordSummary } from "~/types";
 import { STATUS, EXCEPTION_TYPES } from "~/db/schema";
@@ -13,19 +13,21 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader(_args: LoaderFunctionArgs) {
-  const stats = getMockDashboardStats();
+  const { stats, dbMode } = await getStats();
   
   const recordsByExceptionType: Record<string, RecordSummary[]> = {};
-  Object.keys(stats.byType).forEach((type) => {
-    recordsByExceptionType[type] = getMockRecords({ exceptionType: type }).slice(0, 5);
-  });
+  for (const type of Object.keys(stats.byType)) {
+    recordsByExceptionType[type] = (await getRecords({ exceptionType: type })).records.slice(0, 5);
+  }
   
   const recordsByStatus: Record<string, RecordSummary[]> = {};
-  Object.keys(stats.byStatus).forEach((status) => {
-    recordsByStatus[status] = getMockRecords({ status }).slice(0, 5);
-  });
+  for (const status of Object.keys(stats.byStatus)) {
+    recordsByStatus[status] = (await getRecords({ status })).records.slice(0, 5);
+  }
   
-  return json({ stats, recordsByExceptionType, recordsByStatus });
+  const user = await getCurrentUserInfo();
+  
+  return json({ stats, recordsByExceptionType, recordsByStatus, dbMode, user });
 }
 
 function StatCard({
@@ -360,7 +362,7 @@ function DrillModal({
 }
 
 export default function Dashboard() {
-  const { stats, recordsByExceptionType, recordsByStatus } = useLoaderData<typeof loader>();
+  const { stats, recordsByExceptionType, recordsByStatus, dbMode, user } = useLoaderData<typeof loader>();
   const typedStats = stats as DashboardStats;
   const typedRecordsByType = recordsByExceptionType as Record<string, RecordSummary[]>;
   const typedRecordsByStatus = recordsByStatus as Record<string, RecordSummary[]>;
@@ -413,8 +415,14 @@ export default function Dashboard() {
     <AppLayout
       title="复盘看板"
       subtitle="数据统计与趋势分析 · 支持钻取查看明细"
+      user={user}
       actions={
         <div className="flex items-center gap-2">
+          {!dbMode && (
+            <span className="badge bg-amber-100 text-amber-700">
+              🎭 演示模式
+            </span>
+          )}
           <select className="input py-2 text-sm w-32">
             <option>本周</option>
             <option>本月</option>
