@@ -6,6 +6,7 @@ import {
   advanceWorkflow,
   assertNotArchived,
   assertReviewerOnly,
+  assertStatusFlow,
 } from "~/lib/queries.server";
 import type { AppStatus } from "~/lib/types";
 import StatusBadge from "~/components/StatusBadge";
@@ -40,6 +41,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   await assertReviewerOnly(actionType, operatorRole);
   await assertNotArchived(detail.application.status, actionType);
+  await assertStatusFlow(actionType, detail.application.status);
 
   if (actionType === "confirm_archive") {
     const conclusion = formData.get("conclusion") as string;

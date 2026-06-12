@@ -8,6 +8,7 @@ import {
   addAttachment,
   assertRoleAllowed,
   assertNotArchived,
+  assertStatusFlow,
 } from "~/lib/queries.server";
 import { SAMPLE_TYPE_LABELS, ROLE_LABELS, RECORD_TYPE_LABELS } from "~/lib/types";
 import type { AppStatus, SampleType } from "~/lib/types";
@@ -41,6 +42,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   await assertRoleAllowed(actionType, operatorRole, detail.application.status);
   await assertNotArchived(detail.application.status, actionType);
+  await assertStatusFlow(actionType, detail.application.status);
 
   if (actionType === "start_processing") {
     await advanceWorkflow(id, "processing", operatorName, operatorRole, {
@@ -152,17 +154,32 @@ export async function action({ request, params }: ActionFunctionArgs) {
       const oldDate = formData.get("oldDate") as string;
       const newDate = formData.get("newDate") as string;
       if (newDate) {
+        const newParts = newDate.split("~").map((s) => s.trim());
+        const oldParts = oldDate ? oldDate.split("~").map((s) => s.trim()) : ["", ""];
+        const newStartStr = newParts[0];
+        const newEndStr = newParts[1] || newParts[0];
+        const oldStartStr = oldParts[0] || "";
+        const oldEndStr = oldParts[1] || oldStartStr;
+
+        if (newStartStr) newShootingStartDate = new Date(newStartStr);
+        if (newEndStr) newShootingEndDate = new Date(newEndStr);
+
         fieldChangesData.push({
           fieldName: "shootingStartDate",
-          fieldLabel: "拍摄起止时间",
-          oldValue: oldDate,
-          newValue: newDate,
+          fieldLabel: "拍摄开始时间",
+          oldValue: oldStartStr || null,
+          newValue: newStartStr || null,
           changedBy: operatorName,
           changeType: "time",
         });
-        const parts = newDate.split("~").map((s) => s.trim());
-        if (parts[0]) newShootingStartDate = new Date(parts[0]);
-        if (parts[1]) newShootingEndDate = new Date(parts[1]);
+        fieldChangesData.push({
+          fieldName: "shootingEndDate",
+          fieldLabel: "拍摄结束时间",
+          oldValue: oldEndStr || null,
+          newValue: newEndStr || null,
+          changedBy: operatorName,
+          changeType: "time",
+        });
       }
     }
 

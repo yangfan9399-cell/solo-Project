@@ -71,6 +71,41 @@ export async function assertReviewerOnly(
   }
 }
 
+export async function assertStatusFlow(
+  actionType: string,
+  currentStatus: string
+) {
+  const allowed: Record<string, Set<string>> = {
+    start_processing: new Set(["received", "returned", "reprocessing"]),
+    block_missing_records: new Set(["processing", "reprocessing"]),
+    block_inconsistent_attachments: new Set(["processing", "reprocessing"]),
+    approve_to_review: new Set(["processing", "reprocessing"]),
+    confirm_archive: new Set(["review"]),
+    return_for_evidence: new Set(["review"]),
+    reprocess: new Set(["archived"]),
+    add_business_record: new Set(["returned"]),
+    add_attachment: new Set(["returned"]),
+  };
+
+  if (allowed[actionType]) {
+    if (!allowed[actionType].has(currentStatus)) {
+      const allowedStr = Array.from(allowed[actionType]).join("、");
+      const label: Record<string, string> = {
+        received: "已受理",
+        returned: "退回补证",
+        reprocessing: "重新处理中",
+        processing: "处理中",
+        review: "复核中",
+        archived: "已归档",
+      };
+      throw new Response(
+        `状态不允许：当前状态【${label[currentStatus] || currentStatus}】不允许执行该操作，仅允许状态：${allowedStr.split("、").map(s => label[s] || s).join("、")}`,
+        { status: 400 }
+      );
+    }
+  }
+}
+
 export async function getApplicationDetail(id: number) {
   const app = await db.query.applications.findFirst({
     where: eq(applications.id, id),
@@ -235,44 +270,6 @@ export async function advanceWorkflow(
         changedBy: fc.changedBy,
         changeType: fc.changeType,
       });
-
-      switch (fc.fieldName) {
-        case "budgetAmount":
-          if (fc.newValue !== null && fc.newValue !== undefined) {
-            await db.update(applications).set({ budgetAmount: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "shootingStartDate":
-          if (fc.newValue) {
-            await db.update(applications).set({ shootingStartDate: new Date(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "shootingEndDate":
-          if (fc.newValue) {
-            await db.update(applications).set({ shootingEndDate: new Date(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "crewCount":
-          if (fc.newValue) {
-            await db.update(applications).set({ crewCount: Number(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "conclusion":
-          if (fc.newValue !== null && fc.newValue !== undefined) {
-            await db.update(applications).set({ conclusion: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "currentResponsible":
-          if (fc.newValue) {
-            await db.update(applications).set({ currentResponsible: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-        case "currentResponsibleRole":
-          if (fc.newValue) {
-            await db.update(applications).set({ currentResponsibleRole: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
-          }
-          break;
-      }
     }
   }
 
