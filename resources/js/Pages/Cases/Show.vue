@@ -164,8 +164,8 @@
 
                 <div class="card">
                     <h3 class="font-semibold text-slate-800 mb-4">📎 证据附件</h3>
-                    <div v-if="caseData.evidences.length === 0" class="text-sm text-slate-500">暂无证据附件</div>
-                    <div v-else class="grid grid-cols-2 gap-3">
+                    <div v-if="caseData.evidences.length === 0" class="text-sm text-slate-500 mb-3">暂无证据附件</div>
+                    <div v-else class="grid grid-cols-2 gap-3 mb-4">
                         <div
                             v-for="ev in caseData.evidences"
                             :key="ev.id"
@@ -182,6 +182,30 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div v-if="isClerk && !caseData.is_archived" class="border-t border-slate-200 pt-4">
+                        <h4 class="text-sm font-medium text-slate-700 mb-3">上传新证据</h4>
+                        <form @submit.prevent="uploadEvidence" class="space-y-3">
+                            <input
+                                ref="fileInput"
+                                type="file"
+                                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                @change="onFileChange"
+                            />
+                            <textarea
+                                v-model="evidenceDescription"
+                                class="textarea"
+                                rows="2"
+                                placeholder="证据说明（可选）"
+                            ></textarea>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                :disabled="!evidenceFile || uploadingEvidence"
+                            >
+                                {{ uploadingEvidence ? '上传中...' : '📎 上传证据' }}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -288,6 +312,10 @@ const caseData = computed(() => props.case);
 const showApproveModal = ref(false);
 const showReturnModal = ref(false);
 const returnReason = ref('');
+const evidenceFile = ref(null);
+const evidenceDescription = ref('');
+const uploadingEvidence = ref(false);
+const fileInput = ref(null);
 
 const totalTools = computed(() => {
     const t = caseData.value.tools || [];
@@ -335,5 +363,28 @@ function reopenCase() {
     if (confirm('确定要重新处理此归档案件吗？将生成新的处理节点。')) {
         router.post(route('cases.reopen', caseData.value.id));
     }
+}
+
+function onFileChange(e) {
+    evidenceFile.value = e.target.files[0] || null;
+}
+
+function uploadEvidence() {
+    if (!evidenceFile.value) return;
+    uploadingEvidence.value = true;
+    const formData = new FormData();
+    formData.append('file', evidenceFile.value);
+    if (evidenceDescription.value) {
+        formData.append('description', evidenceDescription.value);
+    }
+    router.post(route('cases.evidence', caseData.value.id), formData, {
+        forceFormData: true,
+        onFinish: () => {
+            uploadingEvidence.value = false;
+            evidenceFile.value = null;
+            evidenceDescription.value = '';
+            if (fileInput.value) fileInput.value.value = '';
+        },
+    });
 }
 </script>

@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>民航机务工具借还清点与遗失追责平台</title>
-    @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @routes
     @inertiaHead
 </head>
 <body class="bg-slate-50">

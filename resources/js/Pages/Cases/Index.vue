@@ -81,6 +81,10 @@
                             <td class="py-3 align-top">
                                 <div class="text-slate-700">{{ c.current_responsible }}</div>
                                 <div class="text-xs text-slate-400 mt-0.5">{{ c.tools?.length || 0 }} 件工具</div>
+                                <div v-if="c.tools && c.tools.length" class="text-xs text-slate-500 mt-0.5">
+                                    数量 {{ c.tools.reduce((s,t) => s + Number(t.actual_quantity), 0) }}/{{ c.tools.reduce((s,t) => s + Number(t.expected_quantity), 0) }}
+                                    · ¥{{ c.tools.reduce((s,t) => s + Number(t.actual_amount), 0).toLocaleString() }}/{{ c.tools.reduce((s,t) => s + Number(t.expected_amount), 0).toLocaleString() }}
+                                </div>
                             </td>
                             <td class="py-3 align-top text-slate-500 text-xs">{{ c.incident_at }}</td>
                             <td class="py-3 align-top">
@@ -117,9 +121,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
-import AppLayout from '../Layouts/AppLayout.vue';
-import StatusBadge from '../Components/StatusBadge.vue';
-import TypeBadge from '../Components/TypeBadge.vue';
+import AppLayout from '../../Layouts/AppLayout.vue';
+import StatusBadge from '../../Components/StatusBadge.vue';
+import TypeBadge from '../../Components/TypeBadge.vue';
 
 const props = defineProps({
     cases: { type: Object, required: true },
@@ -174,6 +178,16 @@ function getSummary(c) {
     }[c.type] || c.type;
     let s = `${typeLabel}`;
     if (hasBlocking(c)) s += ' · 存在异常';
+    if (c.tools && c.tools.length) {
+        const qtyDiff = c.tools.reduce((s,t) => s + Number(t.actual_quantity), 0) - c.tools.reduce((s,t) => s + Number(t.expected_quantity), 0);
+        const amtDiff = c.tools.reduce((s,t) => s + Number(t.actual_amount), 0) - c.tools.reduce((s,t) => s + Number(t.expected_amount), 0);
+        if (qtyDiff !== 0 || amtDiff !== 0) {
+            const parts = [];
+            if (qtyDiff !== 0) parts.push(`数量差异${qtyDiff > 0 ? '+' : ''}${qtyDiff}`);
+            if (amtDiff !== 0) parts.push(`金额差异${amtDiff > 0 ? '+' : ''}¥${amtDiff.toLocaleString()}`);
+            s += ' · ' + parts.join('、');
+        }
+    }
     return s;
 }
 </script>

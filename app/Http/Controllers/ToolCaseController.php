@@ -13,6 +13,7 @@ use App\Models\ResponsiblePerson;
 use App\Models\Evidence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ToolCaseController extends Controller
@@ -152,19 +153,62 @@ class ToolCaseController extends Controller
             'current_responsible' => 'nullable|string',
             'incident_at' => 'nullable|date',
             'tools' => 'nullable|array',
-            'responsible_persons' => 'nullable|array',
+            'tools.*.id' => 'required|integer',
+            'tools.*.actual_quantity' => 'nullable|integer',
+            'tools.*.actual_amount' => 'nullable|numeric',
+            'tools.*.remark' => 'nullable|string',
         ]);
+
+        $toolsData = $validated['tools'] ?? [];
+        unset($validated['tools']);
 
         $original = $toolCase->only(array_keys($validated));
         $toolCase->update($validated);
-        $changes = array_diff_assoc($validated, $original);
 
-        if (!empty($changes)) {
-            $this->addNode($toolCase, NodeType::Update, $toolCase->status, '业务专员更新案件信息', Auth::user(), $changes);
+        $toolChanges = [];
+        foreach ($toolsData as $toolInput) {
+            $tool = Tool::where('id', $toolInput['id'])->where('case_id', $toolCase->id)->first();
+            if (!$tool) continue;
+
+            $before = [
+                'actual_quantity' => $tool->actual_quantity,
+                'actual_amount' => (float) $tool->actual_amount,
+            ];
+
+            $updateData = [];
+            if (array_key_exists('actual_quantity', $toolInput)) {
+                $updateData['actual_quantity'] = $toolInput['actual_quantity'];
+            }
+            if (array_key_exists('actual_amount', $toolInput)) {
+                $updateData['actual_amount'] = $toolInput['actual_amount'];
+            }
+            if (array_key_exists('remark', $toolInput)) {
+                $updateData['remark'] = $toolInput['remark'];
+            }
+
+            if (!empty($updateData)) {
+                $tool->update($updateData);
+                $after = [
+                    'actual_quantity' => $tool->fresh()->actual_quantity,
+                    'actual_amount' => (float) $tool->fresh()->actual_amount,
+                ];
+                if ($before !== $after) {
+                    $toolChanges[$tool->tool_code] = ['before' => $before, 'after' => $after];
+                }
+            }
         }
 
+        $caseChanges = array_diff_assoc($validated, $original);
+        $allChanges = array_merge($caseChanges, empty($toolChanges) ? [] : ['tools' => $toolChanges]);
+
+        if (!empty($allChanges)) {
+            $this->addNode($toolCase, NodeType::Update, $toolCase->status, '业务专员更新案件信息' . (empty($toolChanges) ? '' : '（含工具数量/金额调整）'), Auth::user(), $allChanges);
+        }
+
+        $this->recalcDiffFields($toolCase);
+
         if ($request->has('submit_for_review') && $request->submit_for_review) {
-            $toolCase->status = CaseStatus::Reviewing;
+            $toolCase->status = CaseStatus::Processing;
             $toolCase->handled_by = Auth::id();
             $toolCase->handled_at = now();
             $toolCase->save();
@@ -172,6 +216,67 @@ class ToolCaseController extends Controller
         }
 
         return redirect()->route('cases.show', $toolCase)->with('success', '案件已更新');
+    }
+
+    private function recalcDiffFields(ToolCase $case): void
+    {
+        $case->load('tools');
+        $totalExpectedQty = $case->tools->sum('expected_quantity');
+        $totalActualQty = $case->tools->sum('actual_quantity');
+        $totalExpectedAmt = $case->tools->sum(fn ($t) => (float) $t->expected_amount);
+        $totalActualAmt = $case->tools->sum(fn ($t) => (float) $t->actual_amount);
+
+        $diffFields = [];
+        if ($totalExpectedQty !== $totalActualQty) {
+            $diffFields[] = [
+                'field' => 'quantity',
+                'label' => '工具数量',
+                'expected' => $totalExpectedQty,
+                'actual' => $totalActualQty,
+                'diff' => $totalActualQty - $totalExpectedQty,
+            ];
+        }
+        if (abs($totalExpectedAmt - $totalActualAmt) > 0.01) {
+            $diffFields[] = [
+                'field' => 'amount',
+                'label' => '工具金额',
+                'expected' => round($totalExpectedAmt, 2),
+                'actual' => round($totalActualAmt, 2),
+                'diff' => round($totalActualAmt - $totalExpectedAmt, 2),
+            ];
+        }
+
+        $hasToolDiff = $case->tools->contains(fn ($t) =>
+            $t->expected_quantity !== $t->actual_quantity ||
+            abs((float) $t->expected_amount - (float) $t->actual_amount) > 0.01
+        );
+
+        if ($hasToolDiff && empty($diffFields)) {
+            $diffFields[] = [
+                'field' => 'tool_status',
+                'label' => '工具状态',
+                'expected' => '全部完好',
+                'actual' => '存在差异工具',
+            ];
+        }
+
+        if (!empty($diffFields) && $case->type !== CaseType::Normal) {
+            $case->diff_fields = $diffFields;
+            if (empty($case->blocking_reason)) {
+                $case->blocking_reason = '工具数量或金额与台账不符，需核实后提交。';
+            }
+            if (empty($case->remedy_path)) {
+                $case->remedy_path = '1. 核实工具清单实际数量与金额；2. 补充差异说明和证据；3. 确认后重新提交复核。';
+            }
+        } elseif (empty($diffFields) && $case->type === CaseType::Normal) {
+            $case->diff_fields = null;
+            $case->blocking_reason = null;
+            $case->remedy_path = null;
+        } else {
+            $case->diff_fields = empty($diffFields) ? null : $diffFields;
+        }
+
+        $case->save();
     }
 
     public function approve(Request $request, ToolCase $toolCase)
@@ -227,6 +332,38 @@ class ToolCaseController extends Controller
         $this->addNode($toolCase, NodeType::Reopen, CaseStatus::Processing, '审批负责人启动重新处理流程，生成新的处理节点', Auth::user());
 
         return redirect()->route('cases.show', $toolCase)->with('success', '案件已重新打开处理');
+    }
+
+    public function uploadEvidence(Request $request, ToolCase $toolCase)
+    {
+        if (!Auth::user()?->isClerk()) {
+            abort(403, '只有业务专员可以补充证据');
+        }
+        if ($toolCase->is_archived) {
+            abort(403, '已归档案件不能补充证据');
+        }
+
+        $validated = $request->validate([
+            'description' => 'nullable|string|max:500',
+            'file' => 'required|file|max:20480',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('evidences/' . $toolCase->case_number, 'public');
+
+        Evidence::create([
+            'case_id' => $toolCase->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
+            'description' => $validated['description'] ?? null,
+            'uploaded_by' => Auth::id(),
+        ]);
+
+        $this->addNode($toolCase, NodeType::Update, $toolCase->status, '业务专员补充证据：' . $file->getClientOriginalName(), Auth::user());
+
+        return redirect()->route('cases.show', $toolCase)->with('success', '证据已上传');
     }
 
     private function addNode(ToolCase $case, NodeType $type, CaseStatus $status, string $content, $operator, $changes = null): void
