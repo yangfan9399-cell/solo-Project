@@ -38,7 +38,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
-    "bcryptjs": "^2.4.3"
+    "@rollup/wasm-node": "^4.61.1",
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.21.0"
   },
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seed.ts"

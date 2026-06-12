@@ -148,11 +148,10 @@ export async function processRecord(
       data: {
         recordId,
         nodeType: '现场处理',
-        status: action.status || RecordStatus.PROCESSING,
-        description: action.conclusion || '一线处理人补充记录',
+        status: RecordStatus.PROCESSING,
+        description: '一线处理人补充记录',
         fieldNotes: action.fieldNotes,
         onSiteNotes: action.onSiteNotes,
-        conclusion: action.conclusion,
         handlerId,
         parentNodeId: latestNode?.id
       }
@@ -160,23 +159,24 @@ export async function processRecord(
 
     const updateData: Prisma.EquipmentRecordUpdateInput = {};
 
-    if (action.status) {
-      updateData.status = action.status;
-    }
-    if (action.blockReason) {
-      updateData.blockReason = action.blockReason;
-    }
-    if (action.remediationPath) {
-      updateData.remediationPath = action.remediationPath;
-    }
-    if (action.basisAdopted) {
-      updateData.basisAdopted = action.basisAdopted;
-    }
-    if (action.conclusion) {
-      updateData.conclusion = action.conclusion;
-    }
+    const isAdmin = handler.role === UserRole.ADMIN;
 
-    if (handler.role === UserRole.ADMIN) {
+    if (isAdmin) {
+      if (action.status) {
+        updateData.status = action.status;
+      }
+      if (action.blockReason) {
+        updateData.blockReason = action.blockReason;
+      }
+      if (action.remediationPath) {
+        updateData.remediationPath = action.remediationPath;
+      }
+      if (action.basisAdopted) {
+        updateData.basisAdopted = action.basisAdopted;
+      }
+      if (action.conclusion) {
+        updateData.conclusion = action.conclusion;
+      }
       if (action.amount !== undefined) {
         updateData.amount = action.amount;
       }
@@ -192,7 +192,6 @@ export async function processRecord(
     }
 
     if (action.fieldChanges && action.fieldChanges.length > 0) {
-      const isAdmin = handler.role === UserRole.ADMIN;
       for (const change of action.fieldChanges) {
         const isCriticalChange = [
           FieldChangeType.CRITICAL_TIME,
