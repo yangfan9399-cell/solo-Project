@@ -52,7 +52,8 @@
   $: recordId = $page.params.id;
   $: currentUser = $recordStore.currentUser;
   $: isFieldHandler = currentUser?.role === UserRole.FIELD_HANDLER;
-  $: canEdit = record && !record.isArchived && isFieldHandler;
+  $: canEdit = record && !record.isArchived && (isFieldHandler || currentUser?.role === UserRole.ADMIN);
+  $: isAdmin = currentUser?.role === UserRole.ADMIN;
 
   onMount(async () => {
     await loadRecord();
@@ -117,46 +118,47 @@
   async function submit(action: 'SAVE' | 'SUBMIT') {
     if (!canEdit || submitting) return;
 
-    const hasContent = fieldNotes.trim() || onSiteNotes.trim() || conclusion.trim() ||
-      attachments.length > 0 || fieldChanges.length > 0 ||
-      blockReason.trim() || remediationPath.trim();
+    const hasContent = fieldNotes.trim() || onSiteNotes.trim() || attachments.length > 0 ||
+      (fieldChanges.length > 0 && fieldChanges.some(fc => fc.changeType === FieldChangeType.OTHER || fc.changeType === FieldChangeType.EQUIPMENT_SPEC || fc.changeType === FieldChangeType.VENUE_ARRANGEMENT));
 
-    if (!hasContent) {
+    if (!hasContent && action === 'SAVE') {
       alert('请至少填写一项处理内容');
+      return;
+    }
+    if (!hasContent && action === 'SUBMIT') {
+      alert('提交复核前请至少补充业务记录、现场说明或上传证据附件');
       return;
     }
 
     submitting = true;
     try {
-      const processedChanges = fieldChanges.map(fc => ({
-        fieldName: fc.fieldName,
-        changeType: fc.changeType as FieldChangeType,
-        oldValue: JSON.parse(fc.oldValue || '{}'),
-        newValue: JSON.parse(fc.newValue || '{}'),
-        diffDescription: fc.diffDescription || `${fc.fieldName} 已变更`
-      }));
+      const processedChanges = fieldChanges
+        .filter(fc => 
+          fc.changeType === FieldChangeType.OTHER || 
+          fc.changeType === FieldChangeType.EQUIPMENT_SPEC || 
+          fc.changeType === FieldChangeType.VENUE_ARRANGEMENT
+        )
+        .map(fc => ({
+          fieldName: fc.fieldName,
+          changeType: fc.changeType as FieldChangeType,
+          oldValue: JSON.parse(fc.oldValue || '{}'),
+          newValue: JSON.parse(fc.newValue || '{}'),
+          diffDescription: fc.diffDescription || `${fc.fieldName} 已变更`
+        }));
 
       const actionData = {
-        type: 'STATUS_CHANGE' as const,
+        type: (action === 'SUBMIT' ? 'SUBMIT_REVIEW' : 'FIELD_NOTES') as any,
         fieldNotes: fieldNotes.trim() || undefined,
         onSiteNotes: onSiteNotes.trim() || undefined,
-        conclusion: conclusion.trim() || undefined,
-        status: action === 'SUBMIT' ? RecordStatus.REVIEWING : RecordStatus.PROCESSING,
         attachments: attachments.length > 0 ? attachments : undefined,
-        fieldChanges: processedChanges.length > 0 ? processedChanges : undefined,
-        blockReason: blockReason.trim() || undefined,
-        remediationPath: remediationPath.trim() || undefined,
-        basisAdopted: basisAdopted.trim() || undefined,
-        amount: amount !== Number(record?.amount) ? amount : undefined,
-        scheduledTime: scheduledTime ? new Date(scheduledTime) : undefined,
-        actualTime: actualTime ? new Date(actualTime) : undefined
+        fieldChanges: processedChanges.length > 0 ? processedChanges : undefined
       };
 
       const result = await recordStore.processRecord(recordId, actionData);
       if (result) {
         record = result;
         if (action === 'SUBMIT') {
-          alert('已提交复核');
+          alert('已提交复核，记录进入复核状态');
           window.location.href = '/process';
         } else {
           alert('已保存');
@@ -175,16 +177,19 @@
     history.back();
   }
 
-  $: hasChanges = fieldNotes.trim() || onSiteNotes.trim() || conclusion.trim() ||
-    attachments.length > 0 || fieldChanges.length > 0;
+  $: hasChanges = fieldNotes.trim() || onSiteNotes.trim() || attachments.length > 0 || fieldChanges.length > 0;
 
-  const changeTypeOptions = [
-    { value: FieldChangeType.CRITICAL_TIME, label: getFieldChangeTypeLabel(FieldChangeType.CRITICAL_TIME) },
-    { value: FieldChangeType.RESPONSIBLE_PARTY, label: getFieldChangeTypeLabel(FieldChangeType.RESPONSIBLE_PARTY) },
-    { value: FieldChangeType.AMOUNT, label: getFieldChangeTypeLabel(FieldChangeType.AMOUNT) },
-    { value: FieldChangeType.EVIDENCE_CONCLUSION, label: getFieldChangeTypeLabel(FieldChangeType.EVIDENCE_CONCLUSION) },
-    { value: FieldChangeType.OTHER, label: getFieldChangeTypeLabel(FieldChangeType.OTHER) }
-  ];
+  const changeTypeOptions = isAdmin
+    ? [
+        { value: FieldChangeType.CRITICAL_TIME, label: getFieldChangeTypeLabel(FieldChangeType.CRITICAL_TIME) },
+        { value: FieldChangeType.RESPONSIBLE_PARTY, label: getFieldChangeTypeLabel(FieldChangeType.RESPONSIBLE_PARTY) },
+        { value: FieldChangeType.AMOUNT, label: getFieldChangeTypeLabel(FieldChangeType.AMOUNT) },
+        { value: FieldChangeType.EVIDENCE_CONCLUSION, label: getFieldChangeTypeLabel(FieldChangeType.EVIDENCE_CONCLUSION) },
+        { value: FieldChangeType.OTHER, label: getFieldChangeTypeLabel(FieldChangeType.OTHER) }
+      ]
+    : [
+        { value: FieldChangeType.OTHER, label: getFieldChangeTypeLabel(FieldChangeType.OTHER) }
+      ];
 </script>
 
 <div class="space-y-6">
@@ -281,9 +286,12 @@
                 bind:value={blockReason}
                 placeholder="请输入阻断原因..."
                 rows={3}
-                disabled={!canEdit}
+                disabled={!isAdmin}
                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
+              {#if isFieldHandler}
+                <p class="text-xs text-gray-500 mt-1">一线处理人仅可查看，由质控复核人填写</p>
+              {/if}
             </div>
             <div>
               <label class="block text-sm font-medium text-green-700 mb-1">补救路径</label>
@@ -291,9 +299,12 @@
                 bind:value={remediationPath}
                 placeholder="请输入补救路径..."
                 rows={3}
-                disabled={!canEdit}
+                disabled={!isAdmin}
                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
+              {#if isFieldHandler}
+                <p class="text-xs text-gray-500 mt-1">一线处理人仅可查看，由质控复核人填写</p>
+              {/if}
             </div>
           </div>
 
@@ -303,9 +314,12 @@
               type="text"
               bind:value={basisAdopted}
               placeholder="请输入采用依据（如规范、标准等）"
-              disabled={!canEdit}
+              disabled={!isAdmin}
               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
+            {#if isFieldHandler}
+              <p class="text-xs text-gray-500 mt-1">一线处理人仅可查看，由质控复核人填写</p>
+            {/if}
           </div>
         </div>
       {/if}
@@ -340,9 +354,12 @@
           bind:value={conclusion}
           placeholder="请输入处理结论..."
           rows={3}
-          disabled={!canEdit}
+          disabled={!isAdmin}
           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
         />
+        {#if isFieldHandler}
+          <p class="text-xs text-gray-500 mt-1">一线处理人仅可查看，由质控复核人确认时填写</p>
+        {/if}
       </div>
 
       <div class="bg-white rounded-lg shadow p-6">
@@ -353,9 +370,12 @@
             <input
               type="number"
               bind:value={amount}
-              disabled={!canEdit}
+              disabled={!isAdmin}
               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
+            {#if isFieldHandler}
+              <p class="text-xs text-gray-500 mt-1">一线处理人不可修改</p>
+            {/if}
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -363,18 +383,24 @@
               <input
                 type="datetime-local"
                 bind:value={scheduledTime}
-                disabled={!canEdit}
+                disabled={!isAdmin}
                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
+              {#if isFieldHandler}
+                <p class="text-xs text-gray-500 mt-1">一线处理人不可修改</p>
+              {/if}
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">实际时间</label>
               <input
                 type="datetime-local"
                 bind:value={actualTime}
-                disabled={!canEdit}
+                disabled={!isAdmin}
                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
+              {#if isFieldHandler}
+                <p class="text-xs text-gray-500 mt-1">一线处理人不可修改</p>
+              {/if}
             </div>
           </div>
         </div>

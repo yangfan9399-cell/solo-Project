@@ -1,0 +1,33 @@
+{
+	"/": [],
+	"/api/exceptions": [
+		"src/routes/api/exceptions/+server.ts"
+	],
+	"/api/records": [
+		"src/routes/api/records/+server.ts"
+	],
+	"/api/records/[id]": [
+		"src/routes/api/records/[id]/+server.ts"
+	],
+	"/api/records/[id]/process": [
+		"src/routes/api/records/[id]/process/+server.ts"
+	],
+	"/api/records/[id]/reprocess": [
+		"src/routes/api/records/[id]/reprocess/+server.ts"
+	],
+	"/api/records/[id]/review": [
+		"src/routes/api/records/[id]/review/+server.ts"
+	],
+	"/api/statistics": [
+		"src/routes/api/statistics/+server.ts"
+	],
+	"/api/users": [
+		"src/routes/api/users/+server.ts"
+	],
+	"/dashboard": [],
+	"/process": [],
+	"/process/[id]": [],
+	"/records/[id]": [],
+	"/review": [],
+	"/review/[id]": []
+}

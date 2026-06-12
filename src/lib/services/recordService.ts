@@ -144,6 +144,8 @@ export async function processRecord(
   });
 
   return prisma.$transaction(async (tx) => {
+    const isSubmitReview = action.type === 'SUBMIT_REVIEW';
+
     const newNode = await tx.recordNode.create({
       data: {
         recordId,
@@ -234,6 +236,33 @@ export async function processRecord(
           }
         });
       }
+    }
+
+    let lastNode = newNode;
+
+    if (isSubmitReview) {
+      const summaryParts: string[] = [];
+      if (action.fieldNotes) summaryParts.push('补充业务记录');
+      if (action.onSiteNotes) summaryParts.push('记录现场说明');
+      if (action.attachments?.length) summaryParts.push(`上传${action.attachments.length}个证据附件`);
+      const summary = summaryParts.length > 0 ? summaryParts.join('、') : '处理完成';
+
+      const reviewNode = await tx.recordNode.create({
+        data: {
+          recordId,
+          nodeType: '申请复核',
+          status: RecordStatus.REVIEWING,
+          description: `${summary}，已提交质控复核`,
+          fieldNotes: action.fieldNotes,
+          onSiteNotes: action.onSiteNotes,
+          conclusion: '处理完成，申请质控复核',
+          handlerId,
+          parentNodeId: newNode.id
+        }
+      });
+
+      updateData.status = RecordStatus.REVIEWING;
+      lastNode = reviewNode;
     }
 
     await tx.equipmentRecord.update({

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/postinstall-fix.mjs",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
@@ -37,16 +38,17 @@
     "vite": "^6.0.0"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^5.22.0",
     "@prisma/client": "^5.10.0",
     "@rollup/wasm-node": "^4.61.1",
     "bcryptjs": "^2.4.3",
     "pg": "^8.21.0"
   },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node@^4.61.1"
+  },
   "prisma": {
     "seed": "node --loader ts-node/esm prisma/seed.ts"
   },
-  "type": "module",
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.61.1"
-  }
+  "type": "module"
 }
