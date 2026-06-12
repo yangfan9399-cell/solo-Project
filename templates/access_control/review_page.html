@@ -9,10 +9,12 @@
     async loadRecord(id) {
         this.selectedRecordId = id;
         this.showDetail = true;
-        setTimeout(() => {
-            document.getElementById('review-detail-container').innerHTML = '';
-            htmx.trigger('#review-detail-loader', 'load', {id: id});
-        }, 10);
+        await this.$nextTick();
+        htmx.ajax('GET', '{% url 'access_control:review_page' %}', {
+            target: '#review-detail-container',
+            swap: 'innerHTML',
+            values: { record_id: id }
+        });
     }
 }">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -172,14 +174,10 @@
             </div>
 
             <div x-show="showDetail" x-transition id="review-detail-wrapper">
-                <div id="review-detail-loader"
-                     hx-get="{% url 'access_control:review_page' %}"
-                     hx-target="#review-detail-container"
-                     hx-swap="innerHTML"
-                     hx-trigger="load from:body"
-                     hx-headers='{"HX-Request": "true"}'>
+                <div id="review-detail-container">
+                    <div id="record-detail-content">
+                    </div>
                 </div>
-                <div id="review-detail-container"></div>
             </div>
         </div>
     </div>

@@ -358,6 +358,27 @@
         {% block auth_content %}{% endblock %}
     {% endif %}
 
+<script>
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    var target = evt.detail.target;
+    if (target && target.querySelectorAll) {
+        if (window.Alpine) {
+            Alpine.initTree(target);
+        }
+        var forms = target.querySelectorAll('form');
+        forms.forEach(function(form) {
+            if (form.getAttribute('hx-post') || form.getAttribute('hx-get')) {
+                htmx.process(form);
+            }
+        });
+        var elements = target.querySelectorAll('[hx-get], [hx-post], [hx-put], [hx-delete], [hx-patch], [hx-trigger], [hx-swap]');
+        elements.forEach(function(el) {
+            htmx.process(el);
+        });
+    }
+});
+</script>
+
     {% block extra_js %}{% endblock %}
 
     <script>
