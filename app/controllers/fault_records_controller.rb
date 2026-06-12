@@ -77,7 +77,7 @@ class FaultRecordsController < ApplicationController
         format.html { redirect_to @fault_record, notice: "记录已更新" }
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("fault_record_#{@fault_record.id}", partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
+            turbo_stream.replace("list_row_#{@fault_record.id}", partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
             turbo_stream.replace("flash_notices", partial: "shared/flash")
           ]
         end
@@ -173,16 +173,13 @@ class FaultRecordsController < ApplicationController
     @abnormal_counts = FaultRecord.abnormal_type_counts
     @line_counts = FaultRecord.line_fault_counts
     @daily_counts = FaultRecord.daily_fault_counts(14)
-    @diff_snapshots = @fault_record.diff_snapshots.order(created_at: :desc)
-    @evidence_attachments = @fault_record.evidence_attachments.order(created_at: :desc)
-    @workflow_nodes = @fault_record.workflow_nodes.includes(:operator).order(created_at: :asc)
 
     respond_to do |format|
       format.html { redirect_to @fault_record, notice: notice_message }
       format.turbo_stream do
         flash[:notice] = notice_message
         render turbo_stream: [
-          turbo_stream.replace(dom_id(@fault_record), partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
+          turbo_stream.replace("list_row_#{@fault_record.id}", partial: "fault_records/fault_record", locals: { fault_record: @fault_record }),
           turbo_stream.replace("flash_notices", partial: "shared/flash"),
           turbo_stream.replace("dashboard_stats", partial: "fault_records/dashboard_stats",
             status_counts: @status_counts,
@@ -213,13 +210,7 @@ class FaultRecordsController < ApplicationController
   end
 
   def process_params
-    params.require(:fault_record).permit(
-      :on_site_description, :business_record,
-      :actual_start_at, :actual_end_at, :actual_cost,
-      :responsible_unit, :responsible_person,
-      :notified_confirmation, :handler_qualified,
-      :conclusion, :basis_doc, :remediation_path
-    )
+    params.require(:fault_record).permit(:on_site_description, :business_record)
   end
 
   def generate_ticket_no

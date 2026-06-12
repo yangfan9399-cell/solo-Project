@@ -1,4 +1,4 @@
-<%= turbo_frame_tag dom_id(fault_record) do %>
+<%= turbo_frame_tag "list_row_#{fault_record.id}" do %>
   <tr class="hover:bg-slate-50 transition-colors">
     <td class="px-6 py-4 whitespace-nowrap">
       <div class="font-mono text-sm font-medium text-indigo-600"><%= link_to fault_record.ticket_no, fault_record_path(fault_record) %></div>
