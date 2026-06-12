@@ -49,7 +49,7 @@
   $: reviewingRecords = allRecords.filter(r => r.status === RecordStatus.REVIEWING);
   $: returnedRecords = allRecords.filter(r => r.status === RecordStatus.RETURNED_FOR_SUPPLEMENT);
 
-  $: typeRemediationMap: Record<string, { icon: string; steps: string[]; risks: string[] }> = {
+  const typeRemediationMap: Record<string, { icon: string; steps: string[]; risks: string[] }> = {
     [RecordType.QUALIFICATION_MISMATCH]: {
       icon: '🔍',
       steps: [
