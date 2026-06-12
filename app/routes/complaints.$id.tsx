@@ -356,7 +356,19 @@ function AttachmentsTab({ attachments }: { attachments: any[] }) {
                 {typeIcons[att.type] || "📎"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900 truncate">{att.name}</p>
+                {att.url ? (
+                  <a
+                    href={att.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline truncate block"
+                    title={`打开 ${att.name}`}
+                  >
+                    {att.name}
+                  </a>
+                ) : (
+                  <p className="font-medium text-slate-900 truncate">{att.name}</p>
+                )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-slate-500">v{att.version}</span>
                   {att.isEvidence && (
@@ -373,6 +385,9 @@ function AttachmentsTab({ attachments }: { attachments: any[] }) {
                 </div>
                 {att.description && (
                   <p className="text-xs text-slate-500 mt-2">{att.description}</p>
+                )}
+                {att.url && (
+                  <p className="text-xs text-slate-400 mt-2 truncate font-mono">{att.url}</p>
                 )}
               </div>
             </div>

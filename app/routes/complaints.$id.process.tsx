@@ -1,12 +1,37 @@
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { json, type LoaderFunctionArgs, type ActionFunctionArgs, redirect, unstable_createFileUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { useLoaderData, Link, Form, useActionData, useNavigation } from "@remix-run/react";
 import { db } from "~/db";
 import { complaints, complaintNodes, attachments, users } from "~/db/schema";
 import { eq, desc, asc, and } from "drizzle-orm";
 import { STATUS_MAP, NODE_TYPE_MAP, EXCEPTION_TYPE_MAP, FIELD_LABEL_MAP, formatDate, formatCurrency, formatNoise } from "~/lib/utils";
 import { useState } from "react";
+import path from "node:path";
+import fs from "node:fs";
 
 type Role = "applicant" | "reviewer" | "archivist";
+
+const ATTACH_DIR = path.resolve(process.cwd(), "public", "attachments");
+
+function getUploadHandler() {
+  return unstable_createFileUploadHandler({
+    directory: ATTACH_DIR,
+    avoidFileConflicts: true,
+    file: ({ filename }) => {
+      const ts = Date.now();
+      const safeName = (filename || `file_${ts}`).replace(/[^\w.\-]+/g, "_");
+      return `${ts}_${safeName}`;
+    },
+    maxPartSize: 50 * 1024 * 1024,
+  });
+}
+
+async function ensureDir() {
+  try {
+    await fs.promises.mkdir(ATTACH_DIR, { recursive: true });
+  } catch {
+    // ignore
+  }
+}
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const id = parseInt(params.id || "0");
@@ -39,7 +64,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const id = parseInt(params.id || "0");
-  const formData = await request.formData();
+  const ct = request.headers.get("Content-Type") || "";
+  const isMultipart = ct.includes("multipart/form-data");
+  await ensureDir();
+  const formData = isMultipart
+    ? await unstable_parseMultipartFormData(request, getUploadHandler())
+    : await request.formData();
   const actionType = formData.get("actionType") as string;
   const role = (formData.get("role") as Role) || "applicant";
 
@@ -82,9 +112,42 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
       const businessRecord = (formData.get("businessRecord") as string) || "";
       const siteDescription = (formData.get("siteDescription") as string) || "";
-      const attachmentName = (formData.get("attachmentName") as string) || "";
+      let attachmentName = (formData.get("attachmentName") as string) || "";
       const attachmentType = (formData.get("attachmentType") as string) || "evidence";
       const attachmentDescription = (formData.get("attachmentDescription") as string) || "";
+      const file = formData.get("file") as File | null;
+
+      let savedFileName = "";
+      let savedFileUrl = "";
+
+      if (file && file.size > 0) {
+        // 文件已经由 uploadHandler 写入磁盘，通过 file.name 拿到实际保存的文件名
+        // 但是 uploadHandler 返回的 File 对象的 name 可能是原始名字
+        // 我们需要查找最近写入的文件
+        const files = await fs.promises.readdir(ATTACH_DIR);
+        const now = Date.now();
+        let latest = "";
+        let latestMtime = 0;
+        for (const f of files) {
+          const full = path.join(ATTACH_DIR, f);
+          try {
+            const st = await fs.promises.stat(full);
+            if (st.isFile() && st.mtimeMs > latestMtime && Math.abs(now - st.mtimeMs) < 30000) {
+              latestMtime = st.mtimeMs;
+              latest = f;
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (latest) {
+          savedFileName = latest;
+          savedFileUrl = `/attachments/${latest}`;
+          if (!attachmentName) {
+            attachmentName = (file.name || latest);
+          }
+        }
+      }
 
       if (!businessRecord && !siteDescription && !attachmentName) {
         return json({ error: "请至少填写一项补充内容" }, { status: 400 });
@@ -108,13 +171,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
         sortOrder: nextSortOrder,
       }).returning();
 
-      if (attachmentName) {
+      if (attachmentName && savedFileUrl) {
         await db.insert(attachments).values({
           complaintId: id,
           nodeId: node[0].id,
           type: attachmentType,
           name: attachmentName,
-          url: `/attachments/${id}_${Date.now()}_${attachmentName}`,
+          url: savedFileUrl,
           version: 1,
           uploadedBy: currentUser.id,
           isEvidence: true,
@@ -275,6 +338,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     }
 
     case "reprocess": {
+      if (role !== "reviewer") {
+        return json({ error: "只有复核人可以发起重新处理" }, { status: 403 });
+      }
       await db.update(complaints)
         .set({
           isArchived: false,
@@ -315,12 +381,39 @@ export async function action({ request, params }: ActionFunctionArgs) {
         return json({ error: "只有申请人可以上传证据附件" }, { status: 403 });
       }
 
-      const attName = (formData.get("attachmentName") as string) || "";
+      let attName = (formData.get("attachmentName") as string) || "";
       const attType = (formData.get("attachmentType") as string) || "evidence";
       const attDescription = (formData.get("attachmentDescription") as string) || "";
+      const file = formData.get("file") as File | null;
 
-      if (!attName) {
-        return json({ error: "请输入附件名称" }, { status: 400 });
+      let savedFileUrl = "";
+      if (file && file.size > 0) {
+        const files = await fs.promises.readdir(ATTACH_DIR);
+        const now = Date.now();
+        let latest = "";
+        let latestMtime = 0;
+        for (const f of files) {
+          const full = path.join(ATTACH_DIR, f);
+          try {
+            const st = await fs.promises.stat(full);
+            if (st.isFile() && st.mtimeMs > latestMtime && Math.abs(now - st.mtimeMs) < 30000) {
+              latestMtime = st.mtimeMs;
+              latest = f;
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (latest) {
+          savedFileUrl = `/attachments/${latest}`;
+          if (!attName) {
+            attName = file.name || latest;
+          }
+        }
+      }
+
+      if (!attName || !savedFileUrl) {
+        return json({ error: "请选择并上传附件文件" }, { status: 400 });
       }
 
       const existingVersions = await db.query.attachments.findMany({
@@ -351,7 +444,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         nodeId: node[0].id,
         type: attType,
         name: attName,
-        url: `/attachments/${id}_${Date.now()}_${attName}`,
+        url: savedFileUrl,
         version: maxVersion + 1,
         uploadedBy: currentUser.id,
         isEvidence: true,
@@ -577,7 +670,7 @@ function ApplicantPanel({ complaint, canAct, role, isSubmitting }: {
       </div>
 
       <div className="p-6 space-y-6">
-        <Form method="post" className="space-y-6">
+        <Form method="post" encType="multipart/form-data" className="space-y-6">
           <input type="hidden" name="actionType" value="supplement" />
           <input type="hidden" name="role" value={role} />
 
@@ -660,25 +753,45 @@ function ApplicantPanel({ complaint, canAct, role, isSubmitting }: {
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100"
                   />
                 </div>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-white">
-                  <div className="text-2xl mb-1">📎</div>
-                  <p className="text-sm text-slate-500">点击选择文件或拖拽到此处</p>
-                  <p className="text-xs text-slate-400 mt-1">支持图片、PDF、音频、视频（演示环境自动创建附件记录）</p>
-                  <input type="file" className="hidden" disabled={!canAct} />
-                </div>
+                <label htmlFor="file-upload-supplement" className="block cursor-pointer">
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center bg-white hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
+                    <div className="text-2xl mb-1">📎</div>
+                    <p className="text-sm text-slate-600 font-medium">点击选择文件或拖拽到此处</p>
+                    <p className="text-xs text-slate-400 mt-1">支持图片、PDF、音频、视频，最大 50MB</p>
+                    <input
+                      id="file-upload-supplement"
+                      type="file"
+                      name="file"
+                      className="hidden"
+                      disabled={!canAct || isSubmitting}
+                    />
+                  </div>
+                </label>
               </div>
             )}
 
             {complaint.attachments && complaint.attachments.length > 0 && (
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium text-slate-500">已上传附件：</p>
+                <p className="text-xs font-medium text-slate-500">已上传附件（点击打开）：</p>
                 {complaint.attachments.map((att: any) => (
                   <div key={att.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded text-sm">
                     <span>📎</span>
-                    <span className="text-slate-700">{att.name}</span>
+                    {att.url ? (
+                      <a
+                        href={att.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline flex-1 truncate"
+                        title={att.name}
+                      >
+                        {att.name}
+                      </a>
+                    ) : (
+                      <span className="text-slate-700 flex-1 truncate">{att.name}</span>
+                    )}
                     <span className="text-xs text-slate-400">v{att.version}</span>
                     {att.isEvidence && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                      <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${
                         att.evidenceConclusion === "支持"
                           ? "bg-green-100 text-green-600"
                           : att.evidenceConclusion === "不支持"
