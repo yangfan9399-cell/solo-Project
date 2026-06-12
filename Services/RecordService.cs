@@ -12,14 +12,14 @@ public interface IRecordService
     Task<ProcessViewModel?> GetProcessAsync(int id);
     Task<EquipmentBorrowRecord?> GetByIdAsync(int id);
 
-    Task<bool> SupplementAsync(int id, string fieldDescription, string remark, Dictionary<string, (string Before, string After, string Reason)>? diffs = null);
+    Task<bool> SupplementAsync(int id, string fieldDescription, string remark);
     Task<bool> SubmitForReviewAsync(int id, string remark);
-    Task<bool> ReviewAsync(int id, ActionType action, string remark, string? conclusion = null, string? basis = null, decimal? actualCompensation = null, string? nextResponsibleId = null, string? nextResponsibleName = null);
+    Task<bool> ReviewAsync(int id, ActionType action, string remark, string? conclusion = null, string? basis = null, decimal? actualCompensation = null, DateTime? actualReturnDate = null, decimal? compensationAmount = null, string? nextResponsibleId = null, string? nextResponsibleName = null);
     Task<bool> ArchiveAsync(int id, string remark);
     Task<bool> ReopenAsync(int id, string remark);
     Task<bool> ReturnForSupplementAsync(int id, string remark, string blockingReason, string remedyPath);
 
-    Task UpdateKeyFieldAsync(int id, string fieldName, string beforeValue, string afterValue, string reason);
+    Task<bool> AddEvidenceAsync(int id, EvidenceType evidenceType, string fileName, string fileUrl, string description);
 }
 
 public class RecordService : IRecordService
@@ -33,6 +33,14 @@ public class RecordService : IRecordService
         _ctx = ctx;
         _user = user;
         _perm = perm;
+    }
+
+    private async Task<int> GetNextSequenceAsync(int recordId)
+    {
+        var max = await _ctx.RecordNodes
+            .Where(n => n.RecordId == recordId)
+            .MaxAsync(n => (int?)n.Sequence);
+        return (max ?? 0) + 1;
     }
 
     public async Task<List<RecordListViewModel>> GetListAsync(RecordStatus? status = null, SampleCategory? category = null, string? keyword = null, string? department = null)
@@ -141,14 +149,16 @@ public class RecordService : IRecordService
     public Task<EquipmentBorrowRecord?> GetByIdAsync(int id)
         => _ctx.EquipmentBorrowRecords.FirstOrDefaultAsync(x => x.Id == id);
 
-    public async Task<bool> SupplementAsync(int id, string fieldDescription, string remark, Dictionary<string, (string Before, string After, string Reason)>? diffs = null)
+    public async Task<bool> SupplementAsync(int id, string fieldDescription, string remark)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanFieldEdit(r)) return false;
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanFieldEdit(r)) return false;
 
         var diffList = new List<string>();
         var snapshots = new List<FieldSnapshot>();
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
 
         if (!string.IsNullOrEmpty(fieldDescription) && fieldDescription != r.FieldDescription)
         {
@@ -166,26 +176,6 @@ public class RecordService : IRecordService
                 ChangedAt = DateTime.Now
             });
             r.FieldDescription = fieldDescription;
-        }
-
-        if (diffs != null)
-        {
-            foreach (var (k, v) in diffs)
-            {
-                diffList.Add($"{k}({v.Before}→{v.After})");
-                snapshots.Add(new FieldSnapshot
-                {
-                    RecordId = id,
-                    FieldName = k,
-                    FieldDisplayName = k,
-                    BeforeValue = v.Before,
-                    AfterValue = v.After,
-                    ChangeReason = v.Reason,
-                    ChangedById = _user.UserId,
-                    ChangedByName = _user.UserName,
-                    ChangedAt = DateTime.Now
-                });
-            }
         }
 
         var node = new RecordNode
@@ -222,14 +212,64 @@ public class RecordService : IRecordService
         return true;
     }
 
+    public async Task<bool> AddEvidenceAsync(int id, EvidenceType evidenceType, string fileName, string fileUrl, string description)
+    {
+        var r = await GetByIdAsync(id);
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanFieldEdit(r)) return false;
+
+        var seq = await GetNextSequenceAsync(id);
+
+        var evidence = new EvidenceAttachment
+        {
+            RecordId = id,
+            EvidenceType = evidenceType,
+            FileName = fileName,
+            FileUrl = fileUrl,
+            Description = description,
+            IsValid = true,
+            UploadedById = _user.UserId,
+            UploadedByName = _user.UserName,
+            UploadedAt = DateTime.Now
+        };
+        _ctx.EvidenceAttachments.Add(evidence);
+
+        var node = new RecordNode
+        {
+            RecordId = id,
+            NodeType = NodeType.ProcessUpdate,
+            NodeTitle = "补充证据附件",
+            FromStatus = r.Status,
+            ToStatus = r.Status,
+            Remark = $"上传证据：{fileName}",
+            OperatorId = _user.UserId,
+            OperatorName = _user.UserName,
+            OperatorRole = _user.Role,
+            OperatedAt = DateTime.Now,
+            ChangedFields = $"新增证据 {EnumDisplay.GetEvidenceTypeText(evidenceType)}: {fileName}",
+            Sequence = seq
+        };
+        _ctx.RecordNodes.Add(node);
+
+        r.LastUpdatedAt = DateTime.Now;
+        r.LastUpdatedById = _user.UserId;
+        r.LastUpdatedByName = _user.UserName;
+
+        await _ctx.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> SubmitForReviewAsync(int id, string remark)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanFieldEdit(r)) return false;
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanFieldEdit(r)) return false;
         if (r.Status is not (RecordStatus.Processing or RecordStatus.PendingAcceptance)) return false;
 
         var reviewer = await _ctx.Users.FirstOrDefaultAsync(u => u.Role == UserRole.Reviewer);
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
 
         var node = new RecordNode
         {
@@ -247,7 +287,6 @@ public class RecordService : IRecordService
             Sequence = seq
         };
 
-        var beforeStatus = r.Status;
         r.Status = RecordStatus.PendingReview;
         if (reviewer != null)
         {
@@ -263,12 +302,14 @@ public class RecordService : IRecordService
         return true;
     }
 
-    public async Task<bool> ReviewAsync(int id, ActionType action, string remark, string? conclusion = null, string? basis = null, decimal? actualCompensation = null, string? nextResponsibleId = null, string? nextResponsibleName = null)
+    public async Task<bool> ReviewAsync(int id, ActionType action, string remark, string? conclusion = null, string? basis = null, decimal? actualCompensation = null, DateTime? actualReturnDate = null, decimal? compensationAmount = null, string? nextResponsibleId = null, string? nextResponsibleName = null)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanReview(r)) return false;
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanReview(r)) return false;
 
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
         var diffs = new List<string>();
         var snapshots = new List<FieldSnapshot>();
 
@@ -309,6 +350,32 @@ public class RecordService : IRecordService
                 ChangedAt = DateTime.Now
             });
             r.ActualCompensation = actualCompensation;
+        }
+
+        if (compensationAmount.HasValue && compensationAmount != r.CompensationAmount)
+        {
+            diffs.Add($"CompensationAmount({r.CompensationAmount}→{compensationAmount})");
+            snapshots.Add(new FieldSnapshot
+            {
+                RecordId = id, FieldName = "CompensationAmount", FieldDisplayName = "应赔偿金额",
+                BeforeValue = r.CompensationAmount?.ToString(), AfterValue = compensationAmount.ToString(),
+                ChangeReason = "复核调整", ChangedById = _user.UserId, ChangedByName = _user.UserName,
+                ChangedAt = DateTime.Now
+            });
+            r.CompensationAmount = compensationAmount;
+        }
+
+        if (actualReturnDate.HasValue && actualReturnDate != r.ActualReturnDate)
+        {
+            diffs.Add($"ActualReturnDate({r.ActualReturnDate:yyyy-MM-dd}→{actualReturnDate:yyyy-MM-dd})");
+            snapshots.Add(new FieldSnapshot
+            {
+                RecordId = id, FieldName = "ActualReturnDate", FieldDisplayName = "实际归还时间",
+                BeforeValue = r.ActualReturnDate?.ToString("yyyy-MM-dd"), AfterValue = actualReturnDate.Value.ToString("yyyy-MM-dd"),
+                ChangeReason = "复核确认", ChangedById = _user.UserId, ChangedByName = _user.UserName,
+                ChangedAt = DateTime.Now
+            });
+            r.ActualReturnDate = actualReturnDate;
         }
 
         RecordStatus toStatus;
@@ -373,9 +440,11 @@ public class RecordService : IRecordService
     public async Task<bool> ReturnForSupplementAsync(int id, string remark, string blockingReason, string remedyPath)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanReview(r)) return false;
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanReview(r)) return false;
 
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
         var fieldStaff = await _ctx.Users.FirstOrDefaultAsync(u => u.Role == UserRole.FieldStaff);
 
         var node = new RecordNode
@@ -414,9 +483,11 @@ public class RecordService : IRecordService
     public async Task<bool> ArchiveAsync(int id, string remark)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanArchive(r)) return false;
+        if (r == null) return false;
+        if (r.IsArchived) return false;
+        if (!_perm.CanArchive(r)) return false;
 
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
 
         var node = new RecordNode
         {
@@ -451,9 +522,11 @@ public class RecordService : IRecordService
     public async Task<bool> ReopenAsync(int id, string remark)
     {
         var r = await GetByIdAsync(id);
-        if (r == null || !_perm.CanReopen(r)) return false;
+        if (r == null) return false;
+        if (!r.IsArchived) return false;
+        if (!_perm.CanReopen(r)) return false;
 
-        var seq = (r.Nodes?.Count ?? 0) + 1;
+        var seq = await GetNextSequenceAsync(id);
 
         var node = new RecordNode
         {
@@ -483,72 +556,48 @@ public class RecordService : IRecordService
         return true;
     }
 
-    public async Task UpdateKeyFieldAsync(int id, string fieldName, string beforeValue, string afterValue, string reason)
+    public Task UpdateKeyFieldAsync(int id, string fieldName, string beforeValue, string afterValue, string reason)
     {
-        var r = await GetByIdAsync(id);
-        if (r == null) return;
-
-        var snapshot = new FieldSnapshot
-        {
-            RecordId = id,
-            FieldName = fieldName,
-            FieldDisplayName = fieldName,
-            BeforeValue = beforeValue,
-            AfterValue = afterValue,
-            ChangeReason = reason,
-            ChangedById = _user.UserId,
-            ChangedByName = _user.UserName,
-            ChangedAt = DateTime.Now
-        };
-        _ctx.FieldSnapshots.Add(snapshot);
-        r.LastUpdatedAt = DateTime.Now;
-        r.LastUpdatedById = _user.UserId;
-        r.LastUpdatedByName = _user.UserName;
-        await _ctx.SaveChangesAsync();
-    }
-
-    private RecordListViewModel ToListVm(EquipmentBorrowRecord r)
-    {
-        var hasBlocking = !string.IsNullOrEmpty(r.BlockingReason);
-        var summary = BuildSummary(r, hasBlocking);
-        return new RecordListViewModel
-        {
-            Id = r.Id,
-            RecordNo = r.RecordNo,
-            Title = r.Title,
-            SampleCategory = r.SampleCategory,
-            SampleCategoryText = EnumDisplay.GetCategoryText(r.SampleCategory),
-            Status = r.Status,
-            StatusText = EnumDisplay.GetStatusText(r.Status),
-            StatusBadgeClass = EnumDisplay.GetStatusBadgeClass(r.Status),
-            CategoryBadgeClass = EnumDisplay.GetCategoryBadgeClass(r.SampleCategory),
-            EquipmentName = r.EquipmentName,
-            BorrowerName = r.BorrowerName,
-            BorrowerDept = r.BorrowerDept,
-            CurrentResponsibleName = r.CurrentResponsibleName,
-            CompensationAmount = r.CompensationAmount,
-            HasBlocking = hasBlocking,
-            BlockingReason = r.BlockingReason,
-            Summary = summary,
-            CreatedAt = r.CreatedAt,
-            LastUpdatedAt = r.LastUpdatedAt,
-            IsArchived = r.IsArchived
-        };
-    }
-
-    private static string BuildSummary(EquipmentBorrowRecord r, bool hasBlocking)
-    {
-        var parts = new List<string> { $"{r.EquipmentName}" };
-        if (r.HasDamage) parts.Add($"损坏：{Truncate(r.DamageDescription, 30)}");
-        if (r.CompensationAmount.HasValue && r.CompensationAmount > 0) parts.Add($"赔偿￥{r.CompensationAmount:F2}");
-        if (hasBlocking) parts.Add($"⚠ {Truncate(r.BlockingReason, 40)}");
-        parts.Add($"处理：{Truncate(r.Conclusion, 50)}");
-        return string.Join(" | ", parts);
+        throw new NotSupportedException("关键字段更新请通过各操作方法（ReviewAsync/SupplementAsync）统一执行，会自动生成快照和节点。");
     }
 
     private static string Truncate(string? s, int len)
+        => string.IsNullOrEmpty(s) ? "" : (s.Length <= len ? s : s[..len] + "…");
+
+    private RecordListViewModel ToListVm(EquipmentBorrowRecord r) => new()
     {
-        if (string.IsNullOrEmpty(s)) return string.Empty;
-        return s.Length <= len ? s : s[..len] + "…";
+        Id = r.Id,
+        RecordNo = r.RecordNo,
+        Title = r.Title,
+        Status = r.Status,
+        StatusText = EnumDisplay.GetStatusText(r.Status),
+        StatusBadgeClass = EnumDisplay.GetStatusBadgeClass(r.Status),
+        SampleCategory = r.SampleCategory,
+        CategoryText = EnumDisplay.GetCategoryText(r.SampleCategory),
+        CategoryBadgeClass = EnumDisplay.GetCategoryBadgeClass(r.SampleCategory),
+        BorrowerName = r.BorrowerName,
+        BorrowerDept = r.BorrowerDept,
+        EquipmentName = r.EquipmentName,
+        MeetingRoom = r.MeetingRoom,
+        CreatedAt = r.CreatedAt,
+        HasDamage = r.HasDamage,
+        CompensationAmount = r.CompensationAmount,
+        ActualCompensation = r.ActualCompensation,
+        HasBlocking = !string.IsNullOrEmpty(r.BlockingReason),
+        Conclusion = r.Conclusion,
+        CurrentResponsibleName = r.CurrentResponsibleName,
+        LastUpdatedAt = r.LastUpdatedAt,
+        Summary = BuildSummary(r)
+    };
+
+    private static string BuildSummary(EquipmentBorrowRecord r)
+    {
+        var parts = new List<string> { $"设备：{r.EquipmentName}" };
+        if (r.HasDamage) parts.Add($"损坏：{r.DamageDescription}");
+        if (r.CompensationAmount.HasValue) parts.Add($"应赔：￥{r.CompensationAmount.Value:F2}");
+        if (r.ActualCompensation.HasValue) parts.Add($"实赔：￥{r.ActualCompensation.Value:F2}");
+        if (!string.IsNullOrEmpty(r.BlockingReason)) parts.Add($"阻断：{r.BlockingReason}");
+        if (!string.IsNullOrEmpty(r.Conclusion)) parts.Add($"结论：{r.Conclusion}");
+        return string.Join(" | ", parts);
     }
 }

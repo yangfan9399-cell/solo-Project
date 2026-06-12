@@ -7,20 +7,20 @@
 @if (Model.IsArchived)
 {
     <div class="archived-banner">
-        本记录已归档，仅可查看。如需修改请点击下方"重新处理"（将生成新的节点）。
+        🔒 本记录已归档，仅可查看。如需修改请点击下方"重新处理"（将生成新的节点，原归档节点保留在历史中）。
     </div>
 }
 else if (Model.IsReadOnly)
 {
     <div class="readonly-banner">
-        当前角色对此记录仅具备只读权限，无操作入口。
+        👁 当前角色对此记录仅具备只读权限，无操作入口。
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.BlockingReason))
 {
     <div class="blocking-panel">
-        <h4>当前阻断：无法进入下一流程</h4>
+        <h4>⚠ 当前阻断：无法进入下一流程</h4>
         <div class="label">阻断原因</div>
         <div class="val">@Model.BlockingReason</div>
         @if (!string.IsNullOrEmpty(Model.RemedyPath))
@@ -45,7 +45,7 @@ else if (Model.IsReadOnly)
     <div>
         <div class="card">
             <div class="card-header">
-                <h3>📝 业务信息</h3>
+                <h3>📝 业务信息（只读）</h3>
                 <div style="display:flex; gap:8px;">
                     <span class="badge @Model.CategoryBadgeClass">@Model.CategoryText</span>
                     <span class="badge @Model.StatusBadgeClass">@Model.StatusText</span>
@@ -102,9 +102,11 @@ else if (Model.IsReadOnly)
                     </div>
                     <div class="form-group">
                         <label>实际归还日期</label>
-                        @if (Model.CanFieldEdit && !Model.IsArchived)
+                        @if (Model.CanReview && !Model.IsArchived)
                         {
-                            <input type="datetime-local" name="actualReturnDate" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+                            <input form="approveForm" type="datetime-local" name="actualReturnDate" value="@(Model.ActualReturnDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+                            <input form="archiveForm" type="hidden" name="actualReturnDate" id="archiveActualReturnDate" />
+                            <div class="form-help">复核人确认后自动同步到列表/详情/复盘</div>
                         }
                         else
                         {
@@ -119,6 +121,34 @@ else if (Model.IsReadOnly)
                         <textarea class="form-readonly" readonly>@Model.DamageDescription</textarea>
                     </div>
                 }
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>应赔偿金额（元）</label>
+                        @if (Model.CanReview && !Model.IsArchived)
+                        {
+                            <input form="approveForm" type="number" step="0.01" name="compensationAmount" value="@(Model.CompensationAmount ?? 0)" />
+                            <input form="archiveForm" type="hidden" name="compensationAmount" id="archiveCompensationAmount" />
+                            <div class="form-help">修改后触发差异同步</div>
+                        }
+                        else
+                        {
+                            <input class="form-readonly" value="@(Model.CompensationAmount.HasValue ? "￥" + Model.CompensationAmount.Value.ToString("F2") : "待复核人确认")" readonly />
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label>实际赔偿金额（元）</label>
+                        @if (Model.CanReview && !Model.IsArchived)
+                        {
+                            <input form="approveForm" type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
+                            <input form="archiveForm" type="hidden" name="actualCompensation" id="archiveActualCompensation" />
+                            <div class="form-help">修改后触发差异同步</div>
+                        }
+                        else
+                        {
+                            <input class="form-readonly" value="@(Model.ActualCompensation.HasValue ? "￥" + Model.ActualCompensation.Value.ToString("F2") : "待复核人确认")" readonly />
+                        }
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -126,41 +156,23 @@ else if (Model.IsReadOnly)
         {
             <form asp-action="Supplement" asp-controller="Process" method="post">
                 <input type="hidden" name="id" value="@Model.Id" />
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🛠 现场人员操作区 — 补充业务记录 / 现场说明 / 证据附件</h3>
-                        <span class="badge bg-primary">仅现场人员可编辑</span>
+                <div class="card" style="border:2px solid #16a34a;">
+                    <div class="card-header" style="background:#f0fdf4;">
+                        <h3>🛠 现场人员操作区 — 补充业务记录 / 现场说明</h3>
+                        <span class="badge bg-success">仅现场人员可编辑</span>
                     </div>
                     <div class="card-body">
                         <div class="form-group">
-                            <label>现场说明 / 业务记录补充 <span class="muted small">（此区仅限补充业务描述、现场情况说明）</span></label>
+                            <label>现场说明 / 业务记录补充 <span class="muted small">（仅限补充业务描述、现场情况说明）</span></label>
                             <textarea name="fieldDescription" placeholder="请补充现场核验情况，包括设备检查细节、当事人说明、照片拍摄情况等…">@Model.FieldDescription</textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>应赔偿金额（元）</label>
-                                <input type="number" step="0.01" name="compensationAmount" value="@(Model.CompensationAmount ?? 0)" />
-                                <div class="form-help">修改后将触发差异同步：列表摘要、详情结论、复盘统计全部自动更新</div>
-                            </div>
-                            <div class="form-group">
-                                <label>实际赔偿金额（元）</label>
-                                @if (Model.CanReview)
-                                {
-                                    <input type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
-                                }
-                                else
-                                {
-                                    <input class="form-readonly" value="@(Model.ActualCompensation.HasValue ? "￥" + Model.ActualCompensation.Value.ToString("F2") : "待复核人确认")" readonly />
-                                }
-                            </div>
                         </div>
                         <div class="form-group">
                             <label>操作备注</label>
                             <textarea name="remark" placeholder="请输入本次操作的备注说明，将写入节点历史…"></textarea>
                         </div>
                         <div class="form-help">
-                            🔒 说明：现场人员仅可修改<b>现场说明</b>、<b>赔偿金额</b>、<b>实际归还时间</b>；
-                            <b>结论 / 依据 / 状态</b>需由复核人确认或通过"提交复核"流转。
+                            🔒 权限说明：<b>现场人员仅可编辑"现场说明"和"证据附件"</b>；
+                            <b>归还时间 / 赔偿金额 / 结论 / 依据 / 状态</b>均需由<b>主管复核人</b>确认。
                         </div>
                     </div>
                     <div class="card-footer">
@@ -168,6 +180,42 @@ else if (Model.IsReadOnly)
                             <button type="submit" class="btn btn-primary">💾 保存补充内容</button>
                             <button type="submit" class="btn btn-success" formaction="@Url.Action("Submit", "Process")" formmethod="post">📨 保存并提交复核</button>
                             <a class="btn btn-secondary" href="@Url.Action("Detail", "Records", new { id = Model.Id })">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <form asp-action="UploadEvidence" asp-controller="Process" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="card" style="border:2px dashed #16a34a;">
+                    <div class="card-header" style="background:#f0fdf4;">
+                        <h3>📎 补充证据附件 <span class="muted small">（现场人员专属）</span></h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>证据类型</label>
+                                <select name="evidenceType">
+                                    <option value="@((int)EvidenceType.Photo)">🖼 照片</option>
+                                    <option value="@((int)EvidenceType.Video)">🎬 视频</option>
+                                    <option value="@((int)EvidenceType.Document)">📄 文档</option>
+                                    <option value="@((int)EvidenceType.SignForm)">✍ 签字单</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>证据文件</label>
+                                <input type="file" name="evidenceFile" required style="padding:6px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; width:100%;" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>证据描述</label>
+                            <textarea name="description" placeholder="请描述这份证据的内容、拍摄位置、对应损坏部位等信息…" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="actions-bar">
+                            <button type="submit" class="btn btn-success">📤 上传证据</button>
+                            <span class="muted small">上传后会自动生成新的流转节点</span>
                         </div>
                     </div>
                 </div>
@@ -181,42 +229,40 @@ else if (Model.IsReadOnly)
                     <h3>✅ 主管复核人操作区 — 确认结论 / 退回补证 / 归档</h3>
                     <span class="badge bg-primary">复核人专属</span>
                 </div>
-                <div class="card-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>处理结论</label>
-                            <textarea form="approveForm" name="conclusion" placeholder="请确认或修改最终结论">@Model.Conclusion</textarea>
+                <form id="approveForm" asp-action="Approve" asp-controller="Process" method="post" style="display:contents;">
+                    <div class="card-body">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>处理结论</label>
+                                <textarea name="conclusion" placeholder="请确认或修改最终结论">@Model.Conclusion</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>采用依据</label>
+                                <textarea name="basis" placeholder="请引用制度依据，如：《设备借用管理办法》第 5.2 条">@Model.Basis</textarea>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label>采用依据</label>
-                            <textarea form="approveForm" name="basis" placeholder="请引用制度依据">@Model.Basis</textarea>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>实际赔偿金额（元）</label>
-                            <input form="approveForm" type="number" step="0.01" name="actualCompensation" value="@(Model.ActualCompensation ?? 0)" />
-                        </div>
-                        <div class="form-group">
-                            <label>操作备注</label>
-                            <textarea form="approveForm" name="remark" placeholder="请填写本次复核意见…"></textarea>
+                            <label>复核操作备注</label>
+                            <textarea name="remark" placeholder="请填写本次复核意见，将写入节点历史…"></textarea>
                         </div>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <div class="actions-bar">
-                        <form id="approveForm" asp-action="Approve" asp-controller="Process" method="post" style="display:contents;">
-                            <input type="hidden" name="id" value="@Model.Id" />
-                            <button type="submit" class="btn btn-success">✅ 复核通过</button>
-                        </form>
-                        <form asp-action="Archive" asp-controller="Process" method="post" onsubmit="return confirm('确认归档？归档后记录只读，如需修改需走重新处理流程。');">
-                            <input type="hidden" name="id" value="@Model.Id" />
-                            <input type="hidden" name="remark" value="复核通过并归档" />
-                            <button type="submit" class="btn btn-secondary" style="background:#059669;color:#fff;border-color:#059669;">📦 复核通过并归档</button>
-                        </form>
-                        <button type="button" class="btn btn-warning" onclick="document.getElementById('returnPanel').style.display = (document.getElementById('returnPanel').style.display == 'none' ? '' : 'none');">↩ 退回补证</button>
+                    <div class="card-footer">
+                        <div class="actions-bar">
+                            <button type="submit" class="btn btn-success" onclick="syncReviewerFields();">✅ 复核通过</button>
+                </form>
+
+                            <form id="archiveForm" asp-action="Archive" asp-controller="Process" method="post" onsubmit="return confirm('确认归档？归档后记录只读，如需修改需走重新处理流程。');">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="remark" value="复核通过并归档" />
+                                <input type="hidden" name="conclusion" id="archiveConclusion" />
+                                <input type="hidden" name="basis" id="archiveBasis" />
+                                <button type="submit" class="btn btn-secondary" style="background:#059669;color:#fff;border-color:#059669;" onclick="syncReviewerFields();">📦 复核通过并归档</button>
+                            </form>
+
+                            <button type="button" class="btn btn-warning" onclick="document.getElementById('returnPanel').style.display = (document.getElementById('returnPanel').style.display == 'none' ? '' : 'none');">↩ 退回补证</button>
+                        </div>
                     </div>
-                </div>
             </div>
 
             <div id="returnPanel" class="card" style="border:2px solid #f59e0b; display:none;">
@@ -226,6 +272,16 @@ else if (Model.IsReadOnly)
                 <form asp-action="Return" asp-controller="Process" method="post">
                     <div class="card-body">
                         <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>补充结论（可选）</label>
+                                <textarea name="conclusion" placeholder="若需同时更新结论可在此填写">@Model.Conclusion</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>补充依据（可选）</label>
+                                <textarea name="basis" placeholder="若需同时更新制度依据可在此填写">@Model.Basis</textarea>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>阻断原因（必填）</label>
                             <textarea name="blockingReason" required placeholder="请详细描述阻断流转的原因，例如：证据链缺失、指标超限、时间异常等"></textarea>
@@ -285,19 +341,22 @@ else if (Model.IsReadOnly)
                                     EvidenceType.SignForm => "✍",
                                     _ => "📎"
                                 })</div>
-                                <div class="ev-name">@ev.FileName</div>
-                                <div class="ev-meta">@EnumDisplay.GetEvidenceTypeText(ev.EvidenceType) · @ev.UploadedByName</div>
+                                <div class="ev-name">
+                                    @if (!string.IsNullOrEmpty(ev.FileUrl) && !ev.FileUrl.StartsWith("http") && ev.FileUrl.StartsWith("/"))
+                                    {
+                                        <a href="@ev.FileUrl" target="_blank">@ev.FileName</a>
+                                    }
+                                    else
+                                    {
+                                        @ev.FileName
+                                    }
+                                </div>
+                                <div class="ev-meta">@EnumDisplay.GetEvidenceTypeText(ev.EvidenceType) · @ev.UploadedByName · @ev.UploadedAt.ToString("MM-dd HH:mm")</div>
                                 <div class="ev-desc">@ev.Description</div>
                                 @if (!ev.IsValid) { <div class="small" style="color:#dc2626;">❌ @ev.InvalidReason</div> }
                             </div>
                         }
                     </div>
-                    if (Model.CanFieldEdit && !Model.IsArchived)
-                    {
-                        <div style="margin-top:12px; padding:10px; background:#f0fdf4; border:1px dashed #86efac; border-radius:6px; font-size:12.5px; color:#065f46;">
-                            📌 现场人员可在此区域补充证据附件（本演示省略上传实现，数据已预置）
-                        </div>
-                    }
                 }
                 else
                 {
@@ -347,3 +406,22 @@ else if (Model.IsReadOnly)
         </div>
     </div>
 </div>
+
+<script>
+    function syncReviewerFields() {
+        var src = document.getElementById('approveForm');
+        function valOf(n) { var el = src.querySelector('[name="' + n + '"]'); return el ? el.value : ''; }
+        var map = {
+            conclusion: 'archiveConclusion',
+            basis: 'archiveBasis',
+            compensationAmount: 'archiveCompensationAmount',
+            actualCompensation: 'archiveActualCompensation',
+            actualReturnDate: 'archiveActualReturnDate'
+        };
+        for (var k in map) {
+            var tgt = document.getElementById(map[k]);
+            if (tgt) tgt.value = valOf(k);
+        }
+        return true;
+    }
+</script>
