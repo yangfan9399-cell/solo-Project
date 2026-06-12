@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.local
+build
+.cache
+drizzle
+*.log
+.DS_Store
+.remix
