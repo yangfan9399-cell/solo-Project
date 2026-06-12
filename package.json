@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:setup": "prisma generate && prisma db push && prisma db seed",
+    "verify": "rm -rf .verify-tmp && tsc verify-flow.ts lib/in-memory-db.ts lib/seed-memory.ts lib/prisma.ts lib/auth.ts lib/data-service.ts lib/utils.ts --target es2022 --outDir .verify-tmp --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --allowJs --resolveJsonModule --noCheck && node .verify-tmp/verify-flow.js && rm -rf .verify-tmp",
     "postinstall": "prisma generate"
   },
   "prisma": {

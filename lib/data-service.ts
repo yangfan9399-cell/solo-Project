@@ -126,14 +126,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     REVIEW_REJECTED: 0,
   };
 
-  byCategory.forEach((item) => {
+  byCategory.forEach((item: any) => {
     if (item.sampleCategory) {
-      categoryCounts[item.sampleCategory] = item._count;
+      categoryCounts[item.sampleCategory as SampleCategory] = item._count;
     }
   });
 
   const monthMap = new Map<string, number>();
-  all.forEach((order) => {
+  all.forEach((order: any) => {
     const key = getMonthKey(order.createdAt);
     monthMap.set(key, (monthMap.get(key) || 0) + 1);
   });
@@ -144,12 +144,12 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   return {
     total: all.length,
-    pending: all.filter((o) => o.status === OrderStatus.PENDING_ACCEPT).length,
-    processing: all.filter((o) => o.status === OrderStatus.PROCESSING).length,
-    reviewing: all.filter((o) => o.status === OrderStatus.PENDING_REVIEW).length,
-    approved: all.filter((o) => o.status === OrderStatus.REVIEW_APPROVED).length,
-    rejected: all.filter((o) => o.status === OrderStatus.REVIEW_REJECTED).length,
-    archived: all.filter((o) => o.status === OrderStatus.ARCHIVED).length,
+    pending: all.filter((o: any) => o.status === OrderStatus.PENDING_ACCEPT).length,
+    processing: all.filter((o: any) => o.status === OrderStatus.PROCESSING).length,
+    reviewing: all.filter((o: any) => o.status === OrderStatus.PENDING_REVIEW).length,
+    approved: all.filter((o: any) => o.status === OrderStatus.REVIEW_APPROVED).length,
+    rejected: all.filter((o: any) => o.status === OrderStatus.REVIEW_REJECTED).length,
+    archived: all.filter((o: any) => o.status === OrderStatus.ARCHIVED).length,
     byCategory: categoryCounts,
     byMonth,
   };

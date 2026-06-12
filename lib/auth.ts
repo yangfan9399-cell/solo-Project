@@ -2,13 +2,18 @@ import { cookies } from "next/headers";
 import { UserRole, type CurrentUser } from "./types";
 
 export const MOCK_USERS: CurrentUser[] = [
-  { id: "user-op-001", name: "李经办", role: UserRole.OPERATOR },
-  { id: "user-op-002", name: "王经办", role: UserRole.OPERATOR },
+  { id: "user-op-001", name: "王经办", role: UserRole.OPERATOR },
+  { id: "user-op-002", name: "李执行", role: UserRole.OPERATOR },
   { id: "user-rv-001", name: "张复核", role: UserRole.REVIEWER },
-  { id: "user-admin-001", name: "赵管理员", role: UserRole.ADMIN },
+  { id: "user-ad-001", name: "赵主管", role: UserRole.ADMIN },
 ];
 
 export async function getCurrentUser(): Promise<CurrentUser> {
+  // 测试环境：从全局变量注入
+  const globalUser = (globalThis as any).__mockCurrentUser as
+    | CurrentUser
+    | undefined;
+  if (globalUser && globalUser.id) return { ...globalUser };
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get("currentUserId")?.value;
