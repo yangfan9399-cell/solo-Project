@@ -23,7 +23,14 @@ class ToolCaseController extends Controller
         $query = ToolCase::with(['tools', 'responsiblePersons', 'nodes']);
 
         if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            if ($status === 'processing') {
+                $query->whereIn('status', [CaseStatus::Processing, CaseStatus::Reviewing]);
+            } elseif ($status === 'blocked') {
+                $query->whereIn('status', [CaseStatus::Blocked, CaseStatus::Returned, CaseStatus::Appealing]);
+            } else {
+                $query->where('status', $status);
+            }
         }
         if ($request->has('type') && $request->type) {
             $query->where('type', $request->type);
@@ -117,6 +124,24 @@ class ToolCaseController extends Controller
         ]);
     }
 
+    public function accept(ToolCase $toolCase)
+    {
+        if (!Auth::user()?->isClerk()) {
+            abort(403, '只有业务专员可以受理案件');
+        }
+        if ($toolCase->status !== CaseStatus::Pending) {
+            abort(403, '只有待受理的案件可以受理');
+        }
+
+        $toolCase->status = CaseStatus::Processing;
+        $toolCase->handled_by = Auth::id();
+        $toolCase->save();
+
+        $this->addNode($toolCase, NodeType::Accept, CaseStatus::Processing, '业务专员确认受理，进入处理流程', Auth::user());
+
+        return redirect()->route('cases.review', $toolCase)->with('success', '案件已受理，进入处理台');
+    }
+
     public function review(ToolCase $toolCase)
     {
         if (!Auth::user()?->isClerk()) {
@@ -124,6 +149,12 @@ class ToolCaseController extends Controller
         }
         if ($toolCase->is_archived) {
             abort(403, '已归档案件不能修改');
+        }
+        if ($toolCase->status === CaseStatus::Pending) {
+            return redirect()->route('cases.show', $toolCase)->with('error', '请先受理案件再进入处理台');
+        }
+        if ($toolCase->status === CaseStatus::Reviewing) {
+            abort(403, '复核中案件不能修改，请等待审批结果');
         }
 
         $toolCase->load(['tools', 'responsiblePersons', 'nodes', 'evidences']);
@@ -140,6 +171,12 @@ class ToolCaseController extends Controller
         }
         if ($toolCase->is_archived) {
             abort(403, '已归档案件不能修改');
+        }
+        if ($toolCase->status === CaseStatus::Pending) {
+            abort(403, '请先受理案件再进行处理');
+        }
+        if ($toolCase->status === CaseStatus::Reviewing) {
+            abort(403, '复核中案件不能修改，请等待审批结果');
         }
 
         $validated = $request->validate([
@@ -208,7 +245,7 @@ class ToolCaseController extends Controller
         $this->recalcDiffFields($toolCase);
 
         if ($request->has('submit_for_review') && $request->submit_for_review) {
-            $toolCase->status = CaseStatus::Processing;
+            $toolCase->status = CaseStatus::Reviewing;
             $toolCase->handled_by = Auth::id();
             $toolCase->handled_at = now();
             $toolCase->save();

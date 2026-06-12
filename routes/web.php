@@ -12,6 +12,7 @@ Route::get('/cases', [ToolCaseController::class, 'index'])->name('cases.index');
 Route::get('/cases/{toolCase}', [ToolCaseController::class, 'show'])->name('cases.show');
 Route::get('/cases/{toolCase}/review', [ToolCaseController::class, 'review'])->name('cases.review');
 Route::put('/cases/{toolCase}/clerk', [ToolCaseController::class, 'updateClerk'])->name('cases.update-clerk');
+Route::post('/cases/{toolCase}/accept', [ToolCaseController::class, 'accept'])->name('cases.accept');
 Route::post('/cases/{toolCase}/approve', [ToolCaseController::class, 'approve'])->name('cases.approve');
 Route::post('/cases/{toolCase}/reopen', [ToolCaseController::class, 'reopen'])->name('cases.reopen');
 Route::post('/cases/{toolCase}/evidence', [ToolCaseController::class, 'uploadEvidence'])->name('cases.evidence');

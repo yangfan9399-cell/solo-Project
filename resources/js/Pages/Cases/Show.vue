@@ -7,16 +7,21 @@
                 <span v-if="caseData.is_archived" class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium border border-green-200">
                     📦 已归档只读
                 </span>
-                <Link v-if="!caseData.is_archived && isClerk" :href="route('cases.review', caseData.id)" class="btn btn-primary">
+                <button
+                    v-if="!caseData.is_archived && isClerk && caseData.status === 'pending'"
+                    class="btn btn-primary"
+                    @click="acceptCase"
+                >✋ 受理案件</button>
+                <Link v-if="!caseData.is_archived && isClerk && ['processing', 'returned', 'blocked', 'appealing'].includes(caseData.status)" :href="route('cases.review', caseData.id)" class="btn btn-primary">
                     ✎ 处理台
                 </Link>
                 <button
-                    v-if="!caseData.is_archived && isApprover"
+                    v-if="!caseData.is_archived && isApprover && caseData.status === 'reviewing'"
                     class="btn btn-success"
                     @click="showApproveModal = true"
                 >✓ 复核通过归档</button>
                 <button
-                    v-if="!caseData.is_archived && isApprover"
+                    v-if="!caseData.is_archived && isApprover && caseData.status === 'reviewing'"
                     class="btn btn-warning"
                     @click="showReturnModal = true"
                 >↩ 退回补证</button>
@@ -349,6 +354,10 @@ function formatSize(bytes) {
     let i = 0;
     while (bytes >= 1024 && i < 3) { bytes /= 1024; i++; }
     return bytes.toFixed(1) + ' ' + units[i];
+}
+
+function acceptCase() {
+    router.post(route('cases.accept', caseData.value.id));
 }
 
 function approveCase() {
