@@ -41,12 +41,29 @@ function metalTypeLabel(type) {
   return metalTypeMap[type] || type
 }
 
+const statusLabelMap = {
+  pending: '待处理',
+  processing: '处理中',
+  reviewing: '复核中',
+  archived: '已归档',
+  blocked: '已阻断',
+  appealed: '申诉中',
+}
+
+function statusLabel(status) {
+  return statusLabelMap[status] || status
+}
+
 const drillTitle = computed(() => {
   if (props.filterLabel) return props.filterLabel
   const parts = []
-  if (props.filters?.status) parts.push(`状态为 ${props.filters.status} 的记录`)
-  if (props.filters?.metal_type) parts.push(`贵金属类型为 ${props.filters.metal_type} 的记录`)
-  if (props.filters?.difference_field) parts.push(`差异字段为 ${props.filters.difference_field} 的记录`)
+  if (props.filters?.status) {
+    const statuses = props.filters.status.split(',').filter(Boolean)
+    const labels = statuses.map(statusLabel).join('/')
+    parts.push(`状态为【${labels}】的记录`)
+  }
+  if (props.filters?.metal_type) parts.push(`贵金属类型为【${metalTypeLabel(props.filters.metal_type)}】的记录`)
+  if (props.filters?.difference_field) parts.push(`差异字段为【${props.filters.difference_field}】的记录`)
   return parts.length > 0 ? parts.join('、') : '全部记录'
 })
 </script>

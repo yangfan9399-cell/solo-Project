@@ -1,17 +1,18 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 
 defineOptions({ layout: MainLayout })
 
+const page = usePage()
+
 const props = defineProps({
   allocation: Object,
-  auth: Object,
 })
 
-const isBusinessSpecialist = computed(() => props.auth?.user?.role === 'business_specialist')
-const isReviewManager = computed(() => props.auth?.user?.role === 'approval_manager')
+const isBusinessSpecialist = computed(() => page.props.auth?.user?.role === 'business_specialist')
+const isReviewManager = computed(() => page.props.auth?.user?.role === 'approval_manager')
 
 const processForm = useForm({
   description: '',

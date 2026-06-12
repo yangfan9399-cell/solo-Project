@@ -1,5 +1,5 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 
 const page = usePage()
@@ -23,21 +23,7 @@ const roleBadgeClass = computed(() => {
 function switchRole() {
   const currentRole = page.props.auth?.user?.role
   const targetRole = currentRole === 'business_specialist' ? 'approval_manager' : 'business_specialist'
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = '/switch-role'
-  const token = document.createElement('input')
-  token.type = 'hidden'
-  token.name = '_token'
-  token.value = document.querySelector('meta[name="csrf-token"]')?.content || ''
-  const roleInput = document.createElement('input')
-  roleInput.type = 'hidden'
-  roleInput.name = 'role'
-  roleInput.value = targetRole
-  form.appendChild(token)
-  form.appendChild(roleInput)
-  document.body.appendChild(form)
-  form.submit()
+  router.post('/switch-role', { role: targetRole })
 }
 </script>
 

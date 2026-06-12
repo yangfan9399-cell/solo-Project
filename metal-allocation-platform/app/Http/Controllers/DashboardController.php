@@ -46,21 +46,35 @@ class DashboardController extends Controller
 
     public function drillDown(Request $request)
     {
-        $query = Allocation::with('currentHandler');
+        $query = Allocation::with('currentHandler', 'differences');
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $statuses = array_filter(explode(',', $request->status));
+            if (count($statuses) > 1) {
+                $query->whereIn('status', $statuses);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         if ($request->filled('metal_type')) {
             $query->where('metal_type', $request->metal_type);
         }
 
-        $allocations = $query->latest()->paginate(15);
+        if ($request->filled('difference_field')) {
+            $query->whereHas('differences', function ($q) use ($request) {
+                $q->where('field_name', $request->difference_field);
+            });
+        }
+
+        $allocations = $query->latest()->paginate(15)->withQueryString()->through(function ($allocation) {
+            $allocation->differences_count = $allocation->differences()->count();
+            return $allocation;
+        });
 
         return Inertia::render('Dashboard/DrillDown', [
             'allocations' => $allocations,
-            'filters' => $request->only(['status', 'metal_type']),
+            'filters' => $request->only(['status', 'metal_type', 'difference_field']),
         ]);
     }
 }
