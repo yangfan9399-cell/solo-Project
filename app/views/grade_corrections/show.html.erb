@@ -34,7 +34,7 @@
           </div>
           <div class="flex space-x-3">
             <%= link_to '返回列表', grade_corrections_path, class: 'px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50' %>
-            <% if policy(@grade_correction).processing? && !@grade_correction.archived? && !@grade_correction.rejected? %>
+            <% if policy(@grade_correction).processing? %>
               <%= link_to '进入处理', processing_grade_correction_path(@grade_correction), class: 'px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' %>
             <% end %>
             <% if policy(@grade_correction).review? && (@grade_correction.reviewing? || @grade_correction.archived? || @grade_correction.rejected?) %>

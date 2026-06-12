@@ -5,7 +5,8 @@ class DashboardController < ApplicationController
     @statistics = GradeCorrection.statistics
     @q = GradeCorrection.ransack(params[:q])
     scope = @q.result.includes(:current_owner, :processing_nodes).order(created_at: :desc)
-    @pagy, @grade_corrections = pagy(scope, items: 10)
+    @pagy = SimplePaginator.new(scope, params[:page] || 1, 10)
+    @grade_corrections = @pagy.records
     @monthly_data = GradeCorrection.monthly_statistics
   end
 
@@ -29,11 +30,12 @@ class DashboardController < ApplicationController
     @source_counts = GradeCorrection.group(:source).count
     @evidence_counts = GradeCorrection.group(:evidence_conclusion).count
 
-    @assignee_counts = GradeCorrection.where.not(current_assignee_id: nil).group(:current_assignee_id).count.transform_keys do |id|
+    @assignee_counts = GradeCorrection.where.not(current_owner_id: nil).group(:current_owner_id).count.transform_keys do |id|
       User.find_by(id: id)
     end.compact
 
-    score_diffs = GradeCorrection.pluck(:score_diff).compact
+    score_diffs = GradeCorrection.where.not(corrected_score: nil).where.not(original_score: nil)
+                                  .pluck(Arel.sql('corrected_score - original_score')).compact
     @score_diff_ranges = {
       '0-5分' => score_diffs.count { |d| d <= 5 },
       '6-10分' => score_diffs.count { |d| d > 5 && d <= 10 },
@@ -45,8 +47,11 @@ class DashboardController < ApplicationController
     @total_amount = amounts.sum
     @avg_amount = amounts.any? ? amounts.sum / amounts.size : 0
 
-    processing_times = GradeCorrection.where.not(accepted_at: nil, archived_at: nil)
-      .pluck(Arel.sql('EXTRACT(EPOCH FROM (archived_at - accepted_at)) / 3600'))
+    processing_times = GradeCorrection.where(status: :archived)
+      .joins(:processing_nodes)
+      .where(processing_nodes: { node_type: ['accept', 'approve'] })
+      .group('grade_corrections.id')
+      .pluck(Arel.sql('EXTRACT(EPOCH FROM (MAX(processing_nodes.created_at) - MIN(processing_nodes.created_at))) / 3600'))
     @avg_processing_hours = processing_times.any? ? processing_times.sum / processing_times.size : 0
     @min_processing_hours = processing_times.min || 0
     @max_processing_hours = processing_times.max || 0

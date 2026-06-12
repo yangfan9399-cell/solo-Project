@@ -143,12 +143,22 @@ class GradeCorrection < ApplicationRecord
     end
 
     def calculate_average_processing_days
-      archived.joins(:processing_nodes)
-              .select('AVG(EXTRACT(DAY FROM processing_nodes.created_at - grade_corrections.created_at)) as avg_days')
-              .first
-              &.avg_days
-              &.round(1) || 0
+      result = archived.joins(:processing_nodes)
+              .group('grade_corrections.id')
+              .pluck(Arel.sql('EXTRACT(DAY FROM MIN(processing_nodes.created_at) - grade_corrections.created_at)'))
+      result.any? ? (result.sum / result.size.to_f).round(1) : 0
     end
+  end
+
+  def self.ransackable_attributes(auth_object = nil)
+    %w[amount applicant application_date application_no application_reason block_reason conclusion
+       corrected_score course_code course_name created_at critical_time current_owner_id
+       evidence_conclusion id notification_confirmed original_score remedy_path responsible_party
+       source status student_id student_name updated_at]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[current_owner processing_nodes diff_records attachments]
   end
 
   def status_i18n

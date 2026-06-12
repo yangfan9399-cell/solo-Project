@@ -6,7 +6,8 @@ class GradeCorrectionsController < ApplicationController
     @q = GradeCorrection.ransack(params[:q])
     scope = @q.result.includes(:current_owner, :processing_nodes).order(created_at: :desc)
     scope = scope.with_block_reason if params[:by_block].present?
-    @pagy, @grade_corrections = pagy(scope, items: 20)
+    @pagy = SimplePaginator.new(scope, params[:page] || 1, 20)
+    @grade_corrections = @pagy.records
     authorize @grade_corrections
   end
 

@@ -75,6 +75,11 @@ class GradeCorrectionPolicy < ApplicationPolicy
     show?
   end
 
+  def processing?
+    return false if record.archived? || record.rejected?
+    user.frontline_processor? && record.current_owner == user
+  end
+
   def dashboard?
     true
   end
