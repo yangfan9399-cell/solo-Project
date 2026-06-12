@@ -7,7 +7,7 @@
     selectedRecord: null,
     showDetail: false,
     async loadRecord(id) {
-        const url = '{% url 'processing_desk' %}?record_id=' + id;
+        const url = '{% url 'access_control:processing_desk' %}?record_id=' + id;
         const response = await fetch(url, {
             headers: { 'HX-Request': 'true' }
         });

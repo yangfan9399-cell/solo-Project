@@ -40,7 +40,7 @@
                 <td>{{ record.lab_name }}</td>
                 <td>{{ record.expiry_date }}</td>
                 <td>
-                    <a href="{% url 'record_detail' record.id %}"
+                    <a href="{% url 'access_control:record_detail' record.id %}"
                        class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-eye"></i>
                     </a>

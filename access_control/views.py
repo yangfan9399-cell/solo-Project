@@ -248,7 +248,7 @@ def processing_desk(request):
 def review_page(request):
     if not request.user.is_reviewer and not request.user.is_admin and not request.user.is_superuser:
         messages.error(request, '您没有权限访问复核页面')
-        return redirect('record_list')
+        return redirect('access_control:record_list')
 
     pending_review_records = AccessRecoveryRecord.objects.filter(
         status=AccessRecoveryRecord.Status.REVIEWING
@@ -365,7 +365,7 @@ def analytics_page(request):
         'archived': '#198754',
     }
 
-    status_labels = dict(AccessRecoveryRecord.Status.choices)
+    status_labels = {k: str(v) for k, v in AccessRecoveryRecord.Status.choices}
     status_chart_data = {
         'labels': [status_labels.get(k, k) for k in base_stats['by_status'].keys()],
         'datasets': [{
@@ -381,7 +381,7 @@ def analytics_page(request):
         'timeout': '#dc3545',
     }
 
-    sample_type_labels = dict(AccessRecoveryRecord.SampleType.choices)
+    sample_type_labels = {k: str(v) for k, v in AccessRecoveryRecord.SampleType.choices}
     sample_type_chart_data = {
         'labels': [sample_type_labels.get(k, k) for k in base_stats['by_sample_type'].keys()],
         'datasets': [{
@@ -455,7 +455,7 @@ def analytics_page(request):
         processor_stats.append({
             'id': user.id,
             'name': user.get_full_name(),
-            'role': user.get_role_display(),
+            'role': str(user.get_role_display()),
             'count': user_records.count(),
             'avg_days': avg_days,
         })
@@ -531,7 +531,7 @@ def analytics_page(request):
             total_days = sum((r.archived_at - r.accepted_at).days for r in st_records)
             avg_days = round(total_days / st_records.count(), 1)
         sample_type_efficiency.append({
-            'type': st_label,
+            'type': str(st_label),
             'count': st_records.count(),
             'avg_days': avg_days,
         })
@@ -637,10 +637,10 @@ def api_accept_record(request, pk):
 
         if request.htmx:
             return record_detail(request, pk)
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
     except ValueError as e:
         messages.error(request, str(e))
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -666,7 +666,7 @@ def api_process_record(request, pk):
 
             if request.htmx:
                 return record_detail(request, pk)
-            return redirect('record_detail', pk=pk)
+            return redirect('access_control:record_detail', pk=pk)
         except ValueError as e:
             messages.error(request, str(e))
     else:
@@ -689,10 +689,10 @@ def api_submit_review(request, pk):
 
         if request.htmx:
             return record_detail(request, pk)
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
     except ValueError as e:
         messages.error(request, str(e))
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -707,10 +707,10 @@ def api_review_approve(request, pk):
 
         if request.htmx:
             return record_detail(request, pk)
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
     except ValueError as e:
         messages.error(request, str(e))
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -730,7 +730,7 @@ def api_review_reject(request, pk):
 
             if request.htmx:
                 return record_detail(request, pk)
-            return redirect('record_detail', pk=pk)
+            return redirect('access_control:record_detail', pk=pk)
         except ValueError as e:
             messages.error(request, str(e))
     else:
@@ -753,10 +753,10 @@ def api_archive_record(request, pk):
 
         if request.htmx:
             return record_detail(request, pk)
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
     except ValueError as e:
         messages.error(request, str(e))
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
 
 @login_required
@@ -775,7 +775,7 @@ def api_reopen_record(request, pk):
 
             if request.htmx:
                 return record_detail(request, pk)
-            return redirect('record_detail', pk=pk)
+            return redirect('access_control:record_detail', pk=pk)
         except ValueError as e:
             messages.error(request, str(e))
     else:
@@ -795,11 +795,11 @@ def api_upload_evidence(request, pk):
 
     if record.is_archived:
         messages.error(request, '已归档记录不能上传证据')
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
     if not (request.user.is_field_staff or request.user.is_reviewer or request.user.is_admin):
         messages.error(request, '您没有权限上传证据')
-        return redirect('record_detail', pk=pk)
+        return redirect('access_control:record_detail', pk=pk)
 
     form = EvidenceUploadForm(request.POST, request.FILES)
     if form.is_valid():

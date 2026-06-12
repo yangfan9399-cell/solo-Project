@@ -14,7 +14,7 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-2">
-                    <li class="breadcrumb-item"><a href="{% url 'record_list' %}">记录列表</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'access_control:record_list' %}">记录列表</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ record.record_no }}</li>
                 </ol>
             </nav>
@@ -42,7 +42,7 @@
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary btn-sm"
-                    hx-get="{% url 'record_detail' record.id %}"
+                    hx-get="{% url 'access_control:record_detail' record.id %}"
                     hx-target="#record-detail-content">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
@@ -106,7 +106,7 @@
                 <button @click="showEvidenceModal = false" class="btn-close"></button>
             </div>
             <div class="card-body">
-                <form hx-post="{% url 'api_upload_evidence' record.id %}"
+                <form hx-post="{% url 'access_control:api_upload_evidence' record.id %}"
                       hx-target="#evidence-list"
                       hx-encoding="multipart/form-data"
                       @submit="showEvidenceModal = false">
@@ -137,7 +137,7 @@
                 <button @click="showRejectModal = false" class="btn-close"></button>
             </div>
             <div class="card-body">
-                <form hx-post="{% url 'api_review_reject' record.id %}"
+                <form hx-post="{% url 'access_control:api_review_reject' record.id %}"
                       hx-target="#record-detail-content"
                       @submit="showRejectModal = false">
                     {% csrf_token %}
@@ -170,7 +170,7 @@
                 <button @click="showReopenModal = false" class="btn-close"></button>
             </div>
             <div class="card-body">
-                <form hx-post="{% url 'api_reopen_record' record.id %}"
+                <form hx-post="{% url 'access_control:api_reopen_record' record.id %}"
                       hx-target="#record-detail-content"
                       @submit="showReopenModal = false">
                     {% csrf_token %}

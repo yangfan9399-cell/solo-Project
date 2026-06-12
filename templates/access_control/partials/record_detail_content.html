@@ -210,7 +210,7 @@
                         </h5>
 
                         <form method="post"
-                              hx-post="{% url 'api_process_record' record.id %}"
+                              hx-post="{% url 'access_control:api_process_record' record.id %}"
                               hx-target="#record-detail-content"
                               class="{% if not can_edit %}disabled-overlay{% endif %}">
                             {% csrf_token %}
@@ -451,7 +451,7 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     {% if record.status == 'pending_accept' and user.is_field_staff %}
-                    <form method="post" hx-post="{% url 'api_accept_record' record.id %}" hx-target="#record-detail-content">
+                    <form method="post" hx-post="{% url 'access_control:api_accept_record' record.id %}" hx-target="#record-detail-content">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-check-circle me-2"></i>受理申请
@@ -460,7 +460,7 @@
                     {% endif %}
 
                     {% if can_submit_review %}
-                    <form method="post" hx-post="{% url 'api_submit_review' record.id %}" hx-target="#record-detail-content">
+                    <form method="post" hx-post="{% url 'access_control:api_submit_review' record.id %}" hx-target="#record-detail-content">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-warning w-100">
                             <i class="bi bi-send me-2"></i>提交复核
@@ -469,7 +469,7 @@
                     {% endif %}
 
                     {% if record.status == 'reviewing' and user.is_reviewer %}
-                    <form method="post" hx-post="{% url 'api_review_approve' record.id %}" hx-target="#record-detail-content">
+                    <form method="post" hx-post="{% url 'access_control:api_review_approve' record.id %}" hx-target="#record-detail-content">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-success w-100">
                             <i class="bi bi-check-circle me-2"></i>复核通过并归档
@@ -481,7 +481,7 @@
                     {% endif %}
 
                     {% if can_archive %}
-                    <form method="post" hx-post="{% url 'api_archive_record' record.id %}" hx-target="#record-detail-content">
+                    <form method="post" hx-post="{% url 'access_control:api_archive_record' record.id %}" hx-target="#record-detail-content">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-success w-100">
                             <i class="bi bi-archive me-2"></i>归档

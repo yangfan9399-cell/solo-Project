@@ -238,7 +238,7 @@
     {% if user.is_authenticated %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <a class="navbar-brand" href="{% url 'access_control:dashboard' %}">
                 <i class="bi bi-shield-lock me-2"></i>
                 实验室门禁授权回收系统
             </a>
@@ -272,13 +272,13 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                               href="{% url 'dashboard' %}">
+                               href="{% url 'access_control:dashboard' %}">
                                 <i class="bi bi-speedometer2"></i>数据看板
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'record_list' %}active{% endif %}"
-                               href="{% url 'record_list' %}">
+                               href="{% url 'access_control:record_list' %}">
                                 <i class="bi bi-list-ul"></i>记录列表
                                 {% if my_pending_count > 0 %}
                                 <span class="badge bg-danger float-end">{{ my_pending_count }}</span>
@@ -287,14 +287,14 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'processing_desk' %}active{% endif %}"
-                               href="{% url 'processing_desk' %}">
+                               href="{% url 'access_control:processing_desk' %}">
                                 <i class="bi bi-gear"></i>处理台
                             </a>
                         </li>
                         {% if user.is_reviewer or user.is_admin or user.is_superuser %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'review_page' %}active{% endif %}"
-                               href="{% url 'review_page' %}">
+                               href="{% url 'access_control:review_page' %}">
                                 <i class="bi bi-check2-square"></i>复核中心
                                 {% if global_stats.by_status.reviewing and global_stats.by_status.reviewing.count > 0 %}
                                 <span class="badge bg-warning float-end">{{ global_stats.by_status.reviewing.count }}</span>
@@ -304,7 +304,7 @@
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.url_name == 'analytics_page' %}active{% endif %}"
-                               href="{% url 'analytics_page' %}">
+                               href="{% url 'access_control:analytics_page' %}">
                                 <i class="bi bi-graph-up"></i>复盘统计
                             </a>
                         </li>

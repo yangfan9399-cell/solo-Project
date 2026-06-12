@@ -10,7 +10,7 @@
         </h2>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-primary btn-sm"
-                    hx-get="{% url 'record_list' %}"
+                    hx-get="{% url 'access_control:record_list' %}"
                     hx-target="#record-list-content"
                     hx-include="[name='keyword'],[name='status'],[name='sample_type'],[name='risk_level'],[name='source']">
                 <i class="bi bi-arrow-clockwise me-1"></i>刷新
@@ -21,7 +21,7 @@
     <div class="card mb-4">
         <div class="card-body py-3">
             <form class="row g-3 align-items-end"
-                  hx-get="{% url 'record_list' %}"
+                  hx-get="{% url 'access_control:record_list' %}"
                   hx-target="#record-list-content">
                 <div class="col-md-2">
                     <label class="form-label small">关键词</label>

@@ -10,7 +10,7 @@
     currentRecordId: null,
     async loadRecord(id) {
         this.currentRecordId = id;
-        const url = '{% url 'review_page' %}?record_id=' + id;
+        const url = '{% url 'access_control:review_page' %}?record_id=' + id;
         const response = await fetch(url, {
             headers: { 'HX-Request': 'true' }
         });
@@ -184,7 +184,7 @@
                 <button @click="showRejectModal = false" class="btn-close"></button>
             </div>
             <div class="card-body">
-                <form hx-post="{% url 'api_review_reject' 0 %}"
+                <form hx-post="{% url 'access_control:api_review_reject' 0 %}"
                       hx-target="body"
                       @submit="showRejectModal = false">
                     {% csrf_token %}

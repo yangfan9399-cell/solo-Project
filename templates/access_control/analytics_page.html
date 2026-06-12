@@ -12,7 +12,7 @@
     async doDrilldown(type, value) {
         this.drillType = type;
         this.drillValue = value;
-        const url = '{% url 'analytics_page' %}?drilldown=1&drill_type=' + type + '&drill_value=' + encodeURIComponent(value);
+        const url = '{% url 'access_control:analytics_page' %}?drilldown=1&drill_type=' + type + '&drill_value=' + encodeURIComponent(value);
         const response = await fetch(url, {
             headers: { 'HX-Request': 'true' }
         });
@@ -26,7 +26,7 @@
         </h2>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-primary btn-sm"
-                    hx-get="{% url 'analytics_page' %}"
+                    hx-get="{% url 'access_control:analytics_page' %}"
                     hx-target="#analytics-content"
                     hx-include="[name='period'],[name='start_date'],[name='end_date'],[name='sample_type']">
                 <i class="bi bi-arrow-clockwise me-1"></i>刷新
@@ -37,7 +37,7 @@
     <div class="card mb-4">
         <div class="card-body py-3">
             <form class="row g-3 align-items-end"
-                  hx-get="{% url 'analytics_page' %}"
+                  hx-get="{% url 'access_control:analytics_page' %}"
                   hx-target="#analytics-content">
                 <div class="col-md-2">
                     <label class="form-label small">时间范围</label>
