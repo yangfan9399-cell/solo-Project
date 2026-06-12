@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OPERATOR
+  REVIEWER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_ACCEPT
+  PROCESSING
+  PENDING_REVIEW
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  ARCHIVED
+}
+
+enum NodeType {
+  ACCEPT
+  ASSIGN
+  PROCESS
+  SUPPLEMENT
+  SUBMIT_REVIEW
+  REVIEW
+  REJECT
+  APPROVE
+  ARCHIVE
+  REOPEN
+}
+
+enum DifferenceType {
+  KEY_TIME
+  RESPONSIBLE_PARTY
+  AMOUNT
+  EVIDENCE_CONCLUSION
+  OTHER
+}
+
+enum SampleCategory {
+  NORMAL_CLOSE
+  MISSING_MATERIAL
+  INCONSISTENT_PARTY
+  REVIEW_REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  role      UserRole
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdNodes OrderNode[]
+}
+
+model DispatchOrder {
+  id              String   @id @default(uuid())
+  orderNo         String   @unique
+  title           String
+  content         String
+  source          String
+  sourceDept      String
+  sampleCategory  SampleCategory?
+
+  gateNo          String
+  reservoirName   String
+  targetOpening   Decimal?
+  actualOpening   Decimal?
+  targetFlow      Decimal?
+  actualFlow      Decimal?
+  amount          Decimal?
+
+  planExecuteTime DateTime?
+  actualExecuteTime DateTime?
+  reviewTime      DateTime?
+
+  responsibleUnit String
+  responsiblePerson String
+  operatorId      String?
+
+  status          OrderStatus @default(PENDING_ACCEPT)
+  isArchived      Boolean   @default(false)
+  currentNodeId   String?
+
+  blockReason     String?
+  remedyPath      String?
+
+  summary         String?
+  conclusion      String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  nodes           OrderNode[]
+  attachments     OrderAttachment[]
+  differences     FieldDifference[]
+  reviewRecords   ReviewRecord[]
+
+  @@index([status])
+  @@index([sampleCategory])
+  @@index([isArchived])
+  @@index([createdAt])
+}
+
+model OrderNode {
+  id             String      @id @default(uuid())
+  orderId        String
+  nodeType       NodeType
+  status         OrderStatus
+  operatorId     String
+  operatorName   String
+  remark         String?
+  evidence       String?
+
+  snapshotData   Json?
+
+  createdAt      DateTime    @default(now())
+
+  order          DispatchOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  operator       User         @relation(fields: [operatorId], references: [id])
+  attachments    OrderAttachment[]
+  differences    FieldDifference[]
+}
+
+model OrderAttachment {
+  id          String   @id @default(uuid())
+  orderId     String
+  nodeId      String?
+  name        String
+  type        String
+  size        Int
+  url         String
+  uploadedBy  String
+  uploadedAt  DateTime @default(now())
+  description String?
+
+  order       DispatchOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  node        OrderNode?    @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+}
+
+model FieldDifference {
+  id              String         @id @default(uuid())
+  orderId         String
+  nodeId          String?
+  fieldName       String
+  fieldLabel      String
+  oldValue        String?
+  newValue        String?
+  differenceType  DifferenceType
+  changedBy       String
+  changedAt       DateTime       @default(now())
+
+  order           DispatchOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  node            OrderNode?     @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+}
+
+model ReviewRecord {
+  id             String         @id @default(uuid())
+  orderId        String
+  reviewerId     String
+  reviewerName   String
+  conclusion     String
+  opinion        String?
+  blockReason    String?
+  remedyPath     String?
+  isApproved     Boolean
+  reviewedAt     DateTime       @default(now())
+
+  order          DispatchOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
