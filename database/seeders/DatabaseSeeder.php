@@ -71,6 +71,7 @@ class DatabaseSeeder extends Seeder
         $this->createNumberConflictSample($businessSpecialist, $approvalLeader, $businessSpecialist2);
         $this->createAmountDifferenceSample($businessSpecialist, $approvalLeader);
         $this->createAppealSample($businessSpecialist, $approvalLeader);
+        $this->createReviewingSample($businessSpecialist, $approvalLeader);
     }
 
     protected function createNormalSample($specialist, $leader)
@@ -510,6 +511,43 @@ class DatabaseSeeder extends Seeder
         });
     }
 
+    protected function createReviewingSample($specialist, $leader)
+    {
+        DB::transaction(function () use ($specialist, $leader) {
+            $record = InspectionRecord::create([
+                'record_no' => 'GA-' . date('Ymd') . '-006',
+                'source' => '日常巡检',
+                'source_no' => 'XJ20260613001',
+                'current_responsible_id' => $specialist->id,
+                'household_name' => '王大明',
+                'household_phone' => '13800138006',
+                'address' => '北京市朝阳区建国路88号院3号楼1501室',
+                'gas_meter_no' => 'GM20240002',
+                'inspection_time' => '2026-06-13 09:00:00',
+                'inspector' => '张伟',
+                'hidden_danger' => '厨房燃气管道接口处存在轻微漏气，需重新密封处理',
+                'danger_level' => 'minor',
+                'danger_type' => '管道漏气',
+                'involve_amount' => 500.00,
+                'involve_quantity' => 1,
+                'evidence_conclusion' => '经检测，厨房燃气管道接口处存在轻微漏气',
+                'handling_basis' => '《城镇燃气管理条例》第二十八条',
+                'status' => InspectionRecord::STATUS_REVIEWING,
+                'sample_type' => InspectionRecord::SAMPLE_NORMAL,
+                'created_by' => $specialist->id,
+            ]);
+
+            $this->createCompleteNodes($record, $specialist, $leader, [
+                'accepted' => ['2026-06-13 09:30:00', '受理日常巡检发现的安全隐患，登记建档'],
+                'processing' => ['2026-06-13 10:30:00', '现场核实隐患情况，检测确认管道接口漏气'],
+                'reviewing' => ['2026-06-13 14:00:00', '整改完成，业务专员现场复查确认，提交审批'],
+            ]);
+
+            $this->service->updateSummaryAndConclusion($record);
+            $record->saveQuietly();
+        });
+    }
+
     protected function createCompleteNodes($record, $specialist, $leader, $nodeConfig)
     {
         $nodeOrder = 1;
@@ -522,6 +560,7 @@ class DatabaseSeeder extends Seeder
                 'accepted' => RecordNode::ACTION_CREATE,
                 'processing' => RecordNode::ACTION_UPDATE,
                 'reviewing' => RecordNode::ACTION_SUBMIT,
+                'approved' => RecordNode::ACTION_APPROVE,
                 'archived' => RecordNode::ACTION_ARCHIVE,
                 'returned' => RecordNode::ACTION_REJECT,
                 'appealed' => RecordNode::ACTION_APPEAL,
@@ -529,7 +568,7 @@ class DatabaseSeeder extends Seeder
                 'amount_difference' => RecordNode::ACTION_UPDATE,
             ];
 
-            $operator = in_array($nodeType, ['reviewing', 'archived']) ? $leader : $specialist;
+            $operator = in_array($nodeType, ['approved', 'archived']) ? $leader : $specialist;
 
             $node = RecordNode::create([
                 'inspection_record_id' => $record->id,
