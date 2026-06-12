@@ -15,8 +15,8 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader(_args: LoaderFunctionArgs) {
-  const [{ stats, dbMode }, user] = await Promise.all([getStats(), getCurrentUserInfo()]);
-  return json({ stats, dbMode, user });
+  const [{ stats }, user] = await Promise.all([getStats(), getCurrentUserInfo()]);
+  return json({ stats, user });
 }
 
 function StatCard({
@@ -61,7 +61,7 @@ function StatCard({
 }
 
 export default function Index() {
-  const { stats, dbMode, user } = useLoaderData<typeof loader>();
+  const { stats, user } = useLoaderData<typeof loader>();
   const typedStats = stats as DashboardStats;
 
   return (
@@ -71,11 +71,6 @@ export default function Index() {
       user={user}
       actions={
         <div className="flex items-center gap-3">
-          {!dbMode && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
-              ⚠️ 演示模式（Mock 数据）
-            </span>
-          )}
           <button className="btn-primary">
             <span className="mr-2">＋</span>新建核验
           </button>

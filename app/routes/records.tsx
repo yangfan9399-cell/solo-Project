@@ -19,13 +19,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const exceptionType = url.searchParams.get("exceptionType") || undefined;
   const search = url.searchParams.get("search") || undefined;
 
-  const [{ records, dbMode }, { stats }, user] = await Promise.all([
+  const [{ records }, { stats }, user] = await Promise.all([
     getRecords({ status, exceptionType, search }),
     getStats(),
     getCurrentUserInfo(),
   ]);
 
-  return json({ records, stats, dbMode, user });
+  return json({ records, stats, user });
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -47,7 +47,7 @@ function ExceptionBadge({ type }: { type: string }) {
 }
 
 export default function Records() {
-  const { records, stats, dbMode, user } = useLoaderData<typeof loader>();
+  const { records, stats, user } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const typedRecords = records as RecordSummary[];
   const typedStats = stats as DashboardStats;
@@ -90,11 +90,6 @@ export default function Records() {
       user={user}
       actions={
         <div className="flex items-center gap-3">
-          {!dbMode && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
-              ⚠️ 演示模式（Mock 数据）
-            </span>
-          )}
           <div className="relative">
             <input
               type="text"

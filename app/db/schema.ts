@@ -80,7 +80,7 @@ export const attachments = pgTable("attachments", {
     .references(() => records.id),
   nodeId: integer("node_id").references(() => nodes.id),
   fileName: varchar("file_name", { length: 200 }).notNull(),
-  fileType: varchar("file_type", { length: 50 }),
+  fileType: varchar("file_type", { length: 200 }),
   fileSize: integer("file_size"),
   fileUrl: varchar("file_url", { length: 500 }).notNull(),
   version: varchar("version", { length: 20 }).default("1.0"),

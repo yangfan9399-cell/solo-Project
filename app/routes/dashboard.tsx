@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader(_args: LoaderFunctionArgs) {
-  const { stats, dbMode } = await getStats();
+  const { stats } = await getStats();
   
   const recordsByExceptionType: Record<string, RecordSummary[]> = {};
   for (const type of Object.keys(stats.byType)) {
@@ -27,7 +27,7 @@ export async function loader(_args: LoaderFunctionArgs) {
   
   const user = await getCurrentUserInfo();
   
-  return json({ stats, recordsByExceptionType, recordsByStatus, dbMode, user });
+  return json({ stats, recordsByExceptionType, recordsByStatus, user });
 }
 
 function StatCard({
@@ -362,7 +362,7 @@ function DrillModal({
 }
 
 export default function Dashboard() {
-  const { stats, recordsByExceptionType, recordsByStatus, dbMode, user } = useLoaderData<typeof loader>();
+  const { stats, recordsByExceptionType, recordsByStatus, user } = useLoaderData<typeof loader>();
   const typedStats = stats as DashboardStats;
   const typedRecordsByType = recordsByExceptionType as Record<string, RecordSummary[]>;
   const typedRecordsByStatus = recordsByStatus as Record<string, RecordSummary[]>;
@@ -418,11 +418,6 @@ export default function Dashboard() {
       user={user}
       actions={
         <div className="flex items-center gap-2">
-          {!dbMode && (
-            <span className="badge bg-amber-100 text-amber-700">
-              🎭 演示模式
-            </span>
-          )}
           <select className="input py-2 text-sm w-32">
             <option>本周</option>
             <option>本月</option>

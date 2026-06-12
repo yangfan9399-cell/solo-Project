@@ -16,13 +16,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const status = url.searchParams.get("status") || "processing";
   
-  const { records, dbMode } = await getRecords({ 
+  const { records } = await getRecords({ 
     status: status === "all" ? undefined : status 
   });
   const filteredRecords = records.filter(r => !r.isArchived);
   const user = await getCurrentUserInfo();
   
-  return json({ records: filteredRecords, currentStatus: status, dbMode, user });
+  return json({ records: filteredRecords, currentStatus: status, user });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -32,24 +32,26 @@ export async function action({ request }: ActionFunctionArgs) {
   
   if (intent === "supplement") {
     const comment = formData.get("comment") as string;
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.SUPPLEMENT,
       nodeName: "补充材料",
       status: "completed",
-      operatorName: "张伟",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment,
       sequence: record.nodes.length + 1,
       isReProcess: false,
     });
     
     if (record.status === STATUS.RETURNED) {
-      updateRecord(recordId, { 
+      await updateRecord(recordId, { 
         status: STATUS.PENDING_REVIEW,
-        currentHandler: "王芳",
+        currentHandlerId: 3,
         currentHandlerName: "王芳",
       });
     }
@@ -60,25 +62,27 @@ export async function action({ request }: ActionFunctionArgs) {
   if (intent === "review_approve") {
     const comment = formData.get("comment") as string;
     const conclusion = formData.get("conclusion") as string;
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.REVIEW,
       nodeName: "复核审批",
       status: "completed",
-      operatorName: "王芳",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment,
       basis: record.basis,
       sequence: record.nodes.length + 1,
       isReProcess: record.exceptionType === EXCEPTION_TYPES.RE_PROCESS,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.REVIEWED,
       conclusion,
-      currentHandler: "陈杰",
+      currentHandlerId: 4,
       currentHandlerName: "陈杰",
     });
     
@@ -89,25 +93,27 @@ export async function action({ request }: ActionFunctionArgs) {
     const comment = formData.get("comment") as string;
     const blockReason = formData.get("blockReason") as string;
     const remedyPath = formData.get("remedyPath") as string;
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.RETURN,
       nodeName: "复核退回",
       status: "returned",
-      operatorName: "王芳",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment,
       sequence: record.nodes.length + 1,
       isReProcess: false,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.RETURNED,
       blockReason,
       remedyPath,
-      currentHandler: record.applicantName || "张伟",
+      currentHandlerId: record.applicantId || 1,
       currentHandlerName: record.applicantName || "张伟",
     });
     
@@ -115,43 +121,47 @@ export async function action({ request }: ActionFunctionArgs) {
   }
   
   if (intent === "archive") {
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.ARCHIVE,
       nodeName: "归档结案",
       status: "completed",
-      operatorName: "陈杰",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment: "复核通过，材料齐全，予以归档",
       sequence: record.nodes.length + 1,
       isReProcess: false,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.ARCHIVED,
       isArchived: true,
       archivedAt: new Date().toISOString(),
-      currentHandler: "陈杰",
-      currentHandlerName: "陈杰",
+      currentHandlerId: user.id,
+      currentHandlerName: user.displayName,
     });
     
     return redirect("/processing");
   }
   
   if (intent === "reprocess") {
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
     const lastNode = record.nodes[record.nodes.length - 1];
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.RE_PROCESS,
       nodeName: "重新处理-启动",
       status: "completed",
-      operatorName: "陈杰",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment: "档案抽检发现问题，启动重新处理流程",
       basis: "《档案质量抽检办法》第6条",
       isReProcess: true,
@@ -159,11 +169,11 @@ export async function action({ request }: ActionFunctionArgs) {
       sequence: record.nodes.length + 1,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.PROCESSING,
       isArchived: false,
       exceptionType: EXCEPTION_TYPES.RE_PROCESS,
-      currentHandler: "李明",
+      currentHandlerId: 2,
       currentHandlerName: "李明",
       archivedAt: undefined,
     });
@@ -173,23 +183,25 @@ export async function action({ request }: ActionFunctionArgs) {
   
   if (intent === "process_complete") {
     const comment = formData.get("comment") as string;
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.PROCESS,
       nodeName: "现场核验",
       status: "completed",
-      operatorName: "李明",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment,
       sequence: record.nodes.length + 1,
       isReProcess: record.exceptionType === EXCEPTION_TYPES.RE_PROCESS,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.PENDING_REVIEW,
-      currentHandler: "王芳",
+      currentHandlerId: 3,
       currentHandlerName: "王芳",
       summary: comment?.slice(0, 50) + "..." || record.summary,
     });
@@ -199,24 +211,26 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (intent === "accept") {
     const comment = formData.get("comment") as string;
-    const record = (await getRecordDetail(recordId)).record;
+    const user = await getCurrentUserInfo();
+    const { record } = await getRecordDetail(recordId);
     if (!record) return json({ error: "记录不存在" }, { status: 404 });
     
-    addNodeToRecord(recordId, {
+    await addNodeToRecord(recordId, {
       recordId,
       nodeType: NODE_TYPES.ACCEPT,
       nodeName: "受理登记",
       status: "completed",
-      operatorName: "李明",
+      operatorId: user.id,
+      operatorName: user.displayName,
       comment: comment || "已受理",
       sequence: record.nodes.length + 1,
       isReProcess: false,
     });
     
-    updateRecord(recordId, {
+    await updateRecord(recordId, {
       status: STATUS.PROCESSING,
-      currentHandler: "李明",
-      currentHandlerName: "李明",
+      currentHandlerId: user.id,
+      currentHandlerName: user.displayName,
     });
     
     return json({ success: true });
@@ -274,7 +288,7 @@ function ProcessingCard({ record }: { record: RecordSummary }) {
 }
 
 export default function Processing() {
-  const { records, currentStatus, dbMode, user } = useLoaderData<typeof loader>();
+  const { records, currentStatus, user } = useLoaderData<typeof loader>();
   const typedRecords = records as RecordSummary[];
   
   const tabs = [
@@ -291,16 +305,9 @@ export default function Processing() {
       subtitle={`共 ${typedRecords.length} 条待处理记录`}
       user={user}
       actions={
-        <>
-          {!dbMode && (
-            <span className="badge bg-amber-100 text-amber-700">
-              演示模式（使用 Mock 数据）
-            </span>
-          )}
-          <button className="btn-primary">
-            <span className="mr-2">＋</span>新建核验
-          </button>
-        </>
+        <button className="btn-primary">
+          <span className="mr-2">＋</span>新建核验
+        </button>
       }
     >
       <div className="space-y-6">

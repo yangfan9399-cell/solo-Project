@@ -7,4 +7,7 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/container_seal",
   },
+  migrations: {
+    table: "__drizzle_migrations",
+  },
 });

@@ -16,14 +16,14 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const id = parseInt(params.id || "0");
-  const { record, dbMode } = await getRecordDetail(id);
+  const { record } = await getRecordDetail(id);
   const user = await getCurrentUserInfo();
 
   if (!record) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  return json({ record, dbMode, user });
+  return json({ record, user });
 }
 
 function Section({ title, icon, children, action }: { title: string; icon: string; children: React.ReactNode; action?: React.ReactNode }) {
@@ -168,7 +168,7 @@ function TimelineNode({ node, isFirst, isLast }: { node: NodeDetail; isFirst: bo
 }
 
 export default function RecordDetail() {
-  const { record, dbMode, user } = useLoaderData<typeof loader>();
+  const { record, user } = useLoaderData<typeof loader>();
   const typedRecord = record as RecordDetail;
 
   const statusInfo = STATUS_MAP[typedRecord.status] || {
@@ -192,11 +192,6 @@ export default function RecordDetail() {
       user={user}
       actions={
         <div className="flex items-center gap-2">
-          {!dbMode && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
-              ⚠️ 演示模式（Mock 数据）
-            </span>
-          )}
           {typedRecord.isArchived ? (
             <>
               <span className="badge bg-slate-200 text-slate-700">

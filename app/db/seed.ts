@@ -2,10 +2,20 @@ import { db } from "./index";
 import { users, records, nodes, attachments, evidenceItems, STATUS, NODE_TYPES, EXCEPTION_TYPES, ROLES } from "./schema";
 import { eq, sql } from "drizzle-orm";
 
-async function seed() {
+export async function seed() {
   console.log("🌱 开始种子数据...");
 
-  await db.execute(sql`TRUNCATE TABLE evidence_items, attachments, nodes, records, users RESTART IDENTITY CASCADE`);
+  await db.execute(sql`DELETE FROM evidence_items`);
+  await db.execute(sql`DELETE FROM attachments`);
+  await db.execute(sql`DELETE FROM nodes`);
+  await db.execute(sql`DELETE FROM records`);
+  await db.execute(sql`DELETE FROM users`);
+  
+  await db.execute(sql`ALTER SEQUENCE evidence_items_id_seq RESTART WITH 1`);
+  await db.execute(sql`ALTER SEQUENCE attachments_id_seq RESTART WITH 1`);
+  await db.execute(sql`ALTER SEQUENCE nodes_id_seq RESTART WITH 1`);
+  await db.execute(sql`ALTER SEQUENCE records_id_seq RESTART WITH 1`);
+  await db.execute(sql`ALTER SEQUENCE users_id_seq RESTART WITH 1`);
 
   const userList = await db.insert(users).values([
     { username: "zhangwei", displayName: "张伟", role: ROLES.APPLICANT, department: "集装箱操作部", avatarColor: "#3b82f6" },
@@ -809,10 +819,13 @@ async function seed() {
   console.log("   - 用户：5 名");
   console.log("   - 记录：10 条");
   console.log("   - 四类样本：正常核销、记录漏填、附件版本不一致、重新处理");
-  process.exit(0);
 }
 
-seed().catch((error) => {
-  console.error("❌ 种子数据失败:", error);
-  process.exit(1);
-});
+if (process.argv[1] && process.argv[1].includes("seed")) {
+  seed()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error("❌ 种子数据失败:", error);
+      process.exit(1);
+    });
+}

@@ -1,9 +1,15 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/pglite";
+import { PGlite } from "@electric-sql/pglite";
 import * as schema from "./schema";
+import path from "node:path";
+import fs from "node:fs";
 
-const databaseUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/container_seal";
+const dataDir = path.resolve(process.cwd(), ".pglite-data");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
-const client = postgres(databaseUrl, { max: 1 });
+const client = new PGlite(path.join(dataDir, "container_seal.db"));
 
 export const db = drizzle(client, { schema });
+export const pgClient = client;
