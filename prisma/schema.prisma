@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RecordStatus {
+  PENDING
+  PROCESSING
+  REVIEW
+  ARCHIVED
+  REJECTED
+  REOPENED
+}
+
+enum NodeType {
+  ACCEPT
+  PROCESS
+  SUPPLEMENT
+  REVIEW
+  ARCHIVE
+  REJECT
+  REOPEN
+}
+
+enum UserRole {
+  APPLICANT
+  REVIEWER
+  ADMIN
+}
+
+enum SampleType {
+  NORMAL_VERIFICATION
+  MISSING_FIELDS
+  ATTACHMENT_MISMATCH
+  REPROCESS
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  nodes            RecordNode[]
+  handledRecords   AlarmRecord[] @relation("HandlerRecords")
+}
+
+model PumpStation {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  location    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  alarmRecords AlarmRecord[]
+}
+
+model AlarmRecord {
+  id                String        @id @default(cuid())
+  recordNo          String        @unique
+  title             String
+  description       String
+  source            String
+  stationId         String
+  currentHandlerId  String
+  keyObject         String
+  occurrenceTime    DateTime
+  amount            Decimal       @default(0)
+  evidenceConclusion String
+  status            RecordStatus  @default(PENDING)
+  sampleType        SampleType?
+  isArchived        Boolean       @default(false)
+  archivedAt        DateTime?
+  archivedBy        String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  station         PumpStation @relation(fields: [stationId], references: [id])
+  currentHandler  User        @relation("HandlerRecords", fields: [currentHandlerId], references: [id])
+  nodes           RecordNode[]
+  attachments     Attachment[]
+  fieldDiffs      FieldDiff[]
+
+  @@index([status])
+  @@index([sampleType])
+  @@index([isArchived])
+  @@index([occurrenceTime])
+}
+
+model RecordNode {
+  id            String     @id @default(cuid())
+  recordId      String
+  nodeType      NodeType
+  operatorId    String
+  operatorName  String
+  remark        String?
+  blockReason   String?    @db.Text
+  remedyPath    String?    @db.Text
+  beforeSnapshot Json
+  afterSnapshot  Json
+  createdAt     DateTime   @default(now())
+
+  record   AlarmRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  operator User        @relation(fields: [operatorId], references: [id])
+
+  attachments Attachment[]
+  fieldDiffs  FieldDiff[]
+
+  @@index([recordId])
+  @@index([nodeType])
+  @@index([createdAt])
+}
+
+model FieldDiff {
+  id            String   @id @default(cuid())
+  recordId      String
+  nodeId        String?
+  fieldName     String
+  fieldLabel    String
+  oldValue      String
+  newValue      String
+  diffType      String
+  createdAt     DateTime @default(now())
+
+  record AlarmRecord  @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  node   RecordNode?  @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+
+  @@index([recordId])
+  @@index([nodeId])
+}
+
+model Attachment {
+  id            String   @id @default(cuid())
+  recordId      String
+  nodeId        String?
+  name          String
+  url           String
+  version       String
+  fileType      String
+  size          BigInt
+  uploadedBy    String
+  createdAt     DateTime @default(now())
+
+  record AlarmRecord  @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  node   RecordNode?  @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+
+  @@index([recordId])
+  @@index([nodeId])
+}
