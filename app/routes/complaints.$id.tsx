@@ -158,7 +158,7 @@ export default function ComplaintDetail() {
               before={formatNoise(complaint.noiseLevelBefore)}
               after={formatNoise(complaint.noiseLevelAfter)}
               unit="dB"
-              isImproved={complaint.noiseLevelBefore && complaint.noiseLevelAfter && Number(complaint.noiseLevelAfter) < Number(complaint.noiseLevelBefore)}
+              isImproved={!!(complaint.noiseLevelBefore && complaint.noiseLevelAfter && Number(complaint.noiseLevelAfter) < Number(complaint.noiseLevelBefore))}
             />
             <CompareItem
               label="整改状态"
@@ -233,6 +233,14 @@ function InfoTab({ complaint }: { complaint: any }) {
 }
 
 function TimelineTab({ nodes }: { nodes: any[] }) {
+  function parseJsonb(val: unknown): any {
+    if (val == null) return null;
+    if (typeof val === "string") {
+      try { return JSON.parse(val); } catch { return val; }
+    }
+    return val;
+  }
+
   return (
     <div className="relative">
       <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>
@@ -240,12 +248,16 @@ function TimelineTab({ nodes }: { nodes: any[] }) {
         {nodes.map((node, index) => {
           const nodeInfo = NODE_TYPE_MAP[node.nodeType] || { label: node.nodeType, icon: "📌" };
           const isBlocking = node.isBlocking;
-          
+          const parsedDiffFields = parseJsonb(node.diffFields);
+          const diffFieldArr: string[] = Array.isArray(parsedDiffFields) ? parsedDiffFields : (typeof parsedDiffFields === "string" ? [parsedDiffFields] : []);
+          const parsedChanges = parseJsonb(node.changes);
+          const changeKeys: string[] = parsedChanges && typeof parsedChanges === "object" ? Object.keys(parsedChanges) : [];
+
           return (
             <div key={node.id} className="relative pl-10">
               <div className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                isBlocking 
-                  ? "bg-red-100 border-2 border-red-400" 
+                isBlocking
+                  ? "bg-red-100 border-2 border-red-400"
                   : "bg-white border-2 border-slate-300"
               }`}>
                 {nodeInfo.icon}
@@ -280,11 +292,11 @@ function TimelineTab({ nodes }: { nodes: any[] }) {
                         <strong>补救路径：</strong>{node.remedyPath}
                       </p>
                     )}
-                    {node.diffFields && Array.isArray(node.diffFields) && node.diffFields.length > 0 && (
+                    {diffFieldArr.length > 0 && (
                       <div className="mt-2">
                         <span className="text-xs font-medium text-slate-600">差异字段：</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {node.diffFields.map((field: string) => (
+                          {diffFieldArr.map((field: string) => (
                             <span key={field} className="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">
                               {FIELD_LABEL_MAP[field] || field}
                             </span>
@@ -294,11 +306,11 @@ function TimelineTab({ nodes }: { nodes: any[] }) {
                     )}
                   </div>
                 )}
-                {node.changes && Object.keys(node.changes).length > 0 && !isBlocking && (
+                {!isBlocking && changeKeys.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-200">
                     <span className="text-xs font-medium text-slate-600">变更字段：</span>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {Object.keys(node.changes).map((field) => (
+                      {changeKeys.map((field) => (
                         <span key={field} className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">
                           {FIELD_LABEL_MAP[field] || field}
                         </span>

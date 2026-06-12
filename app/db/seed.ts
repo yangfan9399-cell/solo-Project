@@ -78,7 +78,7 @@ async function seed() {
       remark: "分派给张伟负责现场监测和处理",
       timestamp: daysAgo(14),
       sortOrder: 2,
-      changes: JSON.stringify({ currentHandlerId: zhangWei.id, currentStatus: "processing" }),
+      changes: { currentHandlerId: zhangWei.id, currentStatus: "processing" },
     },
     {
       complaintId: c1.id,
@@ -90,7 +90,7 @@ async function seed() {
       remark: "已完成现场监测和处罚，提交复核",
       timestamp: daysAgo(10),
       sortOrder: 3,
-      changes: JSON.stringify({
+      changes: {
         noiseLevelBefore: "78.5",
         noiseLevelAfter: "52.3",
         fineAmount: "20000.00",
@@ -98,8 +98,8 @@ async function seed() {
         legalBasis: "《中华人民共和国环境噪声污染防治法》第三十条、第五十六条",
         conclusion: "经现场监测，该工地夜间施工噪声超标6.5分贝，已责令停止夜间施工并处罚款20000元。整改后复测达标，予以结案。",
         currentStatus: "review",
-      }),
-      diffFields: JSON.stringify(["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"]),
+      },
+      diffFields: ["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"],
     },
     {
       complaintId: c1.id,
@@ -111,7 +111,7 @@ async function seed() {
       remark: "复核通过，材料完整，移交归档",
       timestamp: daysAgo(7),
       sortOrder: 4,
-      changes: JSON.stringify({ currentStatus: "archived" }),
+      changes: { currentStatus: "archived" },
     },
     {
       complaintId: c1.id,
@@ -123,7 +123,7 @@ async function seed() {
       remark: "档案已归档，编号：DA-ZS-2024-001",
       timestamp: daysAgo(3),
       sortOrder: 5,
-      changes: JSON.stringify({ isArchived: true, archivedAt: daysAgo(3).toISOString() }),
+      changes: { isArchived: true, archivedAt: daysAgo(3).toISOString() },
     },
   ]);
 
@@ -188,7 +188,7 @@ async function seed() {
       remark: "分派给李娜负责处理",
       timestamp: daysAgo(9),
       sortOrder: 2,
-      changes: JSON.stringify({ currentHandlerId: liNa.id, currentStatus: "processing" }),
+      changes: { currentHandlerId: liNa.id, currentStatus: "processing" },
     },
     {
       complaintId: c2.id,
@@ -200,13 +200,13 @@ async function seed() {
       remark: "已完成初步监测，提交复核（注：整改复测尚未完成）",
       timestamp: daysAgo(6),
       sortOrder: 3,
-      changes: JSON.stringify({
+      changes: {
         noiseLevelBefore: "72.0",
         responsibleParty: "星光娱乐有限公司",
         legalBasis: "《中华人民共和国环境噪声污染防治法》第四十三条、第五十九条",
         currentStatus: "review",
-      }),
-      diffFields: JSON.stringify(["noiseLevelBefore", "responsibleParty", "legalBasis"]),
+      },
+      diffFields: ["noiseLevelBefore", "responsibleParty", "legalBasis"],
     },
     {
       complaintId: c2.id,
@@ -221,8 +221,8 @@ async function seed() {
       isBlocking: true,
       blockingReason: "记录漏填：整改后噪声值、罚款金额、处理结论等关键字段缺失，无法进入复核环节。",
       remedyPath: "申请人需补充：1) 整改后噪声监测数据；2) 处罚金额确认；3) 明确处理结论。补充完成后重新提交复核。",
-      diffFields: JSON.stringify(["noiseLevelAfter", "fineAmount", "conclusion"]),
-      changes: JSON.stringify({ currentStatus: "rejected", hasException: true, exceptionType: "missing_fields" }),
+      diffFields: ["noiseLevelAfter", "fineAmount", "conclusion"],
+      changes: { currentStatus: "rejected", hasException: true, exceptionType: "missing_fields" },
     },
   ]);
 
@@ -284,7 +284,7 @@ async function seed() {
       remark: "分派给张伟负责处理",
       timestamp: daysAgo(11),
       sortOrder: 2,
-      changes: JSON.stringify({ currentHandlerId: zhangWei.id, currentStatus: "processing" }),
+      changes: { currentHandlerId: zhangWei.id, currentStatus: "processing" },
     },
     {
       complaintId: c3.id,
@@ -296,15 +296,15 @@ async function seed() {
       remark: "已完成监测和整改，提交复核（已上传修订版监测报告）",
       timestamp: daysAgo(5),
       sortOrder: 3,
-      changes: JSON.stringify({
+      changes: {
         noiseLevelBefore: "75.0",
         noiseLevelAfter: "65.0",
         fineAmount: "15000.00",
         responsibleParty: "顺达五金加工厂",
         legalBasis: "《中华人民共和国环境噪声污染防治法》第二十三条、第五十二条",
         currentStatus: "review",
-      }),
-      diffFields: JSON.stringify(["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis"]),
+      },
+      diffFields: ["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis"],
     },
     {
       complaintId: c3.id,
@@ -319,8 +319,8 @@ async function seed() {
       isBlocking: true,
       blockingReason: "附件版本不一致：监测报告存在两个版本（v1、v2），数据存在差异（噪声值从75.0变为72.0），需以哪个版本为准不明确。",
       remedyPath: "请申请人确认最终采用的监测报告版本，并说明版本差异原因。确认无误后重新提交。",
-      diffFields: JSON.stringify(["attachments", "noiseLevelBefore"]),
-      changes: JSON.stringify({ currentStatus: "rejected", hasException: true, exceptionType: "attachment_version_mismatch" }),
+      diffFields: ["attachments", "noiseLevelBefore"],
+      changes: { currentStatus: "rejected", hasException: true, exceptionType: "attachment_version_mismatch" },
     },
   ]);
 
@@ -385,7 +385,7 @@ async function seed() {
       remark: "分派给李娜负责处理",
       timestamp: daysAgo(29),
       sortOrder: 2,
-      changes: JSON.stringify({ currentHandlerId: liNa.id, currentStatus: "processing" }),
+      changes: { currentHandlerId: liNa.id, currentStatus: "processing" },
     },
     {
       complaintId: c4.id,
@@ -397,7 +397,7 @@ async function seed() {
       remark: "已完成监测和整改，提交复核",
       timestamp: daysAgo(22),
       sortOrder: 3,
-      changes: JSON.stringify({
+      changes: {
         noiseLevelBefore: "68.0",
         noiseLevelAfter: "55.0",
         fineAmount: "5000.00",
@@ -405,8 +405,8 @@ async function seed() {
         legalBasis: "《中华人民共和国环境噪声污染防治法》第四十四条、第六十条",
         conclusion: "经复测，超市已采取降噪措施，边界噪声达标，予以结案。",
         currentStatus: "review",
-      }),
-      diffFields: JSON.stringify(["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"]),
+      },
+      diffFields: ["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"],
     },
     {
       complaintId: c4.id,
@@ -418,7 +418,7 @@ async function seed() {
       remark: "复核通过，材料完整，移交归档",
       timestamp: daysAgo(18),
       sortOrder: 4,
-      changes: JSON.stringify({ currentStatus: "archived" }),
+      changes: { currentStatus: "archived" },
     },
     {
       complaintId: c4.id,
@@ -430,7 +430,7 @@ async function seed() {
       remark: "档案已归档，编号：DA-ZS-2024-004",
       timestamp: daysAgo(15),
       sortOrder: 5,
-      changes: JSON.stringify({ isArchived: true, archivedAt: daysAgo(15).toISOString() }),
+      changes: { isArchived: true, archivedAt: daysAgo(15).toISOString() },
     },
     {
       complaintId: c4.id,
@@ -442,14 +442,14 @@ async function seed() {
       remark: "接到投诉人再次投诉，启动重新处理程序。原档案编号：DA-ZS-2024-004，重新处理后生成新节点序列。",
       timestamp: daysAgo(2),
       sortOrder: 6,
-      changes: JSON.stringify({
+      changes: {
         currentStatus: "processing",
         isArchived: false,
         hasException: true,
         exceptionType: "reprocess",
         conclusion: "经复测，超市已采取降噪措施，边界噪声达标，予以结案。（注：因投诉人再次投诉，已启动重新处理程序）",
-      }),
-      diffFields: JSON.stringify(["currentStatus", "isArchived", "conclusion"]),
+      },
+      diffFields: ["currentStatus", "isArchived", "conclusion"],
     },
   ]);
 
@@ -509,7 +509,7 @@ async function seed() {
       remark: "分派给张伟负责处理",
       timestamp: daysAgo(7),
       sortOrder: 2,
-      changes: JSON.stringify({ currentHandlerId: zhangWei.id, currentStatus: "processing" }),
+      changes: { currentHandlerId: zhangWei.id, currentStatus: "processing" },
     },
     {
       complaintId: c5.id,
@@ -521,7 +521,7 @@ async function seed() {
       remark: "已完成监测和整改，提交复核",
       timestamp: daysAgo(2),
       sortOrder: 3,
-      changes: JSON.stringify({
+      changes: {
         noiseLevelBefore: "70.5",
         noiseLevelAfter: "58.0",
         fineAmount: "8000.00",
@@ -529,8 +529,8 @@ async function seed() {
         legalBasis: "《中华人民共和国环境噪声污染防治法》第四十四条、第六十条",
         conclusion: "经监测，餐厅排风机噪声超标5.5分贝，已责令整改并处罚款8000元。整改后复测达标。",
         currentStatus: "review",
-      }),
-      diffFields: JSON.stringify(["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"]),
+      },
+      diffFields: ["noiseLevelBefore", "noiseLevelAfter", "fineAmount", "responsibleParty", "legalBasis", "conclusion"],
     },
   ]);
 
