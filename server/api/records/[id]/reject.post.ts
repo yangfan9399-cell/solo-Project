@@ -1,4 +1,5 @@
 import { createNode } from '~/server/utils/nodeHandler'
+import { requireRole, requireRecordStatus } from '~/server/utils/requireRole'
 import type { NodeActionPayload } from '~/types'
 import prisma from '~/server/utils/prisma'
 
@@ -11,6 +12,16 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<NodeActionPayload>(event)
   if (!body.operatorId || !body.operatorName) {
     throw createError({ statusCode: 400, message: '缺少操作人信息' })
+  }
+
+  await requireRole(body.operatorId, 'reject')
+  await requireRecordStatus(id, ['REVIEW'])
+
+  if (!body.blockReason) {
+    throw createError({ statusCode: 400, message: '退回补证必须填写阻断原因' })
+  }
+  if (!body.remedyPath) {
+    throw createError({ statusCode: 400, message: '退回补证必须填写补救路径' })
   }
 
   const record = await prisma.alarmRecord.findUnique({

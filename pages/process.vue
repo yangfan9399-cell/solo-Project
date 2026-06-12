@@ -131,9 +131,62 @@
 
             <div>
               <label class="label">证据附件</label>
-              <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center text-sm text-gray-500">
-                <p>📎 点击或拖拽上传附件</p>
-                <p class="text-xs mt-1">支持图片、PDF、文档等格式</p>
+              <div class="space-y-3">
+                <div
+                  v-for="(att, idx) in pendingAttachments"
+                  :key="idx"
+                  class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg"
+                >
+                  <div class="flex-1 grid grid-cols-4 gap-3">
+                    <div>
+                      <input
+                        v-model="att.name"
+                        type="text"
+                        class="input text-sm"
+                        placeholder="文件名称"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        v-model="att.version"
+                        type="text"
+                        class="input text-sm"
+                        placeholder="版本号 (如V1)"
+                      />
+                    </div>
+                    <div>
+                      <select v-model="att.fileType" class="input text-sm">
+                        <option value="application/pdf">PDF</option>
+                        <option value="image/jpeg">图片(JPG)</option>
+                        <option value="image/png">图片(PNG)</option>
+                        <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</option>
+                        <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
+                        <option value="other">其他</option>
+                      </select>
+                    </div>
+                    <div>
+                      <input
+                        v-model="att.url"
+                        type="text"
+                        class="input text-sm"
+                        placeholder="文件路径/链接"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    @click="pendingAttachments.splice(idx, 1)"
+                    class="text-red-500 hover:text-red-700 text-sm shrink-0"
+                  >
+                    ✕ 移除
+                  </button>
+                </div>
+                <button
+                  @click="addPendingAttachment"
+                  type="button"
+                  class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
+                >
+                  + 添加附件
+                </button>
               </div>
             </div>
 
@@ -205,6 +258,47 @@
                 placeholder="请填写复核结论..."
                 :disabled="detail.isArchived"
               />
+            </div>
+
+            <div>
+              <label class="label">复核附件（可选）</label>
+              <div class="space-y-3">
+                <div
+                  v-for="(att, idx) in reviewAttachments"
+                  :key="idx"
+                  class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg"
+                >
+                  <div class="flex-1 grid grid-cols-4 gap-3">
+                    <div>
+                      <input v-model="att.name" type="text" class="input text-sm" placeholder="文件名称" />
+                    </div>
+                    <div>
+                      <input v-model="att.version" type="text" class="input text-sm" placeholder="版本号" />
+                    </div>
+                    <div>
+                      <select v-model="att.fileType" class="input text-sm">
+                        <option value="application/pdf">PDF</option>
+                        <option value="image/jpeg">图片(JPG)</option>
+                        <option value="image/png">图片(PNG)</option>
+                        <option value="other">其他</option>
+                      </select>
+                    </div>
+                    <div>
+                      <input v-model="att.url" type="text" class="input text-sm" placeholder="文件路径/链接" />
+                    </div>
+                  </div>
+                  <button @click="reviewAttachments.splice(idx, 1)" class="text-red-500 hover:text-red-700 text-sm shrink-0">
+                    ✕ 移除
+                  </button>
+                </div>
+                <button
+                  @click="addReviewAttachment"
+                  type="button"
+                  class="w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
+                >
+                  + 添加复核附件
+                </button>
+              </div>
             </div>
 
             <div v-if="detail.status === 'REVIEW' && !detail.isArchived" class="flex gap-3">
@@ -445,6 +539,52 @@ const reopenForm = ref({
   evidenceConclusion: ''
 })
 
+const pendingAttachments = ref<Array<{
+  name: string
+  version: string
+  fileType: string
+  url: string
+  size: number
+}>>([])
+
+const reviewAttachments = ref<Array<{
+  name: string
+  version: string
+  fileType: string
+  url: string
+  size: number
+}>>([])
+
+const addPendingAttachment = () => {
+  pendingAttachments.value.push({
+    name: '',
+    version: 'V1',
+    fileType: 'application/pdf',
+    url: '',
+    size: 0
+  })
+}
+
+const addReviewAttachment = () => {
+  reviewAttachments.value.push({
+    name: '',
+    version: 'V1',
+    fileType: 'application/pdf',
+    url: '',
+    size: 0
+  })
+}
+
+const getValidAttachments = (list: typeof pendingAttachments.value) => {
+  return list.filter(att => att.name && att.url).map(att => ({
+    name: att.name,
+    version: att.version || 'V1',
+    fileType: att.fileType || 'application/octet-stream',
+    url: att.url,
+    size: att.size || Math.floor(Math.random() * 5000000) + 100000
+  }))
+}
+
 const detail = computed(() => store.detail)
 
 const showApplicantForm = computed(() => {
@@ -497,6 +637,8 @@ const resetForms = () => {
   }
   rejectForm.value = { remark: '', blockReason: '', remedyPath: '' }
   reopenForm.value = { remark: '', blockReason: '', remedyPath: '', amount: null, evidenceConclusion: '' }
+  pendingAttachments.value = []
+  reviewAttachments.value = []
 }
 
 const getUpdatedFields = () => {
@@ -543,6 +685,7 @@ const handleProcess = async () => {
     await store.processRecord(selectedId.value, {
       remark: `业务记录：${form.value.businessRecord}\n现场说明：${form.value.siteDescription}`,
       evidenceConclusion: form.value.evidenceConclusion || '处理完成，等待复核',
+      attachments: getValidAttachments(pendingAttachments.value),
       updatedFields: getUpdatedFields()
     })
     alert('处理完成，已提交复核！')
@@ -566,6 +709,7 @@ const handleSupplement = async () => {
       businessRecord: form.value.businessRecord,
       siteDescription: form.value.siteDescription,
       evidenceConclusion: form.value.evidenceConclusion,
+      attachments: getValidAttachments(pendingAttachments.value),
       updatedFields: getUpdatedFields()
     })
     alert('资料已补充，已提交复核！')
@@ -587,7 +731,8 @@ const handleReview = async () => {
   try {
     await store.reviewRecord(selectedId.value, {
       remark: reviewForm.value.remark,
-      evidenceConclusion: reviewForm.value.evidenceConclusion
+      evidenceConclusion: reviewForm.value.evidenceConclusion,
+      attachments: getValidAttachments(reviewAttachments.value)
     })
     alert('复核通过！')
     resetForms()

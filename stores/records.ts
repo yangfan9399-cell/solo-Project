@@ -221,11 +221,13 @@ export const useRecordsStore = defineStore('records', {
     async reviewRecord(id: string, data: {
       remark: string
       evidenceConclusion: string
+      attachments?: any[]
       updatedFields?: NodeActionPayload['updatedFields']
     }) {
       return this.performAction('review', id, {
         remark: data.remark,
         evidenceConclusion: data.evidenceConclusion,
+        attachments: data.attachments,
         updatedFields: data.updatedFields
       })
     },

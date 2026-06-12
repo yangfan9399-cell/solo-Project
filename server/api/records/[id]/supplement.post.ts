@@ -1,4 +1,5 @@
 import { createNode } from '~/server/utils/nodeHandler'
+import { requireRole, requireRecordStatus } from '~/server/utils/requireRole'
 import type { NodeActionPayload, NodeType, RecordStatus } from '~/types'
 import prisma from '~/server/utils/prisma'
 
@@ -12,6 +13,9 @@ export default defineEventHandler(async (event) => {
   if (!body.operatorId || !body.operatorName) {
     throw createError({ statusCode: 400, message: '缺少操作人信息' })
   }
+
+  await requireRole(body.operatorId, 'supplement')
+  await requireRecordStatus(id, ['REJECTED'])
 
   const remark = [
     body.businessRecord ? `业务记录：${body.businessRecord}` : '',
