@@ -6,13 +6,14 @@ import {
   NodeType,
   DifferenceType,
   SampleCategory,
+  UserRole,
   type DispatchOrderWithRelations,
   type OrderSummary,
   type DashboardStats,
   type CurrentUser,
   KEY_FIELDS,
 } from "./types";
-import { getCurrentUser } from "./auth";
+import { getCurrentUser, canSupplementMaterials, canReview, canArchive, canReopen, canEditOrder } from "./auth";
 import { generateOrderNo, getMonthKey, formatDate } from "./utils";
 
 function valueToString(v: unknown): string | null {
@@ -214,6 +215,12 @@ export async function acceptOrder(orderId: string, operatorId?: string) {
   const existing = await prisma.dispatchOrder.findUnique({ where: { id: orderId } });
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
+  if (!canEditOrder(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限受理该记录`);
+  }
+  if (existing.status !== OrderStatus.PENDING_ACCEPT) {
+    throw new Error("仅待受理状态可受理");
+  }
 
   const targetOperatorId = operatorId || user.id;
   const operatorUser = await prisma.user.upsert({
@@ -270,6 +277,9 @@ export async function processOrder(
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
+  if (!canEditOrder(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限更新执行数据`);
+  }
   if (!["PROCESSING", "REVIEW_REJECTED"].includes(existing.status))
     throw new Error("当前状态不允许处理");
 
@@ -323,6 +333,9 @@ export async function supplementMaterials(
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
+  if (!canSupplementMaterials(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限补充材料，仅经办人可补充`);
+  }
 
   const node = await createNode(
     orderId,
@@ -376,6 +389,9 @@ export async function submitForReview(orderId: string, data: {
   if (existing.isArchived) throw new Error("已归档记录不能操作");
   if (existing.status !== OrderStatus.PROCESSING)
     throw new Error("仅处理中状态可提交复核");
+  if (user.role !== UserRole.OPERATOR && user.role !== UserRole.ADMIN) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限提交复核，仅经办人可提交`);
+  }
 
   const newData = {
     status: OrderStatus.PENDING_REVIEW,
@@ -427,6 +443,9 @@ export async function reviewOrder(
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
+  if (!canReview(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限复核，仅复核人可进行复核操作`);
+  }
   if (existing.status !== OrderStatus.PENDING_REVIEW)
     throw new Error("仅待复核状态可进行复核");
 
@@ -495,6 +514,9 @@ export async function archiveOrder(orderId: string) {
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
+  if (!canArchive(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限归档，仅复核人可归档`);
+  }
   if (existing.status !== OrderStatus.REVIEW_APPROVED)
     throw new Error("仅复核通过状态可归档");
 
@@ -530,6 +552,9 @@ export async function reopenOrder(orderId: string) {
   const user = await getCurrentUser();
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
+  if (!canReopen(user, existing.status, existing.isArchived)) {
+    throw new Error(`当前用户(${user.name}，角色：${user.role})无权限重新处理，仅管理员可操作`);
+  }
   if (!existing.isArchived) throw new Error("仅归档记录可重新处理");
 
   const newData = {

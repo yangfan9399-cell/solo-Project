@@ -1,22 +1,52 @@
 import { NextResponse } from "next/server";
 import { processOrder } from "@/lib/data-service";
 
+async function parseBody(request: Request): Promise<any> {
+  const contentType = request.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return request.json();
+  }
+  const form = await request.formData();
+  const obj: any = {};
+  for (const [k, v] of form.entries()) {
+    obj[k] = String(v);
+  }
+  if (obj.actualExecuteTime && typeof obj.actualExecuteTime === "string") {
+    obj.actualExecuteTime = new Date(obj.actualExecuteTime);
+  }
+  ["actualOpening", "actualFlow", "amount"].forEach((k) => {
+    if (obj[k] !== undefined && obj[k] !== "") {
+      obj[k] = Number(obj[k]);
+    } else {
+      delete obj[k];
+    }
+  });
+  return obj;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   try {
-    const body = await request.json();
-    if (body.actualExecuteTime) {
-      body.actualExecuteTime = new Date(body.actualExecuteTime);
-    }
+    const body = await parseBody(request);
     const result = await processOrder(id, body);
-    return NextResponse.json(result);
+    const referer = request.headers.get("referer") || `/orders/${id}?tab=process`;
+    const accept = request.headers.get("accept") || "";
+    if (accept.includes("text/html")) {
+      return NextResponse.redirect(new URL(referer, request.url), 303);
+    }
+    return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "处理失败" },
-      { status: 400 }
-    );
+    const msg = error instanceof Error ? error.message : "处理失败";
+    const referer = request.headers.get("referer") || `/orders/${id}?tab=process`;
+    const accept = request.headers.get("accept") || "";
+    if (accept.includes("text/html")) {
+      const url = new URL(referer, request.url);
+      url.searchParams.set("error", encodeURIComponent(msg));
+      return NextResponse.redirect(url, 303);
+    }
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

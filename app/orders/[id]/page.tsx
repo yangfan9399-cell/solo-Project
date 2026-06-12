@@ -8,7 +8,10 @@ import { CategoryBadge } from "@/components/ui/CategoryBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { FieldDifferences } from "@/components/orders/FieldDifferences";
 import { BlockInfo } from "@/components/orders/BlockInfo";
+import { UserSwitcher } from "@/components/ui/UserSwitcher";
 import { formatDate, formatDateShort, formatDecimal, getStatusBgColor } from "@/lib/utils";
+import { getCurrentUser, canEditOrder, canSupplementMaterials, canReview, canArchive, canReopen } from "@/lib/auth";
+import { UserRole } from "@/lib/types";
 import {
   ArrowLeft,
   Eye,
@@ -23,6 +26,8 @@ import {
   Clock,
   MapPin,
   DollarSign,
+  RotateCcw,
+  ShieldAlert,
 } from "lucide-react";
 
 export default async function OrderDetailPage({
@@ -30,11 +35,11 @@ export default async function OrderDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { tab = "detail" } = await searchParams;
-  const order = await getOrderDetail(id);
+  const { tab = "detail", error } = await searchParams;
+  const [order, user] = await Promise.all([getOrderDetail(id), getCurrentUser()]);
 
   if (!order) {
     notFound();
@@ -42,6 +47,14 @@ export default async function OrderDetailPage({
 
   const hasBlock = !!order.blockReason;
   const isArchived = order.isArchived;
+
+  const canAccept = !isArchived && order.status === "PENDING_ACCEPT" && canEditOrder(user, order.status, isArchived);
+  const canProcessForm = !isArchived && ["PROCESSING", "REVIEW_REJECTED"].includes(order.status) && canEditOrder(user, order.status, isArchived);
+  const canSupplement = canSupplementMaterials(user, order.status, isArchived);
+  const canSubmitReview = !isArchived && order.status === "PROCESSING" && (user.role === UserRole.OPERATOR || user.role === UserRole.ADMIN);
+  const canDoReview = canReview(user, order.status, isArchived);
+  const canDoArchive = canArchive(user, order.status, isArchived);
+  const canDoReopen = canReopen(user, order.status, isArchived);
 
   const tabs = [
     { key: "detail", label: "详情信息", icon: Eye },
@@ -53,12 +66,21 @@ export default async function OrderDetailPage({
 
   return (
     <div className="space-y-6">
+      <UserSwitcher />
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+          <ShieldAlert className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <span className="text-red-800">{decodeURIComponent(error)}</span>
+        </div>
+      )}
+
       <div className="flex items-center space-x-4">
         <Link href="/" className="btn btn-secondary">
           <ArrowLeft className="w-4 h-4 mr-2" />
           返回列表
         </Link>
-        <div>
+        <div className="flex-1">
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-gray-900">{order.title}</h1>
             <StatusBadge status={order.status} />
@@ -70,17 +92,27 @@ export default async function OrderDetailPage({
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            指令编号：{order.orderNo}
+            指令编号：{order.orderNo} · 当前用户：{user.name}（{user.role === "OPERATOR" ? "经办人" : user.role === "REVIEWER" ? "复核人" : "管理员"}）
           </p>
         </div>
       </div>
 
       {isArchived && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center space-x-3">
-          <AlertTriangle className="w-5 h-5 text-yellow-600" />
-          <span className="text-yellow-800">
-            该记录已归档，处于只读状态。如需修改，请联系管理员重新处理。
-          </span>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 flex-1">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+            <span className="text-yellow-800">
+              该记录已归档，处于只读状态。如需修改，请联系管理员重新处理。
+            </span>
+          </div>
+          {canDoReopen && (
+            <form action={`/api/orders/${order.id}/reopen`} method="POST">
+              <button type="submit" className="btn btn-warning whitespace-nowrap">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                重新处理（生成新节点）
+              </button>
+            </form>
+          )}
         </div>
       )}
 
@@ -319,146 +351,184 @@ export default async function OrderDetailPage({
             <div className="card-header">
               <h2 className="text-lg font-semibold text-gray-900">处理台</h2>
               <p className="text-sm text-gray-500 mt-1">
-                当前状态：{order.status}
+                当前状态：{order.status} · 你的权限：{user.role === "OPERATOR" ? "经办人" : user.role === "REVIEWER" ? "复核人" : "管理员"}
               </p>
             </div>
             <div className="card-body">
               {isArchived ? (
-                <div className="text-center py-8">
-                  <FileCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">该记录已归档，不能进行操作</p>
+                <div className="space-y-6">
+                  <div className="text-center py-8">
+                    <FileCheck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">该记录已归档，不能进行编辑操作</p>
+                    <p className="text-sm text-gray-500">
+                      {canDoReopen ? "你可以点击下方按钮重新处理（会生成新的历史节点）" : "如需修改请联系管理员重新处理"}
+                    </p>
+                  </div>
+                  {canDoReopen && (
+                    <form
+                      action={`/api/orders/${order.id}/reopen`}
+                      method="POST"
+                      className="p-6 bg-amber-50 rounded-lg border border-amber-200 max-w-md mx-auto"
+                    >
+                      <h3 className="font-medium text-amber-800 mb-3">重新处理</h3>
+                      <p className="text-sm text-amber-700 mb-4">
+                        将生成新的处理节点，原归档记录保留完整历史。重新处理后状态变为"处理中"。
+                      </p>
+                      <button type="submit" className="btn btn-warning w-full">
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        重新处理（生成新节点）
+                      </button>
+                    </form>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {order.status === "PENDING_ACCEPT" && (
+                  {!canAccept && !canProcessForm && !canSupplement && !canSubmitReview && !canDoReview && !canDoArchive && (
+                    <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                      <ShieldAlert className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600 mb-1">当前状态下没有可执行的操作</p>
+                      <p className="text-sm text-gray-500">
+                        可能原因：你的角色权限或当前记录状态不匹配。可切换用户身份或等待流转。
+                      </p>
+                    </div>
+                  )}
+
+                  {canAccept && (
                     <form
                       action={`/api/orders/${order.id}/accept`}
                       method="POST"
                       className="p-6 bg-amber-50 rounded-lg border border-amber-200"
                     >
-                      <h3 className="font-medium text-amber-800 mb-4">受理指令</h3>
+                      <h3 className="font-medium text-amber-800 mb-4">① 受理指令</h3>
                       <p className="text-amber-700 mb-4">
-                        确认受理该调度指令并开始处理
+                        确认受理该调度指令，状态将变更为"处理中"，由你（{user.name}）负责经办。
                       </p>
                       <button type="submit" className="btn btn-warning">
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
                         确认受理
                       </button>
                     </form>
                   )}
 
-                  {(order.status === "PROCESSING" || order.status === "REVIEW_REJECTED") && (
+                  {(canProcessForm || canSupplement) && (
                     <div className="space-y-4">
-                      <form
-                        action={`/api/orders/${order.id}/process`}
-                        method="POST"
-                        className="p-6 bg-blue-50 rounded-lg border border-blue-200"
-                      >
-                        <h3 className="font-medium text-blue-800 mb-4">更新执行数据</h3>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="label">实际执行时间</label>
-                            <input
-                              type="datetime-local"
-                              name="actualExecuteTime"
-                              className="input"
-                            />
+                      {canProcessForm && (
+                        <form
+                          action={`/api/orders/${order.id}/process`}
+                          method="POST"
+                          className="p-6 bg-blue-50 rounded-lg border border-blue-200"
+                        >
+                          <h3 className="font-medium text-blue-800 mb-4">② 更新执行数据</h3>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="label">实际执行时间</label>
+                              <input
+                                type="datetime-local"
+                                name="actualExecuteTime"
+                                className="input"
+                              />
+                            </div>
+                            <div>
+                              <label className="label">实际开度（米）</label>
+                              <input
+                                type="number"
+                                name="actualOpening"
+                                step="0.1"
+                                className="input"
+                                placeholder={formatDecimal(order.actualOpening)}
+                              />
+                            </div>
+                            <div>
+                              <label className="label">实际流量（m³/s）</label>
+                              <input
+                                type="number"
+                                name="actualFlow"
+                                step="10"
+                                className="input"
+                                placeholder={formatDecimal(order.actualFlow)}
+                              />
+                            </div>
+                            <div>
+                              <label className="label">涉及金额（元）</label>
+                              <input
+                                type="number"
+                                name="amount"
+                                className="input"
+                                placeholder={formatDecimal(order.amount)}
+                              />
+                            </div>
                           </div>
                           <div>
-                            <label className="label">实际开度（米）</label>
-                            <input
-                              type="number"
-                              name="actualOpening"
-                              step="0.1"
-                              className="input"
-                              placeholder={formatDecimal(order.actualOpening)}
-                            />
-                          </div>
-                          <div>
-                            <label className="label">实际流量（m³/s）</label>
-                            <input
-                              type="number"
-                              name="actualFlow"
-                              step="10"
-                              className="input"
-                              placeholder={formatDecimal(order.actualFlow)}
-                            />
-                          </div>
-                          <div>
-                            <label className="label">涉及金额（元）</label>
-                            <input
-                              type="number"
-                              name="amount"
-                              className="input"
-                              placeholder={formatDecimal(order.amount)}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="label">执行说明</label>
-                          <textarea
-                            name="remark"
-                            className="textarea"
-                            rows={3}
-                            placeholder="请输入现场执行说明..."
-                          />
-                        </div>
-                        <button type="submit" className="btn btn-primary mt-4">
-                          保存执行数据
-                        </button>
-                      </form>
-
-                      <form
-                        action={`/api/orders/${order.id}/supplement`}
-                        method="POST"
-                        className="p-6 bg-purple-50 rounded-lg border border-purple-200"
-                      >
-                        <h3 className="font-medium text-purple-800 mb-4">补充业务材料</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="label">业务记录</label>
-                            <textarea
-                              name="businessRecord"
-                              className="textarea"
-                              rows={3}
-                              placeholder="请输入业务记录详情..."
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="label">现场说明</label>
-                            <textarea
-                              name="siteDescription"
-                              className="textarea"
-                              rows={3}
-                              placeholder="请输入现场情况说明..."
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="label">备注</label>
+                            <label className="label">执行说明</label>
                             <textarea
                               name="remark"
                               className="textarea"
-                              rows={2}
-                              placeholder="其他需要说明的情况..."
+                              rows={3}
+                              placeholder="请输入现场执行说明..."
                             />
                           </div>
-                        </div>
-                        <button type="submit" className="btn btn-secondary mt-4">
-                          提交补充材料
-                        </button>
-                      </form>
+                          <button type="submit" className="btn btn-primary mt-4">
+                            保存执行数据
+                          </button>
+                        </form>
+                      )}
 
-                      {order.status === "PROCESSING" && (
+                      {canSupplement && (
+                        <form
+                          action={`/api/orders/${order.id}/supplement`}
+                          method="POST"
+                          className="p-6 bg-purple-50 rounded-lg border border-purple-200"
+                        >
+                          <h3 className="font-medium text-purple-800 mb-4">③ 补充业务记录与现场说明</h3>
+                          <p className="text-xs text-purple-600 mb-4">（仅经办人可执行此操作）</p>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="label">业务记录 <span className="text-red-500">*</span></label>
+                              <textarea
+                                name="businessRecord"
+                                className="textarea"
+                                rows={3}
+                                placeholder="请输入业务记录详情..."
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="label">现场说明 <span className="text-red-500">*</span></label>
+                              <textarea
+                                name="siteDescription"
+                                className="textarea"
+                                rows={3}
+                                placeholder="请输入现场情况说明..."
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="label">备注</label>
+                              <textarea
+                                name="remark"
+                                className="textarea"
+                                rows={2}
+                                placeholder="其他需要说明的情况..."
+                              />
+                            </div>
+                          </div>
+                          <button type="submit" className="btn btn-secondary mt-4">
+                            提交补充材料
+                          </button>
+                        </form>
+                      )}
+
+                      {canSubmitReview && (
                         <form
                           action={`/api/orders/${order.id}/submit-review`}
                           method="POST"
                           className="p-6 bg-indigo-50 rounded-lg border border-indigo-200"
                         >
-                          <h3 className="font-medium text-indigo-800 mb-4">提交复核</h3>
+                          <h3 className="font-medium text-indigo-800 mb-4">④ 提交复核</h3>
+                          <p className="text-xs text-indigo-600 mb-4">（仅经办人可执行此操作）</p>
                           <div className="space-y-4">
                             <div>
-                              <label className="label">处理结论</label>
+                              <label className="label">处理结论 <span className="text-red-500">*</span></label>
                               <textarea
                                 name="conclusion"
                                 className="textarea"
@@ -468,7 +538,7 @@ export default async function OrderDetailPage({
                               />
                             </div>
                             <div>
-                              <label className="label">采用依据</label>
+                              <label className="label">采用依据 <span className="text-red-500">*</span></label>
                               <textarea
                                 name="evidenceBasis"
                                 className="textarea"
@@ -486,17 +556,18 @@ export default async function OrderDetailPage({
                     </div>
                   )}
 
-                  {order.status === "PENDING_REVIEW" && (
+                  {canDoReview && (
                     <div className="space-y-4">
                       <form
                         action={`/api/orders/${order.id}/review`}
                         method="POST"
                         className="p-6 bg-green-50 rounded-lg border border-green-200"
                       >
-                        <h3 className="font-medium text-green-800 mb-4">复核通过</h3>
+                        <h3 className="font-medium text-green-800 mb-4">⑤ 复核通过</h3>
+                        <p className="text-xs text-green-600 mb-4">（仅复核人可执行此操作）</p>
                         <div className="space-y-4">
                           <div>
-                            <label className="label">复核结论</label>
+                            <label className="label">复核结论 <span className="text-red-500">*</span></label>
                             <textarea
                               name="conclusion"
                               className="textarea"
@@ -530,10 +601,11 @@ export default async function OrderDetailPage({
                         method="POST"
                         className="p-6 bg-red-50 rounded-lg border border-red-200"
                       >
-                        <h3 className="font-medium text-red-800 mb-4">复核退回</h3>
+                        <h3 className="font-medium text-red-800 mb-4">⑥ 复核退回</h3>
+                        <p className="text-xs text-red-600 mb-4">（仅复核人可执行此操作）</p>
                         <div className="space-y-4">
                           <div>
-                            <label className="label">复核结论</label>
+                            <label className="label">复核结论 <span className="text-red-500">*</span></label>
                             <textarea
                               name="conclusion"
                               className="textarea"
@@ -552,7 +624,7 @@ export default async function OrderDetailPage({
                             />
                           </div>
                           <div>
-                            <label className="label">阻断原因</label>
+                            <label className="label">阻断原因 <span className="text-red-500">*</span></label>
                             <textarea
                               name="blockReason"
                               className="textarea"
@@ -562,7 +634,7 @@ export default async function OrderDetailPage({
                             />
                           </div>
                           <div>
-                            <label className="label">补救路径</label>
+                            <label className="label">补救路径 <span className="text-red-500">*</span></label>
                             <textarea
                               name="remedyPath"
                               className="textarea"
@@ -584,17 +656,19 @@ export default async function OrderDetailPage({
                     </div>
                   )}
 
-                  {order.status === "REVIEW_APPROVED" && (
+                  {canDoArchive && (
                     <form
                       action={`/api/orders/${order.id}/archive`}
                       method="POST"
                       className="p-6 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <h3 className="font-medium text-gray-800 mb-4">归档处理</h3>
+                      <h3 className="font-medium text-gray-800 mb-4">⑦ 归档处理</h3>
+                      <p className="text-xs text-gray-600 mb-4">（仅复核人或管理员可执行此操作）</p>
                       <p className="text-gray-600 mb-4">
                         复核已通过，确认将该记录归档。归档后记录将变为只读状态。
                       </p>
                       <button type="submit" className="btn btn-secondary">
+                        <FileCheck className="w-4 h-4 mr-2" />
                         确认归档
                       </button>
                     </form>

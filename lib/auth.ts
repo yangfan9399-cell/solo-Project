@@ -1,15 +1,35 @@
+import { cookies } from "next/headers";
 import { UserRole, type CurrentUser } from "./types";
 
-const MOCK_USERS: CurrentUser[] = [
-  { id: "user-op-001", name: "张经办", role: UserRole.OPERATOR },
-  { id: "user-op-002", name: "李经办", role: UserRole.OPERATOR },
-  { id: "user-rv-001", name: "王复核", role: UserRole.REVIEWER },
-  { id: "user-rv-002", name: "赵复核", role: UserRole.REVIEWER },
-  { id: "user-admin-001", name: "系统管理员", role: UserRole.ADMIN },
+export const MOCK_USERS: CurrentUser[] = [
+  { id: "user-op-001", name: "李经办", role: UserRole.OPERATOR },
+  { id: "user-op-002", name: "王经办", role: UserRole.OPERATOR },
+  { id: "user-rv-001", name: "张复核", role: UserRole.REVIEWER },
+  { id: "user-admin-001", name: "赵管理员", role: UserRole.ADMIN },
 ];
 
 export async function getCurrentUser(): Promise<CurrentUser> {
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("currentUserId")?.value;
+    if (userId) {
+      const found = MOCK_USERS.find((u) => u.id === userId);
+      if (found) return found;
+    }
+  } catch (e) {
+    // 忽略 cookies 读取错误
+  }
   return MOCK_USERS[0];
+}
+
+export async function setCurrentUser(userId: string): Promise<CurrentUser> {
+  const cookieStore = await cookies();
+  const found = MOCK_USERS.find((u) => u.id === userId);
+  if (found) {
+    cookieStore.set("currentUserId", userId, { path: "/" });
+    return found;
+  }
+  throw new Error("用户不存在");
 }
 
 export async function getOperatorUsers() {

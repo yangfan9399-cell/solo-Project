@@ -6,6 +6,7 @@ import { OrderStatus } from "@/lib/types";
 import type { OrderSummary } from "@/lib/types";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
+import { UserSwitcher } from "@/components/ui/UserSwitcher";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -49,6 +50,7 @@ export default async function ProcessingDeskPage() {
 
   return (
     <div className="space-y-6">
+      <UserSwitcher />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center">
           <Settings className="w-7 h-7 mr-3 text-primary-600" />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getOrderList } from "@/lib/data-service";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CategoryBadge } from "@/components/ui/CategoryBadge";
+import { UserSwitcher } from "@/components/ui/UserSwitcher";
 import { formatDate, formatDecimal, getStatusBgColor } from "@/lib/utils";
 import {
   Search,
@@ -38,6 +39,7 @@ export default async function OrdersListPage({
 
   return (
     <div className="space-y-6">
+      <UserSwitcher />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">调度指令列表</h1>
         <div className="flex items-center space-x-4">
