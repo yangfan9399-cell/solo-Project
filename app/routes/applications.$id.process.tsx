@@ -1,9 +1,16 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Link, Form, useNavigation } from "@remix-run/react";
-import { getApplicationDetail, advanceWorkflow, addBusinessRecord, addAttachment } from "~/lib/queries.server";
-import { STATUS_LABELS, SAMPLE_TYPE_LABELS, ROLE_LABELS, CHANGE_TYPE_LABELS } from "~/lib/types";
-import type { AppStatus } from "~/lib/types";
+import {
+  getApplicationDetail,
+  advanceWorkflow,
+  addBusinessRecord,
+  addAttachment,
+  assertRoleAllowed,
+  assertNotArchived,
+} from "~/lib/queries.server";
+import { SAMPLE_TYPE_LABELS, ROLE_LABELS, RECORD_TYPE_LABELS } from "~/lib/types";
+import type { AppStatus, SampleType } from "~/lib/types";
 import StatusBadge from "~/components/StatusBadge";
 
 export const meta: MetaFunction = () => {
@@ -24,10 +31,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const id = Number(params.id);
   if (isNaN(id)) throw new Response("Not Found", { status: 404 });
 
+  const detail = await getApplicationDetail(id);
+  if (!detail) throw new Response("Not Found", { status: 404 });
+
   const formData = await request.formData();
   const actionType = formData.get("actionType") as string;
   const operatorName = formData.get("operatorName") as string || "系统";
   const operatorRole = formData.get("operatorRole") as string || "processor";
+
+  await assertRoleAllowed(actionType, operatorRole, detail.application.status);
+  await assertNotArchived(detail.application.status, actionType);
 
   if (actionType === "start_processing") {
     await advanceWorkflow(id, "processing", operatorName, operatorRole, {
@@ -41,6 +54,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (actionType === "block_missing_records") {
+    if (operatorRole !== "processor") {
+      throw new Response("无权限：仅处理员可执行阻断操作", { status: 403 });
+    }
     const blockingReason = formData.get("blockingReason") as string;
     const remedyPath = formData.get("remedyPath") as string;
     const basisReference = formData.get("basisReference") as string;
@@ -69,6 +85,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (actionType === "block_inconsistent_attachments") {
+    if (operatorRole !== "processor") {
+      throw new Response("无权限：仅处理员可执行阻断操作", { status: 403 });
+    }
     const blockingReason = formData.get("blockingReason") as string;
     const remedyPath = formData.get("remedyPath") as string;
     const basisReference = formData.get("basisReference") as string;
@@ -98,36 +117,102 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (actionType === "approve_to_review") {
+    if (operatorRole !== "processor") {
+      throw new Response("无权限：仅处理员可提交复核", { status: 403 });
+    }
     const basisReference = formData.get("basisReference") as string;
     const conclusion = formData.get("conclusion") as string;
     const notes = formData.get("notes") as string;
 
     const fieldChangesData: Array<any> = [];
+    let newBudgetAmount: string | undefined;
+    let newShootingStartDate: Date | undefined;
+    let newShootingEndDate: Date | undefined;
+    let newCrewCount: number | undefined;
+
     const budgetChange = formData.get("budgetChange") as string;
     if (budgetChange === "true") {
       const oldBudget = formData.get("oldBudget") as string;
       const newBudget = formData.get("newBudget") as string;
-      fieldChangesData.push({
-        fieldName: "budgetAmount",
-        fieldLabel: "预算金额",
-        oldValue: oldBudget,
-        newValue: newBudget,
-        changedBy: operatorName,
-        changeType: "amount",
-      });
+      if (newBudget) {
+        fieldChangesData.push({
+          fieldName: "budgetAmount",
+          fieldLabel: "预算金额",
+          oldValue: oldBudget,
+          newValue: newBudget,
+          changedBy: operatorName,
+          changeType: "amount",
+        });
+        newBudgetAmount = newBudget;
+      }
     }
+
     const dateChange = formData.get("dateChange") as string;
     if (dateChange === "true") {
       const oldDate = formData.get("oldDate") as string;
       const newDate = formData.get("newDate") as string;
-      fieldChangesData.push({
-        fieldName: "shootingStartDate",
-        fieldLabel: "拍摄起止时间",
-        oldValue: oldDate,
-        newValue: newDate,
-        changedBy: operatorName,
-        changeType: "time",
-      });
+      if (newDate) {
+        fieldChangesData.push({
+          fieldName: "shootingStartDate",
+          fieldLabel: "拍摄起止时间",
+          oldValue: oldDate,
+          newValue: newDate,
+          changedBy: operatorName,
+          changeType: "time",
+        });
+        const parts = newDate.split("~").map((s) => s.trim());
+        if (parts[0]) newShootingStartDate = new Date(parts[0]);
+        if (parts[1]) newShootingEndDate = new Date(parts[1]);
+      }
+    }
+
+    const crewChange = formData.get("crewChange") as string;
+    if (crewChange === "true") {
+      const oldCrew = formData.get("oldCrew") as string;
+      const newCrew = formData.get("newCrew") as string;
+      if (newCrew) {
+        fieldChangesData.push({
+          fieldName: "crewCount",
+          fieldLabel: "剧组人数",
+          oldValue: oldCrew,
+          newValue: newCrew,
+          changedBy: operatorName,
+          changeType: "responsible",
+        });
+        newCrewCount = Number(newCrew);
+      }
+    }
+
+    const responsibleChange = formData.get("responsibleChange") as string;
+    if (responsibleChange === "true") {
+      const oldResp = formData.get("oldResponsible") as string;
+      const newResp = formData.get("newResponsible") as string;
+      if (newResp) {
+        fieldChangesData.push({
+          fieldName: "currentResponsible",
+          fieldLabel: "当前责任人",
+          oldValue: oldResp,
+          newValue: newResp,
+          changedBy: operatorName,
+          changeType: "responsible",
+        });
+      }
+    }
+
+    const conclusionChange = formData.get("conclusionChange") as string;
+    if (conclusionChange === "true") {
+      const oldConc = formData.get("oldConclusion") as string;
+      const newConc = formData.get("newConclusion") as string;
+      if (newConc) {
+        fieldChangesData.push({
+          fieldName: "conclusion",
+          fieldLabel: "验收结论",
+          oldValue: oldConc,
+          newValue: newConc,
+          changedBy: operatorName,
+          changeType: "evidence_conclusion",
+        });
+      }
     }
 
     await advanceWorkflow(id, "review", operatorName, operatorRole, {
@@ -137,8 +222,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
       notes,
       conclusion,
       newStatus: "review" as AppStatus,
-      newResponsible: "复核员",
+      newResponsible: responsibleChange === "true"
+        ? (formData.get("newResponsible") as string) || "复核员"
+        : "复核员",
       newResponsibleRole: "reviewer",
+      newBudgetAmount,
+      newShootingStartDate,
+      newShootingEndDate,
+      newCrewCount,
       fieldChangesData,
     });
     return redirect(`/applications/${id}`);
@@ -165,6 +256,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (actionType === "reprocess") {
+    if (operatorRole !== "reviewer") {
+      throw new Response("无权限：仅归档复核人可发起重新处理", { status: 403 });
+    }
     const reason = formData.get("reason") as string;
     const basisReference = formData.get("basisReference") as string;
 
@@ -215,7 +309,7 @@ export default function ProcessDesk() {
         <div className="card mb-6 bg-gray-50 border-gray-300">
           <div className="flex items-center gap-2 text-gray-500">
             <span className="text-lg">🔒</span>
-            <span className="font-medium">已归档，不可修改</span>
+            <span className="font-medium">已归档，不可修改（仅复核人可发起重新处理）</span>
           </div>
         </div>
       )}
@@ -286,6 +380,7 @@ export default function ProcessDesk() {
                   <Form method="post" className="space-y-4 border rounded-lg p-4">
                     <h3 className="font-medium text-gray-700">处理完成 - 提交复核</h3>
                     <input type="hidden" name="actionType" value="approve_to_review" />
+                    <input type="hidden" name="applicantName" value={app.applicantName} />
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="label">操作人姓名</label>
@@ -310,32 +405,89 @@ export default function ProcessDesk() {
                       <label className="label">备注</label>
                       <textarea name="notes" rows={2} className="input" />
                     </div>
-                    <details className="border rounded-lg p-3">
+
+                    <details className="border rounded-lg p-3 bg-gray-50">
                       <summary className="text-sm font-medium text-gray-600 cursor-pointer">
-                        关键字段变更（如有时填写）
+                        🔄 关键字段变更（修改后列表、详情、看板同步更新）
                       </summary>
-                      <div className="mt-3 space-y-3">
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" name="budgetChange" value="true" />
-                          <span className="text-sm">预算金额变更</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input type="text" name="oldBudget" placeholder="原金额" className="input" />
-                          <input type="text" name="newBudget" placeholder="新金额" className="input" />
+                      <div className="mt-4 space-y-4">
+                        <div className="border rounded p-3 bg-white">
+                          <label className="flex items-center gap-2 mb-2">
+                            <input type="checkbox" name="budgetChange" value="true" />
+                            <span className="text-sm font-medium">预算金额变更</span>
+                            <span className="text-xs text-gray-400">（变更类型：金额数量）</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input type="text" name="oldBudget" defaultValue={app.budgetAmount?.toString()} placeholder="原金额" className="input" readOnly />
+                            <input type="text" name="newBudget" placeholder="新金额" className="input" />
+                          </div>
                         </div>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" name="dateChange" value="true" />
-                          <span className="text-sm">拍摄时间变更</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input type="text" name="oldDate" placeholder="原时间" className="input" />
-                          <input type="text" name="newDate" placeholder="新时间" className="input" />
+                        <div className="border rounded p-3 bg-white">
+                          <label className="flex items-center gap-2 mb-2">
+                            <input type="checkbox" name="dateChange" value="true" />
+                            <span className="text-sm font-medium">拍摄时间变更</span>
+                            <span className="text-xs text-gray-400">（变更类型：关键时间）</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              name="oldDate"
+                              defaultValue={
+                                app.shootingStartDate && app.shootingEndDate
+                                  ? `${new Date(app.shootingStartDate).toLocaleDateString("zh-CN")} ~ ${new Date(app.shootingEndDate).toLocaleDateString("zh-CN")}`
+                                  : ""
+                              }
+                              placeholder="原时间"
+                              className="input"
+                              readOnly
+                            />
+                            <input type="text" name="newDate" placeholder="新时间 (如: 2026/06/20 ~ 2026/06/25)" className="input" />
+                          </div>
+                        </div>
+                        <div className="border rounded p-3 bg-white">
+                          <label className="flex items-center gap-2 mb-2">
+                            <input type="checkbox" name="crewChange" value="true" />
+                            <span className="text-sm font-medium">剧组人数变更</span>
+                            <span className="text-xs text-gray-400">（变更类型：责任对象）</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input type="text" name="oldCrew" defaultValue={app.crewCount?.toString()} placeholder="原人数" className="input" readOnly />
+                            <input type="text" name="newCrew" placeholder="新人数" className="input" />
+                          </div>
+                        </div>
+                        <div className="border rounded p-3 bg-white">
+                          <label className="flex items-center gap-2 mb-2">
+                            <input type="checkbox" name="responsibleChange" value="true" />
+                            <span className="text-sm font-medium">当前责任人变更</span>
+                            <span className="text-xs text-gray-400">（变更类型：责任对象）</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input type="text" name="oldResponsible" defaultValue={app.currentResponsible || ""} placeholder="原责任人" className="input" readOnly />
+                            <input type="text" name="newResponsible" placeholder="新责任人" className="input" />
+                          </div>
+                        </div>
+                        <div className="border rounded p-3 bg-white">
+                          <label className="flex items-center gap-2 mb-2">
+                            <input type="checkbox" name="conclusionChange" value="true" />
+                            <span className="text-sm font-medium">证据结论变更</span>
+                            <span className="text-xs text-gray-400">（变更类型：证据结论）</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input type="text" name="oldConclusion" defaultValue={app.conclusion || ""} placeholder="原结论" className="input" readOnly />
+                            <input type="text" name="newConclusion" placeholder="新结论" className="input" />
+                          </div>
                         </div>
                       </div>
                     </details>
-                    <button type="submit" className="btn-success" disabled={isSubmitting}>
-                      {isSubmitting ? "提交中..." : "提交复核"}
-                    </button>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button type="submit" className="btn-success" disabled={isSubmitting}>
+                        {isSubmitting ? "提交中..." : "提交复核"}
+                      </button>
+                      <span className="text-xs text-gray-500">
+                        （关键字段变更将自动同步到列表、详情页和看板统计）
+                      </span>
+                    </div>
                   </Form>
 
                   <Form method="post" className="space-y-4 border border-red-200 rounded-lg p-4 bg-red-50">
@@ -447,7 +599,8 @@ export default function ProcessDesk() {
                 <div className="space-y-6">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-sm text-yellow-800">
-                      当前申请已退回补证，申请人可补充业务记录、现场说明和证据附件。
+                      📋 当前申请已退回补证，申请人可补充业务记录、现场说明和证据附件。
+                      补充完毕后选择"申请人"角色并重新提交处理。
                     </p>
                   </div>
 
@@ -459,7 +612,7 @@ export default function ProcessDesk() {
                       <select name="recordType" className="input">
                         <option value="business_record">业务记录</option>
                         <option value="site_description">现场说明</option>
-                        <option value="evidence_attachment">证据附件</option>
+                        <option value="evidence_attachment">证据附件说明</option>
                       </select>
                     </div>
                     <div>
@@ -528,6 +681,9 @@ export default function ProcessDesk() {
                         </select>
                       </div>
                     </div>
+                    <p className="text-xs text-gray-500 mb-2">
+                      （申请人仅在退回补证状态下可重新提交处理）
+                    </p>
                     <button type="submit" className="btn-success" disabled={isSubmitting}>
                       {isSubmitting ? "提交中..." : "重新提交处理"}
                     </button>
@@ -542,7 +698,7 @@ export default function ProcessDesk() {
                     <Link to={`/applications/${app.id}/review`} className="underline font-medium ml-1">
                       复核归档页面
                     </Link>
-                    进行操作。
+                    进行操作（仅归档复核人可执行）。
                   </p>
                 </div>
               )}
@@ -551,9 +707,9 @@ export default function ProcessDesk() {
 
           {isArchived && (
             <div className="card">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800">重新处理</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">🔄 重新处理</h2>
               <p className="text-sm text-gray-500 mb-4">
-                归档后如需修改，必须重新处理并生成新的节点记录。
+                归档记录只读。如需调整，必须由归档复核人发起重新处理，将生成新的节点记录。
               </p>
               <Form method="post" className="space-y-4">
                 <input type="hidden" name="actionType" value="reprocess" />
@@ -565,8 +721,7 @@ export default function ProcessDesk() {
                   <div>
                     <label className="label">操作人角色</label>
                     <select name="operatorRole" className="input">
-                      <option value="reviewer">归档复核人</option>
-                      <option value="processor">处理员</option>
+                      <option value="reviewer">归档复核人（唯一有权限）</option>
                     </select>
                   </div>
                 </div>
@@ -579,7 +734,7 @@ export default function ProcessDesk() {
                   <textarea name="basisReference" rows={2} className="input" />
                 </div>
                 <button type="submit" className="btn-warning" disabled={isSubmitting}>
-                  {isSubmitting ? "提交中..." : "发起重新处理"}
+                  {isSubmitting ? "提交中..." : "发起重新处理（生成新节点）"}
                 </button>
               </Form>
             </div>
@@ -588,7 +743,7 @@ export default function ProcessDesk() {
 
         <div className="space-y-6">
           <div className="card">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">申请摘要</h2>
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">申请摘要（实时同步）</h2>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-gray-500">项目</dt>
@@ -603,16 +758,39 @@ export default function ProcessDesk() {
                 <dd className="font-medium">{app.applicantName}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">预算</dt>
+                <dt className="text-gray-500">拍摄时间</dt>
                 <dd className="font-medium">
+                  {app.shootingStartDate
+                    ? `${new Date(app.shootingStartDate).toLocaleDateString("zh-CN")}~${new Date(app.shootingEndDate!).toLocaleDateString("zh-CN")}`
+                    : "-"}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">剧组人数</dt>
+                <dd className="font-medium">{app.crewCount || "-"}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">预算</dt>
+                <dd className="font-medium text-blue-700">
                   {app.budgetAmount ? `¥${Number(app.budgetAmount).toLocaleString()}` : "-"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">结论</dt>
-                <dd className="font-medium">{app.conclusion || "暂无"}</dd>
+                <dt className="text-gray-500">当前责任人</dt>
+                <dd className="font-medium text-purple-700">
+                  {app.currentResponsible || "-"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 text-xs mb-1">结论</dt>
+                <dd className="font-medium border rounded p-2 bg-gray-50 text-gray-800 text-xs">
+                  {app.conclusion || "暂无结论"}
+                </dd>
               </div>
             </dl>
+            <p className="mt-3 text-xs text-gray-400 border-t pt-2">
+              💡 关键字段变更后，上述摘要、列表、看板同步更新
+            </p>
           </div>
 
           {businessRecords.length > 0 && (
@@ -622,8 +800,7 @@ export default function ProcessDesk() {
                 {businessRecords.map((r) => (
                   <div key={r.id} className="text-sm border-l-2 border-blue-300 pl-3">
                     <span className="text-xs text-gray-400">
-                      {r.recordType === "business_record" ? "业务记录" :
-                       r.recordType === "site_description" ? "现场说明" : "证据附件"}
+                      {RECORD_TYPE_LABELS[r.recordType] || r.recordType}
                       {" · "}{r.createdBy}
                     </span>
                     <p className="text-gray-700">{r.content}</p>

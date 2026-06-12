@@ -9,6 +9,68 @@ import {
 } from "./schema";
 import type { AppStatus } from "./types";
 
+export const PROCESSOR_ACTIONS = new Set([
+  "start_processing",
+  "block_missing_records",
+  "block_inconsistent_attachments",
+  "approve_to_review",
+]);
+
+export const REVIEWER_ACTIONS = new Set([
+  "confirm_archive",
+  "return_for_evidence",
+  "reprocess",
+]);
+
+export const APPLICANT_ACTIONS = new Set([
+  "add_business_record",
+  "add_attachment",
+  "start_processing",
+]);
+
+export async function assertRoleAllowed(actionType: string, operatorRole: string, applicationStatus: string) {
+  if (operatorRole === "reviewer") {
+    if (PROCESSOR_ACTIONS.has(actionType)) {
+      throw new Response("无权限：复核人不能执行处理员操作", { status: 403 });
+    }
+  }
+
+  if (operatorRole === "applicant") {
+    if (!APPLICANT_ACTIONS.has(actionType)) {
+      throw new Response("无权限：申请人只能补充业务记录、现场说明和证据附件", { status: 403 });
+    }
+    if (actionType === "start_processing" && applicationStatus !== "returned") {
+      throw new Response("无权限：申请人仅能在退回补证状态下重新提交", { status: 403 });
+    }
+  }
+
+  if (operatorRole === "processor" || operatorRole === "reviewer") {
+    if (actionType === "reprocess") {
+      if (operatorRole !== "reviewer") {
+        throw new Response("无权限：仅复核人可发起重新处理", { status: 403 });
+      }
+    }
+  }
+}
+
+export async function assertNotArchived(
+  status: string,
+  actionType: string
+) {
+  if (status === "archived" && actionType !== "reprocess") {
+    throw new Response("已归档：归档记录只读，需发起重新处理才能修改", { status: 403 });
+  }
+}
+
+export async function assertReviewerOnly(
+  actionType: string,
+  operatorRole: string
+) {
+  if (REVIEWER_ACTIONS.has(actionType) && operatorRole !== "reviewer") {
+    throw new Response("无权限：该操作仅归档复核人可执行", { status: 403 });
+  }
+}
+
 export async function getApplicationDetail(id: number) {
   const app = await db.query.applications.findFirst({
     where: eq(applications.id, id),
@@ -116,6 +178,10 @@ export async function advanceWorkflow(
     newResponsible?: string;
     newResponsibleRole?: string;
     conclusion?: string;
+    newBudgetAmount?: string;
+    newShootingStartDate?: Date;
+    newShootingEndDate?: Date;
+    newCrewCount?: number;
     fieldChangesData?: Array<{
       fieldName: string;
       fieldLabel: string;
@@ -147,6 +213,10 @@ export async function advanceWorkflow(
   if (data.newResponsible) updateData.currentResponsible = data.newResponsible;
   if (data.newResponsibleRole) updateData.currentResponsibleRole = data.newResponsibleRole;
   if (data.conclusion !== undefined) updateData.conclusion = data.conclusion;
+  if (data.newBudgetAmount !== undefined) updateData.budgetAmount = data.newBudgetAmount;
+  if (data.newShootingStartDate !== undefined) updateData.shootingStartDate = data.newShootingStartDate;
+  if (data.newShootingEndDate !== undefined) updateData.shootingEndDate = data.newShootingEndDate;
+  if (data.newCrewCount !== undefined) updateData.crewCount = data.newCrewCount;
 
   await db
     .update(applications)
@@ -165,6 +235,44 @@ export async function advanceWorkflow(
         changedBy: fc.changedBy,
         changeType: fc.changeType,
       });
+
+      switch (fc.fieldName) {
+        case "budgetAmount":
+          if (fc.newValue !== null && fc.newValue !== undefined) {
+            await db.update(applications).set({ budgetAmount: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "shootingStartDate":
+          if (fc.newValue) {
+            await db.update(applications).set({ shootingStartDate: new Date(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "shootingEndDate":
+          if (fc.newValue) {
+            await db.update(applications).set({ shootingEndDate: new Date(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "crewCount":
+          if (fc.newValue) {
+            await db.update(applications).set({ crewCount: Number(fc.newValue), updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "conclusion":
+          if (fc.newValue !== null && fc.newValue !== undefined) {
+            await db.update(applications).set({ conclusion: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "currentResponsible":
+          if (fc.newValue) {
+            await db.update(applications).set({ currentResponsible: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+        case "currentResponsibleRole":
+          if (fc.newValue) {
+            await db.update(applications).set({ currentResponsibleRole: fc.newValue, updatedAt: new Date() }).where(eq(applications.id, appId));
+          }
+          break;
+      }
     }
   }
 

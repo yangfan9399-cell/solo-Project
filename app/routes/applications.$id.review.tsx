@@ -1,8 +1,12 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Link, Form, useNavigation } from "@remix-run/react";
-import { getApplicationDetail, advanceWorkflow } from "~/lib/queries.server";
-import { STATUS_LABELS, SAMPLE_TYPE_LABELS, ROLE_LABELS } from "~/lib/types";
+import {
+  getApplicationDetail,
+  advanceWorkflow,
+  assertNotArchived,
+  assertReviewerOnly,
+} from "~/lib/queries.server";
 import type { AppStatus } from "~/lib/types";
 import StatusBadge from "~/components/StatusBadge";
 import Timeline from "~/components/Timeline";
@@ -26,15 +30,33 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const id = Number(params.id);
   if (isNaN(id)) throw new Response("Not Found", { status: 404 });
 
+  const detail = await getApplicationDetail(id);
+  if (!detail) throw new Response("Not Found", { status: 404 });
+
   const formData = await request.formData();
   const actionType = formData.get("actionType") as string;
   const operatorName = formData.get("operatorName") as string || "李复核";
-  const operatorRole = "reviewer";
+  const operatorRole = formData.get("operatorRole") as string || "reviewer";
+
+  await assertReviewerOnly(actionType, operatorRole);
+  await assertNotArchived(detail.application.status, actionType);
 
   if (actionType === "confirm_archive") {
     const conclusion = formData.get("conclusion") as string;
     const basisReference = formData.get("basisReference") as string;
     const notes = formData.get("notes") as string;
+
+    const fieldChangesData: Array<any> = [];
+    if (conclusion && conclusion !== detail.application.conclusion) {
+      fieldChangesData.push({
+        fieldName: "conclusion",
+        fieldLabel: "验收结论",
+        oldValue: detail.application.conclusion || "",
+        newValue: conclusion,
+        changedBy: operatorName,
+        changeType: "evidence_conclusion",
+      });
+    }
 
     await advanceWorkflow(id, "archived", operatorName, operatorRole, {
       actionTaken: "确认结论，归档完成",
@@ -45,6 +67,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       newStatus: "archived" as AppStatus,
       newResponsible: operatorName,
       newResponsibleRole: operatorRole,
+      fieldChangesData,
     });
     return redirect(`/applications/${id}`);
   }
@@ -54,15 +77,27 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const remedyPath = formData.get("remedyPath") as string;
     const basisReference = formData.get("basisReference") as string;
 
+    const fieldChangesData: Array<any> = [];
+    fieldChangesData.push({
+      fieldName: "conclusion",
+      fieldLabel: "验收结论",
+      oldValue: detail.application.conclusion || "待确认",
+      newValue: "退回补证：" + reason,
+      changedBy: operatorName,
+      changeType: "evidence_conclusion",
+    });
+
     await advanceWorkflow(id, "returned", operatorName, operatorRole, {
       actionTaken: `退回补证: ${reason}`,
       actionResult: "退回补证",
       blockingReason: reason,
       remedyPath,
       basisReference,
+      conclusion: "退回补证：" + reason,
       newStatus: "returned" as AppStatus,
       newResponsible: formData.get("applicantName") as string,
       newResponsibleRole: "applicant",
+      fieldChangesData,
     });
     return redirect(`/applications/${id}`);
   }
@@ -104,7 +139,7 @@ export default function ReviewPage() {
                 <Link to={`/applications/${app.id}/process`} className="text-blue-600 underline mx-1">
                   处理台
                 </Link>
-                发起重新处理，将生成新的节点记录。
+                由归档复核人发起重新处理，将生成新的节点记录。
               </p>
             </div>
           </div>
@@ -146,7 +181,7 @@ export default function ReviewPage() {
               </div>
               <div>
                 <dt className="text-gray-500">预算金额</dt>
-                <dd className="font-medium">
+                <dd className="font-medium text-blue-700">
                   {app.budgetAmount ? `¥${Number(app.budgetAmount).toLocaleString()}` : "-"}
                 </dd>
               </div>
@@ -161,15 +196,27 @@ export default function ReviewPage() {
                 <dd className="font-medium">{app.safetyPlanSummary || "-"}</dd>
               </div>
               <div className="col-span-2">
+                <dt className="text-gray-500">当前责任人</dt>
+                <dd className="font-medium text-purple-700">
+                  {app.currentResponsible || "-"}
+                  {app.currentResponsibleRole ? ` (${app.currentResponsibleRole === "reviewer" ? "归档复核人" : app.currentResponsibleRole === "processor" ? "处理员" : "申请人"})` : ""}
+                </dd>
+              </div>
+              <div className="col-span-2">
                 <dt className="text-gray-500">当前结论</dt>
-                <dd className="font-medium text-blue-700">{app.conclusion || "暂无"}</dd>
+                <dd className="font-medium text-green-700 border rounded p-3 bg-gray-50">
+                  {app.conclusion || "暂无"}
+                </dd>
               </div>
             </dl>
           </div>
 
           {fieldChanges.length > 0 && (
             <div className="card">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800">关键字段变更记录</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">关键字段变更记录（同步来源）</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                💡 列表摘要、详情结论、看板统计均由此表 + applications 主表共同驱动，数据完全一致
+              </p>
               <DiffViewer changes={fieldChanges.map((fc) => ({
                 fieldName: fc.fieldName,
                 fieldLabel: fc.fieldLabel,
@@ -225,6 +272,7 @@ export default function ReviewPage() {
               <Form method="post" className="card border-green-200 bg-green-50">
                 <h2 className="text-lg font-semibold mb-4 text-green-800">✅ 确认结论 - 归档</h2>
                 <input type="hidden" name="actionType" value="confirm_archive" />
+                <input type="hidden" name="applicantName" value={app.applicantName} />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="label">复核人姓名</label>
@@ -232,11 +280,16 @@ export default function ReviewPage() {
                   </div>
                   <div>
                     <label className="label">角色</label>
-                    <input type="text" value="归档复核人" disabled className="input bg-gray-100" />
+                    <select name="operatorRole" className="input">
+                      <option value="reviewer">归档复核人（唯一有权限）</option>
+                    </select>
                   </div>
                 </div>
                 <div>
-                  <label className="label">最终结论</label>
+                  <label className="label">
+                    最终结论
+                    <span className="text-xs text-gray-400 ml-2">（修改后将同步到列表、详情、看板）</span>
+                  </label>
                   <textarea
                     name="conclusion"
                     rows={3}
@@ -254,7 +307,7 @@ export default function ReviewPage() {
                   <textarea name="notes" rows={2} className="input" />
                 </div>
                 <button type="submit" className="btn-success mt-4" disabled={isSubmitting}>
-                  {isSubmitting ? "提交中..." : "确认归档"}
+                  {isSubmitting ? "提交中..." : "确认归档（仅归档复核人可执行）"}
                 </button>
               </Form>
 
@@ -262,6 +315,18 @@ export default function ReviewPage() {
                 <h2 className="text-lg font-semibold mb-4 text-red-800">↩️ 退回补证</h2>
                 <input type="hidden" name="actionType" value="return_for_evidence" />
                 <input type="hidden" name="applicantName" value={app.applicantName} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">复核人姓名</label>
+                    <input type="text" name="operatorName" defaultValue="李复核" className="input" />
+                  </div>
+                  <div>
+                    <label className="label">角色</label>
+                    <select name="operatorRole" className="input">
+                      <option value="reviewer">归档复核人（唯一有权限）</option>
+                    </select>
+                  </div>
+                </div>
                 <div>
                   <label className="label">退回原因</label>
                   <textarea
@@ -285,7 +350,7 @@ export default function ReviewPage() {
                   <textarea name="basisReference" rows={2} className="input" />
                 </div>
                 <button type="submit" className="btn-danger mt-4" disabled={isSubmitting}>
-                  {isSubmitting ? "提交中..." : "退回补证"}
+                  {isSubmitting ? "提交中..." : "退回补证（仅归档复核人可执行）"}
                 </button>
               </Form>
             </div>
