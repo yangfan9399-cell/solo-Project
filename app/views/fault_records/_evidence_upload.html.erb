@@ -1,0 +1,27 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+    <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+      <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+      证据附件上传
+    </h3>
+  </div>
+  <%= form_with url: upload_evidence_fault_record_path(fault_record), method: :post, class: "px-6 py-4 space-y-4" do |f| %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">附件类型</label>
+        <%= select_tag "evidence_attachment[attachment_type]", options_for_select(attachment_type_options_for_select), class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm" %>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">文件名</label>
+        <%= text_field_tag "evidence_attachment[file_name]", nil, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm", placeholder: "例如: 现场照片_20240612.jpg" %>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-600 mb-1">附件说明</label>
+        <%= text_area_tag "evidence_attachment[description]", nil, rows: 2, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm", placeholder: "详细描述附件内容，例如：门体卡滞现场照片、维修记录扫描件等", required: true %>
+      </div>
+    </div>
+    <div class="flex items-center justify-end">
+      <%= submit_tag "添加证据记录", class: "px-5 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 text-sm font-medium cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

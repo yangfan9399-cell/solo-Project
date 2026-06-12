@@ -1,0 +1,58 @@
+<div id="processing_panel" class="bg-white rounded-xl shadow-sm border border-indigo-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-indigo-200 bg-gradient-to-r from-indigo-50 to-sky-50">
+    <h3 class="text-sm font-semibold text-indigo-900 flex items-center gap-2">
+      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      处理台 - 补充业务记录
+    </h3>
+    <p class="text-xs text-indigo-600 mt-1">一线处理人可补充业务记录、现场说明，并更新处理相关字段</p>
+  </div>
+  <%= form_with model: fault_record, url: process_record_fault_record_path(fault_record), method: :post, class: "px-6 py-4 space-y-4" do |f| %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2">
+        <%= f.label :business_record, "业务记录", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.text_area :business_record, rows: 3, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm", placeholder: "记录处理过程、工单号、到达/完成时间等业务信息..." %>
+      </div>
+      <div class="md:col-span-2">
+        <%= f.label :on_site_description, "现场说明", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.text_area :on_site_description, rows: 3, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm", placeholder: "详细描述现场情况、处理措施、测试结果等..." %>
+      </div>
+      <div>
+        <%= f.label :actual_start_at, "实际开始时间", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.datetime_field :actual_start_at, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :actual_end_at, "实际结束时间", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.datetime_field :actual_end_at, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :actual_cost, "实际费用", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.number_field :actual_cost, step: 0.01, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" %>
+      </div>
+      <div>
+        <%= f.label :responsible_person, "责任人", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.text_field :responsible_person, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" %>
+      </div>
+      <div class="flex items-center gap-3 pt-4">
+        <div class="flex items-center gap-2">
+          <%= f.check_box :handler_qualified, class: "w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" %>
+          <%= f.label :handler_qualified, "处理人符合资质要求", class: "text-sm text-slate-700" %>
+        </div>
+        <div class="flex items-center gap-2">
+          <%= f.check_box :notified_confirmation, class: "w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" %>
+          <%= f.label :notified_confirmation, "已收到运营方确认通知", class: "text-sm text-slate-700" %>
+        </div>
+      </div>
+      <div class="md:col-span-2">
+        <%= f.label :conclusion, "处理结论", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.text_area :conclusion, rows: 2, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm", placeholder: "总结处理结果..." %>
+      </div>
+      <div class="md:col-span-2">
+        <%= f.label :basis_doc, "采用依据", class: "block text-xs font-medium text-slate-600 mb-1" %>
+        <%= f.text_area :basis_doc, rows: 2, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm", placeholder: "引用的规程、作业指导书等..." %>
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-3 pt-2">
+      <%= f.submit "保存处理记录", class: "px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

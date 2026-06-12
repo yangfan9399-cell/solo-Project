@@ -1,0 +1,93 @@
+<% content_for :title, "#{@fault_record.ticket_no} - 工单详情" %>
+
+<%= turbo_frame_tag dom_id(@fault_record) do %>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <%= link_to "← 返回列表", fault_records_path, class: "text-slate-500 hover:text-slate-700 text-sm" %>
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-slate-900">工单 <%= @fault_record.ticket_no %></h1>
+            <%= status_badge(@fault_record.current_status) %>
+            <%= abnormal_badge(@fault_record.abnormal_type) %>
+            <%= level_badge(@fault_record.fault_level) %>
+            <% if @fault_record.is_archived? %>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border bg-slate-200 text-slate-700 border-slate-300">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                已归档（只读）
+              </span>
+            <% end %>
+          </div>
+          <p class="text-sm text-slate-500 mt-1"><%= @fault_record.line_name %> · <%= @fault_record.station_name %> · 站台门 <%= @fault_record.platform_door_no %></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <% if policy(@fault_record).review_pass? && @fault_record.pending_review? %>
+          <%= button_to "开始复核", start_review_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium" %>
+        <% end %>
+        <% if policy(@fault_record).review_pass? && @fault_record.reviewing? %>
+          <%= button_to "复核通过并归档", review_pass_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium", data: { confirm: "确认复核通过并归档此工单？" } %>
+          <%= button_to "退回补证", return_supplement_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm font-medium" %>
+        <% end %>
+        <% if policy(@fault_record).submit_review? %>
+          <%= button_to "提交复核", submit_review_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium" %>
+        <% end %>
+        <% if policy(@fault_record).reopen? %>
+          <%= button_to "重新处理", reopen_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium", data: { confirm: "重新处理将生成新节点，确认继续？" } %>
+        <% end %>
+        <% if policy(@fault_record).accept? && @fault_record.pending_acceptance? %>
+          <%= button_to "受理工单", accept_fault_record_path(@fault_record), method: :post, class: "px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 text-sm font-medium" %>
+        <% end %>
+        <% if policy(@fault_record).assign_handler? && (@fault_record.accepted? || @fault_record.returned_for_supplement?) %>
+          <div class="relative" data-controller="dropdown">
+            <button type="button" data-action="click->dropdown#toggle" class="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 text-sm font-medium">
+              分配处理人
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div data-dropdown-target="menu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-slate-200 z-20 p-3">
+              <p class="text-xs text-slate-500 mb-2">选择处理人</p>
+              <div class="space-y-1">
+                <% User.field_handler.each do |handler| %>
+                  <%= button_to assign_handler_fault_record_path(@fault_record, handler_id: handler.id), method: :post, class: "w-full text-left px-3 py-2 rounded hover:bg-slate-50 text-sm flex items-center justify-between group" do %>
+                    <span class="text-slate-700"><%= handler.name %></span>
+                    <span class="text-xs text-slate-400 group-hover:text-indigo-600">分配 →</span>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @fault_record.abnormal? %>
+      <%= render "fault_records/abnormal_panel", fault_record: @fault_record %>
+    <% end %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <%= render "fault_records/basic_info", fault_record: @fault_record %>
+        <%= render "fault_records/key_objects", fault_record: @fault_record %>
+
+        <% if @fault_record.is_archived? %>
+          <%= render "fault_records/readonly_notice", fault_record: @fault_record %>
+        <% else %>
+          <% if policy(@fault_record).process_record? %>
+            <%= render "fault_records/processing_panel", fault_record: @fault_record %>
+          <% end %>
+          <% if policy(@fault_record).upload_evidence? %>
+            <%= render "fault_records/evidence_upload", fault_record: @fault_record %>
+          <% end %>
+        <% end %>
+
+        <%= render "fault_records/diff_snapshots", diff_snapshots: @diff_snapshots %>
+      </div>
+
+      <div class="space-y-6">
+        <%= render "fault_records/conclusion_basis", fault_record: @fault_record %>
+        <%= render "fault_records/evidence_list", evidence_attachments: @evidence_attachments %>
+        <%= render "fault_records/workflow_timeline", workflow_nodes: @workflow_nodes, fault_record: @fault_record %>
+      </div>
+    </div>
+  </div>
+<% end %>

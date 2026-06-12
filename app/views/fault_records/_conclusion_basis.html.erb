@@ -1,0 +1,30 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+    <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+      <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      处理结论与依据
+    </h3>
+  </div>
+  <div class="px-6 py-4 space-y-4">
+    <div>
+      <div class="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">处理结论</div>
+      <div class="text-sm text-slate-700 bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+        <%= fault_record.conclusion.presence || "暂无处理结论" %>
+      </div>
+    </div>
+    <div>
+      <div class="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">采用依据</div>
+      <div class="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 border border-slate-200 whitespace-pre-line">
+        <%= fault_record.basis_doc.presence || "暂无采用依据" %>
+      </div>
+    </div>
+    <% if fault_record.remediation_path.present? && !fault_record.abnormal? %>
+      <div>
+        <div class="text-xs font-medium text-slate-500 mb-1 uppercase tracking-wider">备注说明</div>
+        <div class="text-sm text-slate-700 bg-amber-50 rounded-lg p-3 border border-amber-100 whitespace-pre-line">
+          <%= fault_record.remediation_path %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

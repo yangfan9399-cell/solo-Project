@@ -1,0 +1,45 @@
+<%= turbo_frame_tag dom_id(fault_record) do %>
+  <tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-6 py-4 whitespace-nowrap">
+      <div class="font-mono text-sm font-medium text-indigo-600"><%= link_to fault_record.ticket_no, fault_record_path(fault_record) %></div>
+      <div class="text-xs text-slate-500 mt-0.5"><%= fault_record.source_type_text %></div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <div class="text-sm font-medium text-slate-800"><%= fault_record.line_name %> · <%= fault_record.station_name %></div>
+      <div class="text-xs text-slate-500 mt-0.5">站台门编号: <%= fault_record.platform_door_no %></div>
+    </td>
+    <td class="px-6 py-4">
+      <div class="flex items-center gap-2">
+        <%= level_badge(fault_record.fault_level) %>
+        <span class="text-sm text-slate-700"><%= fault_record.fault_type_text %></span>
+      </div>
+      <div class="text-xs text-slate-500 mt-1 max-w-xs truncate"><%= fault_record.fault_description %></div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <%= status_badge(fault_record.current_status) %>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <%= abnormal_badge(fault_record.abnormal_type) || content_tag(:span, "正常", class: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200") %>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <div class="text-sm text-slate-700"><%= fault_record.current_owner_name %></div>
+      <% if fault_record.processing_duration > 0 %>
+        <div class="text-xs text-slate-500 mt-0.5">处理耗时: <%= fault_record.processing_duration_text %></div>
+      <% end %>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+      <%= format_time(fault_record.reported_at) %>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+      <div class="flex items-center justify-end gap-2">
+        <%= link_to "详情", fault_record_path(fault_record), class: "text-indigo-600 hover:text-indigo-800 font-medium" %>
+        <% if policy(fault_record).review_pass? && (fault_record.pending_review? || fault_record.reviewing?) %>
+          <%= link_to "复核", review_fault_record_path(fault_record), class: "text-violet-600 hover:text-violet-800 font-medium" %>
+        <% end %>
+        <% if policy(fault_record).process_record? %>
+          <%= link_to "处理", fault_record_path(fault_record, anchor: "processing_panel"), class: "text-slate-600 hover:text-slate-800" %>
+        <% end %>
+      </div>
+    </td>
+  </tr>
+<% end %>

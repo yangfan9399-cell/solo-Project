@@ -1,0 +1,209 @@
+<% content_for :title, "复盘看板 - 站台门故障抢修系统" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">运营复盘看板</h1>
+      <p class="text-sm text-slate-500 mt-1">多维度统计分析，点击任一统计卡片可钻取到具体工单记录</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <%= link_to "← 返回工单列表", fault_records_path, class: "text-slate-500 hover:text-slate-700 text-sm" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <%= link_to fault_records_path, class: "bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-indigo-300 transition-all block group" do %>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-slate-500">总工单数</span>
+        <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      </div>
+      <div class="text-3xl font-bold text-slate-800"><%= @total_records %></div>
+      <p class="text-xs text-slate-400 mt-1">点击查看全部 →</p>
+    <% end %>
+
+    <%= link_to fault_records_path(q: { current_status_eq: FaultRecord.current_statuses[:archived] }), class: "bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-emerald-300 transition-all block group" do %>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-slate-500">已归档</span>
+        <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div class="text-3xl font-bold text-slate-800"><%= @archived_count %></div>
+      <div class="text-xs text-emerald-600 mt-1">归档率 <%= @total_records > 0 ? ((@archived_count.to_f / @total_records) * 100).round(1) : 0 %>%</div>
+    <% end %>
+
+    <%= link_to fault_records_path(q: { abnormal_type_not_eq: FaultRecord.abnormal_types[:normal] }), class: "bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-rose-300 transition-all block group" do %>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-slate-500">异常工单</span>
+        <svg class="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div class="text-3xl font-bold text-slate-800"><%= @abnormal_count %></div>
+      <div class="text-xs text-rose-600 mt-1">异常率 <%= @total_records > 0 ? ((@abnormal_count.to_f / @total_records) * 100).round(1) : 0 %>%</div>
+    <% end %>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm font-medium text-slate-500">平均处理耗时</span>
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div class="text-3xl font-bold text-slate-800"><%= (@avg_duration / 60.0).round(1) %></div>
+      <p class="text-xs text-slate-400 mt-1">小时/单</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-sm font-semibold text-slate-800">按状态分布（点击钻取）</h3>
+      </div>
+      <div class="p-6">
+        <% max_status = [@status_counts.values.max || 1, 1].max %>
+        <div class="space-y-3">
+          <% FaultRecord.current_statuses.each do |status_key, status_val| %>
+            <% count = @status_counts[status_val] || 0 %>
+            <%= link_to fault_records_path(q: { current_status_eq: status_val }), class: "block group" do %>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="font-medium text-slate-700 group-hover:text-indigo-600 flex items-center gap-2">
+                  <%= status_badge(status_key) %>
+                </span>
+                <span class="text-slate-500 font-mono"><%= count %> 件 · <%= @total_records > 0 ? ((count.to_f / @total_records) * 100).round(1) : 0 %>%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-400 to-indigo-600 h-2.5 rounded-full group-hover:from-indigo-500 group-hover:to-indigo-700 transition-all" style="width: <%= (count.to_f / max_status * 100).to_i %>%"></div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-sm font-semibold text-slate-800">异常类型分布（点击钻取）</h3>
+      </div>
+      <div class="p-6">
+        <% abnormal_total = [@abnormal_counts.values.sum, 1].max %>
+        <div class="space-y-3">
+          <%= link_to fault_records_path(q: { abnormal_type_eq: FaultRecord.abnormal_types[:normal] }), class: "block group" do %>
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="font-medium text-slate-700 group-hover:text-emerald-600 flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-200">正常交付</span>
+              </span>
+              <span class="text-slate-500 font-mono"><%= @total_records - @abnormal_count %> 件</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-400 to-emerald-600 h-2.5 rounded-full group-hover:from-emerald-500 group-hover:to-emerald-700 transition-all" style="width: <%= (((@total_records - @abnormal_count).to_f / @total_records) * 100).to_i %>%"></div>
+            </div>
+          <% end %>
+
+          <% FaultRecord.abnormal_types.except(:normal).each do |type_key, type_val| %>
+            <% count = @abnormal_counts[type_val] || 0 %>
+            <%= link_to fault_records_path(q: { abnormal_type_eq: type_val }), class: "block group" do %>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="font-medium text-slate-700 group-hover:text-rose-600">
+                  <%= abnormal_badge(type_key) %>
+                </span>
+                <span class="text-slate-500 font-mono"><%= count %> 件 · <%= @abnormal_count > 0 ? ((count.to_f / @abnormal_count) * 100).round(1) : 0 %>%</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-rose-400 to-rose-600 h-2.5 rounded-full group-hover:from-rose-500 group-hover:to-rose-700 transition-all" style="width: <%= (count.to_f / abnormal_total * 100).to_i %>%"></div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-sm font-semibold text-slate-800">近30天故障趋势（点击日期钻取）</h3>
+      </div>
+      <div class="p-6">
+        <div class="flex items-end gap-0.5 h-48">
+          <% (29.days.ago.to_date..Date.today).each do |date| %>
+            <% count = @daily_counts[date.to_s] || 0 %>
+            <% max_count = [@daily_counts.values.max || 1, 1].max %>
+            <% height = (count.to_f / max_count * 100).to_i %>
+            <%= link_to fault_records_path(q: { reported_at_gteq: date.beginning_of_day, reported_at_lteq: date.end_of_day }), class: "flex-1 flex flex-col items-center justify-end group relative" do %>
+              <% if count > 0 %>
+                <div class="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
+                  <%= date.strftime("%m-%d") %>: <%= count %> 件
+                </div>
+              <% end %>
+              <div class="w-full <%= count > 0 ? 'bg-indigo-400 group-hover:bg-indigo-600' : 'bg-slate-100' %> rounded-t transition-colors" style="height: <%= [height, 2].max %>%;"></div>
+              <% if date.day % 5 == 0 || date == Date.today %>
+                <div class="text-[10px] text-slate-400 mt-1"><%= date.strftime("%m/%d") %></div>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-sm font-semibold text-slate-800">各线路故障对比（点击钻取）</h3>
+      </div>
+      <div class="p-6">
+        <% max_line = [@line_counts.values.max || 1, 1].max %>
+        <div class="space-y-3">
+          <% @line_counts.each do |line, count| %>
+            <%= link_to fault_records_path(q: { line_name_eq: line }), class: "block group" do %>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="font-semibold text-slate-700 group-hover:text-indigo-600"><%= line %></span>
+                <span class="text-slate-500 font-mono"><%= count %> 起 · 平均耗时 <%= line_avg_duration(line) %></span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden flex">
+                <div class="bg-gradient-to-r from-sky-400 to-indigo-600 h-3 rounded-l-full group-hover:from-sky-500 group-hover:to-indigo-700 transition-all" style="width: <%= (count.to_f / max_line * 100).to_i %>%;"></div>
+              </div>
+            <% end %>
+          <% end %>
+          <% if @line_counts.empty? %>
+            <p class="text-sm text-slate-400 text-center py-8">暂无线路数据</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-slate-800">故障类型与等级矩阵</h3>
+    </div>
+    <div class="p-6 overflow-x-auto">
+      <% fault_types = FaultRecord.fault_types.keys %>
+      <% fault_levels = FaultRecord.fault_levels.keys %>
+      <% matrix = FaultRecord.group(:fault_type, :fault_level).count %>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-200">
+            <th class="text-left py-2 px-3 font-medium text-slate-600">故障类型 \ 等级</th>
+            <% fault_levels.each do |level| %>
+              <th class="text-center py-2 px-3 font-medium"><%= level_badge(level) %></th>
+            <% end %>
+            <th class="text-center py-2 px-3 font-medium text-slate-600">合计</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% fault_types.each do |type| %>
+            <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <td class="py-2 px-3 font-medium text-slate-700"><%= t("enums.fault_record.fault_type.#{type}") %></td>
+              <% fault_levels.each do |level| %>
+                <% count = matrix[[FaultRecord.fault_types[type], FaultRecord.fault_levels[level]]] || 0 %>
+                <td class="text-center py-2 px-3">
+                  <% if count > 0 %>
+                    <%= link_to fault_records_path(q: { fault_type_eq: FaultRecord.fault_types[type], fault_level_eq: FaultRecord.fault_levels[level] }), class: "inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-semibold hover:bg-indigo-200 transition-colors" do %>
+                      <%= count %>
+                    <% end %>
+                  <% else %>
+                    <span class="text-slate-300">—</span>
+                  <% end %>
+                </td>
+              <% end %>
+              <% type_total = fault_levels.sum { |l| matrix[[FaultRecord.fault_types[type], FaultRecord.fault_levels[l]]] || 0 } %>
+              <td class="text-center py-2 px-3 font-semibold text-slate-700"><%= type_total %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

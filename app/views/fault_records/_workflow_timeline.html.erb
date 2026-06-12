@@ -1,0 +1,55 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+    <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+      <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      流转历史节点
+      <span class="ml-auto text-xs font-normal text-slate-500"><%= workflow_nodes.size %> 个节点</span>
+    </h3>
+  </div>
+  <div class="px-6 py-4">
+    <div class="relative">
+      <div class="absolute left-3.5 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+      <div class="space-y-4">
+        <% workflow_nodes.each do |node| %>
+          <div class="relative pl-10">
+            <div class="absolute left-0 top-1 w-7 h-7 rounded-full border-2 border-white shadow-md flex items-center justify-center
+              <%= node.status_change? ? 'bg-indigo-500' : node.evidence_upload? ? 'bg-rose-500' : node.node_reopen? ? 'bg-orange-500' : 'bg-slate-500' %>">
+              <% if node.status_change? %>
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              <% elsif node.evidence_upload? %>
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              <% else %>
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <% end %>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3 border border-slate-100">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                  <%= node.action_type_text %>
+                </span>
+                <% if node.from_status.present? && node.to_status.present? && node.from_status != node.to_status %>
+                  <span class="text-xs text-slate-500">
+                    <%= FaultRecord.current_statuses.key(node.from_status) %> → <%= FaultRecord.current_statuses.key(node.to_status) %>
+                  </span>
+                <% end %>
+              </div>
+              <% if node.comment.present? %>
+                <div class="text-sm text-slate-700 mt-1.5"><%= node.comment %></div>
+              <% end %>
+              <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                  <%= node.operator_name %>
+                </span>
+                <span class="flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <%= format_time(node.processed_at || node.created_at) %>
+                </span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

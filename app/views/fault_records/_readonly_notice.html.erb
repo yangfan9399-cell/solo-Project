@@ -1,0 +1,14 @@
+<div class="bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 p-5 flex items-start gap-4">
+  <div class="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+    <svg class="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+  </div>
+  <div>
+    <h4 class="text-sm font-semibold text-slate-700">此工单已归档，当前为只读模式</h4>
+    <p class="text-xs text-slate-500 mt-1">归档后的工单不可修改。如需要重新处理，请点击右上角"重新处理"按钮，系统将生成新的处理节点。</p>
+    <% if policy(fault_record).reopen? %>
+      <div class="mt-3">
+        <%= button_to "重新处理此工单", reopen_fault_record_path(fault_record), method: :post, class: "px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium", data: { confirm: "重新处理将生成新节点并进入处理状态，确认继续？" } %>
+      </div>
+    <% end %>
+  </div>
+</div>

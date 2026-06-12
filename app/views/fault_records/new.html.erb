@@ -1,0 +1,96 @@
+<% content_for :title, "新建工单 - 站台门故障抢修系统" %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center gap-4 mb-6">
+    <%= link_to "← 返回", fault_records_path, class: "text-slate-500 hover:text-slate-700 text-sm" %>
+    <h1 class="text-2xl font-bold text-slate-900">新建故障工单</h1>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <%= form_with model: @fault_record, class: "px-6 py-6 space-y-6" do |f| %>
+      <% if @fault_record.errors.any? %>
+        <div class="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
+          <p class="font-medium mb-2">请修正以下错误:</p>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            <% @fault_record.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <%= f.label :source_type, "报修来源", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.select :source_type, source_type_options_for_select, {}, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :line_name, "线路名称", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :line_name, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder: "如：1号线" %>
+        </div>
+        <div>
+          <%= f.label :station_name, "车站名称", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :station_name, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder: "如：人民广场站" %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <%= f.label :platform_door_no, "站台门编号", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :platform_door_no, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder: "如：A-12" %>
+        </div>
+        <div>
+          <%= f.label :fault_type, "故障类型", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.select :fault_type, fault_type_options_for_select, {}, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :fault_level, "故障等级", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.select :fault_level, fault_level_options_for_select, {}, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+      </div>
+
+      <div>
+        <%= f.label :fault_description, "故障描述", class: "block text-sm font-medium text-slate-700 mb-1" %>
+        <%= f.text_area :fault_description, rows: 4, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500", placeholder: "请详细描述故障现象..." %>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :responsible_unit, "责任单位", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :responsible_unit, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :responsible_person, "责任人", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :responsible_person, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :maintenance_window_start, "计划窗口开始", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.datetime_field :maintenance_window_start, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :maintenance_window_end, "计划窗口结束", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.datetime_field :maintenance_window_end, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :estimated_cost, "预估费用 (¥)", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :estimated_cost, step: 0.01, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+        <div>
+          <%= f.label :reported_at, "报修时间", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.datetime_field :reported_at, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <%= link_to "取消", fault_records_path, class: "px-5 py-2 text-slate-700 hover:bg-slate-100 rounded-lg text-sm font-medium" %>
+        <%= f.submit "创建工单", class: "px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+      <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      关键对象与时间
+    </h3>
+  </div>
+  <div class="px-6 py-4 grid grid-cols-2 gap-x-6 gap-y-4">
+    <div>
+      <div class="text-xs text-slate-500 mb-1">责任单位</div>
+      <div class="text-sm font-medium text-slate-800"><%= fault_record.responsible_unit.presence || "—" %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">责任人</div>
+      <div class="text-sm font-medium text-slate-800"><%= fault_record.responsible_person.presence || "—" %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">计划窗口开始</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_time(fault_record.maintenance_window_start) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">计划窗口结束</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_time(fault_record.maintenance_window_end) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">实际开始时间</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_time(fault_record.actual_start_at) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">实际结束时间</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_time(fault_record.actual_end_at) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">预估费用</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_money(fault_record.estimated_cost) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">实际费用</div>
+      <div class="text-sm font-medium text-slate-800"><%= format_money(fault_record.actual_cost) %></div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">处理人资格</div>
+      <div class="text-sm font-medium <%= fault_record.handler_qualified? ? 'text-emerald-700' : 'text-rose-700' %>">
+        <%= fault_record.handler_qualified? ? "✓ 符合要求" : "✗ 不符合要求" %>
+      </div>
+    </div>
+    <div>
+      <div class="text-xs text-slate-500 mb-1">通知确认</div>
+      <div class="text-sm font-medium <%= fault_record.notified_confirmation? ? 'text-emerald-700' : 'text-rose-700' %>">
+        <%= fault_record.notified_confirmation? ? "✓ 已确认" : "✗ 未确认" %>
+      </div>
+    </div>
+    <% if fault_record.processing_duration > 0 %>
+      <div class="col-span-2">
+        <div class="text-xs text-slate-500 mb-1">处理耗时</div>
+        <div class="text-sm font-medium text-indigo-700"><%= fault_record.processing_duration_text %></div>
+      </div>
+    <% end %>
+  </div>
+</div>

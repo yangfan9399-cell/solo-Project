@@ -1,0 +1,97 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <% status_counts ||= {} %>
+  <% abnormal_counts ||= {} %>
+  <% line_counts ||= {} %>
+  <% daily_counts ||= {} %>
+
+  <%= link_to fault_records_path(q: { current_status_eq: FaultRecord.current_statuses[:processing] }), class: "group bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-indigo-300 transition-all block" do %>
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-slate-500">处理中</span>
+      <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+    </div>
+    <div class="text-3xl font-bold text-slate-800"><%= status_counts[FaultRecord.current_statuses[:processing]] || 0 %></div>
+    <p class="text-xs text-slate-500 mt-1">点击查看处理中工单 →</p>
+  <% end %>
+
+  <%= link_to fault_records_path(q: { current_status_eq: FaultRecord.current_statuses[:pending_review] }), class: "group bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-violet-300 transition-all block" do %>
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-slate-500">待复核</span>
+      <div class="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center group-hover:bg-violet-200 transition-colors">
+        <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <div class="text-3xl font-bold text-slate-800"><%= status_counts[FaultRecord.current_statuses[:pending_review]] || 0 %></div>
+    <p class="text-xs text-slate-500 mt-1">点击查看待复核工单 →</p>
+  <% end %>
+
+  <%= link_to fault_records_path(q: { abnormal_type_not_eq: FaultRecord.abnormal_types[:normal] }), class: "group bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-rose-300 transition-all block" do %>
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-slate-500">异常工单</span>
+      <div class="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+    </div>
+    <div class="text-3xl font-bold text-slate-800"><%= abnormal_counts.values.sum || 0 %></div>
+    <div class="flex flex-wrap gap-1 mt-2">
+      <% abnormal_counts.each do |type, count| %>
+        <% next if type == FaultRecord.abnormal_types[:normal] %>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-rose-50 text-rose-700">
+          <%= FaultRecord.abnormal_types.key(type) %>: <%= count %>
+        </span>
+      <% end %>
+    </div>
+    <p class="text-xs text-slate-500 mt-1">点击查看所有异常 →</p>
+  <% end %>
+
+  <%= link_to fault_records_path(q: { current_status_eq: FaultRecord.current_statuses[:archived] }), class: "group bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-emerald-300 transition-all block" do %>
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-slate-500">已归档</span>
+      <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+      </div>
+    </div>
+    <div class="text-3xl font-bold text-slate-800"><%= status_counts[FaultRecord.current_statuses[:archived]] || 0 %></div>
+    <p class="text-xs text-slate-500 mt-1">点击查看已归档工单 →</p>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+    <h3 class="text-sm font-semibold text-slate-800 mb-4">近14天故障趋势</h3>
+    <div class="flex items-end gap-1 h-32">
+      <% (13.days.ago.to_date..Date.today).each do |date| %>
+        <% count = daily_counts[date.to_s] || 0 %>
+        <% max_count = [daily_counts.values.max || 1, 1].max %>
+        <% height = (count.to_f / max_count * 100).to_i %>
+        <%= link_to fault_records_path(q: { reported_at_gteq: date.beginning_of_day, reported_at_lteq: date.end_of_day }), class: "flex-1 flex flex-col items-center gap-1 group" do %>
+          <span class="text-xs font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"><%= count %></span>
+          <div class="w-full bg-indigo-100 rounded-t group-hover:bg-indigo-400 transition-colors" style="height: <%= [height, 4].max %>%"></div>
+          <span class="text-[10px] text-slate-400"><%= date.strftime("%m-%d") %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+    <h3 class="text-sm font-semibold text-slate-800 mb-4">各线路故障分布</h3>
+    <div class="space-y-3">
+      <% max_line = [line_counts.values.max || 1, 1].max %>
+      <% line_counts.each do |line, count| %>
+        <%= link_to fault_records_path(q: { line_name_eq: line }), class: "block group" do %>
+          <div class="flex items-center justify-between text-sm mb-1">
+            <span class="font-medium text-slate-700 group-hover:text-indigo-600"><%= line %></span>
+            <span class="text-slate-500"><%= count %> 起</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+            <div class="bg-indigo-500 h-2 rounded-full group-hover:bg-indigo-600 transition-colors" style="width: <%= (count.to_f / max_line * 100).to_i %>%"></div>
+          </div>
+        <% end %>
+      <% end %>
+      <% if line_counts.empty? %>
+        <p class="text-sm text-slate-400 text-center py-4">暂无数据</p>
+      <% end %>
+    </div>
+  </div>
+</div>
