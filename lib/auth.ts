@@ -2,10 +2,11 @@ import { cookies } from "next/headers";
 import { UserRole, type CurrentUser } from "./types";
 
 export const MOCK_USERS: CurrentUser[] = [
-  { id: "user-op-001", name: "王经办", role: UserRole.OPERATOR },
-  { id: "user-op-002", name: "李执行", role: UserRole.OPERATOR },
-  { id: "user-rv-001", name: "张复核", role: UserRole.REVIEWER },
-  { id: "user-ad-001", name: "赵主管", role: UserRole.ADMIN },
+  { id: "user-op-001", name: "张经办", role: UserRole.OPERATOR },
+  { id: "user-op-002", name: "李经办", role: UserRole.OPERATOR },
+  { id: "user-rv-001", name: "王复核", role: UserRole.REVIEWER },
+  { id: "user-rv-002", name: "赵复核", role: UserRole.REVIEWER },
+  { id: "user-admin-001", name: "系统管理员", role: UserRole.ADMIN },
 ];
 
 export async function getCurrentUser(): Promise<CurrentUser> {

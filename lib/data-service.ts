@@ -387,8 +387,11 @@ export async function submitForReview(orderId: string, data: {
   const existing = await getOrderDetail(orderId);
   if (!existing) throw new Error("记录不存在");
   if (existing.isArchived) throw new Error("已归档记录不能操作");
-  if (existing.status !== OrderStatus.PROCESSING)
-    throw new Error("仅处理中状态可提交复核");
+  if (
+    existing.status !== OrderStatus.PROCESSING &&
+    existing.status !== OrderStatus.REVIEW_REJECTED
+  )
+    throw new Error("仅处理中或复核退回状态可提交复核");
   if (user.role !== UserRole.OPERATOR && user.role !== UserRole.ADMIN) {
     throw new Error(`当前用户(${user.name}，角色：${user.role})无权限提交复核，仅经办人可提交`);
   }

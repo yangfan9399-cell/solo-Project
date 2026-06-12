@@ -76,8 +76,8 @@ async function main() {
   // ========== 阶段1：权限拦截 ==========
   console.log("━━━ 阶段1：权限越权拦截验证 ━━━");
 
-  injectUser("user-op-001", "王经办", UserRole.OPERATOR);
-  await assertCase("经办人【王经办】调用 复核通过 → 被拒绝", async () => {
+  injectUser("user-op-001", "张经办", UserRole.OPERATOR);
+  await assertCase("经办人【张经办】调用 复核通过 → 被拒绝", async () => {
     try {
       await reviewOrder(ORDER_ID, {
         isApproved: true,
@@ -91,7 +91,7 @@ async function main() {
     }
   });
 
-  await assertCase("经办人【王经办】调用 归档 → 被拒绝", async () => {
+  await assertCase("经办人【张经办】调用 归档 → 被拒绝", async () => {
     try {
       await archiveOrder(ORDER_ID);
       throw new Error("应该抛错但未抛");
@@ -119,10 +119,10 @@ async function main() {
   // ========== 阶段2：完整状态流转 ==========
   console.log("━━━ 阶段2：完整状态流转（同一条记录）━━━");
 
-  injectUser("user-op-001", "王经办", UserRole.OPERATOR);
+  injectUser("user-op-001", "张经办", UserRole.OPERATOR);
   let detail: any;
 
-  await assertCase("① 经办人【王经办】受理 → PROCESSING", async () => {
+  await assertCase("① 经办人【张经办】受理 → PROCESSING", async () => {
     const { order } = await acceptOrder(ORDER_ID);
     if ((order as any).status !== OrderStatus.PROCESSING)
       throw new Error(`状态错误：${(order as any).status}`);
@@ -130,7 +130,7 @@ async function main() {
       throw new Error("operatorId 未正确设置");
   });
 
-  await assertCase("② 经办人【王经办】填写执行数据 → 记录actualOpening等", async () => {
+  await assertCase("② 经办人【张经办】填写执行数据 → 记录actualOpening等", async () => {
     const r = await processOrder(ORDER_ID, {
       actualOpening: 5.0,
       actualFlow: 1480,
@@ -145,7 +145,7 @@ async function main() {
       throw new Error(`actualFlow 未更新：${d.actualFlow}`);
   });
 
-  await assertCase("③ 经办人【王经办】补充材料 → 节点SUPPLEMENT + 附件", async () => {
+  await assertCase("③ 经办人【张经办】补充材料 → 节点SUPPLEMENT + 附件", async () => {
     const r = await supplementMaterials(ORDER_ID, {
       businessRecord:
         "记录：闸门启动电流正常（12.5A）、无异常振动、密封完好、全过程现场视频25分钟",
@@ -172,7 +172,7 @@ async function main() {
       throw new Error(`节点数异常：${nodeCount}，应有受理+更新+补充`);
   });
 
-  await assertCase("④ 经办人【王经办】提交复核 → PENDING_REVIEW", async () => {
+  await assertCase("④ 经办人【张经办】提交复核 → PENDING_REVIEW", async () => {
     const { order } = await submitForReview(ORDER_ID, {
       conclusion: "调试完成，机械参数正常，证据完备，申请复核",
       evidenceBasis:
@@ -224,9 +224,9 @@ async function main() {
 
   console.log();
   console.log("─── 切换到管理员（重新处理） ───");
-  injectUser("user-ad-001", "赵主管", UserRole.ADMIN);
+  injectUser("user-admin-001", "系统管理员", UserRole.ADMIN);
 
-  await assertCase("⑦ 管理员【赵主管】重新处理 → PROCESSING + 新增REOPEN节点", async () => {
+  await assertCase("⑦ 管理员【系统管理员】重新处理 → PROCESSING + 新增REOPEN节点", async () => {
     const r = await reopenOrder(ORDER_ID);
     if ((r as any).order.status !== OrderStatus.PROCESSING)
       throw new Error(`重新处理后状态错误：${(r as any).order.status}`);
@@ -238,7 +238,7 @@ async function main() {
       (n: any) => n.nodeType === NodeType.REOPEN
     );
     if (!reopenNode) throw new Error("未生成 REOPEN 历史节点");
-    if (reopenNode.operatorId !== "user-ad-001")
+    if (reopenNode.operatorId !== "user-admin-001")
       throw new Error("REOPEN 节点操作人错误");
   });
 
@@ -266,8 +266,8 @@ async function main() {
     "    📜 节点序列：",
     statuses
       .map(
-        (s) =>
-          `[${s.type}] ${s.op}(${s.role === "user-ad-001" ? "管理员" : s.role === "user-rv-001" ? "复核人" : "经办人"})`
+        (s: any) =>
+          `[${s.type}] ${s.op}(${s.role === "user-admin-001" ? "管理员" : s.role === "user-rv-001" ? "复核人" : "经办人"})`
       )
       .join(" → ")
   );
@@ -295,7 +295,7 @@ async function main() {
   if (!orderRejectedId) {
     console.log("    ⚠️  无 REVIEW_REJECTED 样本，跳过");
   } else {
-    injectUser("user-op-001", "王经办", UserRole.OPERATOR);
+    injectUser("user-op-001", "张经办", UserRole.OPERATOR);
     await assertCase("【样本4-退回】经办人补充材料 → blockReason清零", async () => {
       const r = await supplementMaterials(orderRejectedId, {
         businessRecord:

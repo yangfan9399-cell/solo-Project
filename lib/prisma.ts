@@ -19,10 +19,12 @@ async function tryLoadPrisma(): Promise<boolean> {
     _usePrisma = true;
     console.info("[prisma.ts] 连接到真实 PostgreSQL 数据库");
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.warn(
       "[prisma.ts] Prisma 不可用（引擎加载失败或无数据库），降级到内存数据层。"
     );
+    console.warn("[prisma.ts] 错误详情:", err?.message || String(err));
+    if (err?.stack) console.warn("[prisma.ts] 堆栈:", err.stack.slice(0, 800));
     _usePrisma = false;
     return false;
   }
