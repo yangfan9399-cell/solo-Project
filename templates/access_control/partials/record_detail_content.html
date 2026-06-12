@@ -1,0 +1,558 @@
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="detailTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">
+                            <i class="bi bi-info-circle me-1"></i>基本信息
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-process">
+                            <i class="bi bi-gear me-1"></i>处理内容
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-diff">
+                            <i class="bi bi-arrow-left-right me-1"></i>处理差异
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-timeline">
+                            <i class="bi bi-clock-history me-1"></i>历史节点
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-evidence">
+                            <i class="bi bi-paperclip me-1"></i>证据附件
+                            {% if evidences %}
+                            <span class="badge bg-secondary ms-1">{{ evidences|length }}</span>
+                            {% endif %}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-basic">
+                        <h5 class="mb-3">
+                            <i class="bi bi-info-circle text-primary me-2"></i>基本信息
+                        </h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <table class="table table-bordered table-sm">
+                                    <tr>
+                                        <th class="table-light w-30">记录编号</th>
+                                        <td>{{ record.record_no }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">来源</th>
+                                        <td>{{ record.get_source_display }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">样本类型</th>
+                                        <td>
+                                            <span class="badge {% if record.sample_type == 'normal_release' %}bg-success
+                                                           {% elif record.sample_type == 'over_limit' %}bg-warning
+                                                           {% elif record.sample_type == 'evidence_missing' %}bg-orange
+                                                           {% elif record.sample_type == 'timeout' %}bg-danger
+                                                           {% else %}bg-secondary{% endif %}">
+                                                {{ record.get_sample_type_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">风险等级</th>
+                                        <td>
+                                            <span class="{{ record.get_risk_display_class }}">
+                                                <strong>{{ record.get_risk_level_display }}</strong>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">当前状态</th>
+                                        <td>
+                                            <span class="badge {{ record.get_status_display_class }}">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-bordered table-sm">
+                                    <tr>
+                                        <th class="table-light w-30">当前责任人</th>
+                                        <td>
+                                            {% if record.current_owner %}
+                                            {{ record.current_owner.get_full_name }}
+                                            <span class="badge bg-info ms-1">{{ record.current_owner.get_role_display }}</span>
+                                            {% else %}
+                                            <span class="text-muted">待分配</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">受理人</th>
+                                        <td>{{ record.accepted_by.get_full_name|default:'-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">处理人</th>
+                                        <td>{{ record.processed_by.get_full_name|default:'-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">复核人</th>
+                                        <td>{{ record.reviewed_by.get_full_name|default:'-' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="table-light">归档人</th>
+                                        <td>{{ record.archived_by.get_full_name|default:'-' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4 mb-2 text-primary">
+                            <i class="bi bi-person me-2"></i>申请人信息
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>姓名：</strong>{{ record.applicant_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>部门：</strong>{{ record.applicant_dept }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>工号：</strong>{{ record.applicant_id }}
+                            </div>
+                        </div>
+
+                        <h6 class="mt-3 mb-2 text-primary">
+                            <i class="bi bi-building me-2"></i>实验室信息
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>名称：</strong>{{ record.lab_name }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>编号：</strong>{{ record.lab_code }}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>授权区域：</strong>{{ record.access_area }}
+                            </div>
+                        </div>
+
+                        <h6 class="mt-3 mb-2 text-primary">
+                            <i class="bi bi-calendar me-2"></i>时间信息
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <strong>原授权日期：</strong>{{ record.original_authorized_date }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>到期日期：</strong>{{ record.expiry_date }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>实际回收日期：</strong>{{ record.recovered_date|default:'-' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>处理截止时间：</strong>
+                                {% if record.deadline %}
+                                    {{ record.deadline|date:'Y-m-d H:i' }}
+                                    {% if record.is_overdue %}
+                                    <span class="badge bg-danger ms-1">逾期{{ record.days_overdue }}天</span>
+                                    {% endif %}
+                                {% else %}-{% endif %}
+                            </div>
+                        </div>
+
+                        <h6 class="mt-3 mb-2 text-primary">
+                            <i class="bi bi-bar-chart me-2"></i>关键指标
+                        </h6>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">授权人数</small>
+                                        <h4 class="mb-0 {% if record.authorized_person_count > 50 %}text-danger{% endif %}">
+                                            {{ record.authorized_person_count }} 人
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">涉及金额</small>
+                                        <h4 class="mb-0 {% if record.involved_amount > 100000 %}text-danger{% endif %}">
+                                            ¥ {{ record.involved_amount }}
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <small class="text-muted">处理时长</small>
+                                        <h4 class="mb-0">
+                                            {{ record.processing_days }} 天
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-process">
+                        <h5 class="mb-3">
+                            <i class="bi bi-gear text-primary me-2"></i>处理内容
+                        </h5>
+
+                        <form method="post"
+                              hx-post="{% url 'api_process_record' record.id %}"
+                              hx-target="#record-detail-content"
+                              class="{% if not can_edit %}disabled-overlay{% endif %}">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-file-text me-1"></i>业务记录
+                                </label>
+                                {{ process_form.business_note }}
+                                <div class="form-text">请详细描述业务背景和授权情况</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-geo-alt me-1"></i>现场说明
+                                </label>
+                                {{ process_form.site_description }}
+                                <div class="form-text">请描述现场核实情况</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-calendar-check me-1"></i>实际回收日期
+                                </label>
+                                {{ process_form.recovered_date }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-check-circle me-1"></i>处理结论
+                                </label>
+                                {{ process_form.conclusion }}
+                                <div class="form-text">请给出明确的处理结论</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-book me-1"></i>采用依据
+                                </label>
+                                {{ process_form.recovery_basis }}
+                                <div class="form-text">引用的规章制度或政策依据</div>
+                            </div>
+
+                            {% if record.has_anomaly %}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-tools me-1 text-danger"></i>补救路径
+                                    <span class="badge bg-danger ms-1">异常</span>
+                                </label>
+                                {{ process_form.remedial_path }}
+                                <div class="form-text text-danger">如存在异常，请描述补救措施</div>
+                            </div>
+                            {% endif %}
+
+                            {% if can_edit %}
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-2"></i>保存处理内容
+                                </button>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                {% if record.is_archived %}
+                                该记录已归档，无法编辑。如需修改，请联系主管复核人重新处理。
+                                {% else %}
+                                您没有权限编辑此记录。
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-diff">
+                        <h5 class="mb-3">
+                            <i class="bi bi-arrow-left-right text-primary me-2"></i>处理前后差异
+                        </h5>
+
+                        {% if diff_display %}
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            以下字段在处理过程中发生了变更
+                        </div>
+                        <table class="table table-bordered diff-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="w-25">字段名称</th>
+                                    <th class="w-30">处理前</th>
+                                    <th class="w-30">处理后</th>
+                                    <th class="w-15">状态</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for diff in diff_display %}
+                                <tr>
+                                    <td><strong>{{ diff.label }}</strong></td>
+                                    <td class="old-value">{{ diff.old|default:'-' }}</td>
+                                    <td class="new-value">{{ diff.new|default:'-' }}</td>
+                                    <td>
+                                        <span class="badge bg-success">已变更</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-4"></i>
+                            <p class="mt-2">暂无差异数据</p>
+                        </div>
+                        {% endif %}
+
+                        {% if change_logs %}
+                        <h6 class="mt-4 mb-2 text-primary">
+                            <i class="bi bi-list-check me-2"></i>字段变更日志
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>字段</th>
+                                        <th>原值</th>
+                                        <th>新值</th>
+                                        <th>修改人</th>
+                                        <th>修改时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in change_logs %}
+                                    <tr>
+                                        <td><strong>{{ log.field_label }}</strong></td>
+                                        <td class="old-value small">{{ log.old_value|default:'-' }}</td>
+                                        <td class="new-value small">{{ log.new_value|default:'-' }}</td>
+                                        <td>{{ log.changed_by.get_full_name|default:'系统' }}</td>
+                                        <td>{{ log.changed_at|date:'Y-m-d H:i' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-timeline">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clock-history text-primary me-2"></i>处理历史节点
+                        </h5>
+                        <div class="timeline">
+                            {% for node in nodes %}
+                            <div class="timeline-item
+                                {% if node.node_type == 'block' %}block
+                                {% elif node.node_type in 'review_pass,archive,unblock' %}success
+                                {% elif node.node_type == 'review_reject' %}warning
+                                {% endif %}">
+                                <div class="card">
+                                    <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge
+                                                {% if node.node_type == 'accept' %}bg-info
+                                                {% elif node.node_type == 'process' %}bg-primary
+                                                {% elif node.node_type == 'submit_review' %}bg-secondary
+                                                {% elif node.node_type == 'review_pass' %}bg-success
+                                                {% elif node.node_type == 'review_reject' %}bg-warning
+                                                {% elif node.node_type == 'archive' %}bg-success
+                                                {% elif node.node_type == 'supplement' %}bg-info
+                                                {% elif node.node_type == 'reopen' %}bg-warning
+                                                {% elif node.node_type == 'block' %}bg-danger
+                                                {% elif node.node_type == 'unblock' %}bg-success
+                                                {% else %}bg-secondary{% endif %} me-2">
+                                                {{ node.get_node_type_display }}
+                                            </span>
+                                            <strong>{{ node.node_title }}</strong>
+                                        </div>
+                                        <small class="text-muted">{{ node.created_at|date:'Y-m-d H:i' }}</small>
+                                    </div>
+                                    <div class="card-body py-2 px-3">
+                                        <p class="mb-1">{{ node.description }}</p>
+                                        {% if node.remarks %}
+                                        <p class="mb-1 small text-muted"><strong>备注：</strong>{{ node.remarks }}</p>
+                                        {% endif %}
+                                        <p class="mb-0 small">
+                                            <i class="bi bi-person me-1"></i>
+                                            操作人：{{ node.operator.get_full_name|default:'系统' }}
+                                            {% if node.operator %}
+                                            <span class="badge bg-info ms-1">{{ node.operator.get_role_display }}</span>
+                                            {% endif %}
+                                        </p>
+                                        {% if node.field_changes %}
+                                        <div class="mt-2 small">
+                                            <strong class="text-primary">字段变更：</strong>
+                                            {% for field, change in node.field_changes.items %}
+                                                {% if change.label %}
+                                                <span class="badge bg-light text-dark me-1">
+                                                    {{ change.label }}: {{ change.old|default:'-' }} → {{ change.new|default:'-' }}
+                                                </span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-4"></i>
+                                <p class="mt-2">暂无处理节点</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-evidence">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-paperclip text-primary me-2"></i>证据附件
+                            </h5>
+                            {% if can_edit and not record.is_archived %}
+                            <button class="btn btn-sm btn-primary" @click="showEvidenceModal = true">
+                                <i class="bi bi-cloud-upload me-1"></i>上传证据
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div id="evidence-list">
+                            {% include 'access_control/partials/evidence_list.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-lightning me-2"></i>快捷操作
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if record.status == 'pending_accept' and user.is_field_staff %}
+                    <form method="post" hx-post="{% url 'api_accept_record' record.id %}" hx-target="#record-detail-content">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-check-circle me-2"></i>受理申请
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_submit_review %}
+                    <form method="post" hx-post="{% url 'api_submit_review' record.id %}" hx-target="#record-detail-content">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-100">
+                            <i class="bi bi-send me-2"></i>提交复核
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if record.status == 'reviewing' and user.is_reviewer %}
+                    <form method="post" hx-post="{% url 'api_review_approve' record.id %}" hx-target="#record-detail-content">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle me-2"></i>复核通过并归档
+                        </button>
+                    </form>
+                    <button class="btn btn-danger w-100" @click="showRejectModal = true">
+                        <i class="bi bi-x-circle me-2"></i>退回补证
+                    </button>
+                    {% endif %}
+
+                    {% if can_archive %}
+                    <form method="post" hx-post="{% url 'api_archive_record' record.id %}" hx-target="#record-detail-content">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-archive me-2"></i>归档
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_reopen %}
+                    <button class="btn btn-warning w-100" @click="showReopenModal = true">
+                        <i class="bi bi-arrow-repeat me-2"></i>重新处理
+                    </button>
+                    {% endif %}
+
+                    {% if can_edit and not record.is_archived %}
+                    <button class="btn btn-outline-primary w-100" @click="showEvidenceModal = true">
+                        <i class="bi bi-cloud-upload me-2"></i>补充证据
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if record.status == 'pending_accept' %}
+                <div class="alert alert-info mt-3 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    该记录待受理，请现场人员进行受理。
+                </div>
+                {% elif record.status == 'processing' %}
+                <div class="alert alert-info mt-3 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    该记录正在处理中，请完善处理内容后提交复核。
+                </div>
+                {% elif record.status == 'rejected' %}
+                <div class="alert alert-warning mt-3 mb-0 small">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    该记录已被退回，请根据补证要求补充材料。
+                </div>
+                {% elif record.status == 'reviewing' %}
+                <div class="alert alert-info mt-3 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    该记录正在复核中，请等待主管复核人处理。
+                </div>
+                {% elif record.is_archived %}
+                <div class="alert alert-success mt-3 mb-0 small">
+                    <i class="bi bi-check-circle me-1"></i>
+                    该记录已归档，所有内容为只读状态。
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>关键信息摘要
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted d-block">处理结论</small>
+                    <p class="mb-0">{% if record.conclusion %}{{ record.conclusion|truncatechars:100 }}{% else %}<span class="text-muted">暂未填写</span>{% endif %}</p>
+                </div>
+                <hr>
+                <div class="mb-2">
+                    <small class="text-muted d-block">采用依据</small>
+                    <p class="mb-0">{% if record.recovery_basis %}{{ record.recovery_basis|truncatechars:100 }}{% else %}<span class="text-muted">暂未填写</span>{% endif %}</p>
+                </div>
+                {% if record.remedial_path %}
+                <hr>
+                <div class="mb-2">
+                    <small class="text-muted d-block text-danger">补救路径</small>
+                    <p class="mb-0 text-danger">{{ record.remedial_path|truncatechars:100 }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

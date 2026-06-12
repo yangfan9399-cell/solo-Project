@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}记录列表 - 实验室门禁授权回收系统{% endblock %}
+
+{% block content %}
+<div x-data="{ filters: {{ filters }} }">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-list-ul me-2"></i>记录列表
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    hx-get="{% url 'record_list' %}"
+                    hx-target="#record-list-content"
+                    hx-include="[name='keyword'],[name='status'],[name='sample_type'],[name='risk_level'],[name='source']">
+                <i class="bi bi-arrow-clockwise me-1"></i>刷新
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <form class="row g-3 align-items-end"
+                  hx-get="{% url 'record_list' %}"
+                  hx-target="#record-list-content">
+                <div class="col-md-2">
+                    <label class="form-label small">关键词</label>
+                    {{ filter_form.keyword }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">状态</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">样本类型</label>
+                    {{ filter_form.sample_type }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">风险等级</label>
+                    {{ filter_form.risk_level }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">来源</label>
+                    {{ filter_form.source }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>查询
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="record-list-content">
+        {% include 'access_control/partials/record_list.html' %}
+    </div>
+</div>
+{% endblock %}

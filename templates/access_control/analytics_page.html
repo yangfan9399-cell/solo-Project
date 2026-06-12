@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+
+{% block title %}复盘统计 - 实验室门禁授权回收系统{% endblock %}
+
+{% block content %}
+<div x-data="{
+    drilldown: null,
+    drillRecords: [],
+    showDrilldown: false,
+    drillType: null,
+    drillValue: null,
+    async doDrilldown(type, value) {
+        this.drillType = type;
+        this.drillValue = value;
+        const url = '{% url 'analytics_page' %}?drilldown=1&drill_type=' + type + '&drill_value=' + encodeURIComponent(value);
+        const response = await fetch(url, {
+            headers: { 'HX-Request': 'true' }
+        });
+        this.drillRecords = await response.text();
+        this.showDrilldown = true;
+    }
+}">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-graph-up me-2"></i>复盘统计
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    hx-get="{% url 'analytics_page' %}"
+                    hx-target="#analytics-content"
+                    hx-include="[name='period'],[name='start_date'],[name='end_date'],[name='sample_type']">
+                <i class="bi bi-arrow-clockwise me-1"></i>刷新
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <form class="row g-3 align-items-end"
+                  hx-get="{% url 'analytics_page' %}"
+                  hx-target="#analytics-content">
+                <div class="col-md-2">
+                    <label class="form-label small">时间范围</label>
+                    {{ filter_form.period }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">开始日期</label>
+                    {{ filter_form.start_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">结束日期</label>
+                    {{ filter_form.end_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">样本类型</label>
+                    {{ filter_form.sample_type }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">风险等级</label>
+                    {{ filter_form.risk_level }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>查询
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="analytics-content">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card dashboard-stat-card bg-primary text-white record-card"
+                     @click="doDrilldown('all', '')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 opacity-75">总记录数</p>
+                                <h3 class="stat-value mb-0">{{ stats.total }}</h3>
+                            </div>
+                            <i class="bi bi-file-earmark-text stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-stat-card bg-success text-white record-card"
+                     @click="doDrilldown('status', 'archived')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 opacity-75">已完成</p>
+                                <h3 class="stat-value mb-0">{{ stats.archived_count }}</h3>
+                            </div>
+                            <i class="bi bi-check-circle stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-stat-card bg-warning text-dark record-card"
+                     @click="doDrilldown('overdue', '1')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 opacity-75">已逾期</p>
+                                <h3 class="stat-value mb-0">{{ stats.overdue_count }}</h3>
+                            </div>
+                            <i class="bi bi-exclamation-triangle stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card dashboard-stat-card bg-danger text-white record-card"
+                     @click="doDrilldown('blocked', '1')">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0 opacity-75">已阻断</p>
+                                <h3 class="stat-value mb-0">{{ stats.blocked_count }}</h3>
+                            </div>
+                            <i class="bi bi-slash-circle stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart me-2"></i>按状态分布
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart me-2"></i>按样本类型分布
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="sampleTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-shield-exclamation me-2"></i>按风险等级分布
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-clock-history me-2"></i>月度趋势
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart-line me-2"></i>处理效率统计
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="efficiencyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-people me-2"></i>人员处理统计
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>处理人</th>
+                                        <th>角色</th>
+                                        <th>处理数</th>
+                                        <th>平均天数</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in stats.by_processor %}
+                                    <tr>
+                                        <td>{{ stat.name }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ stat.role }}</span>
+                                        </td>
+                                        <td>{{ stat.count }}</td>
+                                        <td>
+                                            {% if stat.avg_days > 5 %}
+                                            <span class="text-danger">{{ stat.avg_days }} 天</span>
+                                            {% else %}
+                                            <span class="text-success">{{ stat.avg_days }} 天</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    @click="doDrilldown('processor', '{{ stat.id }}')">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">暂无数据</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-building me-2"></i>实验室分布
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>实验室</th>
+                                        <th>记录数</th>
+                                        <th>异常数</th>
+                                        <th>占比</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in stats.by_lab %}
+                                    <tr>
+                                        <td>{{ stat.name }}</td>
+                                        <td>{{ stat.count }}</td>
+                                        <td>
+                                            {% if stat.anomaly_count > 0 %}
+                                            <span class="text-danger">{{ stat.anomaly_count }}</span>
+                                            {% else %}
+                                            0
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="progress" style="height: 15px;">
+                                                <div class="progress-bar" role="progressbar"
+                                                     style="width: {{ stat.percentage }}%">
+                                                    {{ stat.percentage|floatformat:1 }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    @click="doDrilldown('lab_code', '{{ stat.code }}')">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">暂无数据</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle me-2 text-warning"></i>异常类型分析
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for anomaly_type, anomaly_data in stats.by_anomaly_type.items %}
+                    <div class="col-md-3">
+                        <div class="card bg-light border-0 record-card"
+                             @click="doDrilldown('anomaly_type', '{{ anomaly_type }}')">
+                            <div class="card-body py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">{{ anomaly_data.display }}</h5>
+                                        <p class="mb-0 small text-muted">{{ anomaly_data.description }}</p>
+                                    </div>
+                                    <span class="badge
+                                        {% if anomaly_type == 'over_limit' %}bg-warning
+                                        {% elif anomaly_type == 'evidence_missing' %}bg-orange
+                                        {% elif anomaly_type == 'timeout' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ anomaly_data.count }}
+                                    </span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar
+                                            {% if anomaly_type == 'over_limit' %}bg-warning
+                                            {% elif anomaly_type == 'evidence_missing' %}bg-orange
+                                            {% elif anomaly_type == 'timeout' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}"
+                                             style="width: {{ anomaly_data.percentage }}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="bi bi-check-circle display-4 text-success"></i>
+                        <p class="mt-2">暂无异常数据</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showDrilldown" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="card" style="max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-search me-2"></i>钻取结果
+                </h5>
+                <button @click="showDrilldown = false" class="btn-close"></button>
+            </div>
+            <div class="card-body" x-html="drillRecords"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusData = {{ stats.status_chart_data|safe }};
+    const sampleTypeData = {{ stats.sample_type_chart_data|safe }};
+    const riskData = {{ stats.risk_chart_data|safe }};
+    const trendData = {{ stats.trend_chart_data|safe }};
+    const efficiencyData = {{ stats.efficiency_chart_data|safe }};
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: statusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('sampleTypeChart'), {
+        type: 'bar',
+        data: sampleTypeData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('riskChart'), {
+        type: 'pie',
+        data: riskData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: trendData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('efficiencyChart'), {
+        type: 'bar',
+        data: efficiencyData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

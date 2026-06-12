@@ -1,0 +1,60 @@
+{% if evidences %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>类型</th>
+                <th>文件名</th>
+                <th>描述</th>
+                <th>上传人</th>
+                <th>上传时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evidence in evidences %}
+            <tr>
+                <td>
+                    <span class="badge {% if evidence.evidence_type == 'photo' %}bg-primary
+                                   {% elif evidence.evidence_type == 'video' %}bg-info
+                                   {% elif evidence.evidence_type == 'document' %}bg-secondary
+                                   {% elif evidence.evidence_type == 'signature' %}bg-success
+                                   {% elif evidence.evidence_type == 'log' %}bg-warning
+                                   {% else %}bg-secondary{% endif %}">
+                        {{ evidence.get_evidence_type_display }}
+                    </span>
+                </td>
+                <td>
+                    <i class="bi
+                        {% if evidence.evidence_type == 'photo' %}bi-image
+                        {% elif evidence.evidence_type == 'video' %}bi-film
+                        {% elif evidence.evidence_type == 'document' %}bi-file-text
+                        {% elif evidence.evidence_type == 'signature' %}bi-pencil-square
+                        {% elif evidence.evidence_type == 'log' %}bi-list-check
+                        {% else %}bi-file{% endif %} me-1"></i>
+                    {{ evidence.file_name }}
+                </td>
+                <td>{{ evidence.description|default:'-' }}</td>
+                <td>{{ evidence.uploaded_by.get_full_name|default:'系统' }}</td>
+                <td>{{ evidence.uploaded_at|date:'Y-m-d H:i' }}</td>
+                <td>
+                    {% if evidence.file %}
+                    <a href="{{ evidence.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> 下载
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-folder2-open display-4"></i>
+    <p class="mt-2">暂无证据附件</p>
+    {% if can_edit and not record.is_archived %}
+    <p class="small">请点击右上角「上传证据」按钮补充证据材料</p>
+    {% endif %}
+</div>
+{% endif %}

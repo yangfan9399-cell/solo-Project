@@ -1,0 +1,236 @@
+<div x-data="{
+    drilldown: null,
+    drillRecords: [],
+    showDrilldown: false,
+    async doDrilldown(type, value) {
+        const url = '{% url 'analytics_page' %}?drilldown=1&drill_type=' + type + '&drill_value=' + encodeURIComponent(value);
+        const response = await fetch(url, {
+            headers: { 'HX-Request': 'true' }
+        });
+        this.drillRecords = await response.text();
+        this.showDrilldown = true;
+    }
+}">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card dashboard-stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 opacity-75">总记录数</p>
+                            <h3 class="stat-value mb-0">{{ stats.total }}</h3>
+                        </div>
+                        <i class="bi bi-file-earmark-text stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-stat-card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 opacity-75">已逾期</p>
+                            <h3 class="stat-value mb-0">{{ stats.overdue_count }}</h3>
+                        </div>
+                        <i class="bi bi-exclamation-triangle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-stat-card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 opacity-75">已阻断</p>
+                            <h3 class="stat-value mb-0">{{ stats.blocked_count }}</h3>
+                        </div>
+                        <i class="bi bi-slash-circle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card dashboard-stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 opacity-75">平均处理天数</p>
+                            <h3 class="stat-value mb-0">{{ stats.avg_processing_days }}</h3>
+                        </div>
+                        <i class="bi bi-clock stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-pie-chart me-2"></i>按状态分布
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for status_key, status_data in stats.by_status.items %}
+                        <div class="col-6">
+                            <div class="card bg-light border-0 record-card"
+                                 @click="doDrilldown('status', '{{ status_key }}')">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">{{ status_data.count }} 条</span>
+                                        <span class="badge 
+                                            {% if status_key == 'pending_accept' %}bg-warning
+                                            {% elif status_key == 'accepted' %}bg-info
+                                            {% elif status_key == 'processing' %}bg-primary
+                                            {% elif status_key == 'reviewing' %}bg-secondary
+                                            {% elif status_key == 'archived' %}bg-success
+                                            {% elif status_key == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ status_key }}
+                                        </span>
+                                    </div>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar" style="width: {{ status_data.percentage }}%;"></div>
+                                    </div>
+                                    <small class="text-muted">{{ status_data.percentage|floatformat:1 }}%</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-bar-chart me-2"></i>按样本类型分布
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for type_key, type_data in stats.by_sample_type.items %}
+                        <div class="col-6">
+                            <div class="card bg-light border-0 record-card"
+                                 @click="doDrilldown('sample_type', '{{ type_key }}')">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">{{ type_data.count }} 条</span>
+                                        <span class="badge
+                                            {% if type_key == 'normal_release' %}bg-success
+                                            {% elif type_key == 'over_limit' %}bg-warning
+                                            {% elif type_key == 'evidence_missing' %}bg-orange
+                                            {% elif type_key == 'timeout' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ type_key }}
+                                        </span>
+                                    </div>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar
+                                            {% if type_key == 'normal_release' %}bg-success
+                                            {% elif type_key == 'over_limit' %}bg-warning
+                                            {% elif type_key == 'evidence_missing' %}bg-orange
+                                            {% elif type_key == 'timeout' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}"
+                                             style="width: {{ type_data.percentage }}%;"></div>
+                                    </div>
+                                    <small class="text-muted">{{ type_data.percentage|floatformat:1 }}%</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-shield-exclamation me-2"></i>按风险等级分布
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for risk_key, risk_data in stats.by_risk_level.items %}
+                        <div class="col-6">
+                            <div class="card bg-light border-0 record-card"
+                                 @click="doDrilldown('risk_level', '{{ risk_key }}')">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">
+                                            {% if risk_key == 'low' %}低风险
+                                            {% elif risk_key == 'medium' %}中风险
+                                            {% elif risk_key == 'high' %}高风险
+                                            {% elif risk_key == 'critical' %}极高风险
+                                            {% else %}{{ risk_key }}{% endif %}
+                                        </span>
+                                        <span class="fw-bold
+                                            {% if risk_key == 'low' %}text-success
+                                            {% elif risk_key == 'medium' %}text-warning
+                                            {% elif risk_key == 'high' %}text-orange
+                                            {% elif risk_key == 'critical' %}text-danger
+                                            {% else %}text-secondary{% endif %}">
+                                            {{ risk_data.count }}
+                                        </span>
+                                    </div>
+                                    <div class="progress mt-1" style="height: 4px;">
+                                        <div class="progress-bar
+                                            {% if risk_key == 'low' %}bg-success
+                                            {% elif risk_key == 'medium' %}bg-warning
+                                            {% elif risk_key == 'high' %}bg-orange
+                                            {% elif risk_key == 'critical' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}"
+                                             style="width: {{ risk_data.percentage }}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>最近记录
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for record in recent_records %}
+                        <a href="{% url 'record_detail' record.id %}"
+                           class="list-group-item list-group-item-action border-0 py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-medium">{{ record.record_no }}</div>
+                                    <div class="small text-muted">{{ record.title|truncatechars:30 }}</div>
+                                </div>
+                                <span class="badge {{ record.status_class }}">{{ record.status_display }}</span>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox display-4"></i>
+                            <p class="mt-2">暂无记录</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showDrilldown" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="card" style="max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">钻取结果</h5>
+                <button @click="showDrilldown = false" class="btn-close"></button>
+            </div>
+            <div class="card-body" x-html="drillRecords"></div>
+        </div>
+    </div>
+</div>

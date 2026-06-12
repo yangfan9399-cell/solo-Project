@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}数据看板 - 实验室门禁授权回收系统{% endblock %}
+
+{% block content %}
+<div x-data="{ filters: {{ filters }} }">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-speedometer2 me-2"></i>数据看板
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm"
+                    hx-get="{% url 'dashboard' %}"
+                    hx-target="#dashboard-content"
+                    hx-include="[name='period'],[name='start_date'],[name='end_date'],[name='sample_type'],[name='status']">
+                <i class="bi bi-arrow-clockwise me-1"></i>刷新
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <form class="row g-3 align-items-end" hx-get="{% url 'dashboard' %}" hx-target="#dashboard-content">
+                <div class="col-md-2">
+                    <label class="form-label small">时间范围</label>
+                    {{ filter_form.period }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">开始日期</label>
+                    {{ filter_form.start_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">结束日期</label>
+                    {{ filter_form.end_date }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">样本类型</label>
+                    {{ filter_form.sample_type }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">状态</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>查询
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-content">
+        {% include 'access_control/partials/dashboard_stats.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('alpine:init', function() {
+        console.log('Dashboard initialized');
+    });
+</script>
+{% endblock %}

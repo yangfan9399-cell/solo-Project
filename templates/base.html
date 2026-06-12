@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}实验室门禁授权回收系统{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #0dcaf0;
+            --dark-color: #212529;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #343a40;
+            padding-top: 1rem;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        .main-content {
+            padding: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1rem;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            padding: 0.35em 0.65em;
+        }
+
+        .bg-orange {
+            background-color: #fd7e14 !important;
+        }
+
+        .text-orange {
+            color: #fd7e14 !important;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .record-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .record-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #0d6efd;
+        }
+
+        .timeline-item.block::before {
+            background-color: #dc3545;
+            box-shadow: 0 0 0 2px #dc3545;
+        }
+
+        .timeline-item.success::before {
+            background-color: #198754;
+            box-shadow: 0 0 0 2px #198754;
+        }
+
+        .timeline-item.warning::before {
+            background-color: #ffc107;
+            box-shadow: 0 0 0 2px #ffc107;
+        }
+
+        .diff-table {
+            font-size: 0.875rem;
+        }
+
+        .diff-table .old-value {
+            background-color: #f8d7da;
+            text-decoration: line-through;
+        }
+
+        .diff-table .new-value {
+            background-color: #d1e7dd;
+        }
+
+        .anomaly-alert {
+            border-left: 4px solid #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .dashboard-stat-card {
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .dashboard-stat-card .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.3;
+        }
+
+        .dashboard-stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .progress-anomaly {
+            height: 3px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .modal-content {
+            border-radius: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .disabled-overlay {
+            position: relative;
+        }
+
+        .disabled-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            cursor: not-allowed;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .htmx-indicator {
+            display: none;
+        }
+
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+
+        .toast-container {
+            z-index: 1050;
+        }
+    </style>
+
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="bi bi-shield-lock me-2"></i>
+                实验室门禁授权回收系统
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            {{ user.get_full_name }}
+                            <span class="badge bg-info ms-1">{{ user.get_role_display }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="bi bi-person-gear me-2"></i>个人信息
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
+                                <i class="bi bi-box-arrow-right me-2"></i>退出登录
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block sidebar">
+                <div class="position-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                               href="{% url 'dashboard' %}">
+                                <i class="bi bi-speedometer2"></i>数据看板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'record_list' %}active{% endif %}"
+                               href="{% url 'record_list' %}">
+                                <i class="bi bi-list-ul"></i>记录列表
+                                {% if my_pending_count > 0 %}
+                                <span class="badge bg-danger float-end">{{ my_pending_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'processing_desk' %}active{% endif %}"
+                               href="{% url 'processing_desk' %}">
+                                <i class="bi bi-gear"></i>处理台
+                            </a>
+                        </li>
+                        {% if user.is_reviewer or user.is_admin or user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'review_page' %}active{% endif %}"
+                               href="{% url 'review_page' %}">
+                                <i class="bi bi-check2-square"></i>复核中心
+                                {% if global_stats.by_status.reviewing and global_stats.by_status.reviewing.count > 0 %}
+                                <span class="badge bg-warning float-end">{{ global_stats.by_status.reviewing.count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'analytics_page' %}active{% endif %}"
+                               href="{% url 'analytics_page' %}">
+                                <i class="bi bi-graph-up"></i>复盘统计
+                            </a>
+                        </li>
+                    </ul>
+
+                    {% if global_stats %}
+                    <div class="mt-4 px-3">
+                        <h6 class="sidebar-heading text-white-50 text-uppercase fw-bold mb-2">快速统计</h6>
+                        <div class="text-white-50 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>待处理</span>
+                                <span class="text-warning">{{ global_stats.overdue_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>已阻断</span>
+                                <span class="text-danger">{{ global_stats.blocked_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>已归档</span>
+                                <span class="text-success">{{ global_stats.by_status.archived.count|default:0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </nav>
+
+            <main class="col-md-10 ms-sm-auto px-0 main-content">
+                {% if messages %}
+                <div class="toast-container position-fixed top-0 end-0 p-3">
+                    {% for message in messages %}
+                    <div class="toast show align-items-center text-bg-{{ message.tags }} border-0" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-info-circle me-2"></i>
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var toasts = document.querySelectorAll('.toast');
+                toasts.forEach(function(toast) {
+                    var bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+                    bsToast.show();
+                });
+            }, 100);
+
+            document.body.addEventListener('htmx:configRequest', function(evt) {
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (csrftoken) {
+                    evt.detail.headers['X-CSRFToken'] = csrftoken.value;
+                }
+            });
+
+            document.body.addEventListener('htmx:afterRequest', function(evt) {
+                if (evt.detail.boosted || evt.detail.target) {
+                    var toasts = document.querySelectorAll('.toast:not(.show)');
+                    toasts.forEach(function(toast) {
+                        var bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+                        bsToast.show();
+                    });
+                }
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
