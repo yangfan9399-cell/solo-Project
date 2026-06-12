@@ -11,7 +11,6 @@ import {
   getCurrentUser as getDbCurrentUser,
   enrichRecordsWithHandlers,
 } from "~/db/queries";
-import { ensureDbReady } from "~/db/init";
 import type { RecordSummary, RecordDetail, NodeDetail, DashboardStats, AttachmentInfo, EvidenceItemInfo } from "~/types";
 import { STATUS, NODE_TYPES } from "~/db/schema";
 import type { Record as DbRecord, Node, Attachment, EvidenceItem } from "~/db/schema";
@@ -89,14 +88,12 @@ function dbEvidenceToInfo(e: EvidenceItem): EvidenceItemInfo {
 }
 
 export async function getRecords(filters?: { status?: string; exceptionType?: string; search?: string }): Promise<{ records: RecordSummary[] }> {
-  await ensureDbReady();
   const dbRecs = await getDbRecordsByFilters(filters);
   const enriched = await enrichRecordsWithHandlers(dbRecs);
   return { records: enriched.map(dbRecordToSummary) };
 }
 
 export async function getRecordDetail(id: number): Promise<{ record: RecordDetail | null }> {
-  await ensureDbReady();
   const rec = await getDbRecordById(id);
   if (!rec) return { record: null };
 
@@ -137,7 +134,6 @@ export async function getRecordDetail(id: number): Promise<{ record: RecordDetai
 }
 
 export async function getStats(): Promise<{ stats: DashboardStats }> {
-  await ensureDbReady();
   const dbStats = await getDbDashboardStats();
   const enriched = await enrichRecordsWithHandlers(dbStats.recentRecords);
   const stats: DashboardStats = {
@@ -148,14 +144,12 @@ export async function getStats(): Promise<{ stats: DashboardStats }> {
 }
 
 export async function getProcessingList(): Promise<{ records: RecordSummary[] }> {
-  await ensureDbReady();
   const dbRecs = await getDbProcessingRecords();
   const enriched = await enrichRecordsWithHandlers(dbRecs);
   return { records: enriched.map(dbRecordToSummary) };
 }
 
 export async function updateRecord(id: number, updates: Partial<RecordDetail>): Promise<RecordDetail | null> {
-  await ensureDbReady();
   const dbUpdates: any = {};
   if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.isArchived !== undefined) dbUpdates.isArchived = updates.isArchived;
@@ -185,7 +179,6 @@ export async function addNodeToRecord(
   recordId: number,
   node: Omit<NodeDetail, "id" | "createdAt"> & { operatorId?: number }
 ): Promise<NodeDetail | null> {
-  await ensureDbReady();
   const dbNode = await addDbNode(recordId, {
     nodeType: node.nodeType,
     nodeName: node.nodeName,
@@ -205,7 +198,6 @@ export async function addNodeToRecord(
 }
 
 export async function getCurrentUserInfo(): Promise<{ id: number; username: string; displayName: string; role: string; department: string }> {
-  await ensureDbReady();
   const u = await getDbCurrentUser();
   return {
     id: u.id,
