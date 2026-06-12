@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  FIELD_HANDLER
+  QUALITY_REVIEWER
+  ADMIN
+}
+
+enum RecordStatus {
+  ACCEPTED
+  PROCESSING
+  REVIEWING
+  ARCHIVED
+  REJECTED
+  RETURNED_FOR_SUPPLEMENT
+}
+
+enum RecordType {
+  NORMAL_DELIVERY
+  QUALIFICATION_MISMATCH
+  TIME_WINDOW_CONFLICT
+  NOTIFICATION_UNCONFIRMED
+}
+
+enum FieldChangeType {
+  CRITICAL_TIME
+  RESPONSIBLE_PARTY
+  AMOUNT
+  EVIDENCE_CONCLUSION
+  OTHER
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  employeeId      String   @unique
+  role            UserRole
+  department      String
+  phone           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  createdRecords      EquipmentRecord[] @relation("creator")
+  assignedRecords     EquipmentRecord[] @relation("assignee")
+  handledNodes        RecordNode[]
+  createdDiffTrackers DiffTracker[]
+  uploadedAttachments Attachment[]
+}
+
+model EquipmentRecord {
+  id                String        @id @default(cuid())
+  recordNo          String        @unique
+  title             String
+  type              RecordType
+  status            RecordStatus
+  source            String
+  venue             String
+  eventName         String
+  equipmentList     Json
+  scheduledTime     DateTime
+  actualTime        DateTime?
+  amount            Decimal       @default(0)
+  isArchived        Boolean       @default(false)
+  currentAssigneeId String?
+  conclusion        String?
+  blockReason       String?
+  remediationPath   String?
+  basisAdopted      String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  creatorId         String
+
+  creator          User?         @relation("creator", fields: [creatorId], references: [id])
+  currentAssignee  User?         @relation("assignee", fields: [currentAssigneeId], references: [id])
+  nodes            RecordNode[]
+  diffTrackers     DiffTracker[]
+  attachments      Attachment[]
+  keyObjects       KeyObject[]
+}
+
+model RecordNode {
+  id              String        @id @default(cuid())
+  recordId        String
+  nodeType        String
+  status          RecordStatus
+  description     String
+  fieldNotes      String?
+  onSiteNotes     String?
+  conclusion      String?
+  handlerId       String
+  createdAt       DateTime      @default(now())
+  isArchived      Boolean       @default(false)
+  parentNodeId    String?
+
+  record          EquipmentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  handler         User           @relation(fields: [handlerId], references: [id])
+  parentNode      RecordNode?    @relation("nodeHierarchy", fields: [parentNodeId], references: [id])
+  childNodes      RecordNode[]   @relation("nodeHierarchy")
+  attachments     Attachment[]
+  diffTrackers    DiffTracker[]
+}
+
+model DiffTracker {
+  id              String        @id @default(cuid())
+  recordId        String
+  nodeId          String?
+  fieldName       String
+  changeType      FieldChangeType
+  oldValue        Json?
+  newValue        Json?
+  diffDescription String
+  changedById     String
+  createdAt       DateTime      @default(now())
+  affectsSummary  Boolean       @default(true)
+
+  record          EquipmentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  node            RecordNode?    @relation(fields: [nodeId], references: [id])
+  changedBy       User           @relation(fields: [changedById], references: [id])
+}
+
+model Attachment {
+  id              String        @id @default(cuid())
+  recordId        String
+  nodeId          String?
+  fileName        String
+  fileType        String
+  fileUrl         String
+  description     String?
+  uploadedById    String
+  createdAt       DateTime      @default(now())
+
+  record          EquipmentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  node            RecordNode?    @relation(fields: [nodeId], references: [id])
+  uploadedBy      User           @relation(fields: [uploadedById], references: [id])
+}
+
+model KeyObject {
+  id              String        @id @default(cuid())
+  recordId        String
+  objectType      String
+  objectName      String
+  objectValue     String
+  isCritical      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  record          EquipmentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+}
