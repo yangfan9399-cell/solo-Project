@@ -112,7 +112,7 @@ class InspectionRecordsController < ApplicationController
         end
       end
 
-      if @record.send(:"may_#{event}?")
+      if @record.send(:"can_#{event}?")
         @record.send(:"#{event}!", remark: remark)
         broadcast_updates
       end

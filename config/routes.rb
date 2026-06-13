@@ -11,7 +11,7 @@ Rails.application.routes.draw do
     member do
       get 'handle'
       get 'review'
-      post 'workflow_event/:event', to: 'inspection_records#workflow_event', as: 'workflow_event'
+      post 'workflow_event', to: 'inspection_records#workflow_event'
     end
     collection do
       get 'dashboard'

@@ -107,26 +107,8 @@
             <% end %>
 
             <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-              <% if @record.may_archive? %>
-                <%= form.button :name => 'event', :value => 'archive', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700', data: { confirm: '确认复核通过并归档？' } do %>
-                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  确认归档
-                <% end %>
-              <% end %>
-
-              <% if @record.may_reject? %>
-                <%= form.button :name => 'event', :value => 'reject', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700', data: { confirm: '确认退回补证？' } do %>
-                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  退回补证
-                <% end %>
-              <% end %>
-
-              <% if @record.may_start_review? %>
-                <%= form.button :name => 'event', :value => 'start_review', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700', data: { confirm: '确认开始复核？' } do %>
+              <% if @record.can_start_review? %>
+                <%= form.button type: 'submit', name: 'event', value: 'start_review', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700', data: { confirm: '确认开始复核？' } do %>
                   <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
@@ -134,8 +116,26 @@
                 <% end %>
               <% end %>
 
-              <% if policy(@record).reprocess? && @record.may_reprocess? %>
-                <%= form.button :name => 'event', :value => 'reprocess', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700', data: { confirm: '确认重新处理？将生成新的工作流节点。' } do %>
+              <% if @record.can_archive? %>
+                <%= form.button type: 'submit', name: 'event', value: 'archive', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700', data: { confirm: '确认复核通过并归档？' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  确认归档
+                <% end %>
+              <% end %>
+
+              <% if @record.can_reject? %>
+                <%= form.button type: 'submit', name: 'event', value: 'reject', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700', data: { confirm: '确认退回补证？' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  退回补证
+                <% end %>
+              <% end %>
+
+              <% if policy(@record).reprocess? && @record.can_reprocess? %>
+                <%= form.button type: 'submit', name: 'event', value: 'reprocess', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700', data: { confirm: '确认重新处理？将生成新的工作流节点。' } do %>
                   <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>

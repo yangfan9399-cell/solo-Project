@@ -215,21 +215,21 @@ class InspectionRecord < ApplicationRecord
     events = []
 
     if archived?
-      events << :reprocess if user.admin? && may_reprocess?
+      events << :reprocess if user.admin? && can_reprocess?
       return events
     end
 
     if user.can_handle?(self)
-      events << :accept if may_accept?
-      events << :process if may_process?
-      events << :submit_review if may_submit_review?
-      events << :reprocess if may_reprocess?
+      events << :accept if can_accept?
+      events << :process if can_process?
+      events << :submit_review if can_submit_review?
+      events << :reprocess if can_reprocess?
     end
 
     if user.can_review?(self)
-      events << :start_review if may_start_review?
-      events << :archive if may_archive?
-      events << :reject if may_reject?
+      events << :start_review if can_start_review?
+      events << :archive if can_archive?
+      events << :reject if can_reject?
     end
 
     events
@@ -251,7 +251,7 @@ class InspectionRecord < ApplicationRecord
   end
 
   def reprocess_with_new_node(operator, params)
-    return false unless may_reprocess?
+    return false unless can_reprocess?
 
     transaction do
       update!(params)

@@ -198,8 +198,9 @@
           <% end %>
           <div class="flex flex-wrap gap-3">
             <% @available_events.each do |event| %>
-              <%= button_to workflow_event_inspection_record_path(@record, event: event),
+              <%= button_to workflow_event_inspection_record_path(@record),
                   method: :post,
+                  params: { event: event },
                   class: button_class_for_event(event),
                   data: { confirm: "确认执行\"#{event_text(event)}\"操作？" } do %>
                 <%= event_text(event) %>

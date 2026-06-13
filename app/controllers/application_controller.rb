@@ -6,8 +6,8 @@ class ApplicationController < ActionController::Base
 
   before_action :set_current_attributes
   before_action :authenticate_user!
-  after_action :verify_authorized, unless: :devise_controller?
-  after_action :verify_policy_scoped, only: :index, unless: :devise_controller?
+  after_action :verify_authorized, unless: :skip_pundit_verification?
+  after_action :verify_policy_scoped, only: :index, unless: :skip_pundit_verification?
 
   helper_method :current_user
   helper_method :user_signed_in?
@@ -72,5 +72,9 @@ class ApplicationController < ActionController::Base
       format.html { redirect_to root_path, alert: '记录不存在或已被删除' }
       format.json { render json: { error: 'Record not found' }, status: :not_found }
     end
+  end
+
+  def skip_pundit_verification?
+    controller_name == 'sessions'
   end
 end
