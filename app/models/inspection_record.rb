@@ -128,6 +128,24 @@ class InspectionRecord < ApplicationRecord
   scope :by_defect_type, ->(type) { where(defect_type: type) }
   scope :overdue, -> { where('deadline < ?', Time.current).where.not(current_state: 'archived') }
 
+  def self.ransackable_attributes(auth_object = nil)
+    %w[
+      record_no toilet_name toilet_address current_state sample_type
+      defect_type defect_level source description responsible_unit
+      responsible_person department evidence_conclusion fine_amount
+      reward_amount score_before score_after inspection_time
+      created_at archived_at handler_id reviewer_id deadline
+    ]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[handler reviewer workflow_nodes correction_records evidence_attachments]
+  end
+
+  def self.ransackable_scopes(auth_object = nil)
+    %i[by_state by_sample_type by_defect_type abnormal normal_samples active archived overdue]
+  end
+
   def create_workflow_node(transition)
     diff = calculate_diff(transition)
     workflow_nodes.create!(

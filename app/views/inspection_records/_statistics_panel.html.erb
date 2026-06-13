@@ -84,7 +84,7 @@
       </div>
       <div class="ml-3">
         <p class="text-sm font-medium text-gray-500">异常样本</p>
-        <%= link_to inspection_records_path(q: { sample_type_not_eq: 'normal_delivery' }), class: "text-xl font-semibold text-gray-900 hover:text-blue-600" do %>
+        <%= link_to inspection_records_path(q: { abnormal: true }), class: "text-xl font-semibold text-gray-900 hover:text-blue-600" do %>
           <%= statistics[:abnormal] %>
         <% end %>
       </div>
