@@ -4,21 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
+    "build": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt build",
+    "dev": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt dev",
+    "generate": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare && node scripts/fix-rollup.mjs",
+    "postinstall": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt prepare",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "prisma:push": "prisma db push",
-    "db:setup": "prisma db push && prisma generate && node prisma/seed.js",
-    "fix:rollup": "node scripts/fix-rollup.mjs"
+    "db:setup": "prisma db push && prisma generate && node prisma/seed.js"
   },
   "devDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.62.0",
-    "@rollup/wasm-node": "^4.62.0",
+    "@rollup/wasm-node": "4.62.0",
     "@types/node": "^20.11.0",
     "nuxt": "3.9.3",
     "prisma": "5.12.0",
@@ -31,5 +29,16 @@
   },
   "prisma": {
     "seed": "node prisma/seed.js"
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "rollup@4.62.0": {
+        "optionalDependencies": {}
+      }
+    },
+    "public-hoist-patterns": [
+      "@rollup/wasm-node",
+      "@rollup/wasm-node/**"
+    ]
   }
 }

@@ -1,5 +1,12 @@
 <template>
   <div class="review-page">
+    <div class="toast-container" v-if="toast.show">
+      <div :class="['toast', `toast-${toast.type}`]">
+        <span class="toast-icon">{{ toast.icon }}</span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+
     <div class="page-header">
       <div>
         <button class="btn btn-default" @click="goBack">← 返回</button>
@@ -19,8 +26,14 @@
             <div class="summary-header">
               <div>
                 <span class="record-no">{{ record.recordNo }}</span>
-                <span :class="['tag', `tag-${statusColors[record.status]}`]" style="margin-left: 12px;">
+                <span :class="['tag', `tag-${statusColors[record.status]}`, { 'tag-pulse': statusChanged }]" style="margin-left: 12px;">
                   {{ statusLabels[record.status] }}
+                </span>
+                <span v-if="record.isAbnormal" class="tag tag-danger" style="margin-left: 8px;">
+                  异常
+                </span>
+                <span v-if="record.status === 'ARCHIVED'" class="tag tag-info" style="margin-left: 8px;">
+                  📁 只读
                 </span>
               </div>
               <div class="summary-patient">
@@ -422,6 +435,39 @@ const loading = ref(true)
 const submitting = ref(false)
 const reviewResult = ref<'pass' | 'reject'>('pass')
 const mockAttachments = ref<any[]>([])
+const statusChanged = ref(false)
+const previousStatus = ref('')
+const toast = ref({
+  show: false,
+  type: 'success',
+  message: '',
+  icon: '✓'
+})
+
+const showToast = (type: 'success' | 'error' | 'info' | 'warning', message: string, icon?: string) => {
+  const icons: Record<string, string> = {
+    success: '✓',
+    error: '✗',
+    info: 'ℹ',
+    warning: '⚠'
+  }
+  toast.value = {
+    show: true,
+    type,
+    message,
+    icon: icon || icons[type]
+  }
+  setTimeout(() => {
+    toast.value.show = false
+  }, 3000)
+}
+
+const triggerStatusChange = () => {
+  statusChanged.value = true
+  setTimeout(() => {
+    statusChanged.value = false
+  }, 2000)
+}
 
 const formData = ref({
   content: '',
@@ -524,6 +570,7 @@ const handleAccept = async () => {
   if (submitting.value) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/accept`, {
       method: 'POST',
       body: {
@@ -535,10 +582,11 @@ const handleAccept = async () => {
         basis: formData.value.basis
       }
     })
-    alert('受理成功！')
+    showToast('success', '受理成功！状态已更新。')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('受理失败：' + (e?.data?.message || e.message))
+    showToast('error', '受理失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -548,6 +596,7 @@ const handleProcess = async () => {
   if (submitting.value) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/process`, {
       method: 'POST',
       body: {
@@ -563,10 +612,11 @@ const handleProcess = async () => {
         attachments: mockAttachments.value
       }
     })
-    alert('处理完成，已提交复核！')
+    showToast('success', '处理完成！已提交复核，状态已更新。')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('处理失败：' + (e?.data?.message || e.message))
+    showToast('error', '处理失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -576,23 +626,30 @@ const handleReview = async () => {
   if (submitting.value) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
+    const passed = reviewResult.value === 'pass'
     await $fetch(`/api/records/${record.value.id}/review`, {
       method: 'POST',
       body: {
         operatorId: userState.value.id,
         operatorName: userState.value.name,
-        passed: reviewResult.value === 'pass',
+        passed,
         content: formData.value.conclusion,
         conclusion: formData.value.conclusion,
         basis: formData.value.basis,
-        blockingReason: reviewResult.value === 'reject' ? formData.value.blockingReason : null,
-        remedialPath: reviewResult.value === 'reject' ? formData.value.remedialPath : null
+        blockingReason: !passed ? formData.value.blockingReason : null,
+        remedialPath: !passed ? formData.value.remedialPath : null
       }
     })
-    alert(reviewResult.value === 'pass' ? '复核通过！' : '已退回处理！')
+    if (passed) {
+      showToast('success', '复核通过！状态已更新为待归档。')
+    } else {
+      showToast('warning', '已退回处理！已生成新的重新处理节点，请在处理台查看。', '🔄')
+    }
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('复核失败：' + (e?.data?.message || e.message))
+    showToast('error', '复核失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -600,9 +657,10 @@ const handleReview = async () => {
 
 const handleArchive = async () => {
   if (submitting.value) return
-  if (!confirm('确认归档吗？归档后记录将变为只读状态。')) return
+  if (!confirm('确认归档吗？归档后记录将变为只读状态，无法再修改。')) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/archive`, {
       method: 'POST',
       body: {
@@ -612,10 +670,11 @@ const handleArchive = async () => {
         basis: formData.value.basis
       }
     })
-    alert('归档成功！')
+    showToast('success', '归档成功！记录已进入只读状态，后续操作将被拒绝。', '📁')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('归档失败：' + (e?.data?.message || e.message))
+    showToast('error', '归档失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -623,9 +682,10 @@ const handleArchive = async () => {
 
 const handleReturnForSupplement = async () => {
   if (submitting.value) return
-  if (!confirm('确认退回补证吗？记录将回到处理中状态。')) return
+  if (!confirm('确认退回补证吗？记录将回到处理中状态，并生成新的处理节点。')) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/reprocess`, {
       method: 'POST',
       body: {
@@ -637,10 +697,11 @@ const handleReturnForSupplement = async () => {
         reason: '归档复核退回，需补充材料或更正信息'
       }
     })
-    alert('已退回补证！')
+    showToast('warning', '已退回补证！已生成新的处理节点，状态已更新。', '🔄')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('退回失败：' + (e?.data?.message || e.message))
+    showToast('error', '退回失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -648,9 +709,10 @@ const handleReturnForSupplement = async () => {
 
 const handleReprocess = async () => {
   if (submitting.value) return
-  if (!confirm('确认重新处理吗？将生成新的处理节点。')) return
+  if (!confirm('确认重新处理吗？将生成新的处理节点，版本号会递增。')) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/reprocess`, {
       method: 'POST',
       body: {
@@ -662,10 +724,11 @@ const handleReprocess = async () => {
         reason: formData.value.basis || '复核退回重新处理'
       }
     })
-    alert('重新处理已启动！')
+    showToast('success', '重新处理已启动！已生成新的处理节点，版本号已递增。', '🔄')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('重新处理失败：' + (e?.data?.message || e.message))
+    showToast('error', '重新处理失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -675,6 +738,7 @@ const handleSupplement = async () => {
   if (submitting.value) return
   submitting.value = true
   try {
+    previousStatus.value = record.value.status
     await $fetch(`/api/records/${record.value.id}/supplement`, {
       method: 'POST',
       body: {
@@ -686,10 +750,11 @@ const handleSupplement = async () => {
         attachments: mockAttachments.value
       }
     })
-    alert('补充材料已提交！')
+    showToast('success', '补充材料已提交！相关节点已更新。')
     await loadRecord()
+    triggerStatusChange()
   } catch (e: any) {
-    alert('提交失败：' + (e?.data?.message || e.message))
+    showToast('error', '提交失败：' + (e?.data?.message || e.message))
   } finally {
     submitting.value = false
   }
@@ -713,6 +778,81 @@ watch(() => route.query.id, () => {
 </script>
 
 <style scoped>
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toast-success {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+}
+
+.toast-error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+}
+
+.toast-warning {
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  color: #faad14;
+}
+
+.toast-info {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+}
+
+.toast-icon {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tag-pulse {
+  animation: tag-pulse 0.6s ease-in-out 3;
+}
+
+@keyframes tag-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(24, 144, 255, 0);
+  }
+}
+
 .review-page {
   padding-bottom: 40px;
 }
