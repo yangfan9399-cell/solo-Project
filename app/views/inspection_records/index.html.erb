@@ -1,0 +1,66 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">巡检记录</h1>
+      <p class="text-sm text-gray-500 mt-1">共 <%= @records.total_count %> 条记录</p>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to '新建记录', new_inspection_record_path, class: 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700' %>
+    </div>
+  </div>
+
+  <%= render 'statistics_panel', statistics: @statistics %>
+
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <%= form_with url: inspection_records_path, method: :get, local: true, class: 'space-y-4' do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <%= f.label :record_no_or_toilet_name_cont, '搜索', class: 'block text-xs font-medium text-gray-700' %>
+            <%= f.text_field :record_no_or_toilet_name_cont, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '记录编号或公厕名称' %>
+          </div>
+          <div>
+            <%= f.label :current_state_eq, '状态', class: 'block text-xs font-medium text-gray-700' %>
+            <%= f.select :current_state_eq, @states.map { |s| [s.text, s.value] }, include_blank: '全部', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+          <div>
+            <%= f.label :sample_type_eq, '样本类型', class: 'block text-xs font-medium text-gray-700' %>
+            <%= f.select :sample_type_eq, @sample_types.map { |s| [s.text, s.value] }, include_blank: '全部', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+          <div>
+            <%= f.label :defect_type_eq, '缺陷类型', class: 'block text-xs font-medium text-gray-700' %>
+            <%= f.select :defect_type_eq, @defect_types.map { |s| [s.text, s.value] }, include_blank: '全部', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <%= f.submit '搜索', class: 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700' %>
+          <%= link_to '重置', inspection_records_path, class: 'inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
+        </div>
+      <% end %>
+    </div>
+
+    <div id="records_list" class="divide-y divide-gray-200">
+      <%= turbo_stream_from 'inspection_records' %>
+
+      <% @records.each do |record| %>
+        <%= render 'record', record: record %>
+      <% end %>
+
+      <% if @records.empty? %>
+        <div class="px-6 py-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">暂无记录</h3>
+          <p class="mt-1 text-sm text-gray-500">没有找到符合条件的巡检记录</p>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @records.total_pages > 1 %>
+      <div class="px-6 py-4 border-t border-gray-200">
+        <%= paginate @records, theme: 'bootstrap' %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,203 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">统计复盘</h1>
+    <p class="text-sm text-gray-500 mt-1">数据统计与趋势分析，点击数字可钻取查看具体记录</p>
+  </div>
+
+  <%= render 'statistics_panel', statistics: @statistics %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">按样本类型分布</h3>
+      </div>
+      <div class="px-6 py-4">
+        <div class="space-y-4">
+          <% @by_sample_type.each do |type, count| %>
+            <% type_enum = InspectionRecord.sample_type.find_value(type) %>
+            <% next unless type_enum %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-1 text-xs rounded-full <%= sample_type_badge_class(type) %>">
+                  <%= type_enum.text %>
+                </span>
+              </div>
+              <%= link_to inspection_records_path(q: { sample_type_eq: type }), class: "group flex items-center gap-2" do %>
+                <span class="text-xl font-bold <%= type == 'normal_delivery' ? 'text-green-600' : 'text-red-600' %> group-hover:text-blue-600">
+                  <%= count %>
+                </span>
+                <span class="text-xs text-gray-500">
+                  <%= (count.to_f / @statistics[:total] * 100).round(1) %>%
+                </span>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              <% end %>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full <%= type == 'normal_delivery' ? 'bg-green-500' : 'bg-red-500' %>" style="width: <%= (count.to_f / @statistics[:total] * 100) %>%"></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">按缺陷类型分布</h3>
+      </div>
+      <div class="px-6 py-4">
+        <div class="space-y-4">
+          <% @by_defect_type.each do |type, count| %>
+            <% type_enum = InspectionRecord.defect_type.find_value(type) %>
+            <% next unless type_enum %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-gray-600"><%= defect_type_icon(type) %></span>
+                <span class="text-sm font-medium text-gray-700"><%= type_enum.text %></span>
+              </div>
+              <%= link_to inspection_records_path(q: { defect_type_eq: type }), class: "group flex items-center gap-2" do %>
+                <span class="text-xl font-bold text-gray-900 group-hover:text-blue-600"><%= count %></span>
+                <span class="text-xs text-gray-500">
+                  <%= (count.to_f / @statistics[:total] * 100).round(1) %>%
+                </span>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              <% end %>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-blue-500 h-2 rounded-full" style="width: <%= (count.to_f / @statistics[:total] * 100) %>%"></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">按状态分布</h3>
+      </div>
+      <div class="px-6 py-4">
+        <div class="space-y-4">
+          <% @by_state.each do |state, count| %>
+            <% state_enum = InspectionRecord.current_state.find_value(state) %>
+            <% next unless state_enum %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-1 text-xs rounded-full <%= state_badge_class(state) %>">
+                  <%= state_enum.text %>
+                </span>
+              </div>
+              <%= link_to inspection_records_path(q: { current_state_eq: state }), class: "group flex items-center gap-2" do %>
+                <span class="text-xl font-bold text-gray-900 group-hover:text-blue-600"><%= count %></span>
+                <span class="text-xs text-gray-500">
+                  <%= (count.to_f / @statistics[:total] * 100).round(1) %>%
+                </span>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              <% end %>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full <%= state == 'archived' ? 'bg-green-500' : state == 'rejected' ? 'bg-red-500' : 'bg-blue-500' %>" style="width: <%= (count.to_f / @statistics[:total] * 100) %>%"></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">异常样本详情</h3>
+      </div>
+      <div class="px-6 py-4">
+        <% abnormal_records = InspectionRecord.abnormal.includes(:handler, :reviewer).order(created_at: :desc).limit(10) %>
+        <% if abnormal_records.any? %>
+          <div class="space-y-3">
+            <% abnormal_records.each do |record| %>
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <%= link_to record.toilet_name, record, class: "text-sm font-medium text-blue-600 hover:text-blue-800 truncate" %>
+                    <span class="px-2 py-0.5 text-xs rounded-full <%= sample_type_badge_class(record.sample_type) %>">
+                      <%= record.sample_type_text %>
+                    </span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-1 truncate"><%= record.record_no %></p>
+                  <% if record.block_reason.present? %>
+                    <p class="text-xs text-red-600 mt-1 line-clamp-1"><%= record.block_reason %></p>
+                  <% end %>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                  <span class="px-2 py-1 text-xs rounded-full <%= state_badge_class(record.current_state) %>">
+                    <%= record.current_state_text %>
+                  </span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          <div class="mt-4 text-center">
+            <%= link_to '查看全部异常样本', inspection_records_path(q: { sample_type_not_eq: 'normal_delivery' }), class: "text-sm text-blue-600 hover:text-blue-500" %>
+          </div>
+        <% else %>
+          <div class="py-8 text-center text-gray-500 text-sm">
+            暂无异常样本
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h3 class="text-lg font-medium text-gray-900">近30天趋势</h3>
+    </div>
+    <div class="px-6 py-4">
+      <div class="h-64">
+        <div class="flex items-end justify-between h-full gap-1">
+          <% @trend_data.each do |data| %>
+            <% max_count = [@trend_data.map { |d| d[:created] }.max || 1, 1].max %>
+            <% created_height = (data[:created].to_f / max_count * 100).round %>%
+            <% archived_height = (data[:archived].to_f / max_count * 100).round %>
+            <% abnormal_height = (data[:abnormal].to_f / max_count * 100).round %>
+            <div class="flex-1 flex flex-col items-center justify-end h-full group">
+              <div class="w-full flex items-end justify-center gap-0.5 h-full">
+                <% if data[:created] > 0 %>
+                  <%= link_to inspection_records_path(q: { created_at_gteq: data[:date].beginning_of_day, created_at_lteq: data[:date].end_of_day }), class: "w-2 bg-blue-500 rounded-t hover:bg-blue-600 transition-all group-hover:opacity-80", style: "height: #{created_height}%", title: "新增: #{data[:created]}" do %><% end %>
+                <% end %>
+                <% if data[:archived] > 0 %>
+                  <%= link_to inspection_records_path(q: { archived_at_gteq: data[:date].beginning_of_day, archived_at_lteq: data[:date].end_of_day, current_state_eq: 'archived' }), class: "w-2 bg-green-500 rounded-t hover:bg-green-600 transition-all group-hover:opacity-80", style: "height: #{archived_height}%", title: "归档: #{data[:archived]}" do %><% end %>
+                <% end %>
+                <% if data[:abnormal] > 0 %>
+                  <%= link_to inspection_records_path(q: { created_at_gteq: data[:date].beginning_of_day, created_at_lteq: data[:date].end_of_day, sample_type_not_eq: 'normal_delivery' }), class: "w-2 bg-red-500 rounded-t hover:bg-red-600 transition-all group-hover:opacity-80", style: "height: #{abnormal_height}%", title: "异常: #{data[:abnormal]}" do %><% end %>
+                <% end %>
+              </div>
+              <div class="mt-2 text-[10px] text-gray-500 transform -rotate-45 origin-top-left whitespace-nowrap">
+                <%= data[:date].strftime('%m-%d') %>
+              </div>
+              <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                <%= data[:date].strftime('%Y-%m-%d') %><br>
+                新增: <%= data[:created] %> | 归档: <%= data[:archived] %> | 异常: <%= data[:abnormal] %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-6 mt-6 text-sm">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-blue-500 rounded"></div>
+          <span class="text-gray-600">新增</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-green-500 rounded"></div>
+          <span class="text-gray-600">归档</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-red-500 rounded"></div>
+          <span class="text-gray-600">异常</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

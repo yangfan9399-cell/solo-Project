@@ -1,0 +1,166 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">复核台 - 评分复核</h1>
+      <p class="text-sm text-gray-500 mt-1">记录编号：<%= @record.record_no %></p>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to '返回详情', @record, class: 'text-sm text-gray-500 hover:text-gray-700' %>
+    </div>
+  </div>
+
+  <% if @record.archived? %>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <p class="text-sm text-yellow-800">该记录已归档，无法进行操作。</p>
+    </div>
+  <% else %>
+    <%= render 'detail', record: @record, show_actions: false %>
+
+    <% if @record.abnormal? && @record.block_info %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-red-800 mb-4">异常样本复核提示</h3>
+        <div class="space-y-4">
+          <div>
+            <dt class="text-sm font-medium text-red-600">异常类型</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= @record.block_info[:sample_type] %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-red-600">阻断原因</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= @record.block_info[:block_reason] %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-red-600">补救路径</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= @record.block_info[:remedy_path] %></dd>
+          </div>
+          <% if @record.block_info[:diff_fields].present? %>
+            <div>
+              <dt class="text-sm font-medium text-red-600">差异字段</dt>
+              <dd class="mt-1">
+                <div class="bg-white rounded p-3 space-y-2">
+                  <% @record.block_info[:diff_fields].each do |field, values| %>
+                    <div class="flex items-center gap-4 text-sm">
+                      <span class="font-medium text-gray-700 w-32"><%= InspectionRecord.human_attribute_name(field) %>:</span>
+                      <span class="text-red-600 line-through"><%= values[0] || '空' %></span>
+                      <span class="text-gray-500">→</span>
+                      <span class="text-green-600"><%= values[1] || '空' %></span>
+                    </div>
+                  <% end %>
+                </div>
+              </dd>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @record.correction_records.any? %>
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">整改记录</h3>
+        </div>
+        <div class="px-6 py-4 space-y-4">
+          <% @record.correction_records.each do |correction| %>
+            <%= render 'correction_records/correction', correction: correction %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @record.evidence_attachments.any? %>
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">证据附件</h3>
+        </div>
+        <div class="px-6 py-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <% @record.evidence_attachments.each do |attachment| %>
+              <%= render 'evidence_attachments/attachment', attachment: attachment %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">复核操作</h3>
+        <p class="text-sm text-gray-500 mt-1">请仔细核查整改内容，确认通过或退回补证。</p>
+      </div>
+
+      <div class="px-6 py-4">
+        <%= form_with url: workflow_event_inspection_record_path(@record), method: :post, local: true do |form| %>
+          <div class="space-y-4">
+            <div>
+              <%= form.label :remark, '复核意见', class: 'block text-sm font-medium text-gray-700' %>
+              <%= form.text_area :remark, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '请填写复核意见...' %>
+            </div>
+
+            <% if @record.rejected? || @record.abnormal? %>
+              <div>
+                <%= form.label :block_reason, '阻断原因（如有）', class: 'block text-sm font-medium text-gray-700' %>
+                <%= form.text_area :block_reason, rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '如存在阻断因素，请详细说明...', value: @record.block_reason %>
+              </div>
+              <div>
+                <%= form.label :remedy_path, '补救路径（如有）', class: 'block text-sm font-medium text-gray-700' %>
+                <%= form.text_area :remedy_path, rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '请说明补救措施和路径...', value: @record.remedy_path %>
+              </div>
+            <% end %>
+
+            <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+              <% if @record.may_archive? %>
+                <%= form.button :name => 'event', :value => 'archive', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700', data: { confirm: '确认复核通过并归档？' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  确认归档
+                <% end %>
+              <% end %>
+
+              <% if @record.may_reject? %>
+                <%= form.button :name => 'event', :value => 'reject', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700', data: { confirm: '确认退回补证？' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  退回补证
+                <% end %>
+              <% end %>
+
+              <% if @record.may_start_review? %>
+                <%= form.button :name => 'event', :value => 'start_review', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700', data: { confirm: '确认开始复核？' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  开始复核
+                <% end %>
+              <% end %>
+
+              <% if policy(@record).reprocess? && @record.may_reprocess? %>
+                <%= form.button :name => 'event', :value => 'reprocess', class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700', data: { confirm: '确认重新处理？将生成新的工作流节点。' } do %>
+                  <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  重新处理
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">处理历史</h3>
+      </div>
+      <div class="px-6 py-4">
+        <div class="flow-root">
+          <ul class="-mb-8">
+            <% @workflow_nodes.each_with_index do |node, index| %>
+              <%= render 'workflow_nodes/node', node: node, last: index == @workflow_nodes.size - 1 %>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,144 @@
+<%= form_with model: record, local: true do |form| %>
+  <% if record.errors.any? %>
+    <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+      <h4 class="text-sm font-medium text-red-800">表单有以下错误：</h4>
+      <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+        <% record.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="space-y-6">
+      <div>
+        <%= form.label :toilet_name, '公厕名称 *', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.text_field :toilet_name, required: true, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div>
+        <%= form.label :toilet_address, '公厕地址', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.text_field :toilet_address, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div>
+        <%= form.label :inspection_time, '巡检时间 *', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.datetime_field :inspection_time, required: true, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div>
+        <%= form.label :source, '来源 *', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.select :source, InspectionRecord.source.values.map { |s| [s.text, s.value] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div>
+        <%= form.label :defect_type, '缺陷类型 *', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.select :defect_type, InspectionRecord.defect_type.values.map { |s| [s.text, s.value] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div>
+        <%= form.label :sample_type, '样本类型 *', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.select :sample_type, InspectionRecord.sample_type.values.map { |s| [s.text, s.value] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div>
+        <%= form.label :description, '缺陷描述', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.text_area :description, rows: 3, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= form.label :defect_level, '缺陷等级', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :defect_level, InspectionRecord.defect_level.values.map { |s| [s.text, s.value] }, {}, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+        <div>
+          <%= form.label :department, '责任部门', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_field :department, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= form.label :score_before, '整改前评分', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.number_field :score_before, min: 0, max: 100, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+        <div>
+          <%= form.label :score_after, '整改后评分', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.number_field :score_after, min: 0, max: 100, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :responsible_unit, '责任单位', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.text_field :responsible_unit, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= form.label :responsible_person, '责任人', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_field :responsible_person, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+        <div>
+          <%= form.label :contact_phone, '联系电话', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_field :contact_phone, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= form.label :handler_id, '处理人', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :handler_id, User.where(role: 'handler').pluck(:name, :id), include_blank: '请选择', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+        <div>
+          <%= form.label :reviewer_id, '复核人', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.select :reviewer_id, User.where(role: 'reviewer').pluck(:name, :id), include_blank: '请选择', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :deadline, '整改截止时间', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.datetime_field :deadline, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <%= form.label :fine_amount, '罚款金额 (元)', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.number_field :fine_amount, step: '0.01', min: 0, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+        <div>
+          <%= form.label :reward_amount, '奖励金额 (元)', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.number_field :reward_amount, step: '0.01', min: 0, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :evidence_conclusion, '证据结论', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.select :evidence_conclusion, ['待确认', '有效', '无效', '需补充'], include_blank: '请选择', class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm' %>
+      </div>
+    </div>
+  </div>
+
+  <% if record.abnormal? || record.new_record? %>
+    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+      <h4 class="text-sm font-medium text-gray-700 mb-4">异常样本信息（仅异常样本需要填写）</h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <%= form.label :block_reason, '阻断原因', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :block_reason, rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '异常样本的阻断原因...' %>
+        </div>
+        <div>
+          <%= form.label :remedy_path, '补救路径', class: 'block text-sm font-medium text-gray-700' %>
+          <%= form.text_area :remedy_path, rows: 2, class: 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm', placeholder: '异常样本的补救措施...' %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="mt-8 flex justify-end gap-3 pt-4 border-t border-gray-200">
+    <%= link_to '取消', inspection_records_path, class: 'px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50' %>
+    <%= form.submit class: 'inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700' %>
+  </div>
+<% end %>

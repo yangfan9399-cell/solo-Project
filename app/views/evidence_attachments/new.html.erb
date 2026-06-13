@@ -1,0 +1,15 @@
+<div class="max-w-4xl mx-auto">
+  <div class="mb-6">
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl font-bold text-gray-900">上传证据附件</h1>
+      <span class="px-2 py-1 text-xs rounded-full <%= state_badge_class(@inspection_record.current_state) %>">
+        <%= @inspection_record.current_state_text %>
+      </span>
+    </div>
+    <p class="text-sm text-gray-500 mt-1"><%= @inspection_record.record_no %> - <%= @inspection_record.toilet_name %></p>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-6">
+    <%= render 'form', evidence_attachment: @evidence_attachment %>
+  </div>
+</div>

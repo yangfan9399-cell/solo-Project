@@ -1,0 +1,42 @@
+<div id="correction_record_<%= correction.id %>" class="bg-gray-50 rounded-lg p-4">
+  <div class="flex items-start justify-between mb-3">
+    <div class="flex items-center gap-2">
+      <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span class="text-sm font-medium text-gray-900">整改记录</span>
+    </div>
+    <div class="text-xs text-gray-500">
+      <%= correction.formatted_correction_time %> · <%= correction.handler_name %>
+    </div>
+  </div>
+
+  <div class="space-y-2 text-sm">
+    <div>
+      <span class="font-medium text-gray-500">业务记录：</span>
+      <span class="text-gray-900"><%= correction.business_record %></span>
+    </div>
+    <div>
+      <span class="font-medium text-gray-500">现场说明：</span>
+      <span class="text-gray-900"><%= correction.site_description %></span>
+    </div>
+    <% if correction.correction_measure.present? %>
+      <div>
+        <span class="font-medium text-gray-500">整改措施：</span>
+        <span class="text-gray-900"><%= correction.correction_measure %></span>
+      </div>
+    <% end %>
+    <% if correction.correction_result.present? %>
+      <div>
+        <span class="font-medium text-gray-500">整改结果：</span>
+        <span class="text-gray-900"><%= correction.correction_result %></span>
+      </div>
+    <% end %>
+    <% if correction.remark.present? %>
+      <div>
+        <span class="font-medium text-gray-500">备注：</span>
+        <span class="text-gray-900"><%= correction.remark %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

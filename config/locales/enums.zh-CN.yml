@@ -1,0 +1,51 @@
+zh-CN:
+  activerecord:
+    enumerize:
+      user:
+        role:
+          handler: '一线处理人'
+          reviewer: '质控复核人'
+          admin: '系统管理员'
+      inspection_record:
+        source:
+          daily_inspection: '日常巡检'
+          special_inspection: '专项检查'
+          complaint: '市民投诉'
+          third_party: '第三方评估'
+          other: '其他来源'
+        defect_type:
+          cleanliness: '清洁卫生'
+          facility: '设施设备'
+          maintenance: '维护保养'
+          odor: '异味问题'
+          management: '管理问题'
+          other: '其他问题'
+        sample_type:
+          normal: '正常交付'
+          qualification_mismatch: '资格不符'
+          time_window_conflict: '时间窗口冲突'
+          notification_unconfirmed: '通知未确认'
+        current_state:
+          pending: '待受理'
+          accepted: '已受理'
+          processing: '处理中'
+          review_pending: '待复核'
+          reviewing: '复核中'
+          archived: '已归档'
+          rejected: '已退回'
+      workflow_node:
+        event:
+          accept: '受理'
+          process: '开始处理'
+          submit_review: '提交复核'
+          start_review: '开始复核'
+          archive: '归档'
+          reject: '退回补证'
+          reprocess: '重新处理'
+      evidence_attachment:
+        attachment_type:
+          before_photo: '整改前照片'
+          after_photo: '整改后照片'
+          video: '现场视频'
+          document: '文档资料'
+          other: '其他'

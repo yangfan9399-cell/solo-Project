@@ -1,0 +1,218 @@
+zh-CN:
+  activerecord:
+    models:
+      user: '用户'
+      inspection_record: '巡检记录'
+      workflow_node: '工作流节点'
+      correction_record: '整改记录'
+      evidence_attachment: '证据附件'
+    attributes:
+      user:
+        username: '用户名'
+        name: '姓名'
+        role: '角色'
+        email: '邮箱'
+        phone: '电话'
+        department: '部门'
+        created_at: '创建时间'
+      inspection_record:
+        record_no: '记录编号'
+        toilet_name: '公厕名称'
+        toilet_address: '公厕地址'
+        inspection_time: '巡检时间'
+        source: '来源'
+        defect_type: '缺陷类型'
+        sample_type: '样本类型'
+        defect_level: '缺陷等级'
+        description: '缺陷描述'
+        score_before: '整改前评分'
+        score_after: '整改后评分'
+        responsible_unit: '责任单位'
+        responsible_person: '责任人'
+        contact_phone: '联系电话'
+        department: '所属部门'
+        handler_id: '处理人'
+        reviewer_id: '复核人'
+        deadline: '整改截止时间'
+        fine_amount: '罚款金额'
+        reward_amount: '奖励金额'
+        evidence_conclusion: '证据结论'
+        current_state: '当前状态'
+        block_reason: '阻断原因'
+        remedy_path: '补救路径'
+        review_comment: '复核意见'
+        basis: '采用依据'
+        conclusion: '结论'
+        created_at: '创建时间'
+        updated_at: '更新时间'
+        accepted_at: '受理时间'
+        processing_at: '开始处理时间'
+        review_pending_at: '提交复核时间'
+        reviewing_at: '开始复核时间'
+        archived_at: '归档时间'
+        rejected_at: '退回时间'
+      workflow_node:
+          event: '事件'
+          from_state: '原状态'
+          to_state: '目标状态'
+          operator: '操作人'
+          remark: '备注'
+          diff_fields: '差异字段'
+          created_at: '操作时间'
+      correction_record:
+          business_record: '业务记录'
+          site_description: '现场说明'
+          correction_measure: '整改措施'
+          correction_result: '整改结果'
+          correction_time: '整改时间'
+          operator: '操作人'
+          remark: '备注'
+      evidence_attachment:
+          attachment_type: '证据类型'
+          description: '证据描述'
+          shoot_time: '拍摄时间'
+          shoot_location: '拍摄地点'
+          operator: '采集人'
+    errors:
+      messages:
+        record_invalid: '验证失败: %{errors}'
+        taken: '已经被使用'
+  enumerize:
+    user:
+      role:
+        handler: '一线处理人'
+        reviewer: '质控复核人'
+        admin: '系统管理员'
+    inspection_record:
+      source:
+        daily_inspection: '日常巡检'
+        special_inspection: '专项检查'
+        complaint: '市民投诉'
+        third_party: '第三方评估'
+        other: '其他'
+      defect_type:
+        cleanliness: '清洁卫生'
+        facility: '设施设备'
+        maintenance: '维护保养'
+        odor: '异味问题'
+        management: '管理问题'
+        other: '其他问题'
+      sample_type:
+        normal_delivery: '正常交付'
+        qualification_mismatch: '资格不符'
+        time_window_conflict: '时间窗口冲突'
+        notification_unconfirmed: '通知未确认'
+      defect_level:
+        minor: '一般'
+        major: '较大'
+        critical: '严重'
+      current_state:
+        pending: '待受理'
+        accepted: '已受理'
+        processing: '处理中'
+        review_pending: '待复核'
+        reviewing: '复核中'
+        archived: '已归档'
+        rejected: '已退回'
+    workflow_node:
+      event:
+        accept: '受理'
+        process: '开始处理'
+        submit_review: '提交复核'
+        start_review: '开始复核'
+        archive: '归档'
+        reject: '退回补证'
+        reprocess: '重新处理'
+      node_type:
+        acceptance: '受理'
+        processing_start: '开始处理'
+        review_submit: '提交复核'
+        review_start: '开始复核'
+        approval: '审批通过'
+        rejection: '退回'
+        reprocessing: '重新处理'
+        archive: '归档'
+        general: '通用'
+    evidence_attachment:
+      attachment_type:
+        before_photo: '整改前照片'
+        after_photo: '整改后照片'
+        video: '现场视频'
+        document: '文档资料'
+        other: '其他'
+  controllers:
+    sessions:
+      create:
+        success: '登录成功'
+        failure: '用户名或密码错误'
+      destroy:
+        success: '已退出登录'
+    inspection_records:
+          create:
+            success: '巡检记录创建成功'
+          update:
+            success: '巡检记录更新成功'
+          handle:
+            success: '处理成功'
+          review:
+            success: '复核操作成功'
+          workflow_event:
+            success: '操作成功'
+          archive:
+            success: '归档成功，记录已只读'
+          reprocess:
+            success: '已重新处理，已生成新的工作流节点'
+    correction_records:
+      create:
+        success: '整改记录添加成功'
+    evidence_attachments:
+      create:
+        success: '证据附件上传成功'
+  helpers:
+    submit:
+      create: '创建'
+      update: '更新'
+      submit: '保存'
+  views:
+    pagination:
+      first: '首页'
+      last: '末页'
+      previous: '上一页'
+      next: '下一页'
+      truncate: '...'
+  datetime:
+    distance_in_words:
+      half_a_minute: '半分钟'
+      less_than_x_seconds:
+        one: '不到1秒'
+        other: '不到%{count}秒'
+      x_seconds:
+        one: '1秒'
+        other: '%{count}秒'
+      less_than_x_minutes:
+        one: '不到1分钟'
+        other: '不到%{count}分钟'
+      x_minutes:
+        one: '1分钟'
+        other: '%{count}分钟'
+      about_x_hours:
+        one: '大约1小时'
+        other: '大约%{count}小时'
+      x_days:
+        one: '1天'
+        other: '%{count}天'
+      about_x_months:
+        one: '大约1个月'
+        other: '大约%{count}个月'
+      x_months:
+        one: '1个月'
+        other: '%{count}个月'
+      about_x_years:
+        one: '大约1年'
+        other: '大约%{count}年'
+      over_x_years:
+        one: '1年多'
+        other: '%{count}年多'
+      almost_x_years:
+        one: '快1年了'
+        other: '快%{count}年了'

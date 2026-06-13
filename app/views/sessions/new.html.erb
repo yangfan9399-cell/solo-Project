@@ -1,0 +1,45 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div>
+      <div class="mx-auto h-16 w-16 text-blue-600 flex items-center justify-center">
+        <svg class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        城市公厕保洁巡检系统
+      </h2>
+      <p class="mt-2 text-center text-sm text-gray-600">
+        缺陷整改与评分复核管理平台
+      </p>
+    </div>
+
+    <%= form_with url: login_path, class: "mt-8 space-y-6", local: true do |form| %>
+      <div class="rounded-md shadow-sm -space-y-px">
+        <div>
+          <%= form.label :email, class: "sr-only" %>
+          <%= form.email_field :email, required: true, placeholder: "邮箱地址", class: "appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" %>
+        </div>
+        <div>
+          <%= form.label :password, class: "sr-only" %>
+          <%= form.password_field :password, required: true, placeholder: "密码", class: "appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.submit "登录系统", class: "group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+      </div>
+    <% end %>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-blue-800 mb-2">测试账户</h3>
+      <div class="text-xs text-blue-700 space-y-1">
+        <p><strong>系统管理员：</strong>admin@example.com / 123456</p>
+        <p><strong>一线处理人：</strong>handler1@example.com / 123456（张三）</p>
+        <p><strong>一线处理人：</strong>handler2@example.com / 123456（李四）</p>
+        <p><strong>质控复核人：</strong>reviewer1@example.com / 123456（王五）</p>
+        <p><strong>质控复核人：</strong>reviewer2@example.com / 123456（赵六）</p>
+      </div>
+    </div>
+  </div>
+</div>

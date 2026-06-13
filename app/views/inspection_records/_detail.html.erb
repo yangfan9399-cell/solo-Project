@@ -1,0 +1,229 @@
+<div id="record_detail">
+  <%= turbo_stream_from "inspection_record_#{record.id}" %>
+
+  <div class="space-y-6">
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900"><%= record.toilet_name %></h2>
+            <p class="text-sm text-gray-500 mt-1"><%= record.toilet_address %></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 text-sm rounded-full <%= state_badge_class(record.current_state) %>">
+              <%= record.current_state_text %>
+            </span>
+            <% if record.abnormal? %>
+              <span class="px-3 py-1 text-sm rounded-full bg-red-100 text-red-800">
+                <%= record.sample_type_text %>
+              </span>
+            <% end %>
+            <% if record.archived? %>
+              <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">
+                已归档
+              </span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-6 py-4">
+        <dl class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+          <div>
+            <dt class="text-xs font-medium text-gray-500">记录编号</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.record_no %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">来源</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.source_text %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">缺陷类型</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.defect_type_text %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">巡检时间</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.inspection_time&.strftime('%Y-%m-%d %H:%M') %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">当前责任人</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.current_responsible&.name || '待分配' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">责任单位</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.responsible_unit || '未指定' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">处理人</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.handler&.name || '未分配' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">复核人</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.reviewer&.name || '未分配' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">整改前评分</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.score_before || '未评分' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">整改后评分</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.score_after || '未评分' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">评分变化</dt>
+            <dd class="mt-1 text-sm <%= record.score_difference >= 0 ? 'text-green-600' : 'text-red-600' %>">
+              <% if record.score_before && record.score_after %>
+                <%= record.score_difference > 0 ? '+' : '' %><%= record.score_difference %>
+              <% else %>
+                -
+              <% end %>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">罚款金额</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.fine_amount ? "¥#{record.fine_amount}" : '无' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">奖励金额</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.reward_amount ? "¥#{record.reward_amount}" : '无' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">截止时间</dt>
+            <dd class="mt-1 text-sm <%= record.overdue? ? 'text-red-600' : 'text-gray-900' %>">
+              <%= record.deadline&.strftime('%Y-%m-%d %H:%M') || '无' %>
+              <% if record.overdue? %>
+                <span class="text-xs">(已逾期)</span>
+              <% end %>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">证据结论</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.evidence_conclusion || '待确认' %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">创建时间</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.created_at.strftime('%Y-%m-%d %H:%M') %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-gray-500">归档时间</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.archived_at&.strftime('%Y-%m-%d %H:%M') || '未归档' %></dd>
+          </div>
+        </dl>
+
+        <% if record.description.present? %>
+          <div class="mt-4">
+            <dt class="text-xs font-medium text-gray-500">缺陷描述</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.description %></dd>
+          </div>
+        <% end %>
+
+        <% if record.basis.present? %>
+          <div class="mt-4">
+            <dt class="text-xs font-medium text-gray-500">采用依据</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.basis %></dd>
+          </div>
+        <% end %>
+
+        <% if record.conclusion.present? %>
+          <div class="mt-4">
+            <dt class="text-xs font-medium text-gray-500">结论</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.conclusion %></dd>
+          </div>
+        <% end %>
+
+        <% if record.review_comment.present? %>
+          <div class="mt-4">
+            <dt class="text-xs font-medium text-gray-500">复核意见</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= record.review_comment %></dd>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <% if record.abnormal? && record.block_info %>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-red-800 mb-4">异常样本信息</h3>
+        <div class="space-y-4">
+          <div>
+            <dt class="text-xs font-medium text-red-600">异常类型</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= record.block_info[:sample_type] %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-red-600">阻断原因</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= record.block_info[:block_reason] %></dd>
+          </div>
+          <div>
+            <dt class="text-xs font-medium text-red-600">补救路径</dt>
+            <dd class="mt-1 text-sm text-red-800"><%= record.block_info[:remedy_path] %></dd>
+          </div>
+          <% if record.block_info[:diff_fields].present? %>
+            <div>
+              <dt class="text-xs font-medium text-red-600">差异字段</dt>
+              <dd class="mt-1">
+                <div class="bg-white rounded p-3 space-y-2">
+                  <% record.block_info[:diff_fields].each do |field, values| %>
+                    <div class="flex items-center gap-4 text-xs">
+                      <span class="font-medium text-gray-700 w-24"><%= InspectionRecord.human_attribute_name(field) %>:</span>
+                      <span class="text-red-600 line-through"><%= values[0] || '空' %></span>
+                      <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                      <span class="text-green-600"><%= values[1] || '空' %></span>
+                    </div>
+                  <% end %>
+                </div>
+              </dd>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if local_assigns[:show_actions] %>
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">可用操作</h3>
+        </div>
+        <div class="px-6 py-4">
+          <% if record.archived? %>
+            <div class="text-sm text-gray-500 mb-4">
+              <svg class="w-5 h-5 inline mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              该记录已归档，处于只读状态。
+              <% if @available_events.present? && current_user.admin? %>
+                管理员可重新处理。
+              <% end %>
+            </div>
+          <% end %>
+          <div class="flex flex-wrap gap-3">
+            <% @available_events.each do |event| %>
+              <%= button_to workflow_event_inspection_record_path(@record, event: event),
+                  method: :post,
+                  class: button_class_for_event(event),
+                  data: { confirm: "确认执行\"#{event_text(event)}\"操作？" } do %>
+                <%= event_text(event) %>
+              <% end %>
+            <% end %>
+
+            <% if !record.archived? %>
+              <% if policy(@record).update? %>
+                <%= link_to '编辑记录', edit_inspection_record_path(@record), class: 'inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
+              <% end %>
+              <% if policy(@record).submit_correction? %>
+                <%= link_to '提交整改', new_inspection_record_correction_record_path(@record), class: 'inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
+              <% end %>
+              <% if policy(@record).upload_evidence? %>
+                <%= link_to '上传证据', new_inspection_record_evidence_attachment_path(@record), class: 'inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
+              <% end %>
+            <% end %>
+
+            <% if @available_events.empty? && !record.archived? %>
+              <p class="text-sm text-gray-500">当前状态下暂无可用操作。</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

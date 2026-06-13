@@ -1,0 +1,59 @@
+<%= turbo_stream_from "inspection_record_#{@record.id}" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">巡检记录详情</h1>
+      <p class="text-sm text-gray-500 mt-1"><%= @record.record_no %></p>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to '返回列表', inspection_records_path, class: 'text-sm text-gray-500 hover:text-gray-700' %>
+    </div>
+  </div>
+
+  <%= render 'detail', record: @record, show_actions: true %>
+
+  <% if @latest_correction %>
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">最新整改记录</h3>
+      </div>
+      <div class="px-6 py-4">
+        <%= render 'correction_records/correction', correction: @latest_correction %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @record.evidence_attachments.any? %>
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">证据附件</h3>
+      </div>
+      <div class="px-6 py-4">
+        <div id="evidence_attachments" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <% @record.evidence_attachments.each do |attachment| %>
+            <%= render 'evidence_attachments/attachment', attachment: attachment %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium text-gray-900">处理历史</h3>
+        <span class="text-xs text-gray-500">共 <%= @workflow_nodes.size %> 个节点</span>
+      </div>
+    </div>
+    <div class="px-6 py-4">
+      <div class="flow-root">
+        <ul class="-mb-8">
+          <% @workflow_nodes.each_with_index do |node, index| %>
+            <%= render 'workflow_nodes/node', node: node, last: index == @workflow_nodes.size - 1 %>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

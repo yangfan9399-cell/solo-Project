@@ -1,0 +1,82 @@
+<div id="inspection_record_<%= record.id %>" class="px-6 py-4 hover:bg-gray-50 transition-colors">
+  <%= turbo_stream_from "inspection_record_#{record.id}" %>
+
+  <div class="flex items-start justify-between">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-3">
+        <%= link_to record.toilet_name, record, class: 'text-sm font-medium text-blue-600 hover:text-blue-900 truncate' %>
+        <span class="px-2 py-0.5 text-xs rounded-full <%= state_badge_class(record.current_state) %>">
+          <%= record.current_state_text %>
+        </span>
+        <% if record.abnormal? %>
+          <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
+            <%= record.sample_type_text %>
+          </span>
+        <% end %>
+        <% if record.overdue? %>
+          <span class="px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800">
+            已逾期
+          </span>
+        <% end %>
+      </div>
+
+      <div class="mt-1 flex items-center gap-4 text-xs text-gray-500">
+        <span class="truncate"><%= record.record_no %></span>
+        <span class="truncate"><%= record.defect_type_text %></span>
+        <span><%= record.source_text %></span>
+      </div>
+
+      <div class="mt-2 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+        <div>
+          <span class="text-gray-400">巡检时间：</span>
+          <span class="text-gray-700"><%= record.inspection_time&.strftime('%Y-%m-%d %H:%M') %></span>
+        </div>
+        <div>
+          <span class="text-gray-400">处理人：</span>
+          <span class="text-gray-700"><%= record.handler&.name || '未分配' %></span>
+        </div>
+        <div>
+          <span class="text-gray-400">复核人：</span>
+          <span class="text-gray-700"><%= record.reviewer&.name || '未分配' %></span>
+        </div>
+        <div>
+          <span class="text-gray-400">评分变化：</span>
+          <span class="<%= record.score_difference >= 0 ? 'text-green-600' : 'text-red-600' %>">
+            <%= record.score_before %> → <%= record.score_after || '待处理' %>
+            <% if record.score_before && record.score_after %>
+              (<%= record.score_difference > 0 ? '+' : '' %><%= record.score_difference %>)
+            <% end %>
+          </span>
+        </div>
+      </div>
+
+      <% if record.description.present? %>
+        <p class="mt-2 text-xs text-gray-600 line-clamp-2"><%= record.description %></p>
+      <% end %>
+
+      <% if record.abnormal? && record.block_reason.present? %>
+        <div class="mt-2 p-2 bg-red-50 rounded border border-red-100">
+          <p class="text-xs font-medium text-red-700">阻断原因：</p>
+          <p class="text-xs text-red-600 line-clamp-2 mt-0.5"><%= record.block_reason %></p>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="ml-4 flex flex-col items-end gap-2">
+      <div class="text-xs text-gray-400">
+        <%= record.created_at.strftime('%m-%d %H:%M') %>
+      </div>
+      <div class="flex gap-2">
+        <%= link_to '详情', record, class: 'text-xs text-blue-600 hover:text-blue-900' %>
+        <% if defined?(current_user) && current_user && !record.archived? %>
+          <% if current_user.can_handle?(record) %>
+            <%= link_to '处理', handle_inspection_record_path(record), class: 'text-xs text-green-600 hover:text-green-900' %>
+          <% end %>
+          <% if current_user.can_review?(record) %>
+            <%= link_to '复核', review_inspection_record_path(record), class: 'text-xs text-purple-600 hover:text-purple-900' %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

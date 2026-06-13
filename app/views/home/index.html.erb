@@ -1,0 +1,86 @@
+<div class="space-y-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">工作台</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      <%= Time.current.strftime('%Y年%m月%d日') %> · 欢迎回来，<%= current_user.name %>
+    </p>
+  </div>
+
+  <%= render 'inspection_records/statistics_panel', statistics: @statistics %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">最新记录</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @recent_records.each do |record| %>
+            <%= render 'inspection_records/record', record: record %>
+          <% end %>
+          <% if @recent_records.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500">
+              暂无记录
+            </div>
+          <% end %>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <%= link_to '查看全部记录', inspection_records_path, class: 'text-sm text-blue-600 hover:text-blue-500' %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">我的待办</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+          <% @my_tasks.each do |record| %>
+            <div class="px-6 py-4">
+              <div class="flex items-center justify-between">
+                <%= link_to record.toilet_name, record, class: 'text-sm font-medium text-blue-600 hover:text-blue-500 truncate' %>
+                <span class="px-2 py-1 text-xs rounded-full <%= state_badge_class(record.current_state) %>">
+                  <%= record.current_state_text %>
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1"><%= record.record_no %></p>
+            </div>
+          <% end %>
+          <% if @my_tasks.empty? %>
+            <div class="px-6 py-8 text-center text-gray-500 text-sm">
+              暂无待办事项
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">快捷操作</h3>
+        </div>
+        <div class="p-4 space-y-2">
+          <%= link_to new_inspection_record_path, class: 'w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700' do %>
+            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            新建巡检记录
+          <% end %>
+          <% if current_user.handler? || current_user.admin? %>
+            <%= link_to handler_dashboard_inspection_records_path, class: 'w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50' do %>
+              进入处理台
+            <% end %>
+          <% end %>
+          <% if current_user.reviewer? || current_user.admin? %>
+            <%= link_to review_dashboard_inspection_records_path, class: 'w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50' do %>
+              进入复核台
+            <% end %>
+          <% end %>
+          <%= link_to statistics_inspection_records_path, class: 'w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50' do %>
+            查看统计复盘
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
