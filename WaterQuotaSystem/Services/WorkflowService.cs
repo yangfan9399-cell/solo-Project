@@ -215,16 +215,41 @@ public class WorkflowService : IWorkflowService
         if (!string.IsNullOrWhiteSpace(drillDownFilter))
         {
             vm.DrillDownFilter = drillDownFilter;
-            vm.DrillDownRecords = drillDownFilter switch
+            if (drillDownFilter.StartsWith("conclusion_"))
             {
-                "overlimit" => allApps.Where(a => a.SampleType == SampleType.OverLimit).ToList(),
-                "missingevidence" => allApps.Where(a => a.SampleType == SampleType.MissingEvidence).ToList(),
-                "timeout" => allApps.Where(a => a.SampleType == SampleType.ApprovalTimeout).ToList(),
-                "normal" => allApps.Where(a => a.SampleType == SampleType.NormalPass).ToList(),
-                "archived" => allApps.Where(a => a.Status == ApplicationStatus.Archived).ToList(),
-                "active" => allApps.Where(a => a.Status != ApplicationStatus.Archived).ToList(),
-                _ => allApps
-            };
+                var statusLabel = drillDownFilter.Substring("conclusion_".Length);
+                var appIdsByStatus = allApps
+                    .Where(a => GetStatusDisplayName(a.Status) == statusLabel)
+                    .Select(a => a.Id).ToList();
+                vm.DrillDownRecords = allApps.Where(a => appIdsByStatus.Contains(a.Id)).ToList();
+            }
+            else if (drillDownFilter.StartsWith("field_"))
+            {
+                var fieldName = drillDownFilter.Substring("field_".Length);
+                var appIdsByField = allFieldChanges
+                    .Where(f => f.FieldDisplayName == fieldName || f.FieldName == fieldName)
+                    .Select(f => f.ApplicationId)
+                    .Distinct().ToList();
+                vm.DrillDownRecords = allApps.Where(a => appIdsByField.Contains(a.Id)).ToList();
+            }
+            else if (drillDownFilter.StartsWith("reviewer_"))
+            {
+                var rpName = drillDownFilter.Substring("reviewer_".Length);
+                vm.DrillDownRecords = allApps.Where(a => a.CurrentResponsiblePerson == rpName).ToList();
+            }
+            else
+            {
+                vm.DrillDownRecords = drillDownFilter switch
+                {
+                    "overlimit" => allApps.Where(a => a.SampleType == SampleType.OverLimit).ToList(),
+                    "missingevidence" => allApps.Where(a => a.SampleType == SampleType.MissingEvidence).ToList(),
+                    "timeout" => allApps.Where(a => a.SampleType == SampleType.ApprovalTimeout).ToList(),
+                    "normal" => allApps.Where(a => a.SampleType == SampleType.NormalPass).ToList(),
+                    "archived" => allApps.Where(a => a.Status == ApplicationStatus.Archived).ToList(),
+                    "active" => allApps.Where(a => a.Status != ApplicationStatus.Archived).ToList(),
+                    _ => allApps
+                };
+            }
         }
 
         return vm;
@@ -478,7 +503,10 @@ public class WorkflowService : IWorkflowService
         var deadlineInfo = app.Deadline.HasValue ? app.Deadline.Value.ToString("yyyy-MM-dd") : "无截止";
         var responsibleInfo = string.IsNullOrWhiteSpace(app.CurrentResponsiblePerson) ? "未分配" : app.CurrentResponsiblePerson;
 
-        app.Summary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | 审批:{app.ApprovedQuota}{app.QuotaUnit} | {quotaInfo} | 责任人:{responsibleInfo} | 截止:{deadlineInfo} | {statusText}";
+        var baseSummary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | 审批:{app.ApprovedQuota}{app.QuotaUnit} | {quotaInfo} | 责任人:{responsibleInfo} | 截止:{deadlineInfo} | {statusText}";
+        app.Summary = string.IsNullOrWhiteSpace(app.ReviewerComment)
+            ? baseSummary
+            : $"{baseSummary} | 结论:{app.ReviewerComment}";
 
         var standardConclusion = app.Status switch
         {

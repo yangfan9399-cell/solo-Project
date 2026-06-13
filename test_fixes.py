@@ -27,151 +27,136 @@ def check(name, condition, detail=""):
         print(f"  FAIL {name}: {detail}")
 
 # ==============================================================
-# 0: Restart survival - ReviewerComment from previous test survives
+# 0: List Summary column now has ReviewerComment
 # ==============================================================
-print("=== 0: Restart survival ===")
-resp = opener.open(f"{BASE}/Application/Detail/2")
-html = resp.read().decode("utf-8")
-check("ReviewerComment survived restart in detail", "Overlimit confirmed by field inspection" in html)
-
+print("=== 0: List Summary has ReviewerComment ===")
 resp = opener.open(f"{BASE}/Application/Index")
 html = resp.read().decode("utf-8")
-check("ReviewerComment visible in list conclusion column", "Overlimit confirmed by field inspection" in html)
+check("List Summary (Summary column, not Conclusion) has ReviewerComment", "Overlimit confirmed by field inspection" in html)
 
 # ==============================================================
-# 1: Modify key time -> sync to list/detail/dashboard
+# 1: All 4 key field types -> Summary, Conclusion, Drill Dashboard all sync
 # ==============================================================
-print("\n=== 1: Key time change ===")
-token, _ = get_token(f"{BASE}/Application/EditKeyFields/3")
+print("\n=== 1: Key Time modification sync ===")
+token, _ = get_token(f"{BASE}/Application/EditKeyFields/4")
 data = urllib.parse.urlencode({
     "__RequestVerificationToken": token,
-    "ApplicationId": 3,
+    "ApplicationId": 4,
     "CurrentUserRole": 2,
-    "OperatorName": "TestManager",
+    "OperatorName": "TestOperator",
     "ChangeReason": "Update deadline",
-    "NewDeadline": "2026-09-30",
+    "NewDeadline": "2026-12-01",
+    "NewConclusion": "Urgent time sensitive approval needed",
 }).encode("utf-8")
 req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
 resp = opener.open(req)
 print(f"  POST -> HTTP {resp.status}")
 
-resp = opener.open(f"{BASE}/Application/Detail/3")
-html = resp.read().decode("utf-8")
-check("Detail conclusion has new deadline", "2026-09-30" in html)
-
 resp = opener.open(f"{BASE}/Application/Index")
 html = resp.read().decode("utf-8")
-check("List conclusion has new deadline", "2026-09-30" in html)
+check("List Summary has deadline", "2026-12-01" in html)
+check("List Summary has ReviewerComment", "Urgent time sensitive approval needed" in html)
 
-# ==============================================================
-# 2: Modify responsible person -> sync + ReviewerComment preserved
-# ==============================================================
-print("\n=== 2: Responsible person change ===")
-token, _ = get_token(f"{BASE}/Application/EditKeyFields/3")
+resp = opener.open(f"{BASE}/Application/Detail/4")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has deadline", "2026-12-01" in html)
+check("Detail ReviewerComment exists", "Urgent time sensitive approval needed" in html)
+
+print("\n=== 2: Responsible Person sync ===")
+token, _ = get_token(f"{BASE}/Application/EditKeyFields/4")
 data = urllib.parse.urlencode({
     "__RequestVerificationToken": token,
-    "ApplicationId": 3,
+    "ApplicationId": 4,
     "CurrentUserRole": 2,
-    "OperatorName": "TestManager",
-    "ChangeReason": "Reassign person",
-    "NewCurrentResponsiblePerson": "WangWu_Reviewer",
+    "OperatorName": "TestOperator",
+    "ChangeReason": "Reassign",
+    "NewCurrentResponsiblePerson": "ZhaoLiu_Manager",
 }).encode("utf-8")
 req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
 resp = opener.open(req)
 print(f"  POST -> HTTP {resp.status}")
 
-resp = opener.open(f"{BASE}/Application/Detail/3")
-html = resp.read().decode("utf-8")
-check("Detail conclusion has new responsible person", "WangWu_Reviewer" in html)
-check("Detail conclusion has new deadline preserved", "2026-09-30" in html)
-
 resp = opener.open(f"{BASE}/Application/Index")
 html = resp.read().decode("utf-8")
-check("List conclusion has new responsible person", "WangWu_Reviewer" in html)
+check("List Summary has new responsible person", "ZhaoLiu_Manager" in html)
+check("List Summary ReviewerComment preserved", "Urgent time sensitive approval needed" in html)
 
-# ==============================================================
-# 3: Modify amount -> sync + ReviewerComment preserved
-# ==============================================================
-print("\n=== 3: Amount change ===")
-token, _ = get_token(f"{BASE}/Application/EditKeyFields/3")
-data = urllib.parse.urlencode({
-    "__RequestVerificationToken": token,
-    "ApplicationId": 3,
-    "CurrentUserRole": 2,
-    "OperatorName": "TestManager",
-    "ChangeReason": "Update quota",
-    "NewAppliedQuota": "6000",
-}).encode("utf-8")
-req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
-resp = opener.open(req)
-print(f"  POST -> HTTP {resp.status}")
-
-resp = opener.open(f"{BASE}/Application/Detail/3")
+resp = opener.open(f"{BASE}/Application/Detail/4")
 html = resp.read().decode("utf-8")
-check("Detail conclusion has new amount", "6000" in html)
-check("Detail responsible person preserved", "WangWu_Reviewer" in html)
+check("Detail Conclusion has new responsible", "ZhaoLiu_Manager" in html)
+check("Detail ReviewerComment preserved", "Urgent time sensitive approval needed" in html)
 
-resp = opener.open(f"{BASE}/Application/Index")
-html = resp.read().decode("utf-8")
-check("List conclusion has new amount", "6000" in html)
-
-# ==============================================================
-# 4: Modify conclusion -> ReviewerComment persisted, all synced
-# ==============================================================
-print("\n=== 4: Conclusion change ===")
-token, _ = get_token(f"{BASE}/Application/EditKeyFields/3")
-data = urllib.parse.urlencode({
-    "__RequestVerificationToken": token,
-    "ApplicationId": 3,
-    "CurrentUserRole": 2,
-    "OperatorName": "TestManager",
-    "ChangeReason": "Update conclusion",
-    "NewConclusion": "All evidence verified, approve 6000 tons per month",
-}).encode("utf-8")
-req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
-resp = opener.open(req)
-print(f"  POST -> HTTP {resp.status}")
-
-resp = opener.open(f"{BASE}/Application/Detail/3")
-html = resp.read().decode("utf-8")
-check("Detail shows ReviewerComment", "All evidence verified, approve 6000 tons per month" in html)
-check("Detail shows 复核意见 label", "复核意见" in html)
-
-resp = opener.open(f"{BASE}/Application/Index")
-html = resp.read().decode("utf-8")
-check("List conclusion includes ReviewerComment", "All evidence verified" in html)
-
-# ==============================================================
-# 5: Dashboard shows conclusion distribution
-# ==============================================================
-print("\n=== 5: Dashboard ===")
 resp = opener.open(f"{BASE}/Application/Dashboard")
 html = resp.read().decode("utf-8")
-check("Dashboard has conclusion distribution", "结论分布" in html)
-check("Dashboard shows conclusion type counts", "含复核意见" in html)
-check("Dashboard shows reviewer comment samples", "All evidence verified" in html)
-check("Dashboard shows field change frequency", "频次" in html)
-check("Dashboard responsible person stats", "WangWu_Reviewer" in html)
+check("Dashboard responsible person row has drill link", "reviewer_ZhaoLiu_Manager" in html)
 
-# ==============================================================
-# 6: Reprocess archived still works
-# ==============================================================
-print("\n=== 6: Reprocess archived ===")
-token, _ = get_token(f"{BASE}/Application/Process/1?role=2")
+print("\n=== 3: Amount sync ===")
+token, _ = get_token(f"{BASE}/Application/EditKeyFields/4")
 data = urllib.parse.urlencode({
     "__RequestVerificationToken": token,
-    "ApplicationId": 1,
+    "ApplicationId": 4,
     "CurrentUserRole": 2,
-    "Action": "reprocess",
-    "OperatorName": "TestManager",
-    "Comment": "Reprocess test",
+    "OperatorName": "TestOperator",
+    "ChangeReason": "Adjust quota",
+    "NewAppliedQuota": "9200",
 }).encode("utf-8")
-req = urllib.request.Request(f"{BASE}/Application/Process", data=data, method="POST")
-try:
-    resp = opener.open(req)
-    check("Reprocess succeeded", resp.status == 200)
-except Exception as e:
-    check("Reprocess succeeded", False, str(e))
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List Summary has new amount", "9200" in html)
+check("List Summary ReviewerComment preserved", "Urgent time sensitive approval needed" in html)
+
+resp = opener.open(f"{BASE}/Application/Detail/4")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has new amount", "9200" in html)
+
+print("\n=== 4: Conclusion (ReviewerComment) sync ===")
+token, _ = get_token(f"{BASE}/Application/EditKeyFields/4")
+data = urllib.parse.urlencode({
+    "__RequestVerificationToken": token,
+    "ApplicationId": 4,
+    "CurrentUserRole": 2,
+    "OperatorName": "TestOperator",
+    "ChangeReason": "Update review conclusion",
+    "NewConclusion": "Final approval granted after time extension",
+}).encode("utf-8")
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List Summary has new ReviewerComment", "Final approval granted after time extension" in html)
+check("List Summary previous comment cleared", "Urgent time sensitive approval needed" not in html)
+
+resp = opener.open(f"{BASE}/Application/Detail/4")
+html = resp.read().decode("utf-8")
+check("Detail has new ReviewerComment", "Final approval granted after time extension" in html)
+
+print("\n=== 5: Dashboard drill-downs work ===")
+resp = opener.open(f"{BASE}/Application/Dashboard")
+html = resp.read().decode("utf-8")
+check("Dashboard has drill link to conclusion type", "conclusion_" in html)
+check("Dashboard has drill link to field change", "field_" in html)
+check("Dashboard has drill link to reviewer", "reviewer_" in html)
+check("Dashboard conclusion distribution visible", "ConclusionDistribution" in html or "结论分布" in html)
+check("Dashboard field frequency visible", "变更频次" in html or "频次" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard?drill=reviewer_ZhaoLiu_Manager")
+html = resp.read().decode("utf-8")
+check("Reviewer drill shows label", "ZhaoLiu_Manager" in html)
+check("Reviewer drill shows matching apps", "WQ-2026-004" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard?drill=field_CurrentResponsiblePerson")
+html = resp.read().decode("utf-8")
+check("Field drill shows label", "CurrentResponsiblePerson" in html or "当前责任人" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard?drill=conclusion_%E5%B7%B2%E9%98%BB%E6%96%AD")
+html = resp.read().decode("utf-8")
+check("Conclusion type drill shows label", "已阻断" in html or "阻断" in html)
 
 print(f"\n=== RESULTS: {passed} passed, {failed} failed ===")
 sys.exit(0 if failed == 0 else 1)

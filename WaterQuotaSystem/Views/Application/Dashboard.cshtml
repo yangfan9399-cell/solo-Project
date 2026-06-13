@@ -237,8 +237,8 @@
                             @foreach (var r in Model.ResponsiblePersonStats)
                             {
                                 <tr>
-                                    <td><strong>@r.ResponsiblePerson</strong></td>
-                                    <td>@r.Count</td>
+                                    <td><a asp-action="Dashboard" asp-route-drill="reviewer_@r.ResponsiblePerson" class="drill-link"><strong>@r.ResponsiblePerson</strong></a></td>
+                                    <td><a asp-action="Dashboard" asp-route-drill="reviewer_@r.ResponsiblePerson" class="drill-link">@r.Count</a></td>
                                     <td>@r.TotalAppliedQuota.ToString("N0") 吨/月</td>
                                     <td><small class="text-muted">@r.LatestConclusion</small></td>
                                 </tr>
@@ -273,8 +273,8 @@
                             @foreach (var item in Model.ConclusionDistribution)
                             {
                                 <tr>
-                                    <td><strong>@item.ConclusionLabel</strong></td>
-                                    <td>@item.Count</td>
+                                    <td><a asp-action="Dashboard" asp-route-drill="conclusion_@item.ConclusionLabel" class="drill-link"><strong>@item.ConclusionLabel</strong></a></td>
+                                    <td><a asp-action="Dashboard" asp-route-drill="conclusion_@item.ConclusionLabel" class="drill-link">@item.Count</a></td>
                                     <td>@item.Percentage%</td>
                                     <td>
                                         @if (item.WithCommentCount > 0)
@@ -327,8 +327,8 @@
                     @foreach (var f in fieldFreq)
                     {
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-info">@f.Field</span>
-                            <span><strong>@f.Count</strong> 次变更</span>
+                            <a asp-action="Dashboard" asp-route-drill="field_@f.Field" class="drill-link"><span class="badge bg-info">@f.Field</span></a>
+                            <a asp-action="Dashboard" asp-route-drill="field_@f.Field" class="drill-link"><span><strong>@f.Count</strong> 次变更</span></a>
                         </div>
                         <div class="progress mb-2" style="height: 6px">
                             @{
@@ -360,16 +360,18 @@
                     <h6 class="mb-0">
                         钻取记录 -
                         @{
-                            var drillLabel = Model.DrillDownFilter switch
-                            {
-                                "overlimit" => "<span class=\"text-danger\">指标超限</span>",
-                                "missingevidence" => "<span class=\"text-warning\">证据缺失</span>",
-                                "timeout" => "<span class=\"text-danger\">审批超时</span>",
-                                "normal" => "<span class=\"text-success\">正常放行</span>",
-                                "archived" => "<span class=\"text-secondary\">已归档</span>",
-                                "active" => "<span class=\"text-primary\">活跃申请</span>",
-                                _ => "<span>全部</span>"
-                            };
+                            var filter = Model.DrillDownFilter ?? "";
+                            string drillLabel;
+                            if (filter == "overlimit") { drillLabel = "<span class=\"text-danger\">指标超限</span>"; }
+                            else if (filter == "missingevidence") { drillLabel = "<span class=\"text-warning\">证据缺失</span>"; }
+                            else if (filter == "timeout") { drillLabel = "<span class=\"text-danger\">审批超时</span>"; }
+                            else if (filter == "normal") { drillLabel = "<span class=\"text-success\">正常放行</span>"; }
+                            else if (filter == "archived") { drillLabel = "<span class=\"text-secondary\">已归档</span>"; }
+                            else if (filter == "active") { drillLabel = "<span class=\"text-primary\">活跃申请</span>"; }
+                            else if (filter.StartsWith("conclusion_")) { drillLabel = "<span class=\"text-info\">结论类型：" + System.Net.WebUtility.HtmlEncode(filter.Substring(11)) + "</span>"; }
+                            else if (filter.StartsWith("field_")) { drillLabel = "<span class=\"text-info\">变更字段：" + System.Net.WebUtility.HtmlEncode(filter.Substring(6)) + "</span>"; }
+                            else if (filter.StartsWith("reviewer_")) { drillLabel = "<span class=\"text-info\">责任对象：" + System.Net.WebUtility.HtmlEncode(filter.Substring(9)) + "</span>"; }
+                            else { drillLabel = "<span>全部</span>"; }
                         }
                         @Html.Raw(drillLabel)
                         (@Model.DrillDownRecords.Count 条)
