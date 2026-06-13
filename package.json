@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt build",
-    "dev": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt dev",
-    "generate": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt generate",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "NODE_OPTIONS=\"--require ./scripts/rollup-loader.cjs --experimental-loader ./scripts/rollup-esm-loader.mjs\" nuxt prepare",
+    "postinstall": "nuxt prepare",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
@@ -31,14 +31,8 @@
     "seed": "node prisma/seed.js"
   },
   "pnpm": {
-    "packageExtensions": {
-      "rollup@4.62.0": {
-        "optionalDependencies": {}
-      }
-    },
-    "public-hoist-patterns": [
-      "@rollup/wasm-node",
-      "@rollup/wasm-node/**"
-    ]
+    "overrides": {
+      "rollup": "npm:@rollup/wasm-node@4.62.0"
+    }
   }
 }

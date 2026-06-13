@@ -12,6 +12,83 @@ try {
   usePrisma = false
 }
 
+const ROLES = {
+  APPLICANT: 'APPLICANT',
+  PROCESSOR: 'PROCESSOR',
+  REVIEWER: 'REVIEWER',
+  ARCHIVIST: 'ARCHIVIST'
+}
+
+const STATUS = {
+  PENDING_ACCEPTANCE: 'PENDING_ACCEPTANCE',
+  ACCEPTED: 'ACCEPTED',
+  PROCESSING: 'PROCESSING',
+  REPROCESSING: 'REPROCESSING',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  REVIEW_PASSED: 'REVIEW_PASSED',
+  REVIEW_REJECTED: 'REVIEW_REJECTED',
+  ARCHIVED: 'ARCHIVED'
+}
+
+async function validateRecordState(recordId: number, operation: string, operatorRole: string) {
+  const record = await findRecordById(recordId)
+  if (!record) throw new Error('记录不存在')
+  
+  if (record.status === STATUS.ARCHIVED) {
+    throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+  }
+  
+  let allowed = false
+  let requiredStatuses: string[] = []
+  
+  switch (operation) {
+    case 'accept':
+      requiredStatuses = [STATUS.PENDING_ACCEPTANCE]
+      allowed = operatorRole === ROLES.PROCESSOR
+      if (!allowed) throw new Error('只有处理人(耗材科)可以执行受理操作')
+      break
+    case 'process':
+      requiredStatuses = [STATUS.ACCEPTED, STATUS.REPROCESSING, STATUS.PROCESSING]
+      allowed = operatorRole === ROLES.PROCESSOR
+      if (!allowed) throw new Error('只有处理人(耗材科)可以执行处理操作')
+      break
+    case 'review':
+      requiredStatuses = [STATUS.PENDING_REVIEW]
+      allowed = operatorRole === ROLES.REVIEWER
+      if (!allowed) throw new Error('只有复核人(医务科)可以执行复核操作')
+      break
+    case 'archive':
+      requiredStatuses = [STATUS.REVIEW_PASSED]
+      allowed = operatorRole === ROLES.ARCHIVIST
+      if (!allowed) throw new Error('只有归档人(病案室)可以执行归档操作')
+      break
+    case 'supplement':
+      requiredStatuses = [STATUS.ACCEPTED, STATUS.PROCESSING, STATUS.REPROCESSING, STATUS.PENDING_REVIEW, STATUS.REVIEW_PASSED, STATUS.REVIEW_REJECTED]
+      allowed = operatorRole === ROLES.APPLICANT || operatorRole === ROLES.PROCESSOR
+      if (!allowed) throw new Error('只有申请人或处理人可以补充材料')
+      break
+    case 'reprocess':
+      requiredStatuses = [STATUS.REVIEW_REJECTED, STATUS.REVIEW_PASSED]
+      allowed = operatorRole === ROLES.REVIEWER || operatorRole === ROLES.PROCESSOR
+      if (!allowed) throw new Error('只有复核人或处理人可以启动重新处理')
+      if (record.status === STATUS.ARCHIVED) throw new Error('已归档记录需先申请重新开启')
+      break
+    default:
+      throw new Error('未知操作类型')
+  }
+  
+  if (!requiredStatuses.includes(record.status)) {
+    throw new Error(`当前状态(${record.status})不允许${operation}操作，允许的状态: ${requiredStatuses.join(', ')}`)
+  }
+  
+  return record
+}
+
+async function getCurrentUser(operatorId: number) {
+  const users = await getUsers()
+  return users.find((u: any) => u.id === operatorId)
+}
+
 export async function testPrisma() {
   if (!prisma) return false
   try {
@@ -128,8 +205,18 @@ export async function findRecordById(id: number) {
 
 export async function acceptRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'accept', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('记录已归档，不允许修改')
+      if (current.status !== 'PENDING_ACCEPTANCE') throw new Error('当前状态不允许受理')
+      
       const record = await tx.consumableRecord.update({
         where: { id: Number(id) },
         data: {
@@ -172,8 +259,20 @@ export async function acceptRecord(id: number, data: any) {
 
 export async function processRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'process', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('记录已归档，不允许修改')
+      if (!['ACCEPTED', 'REPROCESSING', 'PROCESSING'].includes(current.status)) {
+        throw new Error('当前状态不允许处理')
+      }
+      
       const record = await tx.consumableRecord.update({
         where: { id: Number(id) },
         data: {
@@ -239,8 +338,18 @@ export async function processRecord(id: number, data: any) {
 
 export async function reviewRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'review', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('记录已归档，不允许修改')
+      if (current.status !== 'PENDING_REVIEW') throw new Error('当前状态不允许复核')
+      
       const status = data.passed ? 'REVIEW_PASSED' : 'REPROCESSING'
       const recordData: any = {
         status,
@@ -344,8 +453,18 @@ export async function reviewRecord(id: number, data: any) {
 
 export async function archiveRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'archive', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('记录已归档，不允许重复归档')
+      if (current.status !== 'REVIEW_PASSED') throw new Error('当前状态不允许归档')
+      
       const record = await tx.consumableRecord.update({
         where: { id: Number(id) },
         data: {
@@ -374,8 +493,17 @@ export async function archiveRecord(id: number, data: any) {
 
 export async function supplementRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'supplement', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('已归档记录不能补充材料')
+      
       const nodes = await tx.reviewNode.findMany({
         where: { recordId: Number(id) },
         orderBy: { nodeOrder: 'asc' }
@@ -425,8 +553,20 @@ export async function supplementRecord(id: number, data: any) {
 
 export async function reprocessRecord(id: number, data: any) {
   await ensureInitialized()
+  
+  const operator = await getCurrentUser(data.operatorId)
+  if (!operator) throw new Error('操作用户不存在')
+  await validateRecordState(id, 'reprocess', operator.role)
+  
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
+      const current = await tx.consumableRecord.findUnique({ where: { id: Number(id) } })
+      if (!current) throw new Error('记录不存在')
+      if (current.status === 'ARCHIVED') throw new Error('已归档记录需先申请重新开启')
+      if (!['REVIEW_REJECTED', 'REVIEW_PASSED'].includes(current.status)) {
+        throw new Error('当前状态不允许重新处理')
+      }
+      
       const record = await tx.consumableRecord.update({
         where: { id: Number(id) },
         data: {

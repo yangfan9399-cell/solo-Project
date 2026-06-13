@@ -602,6 +602,10 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'PROCESSOR') throw new Error('只有处理人(耗材科)可以执行受理操作')
     if (record.status !== 'PENDING_ACCEPTANCE') throw new Error('当前状态不允许受理')
 
     record.status = 'ACCEPTED'
@@ -666,7 +670,11 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
-    if (!['ACCEPTED', 'REPROCESSING'].includes(record.status)) throw new Error('当前状态不允许处理')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'PROCESSOR') throw new Error('只有处理人(耗材科)可以执行处理操作')
+    if (!['ACCEPTED', 'REPROCESSING', 'PROCESSING'].includes(record.status)) throw new Error('当前状态不允许处理')
 
     record.status = 'PENDING_REVIEW'
     record.processTime = new Date().toISOString()
@@ -758,6 +766,10 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'REVIEWER') throw new Error('只有复核人(医务科)可以执行复核操作')
     if (record.status !== 'PENDING_REVIEW') throw new Error('当前状态不允许复核')
 
     record.reviewTime = new Date().toISOString()
@@ -878,6 +890,10 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，不允许重复归档')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'ARCHIVIST') throw new Error('只有归档人(病案室)可以执行归档操作')
     if (record.status !== 'REVIEW_PASSED') throw new Error('当前状态不允许归档')
 
     record.status = 'ARCHIVED'
@@ -910,7 +926,12 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
-    if (record.status === 'ARCHIVED') throw new Error('已归档记录不能补充材料')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'APPLICANT' && operator.role !== 'PROCESSOR') {
+      throw new Error('只有申请人或处理人可以补充材料')
+    }
 
     const nodes = this.reviewNodes.filter(n => n.recordId === id)
     const maxOrder = nodes.length > 0 ? Math.max(...nodes.map(n => n.nodeOrder)) : 0
@@ -970,8 +991,15 @@ export class InMemoryDB {
   }) {
     const record = this.records.find(r => r.id === id)
     if (!record) throw new Error('记录不存在')
-    if (!['REVIEW_REJECTED', 'REVIEW_PASSED', 'ARCHIVED'].includes(record.status)) throw new Error('当前状态不允许重新处理')
-    if (record.status === 'ARCHIVED') throw new Error('已归档记录需先申请重新开启')
+    if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
+    const operator = this.users.find(u => u.id === data.operatorId)
+    if (!operator) throw new Error('操作用户不存在')
+    if (operator.role !== 'REVIEWER' && operator.role !== 'PROCESSOR') {
+      throw new Error('只有复核人或处理人可以启动重新处理')
+    }
+    if (!['REVIEW_REJECTED', 'REVIEW_PASSED'].includes(record.status)) {
+      throw new Error('当前状态不允许重新处理')
+    }
 
     record.status = 'REPROCESSING'
     record.currentHandlerId = data.handlerId
