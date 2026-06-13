@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看板统计 - 复盘分析</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>医院影像胶片补打申请收费与领取核验系统</h1>
+            <nav class="nav">
+                <a th:href="@{/list}">申请列表</a>
+                <a th:href="@{/dashboard}" class="active">看板统计</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-title">总体概览</div>
+            <div class="stats-grid">
+                <div class="stat-card" onclick="window.location.href='/list'">
+                    <div class="stat-number" th:text="${stats.total}">0</div>
+                    <div class="stat-label">总申请数</div>
+                </div>
+                <div class="stat-card success" onclick="window.location.href='/drilldown/status?status=ARCHIVED'">
+                    <div class="stat-number" th:text="${stats.statusCounts['ARCHIVED']} ?: 0">0</div>
+                    <div class="stat-label">已归档（已完成）</div>
+                </div>
+                <div class="stat-card" onclick="window.location.href='/drilldown/status?status=REVIEWING'">
+                    <div class="stat-number" th:text="${stats.statusCounts['REVIEWING']} ?: 0">0</div>
+                    <div class="stat-label">复核中</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="color: #28a745;"
+                         th:text="${stats.total > 0 ? (stats.statusCounts['ARCHIVED'] != null ? stats.statusCounts['ARCHIVED'] * 100 / stats.total : 0) + '%' : '0%'}">0%</div>
+                    <div class="stat-label">归档完成率</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <div class="card">
+                <div class="card-title">状态分布（点击钻取）</div>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/status?status=ACCEPTED'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.statusCounts['ACCEPTED']} ?: 0">0</div>
+                        <div class="stat-label">已受理</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/drilldown/status?status=PROCESSING'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.statusCounts['PROCESSING']} ?: 0">0</div>
+                        <div class="stat-label">处理中</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/drilldown/status?status=REVIEWING'">
+                        <div class="stat-number" style="font-size: 24px; color: #ffc107;" th:text="${stats.statusCounts['REVIEWING']} ?: 0">0</div>
+                        <div class="stat-label">复核中</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/drilldown/status?status=REJECTED'">
+                        <div class="stat-number" style="font-size: 24px; color: #dc3545;" th:text="${stats.statusCounts['REJECTED']} ?: 0">0</div>
+                        <div class="stat-label">已退回</div>
+                    </div>
+                    <div class="stat-card success" onclick="window.location.href='/drilldown/status?status=ARCHIVED'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.statusCounts['ARCHIVED']} ?: 0">0</div>
+                        <div class="stat-label">已归档</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">异常类型分布（点击钻取）</div>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/abnormal?abnormalType=NORMAL'">
+                        <div class="stat-number" style="font-size: 24px; color: #28a745;" th:text="${stats.abnormalCounts['NORMAL']} ?: 0">0</div>
+                        <div class="stat-label">正常</div>
+                    </div>
+                    <div class="stat-card danger" onclick="window.location.href='/drilldown/abnormal?abnormalType=MATERIAL_MISSING'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.abnormalCounts['MATERIAL_MISSING']} ?: 0">0</div>
+                        <div class="stat-label">材料缺失</div>
+                    </div>
+                    <div class="stat-card warning" onclick="window.location.href='/drilldown/abnormal?abnormalType=RESPONSIBILITY_MISMATCH'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.abnormalCounts['RESPONSIBILITY_MISMATCH']} ?: 0">0</div>
+                        <div class="stat-label">责任不一致</div>
+                    </div>
+                    <div class="stat-card danger" onclick="window.location.href='/drilldown/abnormal?abnormalType=REVIEW_REJECTED'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.abnormalCounts['REVIEW_REJECTED']} ?: 0">0</div>
+                        <div class="stat-label">复核退回</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <div class="card">
+                <div class="card-title">来源分布（点击钻取）</div>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="window.location.href='/list'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['OUTPATIENT']} ?: 0">0</div>
+                        <div class="stat-label">门诊</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/list'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['INPATIENT']} ?: 0">0</div>
+                        <div class="stat-label">住院</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/list'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['EMERGENCY']} ?: 0">0</div>
+                        <div class="stat-label">急诊</div>
+                    </div>
+                    <div class="stat-card" onclick="window.location.href='/list'">
+                        <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['PHYSICAL_EXAM']} ?: 0">0</div>
+                        <div class="stat-label">体检</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">费用统计</div>
+                <div class="stats-grid">
+                    <div class="stat-card" style="cursor: default;">
+                        <div class="stat-number" style="color: #dc3545; font-size: 28px;"
+                             th:text="'¥' + ${stats.totalFee}">¥0</div>
+                        <div class="stat-label">总费用</div>
+                    </div>
+                    <div class="stat-card" style="cursor: default;">
+                        <div class="stat-number" style="font-size: 28px;"
+                             th:text="${stats.total > 0 ? '¥' + #numbers.formatDecimal(stats.totalFee.divide(new java.math.BigDecimal(stats.total)), 1, 2) : '¥0'}">¥0</div>
+                        <div class="stat-label">平均费用</div>
+                    </div>
+                </div>
+
+                <div class="section-subtitle">费用说明</div>
+                <ul class="evidence-list">
+                    <li>干式激光胶片：25元/张</li>
+                    <li>费用包含胶片成本和打印服务费</li>
+                    <li>补打需重新缴费（特殊情况除外）</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">异常案例复盘分析</div>
+
+            <div class="two-column">
+                <div class="diff-section">
+                    <h4>关键材料缺失案例</h4>
+                    <p><strong>常见原因：</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>患者身份证明缺失或过期</li>
+                        <li>收费票据遗失</li>
+                        <li>授权委托书缺失（代办情况）</li>
+                        <li>检查申请单丢失</li>
+                    </ul>
+                    <p style="margin-top: 10px;"><strong>改进措施：</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>加强受理环节材料审核</li>
+                        <li>提供电子票据查询通道</li>
+                        <li>优化授权委托书模板</li>
+                    </ul>
+                </div>
+
+                <div class="diff-section">
+                    <h4>责任对象不一致案例</h4>
+                    <p><strong>常见原因：</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>申请单与系统记录不符</li>
+                        <li>工伤认定材料不完整</li>
+                        <li>单位与个人费用混淆</li>
+                        <li>医保类型变更未更新</li>
+                    </ul>
+                    <p style="margin-top: 10px;"><strong>改进措施：</strong></p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>加强费用承担方核实</li>
+                        <li>与财务系统数据对接</li>
+                        <li>完善工伤认定流程</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="remedy-section" style="margin-top: 16px;">
+                <h4>复核退回案例分析</h4>
+                <p><strong>常见退回原因：</strong></p>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li>材料不完整或不符合规范</li>
+                    <li>处理结论依据不充分</li>
+                    <li>关键信息核实不到位</li>
+                    <li>流程执行不规范</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>质量改进方向：</strong></p>
+                <ul style="margin-left: 20px; margin-top: 8px;">
+                    <li>加强经办人培训，提高初审质量</li>
+                    <li>完善材料清单和审核标准</li>
+                    <li>建立常见问题知识库</li>
+                    <li>定期开展质量复盘会议</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">流程效率指标</div>
+            <div class="stats-grid">
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px;">4</div>
+                    <div class="stat-label">标准流程节点数</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px; color: #28a745;">2</div>
+                    <div class="stat-label">正常办结节点（受理→归档）</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px; color: #dc3545;">3+</div>
+                    <div class="stat-label">异常案例平均节点数</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px; color: #ffc107;">25%</div>
+                    <div class="stat-label">异常率（示例）</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a th:href="@{/list}" class="btn btn-primary" style="padding: 12px 32px; font-size: 16px;">
+                查看全部申请记录 →
+            </a>
+        </div>
+    </div>
+</body>
+</html>

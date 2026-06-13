@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复核处理 - <span th:text="${film.applicationNo}"></span></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>医院影像胶片补打申请收费与领取核验系统</h1>
+            <nav class="nav">
+                <a th:href="@{/list}">申请列表</a>
+                <a th:href="@{/dashboard}">看板统计</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="status-bar">
+            <div>
+                <strong>申请编号：</strong>
+                <span th:text="${film.applicationNo}" style="font-size: 18px;"></span>
+            </div>
+            <span class="badge badge-warning" style="font-size: 14px; padding: 6px 14px;">复核中</span>
+            <div>
+                <strong>当前责任人：</strong>
+                <span th:text="${film.currentHandler}"></span>
+                <span class="badge badge-success" style="margin-left: 8px;">复核人处理</span>
+            </div>
+        </div>
+
+        <div th:if="${film.abnormalType != T(com.hospital.film.enums.AbnormalType).NORMAL}" class="alert alert-warning">
+            <strong>异常类型：</strong>
+            <span th:text="${film.abnormalType.description}"></span>
+            <span th:if="${film.blockReason}" style="margin-left: 20px;">
+                <strong>阻断原因：</strong>
+                <span th:text="${film.blockReason}"></span>
+            </span>
+        </div>
+
+        <div class="two-column">
+            <div class="card">
+                <div class="card-title">申请概览</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">患者姓名：</span>
+                        <span class="info-value" th:text="${film.patientName}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">来源：</span>
+                        <span class="info-value" th:text="${film.source.description}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">检查项目：</span>
+                        <span class="info-value" th:text="${film.examItem}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">胶片数量：</span>
+                        <span class="info-value" th:text="${film.filmCount} + ' 张'"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">费用金额：</span>
+                        <span class="info-value" style="color: #dc3545;" th:text="'¥' + ${film.feeAmount}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">责任对象：</span>
+                        <span class="info-value" th:text="${film.responsibleParty}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">经办人处理结论</div>
+                <div class="info-grid">
+                    <div class="info-item" style="grid-column: span 2;">
+                        <span class="info-label">处理结论：</span>
+                        <span class="info-value" style="color: #2a5298; font-weight: 600;" th:text="${film.conclusion}"></span>
+                    </div>
+                    <div class="info-item" style="grid-column: span 2;">
+                        <span class="info-label">采用依据：</span>
+                        <span class="info-value" th:text="${film.evidenceBasis}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">经办人：</span>
+                        <span class="info-value">张经办</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">处理时间：</span>
+                        <span class="info-value" th:if="${film.processTime}" th:text="${#temporals.format(film.processTime, 'yyyy-MM-dd HH:mm')}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">历史节点</div>
+            <div class="timeline">
+                <div th:each="history : ${histories}" class="timeline-item">
+                    <div class="timeline-dot" th:classappend="${history.operationType == T(com.hospital.film.enums.OperationType).ARCHIVE or history.operationType == T(com.hospital.film.enums.OperationType).REVIEW_PASS ? 'success' :
+                                      (history.operationType == T(com.hospital.film.enums.OperationType).REVIEW_REJECT ? 'danger' : '')}"></div>
+                    <div class="timeline-header">
+                        <span class="timeline-title" th:text="${history.nodeName}"></span>
+                        <span class="timeline-time" th:text="${#temporals.format(history.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
+                    </div>
+                    <div class="timeline-operator">
+                        <span th:text="${history.operator}"></span>
+                        <span class="badge" th:classappend="${history.operatorRole == T(com.hospital.film.enums.RoleType).REVIEWER ? 'badge-success' :
+                                          (history.operatorRole == T(com.hospital.film.enums.RoleType).ADMIN ? 'badge-secondary' : 'badge-primary')}"
+                              th:text="${history.operatorRole.description}" style="margin-left: 8px;"></span>
+                    </div>
+                    <div class="timeline-content" th:text="${history.description}"></div>
+
+                    <div th:if="${history.basis != null or history.changedFields != null or history.blockReason != null or history.remedyPath != null}" class="timeline-detail">
+                        <div th:if="${history.changedFields}" class="timeline-detail-row">
+                            <span class="timeline-detail-label">变更字段：</span>
+                            <span class="timeline-detail-value" style="color: #ffc107;" th:text="${history.changedFields}"></span>
+                        </div>
+                        <div th:if="${history.basis}" class="timeline-detail-row">
+                            <span class="timeline-detail-label">采用依据：</span>
+                            <span class="timeline-detail-value" th:text="${history.basis}"></span>
+                        </div>
+                        <div th:if="${history.blockReason}" class="timeline-detail-row">
+                            <span class="timeline-detail-label">阻断原因：</span>
+                            <span class="timeline-detail-value" style="color: #dc3545;" th:text="${history.blockReason}"></span>
+                        </div>
+                        <div th:if="${history.remedyPath}" class="timeline-detail-row">
+                            <span class="timeline-detail-label">补救路径：</span>
+                            <span class="timeline-detail-value" style="color: #28a745;" th:text="${history.remedyPath}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">复核意见</div>
+
+            <div class="form-group">
+                <label class="form-label">复核结论</label>
+                <select id="reviewAction" class="form-control">
+                    <option value="pass">复核通过（归档）</option>
+                    <option value="reject">复核退回（补证）</option>
+                </select>
+            </div>
+
+            <div id="passSection">
+                <form method="post" th:action="@{/api/review-pass}">
+                    <input type="hidden" name="id" th:value="${film.id}">
+
+                    <div class="form-group">
+                        <label class="form-label">复核结论</label>
+                        <textarea name="conclusion" class="form-control" placeholder="请输入复核结论..." th:text="${film.conclusion}"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核依据</label>
+                        <textarea name="evidenceBasis" class="form-control" placeholder="请输入复核采用的依据..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核说明</label>
+                        <textarea name="description" class="form-control" placeholder="请输入复核说明..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核人</label>
+                        <input type="text" name="operator" class="form-control" value="王复核">
+                    </div>
+
+                    <div class="action-bar" style="justify-content: space-between;">
+                        <a th:href="@{'/detail?id=' + ${film.id}}" class="btn btn-secondary">返回详情</a>
+                        <button type="submit" class="btn btn-success"
+                                onclick="return confirm('确定复核通过吗？通过后将自动归档，归档后只读。')">
+                            确认通过并归档
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="rejectSection" style="display: none;">
+                <form method="post" th:action="@{/api/review-reject}">
+                    <input type="hidden" name="id" th:value="${film.id}">
+
+                    <div class="form-group">
+                        <label class="form-label">退回原因</label>
+                        <textarea name="rejectReason" class="form-control" placeholder="请详细说明退回原因..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">补救路径</label>
+                        <textarea name="remedyPath" class="form-control" placeholder="请说明需要补充的材料或整改要求..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核说明</label>
+                        <textarea name="description" class="form-control" placeholder="请输入复核说明..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核依据</label>
+                        <textarea name="evidenceBasis" class="form-control" placeholder="请输入退回的依据..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">复核人</label>
+                        <input type="text" name="operator" class="form-control" value="王复核">
+                    </div>
+
+                    <div class="action-bar" style="justify-content: space-between;">
+                        <a th:href="@{'/detail?id=' + ${film.id}}" class="btn btn-secondary">返回详情</a>
+                        <button type="submit" class="btn btn-danger"
+                                onclick="return confirm('确定退回吗？退回后经办人需要重新补充材料。')">
+                            确认退回补证
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('reviewAction').addEventListener('change', function() {
+            var passSection = document.getElementById('passSection');
+            var rejectSection = document.getElementById('rejectSection');
+            
+            if (this.value === 'pass') {
+                passSection.style.display = 'block';
+                rejectSection.style.display = 'none';
+            } else {
+                passSection.style.display = 'none';
+                rejectSection.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>业务处理 - <span th:text="${film.applicationNo}"></span></title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>医院影像胶片补打申请收费与领取核验系统</h1>
+            <nav class="nav">
+                <a th:href="@{/list}">申请列表</a>
+                <a th:href="@{/dashboard}">看板统计</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="status-bar">
+            <div>
+                <strong>申请编号：</strong>
+                <span th:text="${film.applicationNo}" style="font-size: 18px;"></span>
+            </div>
+            <span class="badge" th:classappend="${film.status == T(com.hospital.film.enums.ApplicationStatus).ARCHIVED ? 'badge-success' :
+                                 (film.status == T(com.hospital.film.enums.ApplicationStatus).REJECTED ? 'badge-danger' :
+                                 (film.status == T(com.hospital.film.enums.ApplicationStatus).REVIEWING ? 'badge-warning' :
+                                 (film.status == T(com.hospital.film.enums.ApplicationStatus).PROCESSING ? 'badge-info' : 'badge-secondary')))}"
+                  th:text="${film.status.description}" style="font-size: 14px; padding: 6px 14px;"></span>
+            <div>
+                <strong>当前责任人：</strong>
+                <span th:text="${film.currentHandler}"></span>
+                <span class="badge badge-primary" style="margin-left: 8px;">经办人处理</span>
+            </div>
+        </div>
+
+        <div class="two-column">
+            <div class="card">
+                <div class="card-title">当前信息（处理前）</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">患者姓名：</span>
+                        <span class="info-value" th:text="${film.patientName}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">病案号：</span>
+                        <span class="info-value" th:text="${film.medicalRecordNo}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">检查号：</span>
+                        <span class="info-value" th:text="${film.examNo}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">检查项目：</span>
+                        <span class="info-value" th:text="${film.examItem}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">检查时间：</span>
+                        <span class="info-value" th:if="${film.examTime}" th:text="${#temporals.format(film.examTime, 'yyyy-MM-dd HH:mm')}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">胶片数量：</span>
+                        <span class="info-value" th:text="${film.filmCount} + ' 张'"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">费用金额：</span>
+                        <span class="info-value" style="color: #dc3545;" th:text="'¥' + ${film.feeAmount}"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">责任对象：</span>
+                        <span class="info-value" th:text="${film.responsibleParty}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">历史节点</div>
+                <div class="timeline" style="max-height: 300px; overflow-y: auto;">
+                    <div th:each="history : ${histories}" class="timeline-item">
+                        <div class="timeline-dot" th:classappend="${history.operationType == T(com.hospital.film.enums.OperationType).ARCHIVE or history.operationType == T(com.hospital.film.enums.OperationType).REVIEW_PASS ? 'success' :
+                                          (history.operationType == T(com.hospital.film.enums.OperationType).REVIEW_REJECT ? 'danger' : '')}"></div>
+                        <div class="timeline-header">
+                            <span class="timeline-title" th:text="${history.nodeName}"></span>
+                            <span class="timeline-time" th:text="${#temporals.format(history.createdAt, 'MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="timeline-operator">
+                            <span th:text="${history.operator}"></span>
+                            <span class="badge badge-primary" style="margin-left: 4px; font-size: 11px;"
+                                  th:text="${history.operatorRole.description}"></span>
+                        </div>
+                        <div class="timeline-content" th:text="${history.description}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" th:action="@{/api/process}">
+            <input type="hidden" name="id" th:value="${film.id}">
+
+            <div class="card">
+                <div class="card-title">业务信息编辑</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">患者姓名</label>
+                        <input type="text" name="patientName" class="form-control" th:value="${film.patientName}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">病案号</label>
+                        <input type="text" name="medicalRecordNo" class="form-control" th:value="${film.medicalRecordNo}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">检查号</label>
+                        <input type="text" name="examNo" class="form-control" th:value="${film.examNo}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">检查项目</label>
+                        <input type="text" name="examItem" class="form-control" th:value="${film.examItem}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">检查时间</label>
+                        <input type="datetime-local" name="examTime" class="form-control"
+                               th:value="${film.examTime != null ? #temporals.format(film.examTime, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">检查科室</label>
+                        <input type="text" name="examDepartment" class="form-control" th:value="${film.examDepartment}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">胶片类型</label>
+                        <input type="text" name="filmType" class="form-control" th:value="${film.filmType}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">胶片数量（张）</label>
+                        <input type="number" name="filmCount" class="form-control" th:value="${film.filmCount}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">费用金额（元）</label>
+                        <input type="number" step="0.01" name="feeAmount" class="form-control" th:value="${film.feeAmount}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">收费票据号</label>
+                        <input type="text" name="feeReceiptNo" class="form-control" th:value="${film.feeReceiptNo}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">缴费时间</label>
+                        <input type="datetime-local" name="feePayTime" class="form-control"
+                               th:value="${film.feePayTime != null ? #temporals.format(film.feePayTime, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">责任对象</label>
+                        <input type="text" name="responsibleParty" class="form-control" th:value="${film.responsibleParty}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">申请原因</label>
+                    <textarea name="applicationReason" class="form-control" th:text="${film.applicationReason}"></textarea>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">处理结论</div>
+
+                <div class="form-group">
+                    <label class="form-label">异常类型</label>
+                    <select name="abnormalType" class="form-control">
+                        <option value="NORMAL" th:selected="${film.abnormalType == T(com.hospital.film.enums.AbnormalType).NORMAL}">正常</option>
+                        <option value="MATERIAL_MISSING" th:selected="${film.abnormalType == T(com.hospital.film.enums.AbnormalType).MATERIAL_MISSING}">关键材料缺失</option>
+                        <option value="RESPONSIBILITY_MISMATCH" th:selected="${film.abnormalType == T(com.hospital.film.enums.AbnormalType).RESPONSIBILITY_MISMATCH}">责任对象不一致</option>
+                    </select>
+                    <small style="color: #888;">当选择异常类型时，需要填写阻断原因和补救路径</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">处理结论</label>
+                    <textarea name="conclusion" class="form-control" th:text="${film.conclusion}" placeholder="请输入处理结论..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">采用依据</label>
+                    <textarea name="evidenceBasis" class="form-control" th:text="${film.evidenceBasis}" placeholder="请输入采用依据，如：1. 患者身份证明；2. 收费票据核对；3. PACS系统记录..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">阻断原因</label>
+                        <textarea name="blockReason" class="form-control" th:text="${film.blockReason}" placeholder="如存在异常，填写阻断原因"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">补救路径</label>
+                        <textarea name="remedyPath" class="form-control" th:text="${film.remedyPath}" placeholder="如存在异常，填写补救路径"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">处理说明（现场说明）</label>
+                    <textarea name="description" class="form-control" placeholder="请详细描述本次处理的内容和情况..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">经办人</label>
+                    <input type="text" name="operator" class="form-control" value="张经办">
+                </div>
+            </div>
+
+            <div class="action-bar" style="justify-content: space-between;">
+                <div>
+                    <a th:href="@{'/detail?id=' + ${film.id}}" class="btn btn-secondary">取消</a>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary">保存处理</button>
+                    <button type="submit" formaction="/api/submit-review" class="btn btn-success"
+                            onclick="return confirm('确定提交复核吗？提交后将进入复核流程。')">保存并提交复核</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">补充业务记录</div>
+            <form method="post" th:action="@{/api/supplement}">
+                <input type="hidden" name="id" th:value="${film.id}">
+                <div class="form-group">
+                    <label class="form-label">补充说明</label>
+                    <textarea name="description" class="form-control" placeholder="可补充业务记录、现场说明等..."></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-secondary btn-sm">补充记录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

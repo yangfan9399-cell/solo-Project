@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>胶片补打申请 - 列表</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>医院影像胶片补打申请收费与领取核验系统</h1>
+            <nav class="nav">
+                <a th:href="@{/list}" class="active">申请列表</a>
+                <a th:href="@{/dashboard}">看板统计</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div th:if="${drilldownTitle}" class="alert alert-info">
+            <strong>钻取结果：</strong><span th:text="${drilldownTitle}"></span>
+            <a th:href="@{/list}" style="margin-left: 20px;">返回全部列表</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card" onclick="window.location.href='/list'">
+                <div class="stat-number" th:text="${stats.total}">0</div>
+                <div class="stat-label">总申请数</div>
+            </div>
+            <div class="stat-card" onclick="window.location.href='/drilldown/status?status=ACCEPTED'">
+                <div class="stat-number" th:text="${stats.statusCounts['ACCEPTED']} ?: 0">0</div>
+                <div class="stat-label">已受理</div>
+            </div>
+            <div class="stat-card" onclick="window.location.href='/drilldown/status?status=PROCESSING'">
+                <div class="stat-number" th:text="${stats.statusCounts['PROCESSING']} ?: 0">0</div>
+                <div class="stat-label">处理中</div>
+            </div>
+            <div class="stat-card" onclick="window.location.href='/drilldown/status?status=REVIEWING'">
+                <div class="stat-number" th:text="${stats.statusCounts['REVIEWING']} ?: 0">0</div>
+                <div class="stat-label">复核中</div>
+            </div>
+            <div class="stat-card success" onclick="window.location.href='/drilldown/status?status=ARCHIVED'">
+                <div class="stat-number" th:text="${stats.statusCounts['ARCHIVED']} ?: 0">0</div>
+                <div class="stat-label">已归档</div>
+            </div>
+            <div class="stat-card danger" onclick="window.location.href='/drilldown/abnormal?abnormalType=MATERIAL_MISSING'">
+                <div class="stat-number" th:text="${stats.abnormalCounts['MATERIAL_MISSING']} ?: 0">0</div>
+                <div class="stat-label">材料缺失</div>
+            </div>
+            <div class="stat-card warning" onclick="window.location.href='/drilldown/abnormal?abnormalType=RESPONSIBILITY_MISMATCH'">
+                <div class="stat-number" th:text="${stats.abnormalCounts['RESPONSIBILITY_MISMATCH']} ?: 0">0</div>
+                <div class="stat-label">责任不一致</div>
+            </div>
+            <div class="stat-card" onclick="window.location.href='/drilldown/abnormal?abnormalType=REVIEW_REJECTED'">
+                <div class="stat-number" th:text="${stats.abnormalCounts['REVIEW_REJECTED']} ?: 0">0</div>
+                <div class="stat-label">复核退回</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">申请列表</div>
+
+            <div class="filter-bar">
+                <form method="get" th:action="@{/list}" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                    <select name="status">
+                        <option value="">全部状态</option>
+                        <option value="ACCEPTED" th:selected="${status == 'ACCEPTED'}">已受理</option>
+                        <option value="PROCESSING" th:selected="${status == 'PROCESSING'}">处理中</option>
+                        <option value="REVIEWING" th:selected="${status == 'REVIEWING'}">复核中</option>
+                        <option value="ARCHIVED" th:selected="${status == 'ARCHIVED'}">已归档</option>
+                        <option value="REJECTED" th:selected="${status == 'REJECTED'}">已退回</option>
+                    </select>
+
+                    <select name="abnormalType">
+                        <option value="">全部异常类型</option>
+                        <option value="NORMAL" th:selected="${abnormalType == 'NORMAL'}">正常</option>
+                        <option value="MATERIAL_MISSING" th:selected="${abnormalType == 'MATERIAL_MISSING'}">关键材料缺失</option>
+                        <option value="RESPONSIBILITY_MISMATCH" th:selected="${abnormalType == 'RESPONSIBILITY_MISMATCH'}">责任对象不一致</option>
+                        <option value="REVIEW_REJECTED" th:selected="${abnormalType == 'REVIEW_REJECTED'}">复核退回</option>
+                    </select>
+
+                    <input type="text" name="keyword" placeholder="搜索申请号/姓名/检查号" th:value="${keyword}">
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                    <a th:href="@{/list}" class="btn btn-secondary">重置</a>
+                </form>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>申请编号</th>
+                        <th>来源</th>
+                        <th>患者姓名</th>
+                        <th>检查项目</th>
+                        <th>胶片数量</th>
+                        <th>费用</th>
+                        <th>状态</th>
+                        <th>异常类型</th>
+                        <th>当前责任人</th>
+                        <th>申请时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="app : ${applications}">
+                        <td>
+                            <a th:href="@{'/detail?id=' + ${app.id}}" th:text="${app.applicationNo}" style="color: #2a5298; font-weight: 500;"></a>
+                        </td>
+                        <td th:text="${app.source.description}"></td>
+                        <td th:text="${app.patientName}"></td>
+                        <td th:text="${app.examItem}"></td>
+                        <td th:text="${app.filmCount} + '张'"></td>
+                        <td th:text="'¥' + ${app.feeAmount}"></td>
+                        <td>
+                            <span class="badge" th:classappend="${app.status == T(com.hospital.film.enums.ApplicationStatus).ARCHIVED ? 'badge-success' :
+                                                                 (app.status == T(com.hospital.film.enums.ApplicationStatus).REJECTED ? 'badge-danger' :
+                                                                 (app.status == T(com.hospital.film.enums.ApplicationStatus).REVIEWING ? 'badge-warning' :
+                                                                 (app.status == T(com.hospital.film.enums.ApplicationStatus).PROCESSING ? 'badge-info' : 'badge-secondary')))}"
+                                  th:text="${app.status.description}"></span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${app.abnormalType == T(com.hospital.film.enums.AbnormalType).NORMAL ? 'badge-success' :
+                                                                 (app.abnormalType == T(com.hospital.film.enums.AbnormalType).MATERIAL_MISSING ? 'badge-danger' :
+                                                                 (app.abnormalType == T(com.hospital.film.enums.AbnormalType).RESPONSIBILITY_MISMATCH ? 'badge-warning' : 'badge-danger'))}"
+                                  th:text="${app.abnormalType.description}"></span>
+                        </td>
+                        <td th:text="${app.currentHandler}"></td>
+                        <td th:text="${#temporals.format(app.applyTime, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td>
+                            <a th:href="@{'/detail?id=' + ${app.id}}" class="btn btn-sm btn-secondary">详情</a>
+                            <a th:if="${!app.archived and app.status != T(com.hospital.film.enums.ApplicationStatus).REVIEWING}"
+                               th:href="@{'/process?id=' + ${app.id}}" class="btn btn-sm btn-primary">处理</a>
+                            <a th:if="${app.status == T(com.hospital.film.enums.ApplicationStatus).REVIEWING}"
+                               th:href="@{'/review?id=' + ${app.id}}" class="btn btn-sm btn-success">复核</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(applications)}">
+                        <td colspan="11" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
