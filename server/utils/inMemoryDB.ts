@@ -994,8 +994,9 @@ export class InMemoryDB {
     if (record.status === 'ARCHIVED') throw new Error('记录已归档，处于只读状态，不允许任何修改操作')
     const operator = this.users.find(u => u.id === data.operatorId)
     if (!operator) throw new Error('操作用户不存在')
-    if (operator.role !== 'REVIEWER' && operator.role !== 'PROCESSOR') {
-      throw new Error('只有复核人或处理人可以启动重新处理')
+    const isArchivistReturn = operator.role === 'ARCHIVIST' && record.status === 'REVIEW_PASSED'
+    if (operator.role !== 'REVIEWER' && operator.role !== 'PROCESSOR' && !isArchivistReturn) {
+      throw new Error('只有复核人、处理人或归档复核人(退回补证)可以启动重新处理')
     }
     if (!['REVIEW_REJECTED', 'REVIEW_PASSED'].includes(record.status)) {
       throw new Error('当前状态不允许重新处理')

@@ -69,9 +69,8 @@ async function validateRecordState(recordId: number, operation: string, operator
       break
     case 'reprocess':
       requiredStatuses = [STATUS.REVIEW_REJECTED, STATUS.REVIEW_PASSED]
-      allowed = operatorRole === ROLES.REVIEWER || operatorRole === ROLES.PROCESSOR
-      if (!allowed) throw new Error('只有复核人或处理人可以启动重新处理')
-      if (record.status === STATUS.ARCHIVED) throw new Error('已归档记录需先申请重新开启')
+      allowed = operatorRole === ROLES.REVIEWER || operatorRole === ROLES.PROCESSOR || (operatorRole === ROLES.ARCHIVIST && record.status === STATUS.REVIEW_PASSED)
+      if (!allowed) throw new Error('只有复核人、处理人或归档复核人(退回补证)可以启动重新处理')
       break
     default:
       throw new Error('未知操作类型')
