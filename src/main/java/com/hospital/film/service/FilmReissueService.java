@@ -4,11 +4,19 @@ import com.hospital.film.dto.FilmReissueCreateDTO;
 import com.hospital.film.dto.ProcessDTO;
 import com.hospital.film.dto.ReviewDTO;
 import com.hospital.film.entity.ApplicationHistory;
+import com.hospital.film.entity.Attachment;
 import com.hospital.film.entity.FilmReissue;
 import com.hospital.film.enums.*;
 import com.hospital.film.repository.ApplicationHistoryRepository;
 import com.hospital.film.repository.AttachmentRepository;
 import com.hospital.film.repository.FilmReissueRepository;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -373,5 +381,49 @@ public class FilmReissueService {
 
     public long count() {
         return filmReissueRepository.count();
+    }
+
+    @Transactional
+    public Attachment uploadAttachment(Long filmReissueId, MultipartFile file, String description, String operator) throws IOException {
+        FilmReissue film = findById(filmReissueId);
+        if (film.getArchived()) {
+            throw new RuntimeException("已归档记录不能上传附件");
+        }
+
+        String uploadDir = "uploads/" + filmReissueId;
+        Path uploadPath = Paths.get(uploadDir);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        String originalFileName = file.getOriginalFilename();
+        String fileName = System.currentTimeMillis() + "_" + (originalFileName != null ? originalFileName : "attachment");
+        Path filePath = uploadPath.resolve(fileName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        Attachment attachment = new Attachment();
+        attachment.setFilmReissue(film);
+        attachment.setFileName(originalFileName != null ? originalFileName : fileName);
+        attachment.setFileType(file.getContentType());
+        attachment.setFilePath(filePath.toString());
+        attachment.setFileSize(file.getSize());
+        attachment.setDescription(description);
+        attachment.setUploadedBy(operator != null ? operator : "张经办");
+
+        attachment = attachmentRepository.save(attachment);
+
+        addHistory(film, OperationType.SUPPLEMENT, "上传证据附件", attachment.getUploadedBy(),
+                RoleType.OPERATOR, "上传附件: " + attachment.getFileName(), null, null, null, null, null, null);
+
+        return attachment;
+    }
+
+    public List<Attachment> getAttachments(Long filmReissueId) {
+        return attachmentRepository.findByFilmReissueIdOrderByCreatedAtDesc(filmReissueId);
+    }
+
+    public Attachment getAttachment(Long id) {
+        return attachmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("附件不存在"));
     }
 }

@@ -7,6 +7,8 @@ import com.hospital.film.repository.FilmReissueRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +61,81 @@ public class StatisticsService {
         BigDecimal totalFee = filmReissueRepository.sumFeeAmount();
         stats.put("totalFee", totalFee != null ? totalFee : BigDecimal.ZERO);
 
+        calculateEfficiencyMetrics(stats);
+        calculateAbnormalMetrics(stats);
+
         return stats;
+    }
+
+    private void calculateEfficiencyMetrics(Map<String, Object> stats) {
+        List<FilmReissue> allApplications = filmReissueRepository.findAll();
+        long total = allApplications.size();
+        long archivedCount = allApplications.stream()
+                .filter(f -> f.getStatus() == ApplicationStatus.ARCHIVED)
+                .count();
+
+        if (total > 0) {
+            stats.put("archivedRate", BigDecimal.valueOf(archivedCount * 100.0 / total)
+                    .setScale(1, RoundingMode.HALF_UP) + "%");
+        } else {
+            stats.put("archivedRate", "0%");
+        }
+
+        long totalProcessingHours = 0;
+        long processedCount = 0;
+        for (FilmReissue app : allApplications) {
+            if (app.getAcceptTime() != null) {
+                java.time.LocalDateTime endTime = app.getArchiveTime() != null ? app.getArchiveTime() : java.time.LocalDateTime.now();
+                Duration duration = Duration.between(app.getAcceptTime(), endTime);
+                totalProcessingHours += duration.toHours();
+                processedCount++;
+            }
+        }
+
+        if (processedCount > 0) {
+            double avgHours = totalProcessingHours * 1.0 / processedCount;
+            if (avgHours < 24) {
+                stats.put("avgProcessingTime", BigDecimal.valueOf(avgHours).setScale(1, RoundingMode.HALF_UP) + "小时");
+            } else {
+                stats.put("avgProcessingTime", BigDecimal.valueOf(avgHours / 24).setScale(1, RoundingMode.HALF_UP) + "天");
+            }
+        } else {
+            stats.put("avgProcessingTime", "0小时");
+        }
+
+        long reprocessCount = allApplications.stream()
+                .filter(f -> f.getHistories() != null && f.getHistories().stream()
+                        .anyMatch(h -> h.getOperationType() == com.hospital.film.enums.OperationType.REPROCESS))
+                .count();
+        stats.put("reprocessCount", reprocessCount);
+    }
+
+    private void calculateAbnormalMetrics(Map<String, Object> stats) {
+        List<FilmReissue> allApplications = filmReissueRepository.findAll();
+        long total = allApplications.size();
+        long abnormalCount = allApplications.stream()
+                .filter(f -> f.getAbnormalType() != AbnormalType.NORMAL)
+                .count();
+
+        if (total > 0) {
+            stats.put("abnormalRate", BigDecimal.valueOf(abnormalCount * 100.0 / total)
+                    .setScale(1, RoundingMode.HALF_UP) + "%");
+        } else {
+            stats.put("abnormalRate", "0%");
+        }
+        stats.put("abnormalCount", abnormalCount);
+
+        Map<String, Object> abnormalCounts = (Map<String, Object>) stats.get("abnormalCounts");
+        long materialMissingCount = abnormalCounts.containsKey("MATERIAL_MISSING") ?
+                ((Long) abnormalCounts.get("MATERIAL_MISSING")) : 0L;
+        long responsibilityMismatchCount = abnormalCounts.containsKey("RESPONSIBILITY_MISMATCH") ?
+                ((Long) abnormalCounts.get("RESPONSIBILITY_MISMATCH")) : 0L;
+        long reviewRejectedCount = abnormalCounts.containsKey("REVIEW_REJECTED") ?
+                ((Long) abnormalCounts.get("REVIEW_REJECTED")) : 0L;
+
+        stats.put("topAbnormalType", materialMissingCount >= responsibilityMismatchCount &&
+                materialMissingCount >= reviewRejectedCount ? "关键材料缺失" :
+                (responsibilityMismatchCount >= reviewRejectedCount ? "责任对象不一致" : "复核退回"));
     }
 
     public List<FilmReissue> getApplicationsByStatus(String status) {

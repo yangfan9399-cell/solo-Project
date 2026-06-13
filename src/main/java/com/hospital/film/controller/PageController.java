@@ -1,13 +1,24 @@
 package com.hospital.film.controller;
 
+import com.hospital.film.entity.Attachment;
 import com.hospital.film.entity.FilmReissue;
+import com.hospital.film.enums.ApplicationSource;
 import com.hospital.film.service.FilmReissueService;
 import com.hospital.film.service.StatisticsService;
+import org.springframework.core.io.PathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +57,7 @@ public class PageController {
         FilmReissue film = filmReissueService.findById(id);
         model.addAttribute("film", film);
         model.addAttribute("histories", filmReissueService.getHistories(id));
+        model.addAttribute("attachments", filmReissueService.getAttachments(id));
         return "detail";
     }
 
@@ -54,6 +66,7 @@ public class PageController {
         FilmReissue film = filmReissueService.findById(id);
         model.addAttribute("film", film);
         model.addAttribute("histories", filmReissueService.getHistories(id));
+        model.addAttribute("attachments", filmReissueService.getAttachments(id));
         return "process";
     }
 
@@ -94,5 +107,37 @@ public class PageController {
         model.addAttribute("stats", statisticsService.getOverviewStats());
         model.addAttribute("drilldownTitle", "按异常类型钻取 - " + abnormalType);
         return "list";
+    }
+
+    @GetMapping("/drilldown/source")
+    public String drilldownBySource(@RequestParam String source, Model model) {
+        List<FilmReissue> applications = filmReissueService.findAll(null, null, null)
+                .stream()
+                .filter(f -> f.getSource().name().equals(source))
+                .toList();
+        model.addAttribute("applications", applications);
+        model.addAttribute("status", "");
+        model.addAttribute("abnormalType", "");
+        model.addAttribute("keyword", "");
+        model.addAttribute("stats", statisticsService.getOverviewStats());
+        model.addAttribute("drilldownTitle", "按来源钻取 - " + ApplicationSource.valueOf(source).getDescription());
+        return "list";
+    }
+
+    @GetMapping("/attachment/{id}")
+    public ResponseEntity<Resource> downloadAttachment(@PathVariable Long id) throws IOException {
+        Attachment attachment = filmReissueService.getAttachment(id);
+        Path filePath = Paths.get(attachment.getFilePath());
+        Resource resource = new PathResource(filePath);
+
+        String contentType = attachment.getFileType();
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
+                .body(resource);
     }
 }

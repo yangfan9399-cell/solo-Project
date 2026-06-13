@@ -95,19 +95,19 @@
             <div class="card">
                 <div class="card-title">来源分布（点击钻取）</div>
                 <div class="stats-grid">
-                    <div class="stat-card" onclick="window.location.href='/list'">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/source?source=OUTPATIENT'">
                         <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['OUTPATIENT']} ?: 0">0</div>
                         <div class="stat-label">门诊</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='/list'">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/source?source=INPATIENT'">
                         <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['INPATIENT']} ?: 0">0</div>
                         <div class="stat-label">住院</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='/list'">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/source?source=EMERGENCY'">
                         <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['EMERGENCY']} ?: 0">0</div>
                         <div class="stat-label">急诊</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='/list'">
+                    <div class="stat-card" onclick="window.location.href='/drilldown/source?source=PHYSICAL_EXAM'">
                         <div class="stat-number" style="font-size: 24px;" th:text="${stats.sourceCounts['PHYSICAL_EXAM']} ?: 0">0</div>
                         <div class="stat-label">体检</div>
                     </div>
@@ -140,6 +140,25 @@
 
         <div class="card">
             <div class="card-title">异常案例复盘分析</div>
+
+            <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stat-card danger" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px;" th:text="${stats.abnormalCount}">0</div>
+                    <div class="stat-label">异常案例总数</div>
+                </div>
+                <div class="stat-card warning" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px; color: #ffc107;" th:text="${stats.abnormalRate}">0%</div>
+                    <div class="stat-label">异常占比</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 24px;" th:text="${stats.topAbnormalType}">-</div>
+                    <div class="stat-label">最高发异常类型</div>
+                </div>
+                <div class="stat-card" style="cursor: default;">
+                    <div class="stat-number" style="font-size: 28px; color: #dc3545;" th:text="${stats.reprocessCount}">0</div>
+                    <div class="stat-label">重新处理次数</div>
+                </div>
+            </div>
 
             <div class="two-column">
                 <div class="diff-section">
@@ -200,20 +219,20 @@
             <div class="card-title">流程效率指标</div>
             <div class="stats-grid">
                 <div class="stat-card" style="cursor: default;">
-                    <div class="stat-number" style="font-size: 28px;">4</div>
-                    <div class="stat-label">标准流程节点数</div>
+                    <div class="stat-number" style="font-size: 28px;" th:text="${stats.avgProcessingTime}">0小时</div>
+                    <div class="stat-label">平均处理时长</div>
                 </div>
                 <div class="stat-card" style="cursor: default;">
-                    <div class="stat-number" style="font-size: 28px; color: #28a745;">2</div>
-                    <div class="stat-label">正常办结节点（受理→归档）</div>
+                    <div class="stat-number" style="font-size: 28px; color: #28a745;" th:text="${stats.archivedRate}">0%</div>
+                    <div class="stat-label">归档完成率</div>
                 </div>
                 <div class="stat-card" style="cursor: default;">
-                    <div class="stat-number" style="font-size: 28px; color: #dc3545;">3+</div>
-                    <div class="stat-label">异常案例平均节点数</div>
+                    <div class="stat-number" style="font-size: 28px; color: #ffc107;" th:text="${stats.abnormalRate}">0%</div>
+                    <div class="stat-label">异常率</div>
                 </div>
                 <div class="stat-card" style="cursor: default;">
-                    <div class="stat-number" style="font-size: 28px; color: #ffc107;">25%</div>
-                    <div class="stat-label">异常率（示例）</div>
+                    <div class="stat-number" style="font-size: 28px; color: #dc3545;" th:text="${stats.reprocessCount}">0</div>
+                    <div class="stat-label">重新处理次数</div>
                 </div>
             </div>
         </div>

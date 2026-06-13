@@ -6,6 +6,7 @@ import com.hospital.film.entity.FilmReissue;
 import com.hospital.film.service.FilmReissueService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -93,6 +94,26 @@ public class ApplicationController {
             return "redirect:/detail?id=" + id;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "补充失败: " + e.getMessage());
+            return "redirect:/process?id=" + id;
+        }
+    }
+
+    @PostMapping("/upload-attachment")
+    public String uploadAttachment(@RequestParam Long id,
+                                   @RequestParam("file") MultipartFile file,
+                                   @RequestParam(required = false) String description,
+                                   @RequestParam(required = false) String operator,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            if (file.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "请选择要上传的文件");
+                return "redirect:/process?id=" + id;
+            }
+            filmReissueService.uploadAttachment(id, file, description, operator);
+            redirectAttributes.addFlashAttribute("message", "附件上传成功");
+            return "redirect:/detail?id=" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "上传失败: " + e.getMessage());
             return "redirect:/process?id=" + id;
         }
     }

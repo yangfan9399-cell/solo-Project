@@ -247,6 +247,58 @@
                 </div>
             </form>
         </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title"><i class="icon">📎</i> 上传证据附件</div>
+            <form method="post" th:action="@{/api/upload-attachment}" enctype="multipart/form-data">
+                <input type="hidden" name="id" th:value="${film.id}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">选择文件</label>
+                        <input type="file" name="file" class="form-control" required style="padding: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">上传人</label>
+                        <input type="text" name="operator" class="form-control" value="张经办">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">附件说明</label>
+                    <textarea name="description" class="form-control" placeholder="如：收费票据扫描件、身份证明照片、检查申请单等..."></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-primary btn-sm">上传附件</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" th:if="${attachments != null and !attachments.isEmpty()}" style="margin-top: 20px;">
+            <div class="card-title">已上传附件</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>大小</th>
+                        <th>说明</th>
+                        <th>上传人</th>
+                        <th>上传时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="att : ${attachments}">
+                        <td th:text="${att.fileName}">文件名</td>
+                        <td th:text="${att.fileSize &lt; 1024 ? att.fileSize + ' B' : (att.fileSize &lt; 1024 * 1024 ? #numbers.formatDecimal(att.fileSize / 1024.0, 1, 1) + ' KB' : #numbers.formatDecimal(att.fileSize / (1024.0 * 1024), 1, 1) + ' MB')}">大小</td>
+                        <td th:text="${att.description}">说明</td>
+                        <td th:text="${att.uploadedBy}">上传人</td>
+                        <td th:text="${#temporals.format(att.createdAt, 'yyyy-MM-dd HH:mm')}">上传时间</td>
+                        <td>
+                            <a th:href="@{'/attachment/' + ${att.id}}" class="btn btn-sm btn-primary">下载</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

@@ -225,6 +225,40 @@
             </div>
         </div>
 
+        <div class="card" th:if="${attachments != null and !attachments.isEmpty()}">
+            <div class="card-header">
+                <h3><i class="icon">📎</i> 证据附件</h3>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>类型</th>
+                            <th>大小</th>
+                            <th>说明</th>
+                            <th>上传人</th>
+                            <th>上传时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="att : ${attachments}">
+                            <td th:text="${att.fileName}">文件名</td>
+                            <td th:text="${att.fileType}">类型</td>
+                            <td th:text="${att.fileSize &lt; 1024 ? att.fileSize + ' B' : (att.fileSize &lt; 1024 * 1024 ? #numbers.formatDecimal(att.fileSize / 1024.0, 1, 1) + ' KB' : #numbers.formatDecimal(att.fileSize / (1024.0 * 1024), 1, 1) + ' MB')}">大小</td>
+                            <td th:text="${att.description}">说明</td>
+                            <td th:text="${att.uploadedBy}">上传人</td>
+                            <td th:text="${#temporals.format(att.createdAt, 'yyyy-MM-dd HH:mm')}">上传时间</td>
+                            <td>
+                                <a th:href="@{'/attachment/' + ${att.id}}" class="btn btn-sm btn-primary">下载</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="action-bar">
             <a th:href="@{/list}" class="btn btn-secondary">返回列表</a>
             <a th:if="${!film.archived and film.status != T(com.hospital.film.enums.ApplicationStatus).REVIEWING}"
