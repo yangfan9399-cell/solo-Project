@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/review/{record}/process', [ReviewRecordController::class, 'process'])->name('review.process');
     Route::post('/review/{record}/review', [ReviewRecordController::class, 'review'])->name('review.review');
     Route::post('/review/{record}/reopen', [ReviewRecordController::class, 'reopen'])->name('review.reopen');
+    Route::post('/review/{record}/attachments', [ReviewRecordController::class, 'uploadAttachment'])->name('review.attachment.upload');
 
     Route::get('/api/review', [ReviewRecordController::class, 'apiList'])->name('api.review.list');
     Route::get('/api/review/{record}', [ReviewRecordController::class, 'apiDetail'])->name('api.review.detail');

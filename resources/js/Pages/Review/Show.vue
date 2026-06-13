@@ -287,11 +287,47 @@
                             </div>
                             <div>
                                 <label class="input-label">证据附件</label>
-                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                                <div 
+                                    class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                                    @click="triggerFileInput"
+                                    @dragover.prevent
+                                    @drop.prevent="handleFileDrop"
+                                >
+                                    <input 
+                                        ref="fileInput"
+                                        type="file" 
+                                        multiple
+                                        class="hidden"
+                                        @change="handleFileSelect"
+                                    />
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
-                                    <p class="mt-2 text-sm text-gray-500">点击上传证据附件</p>
+                                    <p class="mt-2 text-sm text-gray-500">点击或拖拽上传证据附件</p>
+                                    <p class="mt-1 text-xs text-gray-400">支持图片、PDF等格式，单文件最大10MB</p>
+                                </div>
+                                <div v-if="pendingFiles.length > 0" class="mt-3 space-y-2">
+                                    <div 
+                                        v-for="(file, idx) in pendingFiles" 
+                                        :key="idx"
+                                        class="flex items-center justify-between p-2 bg-gray-50 rounded"
+                                    >
+                                        <div class="flex items-center min-w-0 flex-1">
+                                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span class="ml-2 text-sm text-gray-700 truncate">{{ file.name }}</span>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            @click="removePendingFile(idx)"
+                                            class="ml-2 text-red-500 hover:text-red-700"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <button 
@@ -498,6 +534,8 @@ const showSnapshot = ref(false);
 const showReopenModal = ref(false);
 const submitting = ref(false);
 const reopening = ref(false);
+const fileInput = ref(null);
+const pendingFiles = ref([]);
 
 const isBusinessSpecialist = computed(() => auth.value?.user?.is_business_specialist);
 const isApprovalOfficer = computed(() => auth.value?.user?.is_approval_officer);
@@ -594,20 +632,102 @@ const formatFileSize = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const submitBusinessRecord = () => {
-    if (!processForm.business_note && !processForm.on_site_note) {
-        alert('请至少填写业务记录或现场说明');
+const triggerFileInput = () => {
+    fileInput.value?.click();
+};
+
+const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    addPendingFiles(files);
+    e.target.value = '';
+};
+
+const handleFileDrop = (e) => {
+    const files = Array.from(e.dataTransfer?.files || []);
+    addPendingFiles(files);
+};
+
+const addPendingFiles = (files) => {
+    for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`文件 ${file.name} 超过10MB限制`);
+            continue;
+        }
+        pendingFiles.value.push(file);
+    }
+};
+
+const removePendingFile = (index) => {
+    pendingFiles.value.splice(index, 1);
+};
+
+const uploadFiles = async (recordId) => {
+    const uploaded = [];
+    for (const file of pendingFiles.value) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('attachment_type', 'evidence');
+        
+        const response = await fetch(route('review.attachment.upload', { record: recordId }), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'application/json',
+            },
+            body: formData,
+            credentials: 'same-origin',
+        });
+        
+        if (!response.ok) {
+            throw new Error(`上传失败: ${file.name}`);
+        }
+        
+        const result = await response.json();
+        uploaded.push(result.attachment);
+    }
+    return uploaded;
+};
+
+const submitBusinessRecord = async () => {
+    if (!processForm.business_note && !processForm.on_site_note && pendingFiles.value.length === 0) {
+        alert('请至少填写业务记录、现场说明或上传证据附件');
         return;
     }
     submitting.value = true;
-    router.post(route('review.process', { record: detail.value.id }), processForm.data(), {
-        onSuccess: () => {
+    
+    try {
+        const formData = new FormData();
+        formData.append('business_note', processForm.business_note || '');
+        formData.append('on_site_note', processForm.on_site_note || '');
+        formData.append('evidence_note', processForm.evidence_note || '');
+        
+        pendingFiles.value.forEach((file, index) => {
+            formData.append(`attachments[${index}]`, file);
+        });
+        
+        const response = await fetch(route('review.process', { record: detail.value.id }), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                'Accept': 'text/html,application/xhtml+xml',
+            },
+            body: formData,
+            credentials: 'same-origin',
+        });
+        
+        if (response.ok) {
+            pendingFiles.value = [];
             processForm.reset();
-        },
-        onFinish: () => {
-            submitting.value = false;
-        },
-    });
+            router.get(route('review.show', { record: detail.value.id, tab: 'process' }));
+        } else {
+            alert('提交失败，请重试');
+        }
+    } catch (error) {
+        console.error('提交错误:', error);
+        alert('提交失败，请重试');
+    } finally {
+        submitting.value = false;
+    }
 };
 
 const submitReview = (action) => {

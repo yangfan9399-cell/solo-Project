@@ -67,41 +67,54 @@ class ReviewService
             throw new \Exception('已归档的记录不能修改');
         }
 
+        if (!$operator->isBusinessSpecialist() && !$operator->isApprovalOfficer()) {
+            throw new \Exception('无权限执行此操作');
+        }
+
         return DB::transaction(function () use ($record, $data, $operator) {
             $changes = $this->detectChanges($record, $data);
             
-            $updateData = [
-                'processed_data' => array_merge($record->processed_data ?? [], [
-                    'approved_amount' => $data['approved_amount'] ?? $record->apply_amount,
-                    'approved_count' => $data['approved_count'] ?? $record->apply_count,
-                ]),
-                'diff_fields' => $changes,
-                'basis' => $data['basis'] ?? $record->basis,
-            ];
+            $updateData = [];
+            
+            if ($operator->isApprovalOfficer()) {
+                $updateData = [
+                    'processed_data' => array_merge($record->processed_data ?? [], [
+                        'approved_amount' => $data['approved_amount'] ?? $record->apply_amount,
+                        'approved_count' => $data['approved_count'] ?? $record->apply_count,
+                    ]),
+                    'diff_fields' => $changes,
+                    'basis' => $data['basis'] ?? $record->basis,
+                    'conclusion' => $data['conclusion'] ?? $record->conclusion,
+                ];
 
-            if (isset($data['apply_amount'])) {
-                $updateData['apply_amount'] = $data['apply_amount'];
-            }
-            if (isset($data['approved_amount'])) {
-                $updateData['approved_amount'] = $data['approved_amount'];
-            }
-            if (isset($data['apply_count'])) {
-                $updateData['apply_count'] = $data['apply_count'];
-            }
-            if (isset($data['approved_count'])) {
-                $updateData['approved_count'] = $data['approved_count'];
-            }
-            if (isset($data['student_id'])) {
-                $updateData['student_id'] = $data['student_id'];
-            }
-            if (isset($data['anomaly_type'])) {
-                $updateData['anomaly_type'] = $data['anomaly_type'];
-            }
-            if (isset($data['block_reason'])) {
-                $updateData['block_reason'] = $data['block_reason'];
-            }
-            if (isset($data['remedy_path'])) {
-                $updateData['remedy_path'] = $data['remedy_path'];
+                if (isset($data['apply_amount'])) {
+                    $updateData['apply_amount'] = $data['apply_amount'];
+                }
+                if (isset($data['approved_amount'])) {
+                    $updateData['approved_amount'] = $data['approved_amount'];
+                }
+                if (isset($data['apply_count'])) {
+                    $updateData['apply_count'] = $data['apply_count'];
+                }
+                if (isset($data['approved_count'])) {
+                    $updateData['approved_count'] = $data['approved_count'];
+                }
+                if (isset($data['student_id'])) {
+                    $updateData['student_id'] = $data['student_id'];
+                }
+                if (isset($data['anomaly_type'])) {
+                    $updateData['anomaly_type'] = $data['anomaly_type'];
+                }
+                if (isset($data['block_reason'])) {
+                    $updateData['block_reason'] = $data['block_reason'];
+                }
+                if (isset($data['remedy_path'])) {
+                    $updateData['remedy_path'] = $data['remedy_path'];
+                }
+            } else {
+                $updateData = [
+                    'diff_fields' => $changes,
+                ];
             }
 
             $record->update($updateData);
@@ -282,6 +295,35 @@ class ReviewService
         ]);
     }
 
+    public function uploadAttachment(
+        ReviewRecord $record, 
+        \Illuminate\Http\UploadedFile $file, 
+        string $attachmentType, 
+        User $uploader,
+        ?ReviewNode $node = null,
+        ?string $description = null
+    ): Attachment {
+        if ($record->is_archived) {
+            throw new \Exception('已归档的记录不能上传附件');
+        }
+
+        $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+        $filePath = $file->storeAs('attachments/' . $record->id, $fileName, 'public');
+
+        return $record->attachments()->create([
+            'review_node_id' => $node?->id,
+            'file_name' => $fileName,
+            'original_name' => $file->getClientOriginalName(),
+            'file_path' => $filePath,
+            'file_type' => $file->getClientOriginalExtension(),
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'attachment_type' => $attachmentType,
+            'description' => $description,
+            'uploaded_by' => $uploader->id,
+        ]);
+    }
+
     public function createAppeal(ReviewRecord $record, array $data): AppealRecord
     {
         return DB::transaction(function () use ($record, $data) {
@@ -425,7 +467,7 @@ class ReviewService
                 'name' => $record->createdBy->name,
                 'department' => $record->createdBy->department,
             ] : null,
-            'nodes' => $record->activeNodes->map(function ($node) {
+            'nodes' => $record->nodes->map(function ($node) {
                 return [
                     'id' => $node->id,
                     'type' => $node->node_type,

@@ -88,24 +88,90 @@ class ReviewRecordController extends Controller
 
         try {
             $data = $request->validate([
-                'approved_amount' => 'nullable|numeric|min:0',
-                'approved_count' => 'nullable|integer|min:1',
-                'basis' => 'nullable|string',
-                'conclusion' => 'nullable|string',
                 'business_note' => 'nullable|string',
                 'on_site_note' => 'nullable|string',
                 'evidence_note' => 'nullable|string',
-                'anomaly_type' => 'nullable|string',
-                'block_reason' => 'nullable|string',
-                'remedy_path' => 'nullable|string',
-                'remark' => 'nullable|string',
             ]);
 
+            if ($user->isApprovalOfficer()) {
+                $extraData = $request->validate([
+                    'approved_amount' => 'nullable|numeric|min:0',
+                    'approved_count' => 'nullable|integer|min:1',
+                    'basis' => 'nullable|string',
+                    'conclusion' => 'nullable|string',
+                    'anomaly_type' => 'nullable|string',
+                    'block_reason' => 'nullable|string',
+                    'remedy_path' => 'nullable|string',
+                    'remark' => 'nullable|string',
+                ]);
+                $data = array_merge($data, $extraData);
+            }
+
             $record = $this->reviewService->processRecord($record, $data, $user);
+
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    if ($file->isValid()) {
+                        $this->reviewService->uploadAttachment(
+                            $record,
+                            $file,
+                            \App\Models\Attachment::TYPE_EVIDENCE,
+                            $user,
+                            $record->latestNode
+                        );
+                    }
+                }
+            }
 
             return back()->with('success', '处理成功');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function uploadAttachment(ReviewRecord $record, Request $request)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isBusinessSpecialist() && !$user->isApprovalOfficer()) {
+            return response()->json(['error' => '无权限执行此操作'], 403);
+        }
+
+        if ($record->is_archived) {
+            return response()->json(['error' => '已归档的记录不能上传附件'], 403);
+        }
+
+        try {
+            $request->validate([
+                'file' => 'required|file|max:10240',
+                'attachment_type' => 'nullable|in:evidence,business,site,appeal,other',
+                'description' => 'nullable|string',
+            ]);
+
+            $attachment = $this->reviewService->uploadAttachment(
+                $record,
+                $request->file('file'),
+                $request->input('attachment_type', 'evidence'),
+                $user,
+                null,
+                $request->input('description')
+            );
+
+            return response()->json([
+                'success' => true,
+                'attachment' => [
+                    'id' => $attachment->id,
+                    'file_name' => $attachment->file_name,
+                    'original_name' => $attachment->original_name,
+                    'file_size' => $attachment->file_size,
+                    'attachment_type' => $attachment->attachment_type,
+                    'attachment_type_label' => $attachment->attachment_type_label,
+                    'file_url' => $attachment->file_url,
+                    'created_at' => $attachment->created_at->toDateTimeString(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
