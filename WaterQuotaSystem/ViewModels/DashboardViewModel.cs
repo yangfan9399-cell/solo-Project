@@ -22,8 +22,30 @@ public class DashboardViewModel
     public List<StatusDistributionItem> StatusDistribution { get; set; } = [];
     public List<SampleTypeDistributionItem> SampleTypeDistribution { get; set; } = [];
     public List<MonthlyTrendItem> MonthlyTrend { get; set; } = [];
+    public List<RecentKeyChangeItem> RecentKeyChanges { get; set; } = [];
+    public List<ResponsiblePersonItem> ResponsiblePersonStats { get; set; } = [];
     public List<WaterQuotaApplication> DrillDownRecords { get; set; } = [];
     public string? DrillDownFilter { get; set; }
+}
+
+public class RecentKeyChangeItem
+{
+    public string ApplicationNo { get; set; } = string.Empty;
+    public string ParkName { get; set; } = string.Empty;
+    public string FieldDisplayName { get; set; } = string.Empty;
+    public string OldValue { get; set; } = string.Empty;
+    public string NewValue { get; set; } = string.Empty;
+    public string ChangedBy { get; set; } = string.Empty;
+    public DateTime ChangedAt { get; set; }
+    public int ApplicationId { get; set; }
+}
+
+public class ResponsiblePersonItem
+{
+    public string ResponsiblePerson { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public decimal TotalAppliedQuota { get; set; }
+    public string LatestConclusion { get; set; } = string.Empty;
 }
 
 public class StatusDistributionItem

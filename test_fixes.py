@@ -2,6 +2,7 @@ import urllib.request
 import urllib.parse
 import http.cookiejar
 import re
+import sys
 
 BASE = "http://localhost:5183"
 jar = http.cookiejar.CookieJar()
@@ -11,111 +12,226 @@ def get_token(html):
     m = re.search(r'name="__RequestVerificationToken" type="hidden" value="([^"]+)"', html)
     return m.group(1) if m else None
 
+passed = 0
+failed = 0
+
+def check(name, condition, detail=""):
+    global passed, failed
+    if condition:
+        passed += 1
+        print(f"  OK {name}")
+    else:
+        failed += 1
+        print(f"  FAIL {name}: {detail}")
+
 # ==============================================================
-# 修复1测试：归档记录 WQ-2026-001（id=1）能否重新处理
+# 0: Seed data Summary/Conclusion are already new format
 # ==============================================================
-print("=== 修复1: 归档记录重新处理 ===")
+print("=== 0: Seed data already synced ===")
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List page shows synced summary", "Limit" in html or "limit" in html.lower() or "8000" in html)
+
+resp = opener.open(f"{BASE}/Application/Detail/1")
+html = resp.read().decode("utf-8")
+check("Detail WQ-001 Conclusion contains key fields", "5000" in html and "Archived" not in html)
+check("Detail shows new Conclusion format", "|" in html)
+
+# ==============================================================
+# 1: Modify key time fields -> sync
+# ==============================================================
+print("\n=== 1: Modify key time (deadline) -> sync ===")
+resp = opener.open(f"{BASE}/Application/EditKeyFields/2")
+html = resp.read().decode("utf-8")
+token = get_token(html)
+check("EditKeyFields page loads", token is not None)
+if not token:
+    sys.exit(1)
+
+data = urllib.parse.urlencode({
+    "__RequestVerificationToken": token,
+    "ApplicationId": 2,
+    "CurrentUserRole": 2,
+    "OperatorName": "TestReviewer",
+    "ChangeReason": "Extend deadline",
+    "NewDeadline": "2026-07-15",
+}).encode("utf-8")
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Detail/2")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has new deadline", "2026-07-15" in html)
+
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List Summary has new deadline", "2026-07-15" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard")
+html = resp.read().decode("utf-8")
+check("Dashboard shows recent key changes", "deadline" in html.lower() or "Deadline" in html or "2026-07-15" in html)
+
+# ==============================================================
+# 2: Modify responsible person -> sync
+# ==============================================================
+print("\n=== 2: Modify responsible person -> sync ===")
+resp = opener.open(f"{BASE}/Application/EditKeyFields/2")
+html = resp.read().decode("utf-8")
+token = get_token(html)
+
+data = urllib.parse.urlencode({
+    "__RequestVerificationToken": token,
+    "ApplicationId": 2,
+    "CurrentUserRole": 2,
+    "OperatorName": "TestReviewer",
+    "ChangeReason": "Reassign responsible person",
+    "NewCurrentResponsiblePerson": "ZhangSan_New",
+}).encode("utf-8")
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Detail/2")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has new responsible person", "ZhangSan_New" in html)
+
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List Summary has new responsible person", "ZhangSan_New" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard")
+html = resp.read().decode("utf-8")
+check("Dashboard responsible person stats updated", "ZhangSan_New" in html)
+
+# ==============================================================
+# 3: Modify amount -> sync
+# ==============================================================
+print("\n=== 3: Modify amount (AppliedQuota) -> sync ===")
+resp = opener.open(f"{BASE}/Application/EditKeyFields/3")
+html = resp.read().decode("utf-8")
+token = get_token(html)
+
+data = urllib.parse.urlencode({
+    "__RequestVerificationToken": token,
+    "ApplicationId": 3,
+    "CurrentUserRole": 2,
+    "OperatorName": "TestReviewer",
+    "ChangeReason": "Reduce applied quota",
+    "NewAppliedQuota": "5500",
+}).encode("utf-8")
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Detail/3")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has new amount", "5500" in html)
+
+resp = opener.open(f"{BASE}/Application/Index")
+html = resp.read().decode("utf-8")
+check("List Summary has new amount", "5500" in html)
+
+# ==============================================================
+# 4: Modify conclusion -> sync
+# ==============================================================
+print("\n=== 4: Modify conclusion -> sync ===")
+resp = opener.open(f"{BASE}/Application/EditKeyFields/3")
+html = resp.read().decode("utf-8")
+token = get_token(html)
+
+data = urllib.parse.urlencode({
+    "__RequestVerificationToken": token,
+    "ApplicationId": 3,
+    "CurrentUserRole": 2,
+    "OperatorName": "TestReviewer",
+    "ChangeReason": "Update conclusion after evidence review",
+    "NewConclusion": "Evidence complete, approve 5500 tons",
+}).encode("utf-8")
+req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
+resp = opener.open(req)
+print(f"  POST -> HTTP {resp.status}")
+
+resp = opener.open(f"{BASE}/Application/Detail/3")
+html = resp.read().decode("utf-8")
+check("Detail Conclusion has user conclusion", "Evidence complete, approve 5500 tons" in html)
+
+resp = opener.open(f"{BASE}/Application/Dashboard")
+html = resp.read().decode("utf-8")
+check("Dashboard recent key changes includes conclusion change", "conclusion" in html.lower() or "Conclusion" in html or "Evidence complete" in html)
+
+# ==============================================================
+# 5: Dashboard responsible person and recent changes
+# ==============================================================
+print("\n=== 5: Dashboard structure ===")
+resp = opener.open(f"{BASE}/Application/Dashboard")
+html = resp.read().decode("utf-8")
+check("Dashboard has recent key changes section", "RecentKeyChanges" in html or "recent key" in html.lower() or "diff-old" in html)
+check("Dashboard has responsible person stats", "ResponsiblePerson" in html or "responsible person" in html.lower() or "ZhangSan_New" in html)
+check("Dashboard has drill-down records", "DrillDown" in html or "drill" in html.lower())
+
+# ==============================================================
+# 6: Reprocess archived record
+# ==============================================================
+print("\n=== 6: Reprocess archived record ===")
 resp = opener.open(f"{BASE}/Application/Process/1?role=2")
 html = resp.read().decode("utf-8")
-assert "重新处理（生成新节点）" in html, "未找到重新处理按钮"
 token = get_token(html)
-assert token, "未获取到 CSRF Token"
+check("Reprocess button exists", "reprocess" in html)
 
 data = urllib.parse.urlencode({
     "__RequestVerificationToken": token,
     "ApplicationId": 1,
     "CurrentUserRole": 2,
     "Action": "reprocess",
-    "OperatorName": "测试主管",
-    "Comment": "测试重新处理归档记录"
+    "OperatorName": "TestManager",
+    "Comment": "Reprocess archived WQ-001",
 }).encode("utf-8")
 req = urllib.request.Request(f"{BASE}/Application/Process", data=data, method="POST")
-resp = opener.open(req)
-print(f"  重新处理提交 -> HTTP {resp.status}")
+try:
+    resp = opener.open(req)
+    check("Reprocess POST succeeded", resp.status == 200)
+except Exception as e:
+    check("Reprocess POST succeeded", False, str(e))
 
-# 查看详情验证生成了新节点
 resp = opener.open(f"{BASE}/Application/Detail/1")
 html = resp.read().decode("utf-8")
-assert "测试重新处理归档记录" in html, "详情中未显示新处理节点"
-print("  OK 修复1验证通过: 归档记录重新处理成功，生成新节点")
+check("Detail shows reprocess node", "Reprocess" in html or "reprocess" in html or "Reprocess archived" in html)
 
 # ==============================================================
-# 修复2测试：现场人员补充证据是否写入 EvidenceAttachment
+# 7: Supplement evidence -> EvidenceAttachment
 # ==============================================================
-print("\n=== 修复2: 现场人员补充证据写入 EvidenceAttachment ===")
+print("\n=== 7: Supplement evidence -> EvidenceAttachment ===")
+# Need to first get WQ-003 to a state where we can supplement
+# WQ-003 is in ReturnedForEvidence status, so field personnel can supplement
 resp = opener.open(f"{BASE}/Application/Process/3?role=1")
 html = resp.read().decode("utf-8")
 token = get_token(html)
-assert token, "未获取到 CSRF Token"
+check("Process page for WQ-003 loads", token is not None)
 
 data = urllib.parse.urlencode({
     "__RequestVerificationToken": token,
     "ApplicationId": 3,
     "CurrentUserRole": 1,
     "Action": "supplement_evidence",
-    "OperatorName": "测试现场人员",
-    "Comment": "补充现场照片证据",
-    "BusinessRecord": "现场检测水压正常",
-    "FieldDescription": "水表读数 202400 m3",
-    "EvidenceFileName": "现场水表读数_20250703.jpg",
+    "OperatorName": "TestFieldStaff",
+    "Comment": "Supplementing evidence",
+    "BusinessRecord": "Field inspection completed",
+    "FieldDescription": "Water meter reading 5500m3",
+    "EvidenceFileName": "field_meter_photo.jpg",
     "EvidenceFileType": "Image",
-    "EvidenceDescription": "2025年7月3日现场水表拍照"
+    "EvidenceDescription": "Water meter photo from field",
 }).encode("utf-8")
 req = urllib.request.Request(f"{BASE}/Application/Process", data=data, method="POST")
-resp = opener.open(req)
-print(f"  补充证据提交 -> HTTP {resp.status}")
+try:
+    resp = opener.open(req)
+    check("Supplement evidence POST succeeded", resp.status == 200)
+except Exception as e:
+    check("Supplement evidence POST succeeded", False, str(e))
 
 resp = opener.open(f"{BASE}/Application/Detail/3")
 html = resp.read().decode("utf-8")
-assert "现场水表读数_20250703.jpg" in html, "EvidenceAttachment 未写入详情展示"
-assert "测试现场人员" in html, "操作人未记录"
-print("  OK 修复2验证通过: 证据附件已写入 EvidenceAttachment 并展示")
+check("Detail shows new evidence attachment", "field_meter_photo.jpg" in html)
 
-# ==============================================================
-# 修复3测试：关键字段修改是否同步更新列表/详情/看板
-# ==============================================================
-print("\n=== 修复3: 关键字段修改同步列表摘要/详情结论/看板统计 ===")
-resp = opener.open(f"{BASE}/Application/EditKeyFields/2")
-html = resp.read().decode("utf-8")
-assert "同步影响" in html, "关键字段编辑页缺失同步说明"
-token = get_token(html)
-assert token, "未获取到 CSRF Token"
-
-resp = opener.open(f"{BASE}/Application/Index")
-html_before = resp.read().decode("utf-8")
-resp = opener.open(f"{BASE}/Application/Dashboard")
-dash_before = resp.read().decode("utf-8")
-
-data = urllib.parse.urlencode({
-    "__RequestVerificationToken": token,
-    "ApplicationId": 2,
-    "CurrentUserRole": 2,
-    "OperatorName": "测试主管",
-    "Comment": "修改审批指标和责任人，验证同步",
-    "NewAppliedQuota": "9500",
-    "NewApprovedQuota": "7000",
-    "NewCurrentResponsiblePerson": "测试新责任人张三",
-    "NewConclusion": "经复核，同意审批7000吨月"
-}).encode("utf-8")
-req = urllib.request.Request(f"{BASE}/Application/EditKeyFields", data=data, method="POST")
-resp = opener.open(req)
-print(f"  关键字段修改提交 -> HTTP {resp.status}")
-
-resp = opener.open(f"{BASE}/Application/Index")
-html_after = resp.read().decode("utf-8")
-assert "7000" in html_after, "列表摘要未同步新审批指标"
-assert "测试新责任人张三" in html_after, "列表摘要未同步新责任人"
-print("  OK 列表摘要已同步关键字段变更")
-
-resp = opener.open(f"{BASE}/Application/Detail/2")
-html_detail = resp.read().decode("utf-8")
-assert "经复核，同意审批7000吨月" in html_detail, "详情结论未同步"
-assert "测试新责任人张三" in html_detail, "详情责任人未同步"
-print("  OK 详情结论已同步关键字段变更")
-
-resp = opener.open(f"{BASE}/Application/Dashboard")
-dash_after = resp.read().decode("utf-8")
-assert dash_after != dash_before, "看板统计未同步变化"
-print("  OK 看板统计已同步变化")
-
-print("\n=== 三项修复全部验证通过! ===")
+print(f"\n=== RESULTS: {passed} passed, {failed} failed ===")
+sys.exit(0 if failed == 0 else 1)

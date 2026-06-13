@@ -116,6 +116,15 @@ public class WorkflowService : IWorkflowService
         var allApps = _context.Applications.ToList();
         var approvedOrArchived = allApps.Where(a => a.Status == ApplicationStatus.Approved || a.Status == ApplicationStatus.Archived).ToList();
 
+        var allFieldChanges = _context.FieldChanges
+            .Where(f => f.IsKeyChange)
+            .OrderByDescending(f => f.ChangedAt)
+            .Take(20)
+            .ToList();
+
+        var allAppIds = allFieldChanges.Select(f => f.ApplicationId).Distinct().ToList();
+        var changeApps = _context.Applications.Where(a => allAppIds.Contains(a.Id)).ToList();
+
         var vm = new DashboardViewModel
         {
             TotalApplications = allApps.Count,
@@ -134,7 +143,32 @@ public class WorkflowService : IWorkflowService
                 ? Math.Round(approvedOrArchived.Sum(a => a.ApprovedQuota) / allApps.Sum(a => a.AppliedQuota) * 100, 1)
                 : 0,
             AverageProcessingDays = allApps.Where(a => a.ProcessedDate.HasValue).Select(a => (a.ProcessedDate!.Value - a.ApplicationDate).TotalDays).DefaultIfEmpty(0).Average(),
-            PendingTimeoutCount = allApps.Count(a => a.Deadline.HasValue && a.Deadline.Value < DateTime.Now && a.Status != ApplicationStatus.Archived && a.Status != ApplicationStatus.Timeout)
+            PendingTimeoutCount = allApps.Count(a => a.Deadline.HasValue && a.Deadline.Value < DateTime.Now && a.Status != ApplicationStatus.Archived && a.Status != ApplicationStatus.Timeout),
+            RecentKeyChanges = allFieldChanges.Select(f =>
+            {
+                var ca = changeApps.FirstOrDefault(a => a.Id == f.ApplicationId);
+                return new RecentKeyChangeItem
+                {
+                    ApplicationId = f.ApplicationId,
+                    ApplicationNo = ca?.ApplicationNo ?? "",
+                    ParkName = ca?.ParkName ?? "",
+                    FieldDisplayName = f.FieldDisplayName,
+                    OldValue = f.OldValue,
+                    NewValue = f.NewValue,
+                    ChangedBy = f.ChangedBy,
+                    ChangedAt = f.ChangedAt
+                };
+            }).ToList(),
+            ResponsiblePersonStats = allApps
+                .Where(a => !string.IsNullOrWhiteSpace(a.CurrentResponsiblePerson))
+                .GroupBy(a => a.CurrentResponsiblePerson)
+                .Select(g => new ResponsiblePersonItem
+                {
+                    ResponsiblePerson = g.Key,
+                    Count = g.Count(),
+                    TotalAppliedQuota = g.Sum(a => a.AppliedQuota),
+                    LatestConclusion = g.OrderByDescending(a => a.UpdatedAt).First().Conclusion
+                }).OrderByDescending(r => r.Count).ToList()
         };
 
         var statusGroups = allApps.GroupBy(a => a.Status).Select(g => new StatusDistributionItem
@@ -357,8 +391,15 @@ public class WorkflowService : IWorkflowService
                 break;
         }
 
+        var userConclusion = input.Conclusion;
+
         app.UpdatedAt = DateTime.Now;
-        SyncSummaryAndConclusionInternal(app);
+        SyncApplicationDisplay(app);
+
+        if (!string.IsNullOrWhiteSpace(userConclusion) && userConclusion != app.Conclusion)
+        {
+            app.Conclusion = $"{app.Conclusion} | 复核意见:{userConclusion}";
+        }
 
         _context.ProcessingNodes.Add(node);
         _context.SaveChanges();
@@ -409,27 +450,34 @@ public class WorkflowService : IWorkflowService
     {
         var app = _context.Applications.FirstOrDefault(a => a.Id == applicationId);
         if (app == null) return;
-        SyncSummaryAndConclusionInternal(app);
+        SyncApplicationDisplay(app);
         _context.SaveChanges();
     }
 
-    private void SyncSummaryAndConclusionInternal(WaterQuotaApplication app)
+    public static void SyncApplicationDisplay(WaterQuotaApplication app)
     {
         var statusText = GetStatusDisplayName(app.Status);
         var sampleText = GetSampleTypeDisplayName(app.SampleType);
         var quotaInfo = app.AppliedQuota > app.QuotaLimit
             ? $"超限{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%"
             : "限额内";
-        var deadlineInfo = app.Deadline.HasValue ? app.Deadline.Value.ToString("MM-dd") : "无截止";
+        var deadlineInfo = app.Deadline.HasValue ? app.Deadline.Value.ToString("yyyy-MM-dd") : "无截止";
         var responsibleInfo = string.IsNullOrWhiteSpace(app.CurrentResponsiblePerson) ? "未分配" : app.CurrentResponsiblePerson;
 
         app.Summary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | 审批:{app.ApprovedQuota}{app.QuotaUnit} | {quotaInfo} | 责任人:{responsibleInfo} | 截止:{deadlineInfo} | {statusText}";
 
-        if (app.Status == ApplicationStatus.Approved || app.Status == ApplicationStatus.Archived)
+        app.Conclusion = app.Status switch
         {
-            if (string.IsNullOrWhiteSpace(app.Conclusion))
-                app.Conclusion = $"审批通过：申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，责任人{responsibleInfo}";
-        }
+            ApplicationStatus.Accepted => $"已受理，等待处理 | 申请{app.AppliedQuota}{app.QuotaUnit}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Processing => $"处理中 | 申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，{quotaInfo}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Reviewing => $"复核中 | 申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，{quotaInfo}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Approved => $"审批通过 | 申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，{quotaInfo}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Blocked => $"指标超限阻断 | 申请{app.AppliedQuota}{app.QuotaUnit}超出限额{app.QuotaLimit}{app.QuotaUnit}，超限{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.ReturnedForEvidence => $"退回补证 | 申请{app.AppliedQuota}{app.QuotaUnit}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Archived => $"已归档 | 申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，{quotaInfo}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            ApplicationStatus.Timeout => $"审批超时 | 申请{app.AppliedQuota}{app.QuotaUnit}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
+            _ => app.Conclusion
+        };
     }
 
     private static void AddKeyChange(List<FieldChangeRecord> changes, int appId, string fieldName, string displayName, string oldValue, string newValue, string changedBy)
@@ -599,6 +647,8 @@ public class WorkflowService : IWorkflowService
             updatedFields.Add("证据结论");
         }
 
+        var userConclusion = input.NewConclusion;
+
         if (app.AppliedQuota > app.QuotaLimit && app.Status == ApplicationStatus.Processing)
         {
             app.Status = ApplicationStatus.Blocked;
@@ -621,7 +671,12 @@ public class WorkflowService : IWorkflowService
         }
 
         app.UpdatedAt = DateTime.Now;
-        SyncSummaryAndConclusionInternal(app);
+        SyncApplicationDisplay(app);
+
+        if (!string.IsNullOrWhiteSpace(userConclusion))
+        {
+            app.Conclusion = $"{app.Conclusion} | 复核意见:{userConclusion}";
+        }
 
         var node = new ProcessingNode
         {

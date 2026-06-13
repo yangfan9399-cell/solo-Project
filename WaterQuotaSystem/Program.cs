@@ -29,6 +29,13 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<WaterQuotaDbContext>();
     db.Database.EnsureCreated();
+
+    var allApps = db.Applications.ToList();
+    foreach (var a in allApps)
+    {
+        WorkflowService.SyncApplicationDisplay(a);
+    }
+    db.SaveChanges();
 }
 
 app.MapControllerRoute(
