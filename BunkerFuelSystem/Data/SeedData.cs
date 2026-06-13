@@ -318,6 +318,108 @@ public static class SeedData
         };
 
         context.BunkerApplications.AddRange(app1, app2, app3, app4);
+
+        var app5 = new BunkerApplication
+        {
+            ApplicationNo = "BF-2026-005",
+            ShipName = "和平号",
+            VoyageNo = "VY-2605",
+            FuelType = "VLSFO",
+            OrderedQuantity = 450.0000m,
+            ActualQuantity = 449.2000m,
+            UnitPrice = 575.0000m,
+            TotalAmount = 258290.0000m,
+            BunkerDate = now.AddDays(-10),
+            BunkerPort = "天津港",
+            SupplierName = "中石化燃油",
+            ApplicationSource = "船舶申报",
+            Category = ApplicationCategory.NormalPass,
+            Status = WorkflowStatus.Archived,
+            CurrentResponsiblePerson = "刘建国",
+            CurrentResponsibleRole = UserRole.SupervisorReviewer,
+            Conclusion = "计量差异0.18%，在允许范围内，已归档确认。",
+            Summary = "实际加注量与申领量偏差0.18%，在允许范围内，已正常归档。",
+            BlockedReason = null,
+            RemediationPath = null,
+            Basis = "ISO 8217:2017 燃油规格标准及公司计量管理规程第4.3条",
+            CreatedAt = now.AddDays(-10),
+            UpdatedAt = now.AddDays(-7),
+            ProcessNodes = new List<ProcessNode>
+            {
+                new()
+                {
+                    NodeType = NodeType.Received,
+                    OperatorName = "王大海",
+                    OperatorRole = UserRole.OnSitePersonnel,
+                    Action = "受理申请",
+                    Comment = "收到船舶加注申请，资料齐全",
+                    CreatedAt = now.AddDays(-10)
+                },
+                new()
+                {
+                    NodeType = NodeType.Processing,
+                    OperatorName = "王大海",
+                    OperatorRole = UserRole.OnSitePersonnel,
+                    Action = "提交处理",
+                    Comment = "进入处理",
+                    CreatedAt = now.AddDays(-9)
+                },
+                new()
+                {
+                    NodeType = NodeType.Review,
+                    OperatorName = "王大海",
+                    OperatorRole = UserRole.OnSitePersonnel,
+                    Action = "提交处理",
+                    Comment = "提交复核",
+                    CreatedAt = now.AddDays(-8)
+                },
+                new()
+                {
+                    NodeType = NodeType.Review,
+                    OperatorName = "刘建国",
+                    OperatorRole = UserRole.SupervisorReviewer,
+                    Action = "确认结论",
+                    Comment = "计量差异在允许范围内",
+                    CreatedAt = now.AddDays(-7)
+                },
+                new()
+                {
+                    NodeType = NodeType.Archive,
+                    OperatorName = "刘建国",
+                    OperatorRole = UserRole.SupervisorReviewer,
+                    Action = "只读归档",
+                    Comment = "审核通过，归档",
+                    CreatedAt = now.AddDays(-7)
+                }
+            },
+            DiscrepancyFields = new List<DiscrepancyField>
+            {
+                new()
+                {
+                    FieldName = "ActualQuantity",
+                    FieldLabel = "实际加注量",
+                    OriginalValue = "450.0000 MT",
+                    CurrentValue = "449.2000 MT",
+                    ChangedAt = now.AddDays(-9),
+                    ChangedBy = "王大海",
+                    IsKeyField = false
+                }
+            },
+            EvidenceAttachments = new List<EvidenceAttachment>
+            {
+                new()
+                {
+                    FileName = "bunker_receipt_BF2026005.pdf",
+                    FilePath = "/uploads/BF-2026-005/bunker_receipt.pdf",
+                    FileType = "application/pdf",
+                    Description = "加油收据",
+                    UploadedBy = "王大海",
+                    UploadedAt = now.AddDays(-9)
+                }
+            }
+        };
+
+        context.BunkerApplications.AddRange(app5);
         context.SaveChanges();
     }
 }

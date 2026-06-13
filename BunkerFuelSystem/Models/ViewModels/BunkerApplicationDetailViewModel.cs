@@ -28,4 +28,7 @@ public class BunkerApplicationDetailViewModel
 
     [Display(Name = "只读")]
     public bool IsReadOnly { get; set; }
+
+    [Display(Name = "可重新处理")]
+    public bool CanReprocess { get; set; }
 }

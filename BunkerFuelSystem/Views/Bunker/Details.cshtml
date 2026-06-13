@@ -231,9 +231,14 @@
     {
         <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="SupervisorReviewer" class="btn btn-primary me-2">前往处理台</a>
     }
-    @if (Model.IsReadOnly)
+    @if (Model.IsReadOnly && !Model.CanReprocess)
     {
         <span class="badge bg-secondary me-2">已归档 - 只读</span>
+    }
+    @if (Model.CanReprocess)
+    {
+        <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="OnSitePersonnel" class="btn btn-warning me-2">重新处理</a>
+        <span class="badge bg-secondary me-2">已归档</span>
     }
     <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
 </div>

@@ -95,7 +95,8 @@ public class BunkerService : IBunkerService
                         && app.CurrentResponsibleRole == UserRole.SupervisorReviewer,
             CanArchive = app.Status == WorkflowStatus.UnderReview
                          && app.CurrentResponsibleRole == UserRole.SupervisorReviewer,
-            IsReadOnly = app.Status == WorkflowStatus.Archived
+            IsReadOnly = app.Status == WorkflowStatus.Archived,
+            CanReprocess = app.Status == WorkflowStatus.Archived
         };
     }
 
@@ -120,6 +121,10 @@ public class BunkerService : IBunkerService
         {
             availableActions = ["确认结论", "退回补证", "只读归档"];
         }
+        else if (app.Status == WorkflowStatus.Archived)
+        {
+            availableActions = ["重新处理"];
+        }
 
         return new ProcessDeskViewModel
         {
@@ -143,7 +148,7 @@ public class BunkerService : IBunkerService
 
         if (!IsActionAllowed(currentRole, app.Status, action)) return false;
 
-        if (app.Status == WorkflowStatus.Archived) return false;
+        if (app.Status == WorkflowStatus.Archived && action != "重新处理") return false;
 
         var now = DateTime.Now;
 
@@ -151,22 +156,27 @@ public class BunkerService : IBunkerService
         {
             case "提交处理":
                 if (app.Status == WorkflowStatus.Received)
+                {
                     app.Status = WorkflowStatus.Processing;
+                    app.CurrentResponsibleRole = UserRole.OnSitePersonnel;
+                    app.CurrentResponsiblePerson = operatorName ?? app.CurrentResponsiblePerson;
+                }
                 else if (app.Status == WorkflowStatus.Processing)
+                {
                     app.Status = WorkflowStatus.UnderReview;
-
-                app.CurrentResponsibleRole = UserRole.SupervisorReviewer;
-                app.CurrentResponsiblePerson = "待指派主管";
+                    app.CurrentResponsibleRole = UserRole.SupervisorReviewer;
+                    app.CurrentResponsiblePerson = "待指派主管";
+                }
                 app.BlockedReason = null;
 
                 _context.ProcessNodes.Add(new ProcessNode
                 {
                     BunkerApplicationId = app.Id,
-                    NodeType = NodeType.Processing,
+                    NodeType = app.Status == WorkflowStatus.UnderReview ? NodeType.Review : NodeType.Processing,
                     OperatorName = operatorName ?? "",
                     OperatorRole = currentRole,
                     Action = action,
-                    Comment = comment,
+                    Comment = app.Status == WorkflowStatus.UnderReview ? "提交复核" : "进入处理",
                     CreatedAt = now
                 });
                 break;
@@ -269,6 +279,25 @@ public class BunkerService : IBunkerService
                 });
                 break;
 
+            case "重新处理":
+                app.Status = WorkflowStatus.Processing;
+                app.CurrentResponsibleRole = UserRole.OnSitePersonnel;
+                app.CurrentResponsiblePerson = operatorName ?? app.CurrentResponsiblePerson;
+                app.BlockedReason = null;
+                app.Conclusion = null;
+
+                _context.ProcessNodes.Add(new ProcessNode
+                {
+                    BunkerApplicationId = app.Id,
+                    NodeType = NodeType.Reprocess,
+                    OperatorName = operatorName ?? "",
+                    OperatorRole = currentRole,
+                    Action = action,
+                    Comment = comment ?? "归档后重新处理，生成新的处理节点",
+                    CreatedAt = now
+                });
+                break;
+
             default:
                 return false;
         }
@@ -358,6 +387,10 @@ public class BunkerService : IBunkerService
                 => action is "补充业务记录" or "补充现场说明" or "上传证据附件" or "提交处理",
             UserRole.SupervisorReviewer when status is WorkflowStatus.UnderReview
                 => action is "确认结论" or "退回补证" or "只读归档",
+            UserRole.OnSitePersonnel when status is WorkflowStatus.Archived
+                => action is "重新处理",
+            UserRole.SupervisorReviewer when status is WorkflowStatus.Archived
+                => action is "重新处理",
             _ => false
         };
     }

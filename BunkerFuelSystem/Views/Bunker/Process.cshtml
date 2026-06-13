@@ -213,6 +213,25 @@ else if (!string.IsNullOrEmpty(app.RemediationPath))
                     </form>
                 }
             }
+
+            @if (Model.AvailableActions.Contains("重新处理"))
+            {
+                <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-重新处理">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@app.Id" />
+                    <input type="hidden" name="currentRole" value="@roleEnumName" />
+                    <input type="hidden" name="action" value="重新处理" />
+                    <div class="alert alert-warning">
+                        <strong>注意：</strong>归档后重新处理将生成新的处理节点，记录将回到"处理中"状态。
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">重新处理原因</label>
+                        <textarea name="comment" class="form-control" rows="3" placeholder="请输入重新处理原因..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning">确认重新处理</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('重新处理')">取消</button>
+                </form>
+            }
         }
     </div>
 </div>
