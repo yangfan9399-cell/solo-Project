@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponse
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from .models import (
     DailyInspection, CablewayEquipment, ApprovalNode,
@@ -129,12 +129,12 @@ def inspection_handle(request, pk):
     is_field_staff = request.user.role == 'field'
     is_supervisor = request.user.role == 'supervisor'
 
-    if is_field_staff:
-        action_form = ProcessActionForm()
-    elif is_supervisor:
-        action_form = ReviewActionForm()
+    role_actions = ROLE_ACTION_MATRIX.get(request.user.role, set())
+    if inspection.is_archived:
+        allowed_actions = role_actions & {'reopen'}
     else:
-        action_form = None
+        status_actions = STATUS_ACTION_MAP.get(inspection.status, set())
+        allowed_actions = role_actions & status_actions
 
     context = {
         'inspection': inspection,
@@ -144,12 +144,41 @@ def inspection_handle(request, pk):
         'business_records': business_records,
         'evidence_form': evidence_form,
         'record_form': record_form,
-        'action_form': action_form,
         'is_field_staff': is_field_staff,
         'is_supervisor': is_supervisor,
         'is_readonly': inspection.is_readonly,
+        'allowed_actions': allowed_actions,
     }
     return render(request, 'inspection_handle.html', context)
+
+
+ROLE_ACTION_MATRIX = {
+    'field': {'process', 'submit_review'},
+    'supervisor': {'accept', 'approve', 'reject', 'return', 'archive', 'reopen'},
+    'admin': {'accept', 'approve', 'reject', 'return', 'archive', 'reopen'},
+}
+
+STATUS_ACTION_MAP = {
+    'pending': {'accept'},
+    'processing': {'process', 'submit_review'},
+    'reviewing': {'approve', 'reject', 'return'},
+    'approved': {'archive'},
+    'rejected': {'archive'},
+    'returned': {'process', 'submit_review'},
+    'timeout': {'accept', 'process', 'submit_review', 'approve', 'reject', 'return'},
+    'archived': {'reopen'},
+}
+
+
+def _validate_action(user, inspection, action):
+    if inspection.is_archived and action != 'reopen':
+        return False, '记录已归档，仅支持重新处理操作'
+    if action not in ROLE_ACTION_MATRIX.get(user.role, set()):
+        return False, f'角色 {user.get_role_display()} 无权执行 {action} 操作'
+    allowed = STATUS_ACTION_MAP.get(inspection.status, set())
+    if action not in allowed:
+        return False, f'当前状态 {inspection.get_status_display()} 不允许执行 {action} 操作'
+    return True, ''
 
 
 def _handle_action(request, inspection):
@@ -157,14 +186,18 @@ def _handle_action(request, inspection):
     remarks = request.POST.get('remarks', '')
     basis = request.POST.get('basis', '')
 
-    if inspection.is_readonly and action != 'reopen':
-        return JsonResponse({'success': False, 'message': '记录已归档，无法操作'}, status=400)
+    valid, msg = _validate_action(request.user, inspection, action)
+    if not valid:
+        if request.headers.get('HX-Request'):
+            return JsonResponse({'success': False, 'message': msg}, status=403)
+        return JsonResponse({'success': False, 'message': msg}, status=403)
 
     previous_status = inspection.status
     operator = request.user
 
     status_map = {
         'accept': 'processing',
+        'process': 'processing',
         'submit_review': 'reviewing',
         'approve': 'approved',
         'reject': 'rejected',
@@ -182,18 +215,30 @@ def _handle_action(request, inspection):
 
     if action == 'reject':
         inspection.abnormal_type = request.POST.get('abnormal_type', inspection.abnormal_type)
+        if inspection.abnormal_type == 'normal':
+            inspection.abnormal_type = 'metric_exceed'
         inspection.block_reason = request.POST.get('block_reason', inspection.block_reason)
         inspection.remediation_path = request.POST.get('remediation_path', inspection.remediation_path)
         key_change_desc = f'异常阻断: {inspection.block_reason[:50]}'
 
     if action == 'approve':
         inspection.conclusion = request.POST.get('conclusion', inspection.conclusion)
-        inspection.actual_loss = request.POST.get('actual_loss', inspection.actual_loss) or None
+        actual_loss_str = request.POST.get('actual_loss', '')
+        if actual_loss_str:
+            try:
+                inspection.actual_loss = Decimal(actual_loss_str)
+            except (InvalidOperation, ValueError):
+                pass
         inspection.responsible_party = request.POST.get('responsible_party', inspection.responsible_party)
 
     if action == 'archive':
         inspection.is_archived = True
         inspection.archived_at = timezone.now()
+
+    if action == 'reopen':
+        inspection.is_archived = False
+        inspection.archived_at = None
+        inspection.status = 'processing'
 
     if is_key_change:
         key_change_desc = _build_key_change_desc(inspection, request.POST)
@@ -224,6 +269,12 @@ def _handle_action(request, inspection):
     )
 
     if request.headers.get('HX-Request'):
+        role_actions = ROLE_ACTION_MATRIX.get(request.user.role, set())
+        if inspection.is_archived:
+            allowed = role_actions & {'reopen'}
+        else:
+            status_actions = STATUS_ACTION_MAP.get(inspection.status, set())
+            allowed = role_actions & status_actions
         context = {
             'inspection': inspection,
             'nodes': inspection.nodes.order_by('created_at'),
@@ -234,6 +285,7 @@ def _handle_action(request, inspection):
             'is_field_staff': request.user.role == 'field',
             'is_supervisor': request.user.role == 'supervisor',
             'is_readonly': inspection.is_readonly,
+            'allowed_actions': allowed,
         }
         return render(request, 'partials/inspection_handle_content.html', context)
 

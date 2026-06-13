@@ -27,11 +27,9 @@
                 <a href="{% url 'inspection:list' %}" class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
                     返回列表
                 </a>
-                {% if not inspection.is_archived and inspection.status not in 'approved,rejected,timeout' %}
                 <a href="{% url 'inspection:handle' inspection.pk %}" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     进入处理台
                 </a>
-                {% endif %}
             </div>
         </div>
     </div>

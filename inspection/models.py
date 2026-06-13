@@ -105,7 +105,7 @@ class DailyInspection(models.Model):
 
     @property
     def is_readonly(self):
-        return self.is_archived or self.status in ('approved', 'rejected', 'timeout')
+        return self.is_archived
 
     @property
     def abnormal_metrics(self):

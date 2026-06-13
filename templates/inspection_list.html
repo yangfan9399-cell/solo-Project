@@ -134,9 +134,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a href="{% url 'inspection:detail' inspection.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">详情</a>
-                            {% if not inspection.is_archived and not inspection.status == 'approved' and not inspection.status == 'rejected' and not inspection.status == 'timeout' %}
-                            <a href="{% url 'inspection:handle' inspection.pk %}" class="text-green-600 hover:text-green-900">处理</a>
-                            {% endif %}
+                            <a href="{% url 'inspection:handle' inspection.pk %}" class="text-green-600 hover:text-green-900">处理台</a>
                         </td>
                     </tr>
                     {% empty %}

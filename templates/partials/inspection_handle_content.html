@@ -1,13 +1,26 @@
 <div x-data="handleContentData()">
-    {% if is_readonly %}
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <div class="flex items-center">
-            <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <span class="text-sm text-yellow-700">
-                此记录已归档或已完结，当前为只读状态。如需重新处理，请申请重新开启。
-            </span>
+    {% if inspection.is_archived %}
+    <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span class="text-sm text-gray-600">
+                    此记录已归档，当前为只读状态。
+                </span>
+            </div>
+            {% if 'reopen' in allowed_actions %}
+            <form method="post" action="{% url 'inspection:handle' inspection.pk %}"
+                  class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reopen">
+                <button type="submit"
+                        class="px-4 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-medium">
+                    重新处理
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
     {% endif %}
@@ -66,21 +79,18 @@
                             </div>
                             {% endif %}
                             
-                            {% if is_supervisor and not is_readonly %}
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
+                                {% if not inspection.is_archived and is_supervisor and inspection.status in 'reviewing,approved,rejected' %}
                                 <textarea name="conclusion" rows="3" form="action-form"
                                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                           placeholder="请输入最终结论...">{{ inspection.conclusion|default:"" }}</textarea>
-                            </div>
-                            {% else %}
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
+                                {% else %}
                                 <div class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
                                     {{ inspection.conclusion|default:"暂无" }}
                                 </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -126,7 +136,7 @@
                     <div x-show="activeTab === 'evidence'" x-cloak>
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-medium text-gray-900">证据附件列表</h3>
-                            {% if not is_readonly %}
+                            {% if not inspection.is_archived %}
                             <button @click="showEvidenceModal = true"
                                     class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                 + 上传证据
@@ -139,7 +149,7 @@
                     <div x-show="activeTab === 'records'" x-cloak>
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-medium text-gray-900">业务记录列表</h3>
-                            {% if not is_readonly and is_field_staff %}
+                            {% if not inspection.is_archived and is_field_staff %}
                             <button @click="showRecordModal = true"
                                     class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                 + 添加记录
@@ -151,24 +161,96 @@
                 </div>
             </div>
 
-            {% if not is_readonly %}
+            {% if not inspection.is_archived %}
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">处理操作</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">处理操作</h3>
+                <p class="text-sm text-gray-500 mb-4">
+                    当前状态：<span class="status-badge status-{{ inspection.status }}">{{ inspection.get_status_display }}</span>
+                    {% if not allowed_actions %}
+                    <span class="ml-2 text-gray-400">— 当前状态/角色下无可执行操作</span>
+                    {% endif %}
+                </p>
                 
-                <form id="action-form" 
-                      hx-post="{% url 'inspection:api_record_action' inspection.pk %}"
-                      hx-target="#handle-content"
-                      hx-swap="innerHTML"
-                      hx-confirm="确定执行此操作吗？">
+                {% if allowed_actions %}
+                <form id="action-form"
+                      method="post"
+                      action="{% url 'inspection:handle' inspection.pk %}">
                     {% csrf_token %}
                     
-                    {% if is_field_staff %}
                     <div class="space-y-4">
-                        <div class="flex space-x-4">
-                            <label class="flex items-center">
-                                <input type="radio" name="action" value="submit_review" class="mr-2" checked>
-                                <span class="text-sm">提交复核</span>
-                            </label>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">操作类型 <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                {% if 'accept' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 transition">
+                                    <input type="radio" name="action" value="accept" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-blue-600">受理</div>
+                                        <div class="text-xs text-gray-500">确认受理此日检记录</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'process' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 transition">
+                                    <input type="radio" name="action" value="process" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-blue-600">处理补充</div>
+                                        <div class="text-xs text-gray-500">补充现场记录和证据</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'submit_review' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                                    <input type="radio" name="action" value="submit_review" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-indigo-600">提交复核</div>
+                                        <div class="text-xs text-gray-500">提交主管复核人审核</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'approve' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-green-200 rounded-lg cursor-pointer hover:border-green-400 transition bg-green-50">
+                                    <input type="radio" name="action" value="approve" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-green-600">正常放行</div>
+                                        <div class="text-xs text-gray-500">审核通过，设备可正常运行</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'reject' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-red-200 rounded-lg cursor-pointer hover:border-red-400 transition bg-red-50">
+                                    <input type="radio" name="action" value="reject" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-red-600">异常阻断</div>
+                                        <div class="text-xs text-gray-500">存在异常，禁止设备运行</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'return' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-orange-200 rounded-lg cursor-pointer hover:border-orange-400 transition bg-orange-50">
+                                    <input type="radio" name="action" value="return" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-orange-600">退回补证</div>
+                                        <div class="text-xs text-gray-500">资料不全，需要补充证据</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+
+                                {% if 'archive' in allowed_actions %}
+                                <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-gray-500 transition bg-gray-50">
+                                    <input type="radio" name="action" value="archive" class="mr-3">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-700">归档</div>
+                                        <div class="text-xs text-gray-500">记录完结，归档保存</div>
+                                    </div>
+                                </label>
+                                {% endif %}
+                            </div>
                         </div>
                         
                         <div>
@@ -184,59 +266,8 @@
                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                       placeholder="请输入采用的法规、标准或规程依据..."></textarea>
                         </div>
-                        
-                        <button type="submit" 
-                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition">
-                            提交复核
-                        </button>
-                    </div>
-                    {% elif is_supervisor %}
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 transition">
-                                <input type="radio" name="action" value="approve" class="mr-3" checked>
-                                <div>
-                                    <div class="text-sm font-medium text-green-600">正常放行</div>
-                                    <div class="text-xs text-gray-500">审核通过，设备可正常运行</div>
-                                </div>
-                            </label>
-                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-red-400 transition">
-                                <input type="radio" name="action" value="reject" class="mr-3">
-                                <div>
-                                    <div class="text-sm font-medium text-red-600">异常阻断</div>
-                                    <div class="text-xs text-gray-500">存在异常，禁止设备运行</div>
-                                </div>
-                            </label>
-                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-400 transition">
-                                <input type="radio" name="action" value="return" class="mr-3">
-                                <div>
-                                    <div class="text-sm font-medium text-orange-600">退回补证</div>
-                                    <div class="text-xs text-gray-500">资料不全，需要补充证据</div>
-                                </div>
-                            </label>
-                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 transition">
-                                <input type="radio" name="action" value="archive" class="mr-3">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-600">归档</div>
-                                    <div class="text-xs text-gray-500">记录完结，归档保存</div>
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">复核意见 <span class="text-red-500">*</span></label>
-                            <textarea name="remarks" rows="3" required
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                      placeholder="请输入复核意见..."></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">采用依据</label>
-                            <textarea name="basis" rows="2"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                      placeholder="请输入采用的法规、标准或规程依据..."></textarea>
-                        </div>
-                        
+
+                        {% if is_supervisor and inspection.status in 'reviewing,approved,rejected,timeout' %}
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">实际损失金额</label>
@@ -253,25 +284,40 @@
                                        value="{{ inspection.responsible_party|default:'' }}">
                             </div>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
-                            <textarea name="conclusion" rows="3"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                      placeholder="请输入最终结论...">{{ inspection.conclusion|default:"" }}</textarea>
+                        {% endif %}
+
+                        {% if 'reject' in allowed_actions %}
+                        <div id="reject-fields" class="hidden space-y-3 border border-red-200 rounded-lg p-4 bg-red-50">
+                            <div>
+                                <label class="block text-sm font-medium text-red-700 mb-2">阻断原因</label>
+                                <textarea name="block_reason" rows="2"
+                                          class="w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                                          placeholder="请说明阻断原因...">{{ inspection.block_reason|default:"" }}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-red-700 mb-2">补救路径</label>
+                                <textarea name="remediation_path" rows="2"
+                                          class="w-full px-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm"
+                                          placeholder="请说明补救路径...">{{ inspection.remediation_path|default:"" }}</textarea>
+                            </div>
                         </div>
+                        {% endif %}
                         
                         <button type="submit"
-                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition">
-                            确认处理
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition"
+                                onclick="return confirm('确定执行此操作吗？')">
+                            确认提交
                         </button>
                     </div>
-                    {% else %}
-                    <div class="text-center py-6 text-gray-500">
-                        <p>您没有操作权限</p>
-                    </div>
-                    {% endif %}
                 </form>
+                {% else %}
+                <div class="text-center py-6 text-gray-500 bg-gray-50 rounded-lg">
+                    <svg class="mx-auto h-10 w-10 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <p>当前状态/角色下无可执行操作</p>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -296,7 +342,7 @@
                                 {% endif %}
                             </div>
                             <div class="text-xs text-gray-500 mt-1">
-                                {{ node.operator.username }} · {{ node.action_time|date:"Y-m-d H:i" }}
+                                {{ node.operator.username }} ({{ node.operator.get_role_display }}) · {{ node.action_time|date:"Y-m-d H:i" }}
                             </div>
                             {% if node.remarks %}
                             <div class="text-xs text-gray-600 mt-1 bg-gray-50 rounded p-2">
@@ -363,16 +409,13 @@
         </div>
     </div>
 
-    {% if not is_readonly %}
+    {% if not inspection.is_archived %}
     <div x-show="showEvidenceModal" x-cloak
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
          @click.self="showEvidenceModal = false">
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">上传证据附件</h3>
-            <form hx-post="{% url 'inspection:api_upload_evidence' inspection.pk %}"
-                  hx-target="#evidence-list-container"
-                  hx-swap="innerHTML"
-                  hx-on::after-request="showEvidenceModal = false"
+            <form method="post" action="{% url 'inspection:api_upload_evidence' inspection.pk %}"
                   enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="space-y-4">
@@ -417,16 +460,12 @@
         </div>
     </div>
 
-    {% if is_field_staff %}
     <div x-show="showRecordModal" x-cloak
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
          @click.self="showRecordModal = false">
         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">添加业务记录</h3>
-            <form hx-post="{% url 'inspection:api_add_business_record' inspection.pk %}"
-                  hx-target="#business-record-container"
-                  hx-swap="innerHTML"
-                  hx-on::after-request="showRecordModal = false">
+            <form method="post" action="{% url 'inspection:api_add_business_record' inspection.pk %}">
                 {% csrf_token %}
                 <div class="space-y-4">
                     <div>
@@ -465,7 +504,6 @@
         </div>
     </div>
     {% endif %}
-    {% endif %}
 </div>
 
 <script>
@@ -474,6 +512,19 @@ function handleContentData() {
         activeTab: 'summary',
         showEvidenceModal: false,
         showRecordModal: false,
+        init() {
+            this.setupRejectToggle();
+        },
+        setupRejectToggle() {
+            const radios = document.querySelectorAll('input[name="action"]');
+            const rejectFields = document.getElementById('reject-fields');
+            if (!rejectFields) return;
+            radios.forEach(r => {
+                r.addEventListener('change', () => {
+                    rejectFields.classList.toggle('hidden', r.value !== 'reject');
+                });
+            });
+        }
     }
 }
 </script>

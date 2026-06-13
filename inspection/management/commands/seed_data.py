@@ -96,7 +96,7 @@ class Command(BaseCommand):
             inspection_date=timezone.now().date() - timedelta(days=3),
             inspector=inspector,
             current_handler=None,
-            status='approved',
+            status='archived',
             abnormal_type='normal',
             is_archived=True,
             summary='一号索道日常巡检，各项指标正常，设备运行状态良好。',
