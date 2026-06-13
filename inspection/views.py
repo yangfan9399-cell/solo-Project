@@ -472,6 +472,9 @@ def api_upload_evidence(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': '仅支持POST请求'}, status=405)
 
+    if request.user.role != 'field':
+        return JsonResponse({'success': False, 'message': '仅现场人员可上传证据附件，主管复核人负责审批决策'}, status=403)
+
     inspection = get_object_or_404(DailyInspection, pk=pk)
     if inspection.is_readonly:
         return JsonResponse({'success': False, 'message': '记录已归档，无法上传证据'}, status=400)
@@ -500,6 +503,9 @@ def api_upload_evidence(request, pk):
 def api_add_business_record(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': '仅支持POST请求'}, status=405)
+
+    if request.user.role != 'field':
+        return JsonResponse({'success': False, 'message': '仅现场人员可添加业务记录，主管复核人负责审批决策'}, status=403)
 
     inspection = get_object_or_404(DailyInspection, pk=pk)
     if inspection.is_readonly:

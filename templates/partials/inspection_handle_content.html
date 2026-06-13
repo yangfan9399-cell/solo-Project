@@ -136,7 +136,7 @@
                     <div x-show="activeTab === 'evidence'" x-cloak>
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-sm font-medium text-gray-900">证据附件列表</h3>
-                            {% if not inspection.is_archived %}
+                            {% if not inspection.is_archived and is_field_staff %}
                             <button @click="showEvidenceModal = true"
                                     class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                 + 上传证据
@@ -409,7 +409,7 @@
         </div>
     </div>
 
-    {% if not inspection.is_archived %}
+    {% if not inspection.is_archived and is_field_staff %}
     <div x-show="showEvidenceModal" x-cloak
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
          @click.self="showEvidenceModal = false">
