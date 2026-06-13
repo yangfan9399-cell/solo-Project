@@ -1,0 +1,205 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  FRONTLINE
+  QC_REVIEWER
+  ADMIN
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RecordStatus {
+  RECEIVED
+  PROCESSING
+  REVIEW
+  ARCHIVED
+}
+
+enum SampleType {
+  NORMAL
+  INELIGIBLE
+  TIME_CONFLICT
+  UNCONFIRMED
+}
+
+enum NodeType {
+  CREATED
+  ASSIGNED
+  PROCESSING
+  REVIEW_SUBMITTED
+  REVIEW_CONFIRMED
+  REVIEW_RETURNED
+  ARCHIVED
+  REPROCESSING
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  role      UserRole
+  department String
+  createdAt DateTime @default(now())
+
+  appliedRecords     VehicleUsageRecord[] @relation("ApplicantRecords")
+  assignedRecords    VehicleUsageRecord[] @relation("CurrentAssignee")
+  processingNodes    ProcessingNode[]
+  businessRecords    BusinessRecord[]
+  onSiteExplanations OnSiteExplanation[]
+  evidenceAttachments EvidenceAttachment[]
+
+  @@index([role])
+  @@index([department])
+}
+
+model Vehicle {
+  id          String         @id @default(cuid())
+  plateNumber String         @unique
+  vehicleType String
+  department  String
+  status      VehicleStatus  @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+
+  usageRecords VehicleUsageRecord[]
+
+  @@index([status])
+  @@index([department])
+}
+
+model VehicleUsageRecord {
+  id               String       @id @default(cuid())
+  title            String
+  applicantId      String
+  vehicleId        String
+  status           RecordStatus @default(RECEIVED)
+  sampleType       SampleType
+  appliedMileage   Float
+  actualMileage    Float
+  usageStartTime   DateTime
+  usageEndTime     DateTime
+  actualStartTime  DateTime?
+  actualEndTime    DateTime?
+  purpose          String
+  department       String
+  currentAssigneeId String?
+  blockingReason   String?
+  remediationPath  String?
+  diffFields       Json?
+  conclusion       String?
+  basis            String?
+  source           String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  applicant       User                @relation("ApplicantRecords", fields: [applicantId], references: [id])
+  vehicle         Vehicle             @relation(fields: [vehicleId], references: [id])
+  currentAssignee User?               @relation("CurrentAssignee", fields: [currentAssigneeId], references: [id])
+  processingNodes ProcessingNode[]
+  businessRecords BusinessRecord[]
+  onSiteExplanations OnSiteExplanation[]
+  evidenceAttachments EvidenceAttachment[]
+  violationInfos  ViolationInfo[]
+
+  @@index([status])
+  @@index([sampleType])
+  @@index([applicantId])
+  @@index([vehicleId])
+  @@index([currentAssigneeId])
+  @@index([department])
+  @@index([createdAt])
+}
+
+model ProcessingNode {
+  id            String   @id @default(cuid())
+  recordId      String
+  nodeType      NodeType
+  operatorId    String
+  action        String
+  comment       String?
+  snapshot      Json?
+  changedFields Json?
+  createdAt     DateTime @default(now())
+
+  record   VehicleUsageRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  operator User               @relation(fields: [operatorId], references: [id])
+
+  @@index([recordId])
+  @@index([nodeType])
+  @@index([operatorId])
+  @@index([createdAt])
+}
+
+model BusinessRecord {
+  id         String   @id @default(cuid())
+  recordId   String
+  content    String
+  recordType String
+  createdById String
+  createdAt  DateTime @default(now())
+
+  record    VehicleUsageRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  createdBy User               @relation(fields: [createdById], references: [id])
+
+  @@index([recordId])
+  @@index([createdById])
+}
+
+model OnSiteExplanation {
+  id         String   @id @default(cuid())
+  recordId   String
+  content    String
+  createdById String
+  createdAt  DateTime @default(now())
+
+  record    VehicleUsageRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  createdBy User               @relation(fields: [createdById], references: [id])
+
+  @@index([recordId])
+  @@index([createdById])
+}
+
+model EvidenceAttachment {
+  id          String   @id @default(cuid())
+  recordId    String
+  fileName    String
+  fileType    String
+  fileSize    Int
+  filePath    String
+  description String?
+  uploadedById String
+  createdAt   DateTime @default(now())
+
+  record    VehicleUsageRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  uploadedBy User               @relation(fields: [uploadedById], references: [id])
+
+  @@index([recordId])
+  @@index([uploadedById])
+}
+
+model ViolationInfo {
+  id             String   @id @default(cuid())
+  recordId       String
+  violationType  String
+  violationDate  DateTime
+  location       String
+  fine           Float
+  penaltyPoints  Int
+  description    String
+  isConfirmed    Boolean  @default(false)
+
+  record VehicleUsageRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+  @@index([violationType])
+  @@index([isConfirmed])
+}
