@@ -190,7 +190,7 @@ export const useRecordsStore = defineStore('records', {
 
     async processRecord(id: string, data: {
       remark: string
-      evidenceConclusion: string
+      evidenceConclusion?: string
       attachments?: any[]
       updatedFields?: NodeActionPayload['updatedFields']
     }) {

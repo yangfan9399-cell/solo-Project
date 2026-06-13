@@ -120,7 +120,7 @@ export async function createNode(
       updateData.evidenceConclusion = uf.evidenceConclusion
     }
 
-    if (nodeType === 'ARCHIVE') {
+    if (nodeType === 'ARCHIVE' || newStatus === 'ARCHIVED') {
       updateData.isArchived = true
       updateData.archivedAt = new Date()
       updateData.archivedBy = payload.operatorName
@@ -191,9 +191,37 @@ export async function createNode(
       }
     }
 
+    const nodeWithAtts = await tx.recordNode.findUnique({
+      where: { id: node.id },
+      include: { attachments: true }
+    })
+
+    const nodeResponse = {
+      ...nodeWithAtts,
+      attachments: (nodeWithAtts?.attachments || []).map((att: any) => ({
+        id: att.id,
+        name: att.name,
+        url: att.url,
+        version: att.version,
+        fileType: att.fileType,
+        size: Number(att.size),
+        uploadedBy: att.uploadedBy,
+        createdAt: att.createdAt.toISOString()
+      })),
+      createdAt: nodeWithAtts?.createdAt?.toISOString(),
+      updatedAt: nodeWithAtts?.updatedAt?.toISOString()
+    }
+
     return {
-      record: updatedRecord,
-      node,
+      record: {
+        ...updatedRecord,
+        amount: updatedRecord.amount.toString(),
+        occurrenceTime: updatedRecord.occurrenceTime.toISOString(),
+        createdAt: updatedRecord.createdAt.toISOString(),
+        updatedAt: updatedRecord.updatedAt.toISOString(),
+        archivedAt: updatedRecord.archivedAt?.toISOString()
+      },
+      node: nodeResponse,
       fieldDiffs
     }
   })

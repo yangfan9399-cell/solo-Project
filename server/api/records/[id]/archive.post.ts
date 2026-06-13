@@ -1,7 +1,7 @@
 import { createNode } from '~/server/utils/nodeHandler'
 import { requireRole, requireRecordStatus } from '~/server/utils/requireRole'
+import { validateAndFilterPayload } from '~/server/utils/validatePayload'
 import type { NodeActionPayload } from '~/types'
-import prisma from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -14,15 +14,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '缺少操作人信息' })
   }
 
-  await requireRole(body.operatorId, 'archive')
+  const user = await requireRole(body.operatorId, 'archive')
   await requireRecordStatus(id, ['REVIEW'])
+
+  const cleanPayload = validateAndFilterPayload('archive', user.role, body)
 
   const result = await createNode(
     id,
     'ARCHIVE' as any,
     'ARCHIVED' as any,
-    body,
-    body.operatorId
+    cleanPayload,
+    user.id
   )
 
   return { success: true, data: result }

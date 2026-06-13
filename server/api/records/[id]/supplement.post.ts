@@ -1,5 +1,6 @@
 import { createNode } from '~/server/utils/nodeHandler'
 import { requireRole, requireRecordStatus } from '~/server/utils/requireRole'
+import { validateAndFilterPayload } from '~/server/utils/validatePayload'
 import type { NodeActionPayload, NodeType, RecordStatus } from '~/types'
 import prisma from '~/server/utils/prisma'
 
@@ -14,17 +15,19 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '缺少操作人信息' })
   }
 
-  await requireRole(body.operatorId, 'supplement')
+  const user = await requireRole(body.operatorId, 'supplement')
   await requireRecordStatus(id, ['REJECTED'])
 
+  const cleanPayload = validateAndFilterPayload('supplement', user.role, body)
+
   const remark = [
-    body.businessRecord ? `业务记录：${body.businessRecord}` : '',
-    body.siteDescription ? `现场说明：${body.siteDescription}` : '',
-    body.remark || ''
+    cleanPayload.businessRecord ? `业务记录：${cleanPayload.businessRecord}` : '',
+    cleanPayload.siteDescription ? `现场说明：${cleanPayload.siteDescription}` : '',
+    cleanPayload.remark || ''
   ].filter(Boolean).join('\n')
 
-  const payload: NodeActionPayload = {
-    ...body,
+  const finalPayload: NodeActionPayload = {
+    ...cleanPayload,
     remark
   }
 
@@ -33,13 +36,13 @@ export default defineEventHandler(async (event) => {
     take: 1
   })
 
-  const reviewerId = reviewers.length > 0 ? reviewers[0].id : body.operatorId
+  const reviewerId = reviewers.length > 0 ? reviewers[0].id : user.id
 
   const result = await createNode(
     id,
     'SUPPLEMENT' as NodeType,
     'REVIEW' as RecordStatus,
-    payload,
+    finalPayload,
     reviewerId
   )
 

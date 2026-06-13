@@ -88,105 +88,86 @@
             </div>
 
             <div>
-              <label class="label">证据结论</label>
-              <textarea
-                v-model="form.evidenceConclusion"
-                class="input h-20"
-                placeholder="请填写最终证据结论..."
-                :disabled="detail.isArchived"
-              />
-            </div>
-
-            <div v-if="canUpdateKeyFields" class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="label">发生时间（可修正）</label>
-                <input
-                  v-model="form.occurrenceTime"
-                  type="datetime-local"
-                  class="input"
-                  :disabled="detail.isArchived"
-                />
-              </div>
-              <div>
-                <label class="label">责任对象（可修正）</label>
-                <input
-                  v-model="form.keyObject"
-                  type="text"
-                  class="input"
-                  placeholder="修正责任对象..."
-                  :disabled="detail.isArchived"
-                />
-              </div>
-              <div>
-                <label class="label">金额数量（可修正）</label>
-                <input
-                  v-model.number="form.amount"
-                  type="number"
-                  class="input"
-                  placeholder="修正损失金额..."
-                  :disabled="detail.isArchived"
-                />
-              </div>
-            </div>
-
-            <div>
               <label class="label">证据附件</label>
               <div class="space-y-3">
                 <div
                   v-for="(att, idx) in pendingAttachments"
                   :key="idx"
-                  class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg"
+                  class="bg-gray-50 p-3 rounded-lg"
                 >
-                  <div class="flex-1 grid grid-cols-4 gap-3">
-                    <div>
-                      <input
-                        v-model="att.name"
-                        type="text"
-                        class="input text-sm"
-                        placeholder="文件名称"
-                      />
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1 grid grid-cols-4 gap-3">
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件名称</div>
+                        <input
+                          v-model="att.name"
+                          type="text"
+                          class="input text-sm"
+                          placeholder="文件名称"
+                        />
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">版本号</div>
+                        <input
+                          v-model="att.version"
+                          type="text"
+                          class="input text-sm"
+                          placeholder="如 V1"
+                        />
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件类型</div>
+                        <select v-model="att.fileType" class="input text-sm">
+                          <option value="application/pdf">PDF</option>
+                          <option value="image/jpeg">图片(JPG)</option>
+                          <option value="image/png">图片(PNG)</option>
+                          <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</option>
+                          <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
+                          <option value="other">其他</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件路径</div>
+                        <input
+                          v-model="att.url"
+                          type="text"
+                          class="input text-sm"
+                          placeholder="/attachments/xxx.pdf"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <input
-                        v-model="att.version"
-                        type="text"
-                        class="input text-sm"
-                        placeholder="版本号 (如V1)"
-                      />
-                    </div>
-                    <div>
-                      <select v-model="att.fileType" class="input text-sm">
-                        <option value="application/pdf">PDF</option>
-                        <option value="image/jpeg">图片(JPG)</option>
-                        <option value="image/png">图片(PNG)</option>
-                        <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</option>
-                        <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
-                        <option value="other">其他</option>
-                      </select>
-                    </div>
-                    <div>
-                      <input
-                        v-model="att.url"
-                        type="text"
-                        class="input text-sm"
-                        placeholder="文件路径/链接"
-                      />
-                    </div>
+                    <button
+                      @click="pendingAttachments.splice(idx, 1)"
+                      type="button"
+                      class="text-red-500 hover:text-red-700 text-sm shrink-0 self-start mt-6"
+                    >
+                      ✕
+                    </button>
                   </div>
+                  <div v-if="att.size" class="mt-2 text-xs text-gray-500">
+                    文件大小：{{ formatFileSize(att.size) }}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <label class="btn btn-secondary cursor-pointer shrink-0">
+                    📁 选择本地文件
+                    <input
+                      type="file"
+                      class="hidden"
+                      @change="onFileSelect"
+                      multiple
+                      :disabled="detail.isArchived"
+                    />
+                  </label>
                   <button
-                    @click="pendingAttachments.splice(idx, 1)"
-                    class="text-red-500 hover:text-red-700 text-sm shrink-0"
+                    @click="addPendingAttachment"
+                    type="button"
+                    class="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
                   >
-                    ✕ 移除
+                    + 手动添加附件条目
                   </button>
                 </div>
-                <button
-                  @click="addPendingAttachment"
-                  type="button"
-                  class="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
-                >
-                  + 添加附件
-                </button>
               </div>
             </div>
 
@@ -266,38 +247,66 @@
                 <div
                   v-for="(att, idx) in reviewAttachments"
                   :key="idx"
-                  class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg"
+                  class="bg-gray-50 p-3 rounded-lg"
                 >
-                  <div class="flex-1 grid grid-cols-4 gap-3">
-                    <div>
-                      <input v-model="att.name" type="text" class="input text-sm" placeholder="文件名称" />
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1 grid grid-cols-4 gap-3">
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件名称</div>
+                        <input v-model="att.name" type="text" class="input text-sm" placeholder="文件名称" />
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">版本号</div>
+                        <input v-model="att.version" type="text" class="input text-sm" placeholder="版本号" />
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件类型</div>
+                        <select v-model="att.fileType" class="input text-sm">
+                          <option value="application/pdf">PDF</option>
+                          <option value="image/jpeg">图片(JPG)</option>
+                          <option value="image/png">图片(PNG)</option>
+                          <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Word</option>
+                          <option value="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">Excel</option>
+                          <option value="other">其他</option>
+                        </select>
+                      </div>
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">文件路径</div>
+                        <input v-model="att.url" type="text" class="input text-sm" placeholder="/attachments/xxx.pdf" />
+                      </div>
                     </div>
-                    <div>
-                      <input v-model="att.version" type="text" class="input text-sm" placeholder="版本号" />
-                    </div>
-                    <div>
-                      <select v-model="att.fileType" class="input text-sm">
-                        <option value="application/pdf">PDF</option>
-                        <option value="image/jpeg">图片(JPG)</option>
-                        <option value="image/png">图片(PNG)</option>
-                        <option value="other">其他</option>
-                      </select>
-                    </div>
-                    <div>
-                      <input v-model="att.url" type="text" class="input text-sm" placeholder="文件路径/链接" />
-                    </div>
+                    <button
+                      @click="reviewAttachments.splice(idx, 1)"
+                      type="button"
+                      class="text-red-500 hover:text-red-700 text-sm shrink-0 self-start mt-6"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <button @click="reviewAttachments.splice(idx, 1)" class="text-red-500 hover:text-red-700 text-sm shrink-0">
-                    ✕ 移除
+                  <div v-if="att.size" class="mt-2 text-xs text-gray-500">
+                    文件大小：{{ formatFileSize(att.size) }}
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <label class="btn btn-secondary cursor-pointer shrink-0">
+                    📁 选择本地文件
+                    <input
+                      type="file"
+                      class="hidden"
+                      @change="onReviewFileSelect"
+                      multiple
+                      :disabled="detail.isArchived"
+                    />
+                  </label>
+                  <button
+                    @click="addReviewAttachment"
+                    type="button"
+                    class="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
+                  >
+                    + 手动添加复核附件条目
                   </button>
                 </div>
-                <button
-                  @click="addReviewAttachment"
-                  type="button"
-                  class="w-full border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-500 hover:border-primary-400 hover:text-primary-600 transition"
-                >
-                  + 添加复核附件
-                </button>
               </div>
             </div>
 
@@ -394,7 +403,7 @@
           </div>
         </div>
 
-        <div class="card p-6">
+        <div v-if="isReviewer" class="card p-6">
           <h3 class="text-lg font-semibold mb-4 text-gray-900">关键字段变更预览</h3>
           <div class="text-xs text-gray-500 mb-3">修改后将同步更新列表摘要、详情结论和复盘统计</div>
           <div class="space-y-2 text-sm">
@@ -603,16 +612,73 @@ const showReviewerForm = computed(() => {
 
 const canEdit = computed(() => store.canEdit)
 
-const canUpdateKeyFields = computed(() => {
-  return showApplicantForm.value && (detail.value?.status === 'REJECTED' || detail.value?.status === 'REOPENED')
-})
-
 const lastRejectNode = computed(() => {
   if (!detail.value) return null
   return [...detail.value.nodes].reverse().find(n => n.nodeType === 'REJECT' || n.nodeType === 'REOPEN')
 })
 
 const formatTime = (t: string) => dayjs(t).format('YYYY-MM-DD HH:mm:ss')
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0
+  let val = bytes
+  while (val >= 1024 && i < units.length - 1) {
+    val = val / 1024
+    i++
+  }
+  return `${val.toFixed(1)} ${units[i]}`
+}
+
+const guessAttachmentType = (name: string) => {
+  const ext = name.split('.').pop()?.toLowerCase() || ''
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/png',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    txt: 'text/plain'
+  }
+  return map[ext] || 'other'
+}
+
+const onFileSelect = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+  for (let i = 0; i < target.files.length; i++) {
+    const file = target.files[i]
+    pendingAttachments.value.push({
+      name: file.name,
+      version: 'V1',
+      fileType: guessAttachmentType(file.name),
+      url: `/attachments/${Date.now()}-${file.name}`,
+      size: file.size
+    })
+  }
+  target.value = ''
+}
+
+const onReviewFileSelect = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+  for (let i = 0; i < target.files.length; i++) {
+    const file = target.files[i]
+    reviewAttachments.value.push({
+      name: file.name,
+      version: 'V1',
+      fileType: guessAttachmentType(file.name),
+      url: `/attachments/${Date.now()}-${file.name}`,
+      size: file.size
+    })
+  }
+  target.value = ''
+}
 
 const onRecordChange = () => {
   if (selectedId.value) {
@@ -684,9 +750,7 @@ const handleProcess = async () => {
   try {
     await store.processRecord(selectedId.value, {
       remark: `业务记录：${form.value.businessRecord}\n现场说明：${form.value.siteDescription}`,
-      evidenceConclusion: form.value.evidenceConclusion || '处理完成，等待复核',
-      attachments: getValidAttachments(pendingAttachments.value),
-      updatedFields: getUpdatedFields()
+      attachments: getValidAttachments(pendingAttachments.value)
     })
     alert('处理完成，已提交复核！')
     resetForms()
@@ -708,9 +772,7 @@ const handleSupplement = async () => {
     await store.supplementRecord(selectedId.value, {
       businessRecord: form.value.businessRecord,
       siteDescription: form.value.siteDescription,
-      evidenceConclusion: form.value.evidenceConclusion,
-      attachments: getValidAttachments(pendingAttachments.value),
-      updatedFields: getUpdatedFields()
+      attachments: getValidAttachments(pendingAttachments.value)
     })
     alert('资料已补充，已提交复核！')
     resetForms()

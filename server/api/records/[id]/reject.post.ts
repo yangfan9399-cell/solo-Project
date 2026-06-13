@@ -1,5 +1,6 @@
 import { createNode } from '~/server/utils/nodeHandler'
 import { requireRole, requireRecordStatus } from '~/server/utils/requireRole'
+import { validateAndFilterPayload } from '~/server/utils/validatePayload'
 import type { NodeActionPayload } from '~/types'
 import prisma from '~/server/utils/prisma'
 
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: '缺少操作人信息' })
   }
 
-  await requireRole(body.operatorId, 'reject')
+  const user = await requireRole(body.operatorId, 'reject')
   await requireRecordStatus(id, ['REVIEW'])
 
   if (!body.blockReason) {
@@ -23,6 +24,8 @@ export default defineEventHandler(async (event) => {
   if (!body.remedyPath) {
     throw createError({ statusCode: 400, message: '退回补证必须填写补救路径' })
   }
+
+  const cleanPayload = validateAndFilterPayload('reject', user.role, body)
 
   const record = await prisma.alarmRecord.findUnique({
     where: { id },
@@ -34,13 +37,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const acceptNode = record.nodes.find((n: { nodeType: string; operatorId: string }) => n.nodeType === 'ACCEPT')
-  const applicantId = acceptNode?.operatorId || record.currentHandlerId
+  const applicantId = acceptNode?.operatorId || (record as any).currentHandlerId
 
   const result = await createNode(
     id,
     'REJECT' as any,
     'REJECTED' as any,
-    body,
+    cleanPayload,
     applicantId
   )
 
