@@ -1,0 +1,280 @@
+@model ApplicationDetailViewModel
+@{
+    ViewData["Title"] = $"申请详情 - {Model.Application.ApplicationNo}";
+    var app = Model.Application;
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">申请列表</a></li>
+                <li class="breadcrumb-item active">@app.ApplicationNo</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <h5 class="mb-0">基本信息</h5>
+                <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(app.Status) badge-status fs-6">
+                    @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(app.Status)
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="text-muted" style="width:120px">申请编号</td><td><strong>@app.ApplicationNo</strong></td></tr>
+                            <tr><td class="text-muted">来源</td><td>@app.Source</td></tr>
+                            <tr><td class="text-muted">园区名称</td><td>@app.ParkName</td></tr>
+                            <tr><td class="text-muted">申请人</td><td>@app.ApplicantName</td></tr>
+                            <tr><td class="text-muted">申请部门</td><td>@app.ApplicantDepartment</td></tr>
+                            <tr><td class="text-muted">当前责任人</td><td><strong>@app.CurrentResponsiblePerson</strong></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="text-muted" style="width:120px">关键对象</td><td><strong>@app.KeyObject</strong></td></tr>
+                            <tr><td class="text-muted">申请指标</td><td>@app.AppliedQuota @app.QuotaUnit</td></tr>
+                            <tr><td class="text-muted">审批指标</td><td>@app.ApprovedQuota @app.QuotaUnit</td></tr>
+                            <tr><td class="text-muted">限额</td><td>@app.QuotaLimit @app.QuotaUnit</td></tr>
+                            <tr><td class="text-muted">申请日期</td><td>@app.ApplicationDate.ToString("yyyy-MM-dd")</td></tr>
+                            <tr><td class="text-muted">样本类型</td><td>
+                                <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeCssClass(app.SampleType) badge-status">
+                                    @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeDisplayName(app.SampleType)
+                                </span>
+                            </td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <p><strong class="text-muted">采用依据：</strong>@app.Basis</p>
+                        <p><strong class="text-muted">摘要：</strong>@app.Summary</p>
+                        <p><strong class="text-muted">结论：</strong><span class="@(app.Status == ApplicationStatus.Blocked || app.Status == ApplicationStatus.Timeout ? "text-danger fw-bold" : "")">@app.Conclusion</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (app.SampleType != SampleType.NormalPass && (!string.IsNullOrEmpty(app.BlockingReason) || !string.IsNullOrEmpty(app.DifferentialFields) || !string.IsNullOrEmpty(app.RemediationPath)))
+        {
+            <div class="card mb-3 blocking-card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 text-danger">⚠ 阻断信息</h6>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(app.BlockingReason))
+                    {
+                        <div class="mb-3">
+                            <strong>阻断原因：</strong>
+                            <p class="mb-0 text-danger">@app.BlockingReason</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(app.DifferentialFields))
+                    {
+                        <div class="mb-3">
+                            <strong>差异字段：</strong>
+                            <p class="mb-0">
+                                @foreach (var diff in app.DifferentialFields.Split('|'))
+                                {
+                                    var parts = diff.Split("vs");
+                                    var oldVal = parts.Length > 0 ? parts[0].Trim() : "";
+                                    var newVal = parts.Length > 1 ? parts[1].Trim() : "";
+                                    <span class="d-block"><span class="diff-old">@oldVal</span> → <span class="diff-new">@newVal</span></span>
+                                }
+                            </p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(app.RemediationPath))
+                    {
+                        <div class="remediation-card p-3 rounded">
+                            <strong>补救路径：</strong>
+                            <p class="mb-0">@Html.Raw(app.RemediationPath.Replace("；", "；<br/>").Replace("。", "。<br/>"))</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">业务记录与现场说明</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong class="text-muted">业务记录：</strong>
+                        <p>@(string.IsNullOrEmpty(app.BusinessRecord) ? "暂无" : app.BusinessRecord)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong class="text-muted">现场说明：</strong>
+                        <p>@(string.IsNullOrEmpty(app.FieldDescription) ? "暂无" : app.FieldDescription)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.KeyFieldDiffs.Any())
+        {
+            <div class="card mb-3">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">关键字段变更记录</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>字段</th><th>变更前</th><th>变更后</th><th>操作人</th><th>时间</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var diff in Model.KeyFieldDiffs)
+                            {
+                                <tr>
+                                    <td><strong>@diff.FieldDisplayName</strong></td>
+                                    <td><span class="diff-old">@diff.OldValue</span></td>
+                                    <td><span class="diff-new">@diff.NewValue</span></td>
+                                    <td>@diff.ChangedBy</td>
+                                    <td>@diff.ChangedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">证据附件</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.Attachments.Any())
+                {
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>文件名</th><th>说明</th><th>上传人</th><th>上传时间</th><th>状态</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var att in Model.Attachments)
+                            {
+                                <tr class="@(att.IsMissing ? "table-danger" : "")">
+                                    <td>@att.FileName</td>
+                                    <td>@att.Description</td>
+                                    <td>@(att.IsMissing ? "-" : att.UploadedBy)</td>
+                                    <td>@(att.IsMissing ? "-" : att.UploadedAt.ToString("yyyy-MM-dd HH:mm"))</td>
+                                    <td>
+                                        @if (att.IsMissing)
+                                        {
+                                            <span class="badge bg-danger">缺失</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">已上传</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted">暂无附件</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">处理时间线</h6>
+            </div>
+            <div class="card-body">
+                @foreach (var node in Model.HistoryNodes)
+                {
+                    var isBlocked = node.ToStatus == ApplicationStatus.Blocked || node.ToStatus == ApplicationStatus.Timeout;
+                    var isArchived = node.ToStatus == ApplicationStatus.Archived;
+                    <div class="timeline-item @(isBlocked ? "blocked" : "") @(isArchived ? "archived" : "")">
+                        <div class="d-flex justify-content-between">
+                            <strong class="text-sm">@node.Action</strong>
+                            <small class="text-muted">@node.OperatedAt.ToString("MM-dd HH:mm")</small>
+                        </div>
+                        <div>
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.FromStatus) badge-status">
+                                @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.FromStatus)
+                            </span>
+                            →
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.ToStatus) badge-status">
+                                @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.ToStatus)
+                            </span>
+                        </div>
+                        <div class="mt-1">
+                            <small class="text-muted">操作人：@node.OperatorName (@(node.OperatorRole == RoleType.FieldPersonnel ? "现场人员" : "主管复核人"))</small>
+                        </div>
+                        @if (!string.IsNullOrEmpty(node.Comment))
+                        {
+                            <p class="mb-0 mt-1"><small>@node.Comment</small></p>
+                        }
+                        @if (!string.IsNullOrEmpty(node.Conclusion))
+                        {
+                            <p class="mb-0"><small class="text-primary">结论：@node.Conclusion</small></p>
+                        }
+                        @if (!string.IsNullOrEmpty(node.ResponsiblePersonAfter))
+                        {
+                            <p class="mb-0"><small class="text-muted">责任人：@node.ResponsiblePersonBefore → @node.ResponsiblePersonAfter</small></p>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (!app.IsReadOnly)
+        {
+            <div class="d-grid gap-2">
+                <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="1" class="btn btn-primary">现场处理台</a>
+                <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="2" class="btn btn-warning">主管复核台</a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary text-center">
+                <strong>已归档 - 只读</strong><br/>
+                <small>如需重新处理，需在处理台发起重新处理</small>
+            </div>
+        }
+
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">所有变更记录</h6>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.FieldChanges.Any())
+                {
+                    <table class="table table-sm mb-0">
+                        @foreach (var change in Model.FieldChanges)
+                        {
+                            <tr class="@(change.IsKeyChange ? "table-warning" : "")">
+                                <td>
+                                    <small>
+                                        <strong>@change.FieldDisplayName</strong><br/>
+                                        <span class="diff-old">@change.OldValue</span> → <span class="diff-new">@change.NewValue</span><br/>
+                                        <span class="text-muted">@change.ChangedBy @change.ChangedAt.ToString("MM-dd HH:mm")</span>
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted p-2 mb-0">暂无变更记录</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

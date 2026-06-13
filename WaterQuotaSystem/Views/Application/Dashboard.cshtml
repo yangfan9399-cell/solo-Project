@@ -1,0 +1,220 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "统计看板";
+}
+
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-primary" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "active" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.ActiveCount</div>
+                <div>活跃申请</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-success" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "normal" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.NormalCount</div>
+                <div>正常放行</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-danger" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "overlimit" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.OverLimitCount</div>
+                <div>指标超限</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-warning" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "missingevidence" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.MissingEvidenceCount</div>
+                <div>证据缺失</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-danger" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "timeout" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.TimeoutCount</div>
+                <div>审批超时</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card card-summary text-white bg-secondary" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "archived" })'">
+            <div class="card-body text-center">
+                <div class="stat-number">@Model.ArchivedCount</div>
+                <div>已归档</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">汇总指标</h6></div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted">总申请数</td>
+                        <td class="text-end fw-bold">@Model.TotalApplications</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">申请用水总量</td>
+                        <td class="text-end fw-bold">@Model.TotalAppliedQuota.ToString("N0") 吨/月</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">已审批用水量</td>
+                        <td class="text-end fw-bold text-success">@Model.TotalApprovedQuota.ToString("N0") 吨/月</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">平均处理天数</td>
+                        <td class="text-end fw-bold">@Model.AverageProcessingDays.ToString("F1") 天</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">状态分布</h6></div>
+            <div class="card-body">
+                @foreach (var item in Model.StatusDistribution)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(item.Status) badge-status">@item.StatusName</span>
+                        </span>
+                        <span>
+                            <strong>@item.Count</strong>
+                            <small class="text-muted">(@item.Percentage%)</small>
+                        </span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px">
+                        <div class="progress-bar @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(item.Status)" style="width: @item.Percentage%"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">样本类型分布</h6></div>
+            <div class="card-body">
+                @foreach (var item in Model.SampleTypeDistribution)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeCssClass(item.SampleType) badge-status">@item.TypeName</span>
+                        </span>
+                        <span>
+                            <strong>@item.Count</strong>
+                            <small class="text-muted">(@item.Percentage%)</small>
+                        </span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px">
+                        <div class="progress-bar @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeCssClass(item.SampleType)" style="width: @item.Percentage%"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.MonthlyTrend.Any())
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white"><h6 class="mb-0">月度趋势</h6></div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>月份</th><th>申请数</th><th>申请总量(吨/月)</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.MonthlyTrend)
+                            {
+                                <tr>
+                                    <td>@m.Month</td>
+                                    <td>@m.Count</td>
+                                    <td>@m.TotalQuota.ToString("N0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.DrillDownFilter) && Model.DrillDownRecords.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        钻取记录 -
+                        @{
+                            var drillLabel = Model.DrillDownFilter switch
+                            {
+                                "overlimit" => "<span class=\"text-danger\">指标超限</span>",
+                                "missingevidence" => "<span class=\"text-warning\">证据缺失</span>",
+                                "timeout" => "<span class=\"text-danger\">审批超时</span>",
+                                "normal" => "<span class=\"text-success\">正常放行</span>",
+                                "archived" => "<span class=\"text-secondary\">已归档</span>",
+                                "active" => "<span class=\"text-primary\">活跃申请</span>",
+                                _ => "<span>全部</span>"
+                            };
+                        }
+                        @Html.Raw(drillLabel)
+                        (@Model.DrillDownRecords.Count 条)
+                    </h6>
+                    <a asp-action="Dashboard" class="btn btn-sm btn-outline-secondary">清除筛选</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>申请编号</th>
+                                <th>园区名称</th>
+                                <th>关键对象</th>
+                                <th>申请指标</th>
+                                <th>状态</th>
+                                <th>结论</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var app in Model.DrillDownRecords)
+                            {
+                                <tr>
+                                    <td><strong>@app.ApplicationNo</strong></td>
+                                    <td>@app.ParkName</td>
+                                    <td>@app.KeyObject</td>
+                                    <td>@app.AppliedQuota @app.QuotaUnit</td>
+                                    <td>
+                                        <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(app.Status) badge-status">
+                                            @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(app.Status)
+                                        </span>
+                                    </td>
+                                    <td><small>@app.Conclusion</small></td>
+                                    <td>
+                                        <a asp-action="Detail" asp-route-id="@app.Id" class="btn btn-sm btn-outline-info">详情</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}

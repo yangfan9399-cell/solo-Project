@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 城市园区用水指标申请超额预警与审批系统</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .badge-status { font-size: 0.85em; padding: 5px 10px; }
+        .card-summary { transition: transform 0.2s; cursor: pointer; }
+        .card-summary:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .timeline-item { position: relative; padding-left: 30px; margin-bottom: 20px; border-left: 2px solid #dee2e6; }
+        .timeline-item::before { content: ''; position: absolute; left: -7px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #0d6efd; border: 2px solid #fff; }
+        .timeline-item.blocked::before { background: #dc3545; }
+        .timeline-item.timeout::before { background: #fd7e14; }
+        .timeline-item.archived::before { background: #6c757d; }
+        .diff-old { background: #ffecec; text-decoration: line-through; color: #dc3545; padding: 2px 6px; border-radius: 3px; }
+        .diff-new { background: #e6ffec; color: #198754; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
+        .blocking-card { border-left: 4px solid #dc3545; background: #fff5f5; }
+        .remediation-card { border-left: 4px solid #0d6efd; background: #f0f7ff; }
+        .evidence-missing { border: 2px dashed #dc3545; background: #fff5f5; padding: 10px; border-radius: 8px; }
+        .drill-link { cursor: pointer; text-decoration: none; }
+        .drill-link:hover { text-decoration: underline; }
+        .stat-number { font-size: 2rem; font-weight: bold; }
+        .nav-water { background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); }
+        .nav-water .navbar-brand, .nav-water .nav-link { color: #fff !important; }
+        .nav-water .nav-link:hover { color: #bbdefb !important; }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm nav-water mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Application" asp-action="Index">
+                    <i class="bi bi-droplet-fill"></i> 用水指标审批系统
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Application" asp-action="Index">申请列表</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Application" asp-action="Dashboard">统计看板</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Application" asp-action="Create">新建申请</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid px-4">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+    <footer class="border-top footer text-muted mt-4">
+        <div class="container text-center py-2">
+            &copy; 2026 城市园区用水指标申请超额预警与审批系统
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,273 @@
+@model ProcessingDeskViewModel
+@{
+    ViewData["Title"] = $"处理台 - {Model.Application.ApplicationNo}";
+    var app = Model.Application;
+    var currentRole = (RoleType)ViewBag.CurrentRole;
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">申请列表</a></li>
+                <li class="breadcrumb-item"><a asp-action="Detail" asp-route-id="@app.Id">@app.ApplicationNo</a></li>
+                <li class="breadcrumb-item active">处理台</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">处理台 - @app.ApplicationNo</h5>
+                <div>
+                    <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(app.Status) badge-status fs-6">
+                        @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(app.Status)
+                    </span>
+                    <span class="badge @(currentRole == RoleType.FieldPersonnel ? "bg-info" : "bg-warning") badge-status ms-2">
+                        @(currentRole == RoleType.FieldPersonnel ? "现场人员视角" : "主管复核人视角")
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light">
+                    <div class="row">
+                        <div class="col-md-4"><strong>园区：</strong>@app.ParkName</div>
+                        <div class="col-md-4"><strong>关键对象：</strong>@app.KeyObject</div>
+                        <div class="col-md-4"><strong>当前责任人：</strong>@app.CurrentResponsiblePerson</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-4"><strong>申请指标：</strong>@app.AppliedQuota @app.QuotaUnit</div>
+                        <div class="col-md-4"><strong>限额：</strong>@app.QuotaLimit @app.QuotaUnit</div>
+                        <div class="col-md-4"><strong>审批指标：</strong>@app.ApprovedQuota @app.QuotaUnit</div>
+                    </div>
+                </div>
+
+                @if (app.IsReadOnly)
+                {
+                    <div class="alert alert-secondary text-center">
+                        <h5>此申请已归档，只读不可修改</h5>
+                        <p>如需重新处理，请点击下方"重新处理"按钮，系统将生成新的处理节点</p>
+                    </div>
+                }
+
+                @if (app.SampleType != SampleType.NormalPass && (!string.IsNullOrEmpty(app.BlockingReason) || !string.IsNullOrEmpty(app.RemediationPath)))
+                {
+                    <div class="blocking-card mb-3 p-3 rounded">
+                        <h6 class="text-danger">⚠ 阻断详情</h6>
+                        @if (!string.IsNullOrEmpty(app.BlockingReason))
+                        {
+                            <p><strong>阻断原因：</strong><span class="text-danger">@app.BlockingReason</span></p>
+                        }
+                        @if (!string.IsNullOrEmpty(app.DifferentialFields))
+                        {
+                            <p><strong>差异字段：</strong>@app.DifferentialFields</p>
+                        }
+                        @if (!string.IsNullOrEmpty(app.RemediationPath))
+                        {
+                            <div class="remediation-card p-2 rounded">
+                                <strong>补救路径：</strong>
+                                <p class="mb-0">@app.RemediationPath</p>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <h6>角色权限说明</h6>
+                    @if (currentRole == RoleType.FieldPersonnel)
+                    {
+                        <div class="alert alert-info">
+                            <strong>现场人员权限：</strong>可补充业务记录、现场说明和证据附件；可提交复核；可重新提交补证材料
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <strong>主管复核人权限：</strong>可确认结论、退回补证或归档；归档后记录只读
+                        </div>
+                    }
+                </div>
+
+                @if (!app.IsReadOnly)
+                {
+                    <form asp-action="Process" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ApplicationId" value="@app.Id" />
+                        <input type="hidden" name="CurrentUserRole" value="@((int)currentRole)" />
+
+                        @if (currentRole == RoleType.FieldPersonnel)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">业务记录</label>
+                                <textarea name="BusinessRecord" class="form-control" rows="3" placeholder="补充业务记录...">@(app.BusinessRecord)</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">现场说明</label>
+                                <textarea name="FieldDescription" class="form-control" rows="3" placeholder="补充现场说明...">@(app.FieldDescription)</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">证据附件说明</label>
+                                <input name="EvidenceDescription" class="form-control" placeholder="描述上传的证据附件..." />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">操作人姓名</label>
+                                <input name="OperatorName" class="form-control" value="@(app.CurrentResponsiblePerson)" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">处理意见</label>
+                                <textarea name="Comment" class="form-control" rows="2" placeholder="填写处理意见..."></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (app.Status == ApplicationStatus.Accepted)
+                                {
+                                    <button type="submit" name="Action" value="start_processing" class="btn btn-primary">开始处理</button>
+                                }
+                                @if (app.Status == ApplicationStatus.Processing)
+                                {
+                                    <button type="submit" name="Action" value="submit_for_review" class="btn btn-success">提交复核</button>
+                                    @if (app.AppliedQuota > app.QuotaLimit)
+                                    {
+                                        <button type="submit" name="Action" value="block_overlimit" class="btn btn-danger">指标超限阻断</button>
+                                    }
+                                }
+                                @if (app.Status == ApplicationStatus.ReturnedForEvidence)
+                                {
+                                    <button type="submit" name="Action" value="supplement_evidence" class="btn btn-info">补充证据</button>
+                                    <button type="submit" name="Action" value="resubmit_after_evidence" class="btn btn-success">补证完成重新提交</button>
+                                }
+                                @if (app.Status == ApplicationStatus.Blocked)
+                                {
+                                    <button type="submit" name="Action" value="supplement_evidence" class="btn btn-info">补充材料</button>
+                                }
+                            </div>
+                        }
+
+                        @if (currentRole == RoleType.Reviewer)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">操作人姓名</label>
+                                <input name="OperatorName" class="form-control" value="@(app.CurrentResponsiblePerson)" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">审批意见</label>
+                                <textarea name="Comment" class="form-control" rows="3" placeholder="填写审批意见..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">审批结论</label>
+                                <input name="Conclusion" class="form-control" placeholder="填写审批结论..." required />
+                            </div>
+                            @if (app.Status == ApplicationStatus.Reviewing)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">审批指标(吨/月)</label>
+                                    <input name="ApprovedQuota" type="number" step="0.01" class="form-control" value="@app.AppliedQuota" />
+                                </div>
+                            }
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                @if (app.Status == ApplicationStatus.Reviewing)
+                                {
+                                    <button type="submit" name="Action" value="review_approve" class="btn btn-success">确认通过</button>
+                                    <button type="submit" name="Action" value="return_for_evidence" class="btn btn-warning">退回补证</button>
+                                }
+                                @if (app.Status == ApplicationStatus.Approved)
+                                {
+                                    <button type="submit" name="Action" value="archive" class="btn btn-secondary">确认归档</button>
+                                }
+                            </div>
+                        }
+
+                        @if (app.Status == ApplicationStatus.Timeout)
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">操作人姓名</label>
+                                <input name="OperatorName" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">超时说明</label>
+                                <textarea name="Comment" class="form-control" rows="3" placeholder="填写超时原因说明..."></textarea>
+                            </div>
+                            <button type="submit" name="Action" value="reprocess" class="btn btn-primary">重新处理</button>
+                        }
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="Process" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ApplicationId" value="@app.Id" />
+                        <input type="hidden" name="CurrentUserRole" value="@((int)currentRole)" />
+                        <div class="mb-3">
+                            <label class="form-label">操作人姓名</label>
+                            <input name="OperatorName" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">重新处理原因</label>
+                            <textarea name="Comment" class="form-control" rows="3" placeholder="填写重新处理原因..." required></textarea>
+                        </div>
+                        <button type="submit" name="Action" value="reprocess" class="btn btn-danger">重新处理（生成新节点）</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">历史处理节点</h6>
+            </div>
+            <div class="card-body">
+                @foreach (var node in Model.HistoryNodes)
+                {
+                    var isBlocked = node.ToStatus == ApplicationStatus.Blocked || node.ToStatus == ApplicationStatus.Timeout;
+                    <div class="timeline-item @(isBlocked ? "blocked" : "") @(node.ToStatus == ApplicationStatus.Archived ? "archived" : "")">
+                        <div class="d-flex justify-content-between">
+                            <strong>@node.Action</strong>
+                            <small class="text-muted">@node.OperatedAt.ToString("MM-dd HH:mm")</small>
+                        </div>
+                        <div>
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.FromStatus) badge-status">
+                                @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.FromStatus)
+                            </span>
+                            →
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.ToStatus) badge-status">
+                                @WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.ToStatus)
+                            </span>
+                        </div>
+                        <small class="text-muted">@node.OperatorName | @node.Comment</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">证据附件状态</h6>
+            </div>
+            <div class="card-body">
+                @foreach (var att in Model.Attachments)
+                {
+                    if (att.IsMissing)
+                    {
+                        <div class="evidence-missing mb-2">
+                            <strong class="text-danger">⚠ @att.FileName</strong>
+                            <p class="mb-0 small">@att.Description</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-2 p-2 bg-light rounded">
+                            <strong class="text-success">✓ @att.FileName</strong>
+                            <p class="mb-0 small text-muted">@att.Description | @att.UploadedBy | @att.UploadedAt.ToString("yyyy-MM-dd")</p>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
