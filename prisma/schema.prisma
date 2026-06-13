@@ -1,0 +1,145 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  name        String
+  role        String
+  department  String
+  phone       String?
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  recordsAsHandler ConsumableRecord[] @relation("currentHandler")
+  reviewNodes      ReviewNode[]       @relation("operator")
+}
+
+model ConsumableRecord {
+  id                 Int             @id @default(autoincrement())
+  recordNo           String          @unique
+  status             String          @default("PENDING_ACCEPTANCE")
+  sourceType         String
+  sourceId           String?
+  patientName        String
+  patientId          String
+  deptName           String
+  wardName           String?
+  bedNo              String?
+  consumableName     String
+  consumableCode     String
+  specification      String
+  manufacturer       String?
+  batchNo            String
+  serialNo           String?
+  quantity           Int
+  unit               String
+  unitPrice          Float
+  totalAmount        Float
+  implantDate        DateTime?
+  implantLocation    String?
+  surgeonName        String?
+  nurseName          String?
+  isAbnormal         Boolean         @default(false)
+  abnormalType       String?
+  abnormalReason     String?
+  conclusion         String?
+  currentHandlerId   Int?
+  currentHandler     User?           @relation("currentHandler", fields: [currentHandlerId], references: [id])
+  applicantName      String
+  applyDept          String
+  applyTime          DateTime        @default(now())
+  acceptTime         DateTime?
+  processTime        DateTime?
+  reviewTime         DateTime?
+  archiveTime        DateTime?
+  reviewBasis        String?
+  blockingReason     String?
+  remedialPath       String?
+  diffFieldsJson     String?
+  attachments        Attachment[]
+  reviewNodes        ReviewNode[]
+  fieldDiffs         FieldDiff[]
+  version            Int             @default(1)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([status])
+  @@index([isAbnormal])
+  @@index([abnormalType])
+  @@index([deptName])
+  @@index([applyTime])
+}
+
+model ReviewNode {
+  id              Int              @id @default(autoincrement())
+  recordId        Int
+  record          ConsumableRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  nodeType        String
+  nodeStatus      String           @default("PENDING")
+  nodeName        String
+  nodeOrder       Int
+  operatorId      Int?
+  operator        User?            @relation("operator", fields: [operatorId], references: [id])
+  operatorName    String?
+  handlerId       Int?
+  handlerName     String?
+  content         String?
+  basis           String?
+  blockingReason  String?
+  remedialPath    String?
+  diffDataJson    String?
+  remark          String?
+  createdAt       DateTime         @default(now())
+  completedAt     DateTime?
+
+  attachments     Attachment[]
+  fieldDiffs      FieldDiff[]
+
+  @@index([recordId])
+  @@index([nodeType])
+  @@index([nodeStatus])
+}
+
+model Attachment {
+  id              Int              @id @default(autoincrement())
+  recordId        Int
+  record          ConsumableRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  nodeId          Int?
+  reviewNode      ReviewNode?      @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  fileName        String
+  fileType        String
+  fileUrl         String
+  fileSize        Int?
+  version         Int              @default(1)
+  uploadedBy      String
+  uploadedAt      DateTime         @default(now())
+  isEvidence      Boolean          @default(false)
+
+  @@index([recordId])
+  @@index([nodeId])
+}
+
+model FieldDiff {
+  id              Int              @id @default(autoincrement())
+  recordId        Int
+  record          ConsumableRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  nodeId          Int?
+  reviewNode      ReviewNode?      @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  fieldName       String
+  fieldLabel      String
+  oldValue        String?
+  newValue        String?
+  diffType        String
+  changedAt       DateTime         @default(now())
+  changedBy       String?
+
+  @@index([recordId])
+  @@index([diffType])
+}
