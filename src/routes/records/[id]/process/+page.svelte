@@ -379,7 +379,7 @@
 										{/if}
 										<div class="flex items-center justify-between mt-sm">
 											<span class="text-xs text-secondary">
-												上传人: {ea.uploader?.name ?? '-'}
+												上传人: {ea.uploadedBy?.name ?? '-'}
 											</span>
 											<span class="text-xs text-muted">{formatDate(ea.createdAt)}</span>
 										</div>
@@ -435,7 +435,7 @@
 
 	{#if showConfirmDialog}
 		<div class="dialog-overlay" onclick={() => (showConfirmDialog = false)}>
-			<div class="dialog-box" onclick|stopPropagation>
+			<div class="dialog-box" onclick={(e) => e.stopPropagation()}>
 				<h3>确认提交复核</h3>
 				<p class="mt-sm">提交后将进入复核流程，确认要提交吗？</p>
 				<div class="dialog-actions mt-md">

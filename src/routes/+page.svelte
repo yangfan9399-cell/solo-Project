@@ -35,7 +35,7 @@
 	const sampleTypes: SampleType[] = ['NORMAL', 'INELIGIBLE', 'TIME_CONFLICT', 'UNCONFIRMED'];
 
 	let totalCount = $derived(
-		Object.values(data.stats.byStatus).reduce((sum: number, c: number) => sum + c, 0)
+		(Object.values(data.stats.byStatus) as number[]).reduce((sum, c) => sum + c, 0)
 	);
 
 	let recordsByStatus = $derived(() => {

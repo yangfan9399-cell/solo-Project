@@ -530,7 +530,7 @@
 
 	{#if modalType === 'confirm'}
 		<div class="dialog-overlay" onclick={closeModal}>
-			<div class="dialog-box" onclick|stopPropagation>
+			<div class="dialog-box" onclick={(e) => e.stopPropagation()}>
 				<h3>确认结论</h3>
 				<div class="form-group mt-md">
 					<label class="form-label">结论 <span class="required">*</span></label>
@@ -550,7 +550,7 @@
 
 	{#if modalType === 'return'}
 		<div class="dialog-overlay" onclick={closeModal}>
-			<div class="dialog-box" onclick|stopPropagation>
+			<div class="dialog-box" onclick={(e) => e.stopPropagation()}>
 				<h3>退回补证</h3>
 				<p class="text-secondary text-sm mt-sm">退回后记录将回到「处理中」状态，由原处理人补充证据。</p>
 				<div class="form-group mt-md">
@@ -567,7 +567,7 @@
 
 	{#if modalType === 'archive'}
 		<div class="dialog-overlay" onclick={closeModal}>
-			<div class="dialog-box" onclick|stopPropagation>
+			<div class="dialog-box" onclick={(e) => e.stopPropagation()}>
 				<h3>确认归档</h3>
 				<div class="alert alert-warning mt-md">
 					⚠️ 归档后记录将变为只读，重新处理需生成新的处理节点。
