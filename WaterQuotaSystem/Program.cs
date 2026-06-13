@@ -30,6 +30,14 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<WaterQuotaDbContext>();
     db.Database.EnsureCreated();
 
+    try
+    {
+        db.Database.ExecuteSqlRaw(
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Applications') AND name = 'ReviewerComment') " +
+            "ALTER TABLE Applications ADD ReviewerComment NVARCHAR(500) NOT NULL DEFAULT ''");
+    }
+    catch { }
+
     var allApps = db.Applications.ToList();
     foreach (var a in allApps)
     {

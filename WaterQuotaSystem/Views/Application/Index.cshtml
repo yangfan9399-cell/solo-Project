@@ -97,6 +97,7 @@
                     <th>状态</th>
                     <th>当前责任人</th>
                     <th>摘要</th>
+                    <th>结论</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -122,6 +123,7 @@
                         </td>
                         <td>@app.CurrentResponsiblePerson</td>
                         <td><small class="text-muted">@app.Summary</small></td>
+                        <td><small>@app.Conclusion</small></td>
                         <td>
                             <a asp-action="Detail" asp-route-id="@app.Id" class="btn btn-sm btn-outline-info">详情</a>
                             @if (!app.IsReadOnly)

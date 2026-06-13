@@ -114,8 +114,9 @@
 
                     <h6 class="text-danger mb-3">📋 第四类：证据结论</h6>
                     <div class="mb-3">
-                        <label class="form-label">证据结论 <span class="badge bg-danger">当前: @(string.IsNullOrWhiteSpace(app.Conclusion) ? "未设置" : app.Conclusion)</span></label>
-                        <textarea name="NewConclusion" class="form-control" rows="3" placeholder="如不修改请留空。新结论将同步显示在详情页和列表摘要。"></textarea>
+                        <label class="form-label">证据结论(复核意见) <span class="badge bg-danger">当前: @(string.IsNullOrWhiteSpace(app.ReviewerComment) ? "未设置" : app.ReviewerComment)</span></label>
+                        <textarea name="NewConclusion" class="form-control" rows="3" placeholder="如不修改请留空。新结论将作为复核意见持久保存，与标准结论拼接显示在列表和详情。"></textarea>
+                        <small class="text-muted">此字段为可持久化复核意见，重启后不会丢失。标准结论由系统自动生成（含申请量/审批量/责任人/截止时间/状态），复核意见追加在标准结论之后。</small>
                     </div>
 
                     <hr/>
@@ -150,6 +151,7 @@
                 <table class="table table-sm table-borderless mb-0">
                     <tr><td class="text-muted" style="width:120px">列表摘要</td><td><small>@app.Summary</small></td></tr>
                     <tr><td class="text-muted">详情结论</td><td><small>@(string.IsNullOrWhiteSpace(app.Conclusion) ? "暂无" : app.Conclusion)</small></td></tr>
+                    <tr><td class="text-muted">复核意见</td><td><small class="text-primary">@(string.IsNullOrWhiteSpace(app.ReviewerComment) ? "未设置" : app.ReviewerComment)</small></td></tr>
                     <tr><td class="text-muted">状态</td><td><span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(app.Status) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(app.Status)</span></td></tr>
                     <tr><td class="text-muted">样本类型</td><td><span class="badge @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeCssClass(app.SampleType) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetSampleTypeDisplayName(app.SampleType)</span></td></tr>
                 </table>

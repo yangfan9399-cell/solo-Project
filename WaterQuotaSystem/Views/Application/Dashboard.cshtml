@@ -255,6 +255,102 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">📋 结论分布（同源数据实时同步）</h6>
+                <span class="badge bg-info">含复核意见: @Model.WithReviewerCommentCount 条</span>
+            </div>
+            <div class="card-body">
+                @if (Model.ConclusionDistribution.Any())
+                {
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>结论类型</th><th>数量</th><th>占比</th><th>含复核意见</th><th>复核意见样例</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ConclusionDistribution)
+                            {
+                                <tr>
+                                    <td><strong>@item.ConclusionLabel</strong></td>
+                                    <td>@item.Count</td>
+                                    <td>@item.Percentage%</td>
+                                    <td>
+                                        @if (item.WithCommentCount > 0)
+                                        {
+                                            <span class="badge bg-primary">@item.WithCommentCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.SampleComments.Any())
+                                        {
+                                            <small class="text-primary">@string.Join("；", item.SampleComments)</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">暂无</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <small class="text-muted d-block mt-2 border-top pt-2">
+                        ⚠ 结论类型由状态自动生成（含申请量/审批量/责任人/截止时间），复核意见为用户持久化输入。修改任何关键字段后此表实时重算。
+                    </small>
+                }
+                else
+                {
+                    <p class="text-muted">暂无结论分布数据。</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white"><h6 class="mb-0">📊 关键字段变更频次</h6></div>
+            <div class="card-body">
+                @{
+                    var fieldFreq = Model.RecentKeyChanges
+                        .GroupBy(c => c.FieldDisplayName)
+                        .Select(g => new { Field = g.Key, Count = g.Count() })
+                        .OrderByDescending(f => f.Count)
+                        .ToList();
+                }
+                @if (fieldFreq.Any())
+                {
+                    @foreach (var f in fieldFreq)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-info">@f.Field</span>
+                            <span><strong>@f.Count</strong> 次变更</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px">
+                            @{
+                                var maxCount = fieldFreq.First().Count;
+                                var width = maxCount > 0 ? (double)f.Count / maxCount * 100 : 0;
+                            }
+                            <div class="progress-bar bg-info" style="width: @width%"></div>
+                        </div>
+                    }
+                    <small class="text-muted d-block mt-2 border-top pt-2">
+                        变更频次反映关键字段的活跃度，与列表摘要和详情结论同步。
+                    </small>
+                }
+                else
+                {
+                    <p class="text-muted">暂无关键字段变更记录。</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (!string.IsNullOrEmpty(Model.DrillDownFilter) && Model.DrillDownRecords.Any())
 {
     <div class="row">

@@ -25,6 +25,7 @@ public class WaterQuotaDbContext : DbContext
             entity.Property(e => e.QuotaLimit).HasPrecision(18, 2);
             entity.Property(e => e.Summary).HasMaxLength(500);
             entity.Property(e => e.Conclusion).HasMaxLength(500);
+            entity.Property(e => e.ReviewerComment).HasMaxLength(500);
             entity.Property(e => e.BlockingReason).HasMaxLength(500);
             entity.Property(e => e.DifferentialFields).HasMaxLength(1000);
             entity.Property(e => e.RemediationPath).HasMaxLength(500);

@@ -20,6 +20,7 @@ public class WaterQuotaApplication
     public string Basis { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public string Conclusion { get; set; } = string.Empty;
+    public string ReviewerComment { get; set; } = string.Empty;
     public string BusinessRecord { get; set; } = string.Empty;
     public string FieldDescription { get; set; } = string.Empty;
     public string BlockingReason { get; set; } = string.Empty;

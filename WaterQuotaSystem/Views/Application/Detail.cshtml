@@ -56,6 +56,10 @@
                         <p><strong class="text-muted">采用依据：</strong>@app.Basis</p>
                         <p><strong class="text-muted">摘要：</strong>@app.Summary</p>
                         <p><strong class="text-muted">结论：</strong><span class="@(app.Status == ApplicationStatus.Blocked || app.Status == ApplicationStatus.Timeout ? "text-danger fw-bold" : "")">@app.Conclusion</span></p>
+                        @if (!string.IsNullOrWhiteSpace(app.ReviewerComment))
+                        {
+                            <p><strong class="text-muted">复核意见：</strong><span class="text-primary">@app.ReviewerComment</span></p>
+                        }
                     </div>
                 </div>
             </div>

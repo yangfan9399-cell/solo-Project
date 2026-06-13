@@ -168,7 +168,19 @@ public class WorkflowService : IWorkflowService
                     Count = g.Count(),
                     TotalAppliedQuota = g.Sum(a => a.AppliedQuota),
                     LatestConclusion = g.OrderByDescending(a => a.UpdatedAt).First().Conclusion
-                }).OrderByDescending(r => r.Count).ToList()
+                }).OrderByDescending(r => r.Count).ToList(),
+            WithReviewerCommentCount = allApps.Count(a => !string.IsNullOrWhiteSpace(a.ReviewerComment)),
+            ConclusionDistribution = allApps
+                .GroupBy(a => GetStatusDisplayName(a.Status))
+                .Select(g => new ConclusionDistributionItem
+                {
+                    ConclusionLabel = g.Key,
+                    Count = g.Count(),
+                    Percentage = allApps.Count > 0 ? Math.Round((double)g.Count() / allApps.Count * 100, 1) : 0,
+                    WithCommentCount = g.Count(a => !string.IsNullOrWhiteSpace(a.ReviewerComment)),
+                    SampleComments = g.Where(a => !string.IsNullOrWhiteSpace(a.ReviewerComment))
+                        .Select(a => a.ReviewerComment).Take(3).ToList()
+                }).OrderByDescending(c => c.Count).ToList()
         };
 
         var statusGroups = allApps.GroupBy(a => a.Status).Select(g => new StatusDistributionItem
@@ -278,7 +290,6 @@ public class WorkflowService : IWorkflowService
                 app.BlockingReason = $"申请用水指标({app.AppliedQuota}吨/月)超出园区限额({app.QuotaLimit}吨/月)，超限{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%，不符合规定";
                 app.DifferentialFields = $"申请指标:{app.AppliedQuota}吨/月 vs 限额:{app.QuotaLimit}吨/月 | 差异:+{app.AppliedQuota - app.QuotaLimit}吨/月(+{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%)";
                 app.RemediationPath = "1.重新核算实际用水需求，分阶段申请增量；2.提交节水改造方案，降低单耗后重新申报；3.如确需超限用水，需向市水务局申请特殊配额审批";
-                app.Conclusion = $"指标超限阻断：申请量超出限额{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%";
                 node.ToStatus = ApplicationStatus.Blocked;
                 node.ResponsiblePersonAfter = input.OperatorName;
                 AddKeyChange(keyChanges, app.Id, "Status", "状态", GetStatusDisplayName(previousStatus), "已阻断", input.OperatorName);
@@ -296,9 +307,11 @@ public class WorkflowService : IWorkflowService
                     if (oldQuota != input.ApprovedQuota.Value)
                         AddKeyChange(keyChanges, app.Id, "ApprovedQuota", "审批指标", oldQuota.ToString(), input.ApprovedQuota.Value.ToString(), input.OperatorName);
                 }
-                app.Conclusion = input.Conclusion;
                 if (!string.IsNullOrWhiteSpace(input.Conclusion))
-                    AddKeyChange(keyChanges, app.Id, "Conclusion", "结论", app.Conclusion, input.Conclusion, input.OperatorName);
+                {
+                    app.ReviewerComment = input.Conclusion;
+                    AddKeyChange(keyChanges, app.Id, "ReviewerComment", "复核意见", app.ReviewerComment, input.Conclusion, input.OperatorName);
+                }
                 node.ToStatus = ApplicationStatus.Approved;
                 node.Conclusion = input.Conclusion;
                 break;
@@ -309,7 +322,10 @@ public class WorkflowService : IWorkflowService
                 app.CurrentRole = RoleType.FieldPersonnel;
                 app.BlockingReason = "缺少必要现场证据：" + input.Comment;
                 app.RemediationPath = "1.补充现场勘验记录；2.提交必要的检测报告和批复文件；3.以上材料补齐后重新提交审核";
-                app.Conclusion = "退回补证：" + input.Comment;
+                if (!string.IsNullOrWhiteSpace(input.Comment))
+                {
+                    app.ReviewerComment = "退回补证：" + input.Comment;
+                }
                 node.ToStatus = ApplicationStatus.ReturnedForEvidence;
                 node.ResponsiblePersonAfter = input.OperatorName;
                 AddKeyChange(keyChanges, app.Id, "Status", "状态", GetStatusDisplayName(previousStatus), "退回补证", input.OperatorName);
@@ -391,15 +407,13 @@ public class WorkflowService : IWorkflowService
                 break;
         }
 
-        var userConclusion = input.Conclusion;
+        if (!string.IsNullOrWhiteSpace(input.Conclusion))
+        {
+            app.ReviewerComment = input.Conclusion;
+        }
 
         app.UpdatedAt = DateTime.Now;
         SyncApplicationDisplay(app);
-
-        if (!string.IsNullOrWhiteSpace(userConclusion) && userConclusion != app.Conclusion)
-        {
-            app.Conclusion = $"{app.Conclusion} | 复核意见:{userConclusion}";
-        }
 
         _context.ProcessingNodes.Add(node);
         _context.SaveChanges();
@@ -466,7 +480,7 @@ public class WorkflowService : IWorkflowService
 
         app.Summary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | 审批:{app.ApprovedQuota}{app.QuotaUnit} | {quotaInfo} | 责任人:{responsibleInfo} | 截止:{deadlineInfo} | {statusText}";
 
-        app.Conclusion = app.Status switch
+        var standardConclusion = app.Status switch
         {
             ApplicationStatus.Accepted => $"已受理，等待处理 | 申请{app.AppliedQuota}{app.QuotaUnit}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
             ApplicationStatus.Processing => $"处理中 | 申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，{quotaInfo}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
@@ -478,6 +492,10 @@ public class WorkflowService : IWorkflowService
             ApplicationStatus.Timeout => $"审批超时 | 申请{app.AppliedQuota}{app.QuotaUnit}，责任人:{responsibleInfo}，截止:{deadlineInfo}",
             _ => app.Conclusion
         };
+
+        app.Conclusion = string.IsNullOrWhiteSpace(app.ReviewerComment)
+            ? standardConclusion
+            : $"{standardConclusion} | 复核意见:{app.ReviewerComment}";
     }
 
     private static void AddKeyChange(List<FieldChangeRecord> changes, int appId, string fieldName, string displayName, string oldValue, string newValue, string changedBy)
@@ -638,16 +656,14 @@ public class WorkflowService : IWorkflowService
         }
 
         if (!string.IsNullOrWhiteSpace(input.NewConclusion) &&
-            input.NewConclusion != app.Conclusion)
+            input.NewConclusion != app.ReviewerComment)
         {
-            AddKeyChange(keyChanges, app.Id, "Conclusion", "证据结论",
-                string.IsNullOrWhiteSpace(app.Conclusion) ? "未设置" : app.Conclusion,
+            AddKeyChange(keyChanges, app.Id, "ReviewerComment", "证据结论",
+                string.IsNullOrWhiteSpace(app.ReviewerComment) ? "未设置" : app.ReviewerComment,
                 input.NewConclusion, input.OperatorName);
-            app.Conclusion = input.NewConclusion;
+            app.ReviewerComment = input.NewConclusion;
             updatedFields.Add("证据结论");
         }
-
-        var userConclusion = input.NewConclusion;
 
         if (app.AppliedQuota > app.QuotaLimit && app.Status == ApplicationStatus.Processing)
         {
@@ -672,11 +688,6 @@ public class WorkflowService : IWorkflowService
 
         app.UpdatedAt = DateTime.Now;
         SyncApplicationDisplay(app);
-
-        if (!string.IsNullOrWhiteSpace(userConclusion))
-        {
-            app.Conclusion = $"{app.Conclusion} | 复核意见:{userConclusion}";
-        }
 
         var node = new ProcessingNode
         {

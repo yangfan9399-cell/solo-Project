@@ -24,6 +24,8 @@ public class DashboardViewModel
     public List<MonthlyTrendItem> MonthlyTrend { get; set; } = [];
     public List<RecentKeyChangeItem> RecentKeyChanges { get; set; } = [];
     public List<ResponsiblePersonItem> ResponsiblePersonStats { get; set; } = [];
+    public List<ConclusionDistributionItem> ConclusionDistribution { get; set; } = [];
+    public int WithReviewerCommentCount { get; set; }
     public List<WaterQuotaApplication> DrillDownRecords { get; set; } = [];
     public string? DrillDownFilter { get; set; }
 }
@@ -38,6 +40,15 @@ public class RecentKeyChangeItem
     public string ChangedBy { get; set; } = string.Empty;
     public DateTime ChangedAt { get; set; }
     public int ApplicationId { get; set; }
+}
+
+public class ConclusionDistributionItem
+{
+    public string ConclusionLabel { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public double Percentage { get; set; }
+    public int WithCommentCount { get; set; }
+    public List<string> SampleComments { get; set; } = [];
 }
 
 public class ResponsiblePersonItem
