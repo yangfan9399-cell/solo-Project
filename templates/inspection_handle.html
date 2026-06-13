@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ inspection.inspection_no }} - 处理台{% endblock %}
+
+{% block content %}
+<div x-data="handleData()" x-init="init()">
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="flex items-center space-x-3">
+                    <h1 class="text-2xl font-bold text-gray-900">处理台</h1>
+                    <span class="text-lg text-gray-500">{{ inspection.inspection_no }}</span>
+                    <span class="status-badge status-{{ inspection.status }}">
+                        {{ inspection.get_status_display }}
+                    </span>
+                    {% if inspection.abnormal_type != 'normal' %}
+                    <span class="abnormal-badge abnormal-{{ inspection.abnormal_type }}">
+                        {{ inspection.get_abnormal_type_display }}
+                    </span>
+                    {% endif %}
+                    {% if is_readonly %}
+                    <span class="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded">只读</span>
+                    {% endif %}
+                </div>
+                <p class="text-gray-500 mt-1">{{ inspection.equipment.name }}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'inspection:detail' inspection.pk %}" class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    查看详情
+                </a>
+                <a href="{% url 'inspection:list' %}" class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    返回列表
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="handle-content">
+        {% include "partials/inspection_handle_content.html" %}
+    </div>
+</div>
+
+<script>
+function handleData() {
+    return {
+        activeTab: 'summary',
+        showEvidenceModal: false,
+        showRecordModal: false,
+        
+        init() {
+        },
+        
+        switchTab(tab) {
+            this.activeTab = tab;
+        },
+        
+        submitAction(action) {
+            if (!confirm('确定执行此操作吗？')) {
+                return false;
+            }
+            return true;
+        }
+    }
+}
+</script>
+{% endblock %}

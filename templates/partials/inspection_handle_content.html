@@ -1,0 +1,479 @@
+<div x-data="handleContentData()">
+    {% if is_readonly %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+            <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span class="text-sm text-yellow-700">
+                此记录已归档或已完结，当前为只读状态。如需重新处理，请申请重新开启。
+            </span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                <div class="border-b border-gray-200">
+                    <div class="flex">
+                        <button @click="activeTab = 'summary'"
+                                :class="activeTab === 'summary' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="px-6 py-4 text-sm font-medium border-b-2 transition">
+                            日检摘要
+                        </button>
+                        <button @click="activeTab = 'metrics'"
+                                :class="activeTab === 'metrics' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="px-6 py-4 text-sm font-medium border-b-2 transition">
+                            指标详情
+                        </button>
+                        <button @click="activeTab = 'evidence'"
+                                :class="activeTab === 'evidence' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="px-6 py-4 text-sm font-medium border-b-2 transition">
+                            证据附件
+                        </button>
+                        <button @click="activeTab = 'records'"
+                                :class="activeTab === 'records' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                                class="px-6 py-4 text-sm font-medium border-b-2 transition">
+                            业务记录
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div x-show="activeTab === 'summary'">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">日检摘要</label>
+                                <div class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
+                                    {{ inspection.summary|default:"暂无" }}
+                                </div>
+                            </div>
+                            
+                            {% if inspection.abnormal_type != 'normal' %}
+                            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                                <h3 class="text-sm font-medium text-red-900 mb-3">异常信息</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="text-xs font-medium text-red-700">阻断原因</label>
+                                        <p class="text-sm text-red-900 mt-1">{{ inspection.block_reason|default:"暂无" }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-medium text-red-700">补救路径</label>
+                                        <p class="text-sm text-red-900 mt-1 whitespace-pre-line">{{ inspection.remediation_path|default:"暂无" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if is_supervisor and not is_readonly %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
+                                <textarea name="conclusion" rows="3" form="action-form"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                          placeholder="请输入最终结论...">{{ inspection.conclusion|default:"" }}</textarea>
+                            </div>
+                            {% else %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
+                                <div class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 text-sm">
+                                    {{ inspection.conclusion|default:"暂无" }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div x-show="activeTab === 'metrics'" x-cloak>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">指标名称</th>
+                                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">类别</th>
+                                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">标准值</th>
+                                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">实测值</th>
+                                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">状态</th>
+                                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for metric in metrics %}
+                                    <tr class="border-b border-gray-100 {% if metric.is_abnormal %}bg-red-50{% endif %}">
+                                        <td class="py-3 px-4 text-sm text-gray-900 font-medium">{{ metric.metric_name }}</td>
+                                        <td class="py-3 px-4 text-sm text-gray-500">{{ metric.get_category_display }}</td>
+                                        <td class="py-3 px-4 text-sm text-gray-600 text-center">{{ metric.standard_value }}{% if metric.unit %} {{ metric.unit }}{% endif %}</td>
+                                        <td class="py-3 px-4 text-sm text-center font-medium {% if metric.is_abnormal %}text-red-600{% else %}text-gray-900{% endif %}">
+                                            {{ metric.measured_value }}{% if metric.unit %} {{ metric.unit }}{% endif %}
+                                        </td>
+                                        <td class="py-3 px-4 text-center">
+                                            {% if metric.is_abnormal %}
+                                            <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">异常</span>
+                                            {% else %}
+                                            <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">正常</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-3 px-4 text-sm text-gray-500">
+                                            {{ metric.abnormal_desc|default:"-" }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div x-show="activeTab === 'evidence'" x-cloak>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-medium text-gray-900">证据附件列表</h3>
+                            {% if not is_readonly %}
+                            <button @click="showEvidenceModal = true"
+                                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                + 上传证据
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% include "partials/evidence_list.html" %}
+                    </div>
+
+                    <div x-show="activeTab === 'records'" x-cloak>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-medium text-gray-900">业务记录列表</h3>
+                            {% if not is_readonly and is_field_staff %}
+                            <button @click="showRecordModal = true"
+                                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                + 添加记录
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% include "partials/business_record_list.html" %}
+                    </div>
+                </div>
+            </div>
+
+            {% if not is_readonly %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">处理操作</h3>
+                
+                <form id="action-form" 
+                      hx-post="{% url 'inspection:api_record_action' inspection.pk %}"
+                      hx-target="#handle-content"
+                      hx-swap="innerHTML"
+                      hx-confirm="确定执行此操作吗？">
+                    {% csrf_token %}
+                    
+                    {% if is_field_staff %}
+                    <div class="space-y-4">
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="action" value="submit_review" class="mr-2" checked>
+                                <span class="text-sm">提交复核</span>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">处理意见</label>
+                            <textarea name="remarks" rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      placeholder="请输入处理意见..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">采用依据</label>
+                            <textarea name="basis" rows="2"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      placeholder="请输入采用的法规、标准或规程依据..."></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition">
+                            提交复核
+                        </button>
+                    </div>
+                    {% elif is_supervisor %}
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-400 transition">
+                                <input type="radio" name="action" value="approve" class="mr-3" checked>
+                                <div>
+                                    <div class="text-sm font-medium text-green-600">正常放行</div>
+                                    <div class="text-xs text-gray-500">审核通过，设备可正常运行</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-red-400 transition">
+                                <input type="radio" name="action" value="reject" class="mr-3">
+                                <div>
+                                    <div class="text-sm font-medium text-red-600">异常阻断</div>
+                                    <div class="text-xs text-gray-500">存在异常，禁止设备运行</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-orange-400 transition">
+                                <input type="radio" name="action" value="return" class="mr-3">
+                                <div>
+                                    <div class="text-sm font-medium text-orange-600">退回补证</div>
+                                    <div class="text-xs text-gray-500">资料不全，需要补充证据</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-gray-400 transition">
+                                <input type="radio" name="action" value="archive" class="mr-3">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-600">归档</div>
+                                    <div class="text-xs text-gray-500">记录完结，归档保存</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">复核意见 <span class="text-red-500">*</span></label>
+                            <textarea name="remarks" rows="3" required
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      placeholder="请输入复核意见..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">采用依据</label>
+                            <textarea name="basis" rows="2"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      placeholder="请输入采用的法规、标准或规程依据..."></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">实际损失金额</label>
+                                <input type="number" name="actual_loss" step="0.01"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="0.00"
+                                       value="{{ inspection.actual_loss|default:'' }}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">责任对象</label>
+                                <input type="text" name="responsible_party"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                       placeholder="请输入责任对象"
+                                       value="{{ inspection.responsible_party|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">最终结论</label>
+                            <textarea name="conclusion" rows="3"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      placeholder="请输入最终结论...">{{ inspection.conclusion|default:"" }}</textarea>
+                        </div>
+                        
+                        <button type="submit"
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition">
+                            确认处理
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-6 text-gray-500">
+                        <p>您没有操作权限</p>
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">审批流转</h3>
+                <div class="relative max-h-96 overflow-y-auto scrollbar-thin">
+                    {% for node in nodes %}
+                    <div class="flex items-start mb-4 last:mb-0">
+                        <div class="flex flex-col items-center mr-4">
+                            <div class="w-3 h-3 rounded-full {% if forloop.last %}bg-blue-600{% else %}bg-gray-300{% endif %}"></div>
+                            {% if not forloop.last %}
+                            <div class="w-0.5 h-12 bg-gray-200"></div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 pb-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">{{ node.get_action_display }}</span>
+                                {% if node.is_key_change %}
+                                <span class="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded">关键变更</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {{ node.operator.username }} · {{ node.action_time|date:"Y-m-d H:i" }}
+                            </div>
+                            {% if node.remarks %}
+                            <div class="text-xs text-gray-600 mt-1 bg-gray-50 rounded p-2">
+                                {{ node.remarks }}
+                            </div>
+                            {% endif %}
+                            {% if node.basis %}
+                            <div class="text-xs text-blue-600 mt-1">
+                                依据：{{ node.basis }}
+                            </div>
+                            {% endif %}
+                            {% if node.key_change_desc %}
+                            <div class="text-xs text-red-600 mt-1 bg-red-50 rounded p-2">
+                                {{ node.key_change_desc }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">关键信息</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">日检单号</span>
+                        <span class="font-medium text-gray-900">{{ inspection.inspection_no }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">索道设备</span>
+                        <span class="font-medium text-gray-900">{{ inspection.equipment.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">日检日期</span>
+                        <span class="font-medium text-gray-900">{{ inspection.inspection_date|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">现场日检员</span>
+                        <span class="font-medium text-gray-900">{{ inspection.inspector.username }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">当前状态</span>
+                        <span class="status-badge status-{{ inspection.status }}">{{ inspection.get_status_display }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">预估损失</span>
+                        <span class="font-medium text-gray-900">¥{{ inspection.estimated_loss|default:"0" }}</span>
+                    </div>
+                    {% if inspection.actual_loss %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">实际损失</span>
+                        <span class="font-medium text-red-600">¥{{ inspection.actual_loss }}</span>
+                    </div>
+                    {% endif %}
+                    {% if inspection.responsible_party %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">责任对象</span>
+                        <span class="font-medium text-gray-900">{{ inspection.responsible_party }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not is_readonly %}
+    <div x-show="showEvidenceModal" x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+         @click.self="showEvidenceModal = false">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">上传证据附件</h3>
+            <form hx-post="{% url 'inspection:api_upload_evidence' inspection.pk %}"
+                  hx-target="#evidence-list-container"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="showEvidenceModal = false"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">文件类型</label>
+                        <select name="file_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="photo">现场照片</option>
+                            <option value="video">视频录像</option>
+                            <option value="document">文档资料</option>
+                            <option value="report">检测报告</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">文件名称</label>
+                        <input type="text" name="file_name" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                               placeholder="请输入文件名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">选择文件</label>
+                        <input type="file" name="file" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">证据说明</label>
+                        <textarea name="description" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                  placeholder="请输入证据说明..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" @click="showEvidenceModal = false"
+                            class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        上传
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if is_field_staff %}
+    <div x-show="showRecordModal" x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+         @click.self="showRecordModal = false">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">添加业务记录</h3>
+            <form hx-post="{% url 'inspection:api_add_business_record' inspection.pk %}"
+                  hx-target="#business-record-container"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="showRecordModal = false">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">记录类型</label>
+                        <select name="record_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="fault">故障记录</option>
+                            <option value="maintenance">维护记录</option>
+                            <option value="incident">事件记录</option>
+                            <option value="other">其他记录</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">记录标题</label>
+                        <input type="text" name="title" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                               placeholder="请输入记录标题">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">记录内容</label>
+                        <textarea name="content" rows="4" required
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                  placeholder="请输入记录内容..."></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" @click="showRecordModal = false"
+                            class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        添加
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<script>
+function handleContentData() {
+    return {
+        activeTab: 'summary',
+        showEvidenceModal: false,
+        showRecordModal: false,
+    }
+}
+</script>

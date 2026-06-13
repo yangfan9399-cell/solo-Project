@@ -1,0 +1,31 @@
+<div id="business-record-container">
+    {% if business_records %}
+    <div class="space-y-3">
+        {% for record in business_records %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-200 transition">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">{{ record.get_record_type_display }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ record.title }}</span>
+                </div>
+                <span class="text-xs text-gray-500">{{ record.record_time|date:"Y-m-d H:i" }}</span>
+            </div>
+            <p class="text-sm text-gray-600">{{ record.content }}</p>
+            <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
+                <span class="text-xs text-gray-400">记录人：{{ record.recorded_by.username }}</span>
+                {% if record.node %}
+                <span class="text-xs text-gray-400">节点：{{ record.node.node_no }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 text-gray-400">
+        <svg class="mx-auto h-12 w-12 mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        暂无业务记录
+    </div>
+    {% endif %}
+</div>

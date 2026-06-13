@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}复盘统计 - 索道日检审批系统{% endblock %}
+
+{% block content %}
+<div x-data="reviewData()" x-init="loadStats()">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">复盘统计</h1>
+        <p class="text-gray-500 mt-1">多维度统计分析，点击数据可钻取到具体记录</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="drillToRecords('all')">
+            <div class="text-sm text-gray-500">总记录数</div>
+            <div class="text-3xl font-bold text-gray-900 mt-1" x-text="stats.total || 0">-</div>
+            <div class="text-xs text-blue-600 mt-2">查看全部 →</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="drillToRecords('approved')">
+            <div class="text-sm text-gray-500">正常放行</div>
+            <div class="text-3xl font-bold text-green-600 mt-1" x-text="getStatusCount('approved')">-</div>
+            <div class="text-xs text-green-600 mt-2">点击查看 →</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="drillToRecords('rejected')">
+            <div class="text-sm text-gray-500">异常阻断</div>
+            <div class="text-3xl font-bold text-red-600 mt-1" x-text="getStatusCount('rejected')">-</div>
+            <div class="text-xs text-red-600 mt-2">点击查看 →</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="drillToAbnormal('approval_timeout')">
+            <div class="text-sm text-gray-500">审批超时</div>
+            <div class="text-3xl font-bold text-orange-600 mt-1" x-text="getAbnormalTypeCount('approval_timeout')">-</div>
+            <div class="text-xs text-orange-600 mt-2">点击查看 →</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">金额损失统计</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <div class="text-sm text-gray-500">预估损失总计</div>
+                        <div class="text-2xl font-bold text-gray-900" x-text="'¥' + formatMoney(stats.loss_stats?.total_estimated || 0)">-</div>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition"
+                     @click="drillToRecordsWithLoss()">
+                    <div>
+                        <div class="text-sm text-gray-500">实际损失总计</div>
+                        <div class="text-2xl font-bold text-red-600" x-text="'¥' + formatMoney(stats.loss_stats?.total_actual || 0)">-</div>
+                    </div>
+                    <div class="text-xs text-red-600">钻取详情 →</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">异常类型分布</h3>
+            <div class="space-y-4">
+                <template x-for="item in stats.abnormal_data || []" :key="item.type">
+                    <div class="p-4 border border-gray-200 rounded-lg hover:border-blue-400 cursor-pointer transition"
+                         @click="drillToAbnormal(item.type)">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-900" x-text="item.label"></span>
+                            <span class="text-sm font-bold" :class="getAbnormalColorClass(item.type)" x-text="item.count"></span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all"
+                                 :class="getAbnormalBarClass(item.type)"
+                                 :style="{ width: getAbnormalPercentage(item.count) + '%' }"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-2">点击钻取到具体记录 →</div>
+                    </div>
+                </template>
+                <div x-show="!stats.abnormal_data || stats.abnormal_data.length === 0" class="text-gray-400 text-center py-8">
+                    暂无异常数据
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">近30天日检趋势</h3>
+        <div class="h-72 flex items-end justify-between space-x-1 px-2">
+            <template x-for="item in stats.monthly_data || []" :key="item.date">
+                <div class="flex-1 flex flex-col items-center group relative"
+                     @click="drillToDate(item.date)">
+                    <div class="w-full flex justify-center items-end h-48">
+                        <div class="relative w-full max-w-[24px] flex justify-center">
+                            <div class="absolute bottom-0 w-full bg-blue-500 rounded-t cursor-pointer hover:bg-blue-600 transition-all"
+                                 :style="{ height: (item.total * 25 + 4) + 'px' }">
+                                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                    <div>总计: <span x-text="item.total"></span></div>
+                                    <div>异常: <span x-text="item.abnormal"></span></div>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 w-full bg-red-400 rounded-t cursor-pointer"
+                                 :style="{ height: (item.abnormal * 25) + 'px' }"
+                                 x-show="item.abnormal > 0"></div>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400 mt-2" x-text="item.date.slice(3)"></span>
+                </div>
+            </template>
+        </div>
+        <div class="flex items-center justify-center mt-4 space-x-6">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-blue-500 rounded"></div>
+                <span class="text-sm text-gray-600">总记录数</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 bg-red-400 rounded"></div>
+                <span class="text-sm text-gray-600">异常数</span>
+            </div>
+            <div class="text-sm text-gray-400">点击柱状图可钻取到当天记录</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">设备异常排行榜</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">排名</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">设备编号</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">设备名称</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">总记录数</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">异常数</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">异常率</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(item, index) in stats.equipment_stats || []" :key="item.equipment__equipment_no">
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            @click="drillToEquipment(item.equipment__equipment_no)">
+                            <td class="py-3 px-4">
+                                <span :class="getRankClass(index)" class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold">
+                                    <span x-text="index + 1"></span>
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-sm font-medium text-gray-900" x-text="item.equipment__equipment_no"></td>
+                            <td class="py-3 px-4 text-sm text-gray-600" x-text="item.equipment__name"></td>
+                            <td class="py-3 px-4 text-sm text-gray-600 text-center" x-text="item.total"></td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <span class="text-red-600 font-bold" x-text="item.abnormal"></span>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <div class="inline-flex items-center">
+                                    <div class="w-24 h-2 bg-gray-100 rounded-full overflow-hidden mr-2">
+                                        <div class="h-full bg-red-400 rounded-full"
+                                             :style="{ width: (item.abnormal / item.total * 100) + '%' }"></div>
+                                    </div>
+                                    <span class="text-gray-600" x-text="(item.abnormal / item.total * 100).toFixed(1) + '%'"></span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <span class="text-blue-600 hover:text-blue-800">查看记录 →</span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-xs text-gray-400 mt-4 text-center">点击任意行可钻取到该设备的所有日检记录</div>
+    </div>
+</div>
+
+<script>
+function reviewData() {
+    return {
+        stats: {},
+        
+        async loadStats() {
+            try {
+                const response = await fetch('{% url "inspection:api_stats" %}');
+                this.stats = await response.json();
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        },
+        
+        getStatusCount(status) {
+            if (!this.stats.status_data) return 0;
+            const item = this.stats.status_data.find(s => s.status === status);
+            return item ? item.count : 0;
+        },
+        
+        getAbnormalTypeCount(type) {
+            if (!this.stats.abnormal_data) return 0;
+            const item = this.stats.abnormal_data.find(a => a.type === type);
+            return item ? item.count : 0;
+        },
+        
+        getAbnormalCount() {
+            if (!this.stats.abnormal_data) return 0;
+            return this.stats.abnormal_data.reduce((sum, item) => sum + item.count, 0);
+        },
+        
+        getAbnormalPercentage(count) {
+            const total = this.getAbnormalCount();
+            if (!total) return 0;
+            return (count / total * 100).toFixed(1);
+        },
+        
+        getAbnormalColorClass(type) {
+            const classes = {
+                'metric_exceed': 'text-red-600',
+                'evidence_missing': 'text-yellow-600',
+                'approval_timeout': 'text-orange-600',
+            };
+            return classes[type] || 'text-gray-600';
+        },
+        
+        getAbnormalBarClass(type) {
+            const classes = {
+                'metric_exceed': 'bg-red-500',
+                'evidence_missing': 'bg-yellow-500',
+                'approval_timeout': 'bg-orange-500',
+            };
+            return classes[type] || 'bg-gray-400';
+        },
+        
+        getRankClass(index) {
+            if (index === 0) return 'bg-red-500 text-white';
+            if (index === 1) return 'bg-orange-500 text-white';
+            if (index === 2) return 'bg-yellow-500 text-white';
+            return 'bg-gray-200 text-gray-600';
+        },
+        
+        formatMoney(value) {
+            const num = parseFloat(value);
+            return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+        
+        drillToRecords(status) {
+            let url = '{% url "inspection:list" %}';
+            if (status && status !== 'all') {
+                url += '?status=' + status;
+            }
+            window.location.href = url;
+        },
+        
+        drillToRecordsWithLoss() {
+            window.location.href = '{% url "inspection:list" %}?status=rejected';
+        },
+        
+        drillToAbnormal(type) {
+            window.location.href = '{% url "inspection:list" %}?abnormal_type=' + type;
+        },
+        
+        drillToDate(dateStr) {
+            const year = new Date().getFullYear();
+            const fullDate = year + '-' + dateStr.replace('-', '-');
+            window.location.href = '{% url "inspection:list" %}?date_from=' + fullDate + '&date_to=' + fullDate;
+        },
+        
+        drillToEquipment(equipmentNo) {
+            window.location.href = '{% url "inspection:list" %}?keyword=' + equipmentNo;
+        },
+    }
+}
+</script>
+{% endblock %}

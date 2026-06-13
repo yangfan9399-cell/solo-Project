@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}统计看板 - 索道日检审批系统{% endblock %}
+
+{% block content %}
+<div x-data="dashboardData()" x-init="loadStats()">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">统计看板</h1>
+        <p class="text-gray-500 mt-1">索道设备日检异常停运与复开审批总览</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="window.location.href='{% url 'inspection:list' %}?status='">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">总记录数</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1" x-text="stats.total || 0">-</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="window.location.href='{% url 'inspection:list' %}?status=processing'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">处理中</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-1" x-text="getStatusCount('processing')">-</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="window.location.href='{% url 'inspection:list' %}?status=reviewing'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">复核中</p>
+                    <p class="text-3xl font-bold text-indigo-600 mt-1" x-text="getStatusCount('reviewing')">-</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover cursor-pointer"
+             @click="window.location.href='{% url 'inspection:list' %}?abnormal_type=metric_exceed'">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">异常记录</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1" x-text="getAbnormalCount()">-</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">状态分布</h3>
+            <div class="space-y-3">
+                <template x-for="item in stats.status_data || []" :key="item.status">
+                    <div class="flex items-center">
+                        <span class="w-20 text-sm text-gray-600" x-text="item.label"></span>
+                        <div class="flex-1 mx-3 bg-gray-100 rounded-full h-6 overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 :class="getStatusBarClass(item.status)"
+                                 :style="{ width: getPercentage(item.count, stats.total) + '%' }"></div>
+                        </div>
+                        <span class="w-12 text-right text-sm font-medium" x-text="item.count"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">异常类型分布</h3>
+            <div class="space-y-3">
+                <template x-for="item in stats.abnormal_data || []" :key="item.type">
+                    <div class="flex items-center cursor-pointer hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
+                         @click="filterByAbnormalType(item.type)">
+                        <span class="w-24 text-sm text-gray-600" x-text="item.label"></span>
+                        <div class="flex-1 mx-3 bg-gray-100 rounded-full h-6 overflow-hidden">
+                            <div class="h-full rounded-full bg-red-400 transition-all duration-500"
+                                 :style="{ width: getAbnormalPercentage(item.count) + '%' }"></div>
+                        </div>
+                        <span class="w-12 text-right text-sm font-medium text-red-600" x-text="item.count"></span>
+                    </div>
+                </template>
+                <div x-show="!stats.abnormal_data || stats.abnormal_data.length === 0" class="text-gray-400 text-center py-4">
+                    暂无异常数据
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">近30天趋势</h3>
+        <div class="h-64 flex items-end justify-between space-x-1">
+            <template x-for="item in stats.monthly_data || []" :key="item.date">
+                <div class="flex-1 flex flex-col items-center group">
+                    <div class="w-full flex justify-center relative">
+                        <div class="bg-blue-500 w-full max-w-[20px] rounded-t transition-all hover:bg-blue-600 cursor-pointer"
+                             :style="{ height: (item.total * 20 + 4) + 'px' }"
+                             @click="filterByDate(item.date)">
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400 mt-2" x-text="item.date.slice(3)"></span>
+                    <div class="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        <span x-text="'总计: ' + item.total + ', 异常: ' + item.abnormal"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">设备异常排行</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">设备编号</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">设备名称</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">总记录数</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">异常数</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-500">异常率</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="item in stats.equipment_stats || []" :key="item.equipment__equipment_no">
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            @click="filterByEquipment(item.equipment__equipment_no)">
+                            <td class="py-3 px-4 text-sm font-medium text-gray-900" x-text="item.equipment__equipment_no"></td>
+                            <td class="py-3 px-4 text-sm text-gray-600" x-text="item.equipment__name"></td>
+                            <td class="py-3 px-4 text-sm text-gray-600 text-center" x-text="item.total"></td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <span class="text-red-600 font-medium" x-text="item.abnormal"></span>
+                            </td>
+                            <td class="py-3 px-4 text-sm text-center">
+                                <div class="inline-flex items-center">
+                                    <div class="w-20 h-2 bg-gray-100 rounded-full overflow-hidden mr-2">
+                                        <div class="h-full bg-red-400 rounded-full"
+                                             :style="{ width: (item.abnormal / item.total * 100) + '%' }"></div>
+                                    </div>
+                                    <span class="text-gray-600" x-text="(item.abnormal / item.total * 100).toFixed(1) + '%'"></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboardData() {
+    return {
+        stats: {},
+        
+        async loadStats() {
+            try {
+                const response = await fetch('{% url "inspection:api_stats" %}');
+                this.stats = await response.json();
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        },
+        
+        getStatusCount(status) {
+            if (!this.stats.status_data) return 0;
+            const item = this.stats.status_data.find(s => s.status === status);
+            return item ? item.count : 0;
+        },
+        
+        getAbnormalCount() {
+            if (!this.stats.abnormal_data) return 0;
+            return this.stats.abnormal_data.reduce((sum, item) => sum + item.count, 0);
+        },
+        
+        getPercentage(count, total) {
+            if (!total) return 0;
+            return (count / total * 100).toFixed(1);
+        },
+        
+        getAbnormalPercentage(count) {
+            const total = this.getAbnormalCount();
+            if (!total) return 0;
+            return (count / total * 100).toFixed(1);
+        },
+        
+        getStatusBarClass(status) {
+            const classes = {
+                'pending': 'bg-yellow-400',
+                'processing': 'bg-blue-400',
+                'reviewing': 'bg-indigo-400',
+                'approved': 'bg-green-400',
+                'rejected': 'bg-red-400',
+                'returned': 'bg-orange-400',
+                'archived': 'bg-gray-400',
+                'timeout': 'bg-red-500',
+            };
+            return classes[status] || 'bg-gray-300';
+        },
+        
+        filterByStatus(status) {
+            window.location.href = '{% url "inspection:list" %}?status=' + status;
+        },
+        
+        filterByAbnormalType(type) {
+            window.location.href = '{% url "inspection:list" %}?abnormal_type=' + type;
+        },
+        
+        filterByDate(dateStr) {
+            const year = new Date().getFullYear();
+            const fullDate = year + '-' + dateStr.replace('-', '-');
+            window.location.href = '{% url "inspection:list" %}?date_from=' + fullDate + '&date_to=' + fullDate;
+        },
+        
+        filterByEquipment(equipmentNo) {
+            window.location.href = '{% url "inspection:list" %}?keyword=' + equipmentNo;
+        },
+    }
+}
+</script>
+{% endblock %}

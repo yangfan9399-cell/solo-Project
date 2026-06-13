@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN" x-data="{ sidebarOpen: false }">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}索道日检审批系统{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-reviewing { background: #e0e7ff; color: #3730a3; }
+        .status-approved { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-returned { background: #fed7aa; color: #9a3412; }
+        .status-archived { background: #e5e7eb; color: #374151; }
+        .status-timeout { background: #fecaca; color: #991b1b; }
+        
+        .abnormal-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .abnormal-normal { background: #d1fae5; color: #065f46; }
+        .abnormal-metric_exceed { background: #fee2e2; color: #991b1b; }
+        .abnormal-evidence_missing { background: #fef3c7; color: #92400e; }
+        .abnormal-approval_timeout { background: #fecaca; color: #991b1b; }
+        
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            flex-shrink: 0;
+        }
+        .timeline-line {
+            width: 2px;
+            background: #e5e7eb;
+            flex-shrink: 0;
+        }
+        
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+
+        .card-hover:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+            transition: all 0.2s;
+        }
+
+        .diff-highlight {
+            background: #fef9c3;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    {% if user.is_authenticated %}
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span class="ml-2 text-xl font-bold text-gray-900">索道日检审批系统</span>
+                    </div>
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
+                        <a href="{% url 'inspection:dashboard' %}" 
+                           class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium {% if request.resolver_match.url_name == 'dashboard' %}text-blue-600 border-b-2 border-blue-600{% endif %}">
+                            统计看板
+                        </a>
+                        <a href="{% url 'inspection:list' %}"
+                           class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium {% if 'list' in request.resolver_match.url_name %}text-blue-600 border-b-2 border-blue-600{% endif %}">
+                            日检列表
+                        </a>
+                        <a href="{% url 'inspection:review_board' %}"
+                           class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium {% if 'review' in request.resolver_match.url_name %}text-blue-600 border-b-2 border-blue-600{% endif %}">
+                            复盘统计
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="ml-3 relative">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-500">{{ user.get_role_display }}</span>
+                            <span class="text-sm font-medium text-gray-700">{{ user.username }}</span>
+                            <a href="{% url 'inspection:logout' %}" class="text-sm text-red-600 hover:text-red-800">退出</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <main class="{% if user.is_authenticated %}max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <div id="modal-container"></div>
+    
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

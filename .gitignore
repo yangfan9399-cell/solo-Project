@@ -1,0 +1,36 @@
+.env
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info
+.eggs/
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 静态文件
+staticfiles/
+media/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 数据库
+*.sqlite3
+db.sqlite3
+
+# macOS
+.DS_Store
