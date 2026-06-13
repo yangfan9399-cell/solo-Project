@@ -20,5 +20,8 @@ export default defineNuxtConfig({
       appName: '高值耗材追溯系统',
       version: '1.0.0'
     }
+  },
+  nitro: {
+    compatibilityDate: '2024-04-03'
   }
 })

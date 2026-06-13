@@ -8,12 +8,13 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "postinstall": "nuxt prepare && node scripts/fix-rollup.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "prisma:push": "prisma db push",
-    "db:setup": "prisma db push && prisma generate && node prisma/seed.js"
+    "db:setup": "prisma db push && prisma generate && node prisma/seed.js",
+    "fix:rollup": "node scripts/fix-rollup.mjs"
   },
   "devDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.62.0",

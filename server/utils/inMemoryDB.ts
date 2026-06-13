@@ -771,9 +771,13 @@ export class InMemoryDB {
       record.blockingReason = null
       record.remedialPath = null
     } else {
-      record.status = 'REVIEW_REJECTED'
+      record.status = 'REPROCESSING'
+      record.currentHandlerId = 2
       record.blockingReason = data.blockingReason || null
       record.remedialPath = data.remedialPath || null
+      record.version = (record.version || 1) + 1
+      record.isAbnormal = true
+      record.abnormalType = 'REPROCESS'
     }
 
     const nodes = this.reviewNodes.filter(n => n.recordId === id)
@@ -836,6 +840,30 @@ export class InMemoryDB {
           changedBy: data.operatorName
         })
       }
+    }
+
+    if (!data.passed) {
+      const maxOrder = Math.max(...nodes.map(n => n.nodeOrder), 0)
+      this.reviewNodes.push({
+        id: generateId(),
+        recordId: id,
+        nodeType: 'REPROCESS',
+        nodeStatus: 'PENDING',
+        nodeName: '重新处理节点',
+        nodeOrder: maxOrder + 1,
+        operatorId: null,
+        operatorName: null,
+        handlerId: 2,
+        handlerName: '李护士',
+        content: data.content || '复核退回，需重新处理',
+        basis: null,
+        blockingReason: data.blockingReason || null,
+        remedialPath: data.remedialPath || null,
+        diffDataJson: null,
+        remark: null,
+        createdAt: new Date().toISOString(),
+        completedAt: null
+      })
     }
 
     return record
@@ -996,6 +1024,7 @@ export class InMemoryDB {
 
     const normalCount = records.filter(r => !r.isAbnormal).length
     const abnormalCount = records.filter(r => r.isAbnormal).length
+    const archivedCount = records.filter(r => r.status === 'ARCHIVED').length
 
     const abnormalByType: Record<string, number> = {}
     for (const r of records) {
@@ -1004,6 +1033,7 @@ export class InMemoryDB {
       }
     }
     const byType = Object.entries(abnormalByType).map(([type, count]) => ({ type, count }))
+    const abnormalTypeStats = byType.map(t => ({ abnormalType: t.type, _count: t.count }))
 
     const deptGroups: Record<string, { count: number; totalAmount: number }> = {}
     for (const r of records) {
@@ -1031,6 +1061,7 @@ export class InMemoryDB {
         total,
         normal: normalCount,
         abnormal: abnormalCount,
+        archived: archivedCount,
         abnormalRate: total > 0 ? ((abnormalCount / total) * 100).toFixed(1) + '%' : '0%'
       },
       statusStats,
@@ -1039,6 +1070,7 @@ export class InMemoryDB {
         abnormal: abnormalCount,
         byType
       },
+      abnormalTypeStats,
       deptStats,
       today: {
         count: todayCount,

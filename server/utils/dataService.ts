@@ -241,19 +241,25 @@ export async function reviewRecord(id: number, data: any) {
   await ensureInitialized()
   if (usePrisma && prisma) {
     const result = await prisma.$transaction(async (tx: any) => {
-      const status = data.passed ? 'REVIEW_PASSED' : 'REVIEW_REJECTED'
+      const status = data.passed ? 'REVIEW_PASSED' : 'REPROCESSING'
+      const recordData: any = {
+        status,
+        reviewTime: new Date(),
+        reviewBasis: data.basis || null,
+        conclusion: data.conclusion || null,
+        blockingReason: data.passed ? null : data.blockingReason || null,
+        remedialPath: data.passed ? null : data.remedialPath || null,
+        currentHandlerId: data.passed ? 4 : 2,
+        updatedAt: new Date()
+      }
+      if (!data.passed) {
+        recordData.version = { increment: 1 }
+        recordData.isAbnormal = true
+        recordData.abnormalType = 'REPROCESS'
+      }
       const record = await tx.consumableRecord.update({
         where: { id: Number(id) },
-        data: {
-          status,
-          reviewTime: new Date(),
-          reviewBasis: data.basis || null,
-          conclusion: data.conclusion || null,
-          blockingReason: data.passed ? null : data.blockingReason || null,
-          remedialPath: data.passed ? null : data.remedialPath || null,
-          currentHandlerId: data.passed ? 4 : 2,
-          updatedAt: new Date()
-        }
+        data: recordData
       })
       const nodes = await tx.reviewNode.findMany({
         where: { recordId: Number(id) },
@@ -312,6 +318,22 @@ export async function reviewRecord(id: number, data: any) {
             }
           })
         }
+      } else {
+        const maxOrder = nodes.length > 0 ? Math.max(...nodes.map((n: any) => n.nodeOrder)) : 0
+        await tx.reviewNode.create({
+          data: {
+            recordId: Number(id),
+            nodeType: 'REPROCESS',
+            nodeStatus: 'PENDING',
+            nodeName: '重新处理节点',
+            nodeOrder: maxOrder + 1,
+            handlerId: 2,
+            handlerName: '李护士',
+            content: data.content || '复核退回，需重新处理',
+            blockingReason: data.blockingReason || null,
+            remedialPath: data.remedialPath || null
+          }
+        })
       }
       return record
     })
@@ -445,7 +467,7 @@ export async function reprocessRecord(id: number, data: any) {
 export async function getStats() {
   await ensureInitialized()
   if (usePrisma && prisma) {
-    const [total, statusStats, normalCount, abnormalCount, deptStats, todayRecords] = await Promise.all([
+    const [total, statusStats, normalCount, abnormalCount, archivedCount, deptStats, todayRecords] = await Promise.all([
       prisma.consumableRecord.count(),
       prisma.consumableRecord.groupBy({
         by: ['status'],
@@ -454,6 +476,7 @@ export async function getStats() {
       }),
       prisma.consumableRecord.count({ where: { isAbnormal: false } }),
       prisma.consumableRecord.count({ where: { isAbnormal: true } }),
+      prisma.consumableRecord.count({ where: { status: 'ARCHIVED' } }),
       prisma.consumableRecord.groupBy({
         by: ['deptName'],
         _count: { deptName: true },
@@ -484,6 +507,7 @@ export async function getStats() {
         total,
         normal: normalCount,
         abnormal: abnormalCount,
+        archived: archivedCount,
         abnormalRate: total > 0 ? ((abnormalCount / total) * 100).toFixed(1) + '%' : '0%'
       },
       statusStats: statusStats.map((s: any) => ({ status: s.status, _count: s._count.status })),
@@ -495,6 +519,10 @@ export async function getStats() {
           count: t._count.abnormalType
         }))
       },
+      abnormalTypeStats: abnormalByType.filter((t: any) => t.abnormalType).map((t: any) => ({
+        abnormalType: t.abnormalType,
+        _count: t._count.abnormalType
+      })),
       deptStats: deptStats.map((d: any) => ({
         deptName: d.deptName,
         count: d._count.deptName,
