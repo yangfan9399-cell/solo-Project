@@ -1,0 +1,145 @@
+@model BunkerApplicationListViewModel
+@{
+    ViewData["Title"] = "船舶燃油加注申请列表";
+}
+
+<h1 class="mb-4">船舶燃油加注申请列表</h1>
+
+<form method="get" asp-action="Index" asp-controller="Bunker" class="row g-3 mb-4 align-items-end">
+    <div class="col-auto">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-select">
+            <option value="">全部</option>
+            <option value="Received" selected="@(Model.FilterStatus == WorkflowStatus.Received)">已受理</option>
+            <option value="Processing" selected="@(Model.FilterStatus == WorkflowStatus.Processing)">处理中</option>
+            <option value="UnderReview" selected="@(Model.FilterStatus == WorkflowStatus.UnderReview)">复核中</option>
+            <option value="Archived" selected="@(Model.FilterStatus == WorkflowStatus.Archived)">已归档</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">分类</label>
+        <select name="category" class="form-select">
+            <option value="">全部</option>
+            <option value="NormalPass" selected="@(Model.FilterCategory == ApplicationCategory.NormalPass)">正常放行</option>
+            <option value="IndicatorOverLimit" selected="@(Model.FilterCategory == ApplicationCategory.IndicatorOverLimit)">指标超限</option>
+            <option value="EvidenceMissing" selected="@(Model.FilterCategory == ApplicationCategory.EvidenceMissing)">现场证据缺失</option>
+            <option value="ApprovalTimeout" selected="@(Model.FilterCategory == ApplicationCategory.ApprovalTimeout)">审批超时</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">&nbsp;</label>
+        <div class="input-group">
+            <input type="text" name="keyword" class="form-control" placeholder="搜索申请编号/船名/供应商" value="@(Model.SearchKeyword ?? "")" />
+            <button type="submit" class="btn btn-primary">搜索</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th></th>
+                <th>申请编号</th>
+                <th>船名</th>
+                <th>燃油类型</th>
+                <th>申领量(MT)</th>
+                <th>实际量(MT)</th>
+                <th>状态</th>
+                <th>分类</th>
+                <th>当前责任人</th>
+                <th>摘要/结论</th>
+                <th>阻断原因</th>
+                <th>更新时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Applications.Any())
+            {
+                <tr>
+                    <td colspan="13" class="text-center text-muted py-4">暂无数据</td>
+                </tr>
+            }
+            @foreach (var item in Model.Applications)
+            {
+                <tr class="@(item.HasDiscrepancy ? "table-warning" : "")">
+                    <td class="text-center">
+                        @if (item.HasDiscrepancy)
+                        {
+                            <span title="存在差异">&#9888;&#65039;</span>
+                        }
+                    </td>
+                    <td>@item.ApplicationNo</td>
+                    <td>@item.ShipName</td>
+                    <td>@item.FuelType</td>
+                    <td class="text-end">@item.OrderedQuantity.ToString("N2")</td>
+                    <td class="text-end">@item.ActualQuantity.ToString("N2")</td>
+                    <td>
+                        @{
+                            var statusCss = item.Status switch
+                            {
+                                WorkflowStatus.Received => "bg-primary",
+                                WorkflowStatus.Processing => "bg-warning text-dark",
+                                WorkflowStatus.UnderReview => "bg-purple",
+                                WorkflowStatus.Archived => "bg-secondary",
+                                _ => "bg-light text-dark"
+                            };
+                        }
+                        <span class="badge @statusCss">@item.Status.GetDisplayName()</span>
+                    </td>
+                    <td>
+                        @{
+                            var categoryCss = item.Category switch
+                            {
+                                ApplicationCategory.NormalPass => "bg-success",
+                                ApplicationCategory.IndicatorOverLimit => "bg-danger",
+                                ApplicationCategory.EvidenceMissing => "bg-warning text-dark",
+                                ApplicationCategory.ApprovalTimeout => "bg-dark",
+                                _ => "bg-light text-dark"
+                            };
+                        }
+                        <span class="badge @categoryCss">@item.Category.GetDisplayName()</span>
+                    </td>
+                    <td>@item.CurrentResponsiblePerson</td>
+                    <td>
+                        @{
+                            var displayText = !string.IsNullOrEmpty(item.Summary) ? item.Summary : item.Conclusion ?? "";
+                            if (displayText.Length > 30)
+                            {
+                                displayText = displayText.Substring(0, 30) + "...";
+                            }
+                        }
+                        @displayText
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.BlockedReason))
+                        {
+                            <span class="text-danger">@item.BlockedReason</span>
+                        }
+                    </td>
+                    <td>@item.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info me-1">详情</a>
+                        @if (item.Status == WorkflowStatus.Archived)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled>处理</button>
+                        }
+                        else
+                        {
+                            var roleParam = item.CurrentResponsibleRole == UserRole.SupervisorReviewer ? "SupervisorReviewer" : "OnSitePersonnel";
+                            <a asp-action="Process" asp-route-id="@item.Id" asp-route-role="@roleParam" class="btn btn-sm btn-outline-primary">处理</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .bg-purple {
+        background-color: #6f42c1 !important;
+        color: #fff;
+    }
+</style>

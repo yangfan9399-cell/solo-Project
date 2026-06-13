@@ -1,0 +1,364 @@
+@model ProcessDeskViewModel
+@{
+    ViewData["Title"] = $"处理台 - {Model.Application.ApplicationNo}";
+    var app = Model.Application;
+    var roleDisplay = Model.CurrentUserRole == UserRole.OnSitePersonnel ? "现场人员" : "主管复核人";
+    var roleEnumName = Model.CurrentUserRole.ToString();
+}
+
+<h1 class="mb-3">处理台 - @app.ApplicationNo</h1>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">申请概要</span>
+        <span class="badge bg-info fs-6">当前角色: @roleDisplay</span>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">申请编号：</span><strong>@app.ApplicationNo</strong>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">船名：</span><strong>@app.ShipName</strong>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">燃油类型：</span><strong>@app.FuelType</strong>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">申领量：</span><strong>@app.OrderedQuantity.ToString("N2") MT</strong>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">实际量：</span><strong>@app.ActualQuantity.ToString("N2") MT</strong>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">状态：</span>
+                @{
+                    var statusCss = app.Status switch
+                    {
+                        WorkflowStatus.Received => "bg-primary",
+                        WorkflowStatus.Processing => "bg-warning text-dark",
+                        WorkflowStatus.UnderReview => "bg-purple",
+                        WorkflowStatus.Archived => "bg-secondary",
+                        _ => "bg-light text-dark"
+                    };
+                }
+                <span class="badge @statusCss">@app.Status.GetDisplayName()</span>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">分类：</span>
+                @{
+                    var categoryCss = app.Category switch
+                    {
+                        ApplicationCategory.NormalPass => "bg-success",
+                        ApplicationCategory.IndicatorOverLimit => "bg-danger",
+                        ApplicationCategory.EvidenceMissing => "bg-warning text-dark",
+                        ApplicationCategory.ApprovalTimeout => "bg-dark",
+                        _ => "bg-light text-dark"
+                    };
+                }
+                <span class="badge @categoryCss">@app.Category.GetDisplayName()</span>
+            </div>
+            <div class="col-md-3 mb-2">
+                <span class="text-muted">当前责任人：</span><strong>@app.CurrentResponsiblePerson</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(app.BlockedReason))
+{
+    <div class="alert alert-danger mb-3">
+        <h5 class="alert-heading">&#9888;&#65039; 阻断</h5>
+        <p class="mb-1"><strong>阻断原因：</strong>@app.BlockedReason</p>
+        @if (!string.IsNullOrEmpty(app.RemediationPath))
+        {
+            <p class="mb-0"><strong>补救路径：</strong>@app.RemediationPath</p>
+        }
+    </div>
+}
+else if (!string.IsNullOrEmpty(app.RemediationPath))
+{
+    <div class="alert alert-info mb-3">
+        <strong>补救路径：</strong>@app.RemediationPath
+    </div>
+}
+
+<div class="card mb-3 border-primary">
+    <div class="card-header bg-primary text-white fw-bold">操作区域</div>
+    <div class="card-body">
+        @if (!Model.AvailableActions.Any())
+        {
+            <p class="text-muted mb-0">当前无可执行操作</p>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                @foreach (var act in Model.AvailableActions)
+                {
+                    <button type="button" class="btn btn-outline-primary" data-action="@act" onclick="showActionForm('@act')">@act</button>
+                }
+            </div>
+
+            @if (Model.CurrentUserRole == UserRole.OnSitePersonnel)
+            {
+                if (Model.AvailableActions.Contains("补充业务记录"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-补充业务记录">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="补充业务记录" />
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">业务记录</label>
+                            <textarea name="businessRecord" class="form-control" rows="3" placeholder="请输入业务记录内容..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('补充业务记录')">取消</button>
+                    </form>
+                }
+
+                if (Model.AvailableActions.Contains("补充现场说明"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-补充现场说明">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="补充现场说明" />
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">现场说明</label>
+                            <textarea name="siteDescription" class="form-control" rows="3" placeholder="请输入现场说明内容..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">提交</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('补充现场说明')">取消</button>
+                    </form>
+                }
+
+                if (Model.AvailableActions.Contains("上传证据附件"))
+                {
+                    <form asp-action="UploadEvidence" asp-controller="Bunker" method="post" enctype="multipart/form-data" class="action-form mb-3 d-none" id="form-上传证据附件">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">选择文件</label>
+                            <input type="file" name="file" class="form-control" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">描述</label>
+                            <input type="text" name="description" class="form-control" placeholder="附件描述..." />
+                        </div>
+                        <input type="hidden" name="uploadedBy" value="@app.CurrentResponsiblePerson" />
+                        <button type="submit" class="btn btn-primary">上传</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('上传证据附件')">取消</button>
+                    </form>
+                }
+
+                if (Model.AvailableActions.Contains("提交处理"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-提交处理">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="提交处理" />
+                        <p class="text-muted">确认将当前申请流转到下一环节？</p>
+                        <button type="submit" class="btn btn-success">确认提交</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('提交处理')">取消</button>
+                    </form>
+                }
+            }
+
+            @if (Model.CurrentUserRole == UserRole.SupervisorReviewer)
+            {
+                if (Model.AvailableActions.Contains("确认结论"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-确认结论">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="确认结论" />
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">结论</label>
+                            <textarea name="conclusion" class="form-control" rows="3" placeholder="请输入结论内容..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">确认</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('确认结论')">取消</button>
+                    </form>
+                }
+
+                if (Model.AvailableActions.Contains("退回补证"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-退回补证">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="退回补证" />
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">退回原因</label>
+                            <textarea name="comment" class="form-control" rows="3" placeholder="请输入退回原因..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning">退回</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('退回补证')">取消</button>
+                    </form>
+                }
+
+                if (Model.AvailableActions.Contains("只读归档"))
+                {
+                    <form asp-action="ProcessAction" asp-controller="Bunker" method="post" class="action-form mb-3 d-none" id="form-只读归档">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@app.Id" />
+                        <input type="hidden" name="currentRole" value="@roleEnumName" />
+                        <input type="hidden" name="action" value="只读归档" />
+                        <p class="text-muted">确认将此申请归档？归档后不可再修改。</p>
+                        <button type="submit" class="btn btn-secondary">确认归档</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="hideActionForm('只读归档')">取消</button>
+                    </form>
+                }
+            }
+        }
+    </div>
+</div>
+
+@if (app.ProcessNodes.Any())
+{
+    <div class="card mb-3">
+        <div class="card-header fw-bold">处理历史</div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                @foreach (var node in app.ProcessNodes)
+                {
+                    <div class="list-group-item py-2">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-info me-2">@node.NodeType.GetDisplayName()</span>
+                            <strong class="me-2">@node.OperatorName</strong>
+                            <span class="text-muted me-2">(@node.OperatorRole.GetDisplayName())</span>
+                            <span class="text-muted me-auto">@node.Action</span>
+                            <small class="text-muted">@node.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                        </div>
+                        @if (!string.IsNullOrEmpty(node.Comment))
+                        {
+                            <small class="text-muted d-block mt-1">评论: @node.Comment</small>
+                        }
+                        @if (!string.IsNullOrEmpty(node.BlockedReason))
+                        {
+                            <small class="text-danger d-block mt-1">阻断原因: @node.BlockedReason</small>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (app.DiscrepancyFields.Any())
+{
+    <div class="card mb-3">
+        <div class="card-header fw-bold">差异字段</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>字段</th>
+                            <th>原值</th>
+                            <th>现值</th>
+                            <th>变更人</th>
+                            <th>变更时间</th>
+                            <th>关键字段</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var df in app.DiscrepancyFields)
+                        {
+                            <tr class="@(df.IsKeyField ? "table-warning" : "")">
+                                <td>@df.FieldLabel</td>
+                                <td>@df.OriginalValue</td>
+                                <td>@df.CurrentValue</td>
+                                <td>@df.ChangedBy</td>
+                                <td>@df.ChangedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@(df.IsKeyField ? "是" : "否")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-header fw-bold">证据附件</div>
+    <div class="card-body">
+        @if (app.EvidenceAttachments.Any())
+        {
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>文件名</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                            <th>上传人</th>
+                            <th>上传时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var att in app.EvidenceAttachments)
+                        {
+                            <tr>
+                                <td>@att.FileName</td>
+                                <td>@att.FileType</td>
+                                <td>@(att.Description ?? "-")</td>
+                                <td>@att.UploadedBy</td>
+                                <td>@att.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">暂无证据附件</p>
+        }
+
+        <form asp-action="UploadEvidence" asp-controller="Bunker" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@app.Id" />
+            <input type="hidden" name="uploadedBy" value="@app.CurrentResponsiblePerson" />
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">上传附件</label>
+                    <input type="file" name="file" class="form-control form-control-sm" />
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">描述</label>
+                    <input type="text" name="description" class="form-control form-control-sm" placeholder="附件描述" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">上传</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mb-4">
+    <a asp-action="Details" asp-route-id="@app.Id" class="btn btn-outline-secondary">返回详情</a>
+</div>
+
+<style>
+    .bg-purple { background-color: #6f42c1 !important; color: #fff; }
+</style>
+
+@section Scripts {
+    <script>
+        function showActionForm(action) {
+            document.querySelectorAll('.action-form').forEach(f => f.classList.add('d-none'));
+            var form = document.getElementById('form-' + action);
+            if (form) form.classList.remove('d-none');
+        }
+        function hideActionForm(action) {
+            var form = document.getElementById('form-' + action);
+            if (form) form.classList.add('d-none');
+        }
+    </script>
+}

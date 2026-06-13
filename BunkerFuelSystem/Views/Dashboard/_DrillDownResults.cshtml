@@ -1,0 +1,68 @@
+@model DashboardViewModel
+
+@if (Model.DrillDownResults != null && Model.DrillDownResults.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>申请编号</th>
+                    <th>船名</th>
+                    <th>分类</th>
+                    <th>状态</th>
+                    <th>当前责任人</th>
+                    <th>结论</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.DrillDownResults)
+                {
+                    <tr>
+                        <td>@item.ApplicationNo</td>
+                        <td>@item.ShipName</td>
+                        <td>
+                            @{
+                                var catCss = item.Category switch
+                                {
+                                    ApplicationCategory.NormalPass => "bg-success",
+                                    ApplicationCategory.IndicatorOverLimit => "bg-danger",
+                                    ApplicationCategory.EvidenceMissing => "bg-warning text-dark",
+                                    ApplicationCategory.ApprovalTimeout => "bg-dark",
+                                    _ => "bg-light text-dark"
+                                };
+                            }
+                            <span class="badge @catCss">@item.Category.GetDisplayName()</span>
+                        </td>
+                        <td>
+                            @{
+                                var stCss = item.Status switch
+                                {
+                                    WorkflowStatus.Received => "bg-primary",
+                                    WorkflowStatus.Processing => "bg-warning text-dark",
+                                    WorkflowStatus.UnderReview => "bg-purple",
+                                    WorkflowStatus.Archived => "bg-secondary",
+                                    _ => "bg-light text-dark"
+                                };
+                            }
+                            <span class="badge @stCss">@item.Status.GetDisplayName()</span>
+                        </td>
+                        <td>@item.CurrentResponsiblePerson</td>
+                        <td>@(item.Conclusion ?? "-")</td>
+                        <td>
+                            <a asp-controller="Bunker" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">详情</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-muted mb-0">无匹配记录</p>
+}
+
+<style>
+    .bg-purple { background-color: #6f42c1 !important; color: #fff; }
+</style>

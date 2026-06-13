@@ -1,0 +1,298 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "复盘看板 - 船舶燃油加注计量确认与差异处理";
+    var maxStatusCount = Model.StatusDistribution.Values.DefaultIfEmpty(1).Max();
+    var maxCategoryCount = Model.CategoryDistribution.Values.DefaultIfEmpty(1).Max();
+}
+
+<h1 class="mb-4">复盘看板 - 船舶燃油加注计量确认与差异处理</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "all" })" class="text-decoration-none">
+            <div class="card text-center h-100 summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1">@Model.TotalCount</h3>
+                    <small class="text-muted">总申请数</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "NormalPass" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-success summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1 text-success">@Model.NormalCount</h3>
+                    <small class="text-muted">正常放行</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "IndicatorOverLimit" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-danger summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1 text-danger">@Model.OverLimitCount</h3>
+                    <small class="text-muted">指标超限</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "EvidenceMissing" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-warning summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1 text-warning">@Model.EvidenceMissingCount</h3>
+                    <small class="text-muted">证据缺失</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "ApprovalTimeout" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-dark summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1" style="color:darkred">@Model.TimeoutCount</h3>
+                    <small class="text-muted">审批超时</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-1 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "Archived" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-secondary summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1 text-secondary">@Model.ArchivedCount</h3>
+                    <small class="text-muted">已归档</small>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-1 col-6">
+        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = "Active" })" class="text-decoration-none">
+            <div class="card text-center h-100 border-primary summary-card">
+                <div class="card-body">
+                    <h3 class="mb-1 text-primary">@Model.ActiveCount</h3>
+                    <small class="text-muted">进行中</small>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">状态分布</div>
+            <div class="card-body">
+                @if (Model.StatusDistribution.Any())
+                {
+                    foreach (var kv in Model.StatusDistribution)
+                    {
+                        var pct = maxStatusCount > 0 ? (int)((double)kv.Value / maxStatusCount * 100) : 0;
+                        var barColor = kv.Key switch
+                        {
+                            "已受理" => "bg-primary",
+                            "处理中" => "bg-warning",
+                            "复核中" => "bg-purple",
+                            "已归档" => "bg-secondary",
+                            _ => "bg-info"
+                        };
+                        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = kv.Key })" class="text-decoration-none">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="me-2 text-nowrap" style="min-width:60px">@kv.Key</span>
+                                <div class="progress flex-grow-1 me-2" style="height:24px">
+                                    <div class="progress-bar @barColor" style="width:@pct%">@kv.Value</div>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted mb-0">暂无数据</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">类别分布</div>
+            <div class="card-body">
+                @if (Model.CategoryDistribution.Any())
+                {
+                    foreach (var kv in Model.CategoryDistribution)
+                    {
+                        var pct = maxCategoryCount > 0 ? (int)((double)kv.Value / maxCategoryCount * 100) : 0;
+                        var barColor = kv.Key switch
+                        {
+                            "正常放行" => "bg-success",
+                            "指标超限" => "bg-danger",
+                            "现场证据缺失" => "bg-warning",
+                            "审批超时" => "bg-dark",
+                            _ => "bg-info"
+                        };
+                        <a href="@Url.Action("Index", "Dashboard", new { drillDownFilter = kv.Key })" class="text-decoration-none">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="me-2 text-nowrap" style="min-width:90px">@kv.Key</span>
+                                <div class="progress flex-grow-1 me-2" style="height:24px">
+                                    <div class="progress-bar @barColor" style="width:@pct%">@kv.Value</div>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted mb-0">暂无数据</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.DrillDownFilter != null)
+{
+    <div class="card mb-4 border-info">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">钻取结果 - @Model.DrillDownFilter</span>
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-sm btn-outline-light">清除筛选</a>
+        </div>
+        <div class="card-body" id="drillDownResults">
+            @if (Model.DrillDownResults != null && Model.DrillDownResults.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>申请编号</th>
+                                <th>船名</th>
+                                <th>分类</th>
+                                <th>状态</th>
+                                <th>当前责任人</th>
+                                <th>结论</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.DrillDownResults)
+                            {
+                                <tr>
+                                    <td>@item.ApplicationNo</td>
+                                    <td>@item.ShipName</td>
+                                    <td>
+                                        @{
+                                            var catCss = item.Category switch
+                                            {
+                                                ApplicationCategory.NormalPass => "bg-success",
+                                                ApplicationCategory.IndicatorOverLimit => "bg-danger",
+                                                ApplicationCategory.EvidenceMissing => "bg-warning text-dark",
+                                                ApplicationCategory.ApprovalTimeout => "bg-dark",
+                                                _ => "bg-light text-dark"
+                                            };
+                                        }
+                                        <span class="badge @catCss">@item.Category.GetDisplayName()</span>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var stCss = item.Status switch
+                                            {
+                                                WorkflowStatus.Received => "bg-primary",
+                                                WorkflowStatus.Processing => "bg-warning text-dark",
+                                                WorkflowStatus.UnderReview => "bg-purple",
+                                                WorkflowStatus.Archived => "bg-secondary",
+                                                _ => "bg-light text-dark"
+                                            };
+                                        }
+                                        <span class="badge @stCss">@item.Status.GetDisplayName()</span>
+                                    </td>
+                                    <td>@item.CurrentResponsiblePerson</td>
+                                    <td>@(item.Conclusion ?? "-")</td>
+                                    <td>
+                                        <a asp-controller="Bunker" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">详情</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">无匹配记录</p>
+            }
+        </div>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header fw-bold">最近申请</div>
+    <div class="card-body">
+        @if (Model.RecentItems.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>申请编号</th>
+                            <th>船名</th>
+                            <th>分类</th>
+                            <th>状态</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.RecentItems)
+                        {
+                            <tr>
+                                <td>@item.ApplicationNo</td>
+                                <td>@item.ShipName</td>
+                                <td>
+                                    @{
+                                        var rcatCss = item.Category switch
+                                        {
+                                            ApplicationCategory.NormalPass => "bg-success",
+                                            ApplicationCategory.IndicatorOverLimit => "bg-danger",
+                                            ApplicationCategory.EvidenceMissing => "bg-warning text-dark",
+                                            ApplicationCategory.ApprovalTimeout => "bg-dark",
+                                            _ => "bg-light text-dark"
+                                        };
+                                    }
+                                    <span class="badge @rcatCss">@item.Category.GetDisplayName()</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var rstCss = item.Status switch
+                                        {
+                                            WorkflowStatus.Received => "bg-primary",
+                                            WorkflowStatus.Processing => "bg-warning text-dark",
+                                            WorkflowStatus.UnderReview => "bg-purple",
+                                            WorkflowStatus.Archived => "bg-secondary",
+                                            _ => "bg-light text-dark"
+                                        };
+                                    }
+                                    <span class="badge @rstCss">@item.Status.GetDisplayName()</span>
+                                </td>
+                                <td>@item.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <a asp-controller="Bunker" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">详情</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-0">暂无数据</p>
+        }
+    </div>
+</div>
+
+<style>
+    .bg-purple { background-color: #6f42c1 !important; color: #fff; }
+    .summary-card { transition: transform 0.15s ease-in-out; }
+    .summary-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+</style>
