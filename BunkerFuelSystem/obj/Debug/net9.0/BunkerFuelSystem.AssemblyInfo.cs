@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BunkerFuelSystem")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1dae31811c2ba863d737ef2e158b5a4069918d52")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d1bbf6686fa0155d363cf3f3ac721f72f6989b2f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BunkerFuelSystem")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BunkerFuelSystem")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -73,7 +73,7 @@ public class AppDbContext : DbContext
         {
             entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
             entity.Property(e => e.FilePath).IsRequired().HasMaxLength(1000);
-            entity.Property(e => e.FileType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.FileType).IsRequired().HasMaxLength(200);
             entity.Property(e => e.UploadedBy).IsRequired().HasMaxLength(100);
 
             entity.HasIndex(e => e.BunkerApplicationId);
