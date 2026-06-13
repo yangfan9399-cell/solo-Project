@@ -11,9 +11,14 @@ public class DashboardViewModel
     public int TimeoutCount { get; set; }
     public int ArchivedCount { get; set; }
     public int ActiveCount { get; set; }
+    public int BlockedStatusCount { get; set; }
+    public int ReviewingCount { get; set; }
+    public int ProcessingCount { get; set; }
     public decimal TotalAppliedQuota { get; set; }
     public decimal TotalApprovedQuota { get; set; }
+    public decimal QuotaApprovalRate { get; set; }
     public double AverageProcessingDays { get; set; }
+    public int PendingTimeoutCount { get; set; }
     public List<StatusDistributionItem> StatusDistribution { get; set; } = [];
     public List<SampleTypeDistributionItem> SampleTypeDistribution { get; set; } = [];
     public List<MonthlyTrendItem> MonthlyTrend { get; set; } = [];

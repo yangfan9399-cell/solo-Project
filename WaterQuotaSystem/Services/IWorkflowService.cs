@@ -12,4 +12,6 @@ public interface IWorkflowService
     WaterQuotaApplication ProcessAction(ProcessActionInput input);
     WaterQuotaApplication CreateNewApplication(WaterQuotaApplication application);
     void SyncSummaryAndConclusion(int applicationId);
+    KeyFieldEditViewModel GetKeyFieldEditViewModel(int id);
+    WaterQuotaApplication UpdateKeyFields(KeyFieldEditInput input);
 }

@@ -114,6 +114,7 @@ public class WorkflowService : IWorkflowService
     public DashboardViewModel GetDashboard(string? drillDownFilter = null)
     {
         var allApps = _context.Applications.ToList();
+        var approvedOrArchived = allApps.Where(a => a.Status == ApplicationStatus.Approved || a.Status == ApplicationStatus.Archived).ToList();
 
         var vm = new DashboardViewModel
         {
@@ -124,9 +125,16 @@ public class WorkflowService : IWorkflowService
             TimeoutCount = allApps.Count(a => a.SampleType == SampleType.ApprovalTimeout),
             ArchivedCount = allApps.Count(a => a.Status == ApplicationStatus.Archived),
             ActiveCount = allApps.Count(a => a.Status != ApplicationStatus.Archived),
+            BlockedStatusCount = allApps.Count(a => a.Status == ApplicationStatus.Blocked),
+            ReviewingCount = allApps.Count(a => a.Status == ApplicationStatus.Reviewing),
+            ProcessingCount = allApps.Count(a => a.Status == ApplicationStatus.Processing),
             TotalAppliedQuota = allApps.Sum(a => a.AppliedQuota),
-            TotalApprovedQuota = allApps.Where(a => a.Status == ApplicationStatus.Approved || a.Status == ApplicationStatus.Archived).Sum(a => a.ApprovedQuota),
-            AverageProcessingDays = allApps.Where(a => a.ProcessedDate.HasValue).Select(a => (a.ProcessedDate!.Value - a.ApplicationDate).TotalDays).DefaultIfEmpty(0).Average()
+            TotalApprovedQuota = approvedOrArchived.Sum(a => a.ApprovedQuota),
+            QuotaApprovalRate = allApps.Sum(a => a.AppliedQuota) > 0
+                ? Math.Round(approvedOrArchived.Sum(a => a.ApprovedQuota) / allApps.Sum(a => a.AppliedQuota) * 100, 1)
+                : 0,
+            AverageProcessingDays = allApps.Where(a => a.ProcessedDate.HasValue).Select(a => (a.ProcessedDate!.Value - a.ApplicationDate).TotalDays).DefaultIfEmpty(0).Average(),
+            PendingTimeoutCount = allApps.Count(a => a.Deadline.HasValue && a.Deadline.Value < DateTime.Now && a.Status != ApplicationStatus.Archived && a.Status != ApplicationStatus.Timeout)
         };
 
         var statusGroups = allApps.GroupBy(a => a.Status).Select(g => new StatusDistributionItem
@@ -185,7 +193,8 @@ public class WorkflowService : IWorkflowService
             .FirstOrDefault(a => a.Id == input.ApplicationId);
 
         if (app == null) throw new KeyNotFoundException($"Application {input.ApplicationId} not found");
-        if (app.IsReadOnly) throw new InvalidOperationException("Application is archived and read-only");
+        if (app.IsReadOnly && input.Action != "reprocess")
+            throw new InvalidOperationException("Application is archived and read-only, only reprocess action is allowed");
 
         var previousStatus = app.Status;
         var previousResponsible = app.CurrentResponsiblePerson;
@@ -285,8 +294,45 @@ public class WorkflowService : IWorkflowService
             case "supplement_evidence":
                 if (input.CurrentUserRole == RoleType.FieldPersonnel)
                 {
-                    if (!string.IsNullOrWhiteSpace(input.BusinessRecord)) app.BusinessRecord = input.BusinessRecord;
-                    if (!string.IsNullOrWhiteSpace(input.FieldDescription)) app.FieldDescription = input.FieldDescription;
+                    var changedFields = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(input.BusinessRecord) && input.BusinessRecord != app.BusinessRecord)
+                    {
+                        AddKeyChange(keyChanges, app.Id, "BusinessRecord", "业务记录", app.BusinessRecord, input.BusinessRecord, input.OperatorName);
+                        app.BusinessRecord = input.BusinessRecord;
+                    }
+                    if (!string.IsNullOrWhiteSpace(input.FieldDescription) && input.FieldDescription != app.FieldDescription)
+                    {
+                        AddKeyChange(keyChanges, app.Id, "FieldDescription", "现场说明", app.FieldDescription, input.FieldDescription, input.OperatorName);
+                        app.FieldDescription = input.FieldDescription;
+                    }
+                    if (!string.IsNullOrWhiteSpace(input.EvidenceFileName))
+                    {
+                        var newAtt = new EvidenceAttachment
+                        {
+                            ApplicationId = app.Id,
+                            FileName = input.EvidenceFileName,
+                            FilePath = $"/uploads/wq-{app.Id}/{Guid.NewGuid():N}_{input.EvidenceFileName}",
+                            FileType = string.IsNullOrWhiteSpace(input.EvidenceFileType) ? "application/octet-stream" : input.EvidenceFileType,
+                            Description = input.EvidenceDescription,
+                            UploadedBy = input.OperatorName,
+                            UploaderRole = RoleType.FieldPersonnel,
+                            UploadedAt = DateTime.Now,
+                            IsMissing = false
+                        };
+                        _context.EvidenceAttachments.Add(newAtt);
+
+                        var missingAtt = app.EvidenceAttachments.FirstOrDefault(e => e.IsMissing);
+                        if (missingAtt != null)
+                        {
+                            AddKeyChange(keyChanges, app.Id, "EvidenceAttachment", "证据附件",
+                                $"{missingAtt.FileName}(缺失)", $"{input.EvidenceFileName}(已补齐)", input.OperatorName);
+                        }
+                        else
+                        {
+                            AddKeyChange(keyChanges, app.Id, "EvidenceAttachment", "证据附件",
+                                "无", $"{input.EvidenceFileName}(新增)", input.OperatorName);
+                        }
+                    }
                 }
                 break;
 
@@ -374,8 +420,16 @@ public class WorkflowService : IWorkflowService
         var quotaInfo = app.AppliedQuota > app.QuotaLimit
             ? $"超限{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%"
             : "限额内";
+        var deadlineInfo = app.Deadline.HasValue ? app.Deadline.Value.ToString("MM-dd") : "无截止";
+        var responsibleInfo = string.IsNullOrWhiteSpace(app.CurrentResponsiblePerson) ? "未分配" : app.CurrentResponsiblePerson;
 
-        app.Summary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | {quotaInfo} | {statusText}";
+        app.Summary = $"[{sampleText}]{app.ParkName}-{app.KeyObject} | 申请:{app.AppliedQuota}{app.QuotaUnit} | 审批:{app.ApprovedQuota}{app.QuotaUnit} | {quotaInfo} | 责任人:{responsibleInfo} | 截止:{deadlineInfo} | {statusText}";
+
+        if (app.Status == ApplicationStatus.Approved || app.Status == ApplicationStatus.Archived)
+        {
+            if (string.IsNullOrWhiteSpace(app.Conclusion))
+                app.Conclusion = $"审批通过：申请{app.AppliedQuota}{app.QuotaUnit}，审批{app.ApprovedQuota}{app.QuotaUnit}，责任人{responsibleInfo}";
+        }
     }
 
     private static void AddKeyChange(List<FieldChangeRecord> changes, int appId, string fieldName, string displayName, string oldValue, string newValue, string changedBy)
@@ -436,4 +490,163 @@ public class WorkflowService : IWorkflowService
         SampleType.ApprovalTimeout => "bg-danger",
         _ => "bg-secondary"
     };
+
+    public KeyFieldEditViewModel GetKeyFieldEditViewModel(int id)
+    {
+        var app = _context.Applications
+            .Include(a => a.ProcessingNodes)
+            .Include(a => a.FieldChanges)
+            .FirstOrDefault(a => a.Id == id);
+
+        if (app == null) throw new KeyNotFoundException($"Application {id} not found");
+
+        return new KeyFieldEditViewModel
+        {
+            Application = app,
+            HistoryNodes = app.ProcessingNodes.OrderBy(n => n.OperatedAt).ToList(),
+            PreviousKeyChanges = app.FieldChanges.Where(c => c.IsKeyChange).OrderBy(c => c.ChangedAt).ToList()
+        };
+    }
+
+    public WaterQuotaApplication UpdateKeyFields(KeyFieldEditInput input)
+    {
+        var app = _context.Applications.FirstOrDefault(a => a.Id == input.ApplicationId);
+        if (app == null) throw new KeyNotFoundException($"Application {input.ApplicationId} not found");
+
+        if (app.IsReadOnly)
+            throw new InvalidOperationException("已归档记录不可直接修改关键字段，请先重新处理");
+
+        if (string.IsNullOrWhiteSpace(input.OperatorName))
+            throw new ArgumentException("必须指定操作人");
+
+        var keyChanges = new List<FieldChangeRecord>();
+        var updatedFields = new List<string>();
+        var previousStatus = app.Status;
+
+        if (input.NewApplicationDate.HasValue && input.NewApplicationDate.Value.Date != app.ApplicationDate.Date)
+        {
+            AddKeyChange(keyChanges, app.Id, "ApplicationDate", "申请时间(关键时间)",
+                app.ApplicationDate.ToString("yyyy-MM-dd"), input.NewApplicationDate.Value.ToString("yyyy-MM-dd"),
+                input.OperatorName);
+            app.ApplicationDate = input.NewApplicationDate.Value;
+            updatedFields.Add("申请时间");
+        }
+
+        if (input.NewDeadline.HasValue &&
+            (!app.Deadline.HasValue || input.NewDeadline.Value.Date != app.Deadline.Value.Date))
+        {
+            AddKeyChange(keyChanges, app.Id, "Deadline", "截止时间(关键时间)",
+                app.Deadline.HasValue ? app.Deadline.Value.ToString("yyyy-MM-dd") : "未设置",
+                input.NewDeadline.Value.ToString("yyyy-MM-dd"),
+                input.OperatorName);
+            app.Deadline = input.NewDeadline.Value;
+            updatedFields.Add("截止时间");
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.NewCurrentResponsiblePerson) &&
+            input.NewCurrentResponsiblePerson != app.CurrentResponsiblePerson)
+        {
+            AddKeyChange(keyChanges, app.Id, "CurrentResponsiblePerson", "当前责任人(责任对象)",
+                string.IsNullOrWhiteSpace(app.CurrentResponsiblePerson) ? "未设置" : app.CurrentResponsiblePerson,
+                input.NewCurrentResponsiblePerson, input.OperatorName);
+            app.CurrentResponsiblePerson = input.NewCurrentResponsiblePerson;
+            updatedFields.Add("当前责任人");
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.NewApplicantName) &&
+            input.NewApplicantName != app.ApplicantName)
+        {
+            AddKeyChange(keyChanges, app.Id, "ApplicantName", "申请人(责任对象)",
+                app.ApplicantName, input.NewApplicantName, input.OperatorName);
+            app.ApplicantName = input.NewApplicantName;
+            updatedFields.Add("申请人");
+        }
+
+        if (input.NewAppliedQuota.HasValue && input.NewAppliedQuota.Value != app.AppliedQuota)
+        {
+            AddKeyChange(keyChanges, app.Id, "AppliedQuota", "申请指标(金额数量)",
+                $"{app.AppliedQuota}{app.QuotaUnit}", $"{input.NewAppliedQuota.Value}{app.QuotaUnit}",
+                input.OperatorName);
+            app.AppliedQuota = input.NewAppliedQuota.Value;
+            updatedFields.Add("申请指标");
+        }
+
+        if (input.NewApprovedQuota.HasValue && input.NewApprovedQuota.Value != app.ApprovedQuota)
+        {
+            AddKeyChange(keyChanges, app.Id, "ApprovedQuota", "审批指标(金额数量)",
+                $"{app.ApprovedQuota}{app.QuotaUnit}", $"{input.NewApprovedQuota.Value}{app.QuotaUnit}",
+                input.OperatorName);
+            app.ApprovedQuota = input.NewApprovedQuota.Value;
+            updatedFields.Add("审批指标");
+        }
+
+        if (input.NewQuotaLimit.HasValue && input.NewQuotaLimit.Value != app.QuotaLimit)
+        {
+            AddKeyChange(keyChanges, app.Id, "QuotaLimit", "限额(金额数量)",
+                $"{app.QuotaLimit}{app.QuotaUnit}", $"{input.NewQuotaLimit.Value}{app.QuotaUnit}",
+                input.OperatorName);
+            app.QuotaLimit = input.NewQuotaLimit.Value;
+            updatedFields.Add("限额");
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.NewConclusion) &&
+            input.NewConclusion != app.Conclusion)
+        {
+            AddKeyChange(keyChanges, app.Id, "Conclusion", "证据结论",
+                string.IsNullOrWhiteSpace(app.Conclusion) ? "未设置" : app.Conclusion,
+                input.NewConclusion, input.OperatorName);
+            app.Conclusion = input.NewConclusion;
+            updatedFields.Add("证据结论");
+        }
+
+        if (app.AppliedQuota > app.QuotaLimit && app.Status == ApplicationStatus.Processing)
+        {
+            app.Status = ApplicationStatus.Blocked;
+            app.BlockingReason = $"申请用水指标({app.AppliedQuota}吨/月)超出园区限额({app.QuotaLimit}吨/月)，超限{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%";
+            app.DifferentialFields = $"申请指标:{app.AppliedQuota}吨/月 vs 限额:{app.QuotaLimit}吨/月 | 差异:+{app.AppliedQuota - app.QuotaLimit}吨/月(+{Math.Round((app.AppliedQuota - app.QuotaLimit) / app.QuotaLimit * 100, 1)}%)";
+            app.RemediationPath = "1.重新核算实际用水需求；2.提交节水改造方案；3.如确需超限用水，需向市水务局申请特殊配额审批";
+            AddKeyChange(keyChanges, app.Id, "Status", "状态",
+                GetStatusDisplayName(previousStatus), GetStatusDisplayName(ApplicationStatus.Blocked),
+                input.OperatorName);
+        }
+        else if (app.AppliedQuota <= app.QuotaLimit && app.Status == ApplicationStatus.Blocked)
+        {
+            app.Status = ApplicationStatus.Processing;
+            app.BlockingReason = "";
+            app.DifferentialFields = "";
+            app.RemediationPath = "";
+            AddKeyChange(keyChanges, app.Id, "Status", "状态",
+                GetStatusDisplayName(previousStatus), GetStatusDisplayName(ApplicationStatus.Processing),
+                input.OperatorName);
+        }
+
+        app.UpdatedAt = DateTime.Now;
+        SyncSummaryAndConclusionInternal(app);
+
+        var node = new ProcessingNode
+        {
+            ApplicationId = app.Id,
+            FromStatus = previousStatus,
+            ToStatus = app.Status,
+            Action = $"修改关键字段: {string.Join("、", updatedFields)}",
+            OperatorName = input.OperatorName,
+            OperatorRole = input.CurrentUserRole,
+            Comment = input.ChangeReason,
+            Conclusion = $"关键字段变更已同步至列表摘要/详情结论/看板统计",
+            ResponsiblePersonBefore = "",
+            ResponsiblePersonAfter = "",
+            OperatedAt = DateTime.Now
+        };
+        _context.ProcessingNodes.Add(node);
+        _context.SaveChanges();
+
+        foreach (var change in keyChanges)
+        {
+            change.ProcessingNodeId = node.Id;
+            _context.FieldChanges.Add(change);
+        }
+        _context.SaveChanges();
+
+        return app;
+    }
 }

@@ -70,6 +70,36 @@ public class ApplicationController : Controller
         return View(vm);
     }
 
+    public IActionResult EditKeyFields(int id)
+    {
+        try
+        {
+            var vm = _workflowService.GetKeyFieldEditViewModel(id);
+            return View(vm);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult EditKeyFields(KeyFieldEditInput input)
+    {
+        try
+        {
+            _workflowService.UpdateKeyFields(input);
+            return RedirectToAction(nameof(Detail), new { id = input.ApplicationId });
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            var vm = _workflowService.GetKeyFieldEditViewModel(input.ApplicationId);
+            return View(vm);
+        }
+    }
+
     public IActionResult Create()
     {
         return View();

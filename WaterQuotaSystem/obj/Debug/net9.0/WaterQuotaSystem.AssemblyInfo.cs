@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WaterQuotaSystem")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+79d55eb0c11a3556b2f1131b9d80022c4c4bc7c6")]
 [assembly: System.Reflection.AssemblyProductAttribute("WaterQuotaSystem")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WaterQuotaSystem")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

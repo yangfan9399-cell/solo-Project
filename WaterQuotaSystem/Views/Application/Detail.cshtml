@@ -238,6 +238,8 @@
             <div class="d-grid gap-2">
                 <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="1" class="btn btn-primary">现场处理台</a>
                 <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="2" class="btn btn-warning">主管复核台</a>
+                <a asp-action="EditKeyFields" asp-route-id="@app.Id" class="btn btn-outline-primary">🔑 修改关键字段（同步摘要/结论/看板）</a>
+                <a asp-action="Dashboard" class="btn btn-outline-info">📊 查看看板统计</a>
             </div>
         }
         else
@@ -245,6 +247,9 @@
             <div class="alert alert-secondary text-center">
                 <strong>已归档 - 只读</strong><br/>
                 <small>如需重新处理，需在处理台发起重新处理</small>
+            </div>
+            <div class="d-grid gap-2">
+                <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="2" class="btn btn-outline-warning">主管复核台（发起重新处理）</a>
             </div>
         }
 

@@ -3,6 +3,20 @@
     ViewData["Title"] = "统计看板";
 }
 
+<div class="alert alert-info mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>📊 看板统计（实时同步）：</strong>
+            本看板的所有统计（状态分布、样本类型分布、月度趋势、审批水量）均实时同步。
+            点击任意统计卡片即可钻取到对应记录；修改关键字段后刷新本页，统计数值将自动重算。
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="EditKeyFields" asp-route-id="2" class="btn btn-sm btn-outline-primary">修改关键字段演示</a>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-2">
         <div class="card card-summary text-white bg-primary" onclick="location.href='@Url.Action("Dashboard","Application",new { drill = "active" })'">
@@ -73,10 +87,29 @@
                         <td class="text-end fw-bold text-success">@Model.TotalApprovedQuota.ToString("N0") 吨/月</td>
                     </tr>
                     <tr>
+                        <td class="text-muted">指标审批通过率</td>
+                        <td class="text-end fw-bold @(Model.QuotaApprovalRate >= 80 ? "text-success" : "text-warning")">@Model.QuotaApprovalRate%</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">阻断中(状态为已阻断)</td>
+                        <td class="text-end fw-bold text-danger">@Model.BlockedStatusCount</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">复核中</td>
+                        <td class="text-end fw-bold text-warning">@Model.ReviewingCount</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">处理中</td>
+                        <td class="text-end fw-bold text-primary">@Model.ProcessingCount</td>
+                    </tr>
+                    <tr>
                         <td class="text-muted">平均处理天数</td>
                         <td class="text-end fw-bold">@Model.AverageProcessingDays.ToString("F1") 天</td>
                     </tr>
                 </table>
+                <small class="text-muted d-block mt-2 border-top pt-2">
+                    ⚠ 以上指标与列表摘要、详情结论共用同一份数据源，修改关键字段后将同步变化。
+                </small>
             </div>
         </div>
     </div>

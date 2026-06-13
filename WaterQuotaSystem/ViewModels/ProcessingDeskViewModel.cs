@@ -28,4 +28,6 @@ public class ProcessActionInput
     public decimal? ApprovedQuota { get; set; }
     public string OperatorName { get; set; } = string.Empty;
     public string EvidenceDescription { get; set; } = string.Empty;
+    public string EvidenceFileName { get; set; } = string.Empty;
+    public string EvidenceFileType { get; set; } = string.Empty;
 }

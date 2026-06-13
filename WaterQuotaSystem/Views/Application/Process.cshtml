@@ -91,6 +91,15 @@
                     }
                 </div>
 
+                <div class="mb-3 d-flex gap-2 flex-wrap">
+                    <a asp-action="EditKeyFields" asp-route-id="@app.Id" class="btn btn-outline-primary">
+                        🔑 修改关键字段（同步影响列表摘要/详情结论/看板统计）
+                    </a>
+                    <a asp-action="Dashboard" class="btn btn-outline-info">
+                        📊 查看看板统计（验证同步效果）
+                    </a>
+                </div>
+
                 @if (!app.IsReadOnly)
                 {
                     <form asp-action="Process" method="post">
@@ -111,6 +120,22 @@
                             <div class="mb-3">
                                 <label class="form-label">证据附件说明</label>
                                 <input name="EvidenceDescription" class="form-control" placeholder="描述上传的证据附件..." />
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">证据附件文件名（将写入 EvidenceAttachment 记录）</label>
+                                    <input name="EvidenceFileName" class="form-control" placeholder="如：现场勘验记录-20260614.pdf" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">文件类型</label>
+                                    <select name="EvidenceFileType" class="form-select">
+                                        <option value="application/pdf">PDF</option>
+                                        <option value="image/jpeg">JPG图片</option>
+                                        <option value="image/png">PNG图片</option>
+                                        <option value="application/vnd.ms-excel">Excel</option>
+                                        <option value="application/msword">Word</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">操作人姓名</label>

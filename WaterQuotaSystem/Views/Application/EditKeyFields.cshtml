@@ -1,0 +1,212 @@
+@model KeyFieldEditViewModel
+@{
+    ViewData["Title"] = $"修改关键字段 - {Model.Application.ApplicationNo}";
+    var app = Model.Application;
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">申请列表</a></li>
+                <li class="breadcrumb-item"><a asp-action="Detail" asp-route-id="@app.Id">@app.ApplicationNo</a></li>
+                <li class="breadcrumb-item active">修改关键字段</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <h6 class="alert-heading">⚠ 关键字段修改说明</h6>
+    <p class="mb-1">以下字段的变更将<strong>同步影响列表摘要、详情结论和复盘统计</strong>。修改会生成新的处理节点，变更记录永久留存。</p>
+    <p class="mb-0"><small>四大类关键字段：关键时间(申请时间/截止时间)、责任对象(当前责任人/申请人)、金额数量(申请指标/审批指标/限额)、证据结论</small></p>
+</div>
+
+@if (app.IsReadOnly)
+{
+    <div class="alert alert-danger">
+        <h5 class="mb-0">此申请已归档，不可直接修改关键字段。请先在处理台执行"重新处理"后再修改。</h5>
+    </div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">修改关键字段 - @app.ApplicationNo</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="EditKeyFields" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ApplicationId" value="@app.Id" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">操作人姓名</label>
+                        <input name="OperatorName" class="form-control" placeholder="请输入操作人姓名" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">当前用户角色</label>
+                        <select name="CurrentUserRole" class="form-select">
+                            <option value="1">现场人员</option>
+                            <option value="2">主管复核人</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">修改原因</label>
+                        <textarea name="ChangeReason" class="form-control" rows="2" placeholder="说明修改关键字段的原因..." required></textarea>
+                    </div>
+
+                    <hr/>
+
+                    <h6 class="text-primary mb-3">📅 第一类：关键时间</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">申请时间 <span class="badge bg-info">当前: @app.ApplicationDate.ToString("yyyy-MM-dd")</span></label>
+                            <input name="NewApplicationDate" type="date" class="form-control" />
+                            <small class="text-muted">留空表示不修改</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">截止时间 <span class="badge bg-info">当前: @(app.Deadline.HasValue ? app.Deadline.Value.ToString("yyyy-MM-dd") : "未设置")</span></label>
+                            <input name="NewDeadline" type="date" class="form-control" />
+                            <small class="text-muted">留空表示不修改</small>
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <h6 class="text-success mb-3">👤 第二类：责任对象</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">当前责任人 <span class="badge bg-success">当前: @(string.IsNullOrWhiteSpace(app.CurrentResponsiblePerson) ? "未设置" : app.CurrentResponsiblePerson)</span></label>
+                            <input name="NewCurrentResponsiblePerson" class="form-control" placeholder="如不修改请留空" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">申请人 <span class="badge bg-success">当前: @app.ApplicantName</span></label>
+                            <input name="NewApplicantName" class="form-control" placeholder="如不修改请留空" />
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <h6 class="text-warning mb-3">💰 第三类：金额数量（用水指标）</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">申请指标 <span class="badge bg-warning">当前: @app.AppliedQuota @app.QuotaUnit</span></label>
+                            <input name="NewAppliedQuota" type="number" step="0.01" class="form-control" placeholder="如不修改请留空" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">审批指标 <span class="badge bg-warning">当前: @app.ApprovedQuota @app.QuotaUnit</span></label>
+                            <input name="NewApprovedQuota" type="number" step="0.01" class="form-control" placeholder="如不修改请留空" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">限额 <span class="badge bg-warning">当前: @app.QuotaLimit @app.QuotaUnit</span></label>
+                            <input name="NewQuotaLimit" type="number" step="0.01" class="form-control" placeholder="如不修改请留空" />
+                        </div>
+                    </div>
+                    <div class="alert alert-light small">
+                        <strong>自动联动规则：</strong>若修改后申请指标 > 限额，系统将自动将状态切换为"已阻断"并生成阻断信息；反之则恢复为"处理中"。
+                    </div>
+
+                    <hr/>
+
+                    <h6 class="text-danger mb-3">📋 第四类：证据结论</h6>
+                    <div class="mb-3">
+                        <label class="form-label">证据结论 <span class="badge bg-danger">当前: @(string.IsNullOrWhiteSpace(app.Conclusion) ? "未设置" : app.Conclusion)</span></label>
+                        <textarea name="NewConclusion" class="form-control" rows="3" placeholder="如不修改请留空。新结论将同步显示在详情页和列表摘要。"></textarea>
+                    </div>
+
+                    <hr/>
+
+                    <div class="alert alert-success mb-3">
+                        <h6 class="mb-1">✅ 变更同步范围</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>列表摘要：</strong>申请指标、审批指标、责任人、截止时间、状态将自动刷新</li>
+                            <li><strong>详情结论：</strong>证据结论、阻断信息、差异字段、补救路径将自动刷新</li>
+                            <li><strong>复盘统计：</strong>状态分布、样本类型分布、月度趋势、已审批水量、活跃申请数将重新计算</li>
+                            <li><strong>审计追踪：</strong>每个字段变更都将生成 FieldChangeRecord 永久留存</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" @(app.IsReadOnly ? "disabled" : "")>确认修改关键字段</button>
+                        <a asp-action="Detail" asp-route-id="@app.Id" class="btn btn-outline-secondary">返回详情</a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">返回列表</a>
+                        <a asp-action="Dashboard" class="btn btn-outline-info">查看看板统计</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">当前记录快照（修改前）</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><td class="text-muted" style="width:120px">列表摘要</td><td><small>@app.Summary</small></td></tr>
+                    <tr><td class="text-muted">详情结论</td><td><small>@(string.IsNullOrWhiteSpace(app.Conclusion) ? "暂无" : app.Conclusion)</small></td></tr>
+                    <tr><td class="text-muted">状态</td><td><span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(app.Status) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(app.Status)</span></td></tr>
+                    <tr><td class="text-muted">样本类型</td><td><span class="badge @WaterQuotaSystem.Services.WorkflowService.GetSampleTypeCssClass(app.SampleType) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetSampleTypeDisplayName(app.SampleType)</span></td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">历史关键字段变更记录</h6>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.PreviousKeyChanges.Any())
+                {
+                    <table class="table table-sm mb-0">
+                        @foreach (var c in Model.PreviousKeyChanges)
+                        {
+                            <tr class="table-warning">
+                                <td class="p-2">
+                                    <small>
+                                        <strong>@c.FieldDisplayName</strong><br/>
+                                        <span class="diff-old">@c.OldValue</span> → <span class="diff-new">@c.NewValue</span><br/>
+                                        <span class="text-muted">@c.ChangedBy | @c.ChangedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted p-2 mb-0 small">暂无关键字段变更记录</p>
+                }
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">历史处理节点</h6>
+            </div>
+            <div class="card-body">
+                @foreach (var node in Model.HistoryNodes)
+                {
+                    var isBlocked = node.ToStatus == ApplicationStatus.Blocked || node.ToStatus == ApplicationStatus.Timeout;
+                    <div class="timeline-item @(isBlocked ? "blocked" : "") @(node.ToStatus == ApplicationStatus.Archived ? "archived" : "")">
+                        <div class="d-flex justify-content-between">
+                            <strong class="small">@node.Action</strong>
+                            <small class="text-muted">@node.OperatedAt.ToString("MM-dd HH:mm")</small>
+                        </div>
+                        <div>
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.FromStatus) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.FromStatus)</span>
+                            →
+                            <span class="badge @WaterQuotaSystem.Services.WorkflowService.GetStatusCssClass(node.ToStatus) badge-status">@WaterQuotaSystem.Services.WorkflowService.GetStatusDisplayName(node.ToStatus)</span>
+                        </div>
+                        <small class="text-muted">@node.OperatorName | @node.Comment</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

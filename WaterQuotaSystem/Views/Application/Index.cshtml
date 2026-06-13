@@ -3,6 +3,19 @@
     ViewData["Title"] = "用水指标申请列表";
 }
 
+<div class="alert alert-info mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>💡 数据同步说明：</strong>
+            本页面"摘要"列、详情页"结论"、看板"状态分布/月度趋势"共用同一份数据源。
+            修改关键字段（关键时间/责任对象/金额数量/证据结论）后，三处数据将同步刷新。
+        </div>
+        <a asp-action="EditKeyFields" asp-route-id="2" class="btn btn-sm btn-outline-primary">
+            演示：修改 WQ-2026-002 关键字段 →
+        </a>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card card-summary text-white bg-primary" onclick="location.href='@Url.Action("Index","Application",new { statusFilter = (ApplicationStatus?)null })'">
@@ -115,6 +128,11 @@
                             {
                                 <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="1" class="btn btn-sm btn-outline-primary">处理</a>
                                 <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="2" class="btn btn-sm btn-outline-warning">复核</a>
+                                <a asp-action="EditKeyFields" asp-route-id="@app.Id" class="btn btn-sm btn-outline-secondary">🔑改关键字段</a>
+                            }
+                            else
+                            {
+                                <a asp-action="Process" asp-route-id="@app.Id" asp-route-role="2" class="btn btn-sm btn-outline-dark">🔄重新处理</a>
                             }
                         </td>
                     </tr>
