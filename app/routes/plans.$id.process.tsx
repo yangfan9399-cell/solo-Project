@@ -137,6 +137,10 @@ export default function PlanProcessPage() {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const submitter = (event.nativeEvent as unknown as { submitter: HTMLButtonElement | null }).submitter;
+    if (submitter && submitter.name === "intent") {
+      formData.append(submitter.name, submitter.value);
+    }
     const validAttachments = attachments.filter(
       (a) => a.fileName && a.fileUrl
     );

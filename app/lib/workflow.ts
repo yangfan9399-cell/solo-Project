@@ -49,7 +49,8 @@ export async function listPlans(filters?: {
         like(outagePlans.planCode, kw),
         like(outagePlans.title, kw),
         like(outagePlans.lineName, kw),
-        like(outagePlans.responsiblePerson, kw)
+        like(outagePlans.responsiblePerson, kw),
+        like(outagePlans.region, kw)
       )!
     );
   }
