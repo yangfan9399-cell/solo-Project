@@ -39,14 +39,14 @@ export interface BusinessRecord {
   id: string;
   content: string;
   recordType: string;
-  creator: User;
+  createdBy: User;
   createdAt: string;
 }
 
 export interface OnSiteExplanation {
   id: string;
   content: string;
-  creator: User;
+  createdBy: User;
   createdAt: string;
 }
 
@@ -57,7 +57,7 @@ export interface EvidenceAttachment {
   fileSize: number;
   filePath: string;
   description?: string;
-  uploader: User;
+  uploadedBy: User;
   createdAt: string;
 }
 

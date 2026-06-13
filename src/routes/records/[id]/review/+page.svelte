@@ -188,7 +188,7 @@
 		if (ok) closeModal();
 	}
 
-	async function toggleViolationConfirm(violationId: number, currentConfirmed: boolean) {
+	async function toggleViolationConfirm(violationId: string, currentConfirmed: boolean) {
 		try {
 			const res = await fetch(`/api/records/${record.id}/update`, {
 				method: 'PATCH',
@@ -343,7 +343,7 @@
 									</div>
 									<div class="record-content mt-sm">{br.content}</div>
 									<div class="text-xs text-secondary mt-sm">
-										创建人: {br.creator?.name ?? '-'}
+										创建人: {br.createdBy?.name ?? '-'}
 									</div>
 								</div>
 							{/each}
@@ -362,7 +362,7 @@
 									<div class="record-content">{exp.content}</div>
 									<div class="flex items-center justify-between mt-sm">
 										<span class="text-xs text-secondary">
-											创建人: {exp.creator?.name ?? '-'}
+											创建人: {exp.createdBy?.name ?? '-'}
 										</span>
 										<span class="text-xs text-muted">{formatDate(exp.createdAt)}</span>
 									</div>
@@ -394,7 +394,7 @@
 								{/if}
 								<div class="flex items-center justify-between mt-sm">
 									<span class="text-xs text-secondary">
-										上传人: {ea.uploader?.name ?? '-'}
+										上传人: {ea.uploadedBy?.name ?? '-'}
 									</span>
 									<span class="text-xs text-muted">{formatDate(ea.createdAt)}</span>
 								</div>

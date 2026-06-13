@@ -285,7 +285,7 @@
 										</div>
 										<div class="record-content mt-sm">{br.content}</div>
 										<div class="text-xs text-secondary mt-sm">
-											创建人: {br.creator?.name ?? '-'}
+											创建人: {br.createdBy?.name ?? '-'}
 										</div>
 									</div>
 								{/each}
@@ -317,7 +317,7 @@
 										<div class="record-content">{exp.content}</div>
 										<div class="flex items-center justify-between mt-sm">
 											<span class="text-xs text-secondary">
-												创建人: {exp.creator?.name ?? '-'}
+												创建人: {exp.createdBy?.name ?? '-'}
 											</span>
 											<span class="text-xs text-muted">{formatDate(exp.createdAt)}</span>
 										</div>

@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ params }) => {
 					orderBy: { createdAt: 'asc' }
 				},
 				onSiteExplanations: {
-					include: { creator: true },
+					include: { createdBy: true },
 					orderBy: { createdAt: 'asc' }
 				},
 				evidenceAttachments: {
