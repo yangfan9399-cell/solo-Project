@@ -57,6 +57,9 @@ export interface ResultRecord {
   hasBadSplice: boolean;
   voiceDetailLoss: number;
   jumpArtifacts: number;
+  correlationCoefficient: number;
+  jumpPenaltySum: number;
+  detailPenaltyValue: number;
   createdAt: number;
 }
 

@@ -6,12 +6,12 @@ type Params = Promise<{ id: string }>;
 export async function GET(_: Request, { params }: { params: Params }) {
   const { id } = await params;
   try {
-    const session = getSession(id);
+    const session = await getSession(id);
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
-    const tapes = getTapeDetails(id);
-    const results = getResultRecords(id);
+    const tapes = await getTapeDetails(id);
+    const results = await getResultRecords(id);
     return NextResponse.json({ session, tapes, results });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -22,7 +22,7 @@ export async function GET(_: Request, { params }: { params: Params }) {
 export async function POST(_: Request, { params }: { params: Params }) {
   const { id } = await params;
   try {
-    const completed = completeSession(id);
+    const completed = await completeSession(id);
     return NextResponse.json({ session: completed });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

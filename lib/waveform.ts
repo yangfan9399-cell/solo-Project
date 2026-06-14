@@ -190,7 +190,7 @@ export function applyNoiseReduction(waveform: number[], level: number): { wavefo
     }
   }
 
-  const detailLoss = level > 0.6 ? (level - 0.6) * 1.5 : 0;
+  const detailLoss = level > 0.7 ? (level - 0.7) * 2.5 : 0;
   return { waveform: result, detailLoss: Math.min(1, detailLoss) };
 }
 
@@ -237,7 +237,7 @@ export function calculateMetrics(
   analysis: WaveformAnalysis,
   noiseReductionLevel: number,
   voiceDetailLoss: number
-): { intelligibility: number; fidelity: number } {
+): { intelligibility: number; fidelity: number; correlation: number; jumpPenalty: number; detailPenalty: number } {
   let similarity = 0;
   for (let i = 0; i < Math.min(original.length, current.length); i++) {
     similarity += 1 - Math.abs(original[i] - current[i]) / 2;
@@ -261,7 +261,7 @@ export function calculateMetrics(
   const fidelity = Math.max(0, Math.min(100, (similarity * 0.6 + correlation * 0.4) * 100 - jumpPenalty * 20));
   const intelligibility = Math.max(0, Math.min(100, correlation * 100 - detailPenalty * 30 - jumpPenalty * 15));
 
-  return { intelligibility, fidelity };
+  return { intelligibility, fidelity, correlation, jumpPenalty, detailPenalty };
 }
 
 export const CLEANING_COSTS: Record<string, number> = {

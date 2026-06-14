@@ -7,7 +7,7 @@ type Params = Promise<{ id: string }>;
 
 export default async function SessionPage({ params }: { params: Params }) {
   const { id } = await params;
-  const session = getSession(id);
+  const session = await getSession(id);
   if (!session) {
     notFound();
   }
@@ -16,7 +16,7 @@ export default async function SessionPage({ params }: { params: Params }) {
     redirect(`/session/${id}/result`);
   }
 
-  const tapes = getTapeDetails(id);
+  const tapes = await getTapeDetails(id);
   const seeds = getAllSeeds();
 
   let seedHint: string | undefined;

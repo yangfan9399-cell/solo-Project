@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['better-sqlite3'],
+  serverExternalPackages: ['sql.js'],
   webpack: (config) => {
     config.externals = [
       ...(config.externals || []),
-      'better-sqlite3',
+      'sql.js',
     ];
     return config;
   },

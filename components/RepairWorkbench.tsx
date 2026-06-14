@@ -637,7 +637,7 @@ export default function RepairWorkbench({ initialSession, initialTapes, initialS
               <div className="flex justify-between">
                 <span className="text-tape-muted">降噪等级</span>
                 <span className={`${
-                  currentTape.noiseReductionLevel > 0.6 ? 'text-tape-danger' : 'text-tape-text'
+                  currentTape.noiseReductionLevel > 0.7 ? 'text-tape-danger' : 'text-tape-text'
                 }`}>
                   {(currentTape.noiseReductionLevel * 100).toFixed(0)}%
                 </span>

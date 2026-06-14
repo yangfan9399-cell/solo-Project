@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getDb } from './db';
+import { getDb, persist, rowsToObjects } from './db';
+import type { Database, Statement } from 'sql.js';
 import {
   generateOriginalWaveform,
   applyDefects,
@@ -18,7 +19,6 @@ import type {
   ResultRecord,
   RepairActionType,
   CleaningMethod,
-  SeedType,
 } from './types';
 import type { SessionSeed, TapeSeedConfig } from './seeds';
 
@@ -26,8 +26,36 @@ function now(): number {
   return Date.now();
 }
 
-export function createSessionFromSeed(seed: SessionSeed): GameSession {
-  const db = getDb();
+function runStmt(stmt: Statement, params: any[] = []): void {
+  stmt.bind(params);
+  stmt.step();
+  stmt.free();
+}
+
+function getOne(db: Database, sql: string, params: any[] = []): any | null {
+  const stmt = db.prepare(sql);
+  stmt.bind(params);
+  let row: any = null;
+  if (stmt.step()) {
+    row = stmt.getAsObject();
+  }
+  stmt.free();
+  return row;
+}
+
+function getAll(db: Database, sql: string, params: any[] = []): any[] {
+  const stmt = db.prepare(sql);
+  stmt.bind(params);
+  const rows: any[] = [];
+  while (stmt.step()) {
+    rows.push(stmt.getAsObject());
+  }
+  stmt.free();
+  return rows;
+}
+
+export async function createSessionFromSeed(seed: SessionSeed): Promise<GameSession> {
+  const db = await getDb();
   const sessionId = uuidv4();
   const session: GameSession = {
     id: sessionId,
@@ -45,34 +73,37 @@ export function createSessionFromSeed(seed: SessionSeed): GameSession {
     grade: '',
   };
 
-  const insertSession = db.prepare(
-    `INSERT INTO game_sessions (id, label, batch_description, tape_count, status, started_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  );
-  insertSession.run(
-    session.id,
-    session.label,
-    session.batchDescription,
-    session.tapeCount,
-    session.status,
-    session.startedAt
+  runStmt(
+    db.prepare(
+      `INSERT INTO game_sessions (id, label, batch_description, tape_count, status, started_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ),
+    [
+      session.id,
+      session.label,
+      session.batchDescription,
+      session.tapeCount,
+      session.status,
+      session.startedAt,
+    ]
   );
 
   for (const tapeSeed of seed.tapes) {
-    createTapeDetail(sessionId, tapeSeed);
+    await createTapeDetail(sessionId, tapeSeed);
   }
 
-  addHistory(sessionId, null, 'register_tape', {
+  await addHistory(sessionId, null, 'register_tape', {
     seedId: seed.id,
     seedType: seed.seedType,
     tapeCount: seed.tapes.length,
   });
 
+  persist();
   return session;
 }
 
-function createTapeDetail(sessionId: string, tapeSeed: TapeSeedConfig): TapeDetail {
-  const db = getDb();
+async function createTapeDetail(sessionId: string, tapeSeed: TapeSeedConfig): Promise<TapeDetail> {
+  const db = await getDb();
   const tapeId = uuidv4();
   const originalWaveform = generateOriginalWaveform(tapeSeed.seed);
   const { waveform, breakpoints, speedDrift, noiseLevel } = applyDefects(
@@ -100,85 +131,93 @@ function createTapeDetail(sessionId: string, tapeSeed: TapeSeedConfig): TapeDeta
     updatedAt: now(),
   };
 
-  const insert = db.prepare(
-    `INSERT INTO tape_details (id, session_id, tape_index, label, defects, original_waveform, current_waveform,
-      breakpoints, speed_drift, noise_level, applied_speed, noise_reduction_level, splices, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  );
-  insert.run(
-    detail.id,
-    detail.sessionId,
-    detail.tapeIndex,
-    detail.label,
-    JSON.stringify(detail.defects),
-    JSON.stringify(detail.originalWaveform),
-    JSON.stringify(detail.currentWaveform),
-    JSON.stringify(detail.breakpoints),
-    detail.speedDrift,
-    detail.noiseLevel,
-    detail.appliedSpeed,
-    detail.noiseReductionLevel,
-    JSON.stringify(detail.splices),
-    detail.status,
-    detail.createdAt,
-    detail.updatedAt
+  runStmt(
+    db.prepare(
+      `INSERT INTO tape_details (id, session_id, tape_index, label, defects, original_waveform, current_waveform,
+        breakpoints, speed_drift, noise_level, applied_speed, noise_reduction_level, splices, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ),
+    [
+      detail.id,
+      detail.sessionId,
+      detail.tapeIndex,
+      detail.label,
+      JSON.stringify(detail.defects),
+      JSON.stringify(detail.originalWaveform),
+      JSON.stringify(detail.currentWaveform),
+      JSON.stringify(detail.breakpoints),
+      detail.speedDrift,
+      detail.noiseLevel,
+      detail.appliedSpeed,
+      detail.noiseReductionLevel,
+      JSON.stringify(detail.splices),
+      detail.status,
+      detail.createdAt,
+      detail.updatedAt,
+    ]
   );
 
   return detail;
 }
 
-export function getSession(sessionId: string): GameSession | null {
-  const db = getDb();
-  const row = db.prepare('SELECT * FROM game_sessions WHERE id = ?').get(sessionId) as any;
+export async function getSession(sessionId: string): Promise<GameSession | null> {
+  const db = await getDb();
+  const row = getOne(db, 'SELECT * FROM game_sessions WHERE id = ?', [sessionId]);
   if (!row) return null;
   return rowToSession(row);
 }
 
-export function getTapeDetails(sessionId: string): TapeDetail[] {
-  const db = getDb();
-  const rows = db
-    .prepare('SELECT * FROM tape_details WHERE session_id = ? ORDER BY tape_index')
-    .all(sessionId) as any[];
+export async function getTapeDetails(sessionId: string): Promise<TapeDetail[]> {
+  const db = await getDb();
+  const rows = getAll(db, 'SELECT * FROM tape_details WHERE session_id = ? ORDER BY tape_index', [sessionId]);
   return rows.map(rowToTapeDetail);
 }
 
-export function getTapeDetail(tapeId: string): TapeDetail | null {
-  const db = getDb();
-  const row = db.prepare('SELECT * FROM tape_details WHERE id = ?').get(tapeId) as any;
+export async function getTapeDetail(tapeId: string): Promise<TapeDetail | null> {
+  const db = await getDb();
+  const row = getOne(db, 'SELECT * FROM tape_details WHERE id = ?', [tapeId]);
   if (!row) return null;
   return rowToTapeDetail(row);
 }
 
-export function getRepairHistory(sessionId: string, tapeDetailId?: string): RepairHistory[] {
-  const db = getDb();
-  let stmt;
+export async function getRepairHistory(
+  sessionId: string,
+  tapeDetailId?: string
+): Promise<RepairHistory[]> {
+  const db = await getDb();
   if (tapeDetailId) {
-    stmt = db.prepare(
-      'SELECT * FROM repair_history WHERE session_id = ? AND tape_detail_id = ? ORDER BY sequence_number'
+    const rows = getAll(
+      db,
+      'SELECT * FROM repair_history WHERE session_id = ? AND tape_detail_id = ? ORDER BY sequence_number',
+      [sessionId, tapeDetailId]
     );
-    return (stmt.all(sessionId, tapeDetailId) as any[]).map(rowToHistory);
+    return rows.map(rowToHistory);
   }
-  stmt = db.prepare(
-    'SELECT * FROM repair_history WHERE session_id = ? ORDER BY sequence_number'
+  const rows = getAll(
+    db,
+    'SELECT * FROM repair_history WHERE session_id = ? ORDER BY sequence_number',
+    [sessionId]
   );
-  return (stmt.all(sessionId) as any[]).map(rowToHistory);
+  return rows.map(rowToHistory);
 }
 
-export function getResultRecords(sessionId: string): ResultRecord[] {
-  const db = getDb();
-  const rows = db
-    .prepare('SELECT * FROM result_records WHERE session_id = ? ORDER BY created_at')
-    .all(sessionId) as any[];
+export async function getResultRecords(sessionId: string): Promise<ResultRecord[]> {
+  const db = await getDb();
+  const rows = getAll(
+    db,
+    'SELECT * FROM result_records WHERE session_id = ? ORDER BY created_at',
+    [sessionId]
+  );
   return rows.map(rowToResultRecord);
 }
 
-export function selectCleaning(
+export async function selectCleaning(
   sessionId: string,
   tapeDetailId: string,
   method: CleaningMethod
-): { tape: TapeDetail; cost: number } {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
+): Promise<{ tape: TapeDetail; cost: number }> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
@@ -187,26 +226,29 @@ export function selectCleaning(
   const cleaned = applyCleaning(tape.currentWaveform, method, tape.noiseLevel);
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, status = ?, updated_at = ? WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, status = ?, updated_at = ? WHERE id = ?`
+    ),
+    [JSON.stringify(cleaned), 'in_progress', updatedAt, tapeDetailId]
   );
-  update.run(JSON.stringify(cleaned), 'in_progress', updatedAt, tapeDetailId);
 
   tape.currentWaveform = cleaned;
   tape.status = 'in_progress';
   tape.updatedAt = updatedAt;
 
-  addHistory(sessionId, tapeDetailId, 'select_cleaning', { method, cost }, previousState);
+  await addHistory(sessionId, tapeDetailId, 'select_cleaning', { method, cost }, previousState);
+  persist();
   return { tape, cost };
 }
 
-export function spliceBreak(
+export async function spliceBreak(
   sessionId: string,
   tapeDetailId: string,
   position: number
-): { tape: TapeDetail; isCorrect: boolean } {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
+): Promise<{ tape: TapeDetail; isCorrect: boolean }> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
@@ -220,46 +262,55 @@ export function spliceBreak(
   );
 
   const isCorrect = nearestBp && nearestBp.distance < 5;
-  const newSplices = [...tape.splices.filter((s) => Math.abs(s.position - position) >= 5), { position, isCorrect }];
+  const newSplices = [
+    ...tape.splices.filter((s) => Math.abs(s.position - position) >= 5),
+    { position, isCorrect },
+  ];
   const splicedWaveform = applySplice(tape.currentWaveform, tape.breakpoints, newSplices);
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, splices = ?, status = ?, updated_at = ? WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, splices = ?, status = ?, updated_at = ? WHERE id = ?`
+    ),
+    [JSON.stringify(splicedWaveform), JSON.stringify(newSplices), 'in_progress', updatedAt, tapeDetailId]
   );
-  update.run(JSON.stringify(splicedWaveform), JSON.stringify(newSplices), 'in_progress', updatedAt, tapeDetailId);
 
   tape.currentWaveform = splicedWaveform;
   tape.splices = newSplices;
   tape.status = 'in_progress';
   tape.updatedAt = updatedAt;
 
-  addHistory(
+  await addHistory(
     sessionId,
     tapeDetailId,
     'splice_break',
-    { position, nearestBreakpoint: nearestBp?.bp.position, isCorrect, distance: nearestBp?.distance },
+    {
+      position,
+      nearestBreakpoint: nearestBp?.bp.position,
+      isCorrect,
+      distance: nearestBp?.distance,
+    },
     previousState
   );
-
+  persist();
   return { tape, isCorrect };
 }
 
-export function adjustSpeed(
+export async function adjustSpeed(
   sessionId: string,
   tapeDetailId: string,
   speed: number
-): { tape: TapeDetail; deviation: number } {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
+): Promise<{ tape: TapeDetail; deviation: number }> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
   const clampedSpeed = Math.max(0.7, Math.min(1.3, speed));
 
-  let current = applyCleaning(tape.originalWaveform, 'rewind_cycle', tape.noiseLevel);
   const originalWithDefects = applyDefects(tape.originalWaveform, tape.defects, tape.tapeIndex + 5).waveform;
-  current = [...originalWithDefects];
+  let current = [...originalWithDefects];
 
   if (tape.splices.length > 0) {
     current = applySplice(current, tape.breakpoints, tape.splices);
@@ -269,10 +320,12 @@ export function adjustSpeed(
   const { waveform: afterNr } = applyNoiseReduction(current, tape.noiseReductionLevel);
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, applied_speed = ?, status = ?, updated_at = ? WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, applied_speed = ?, status = ?, updated_at = ? WHERE id = ?`
+    ),
+    [JSON.stringify(afterNr), clampedSpeed, 'in_progress', updatedAt, tapeDetailId]
   );
-  update.run(JSON.stringify(afterNr), clampedSpeed, 'in_progress', updatedAt, tapeDetailId);
 
   tape.currentWaveform = afterNr;
   tape.appliedSpeed = clampedSpeed;
@@ -280,32 +333,31 @@ export function adjustSpeed(
   tape.updatedAt = updatedAt;
 
   const deviation = Math.abs(1 - clampedSpeed);
-  addHistory(
+  await addHistory(
     sessionId,
     tapeDetailId,
     'adjust_speed',
     { speed: clampedSpeed, drift: tape.speedDrift, deviation },
     previousState
   );
-
+  persist();
   return { tape, deviation };
 }
 
-export function applyNoiseReductionAction(
+export async function applyNoiseReductionAction(
   sessionId: string,
   tapeDetailId: string,
   level: number
-): { tape: TapeDetail; detailLoss: number; isExcessive: boolean } {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
+): Promise<{ tape: TapeDetail; detailLoss: number; isExcessive: boolean }> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
   const clampedLevel = Math.max(0, Math.min(1, level));
 
-  let current = applyCleaning(tape.originalWaveform, 'rewind_cycle', tape.noiseLevel);
   const originalWithDefects = applyDefects(tape.originalWaveform, tape.defects, tape.tapeIndex + 5).waveform;
-  current = [...originalWithDefects];
+  let current = [...originalWithDefects];
 
   if (tape.splices.length > 0) {
     current = applySplice(current, tape.breakpoints, tape.splices);
@@ -316,39 +368,41 @@ export function applyNoiseReductionAction(
   const isExcessive = clampedLevel > 0.7;
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, noise_reduction_level = ?, status = ?, updated_at = ? WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, noise_reduction_level = ?, status = ?, updated_at = ? WHERE id = ?`
+    ),
+    [JSON.stringify(result), clampedLevel, 'in_progress', updatedAt, tapeDetailId]
   );
-  update.run(JSON.stringify(result), clampedLevel, 'in_progress', updatedAt, tapeDetailId);
 
   tape.currentWaveform = result;
   tape.noiseReductionLevel = clampedLevel;
   tape.status = 'in_progress';
   tape.updatedAt = updatedAt;
 
-  addHistory(
+  await addHistory(
     sessionId,
     tapeDetailId,
     'apply_noise_reduction',
     { level: clampedLevel, detailLoss, isExcessive },
     previousState
   );
-
+  persist();
   return { tape, detailLoss, isExcessive };
 }
 
-export function rollbackToHistory(
+export async function rollbackToHistory(
   sessionId: string,
   tapeDetailId: string,
   historyId: string
-): { tape: TapeDetail; rolledBackActions: number } {
-  const db = getDb();
-  const history = getRepairHistory(sessionId, tapeDetailId);
+): Promise<{ tape: TapeDetail; rolledBackActions: number }> {
+  const db = await getDb();
+  const history = await getRepairHistory(sessionId, tapeDetailId);
   const targetIdx = history.findIndex((h) => h.id === historyId);
   if (targetIdx < 0) throw new Error('History entry not found');
 
   const targetEntry = history[targetIdx];
-  const tape = getTapeDetail(tapeDetailId);
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
@@ -377,16 +431,18 @@ export function rollbackToHistory(
   const actionsAfter = history.length - 1 - targetIdx;
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, applied_speed = ?, noise_reduction_level = ?, splices = ?, updated_at = ? WHERE id = ?`
-  );
-  update.run(
-    JSON.stringify(newWaveform),
-    newSpeed,
-    newNrLevel,
-    JSON.stringify(newSplices),
-    updatedAt,
-    tapeDetailId
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, applied_speed = ?, noise_reduction_level = ?, splices = ?, updated_at = ? WHERE id = ?`
+    ),
+    [
+      JSON.stringify(newWaveform),
+      newSpeed,
+      newNrLevel,
+      JSON.stringify(newSplices),
+      updatedAt,
+      tapeDetailId,
+    ]
   );
 
   tape.currentWaveform = newWaveform;
@@ -395,30 +451,33 @@ export function rollbackToHistory(
   tape.splices = newSplices;
   tape.updatedAt = updatedAt;
 
-  addHistory(
+  await addHistory(
     sessionId,
     tapeDetailId,
     'rollback',
-    { targetHistoryId: historyId, targetAction: targetEntry.actionType, rolledBackActions: actionsAfter },
+    {
+      targetHistoryId: historyId,
+      targetAction: targetEntry.actionType,
+      rolledBackActions: actionsAfter,
+    },
     previousState
   );
-
+  persist();
   return { tape, rolledBackActions: actionsAfter };
 }
 
-export function recalculateTape(
+export async function recalculateTape(
   sessionId: string,
   tapeDetailId: string
-): { tape: TapeDetail; analysis: ReturnType<typeof analyzeWaveforms> } {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
+): Promise<{ tape: TapeDetail; analysis: ReturnType<typeof analyzeWaveforms> }> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
   if (!tape) throw new Error('Tape not found');
 
   const previousState = captureTapeState(tape);
 
-  let current = applyCleaning(tape.originalWaveform, 'rewind_cycle', tape.noiseLevel);
   const originalWithDefects = applyDefects(tape.originalWaveform, tape.defects, tape.tapeIndex + 5).waveform;
-  current = [...originalWithDefects];
+  let current = [...originalWithDefects];
 
   if (tape.splices.length > 0) {
     current = applySplice(current, tape.breakpoints, tape.splices);
@@ -429,36 +488,49 @@ export function recalculateTape(
   const analysis = analyzeWaveforms(tape.originalWaveform, finalWave, tape.splices, tape.noiseReductionLevel);
   const updatedAt = now();
 
-  const update = db.prepare(
-    `UPDATE tape_details SET current_waveform = ?, status = ?, updated_at = ? WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE tape_details SET current_waveform = ?, status = ?, updated_at = ? WHERE id = ?`
+    ),
+    [JSON.stringify(finalWave), 'in_progress', updatedAt, tapeDetailId]
   );
-  update.run(JSON.stringify(finalWave), 'in_progress', updatedAt, tapeDetailId);
 
   tape.currentWaveform = finalWave;
   tape.status = 'in_progress';
   tape.updatedAt = updatedAt;
 
-  addHistory(sessionId, tapeDetailId, 'recalculate', {
-    metrics: calculateMetrics(tape.originalWaveform, finalWave, analysis, tape.noiseReductionLevel, 0),
-  }, previousState);
-
+  await addHistory(
+    sessionId,
+    tapeDetailId,
+    'recalculate',
+    {
+      metrics: calculateMetrics(tape.originalWaveform, finalWave, analysis, tape.noiseReductionLevel, 0),
+    },
+    previousState
+  );
+  persist();
   return { tape, analysis };
 }
 
-export function completeTapeRepair(
+export async function completeTapeRepair(
   sessionId: string,
   tapeDetailId: string,
   cleaningMethod: CleaningMethod,
   repairTimeMs: number
-): ResultRecord {
-  const db = getDb();
-  const tape = getTapeDetail(tapeDetailId);
-  const session = getSession(sessionId);
+): Promise<ResultRecord> {
+  const db = await getDb();
+  const tape = await getTapeDetail(tapeDetailId);
+  const session = await getSession(sessionId);
   if (!tape || !session) throw new Error('Session or tape not found');
 
-  const analysis = analyzeWaveforms(tape.originalWaveform, tape.currentWaveform, tape.splices, tape.noiseReductionLevel);
+  const analysis = analyzeWaveforms(
+    tape.originalWaveform,
+    tape.currentWaveform,
+    tape.splices,
+    tape.noiseReductionLevel
+  );
   const { detailLoss } = applyNoiseReduction(tape.currentWaveform, tape.noiseReductionLevel);
-  const { intelligibility, fidelity } = calculateMetrics(
+  const { intelligibility, fidelity, correlation, jumpPenalty, detailPenalty } = calculateMetrics(
     tape.originalWaveform,
     tape.currentWaveform,
     analysis,
@@ -470,7 +542,7 @@ export function completeTapeRepair(
   const spliceMaterialCost = tape.splices.length * 1.5;
   const totalMaterialCost = cleaningCost + spliceMaterialCost;
 
-  const hasExcessive = tape.noiseReductionLevel > 0.6;
+  const hasExcessive = tape.noiseReductionLevel > 0.7;
   const hasBadSplice = tape.splices.some((s) => !s.isCorrect);
 
   const resultId = uuidv4();
@@ -489,37 +561,48 @@ export function completeTapeRepair(
     hasBadSplice,
     voiceDetailLoss: detailLoss,
     jumpArtifacts: analysis.jumpPoints.length,
+    correlationCoefficient: correlation,
+    jumpPenaltySum: jumpPenalty,
+    detailPenaltyValue: detailPenalty,
     createdAt: now(),
   };
 
-  const insert = db.prepare(
-    `INSERT INTO result_records (id, session_id, tape_detail_id, cleaning_method, cleaning_cost, final_waveform,
-      intelligibility, fidelity, material_cost, repair_time_ms, has_excessive_noise_reduction,
-      has_bad_splice, voice_detail_loss, jump_artifacts, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  );
-  insert.run(
-    result.id,
-    result.sessionId,
-    result.tapeDetailId,
-    result.cleaningMethod,
-    result.cleaningCost,
-    JSON.stringify(result.finalWaveform),
-    result.intelligibility,
-    result.fidelity,
-    result.materialCost,
-    result.repairTimeMs,
-    result.hasExcessiveNoiseReduction ? 1 : 0,
-    result.hasBadSplice ? 1 : 0,
-    result.voiceDetailLoss,
-    result.jumpArtifacts,
-    result.createdAt
+  runStmt(
+    db.prepare(
+      `INSERT INTO result_records (id, session_id, tape_detail_id, cleaning_method, cleaning_cost, final_waveform,
+        intelligibility, fidelity, material_cost, repair_time_ms, has_excessive_noise_reduction,
+        has_bad_splice, voice_detail_loss, jump_artifacts, correlation_coefficient, jump_penalty_sum, detail_penalty_value, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ),
+    [
+      result.id,
+      result.sessionId,
+      result.tapeDetailId,
+      result.cleaningMethod,
+      result.cleaningCost,
+      JSON.stringify(result.finalWaveform),
+      result.intelligibility,
+      result.fidelity,
+      result.materialCost,
+      result.repairTimeMs,
+      result.hasExcessiveNoiseReduction ? 1 : 0,
+      result.hasBadSplice ? 1 : 0,
+      result.voiceDetailLoss,
+      result.jumpArtifacts,
+      result.correlationCoefficient,
+      result.jumpPenaltySum,
+      result.detailPenaltyValue,
+      result.createdAt,
+    ]
   );
 
-  const update = db.prepare(`UPDATE tape_details SET status = ?, updated_at = ? WHERE id = ?`);
-  update.run('completed', now(), tapeDetailId);
+  runStmt(db.prepare(`UPDATE tape_details SET status = ?, updated_at = ? WHERE id = ?`), [
+    'completed',
+    now(),
+    tapeDetailId,
+  ]);
 
-  addHistory(sessionId, tapeDetailId, 'complete_repair', {
+  await addHistory(sessionId, tapeDetailId, 'complete_repair', {
     cleaningMethod,
     intelligibility,
     fidelity,
@@ -528,16 +611,16 @@ export function completeTapeRepair(
     hasExcessive,
     hasBadSplice,
   });
-
+  persist();
   return result;
 }
 
-export function completeSession(sessionId: string): GameSession {
-  const db = getDb();
-  const session = getSession(sessionId);
+export async function completeSession(sessionId: string): Promise<GameSession> {
+  const db = await getDb();
+  const session = await getSession(sessionId);
   if (!session) throw new Error('Session not found');
 
-  const results = getResultRecords(sessionId);
+  const results = await getResultRecords(sessionId);
   if (results.length < session.tapeCount) {
     throw new Error(`还剩 ${session.tapeCount - results.length} 盘磁带未完成修复`);
   }
@@ -560,23 +643,25 @@ export function completeSession(sessionId: string): GameSession {
   else if (finalScore >= 50) grade = 'D';
 
   const completedAt = now();
-  const update = db.prepare(
-    `UPDATE game_sessions SET status = ?, completed_at = ?, total_intelligibility = ?,
-     total_fidelity = ?, total_material_cost = ?, total_repair_time_ms = ?, final_score = ?, grade = ?
-     WHERE id = ?`
+  runStmt(
+    db.prepare(
+      `UPDATE game_sessions SET status = ?, completed_at = ?, total_intelligibility = ?,
+       total_fidelity = ?, total_material_cost = ?, total_repair_time_ms = ?, final_score = ?, grade = ?
+       WHERE id = ?`
+    ),
+    [
+      'completed',
+      completedAt,
+      totalIntelligibility,
+      totalFidelity,
+      totalMaterialCost,
+      totalRepairTimeMs,
+      finalScore,
+      grade,
+      sessionId,
+    ]
   );
-  update.run(
-    'completed',
-    completedAt,
-    totalIntelligibility,
-    totalFidelity,
-    totalMaterialCost,
-    totalRepairTimeMs,
-    finalScore,
-    grade,
-    sessionId
-  );
-
+  persist();
   return {
     ...session,
     status: 'completed',
@@ -590,34 +675,38 @@ export function completeSession(sessionId: string): GameSession {
   };
 }
 
-function addHistory(
+async function addHistory(
   sessionId: string,
   tapeDetailId: string | null,
   actionType: RepairActionType,
   actionData: Record<string, unknown>,
   previousState: Record<string, unknown> | null = null
-): void {
-  const db = getDb();
+): Promise<void> {
+  const db = await getDb();
   const historyId = uuidv4();
   const timestamp = now();
-  const seqRow = db
-    .prepare('SELECT COALESCE(MAX(sequence_number), -1) AS max_seq FROM repair_history WHERE session_id = ?')
-    .get(sessionId) as { max_seq: number };
-  const sequenceNumber = seqRow.max_seq + 1;
-
-  const insert = db.prepare(
-    `INSERT INTO repair_history (id, session_id, tape_detail_id, action_type, action_data, previous_state, timestamp, sequence_number)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  const seqRow = getOne(
+    db,
+    'SELECT COALESCE(MAX(sequence_number), -1) AS max_seq FROM repair_history WHERE session_id = ?',
+    [sessionId]
   );
-  insert.run(
-    historyId,
-    sessionId,
-    tapeDetailId,
-    actionType,
-    JSON.stringify(actionData),
-    previousState ? JSON.stringify(previousState) : null,
-    timestamp,
-    sequenceNumber
+  const sequenceNumber = (seqRow?.max_seq ?? -1) + 1;
+
+  runStmt(
+    db.prepare(
+      `INSERT INTO repair_history (id, session_id, tape_detail_id, action_type, action_data, previous_state, timestamp, sequence_number)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ),
+    [
+      historyId,
+      sessionId,
+      tapeDetailId,
+      actionType,
+      JSON.stringify(actionData),
+      previousState ? JSON.stringify(previousState) : null,
+      timestamp,
+      sequenceNumber,
+    ]
   );
 }
 
@@ -699,12 +788,15 @@ function rowToResultRecord(row: any): ResultRecord {
     hasBadSplice: !!row.has_bad_splice,
     voiceDetailLoss: row.voice_detail_loss,
     jumpArtifacts: row.jump_artifacts,
+    correlationCoefficient: row.correlation_coefficient || 0,
+    jumpPenaltySum: row.jump_penalty_sum || 0,
+    detailPenaltyValue: row.detail_penalty_value || 0,
     createdAt: row.created_at,
   };
 }
 
-export function listAllSessions(): GameSession[] {
-  const db = getDb();
-  const rows = db.prepare('SELECT * FROM game_sessions ORDER BY started_at DESC').all() as any[];
+export async function listAllSessions(): Promise<GameSession[]> {
+  const db = await getDb();
+  const rows = getAll(db, 'SELECT * FROM game_sessions ORDER BY started_at DESC');
   return rows.map(rowToSession);
 }

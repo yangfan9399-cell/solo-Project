@@ -17,6 +17,9 @@ interface ResultRecordData {
   hasBadSplice: boolean;
   voiceDetailLoss: number;
   jumpArtifacts: number;
+  correlationCoefficient: number;
+  jumpPenaltySum: number;
+  detailPenaltyValue: number;
   finalWaveform: number[];
   originalWaveform: number[];
 }
@@ -317,7 +320,7 @@ export default function ResultPageClient({ sessionId }: { sessionId: string }) {
                 <p className="text-sm text-tape-muted">
                   {activeResult.hasExcessiveNoiseReduction
                     ? `检测到过度降噪！人声细节损失 ${(activeResult.voiceDetailLoss * 100).toFixed(1)}%，` +
-                      `这直接降低了可懂度评分。建议降噪强度控制在 60% 以下以保留人声特征。`
+                      `这直接降低了可懂度评分。建议降噪强度控制在 70% 以下以保留人声特征。`
                     : activeResult.voiceDetailLoss > 0
                     ? `降噪正常，细节损失仅 ${(activeResult.voiceDetailLoss * 100).toFixed(1)}%，在可接受范围内`
                     : '未应用降噪或降噪强度极低，人声完全保留'}
@@ -370,32 +373,63 @@ export default function ResultPageClient({ sessionId }: { sessionId: string }) {
             </div>
 
             <div className="p-4 bg-tape-bg rounded-lg border border-tape-border">
-              <h3 className="font-bold text-tape-text mb-3">🔍 可懂度深度分析</h3>
+              <h3 className="font-bold text-tape-text mb-3">🔍 可懂度深度分析（后端实际计算值）</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-tape-muted">基线相关系数</span>
+                  <span className="text-tape-muted">波形相关系数（原始 vs 修复后）</span>
                   <span className="text-tape-text font-mono">
-                    ~{(Math.min(100, activeResult.intelligibility / 0.7 + activeResult.jumpArtifacts * 2 + activeResult.voiceDetailLoss * 30) / 100).toFixed(3)}
+                    {activeResult.correlationCoefficient
+                      ? activeResult.correlationCoefficient.toFixed(4)
+                      : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-tape-muted">过度降噪惩罚 (-细节损失×30)</span>
+                  <span className="text-tape-muted">基线得分 = 相关系数 × 100</span>
+                  <span className="text-tape-accent font-mono">
+                    {activeResult.correlationCoefficient
+                      ? (activeResult.correlationCoefficient * 100).toFixed(2)
+                      : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-tape-muted">过度降噪惩罚 (-人声细节损失×30)</span>
                   <span className="text-tape-danger font-mono">
                     -{(activeResult.voiceDetailLoss * 30).toFixed(2)}
+                    <span className="text-tape-muted ml-1">
+                      (细节损失 {(activeResult.voiceDetailLoss * 100).toFixed(1)}%)
+                    </span>
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-tape-muted">错位拼接惩罚 (-跳音数×15)</span>
+                  <span className="text-tape-muted">错位拼接惩罚 (-跳音伪影数×15)</span>
                   <span className="text-orange-400 font-mono">
-                    -{(activeResult.jumpArtifacts * 15 * 0.15).toFixed(2)}
+                    -{(activeResult.jumpArtifacts * 15).toFixed(2)}
+                    <span className="text-tape-muted ml-1">
+                      ({activeResult.jumpArtifacts} 处跳音)
+                    </span>
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-tape-border font-bold">
+                <div className="flex justify-between pt-2 border-t border-tape-border font-bold text-base">
                   <span className="text-tape-text">最终可懂度得分</span>
                   <span className={scoreColor(activeResult.intelligibility)}>
                     {activeResult.intelligibility.toFixed(2)} / 100
                   </span>
                 </div>
+                {activeResult.correlationCoefficient > 0 && (
+                  <div className="mt-2 p-2 bg-tape-panel rounded text-[11px] text-tape-muted font-mono">
+                    公式验证: { (activeResult.correlationCoefficient * 100).toFixed(2) }
+                    {' - '}{(activeResult.voiceDetailLoss * 30).toFixed(2)}
+                    {' - '}{(activeResult.jumpArtifacts * 15).toFixed(2)}
+                    {' = '}
+                    <span className="text-tape-accent font-bold">
+                      {(
+                        activeResult.correlationCoefficient * 100
+                        - activeResult.voiceDetailLoss * 30
+                        - activeResult.jumpArtifacts * 15
+                      ).toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { getSeedById } from '@/lib/seeds';
 
 export async function GET() {
   try {
-    const sessions = listAllSessions();
+    const sessions = await listAllSessions();
     return NextResponse.json({ sessions });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (!seed) {
       return NextResponse.json({ error: 'Seed not found' }, { status: 404 });
     }
-    const session = createSessionFromSeed(seed);
+    const session = await createSessionFromSeed(seed);
     return NextResponse.json({ session }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

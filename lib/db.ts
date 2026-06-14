@@ -1,27 +1,61 @@
-import Database from 'better-sqlite3';
+import initSqlJs, { Database } from 'sql.js';
 import path from 'path';
 import fs from 'fs';
 
 const DB_DIR = path.join(process.cwd(), '.data');
-const DB_PATH = path.join(DB_DIR, 'tape_archive.db');
+const DB_PATH = path.join(DB_DIR, 'tape_archive.sqlite');
 
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-let dbInstance: Database.Database | null = null;
+let dbInstance: Database | null = null;
+let initPromise: Promise<void> | null = null;
 
-export function getDb(): Database.Database {
-  if (dbInstance) return dbInstance;
+async function initDatabase(): Promise<void> {
+  if (dbInstance) return;
+  if (initPromise) return initPromise;
 
-  dbInstance = new Database(DB_PATH);
-  dbInstance.pragma('journal_mode = WAL');
-  dbInstance.pragma('foreign_keys = ON');
-  initializeSchema(dbInstance);
-  return dbInstance;
+  initPromise = (async () => {
+    const SQL = await initSqlJs({
+      locateFile: (file: string) =>
+        path.join(process.cwd(), 'node_modules/sql.js/dist', file),
+    });
+
+    let existingData: Buffer | null = null;
+    if (fs.existsSync(DB_PATH)) {
+      try {
+        existingData = fs.readFileSync(DB_PATH);
+      } catch (e) {
+        existingData = null;
+      }
+    }
+
+    dbInstance = existingData
+      ? new SQL.Database(new Uint8Array(existingData))
+      : new SQL.Database();
+
+    initializeSchema(dbInstance);
+    persistDatabase();
+  })();
+
+  return initPromise;
 }
 
-function initializeSchema(db: Database.Database): void {
+function persistDatabase(): void {
+  if (!dbInstance) return;
+  try {
+    const data = dbInstance.export();
+    const buffer = Buffer.from(data);
+    const tmpPath = DB_PATH + '.tmp';
+    fs.writeFileSync(tmpPath, buffer);
+    fs.renameSync(tmpPath, DB_PATH);
+  } catch (e) {
+    console.error('Failed to persist database:', e);
+  }
+}
+
+function initializeSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS game_sessions (
       id TEXT PRIMARY KEY,
@@ -55,8 +89,7 @@ function initializeSchema(db: Database.Database): void {
       splices TEXT NOT NULL DEFAULT '[]',
       status TEXT NOT NULL DEFAULT 'pending',
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL,
-      FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+      updated_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS repair_history (
@@ -67,9 +100,7 @@ function initializeSchema(db: Database.Database): void {
       action_data TEXT NOT NULL,
       previous_state TEXT,
       timestamp INTEGER NOT NULL,
-      sequence_number INTEGER NOT NULL,
-      FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE,
-      FOREIGN KEY (tape_detail_id) REFERENCES tape_details(id) ON DELETE CASCADE
+      sequence_number INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS result_records (
@@ -87,14 +118,56 @@ function initializeSchema(db: Database.Database): void {
       has_bad_splice INTEGER NOT NULL DEFAULT 0,
       voice_detail_loss REAL NOT NULL DEFAULT 0,
       jump_artifacts INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE,
-      FOREIGN KEY (tape_detail_id) REFERENCES tape_details(id) ON DELETE CASCADE
+      correlation_coefficient REAL NOT NULL DEFAULT 0,
+      jump_penalty_sum REAL NOT NULL DEFAULT 0,
+      detail_penalty_value REAL NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
     );
-
-    CREATE INDEX IF NOT EXISTS idx_tape_details_session ON tape_details(session_id);
-    CREATE INDEX IF NOT EXISTS idx_repair_history_session ON repair_history(session_id);
-    CREATE INDEX IF NOT EXISTS idx_repair_history_tape ON repair_history(tape_detail_id);
-    CREATE INDEX IF NOT EXISTS idx_result_records_session ON result_records(session_id);
   `);
+
+  addColumnIfMissing(db, 'result_records', 'correlation_coefficient', 'REAL NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'result_records', 'jump_penalty_sum', 'REAL NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'result_records', 'detail_penalty_value', 'REAL NOT NULL DEFAULT 0');
+}
+
+function addColumnIfMissing(db: Database, table: string, column: string, definition: string): void {
+  try {
+    const cols = db.exec(`PRAGMA table_info(${table})`);
+    const colNames: string[] = [];
+    if (cols.length > 0) {
+      for (const row of cols[0].values) {
+        colNames.push(String(row[1]));
+      }
+    }
+    if (!colNames.includes(column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+export async function getDb(): Promise<Database> {
+  await initDatabase();
+  if (!dbInstance) throw new Error('Database not initialized');
+  return dbInstance;
+}
+
+export function persist(): void {
+  persistDatabase();
+}
+
+export interface SqlRow {
+  [key: string]: any;
+}
+
+export function rowsToObjects(result: { columns: string[]; values: any[][] }): SqlRow[] {
+  if (!result || !result.columns) return [];
+  return result.values.map((row) => {
+    const obj: SqlRow = {};
+    result.columns.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj;
+  });
 }

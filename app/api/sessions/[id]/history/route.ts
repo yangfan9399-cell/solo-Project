@@ -6,7 +6,7 @@ type Params = Promise<{ id: string }>;
 export async function GET(_: Request, { params }: { params: Params }) {
   const { id } = await params;
   try {
-    const history = getRepairHistory(id);
+    const history = await getRepairHistory(id);
     return NextResponse.json({ history });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';

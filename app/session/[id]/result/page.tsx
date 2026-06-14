@@ -6,7 +6,7 @@ type Params = Promise<{ id: string }>;
 
 export default async function ResultPage({ params }: { params: Params }) {
   const { id } = await params;
-  const session = getSession(id);
+  const session = await getSession(id);
   if (!session) {
     notFound();
   }
