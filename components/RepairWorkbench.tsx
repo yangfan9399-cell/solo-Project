@@ -566,8 +566,8 @@ export default function RepairWorkbench({ initialSession, initialTapes, initialS
                     nrResult.isExcessive ? 'bg-tape-danger/15 border border-tape-danger/40 text-tape-danger' : 'bg-tape-success/15 text-tape-success'
                   }`}>
                     {nrResult.isExcessive
-                      ? `⚠ 过度降噪！人声细节损失：{(nrResult.detailLoss * 100).toFixed(1)}% - 将严重影响可懂度！`
-                      : `细节损失：{(nrResult.detailLoss * 100).toFixed(1)}% - 在可接受范围内`}
+                      ? `⚠ 过度降噪！人声细节损失：${(nrResult.detailLoss * 100).toFixed(1)}% - 将严重影响可懂度！`
+                      : `细节损失：${(nrResult.detailLoss * 100).toFixed(1)}% - 在可接受范围内`}
                   </div>
                 )}
               </div>
