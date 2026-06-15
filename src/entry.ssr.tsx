@@ -1,0 +1,15 @@
+import { renderToStream, type RenderToStreamOptions } from '@builder.io/qwik/server';
+import { manifest } from '@qwik-client-manifest';
+import Root from './root';
+import './global.css';
+
+export default function (opts: RenderToStreamOptions) {
+  return renderToStream(<Root />, {
+    manifest,
+    ...opts,
+    containerAttributes: {
+      lang: 'zh-CN',
+      ...opts.containerAttributes,
+    },
+  });
+}

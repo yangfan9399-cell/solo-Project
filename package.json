@@ -1,0 +1,35 @@
+{
+  "name": "old-bookstore-blind-box-game",
+  "version": "1.0.0",
+  "description": "旧书店盲盒定价经营游戏",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true,
+  "scripts": {
+    "build": "qwik build",
+    "build.client": "vite build",
+    "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.types": "tsc --incremental --noEmit",
+    "dev": "vite --mode ssr",
+    "preview": "qwik build preview && vite preview --open",
+    "start": "vite --open --mode ssr",
+    "qwik": "qwik",
+    "init-db": "tsx scripts/init-db.ts"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "^1.4.0",
+    "@builder.io/qwik-city": "^1.4.0",
+    "@types/node": "^20.11.0",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-tsconfig-paths": "^4.2.3"
+  },
+  "dependencies": {
+    "sql.js": "^1.10.3"
+  }
+}

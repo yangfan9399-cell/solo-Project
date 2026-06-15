@@ -1,0 +1,16 @@
+{
+  "name": "旧书店盲盒定价经营游戏",
+  "short_name": "旧书店游戏",
+  "description": "给旧书盲盒估价，从书况、题签、藏书章、绝版程度和顾客偏好中挖掘真正的价值",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5DC",
+  "theme_color": "#8B4513",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
