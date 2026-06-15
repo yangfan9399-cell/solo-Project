@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ResultRecord, ErrorNote } from '../../shared/types.js';
+import type { ResultRecord, ErrorNote, PointLabel } from '../../shared/types.js';
 import { ProfileChart } from './ProfileChart.js';
 
 type TabType = 'labels' | 'errors' | 'export';
@@ -11,20 +11,21 @@ interface Props {
   onExportData?: () => void;
 }
 
-export function ResultPanel({ result, onToggleError, onExportImage, onExportData }: Props) {
+export function ResultPanel(props: Props) {
+  const result = props.result;
+  const onToggleError = props.onToggleError;
+  const onExportImage = props.onExportImage;
+  const onExportData = props.onExportData;
   const [tab, setTab] = useState<TabType>('labels');
 
-  const unresolvedHigh = result.errorNotes.filter(n => n.severity === 'high' && !n.resolved).length;
-  const unresolvedCount = result.errorNotes.filter(n => !n.resolved).length;
+  const unresolvedHigh = result.errorNotes.filter(function(n: ErrorNote) { return n.severity === 'high' && !n.resolved; }).length;
+  const unresolvedCount = result.errorNotes.filter(function(n: ErrorNote) { return !n.resolved; }).length;
 
   const statusLabels: Record<string, string> = {
-    pending: '待处理',
-    ready: '就绪',
-    exported: '已导出',
-    rolled_back: '已回滚',
+    pending: '待处理', ready: '就绪', exported: '已导出', rolled_back: '已回滚',
   };
 
-  function getSeverityLabel(s: string) {
+  function getSeverityLabel(s: string): { text: string; className: string } {
     const map: Record<string, { text: string; className: string }> = {
       high: { text: '高', className: 'sev-high' },
       medium: { text: '中', className: 'sev-medium' },
@@ -33,155 +34,125 @@ export function ResultPanel({ result, onToggleError, onExportImage, onExportData
     return map[s] || { text: s, className: '' };
   }
 
-  function getTypeLabel(t: string) {
-    const map: Record<string, string> = {
-      elevation: '高程',
-      landmark: '地标',
-      annotation: '注释',
-    };
+  function getTypeLabel(t: string): string {
+    const map: Record<string, string> = { elevation: '高程', landmark: '地标', annotation: '注释' };
     return map[t] || t;
   }
 
-  return (
-    <div className="result-panel">
-      <div className="panel-section">
-        <div className="result-header">
-          <h3 className="panel-title">结果记录</h3>
-          <span className={`status-badge status-${result.status}`}>
-            {statusLabels[result.status] || result.status}
-          </span>
-        </div>
-        <div className="result-version">结果版本: v{result.version}</div>
-      </div>
+  const tabLabels: Record<TabType, string> = {
+    labels: '点位标签 (' + result.pointLabels.length + ')',
+    errors: '误差备注 (' + unresolvedCount + '/' + result.errorNotes.length + ')',
+    export: '导出',
+  };
 
-      <div className="sub-tab-bar">
-        {(['labels', 'errors', 'export'] as TabType[]).map(t => (
-          <button
-            key={t}
-            className={`sub-tab-btn ${tab === t ? 'active' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {t === 'labels' && `点位标签 (${result.pointLabels.length})`}
-            {t === 'errors' && `误差备注 (${unresolvedCount}/${result.errorNotes.length})`}
-            {t === 'export' && '导出'}
-          </button>
-        ))}
-      </div>
+  const subTabBtns = (['labels', 'errors', 'export'] as TabType[]).map(function(t) {
+    return React.createElement('button', {
+      key: t,
+      className: 'sub-tab-btn' + (tab === t ? ' active' : ''),
+      onClick: function() { setTab(t); },
+    }, tabLabels[t]);
+  });
 
-      <div className="sub-tab-content">
-        {tab === 'labels' && (
-          <div className="labels-list">
-            {result.pointLabels.length === 0 ? (
-              <p className="empty-text">暂无标签</p>
-            ) : (
-              result.pointLabels.map(label => (
-                <div key={label.id} className="label-item">
-                  <div className={`label-type type-${label.type}`}>
-                    {getTypeLabel(label.type)}
-                  </div>
-                  <div className="label-info">
-                    <div className="label-text">{label.text}</div>
-                    {label.elevation !== undefined && (
-                      <div className="label-elev">{label.elevation}m</div>
-                    )}
-                    <div className="label-pos">
-                      ({label.x}, {label.y})
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+  const labelsContent = result.pointLabels.length === 0
+    ? React.createElement('p', { className: 'empty-text' }, '暂无标签')
+    : React.createElement('div', { className: 'labels-list' },
+        result.pointLabels.map(function(label: PointLabel) {
+          return React.createElement('div', { key: label.id, className: 'label-item' },
+            React.createElement('div', { className: 'label-type type-' + label.type }, getTypeLabel(label.type)),
+            React.createElement('div', { className: 'label-info' },
+              React.createElement('div', { className: 'label-text' }, label.text),
+              label.elevation !== undefined ? React.createElement('div', { className: 'label-elev' }, label.elevation + 'm') : null,
+              React.createElement('div', { className: 'label-pos' },
+                '(' + label.x + ', ' + label.y + ')'
+              )
+            )
+          );
+        })
+      );
 
-        {tab === 'errors' && (
-          <div className="errors-list">
-            {unresolvedHigh > 0 && (
-              <div className="error-alert">
-                <span>⚠ {unresolvedHigh} 个高优先级误差待处理</span>
-              </div>
-            )}
-            {result.errorNotes.length === 0 ? (
-              <p className="empty-text">暂无误差备注</p>
-            ) : (
-              result.errorNotes.map(note => {
-                const sev = getSeverityLabel(note.severity);
-                return (
-                  <div
-                    key={note.id}
-                    className={`error-item ${note.resolved ? 'resolved' : ''}`}
-                  >
-                    <div className={`error-severity ${sev.className}`}>
-                      {sev.text}
-                    </div>
-                    <div className="error-content">
-                      <div className="error-message">{note.message}</div>
-                      <div className="error-pos">
-                        位置: ({note.x}, {note.y})
-                      </div>
-                    </div>
-                    <button
-                      className="btn-tiny"
-                      onClick={() => onToggleError(note.id)}
-                    >
-                      {note.resolved ? '重开' : '解决'}
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        )}
+  const errorsItems = result.errorNotes.length === 0
+    ? React.createElement('p', { className: 'empty-text' }, '暂无误差备注')
+    : result.errorNotes.map(function(note: ErrorNote) {
+        const sev = getSeverityLabel(note.severity);
+        return React.createElement('div', {
+          key: note.id,
+          className: 'error-item' + (note.resolved ? ' resolved' : ''),
+        },
+          React.createElement('div', { className: 'error-severity ' + sev.className }, sev.text),
+          React.createElement('div', { className: 'error-content' },
+            React.createElement('div', { className: 'error-message' }, note.message),
+            React.createElement('div', { className: 'error-pos' },
+              '位置: (' + note.x + ', ' + note.y + ')'
+            )
+          ),
+          React.createElement('button', {
+            className: 'btn-tiny',
+            onClick: function() { onToggleError(note.id); },
+          }, note.resolved ? '重开' : '解决')
+        );
+      });
 
-        {tab === 'export' && (
-          <div className="export-section">
-            <div className="export-preview">
-              <h4 className="panel-subtitle">导出预览</h4>
-              <ProfileChart result={result} />
-            </div>
+  const errorsContent = React.createElement('div', { className: 'errors-list' },
+    unresolvedHigh > 0 ? React.createElement('div', { className: 'error-alert' },
+      React.createElement('span', null, '\u26A0 ' + unresolvedHigh + ' 个高优先级误差待处理')
+    ) : null,
+    errorsItems
+  );
 
-            <div className="export-info">
-              <div className="info-row">
-                <span className="info-label">导出格式</span>
-                <span className="info-value">PNG / SVG</span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">包含内容</span>
-                <span className="info-value">
-                  {result.layers.filter(l => l.visible).length} 个图层 · 
-                  {result.pointLabels.length} 个标签
-                </span>
-              </div>
-              <div className="info-row">
-                <span className="info-label">结果状态</span>
-                <span className="info-value">{statusLabels[result.status]}</span>
-              </div>
-            </div>
+  const visibleLayerCount = result.layers.filter(function(l) { return l.visible; }).length;
+  const exportContent = React.createElement('div', { className: 'export-section' },
+    React.createElement('div', { className: 'export-preview' },
+      React.createElement('h4', { className: 'panel-subtitle' }, '剖面预览'),
+      React.createElement(ProfileChart, { result: result })
+    ),
+    React.createElement('div', { className: 'export-info' },
+      React.createElement('div', { className: 'info-row' },
+        React.createElement('span', { className: 'info-label' }, '导出格式'),
+        React.createElement('span', { className: 'info-value' }, 'PNG / JSON')
+      ),
+      React.createElement('div', { className: 'info-row' },
+        React.createElement('span', { className: 'info-label' }, '包含内容'),
+        React.createElement('span', { className: 'info-value' },
+          visibleLayerCount + ' 个图层 \u00B7 ' + result.pointLabels.length + ' 个标签'
+        )
+      ),
+      React.createElement('div', { className: 'info-row' },
+        React.createElement('span', { className: 'info-label' }, '结果状态'),
+        React.createElement('span', { className: 'info-value' }, statusLabels[result.status] || result.status)
+      )
+    ),
+    React.createElement('div', { className: 'export-actions' },
+      React.createElement('button', {
+        className: 'btn-small btn-primary',
+        disabled: result.status === 'rolled_back',
+        onClick: onExportImage,
+      }, '导出图片'),
+      React.createElement('button', {
+        className: 'btn-small',
+        onClick: onExportData,
+      }, '导出数据')
+    ),
+    result.status === 'rolled_back' ? React.createElement('div', { className: 'rollback-notice' },
+      '\u26A0 此结果为回滚版本，请重新校验后再导出'
+    ) : null
+  );
 
-            <div className="export-actions">
-              <button
-                className="btn-primary"
-                disabled={result.status === 'rolled_back'}
-                onClick={onExportImage}
-              >
-                导出图片
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={onExportData}
-              >
-                导出数据
-              </button>
-            </div>
+  let activeContent: any = null;
+  if (tab === 'labels') activeContent = labelsContent;
+  else if (tab === 'errors') activeContent = errorsContent;
+  else if (tab === 'export') activeContent = exportContent;
 
-            {result.status === 'rolled_back' && (
-              <div className="rollback-notice">
-                ⚠ 此结果为回滚版本，请重新校验后再导出
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+  return React.createElement('div', { className: 'result-panel' },
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('div', { className: 'result-header' },
+        React.createElement('h3', { className: 'panel-title' }, '结果记录'),
+        React.createElement('span', { className: 'status-badge status-' + result.status },
+          statusLabels[result.status] || result.status
+        )
+      ),
+      React.createElement('div', { className: 'result-version' }, '结果版本: v' + result.version)
+    ),
+    React.createElement('div', { className: 'sub-tab-bar' }, subTabBtns),
+    React.createElement('div', { className: 'sub-tab-content' }, activeContent)
   );
 }

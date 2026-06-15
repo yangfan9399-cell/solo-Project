@@ -1,20 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ES2020",
-    "moduleResolution": "node",
+    "module": "none",
     "esModuleInterop": true,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "jsx": "react",
-    "outDir": "./public/js",
-    "rootDir": "./src",
+    "outFile": "./public/js/single.js",
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "react": ["./node_modules/react"],
-      "react-dom": ["./node_modules/react-dom"]
-    }
+    "baseUrl": "."
   },
-  "include": ["src/client/**/*", "src/shared/**/*"]
+  "include": ["src/client/single.tsx"]
 }

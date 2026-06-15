@@ -1,78 +1,25 @@
 import React from 'react';
-export function InfoPanel({ master, snapshots, onCreateSnapshot, onRestoreSnapshot }) {
+export function InfoPanel(props) {
+    const master = props.master;
+    const snapshots = props.snapshots;
+    const onCreateSnapshot = props.onCreateSnapshot;
+    const onRestoreSnapshot = props.onRestoreSnapshot;
     function formatDate(iso) {
         return new Date(iso).toLocaleString('zh-CN', {
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
+            month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
         });
     }
     const statusLabels = {
-        draft: '草稿',
-        processing: '处理中',
-        completed: '已完成',
-        error: '异常',
+        draft: '草稿', processing: '处理中', completed: '已完成', error: '异常',
     };
-    return (React.createElement("div", { className: "info-panel" },
-        React.createElement("div", { className: "panel-section" },
-            React.createElement("h3", { className: "panel-title" }, "\u57FA\u672C\u4FE1\u606F"),
-            React.createElement("div", { className: "info-grid" },
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u8BB0\u5F55\u540D\u79F0"),
-                    React.createElement("span", { className: "info-value" }, master.name)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u6279\u6B21\u7F16\u53F7"),
-                    React.createElement("span", { className: "info-value mono" }, master.batch)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u5F53\u524D\u7248\u672C"),
-                    React.createElement("span", { className: "info-value version" },
-                        "v",
-                        master.version)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u5730\u5F62\u7C7B\u578B"),
-                    React.createElement("span", { className: "info-value" }, master.terrainType)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u72B6\u6001"),
-                    React.createElement("span", { className: `status-badge status-${master.status}` }, statusLabels[master.status] || master.status)))),
-        React.createElement("div", { className: "panel-section" },
-            React.createElement("h4", { className: "panel-subtitle" }, "\u6BD4\u4F8B\u5C3A"),
-            React.createElement("div", { className: "info-grid" },
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u6BD4\u4F8B"),
-                    React.createElement("span", { className: "info-value mono" },
-                        "1:",
-                        master.scale)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u5355\u4F4D"),
-                    React.createElement("span", { className: "info-value" }, master.scaleUnit)),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u5E95\u56FE\u5C3A\u5BF8"),
-                    React.createElement("span", { className: "info-value mono" },
-                        master.mapWidth,
-                        " \u00D7 ",
-                        master.mapHeight)))),
-        React.createElement("div", { className: "panel-section" },
-            React.createElement("h4", { className: "panel-subtitle" }, "\u63CF\u8FF0"),
-            React.createElement("p", { className: "description" }, master.description)),
-        React.createElement("div", { className: "panel-section" },
-            React.createElement("h4", { className: "panel-subtitle" }, "\u65F6\u95F4"),
-            React.createElement("div", { className: "info-grid" },
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u521B\u5EFA\u65F6\u95F4"),
-                    React.createElement("span", { className: "info-value" }, formatDate(master.createdAt))),
-                React.createElement("div", { className: "info-row" },
-                    React.createElement("span", { className: "info-label" }, "\u66F4\u65B0\u65F6\u95F4"),
-                    React.createElement("span", { className: "info-value" }, formatDate(master.updatedAt))))),
-        React.createElement("div", { className: "panel-section" },
-            React.createElement("div", { className: "section-header" },
-                React.createElement("h4", { className: "panel-subtitle" }, "\u7248\u672C\u5FEB\u7167"),
-                React.createElement("button", { className: "btn-small", onClick: onCreateSnapshot }, "\u65B0\u5EFA")),
-            snapshots.length === 0 ? (React.createElement("p", { className: "empty-text" }, "\u6682\u65E0\u5FEB\u7167")) : (React.createElement("div", { className: "snapshot-list" }, snapshots.map(s => (React.createElement("div", { key: s.id, className: "snapshot-item" },
-                React.createElement("div", { className: "snapshot-info" },
-                    React.createElement("div", { className: "snapshot-name" }, s.name),
-                    React.createElement("div", { className: "snapshot-version" },
-                        "v",
-                        s.version)),
-                React.createElement("button", { className: "btn-tiny", onClick: () => onRestoreSnapshot(s.id), title: "\u6062\u590D\u5230\u6B64\u7248\u672C" }, "\u56DE\u6EDA")))))))));
+    const snapshotChildren = snapshots.length === 0
+        ? React.createElement('p', { className: 'empty-text' }, '暂无快照')
+        : React.createElement('div', { className: 'snapshot-list' }, snapshots.map(function (s) {
+            return React.createElement('div', { key: s.id, className: 'snapshot-item' }, React.createElement('div', { className: 'snapshot-info' }, React.createElement('div', { className: 'snapshot-name' }, s.name), React.createElement('div', { className: 'snapshot-version' }, 'v' + s.version)), React.createElement('button', {
+                className: 'btn-tiny',
+                onClick: function () { onRestoreSnapshot(s.id); },
+                title: '恢复到此版本',
+            }, '回滚'));
+        }));
+    return React.createElement('div', { className: 'info-panel' }, React.createElement('div', { className: 'panel-section' }, React.createElement('h3', { className: 'panel-title' }, '基本信息'), React.createElement('div', { className: 'info-grid' }, React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '记录名称'), React.createElement('span', { className: 'info-value' }, master.name)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '批次编号'), React.createElement('span', { className: 'info-value mono' }, master.batch)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '当前版本'), React.createElement('span', { className: 'info-value version' }, 'v' + master.version)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '地形类型'), React.createElement('span', { className: 'info-value' }, master.terrainType)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '状态'), React.createElement('span', { className: 'status-badge status-' + master.status }, statusLabels[master.status] || master.status)))), React.createElement('div', { className: 'panel-section' }, React.createElement('h4', { className: 'panel-subtitle' }, '比例尺'), React.createElement('div', { className: 'info-grid' }, React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '比例'), React.createElement('span', { className: 'info-value mono' }, '1:' + master.scale)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '单位'), React.createElement('span', { className: 'info-value' }, master.scaleUnit)), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '底图尺寸'), React.createElement('span', { className: 'info-value mono' }, master.mapWidth + ' \u00D7 ' + master.mapHeight)))), React.createElement('div', { className: 'panel-section' }, React.createElement('h4', { className: 'panel-subtitle' }, '描述'), React.createElement('p', { className: 'description' }, master.description)), React.createElement('div', { className: 'panel-section' }, React.createElement('h4', { className: 'panel-subtitle' }, '时间'), React.createElement('div', { className: 'info-grid' }, React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '创建时间'), React.createElement('span', { className: 'info-value' }, formatDate(master.createdAt))), React.createElement('div', { className: 'info-row' }, React.createElement('span', { className: 'info-label' }, '更新时间'), React.createElement('span', { className: 'info-value' }, formatDate(master.updatedAt))))), React.createElement('div', { className: 'panel-section' }, React.createElement('div', { className: 'section-header' }, React.createElement('h4', { className: 'panel-subtitle' }, '版本快照'), React.createElement('button', { className: 'btn-small', onClick: onCreateSnapshot }, '新建')), snapshotChildren));
 }

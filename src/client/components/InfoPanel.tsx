@@ -8,117 +8,108 @@ interface Props {
   onRestoreSnapshot: (id: string) => void;
 }
 
-export function InfoPanel({ master, snapshots, onCreateSnapshot, onRestoreSnapshot }: Props) {
+export function InfoPanel(props: Props) {
+  const master = props.master;
+  const snapshots = props.snapshots;
+  const onCreateSnapshot = props.onCreateSnapshot;
+  const onRestoreSnapshot = props.onRestoreSnapshot;
+
   function formatDate(iso: string) {
     return new Date(iso).toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
     });
   }
 
   const statusLabels: Record<string, string> = {
-    draft: '草稿',
-    processing: '处理中',
-    completed: '已完成',
-    error: '异常',
+    draft: '草稿', processing: '处理中', completed: '已完成', error: '异常',
   };
 
-  return (
-    <div className="info-panel">
-      <div className="panel-section">
-        <h3 className="panel-title">基本信息</h3>
-        <div className="info-grid">
-          <div className="info-row">
-            <span className="info-label">记录名称</span>
-            <span className="info-value">{master.name}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">批次编号</span>
-            <span className="info-value mono">{master.batch}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">当前版本</span>
-            <span className="info-value version">v{master.version}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">地形类型</span>
-            <span className="info-value">{master.terrainType}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">状态</span>
-            <span className={`status-badge status-${master.status}`}>
-              {statusLabels[master.status] || master.status}
-            </span>
-          </div>
-        </div>
-      </div>
+  const snapshotChildren = snapshots.length === 0
+    ? React.createElement('p', { className: 'empty-text' }, '暂无快照')
+    : React.createElement('div', { className: 'snapshot-list' },
+        snapshots.map(function(s) {
+          return React.createElement('div', { key: s.id, className: 'snapshot-item' },
+            React.createElement('div', { className: 'snapshot-info' },
+              React.createElement('div', { className: 'snapshot-name' }, s.name),
+              React.createElement('div', { className: 'snapshot-version' }, 'v' + s.version)
+            ),
+            React.createElement('button', {
+              className: 'btn-tiny',
+              onClick: function() { onRestoreSnapshot(s.id); },
+              title: '恢复到此版本',
+            }, '回滚')
+          );
+        })
+      );
 
-      <div className="panel-section">
-        <h4 className="panel-subtitle">比例尺</h4>
-        <div className="info-grid">
-          <div className="info-row">
-            <span className="info-label">比例</span>
-            <span className="info-value mono">1:{master.scale}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">单位</span>
-            <span className="info-value">{master.scaleUnit}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">底图尺寸</span>
-            <span className="info-value mono">{master.mapWidth} × {master.mapHeight}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="panel-section">
-        <h4 className="panel-subtitle">描述</h4>
-        <p className="description">{master.description}</p>
-      </div>
-
-      <div className="panel-section">
-        <h4 className="panel-subtitle">时间</h4>
-        <div className="info-grid">
-          <div className="info-row">
-            <span className="info-label">创建时间</span>
-            <span className="info-value">{formatDate(master.createdAt)}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">更新时间</span>
-            <span className="info-value">{formatDate(master.updatedAt)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="panel-section">
-        <div className="section-header">
-          <h4 className="panel-subtitle">版本快照</h4>
-          <button className="btn-small" onClick={onCreateSnapshot}>新建</button>
-        </div>
-        {snapshots.length === 0 ? (
-          <p className="empty-text">暂无快照</p>
-        ) : (
-          <div className="snapshot-list">
-            {snapshots.map(s => (
-              <div key={s.id} className="snapshot-item">
-                <div className="snapshot-info">
-                  <div className="snapshot-name">{s.name}</div>
-                  <div className="snapshot-version">v{s.version}</div>
-                </div>
-                <button
-                  className="btn-tiny"
-                  onClick={() => onRestoreSnapshot(s.id)}
-                  title="恢复到此版本"
-                >
-                  回滚
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+  return React.createElement('div', { className: 'info-panel' },
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('h3', { className: 'panel-title' }, '基本信息'),
+      React.createElement('div', { className: 'info-grid' },
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '记录名称'),
+          React.createElement('span', { className: 'info-value' }, master.name)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '批次编号'),
+          React.createElement('span', { className: 'info-value mono' }, master.batch)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '当前版本'),
+          React.createElement('span', { className: 'info-value version' }, 'v' + master.version)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '地形类型'),
+          React.createElement('span', { className: 'info-value' }, master.terrainType)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '状态'),
+          React.createElement('span', { className: 'status-badge status-' + master.status },
+            statusLabels[master.status] || master.status
+          )
+        )
+      )
+    ),
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('h4', { className: 'panel-subtitle' }, '比例尺'),
+      React.createElement('div', { className: 'info-grid' },
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '比例'),
+          React.createElement('span', { className: 'info-value mono' }, '1:' + master.scale)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '单位'),
+          React.createElement('span', { className: 'info-value' }, master.scaleUnit)
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '底图尺寸'),
+          React.createElement('span', { className: 'info-value mono' }, master.mapWidth + ' \u00D7 ' + master.mapHeight)
+        )
+      )
+    ),
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('h4', { className: 'panel-subtitle' }, '描述'),
+      React.createElement('p', { className: 'description' }, master.description)
+    ),
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('h4', { className: 'panel-subtitle' }, '时间'),
+      React.createElement('div', { className: 'info-grid' },
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '创建时间'),
+          React.createElement('span', { className: 'info-value' }, formatDate(master.createdAt))
+        ),
+        React.createElement('div', { className: 'info-row' },
+          React.createElement('span', { className: 'info-label' }, '更新时间'),
+          React.createElement('span', { className: 'info-value' }, formatDate(master.updatedAt))
+        )
+      )
+    ),
+    React.createElement('div', { className: 'panel-section' },
+      React.createElement('div', { className: 'section-header' },
+        React.createElement('h4', { className: 'panel-subtitle' }, '版本快照'),
+        React.createElement('button', { className: 'btn-small', onClick: onCreateSnapshot }, '新建')
+      ),
+      snapshotChildren
+    )
   );
 }
