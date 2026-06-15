@@ -1,0 +1,339 @@
+{% extends "game/base.html" %}
+{% load game_tags %}
+{% block title %}游戏进行中 - 山城缆车{% endblock %}
+{% block extra_head %}
+<style>
+.game-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+@media (max-width: 900px) { .game-layout { grid-template-columns: 1fr; } }
+.queue-item {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px 10px; margin: 3px; font-size: 0.85em;
+}
+.queue-item .dest { color: var(--info); }
+.queue-item .pat { color: var(--warning); }
+.queue-item .transfer { color: var(--accent); font-size: 0.8em; }
+.cable-car {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border-radius: 12px; padding: 10px 16px; margin: 4px;
+  display: inline-block; color: #fff; font-weight: 600;
+}
+.control-group { margin-bottom: 12px; }
+.control-group label { display: block; margin-bottom: 4px; font-size: 0.85em; opacity: 0.7; }
+.mini-chart { height: 120px; background: rgba(0,0,0,0.2); border-radius: 8px; position: relative; overflow: hidden; }
+.mini-chart canvas { width: 100%; height: 100%; }
+#auto-play-btn.paused { background: var(--warning); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+<h1>🚡 游戏进行中</h1>
+<div>
+  <span class="badge {% if session.status == 'active' %}badge-info{% elif session.status == 'completed' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:1em;">
+    {{ session.get_status_display }}
+  </span>
+</div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:16px;">
+<div class="card stat"><div class="stat-value" id="tick-val">{{ session.current_tick }}</div><div class="stat-label">回合</div></div>
+<div class="card stat"><div class="stat-value" id="income-val">{{ session.total_income }}</div><div class="stat-label">总收入</div></div>
+<div class="card stat"><div class="stat-value" id="complaints-val" style="color:{% if session.total_complaints > 5 %}var(--danger){% else %}var(--success){% endif %}">{{ session.total_complaints }}</div><div class="stat-label">投诉</div></div>
+<div class="card stat"><div class="stat-value" id="served-val">{{ session.total_served }}</div><div class="stat-label">已服务</div></div>
+</div>
+
+<div class="game-layout">
+<div>
+  <div class="card">
+    <h3>排队队列 <span style="font-size:0.8em;opacity:0.6;">(当前 <span id="queue-len">{{ queue_length }}</span> 人)</span></h3>
+    <div id="queue-display" style="min-height:60px;display:flex;flex-wrap:wrap;align-items:center;padding:8px 0;">
+    {% for t in queue %}
+      <span class="queue-item">
+        <span class="dest">{{ t.destination }}</span>
+        <span class="pat">♥{{ t.patience }}</span>
+        {% if t.needs_transfer %}<span class="transfer">换乘</span>{% endif %}
+      </span>
+    {% endfor %}
+    {% if queue_length == 0 %}
+      <span style="opacity:0.4;padding:8px;">暂无排队游客</span>
+    {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>收入曲线</h3>
+    <div class="mini-chart">
+      <canvas id="income-chart"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:8px;">
+    <h3>操作记录</h3>
+    <div id="log" style="max-height:150px;overflow-y:auto;font-size:0.85em;opacity:0.8;"></div>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <h3>控制面板</h3>
+
+    <div class="control-group">
+      <label>票价 (1-100元)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="range" id="price-slider" min="1" max="100" value="{{ session.ticket_price }}" style="flex:1;">
+        <span id="price-display" style="min-width:40px;text-align:right;font-weight:bold;">{{ session.ticket_price }}元</span>
+      </div>
+      <button onclick="setPrice()" class="btn btn-sm btn-primary" style="margin-top:4px;">确认票价</button>
+    </div>
+
+    <div class="control-group">
+      <label>售票窗口 (1-5)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="range" id="windows-slider" min="1" max="5" value="{{ session.open_windows }}" style="flex:1;">
+        <span id="windows-display" style="min-width:20px;text-align:right;font-weight:bold;">{{ session.open_windows }}</span>
+      </div>
+      <button onclick="setWindows()" class="btn btn-sm btn-primary" style="margin-top:4px;">确认窗口</button>
+    </div>
+
+    <div class="control-group">
+      <label>发车间隔 (3-30回合)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="range" id="dispatch-slider" min="3" max="30" value="{{ session.dispatch_interval }}" style="flex:1;">
+        <span id="dispatch-display" style="min-width:30px;text-align:right;font-weight:bold;">{{ session.dispatch_interval }}</span>
+      </div>
+      <button onclick="setDispatch()" class="btn btn-sm btn-primary" style="margin-top:4px;">确认间隔</button>
+    </div>
+
+    <hr style="border-color:var(--border);margin:12px 0;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button onclick="doTick()" class="btn btn-success" id="tick-btn">▶ 推进1回合</button>
+      <button onclick="toggleAutoPlay()" class="btn btn-warning" id="auto-play-btn">⏩ 自动推进</button>
+      <button onclick="finalizeGame()" class="btn btn-danger">🏁 结算</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>关卡目标</h3>
+    <div style="font-size:0.9em;">
+      <div>目标收入: <strong>{{ level.target_income }}元</strong></div>
+      <div class="progress-bar" style="margin:4px 0 8px;">
+        <div class="progress-fill" id="income-progress" style="width:{% widthratio session.total_income level.target_income 100 %}%;background:var(--success);"></div>
+      </div>
+      <div>投诉上限: <strong>{{ level.max_complaints }}</strong></div>
+      <div class="progress-bar" style="margin:4px 0;">
+        <div class="progress-fill" id="complaint-progress" style="width:{% widthratio session.total_complaints level.max_complaints 100 %}%;background:{% if session.total_complaints > level.max_complaints|half %}var(--danger){% else %}var(--warning){% endif %};"></div>
+      </div>
+    </div>
+  </div>
+
+  <a href="{% url 'report' session.id %}" class="btn btn-info" style="width:100%;text-align:center;">查看运营报表</a>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const SESSION_ID = {{ session.id }};
+let autoPlaying = false;
+let autoInterval = null;
+let incomeData = {{ income_history|safe }};
+
+function getCookie(name) {
+  let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+async function apiCall(url, data={}) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken'),
+    },
+    body: JSON.stringify(data),
+  });
+  return resp.json();
+}
+
+function addLog(msg) {
+  const log = document.getElementById('log');
+  const div = document.createElement('div');
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  log.prepend(div);
+  if (log.children.length > 50) log.lastChild.remove();
+}
+
+async function doTick() {
+  const data = await apiCall(`/api/tick/${SESSION_ID}/`);
+  updateUI(data);
+  if (data.status !== 'active' && autoPlaying) {
+    toggleAutoPlay();
+  }
+  return data;
+}
+
+function toggleAutoPlay() {
+  autoPlaying = !autoPlaying;
+  const btn = document.getElementById('auto-play-btn');
+  if (autoPlaying) {
+    btn.textContent = '⏹ 停止';
+    btn.classList.add('paused');
+    autoInterval = setInterval(async () => {
+      const data = await doTick();
+      if (data.status !== 'active') {
+        toggleAutoPlay();
+      }
+    }, 300);
+  } else {
+    btn.textContent = '⏩ 自动推进';
+    btn.classList.remove('paused');
+    if (autoInterval) clearInterval(autoInterval);
+  }
+}
+
+async function setPrice() {
+  const price = parseInt(document.getElementById('price-slider').value);
+  const data = await apiCall(`/api/set-price/${SESSION_ID}/`, {price});
+  addLog(`票价调整为 ${data.ticket_price}元`);
+}
+
+async function setWindows() {
+  const windows = parseInt(document.getElementById('windows-slider').value);
+  const data = await apiCall(`/api/set-windows/${SESSION_ID}/`, {windows});
+  addLog(`窗口数调整为 ${data.open_windows}`);
+}
+
+async function setDispatch() {
+  const interval = parseInt(document.getElementById('dispatch-slider').value);
+  const data = await apiCall(`/api/set-dispatch/${SESSION_ID}/`, {interval});
+  addLog(`发车间隔调整为 ${data.dispatch_interval}回合`);
+}
+
+async function finalizeGame() {
+  if (!confirm('确认结束本局并结算？')) return;
+  const data = await apiCall(`/api/finalize/${SESSION_ID}/`);
+  addLog(`结算完成！分数: ${data.score}`);
+  window.location.href = `/report/${SESSION_ID}/`;
+}
+
+function updateUI(data) {
+  if (!data) return;
+  document.getElementById('tick-val').textContent = data.tick || 0;
+  document.getElementById('income-val').textContent = data.total_income || 0;
+  document.getElementById('complaints-val').textContent = data.total_complaints || 0;
+  document.getElementById('served-val').textContent = data.total_served || 0;
+  document.getElementById('queue-len').textContent = data.queue_length || 0;
+
+  const qd = document.getElementById('queue-display');
+  if (data.queue && data.queue.length > 0) {
+    qd.innerHTML = data.queue.map(t =>
+      `<span class="queue-item">
+        <span class="dest">${t.destination}</span>
+        <span class="pat">♥${t.patience}</span>
+        ${t.needs_transfer ? '<span class="transfer">换乘</span>' : ''}
+      </span>`
+    ).join('');
+  } else {
+    qd.innerHTML = '<span style="opacity:0.4;padding:8px;">暂无排队游客</span>';
+  }
+
+  if (data.total_income) {
+    const target = {{ level.target_income }};
+    const pct = Math.min((data.total_income / target) * 100, 100);
+    document.getElementById('income-progress').style.width = pct + '%';
+  }
+  if (data.total_complaints !== undefined) {
+    const max = {{ level.max_complaints }};
+    const pct = Math.min((data.total_complaints / max) * 100, 100);
+    document.getElementById('complaint-progress').style.width = pct + '%';
+  }
+
+  if (data.status && data.status !== 'active') {
+    document.getElementById('tick-btn').disabled = true;
+    if (data.status === 'failed') {
+      addLog('游戏失败！投诉过多');
+    } else if (data.status === 'completed') {
+      addLog('游戏完成！可查看报表');
+    }
+  }
+}
+
+function drawIncomeChart() {
+  const canvas = document.getElementById('income-chart');
+  if (!canvas || !incomeData.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  canvas.width = w;
+  canvas.height = h;
+
+  ctx.clearRect(0, 0, w, h);
+  const maxIncome = Math.max(...incomeData.map(d => d.income || 0), 1);
+  const maxTick = Math.max(incomeData.length, 1);
+  const stepX = w / maxTick;
+  const stepY = (h - 20) / maxIncome;
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#4ade80';
+  ctx.lineWidth = 2;
+  incomeData.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - 10 - (d.income || 0) * stepY;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(74,222,128,0.1)';
+  ctx.beginPath();
+  incomeData.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - 10 - (d.income || 0) * stepY;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h - 10);
+  ctx.lineTo(0, h - 10);
+  ctx.closePath();
+  ctx.fill();
+
+  if (incomeData.length > 0) {
+    const last = incomeData[incomeData.length - 1];
+    ctx.fillStyle = '#eaeaea';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(`${last.income || 0}元`, w - 60, 15);
+  }
+}
+
+document.getElementById('price-slider').addEventListener('input', function() {
+  document.getElementById('price-display').textContent = this.value + '元';
+});
+document.getElementById('windows-slider').addEventListener('input', function() {
+  document.getElementById('windows-display').textContent = this.value;
+});
+document.getElementById('dispatch-slider').addEventListener('input', function() {
+  document.getElementById('dispatch-display').textContent = this.value;
+});
+
+async function refreshState() {
+  const resp = await fetch(`/api/state/${SESSION_ID}/`);
+  const data = await resp.json();
+  updateUI(data);
+  incomeData = data.income_history || incomeData;
+  drawIncomeChart();
+}
+
+refreshState();
+setInterval(() => {
+  if (!autoPlaying) {
+    fetch(`/api/state/${SESSION_ID}/`).then(r => r.json()).then(d => {
+      if (d.status !== 'active') updateUI(d);
+    });
+  }
+}, 5000);
+
+drawIncomeChart();
+window.addEventListener('resize', drawIncomeChart);
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "game/base.html" %}
+{% block title %}山城缆车售票排队游戏 - 首页{% endblock %}
+{% block content %}
+<h1>🚡 山城缆车售票排队游戏</h1>
+<p style="opacity:0.7;margin-bottom:24px;">管理山城缆车的售票窗口、发车节奏和车厢配载，让每位游客顺利上山！</p>
+
+<section id="levels">
+<h2>选择关卡</h2>
+<div class="grid grid-3">
+{% for level in levels %}
+<div class="card" style="border-left:4px solid {% if level.difficulty == 1 %}var(--success){% elif level.difficulty == 2 %}var(--warning){% else %}var(--danger){% endif %};">
+  <h3>{{ level.name }}</h3>
+  <p style="opacity:0.7;font-size:0.9em;margin-bottom:12px;">{{ level.description }}</p>
+  <div class="grid grid-2" style="font-size:0.85em;margin-bottom:12px;">
+    <div>目标收入: <strong>{{ level.target_income }}</strong></div>
+    <div>最大投诉: <strong>{{ level.max_complaints }}</strong></div>
+    <div>时间限制: <strong>{{ level.time_limit }}回合</strong></div>
+    <div>初始票价: <strong>{{ level.initial_ticket_price }}元</strong></div>
+    <div>初始窗口: <strong>{{ level.initial_windows }}</strong></div>
+    <div>车厢容量: <strong>{{ level.car_capacity }}人</strong></div>
+  </div>
+  <div style="margin-bottom:8px;">
+    <span class="badge {% if level.difficulty == 1 %}badge-success{% elif level.difficulty == 2 %}badge-warning{% else %}badge-danger{% endif %}">
+      难度 {% for i in "x"|rjust:level.difficulty %}★{% endfor %}
+    </span>
+  </div>
+  <form method="post" action="{% url 'api_new_game' level.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">开始游戏</button>
+  </form>
+  <div style="margin-top:8px;">
+    <a href="{% url 'level_detail' level.id %}">查看历史局次 →</a>
+  </div>
+</div>
+{% empty %}
+<div class="card">
+  <p>暂无关卡，请先运行 <code>python manage.py seed_game</code> 初始化数据</p>
+</div>
+{% endfor %}
+</div>
+</section>
+
+{% if recent_sessions %}
+<section style="margin-top:32px;">
+<h2>最近局次</h2>
+<div class="card">
+<table>
+<thead>
+<tr><th>局次</th><th>关卡</th><th>状态</th><th>收入</th><th>投诉</th><th>分数</th><th>操作</th></tr>
+</thead>
+<tbody>
+{% for s in recent_sessions %}
+<tr>
+  <td>#{{ s.id }}</td>
+  <td>{{ s.level.name }}</td>
+  <td><span class="badge {% if s.status == 'completed' %}badge-success{% elif s.status == 'failed' %}badge-danger{% else %}badge-info{% endif %}">{{ s.get_status_display }}</span></td>
+  <td>{{ s.total_income }}元</td>
+  <td>{{ s.total_complaints }}</td>
+  <td>{{ s.final_score }}</td>
+  <td>
+    {% if s.status == 'active' %}
+    <a href="{% url 'play' s.id %}" class="btn btn-sm btn-primary">继续</a>
+    {% endif %}
+    <a href="{% url 'report' s.id %}" class="btn btn-sm btn-info">报表</a>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+{% endblock %}

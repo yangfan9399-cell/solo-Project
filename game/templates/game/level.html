@@ -1,0 +1,55 @@
+{% extends "game/base.html" %}
+{% block title %}{{ level.name }} - 关卡详情{% endblock %}
+{% block content %}
+<h1>{{ level.name }}</h1>
+<p style="opacity:0.7;margin-bottom:20px;">{{ level.description }}</p>
+
+<div class="grid grid-4" style="margin-bottom:24px;">
+<div class="card stat"><div class="stat-value">{{ level.target_income }}</div><div class="stat-label">目标收入</div></div>
+<div class="card stat"><div class="stat-value">{{ level.max_complaints }}</div><div class="stat-label">最大投诉</div></div>
+<div class="card stat"><div class="stat-value">{{ level.time_limit }}</div><div class="stat-label">时间(回合)</div></div>
+<div class="card stat"><div class="stat-value">{{ level.car_capacity }}</div><div class="stat-label">车厢容量</div></div>
+</div>
+
+<div style="margin-bottom:20px;">
+<form method="post" action="{% url 'api_new_game' level.id %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-primary">开始新局次</button>
+</form>
+</div>
+
+<h2>历史局次</h2>
+<div class="card">
+{% if sessions %}
+<table>
+<thead>
+<tr><th>局次</th><th>状态</th><th>票价</th><th>窗口</th><th>收入</th><th>投诉</th><th>服务</th><th>分数</th><th>操作</th></tr>
+</thead>
+<tbody>
+{% for s in sessions %}
+<tr>
+  <td>#{{ s.id }}</td>
+  <td><span class="badge {% if s.status == 'completed' %}badge-success{% elif s.status == 'failed' %}badge-danger{% else %}badge-info{% endif %}">{{ s.get_status_display }}</span></td>
+  <td>{{ s.ticket_price }}元</td>
+  <td>{{ s.open_windows }}</td>
+  <td>{{ s.total_income }}元</td>
+  <td>{{ s.total_complaints }}</td>
+  <td>{{ s.total_served }}</td>
+  <td>{{ s.final_score }}</td>
+  <td>
+    {% if s.status == 'active' %}
+    <a href="{% url 'play' s.id %}" class="btn btn-sm btn-primary">继续</a>
+    {% endif %}
+    <a href="{% url 'report' s.id %}" class="btn btn-sm btn-info">报表</a>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="opacity:0.6;">暂无历史局次</p>
+{% endif %}
+</div>
+
+<p style="margin-top:16px;"><a href="/">← 返回首页</a></p>
+{% endblock %}

@@ -1,0 +1,311 @@
+{% extends "game/base.html" %}
+{% load game_tags %}
+{% block title %}运营报表 - 山城缆车{% endblock %}
+{% block extra_head %}
+<style>
+.chart-container { height: 200px; background: rgba(0,0,0,0.2); border-radius: 8px; position: relative; overflow: hidden; }
+.chart-container canvas { width: 100%; height: 100%; }
+.compare-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; }
+.compare-item { text-align: center; padding: 8px; border-radius: 8px; }
+.compare-before { background: rgba(239,68,68,0.15); }
+.compare-after { background: rgba(74,222,128,0.15); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+<h1>📊 运营报表</h1>
+<div>
+  <a href="{% url 'play' session.id %}" class="btn btn-sm btn-primary">返回游戏</a>
+  <a href="/" class="btn btn-sm btn-info">首页</a>
+</div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:16px;">
+<div class="card stat">
+  <div class="stat-value">{{ score }}</div>
+  <div class="stat-label">最终分数</div>
+</div>
+<div class="card stat">
+  <div class="stat-value" style="color:var(--success)">{{ session.total_income }}元</div>
+  <div class="stat-label">总收入</div>
+</div>
+<div class="card stat">
+  <div class="stat-value" style="color:{% if session.total_complaints > 5 %}var(--danger){% else %}var(--warning){% endif %}">{{ session.total_complaints }}</div>
+  <div class="stat-label">投诉数</div>
+</div>
+<div class="card stat">
+  <div class="stat-value">{{ session.total_served }}</div>
+  <div class="stat-label">服务游客</div>
+</div>
+</div>
+
+<div class="card">
+<h2>分数结算明细（后端按局次重算）</h2>
+<div class="grid grid-3" style="margin:12px 0;">
+  <div style="text-align:center;"><div style="font-size:1.5em;color:var(--success);">{{ breakdown.income_score }}</div><div style="opacity:0.7;font-size:0.85em;">收入得分</div></div>
+  <div style="text-align:center;"><div style="font-size:1.5em;color:var(--danger);">-{{ breakdown.complaint_penalty }}</div><div style="opacity:0.7;font-size:0.85em;">投诉罚分</div></div>
+  <div style="text-align:center;"><div style="font-size:1.5em;color:var(--danger);">-{{ breakdown.wait_penalty }}</div><div style="opacity:0.7;font-size:0.85em;">等待罚分</div></div>
+  <div style="text-align:center;"><div style="font-size:1.5em;color:var(--info);">+{{ breakdown.target_bonus }}</div><div style="opacity:0.7;font-size:0.85em;">目标奖励</div></div>
+  <div style="text-align:center;"><div style="font-size:1.5em;color:var(--info);">+{{ breakdown.transfer_bonus }}</div><div style="opacity:0.7;font-size:0.85em;">换乘奖励</div></div>
+  <div style="text-align:center;"><div style="font-size:1.5em;font-weight:bold;color:var(--accent);">{{ score }}</div><div style="opacity:0.7;font-size:0.85em;">最终分数</div></div>
+</div>
+</div>
+
+<div class="grid grid-2">
+<div class="card">
+  <h3>📈 收入曲线</h3>
+  <div class="chart-container"><canvas id="income-curve"></canvas></div>
+</div>
+<div class="card">
+  <h3>😤 耐心变化</h3>
+  <div class="chart-container"><canvas id="patience-chart"></canvas></div>
+</div>
+</div>
+
+<div class="card" style="margin-top:8px;">
+<h3>票价调整与排队长度对比</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:8px;">展示票价调整如何影响排队长度，票价上升→排队缩短，票价下降→排队增长</p>
+<div class="chart-container" style="height:160px;"><canvas id="price-queue-chart"></canvas></div>
+</div>
+
+<div class="card">
+<h3>投诉记录与回滚</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:8px;">投诉可回滚或重算，回滚后投诉数和分数会发生变化</p>
+<div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+  <div>
+    <label style="font-size:0.85em;opacity:0.7;">回滚到第几回合</label>
+    <input type="number" id="rollback-tick" min="0" max="{{ session.current_tick }}" value="0" style="width:80px;">
+    <button onclick="doRollback()" class="btn btn-sm btn-warning">回滚投诉</button>
+  </div>
+  <div>
+    <button onclick="doRecalculate()" class="btn btn-sm btn-info">重算分数</button>
+    <span id="recalc-result" style="margin-left:8px;font-size:0.9em;"></span>
+  </div>
+</div>
+{% if complaints %}
+<table>
+<thead><tr><th>回合</th><th>原因</th><th>严重度</th><th>是否回滚</th></tr></thead>
+<tbody>
+{% for c in complaints %}
+<tr style="{% if c.rolled_back %}opacity:0.4;text-decoration:line-through;{% endif %}">
+  <td>{{ c.tick }}</td>
+  <td>{{ c.reason }}</td>
+  <td>{% for i in "x"|rjust:c.severity %}⚠{% endfor %}</td>
+  <td>{% if c.rolled_back %}<span class="badge badge-warning">已回滚(回合{{ c.rollback_tick }})</span>{% else %}<span class="badge badge-danger">生效</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="opacity:0.5;">无投诉记录</p>
+{% endif %}
+</div>
+
+<div class="card">
+<h3>发车明细</h3>
+{% if dispatch_summary %}
+<table>
+<thead><tr><th>回合</th><th>车厢</th><th>乘客数</th><th>收入</th><th>目的地</th><th>等待回合</th></tr></thead>
+<tbody>
+{% for d in dispatch_summary %}
+<tr>
+  <td>{{ d.tick }}</td>
+  <td>#{{ d.car }}</td>
+  <td>{{ d.passengers }}人</td>
+  <td>{{ d.revenue }}元</td>
+  <td>{{ d.destinations|join:", " }}</td>
+  <td>均值: {{ d.wait_times|avg }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="opacity:0.5;">无发车记录</p>
+{% endif %}
+</div>
+
+<div class="card">
+<h3>目的地统计</h3>
+<div class="grid grid-4">
+{% for dest, stats in destination_stats.items %}
+<div style="text-align:center;padding:8px;">
+  <div style="font-weight:bold;color:var(--info);">{{ dest }}</div>
+  <div style="font-size:0.85em;">总计: {{ stats.total }}</div>
+  <div style="font-size:0.85em;color:var(--success);">已服务: {{ stats.served }}</div>
+  <div style="font-size:0.85em;color:var(--danger);">投诉: {{ stats.complained }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<div class="card">
+<h3>局次状态摘要</h3>
+<table>
+<tr><td>局次ID</td><td>#{{ session.id }}</td></tr>
+<tr><td>关卡</td><td>{{ session.level.name }}</td></tr>
+<tr><td>状态</td><td>{{ session.get_status_display }}</td></tr>
+<tr><td>总回合</td><td>{{ session.current_tick }}</td></tr>
+<tr><td>最终票价</td><td>{{ session.ticket_price }}元</td></tr>
+<tr><td>窗口数</td><td>{{ session.open_windows }}</td></tr>
+<tr><td>发车间隔</td><td>{{ session.dispatch_interval }}回合</td></tr>
+<tr><td>车厢容量</td><td>{{ session.car_capacity }}人</td></tr>
+<tr><td>总收入</td><td>{{ session.total_income }}元</td></tr>
+<tr><td>已服务</td><td>{{ session.total_served }}人</td></tr>
+<tr><td>已离开</td><td>{{ session.total_departed }}人</td></tr>
+<tr><td>投诉数</td><td>{{ session.total_complaints }}</td></tr>
+<tr><td>最终分数</td><td>{{ session.final_score }}</td></tr>
+</table>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const INCOME_DATA = {{ income_curve|safe }};
+const PATIENCE_DATA = {{ patience_data|safe }};
+const SESSION_ID = {{ session.id }};
+
+function getCookie(name) {
+  let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+async function apiCall(url, data={}) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify(data),
+  });
+  return resp.json();
+}
+
+function drawLineChart(canvasId, data, xKey, yKey, color, label) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  canvas.width = w;
+  canvas.height = h;
+
+  ctx.clearRect(0, 0, w, h);
+  const maxY = Math.max(...data.map(d => d[yKey] || 0), 1);
+  const stepX = w / Math.max(data.length - 1, 1);
+  const padY = 20;
+  const stepY = (h - padY * 2) / maxY;
+
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  data.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - padY - (d[yKey] || 0) * stepY;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = color.replace(')', ',0.1)').replace('rgb', 'rgba');
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - padY - (d[yKey] || 0) * stepY;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h - padY);
+  ctx.lineTo(0, h - padY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#eaeaea';
+  ctx.font = '11px sans-serif';
+  ctx.fillText(label, 8, 14);
+  if (data.length > 0) {
+    const last = data[data.length - 1];
+    ctx.fillText(`${last[yKey] || 0}`, w - 50, 14);
+  }
+}
+
+function drawPriceQueueChart() {
+  const canvas = document.getElementById('price-queue-chart');
+  if (!canvas || !INCOME_DATA.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  canvas.width = w;
+  canvas.height = h;
+
+  ctx.clearRect(0, 0, w, h);
+  const maxIncome = Math.max(...INCOME_DATA.map(d => d.cumulative || 0), 1);
+  const maxQueue = Math.max(...INCOME_DATA.map(d => d.queue || 0), 1);
+  const len = INCOME_DATA.length;
+  const stepX = w / Math.max(len - 1, 1);
+  const padY = 20;
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#4ade80';
+  ctx.lineWidth = 2;
+  INCOME_DATA.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - padY - ((d.cumulative || 0) / maxIncome) * (h - padY * 2);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]);
+  INCOME_DATA.forEach((d, i) => {
+    const x = i * stepX;
+    const y = h - padY - ((d.queue || 0) / maxQueue) * (h - padY * 2);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#4ade80';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('● 累计收入', 8, 14);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('--- 排队长度', 100, 14);
+
+  if (INCOME_DATA.length > 0) {
+    const last = INCOME_DATA[INCOME_DATA.length - 1];
+    const prevPrice = INCOME_DATA.length > 1 ? INCOME_DATA[INCOME_DATA.length - 2].price : last.price;
+    if (last.price !== prevPrice) {
+      ctx.fillStyle = '#ef4444';
+      ctx.fillText(`票价${prevPrice}→${last.price}`, w - 130, 14);
+    }
+  }
+}
+
+drawLineChart('income-curve', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128)', '累计收入');
+drawLineChart('patience-chart', PATIENCE_DATA, 'tick', 'after', 'rgb(251,191,36)', '平均耐心值');
+drawPriceQueueChart();
+
+async function doRollback() {
+  const tick = parseInt(document.getElementById('rollback-tick').value) || 0;
+  const data = await apiCall(`/api/rollback/${SESSION_ID}/`, {to_tick: tick});
+  document.getElementById('recalc-result').textContent =
+    `回滚了 ${data.rolled_back_count} 条投诉，当前投诉: ${data.total_complaints}`;
+  setTimeout(() => location.reload(), 500);
+}
+
+async function doRecalculate() {
+  const data = await apiCall(`/api/recalculate/${SESSION_ID}/`);
+  document.getElementById('recalc-result').textContent =
+    `重算完成！分数: ${data.score}, 收入: ${data.total_income}, 投诉: ${data.total_complaints}`;
+  setTimeout(() => location.reload(), 500);
+}
+
+window.addEventListener('resize', () => {
+  drawLineChart('income-curve', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128)', '累计收入');
+  drawLineChart('patience-chart', PATIENCE_DATA, 'tick', 'after', 'rgb(251,191,36)', '平均耐心值');
+  drawPriceQueueChart();
+});
+</script>
+{% endblock %}
