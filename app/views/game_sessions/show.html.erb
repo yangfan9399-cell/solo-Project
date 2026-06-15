@@ -1,0 +1,478 @@
+<% content_for :title, "#{@game_session.session_code} | 微生物培养皿领地游戏" %>
+<% content_for :head do %>
+  <script>
+    const GRID_SIZE = <%= GameSession::GRID_SIZE %>;
+    const CELL_TARGET = <%= GameSession::CELL_TARGET %>;
+    const CELL_CONTAMINANT = <%= GameSession::CELL_CONTAMINANT %>;
+    const CELL_TARGET_ZONE = <%= GameSession::CELL_TARGET_ZONE %>;
+    const TARGET_COLOR = '<%= @strain_info[:color] %>';
+    const TARGET_ZONE_POINTS = <%= raw @game_session.target_zone_points %>;
+    const ANTIBIOTIC_POSITIONS = <%= raw @game_session.operation_details.where(operation_type: :place_antibiotic).map{|op| {x:op.antibiotic_position_x, y:op.antibiotic_position_y, r:op.antibiotic_radius, t:op.antibiotic_type} }.to_json %>;
+    let placingAntibiotic = false;
+    let antibioticType = 'weak';
+  </script>
+<% end %>
+
+<div class="mb-6 flex flex-wrap justify-between items-start gap-4">
+  <div>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+        <span>🧫</span>
+        <span class="font-mono text-lg"><%= @game_session.session_code %></span>
+      </h1>
+      <span class="px-3 py-1 text-sm font-medium rounded-full <%= status_class(@game_session.status) %>"><%= status_label(@game_session.status) %></span>
+      <% if @game_session.batch_tag.present? %>
+        <span class="px-2.5 py-1 text-xs rounded bg-info-50 text-info-700"><%= @game_session.batch_tag %></span>
+      <% end %>
+    </div>
+    <div class="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+      <span class="flex items-center gap-1.5">
+        <span class="w-3 h-3 rounded-full" style="background-color: <%= @strain_info[:color] %>"></span>
+        <strong><%= @strain_info[:name] %></strong>
+      </span>
+      <span>研究员：<%= @game_session.player_name %></span>
+      <span>创建于 <%= l(@game_session.created_at, format: :short) %></span>
+    </div>
+  </div>
+  <div class="flex gap-2 flex-wrap">
+    <%= link_to "菌落图谱", colony_map_game_session_path(@game_session), class: "px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm" %>
+    <%= link_to "污染差异", contamination_diff_game_session_path(@game_session), class: "px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm" %>
+    <%= link_to "批次对比", batch_comparison_game_session_path(@game_session), class: "px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm" %>
+    <%= link_to "时间线", experiment_path(@game_session), class: "px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm" %>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-7 space-y-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-slate-800">🔬 培养皿视图</h2>
+        <div class="flex gap-2 text-xs">
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background-color: <%= @strain_info[:color] %>"></span>目标菌</span>
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-500"></span>污染菌</span>
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-200 border border-blue-400 border-dashed"></span>目标区域</span>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+        <div id="petri-dish-container" class="relative" style="width:480px; height:480px;">
+          <svg viewBox="0 0 480 480" class="w-full h-full">
+            <defs>
+              <radialGradient id="agar" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#fef3c7" />
+                <stop offset="70%" stop-color="#fde68a" />
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3" />
+              </radialGradient>
+              <filter id="blur1">
+                <feGaussianBlur stdDeviation="0.8"/>
+              </filter>
+            </defs>
+            <circle cx="240" cy="240" r="238" fill="#e2e8f0" />
+            <circle cx="240" cy="240" r="228" fill="url(#agar)" stroke="#fbbf24" stroke-width="2" />
+            <circle cx="240" cy="240" r="228" fill="none" stroke="#92400e" stroke-width="3" stroke-opacity="0.15" />
+
+            <% zone_points = @game_session.target_zone_as_array %>
+            <% zone_points.each do |(zx, zy)| %>
+              <rect x="<%= 20 + zx * 22 %>" y="<%= 20 + zy * 22 %>" width="20" height="20"
+                    fill="#93c5fd" fill-opacity="0.25" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,2" rx="2"/>
+            <% end %>
+
+            <% grid = @game_session.grid_as_array %>
+            <% (0...GameSession::GRID_SIZE).each do |x| %>
+              <% (0...GameSession::GRID_SIZE).each do |y| %>
+                <% cell = grid[x] ? grid[x][y] : 0 %>
+                <% if cell == GameSession::CELL_TARGET %>
+                  <circle cx="<%= 30 + x * 22 %>" cy="<%= 30 + y * 22 %>" r="10"
+                          fill="<%= @strain_info[:color] %>" opacity="0.85" filter="url(#blur1)"/>
+                  <circle cx="<%= 30 + x * 22 %>" cy="<%= 30 + y * 22 %>" r="6"
+                          fill="<%= @strain_info[:color] %>" opacity="0.95"/>
+                <% elsif cell == GameSession::CELL_CONTAMINANT %>
+                  <circle cx="<%= 30 + x * 22 %>" cy="<%= 30 + y * 22 %>" r="9"
+                          fill="#ef4444" opacity="0.85" filter="url(#blur1)"/>
+                  <circle cx="<%= 30 + x * 22 %>" cy="<%= 30 + y * 22 %>" r="5"
+                          fill="#dc2626" opacity="0.95"/>
+                <% end %>
+              <% end %>
+            <% end %>
+
+            <% ab_ops = @game_session.operation_details.where(operation_type: :place_antibiotic) %>
+            <% ab_ops.each do |ab| %>
+              <% cx = 30 + ab.antibiotic_position_x * 22 %>
+              <% cy = 30 + ab.antibiotic_position_y * 22 %>
+              <% r = ab.antibiotic_radius.to_f * 22 %>
+              <% color = ab.antibiotic_type == 'strong' ? '#7c3aed' : (ab.antibiotic_type == 'medium' ? '#2563eb' : '#059669') %>
+              <circle cx="<%= cx %>" cy="<%= cy %>" r="<%= r %>" fill="<%= color %>" fill-opacity="0.08" stroke="<%= color %>" stroke-width="1.5" stroke-dasharray="4,3" stroke-opacity="0.6"/>
+              <circle cx="<%= cx %>" cy="<%= cy %>" r="5" fill="<%= color %>"/>
+            <% end %>
+
+            <g id="cell-grid-interactive" style="cursor: crosshair;">
+              <% (0...GameSession::GRID_SIZE).each do |x| %>
+                <% (0...GameSession::GRID_SIZE).each do |y| %>
+                  <rect data-x="<%= x %>" data-y="<%= y %>" class="ab-click-zone"
+                        x="<%= 20 + x * 22 %>" y="<%= 20 + y * 22 %>" width="20" height="20"
+                        fill="transparent" rx="2"/>
+                <% end %>
+              <% end %>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="mt-4 p-3 bg-slate-50 rounded-lg flex flex-wrap justify-around text-sm gap-2">
+        <div class="text-center">
+          <div class="text-xs text-slate-500">当前回合</div>
+          <div class="font-bold text-lg text-slate-800"><%= @game_session.current_round %> / <%= @game_session.max_rounds %></div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-slate-500">全皿覆盖率</div>
+          <div class="font-bold text-lg text-primary-600"><%= @game_session.actual_coverage %>%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-slate-500">目标区覆盖率</div>
+          <% max_zone = @histories.map {|h| h.target_zone_coverage}.max || 0 %>
+          <div class="font-bold text-lg text-info-600"><%= max_zone %>%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-slate-500">目标阈值</div>
+          <div class="font-bold text-lg text-slate-700"><%= @game_session.target_coverage %>%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">📋 生长历史 (近10轮)</h2>
+      <% if @histories.empty? %>
+        <p class="text-sm text-slate-400 text-center py-6">还没有生长记录，点击「执行一轮生长」开始！</p>
+      <% else %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-slate-500 border-b border-slate-100">
+                <th class="py-2">轮</th>
+                <th>事件</th>
+                <th>覆盖率</th>
+                <th>目标区</th>
+                <th>细胞数</th>
+                <th>温度系数</th>
+                <th>描述</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @histories.each do |h| %>
+                <tr class="border-b border-slate-50 <%= h.is_overheated ? 'bg-danger-50/50' : '' %>">
+                  <td class="py-2 font-mono font-semibold text-slate-800">R<%= h.round_number %></td>
+                  <td>
+                    <span class="px-2 py-0.5 text-xs rounded <%= h.is_overheated ? 'bg-danger-100 text-danger-700' : h.event_type == 'target_reached' ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-600' %>">
+                      <%= h.event_type_label %>
+                    </span>
+                  </td>
+                  <td class="font-semibold"><%= h.target_coverage %>%</td>
+                  <td class="text-info-600"><%= h.target_zone_coverage %>%</td>
+                  <td><%= h.target_colony_cells %></td>
+                  <td class="<%= factor_color(h.temperature_factor) %> font-semibold"><%= h.temperature_factor.round(2) %></td>
+                  <td class="text-xs text-slate-500 max-w-[200px] truncate" title="<%= h.event_description %>"><%= h.event_description %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="lg:col-span-5 space-y-6">
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">⚙️ 环境参数控制</h2>
+
+      <div class="space-y-4">
+        <div class="p-3 rounded-lg bg-slate-50">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-700">🌡️ 温度</span>
+            <span class="font-mono font-bold text-lg <%= factor_color(@temp_factor) %>"><%= @game_session.temperature %>°C</span>
+          </div>
+          <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
+            <div class="h-full bg-orange-500 transition-all" style="width:<%= ((@game_session.temperature.to_f - 10) / 50 * 100) %>%"></div>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">
+            系数: <span class="<%= factor_color(@temp_factor) %> font-semibold"><%= @temp_factor.round(3) %></span>
+            | 最适: <%= @strain_info[:optimal_temp] %>°C
+            | 范围: <%= @strain_info[:temp_range][0] %>-<%= @strain_info[:temp_range][1] %>°C
+          </div>
+          <%= form_with url: adjust_temperature_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+            <%= button_tag "-5°C", name: "temperature", value: -5, class: "flex-1 px-2 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-sm font-semibold" %>
+            <%= button_tag "-1°C", name: "temperature", value: -1, class: "flex-1 px-2 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm" %>
+            <%= button_tag "+1°C", name: "temperature", value: 1, class: "flex-1 px-2 py-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 text-sm" %>
+            <%= button_tag "+5°C", name: "temperature", value: 5, class: "flex-1 px-2 py-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 text-sm font-semibold" %>
+          <% end %>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-50">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-700">💧 水分</span>
+            <% last_m = @game_session.operation_details.where(operation_type: [:adjust_moisture, :simulate_growth]).order(round_number: :desc).first %>
+            <% m_level = last_m&.moisture_level || 50.0 %>
+            <span class="font-mono font-bold text-lg text-blue-600"><%= m_level %>%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
+            <div class="h-full bg-blue-500 transition-all" style="width:<%= m_level %>%"></div>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">
+            系数: <span class="<%= factor_color(@moisture_factor) %> font-semibold"><%= @moisture_factor.round(3) %></span>
+            (最佳 30-70%)
+          </div>
+          <%= form_with url: adjust_moisture_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+            <%= button_tag "-10%", name: "moisture", value: -10, class: "flex-1 px-2 py-1.5 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold" %>
+            <%= button_tag "-5%", name: "moisture", value: -5, class: "flex-1 px-2 py-1.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 text-sm" %>
+            <%= button_tag "+5%", name: "moisture", value: 5, class: "flex-1 px-2 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 text-sm" %>
+            <%= button_tag "+10%", name: "moisture", value: 10, class: "flex-1 px-2 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-sm font-semibold" %>
+          <% end %>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-50">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-700">🧪 营养水平</span>
+            <span class="font-mono font-bold text-lg text-amber-600"><%= @game_session.current_nutrient_level.round(1) %></span>
+          </div>
+          <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
+            <div class="h-full bg-amber-500 transition-all" style="width:<%= [@game_session.current_nutrient_level.to_f, 100].min %>%"></div>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">初始: <%= @game_session.initial_nutrient_level %> | 菌落消耗营养 | 补充过量吸引污染</div>
+          <%= form_with url: add_nutrient_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+            <%= button_tag "+5", name: "amount", value: 5, class: "flex-1 px-2 py-1.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 text-sm" %>
+            <%= button_tag "+15", name: "amount", value: 15, class: "flex-1 px-2 py-1.5 rounded bg-amber-100 text-amber-700 hover:bg-amber-200 text-sm font-semibold" %>
+            <%= button_tag "+30", name: "amount", value: 30, class: "flex-1 px-2 py-1.5 rounded bg-amber-200 text-amber-800 hover:bg-amber-300 text-sm font-semibold" %>
+          <% end %>
+        </div>
+
+        <div class="p-3 rounded-lg bg-slate-50">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-700">⚗️ pH 值</span>
+            <span class="font-mono font-bold text-lg text-purple-600"><%= @game_session.ph_level %></span>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">
+            系数: <span class="<%= factor_color(@ph_factor) %> font-semibold"><%= @ph_factor.round(3) %></span>
+            | 最适范围: <%= @strain_info[:ph_range][0] %>-<%= @strain_info[:ph_range][1] %>
+          </div>
+          <%= form_with url: adjust_ph_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+            <%= button_tag "酸性-0.5", name: "ph", value: -0.5, class: "flex-1 px-2 py-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 text-xs" %>
+            <%= button_tag "酸性-0.1", name: "ph", value: -0.1, class: "flex-1 px-2 py-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100 text-xs" %>
+            <%= button_tag "碱性+0.1", name: "ph", value: 0.1, class: "flex-1 px-2 py-1.5 rounded bg-blue-50 text-blue-500 hover:bg-blue-100 text-xs" %>
+            <%= button_tag "碱性+0.5", name: "ph", value: 0.5, class: "flex-1 px-2 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs" %>
+          <% end %>
+        </div>
+
+        <div class="p-3 rounded-lg bg-purple-50/50 border border-purple-100">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-medium text-slate-700">💊 抑菌圈</span>
+            <a href="#" id="toggle-ab-btn" class="text-xs px-2 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200">放置模式: 关</a>
+          </div>
+          <div class="text-xs text-slate-500 mb-2">开启后在培养皿点击放置抑菌圈 (按类型扣效率分)</div>
+          <div class="flex gap-2 mb-2">
+            <button type="button" data-ab-type="weak" class="ab-type-btn flex-1 px-2 py-1 rounded text-xs ring-2 ring-green-600 bg-green-50 text-green-700 font-semibold">弱效 R2.5</button>
+            <button type="button" data-ab-type="medium" class="ab-type-btn flex-1 px-2 py-1 rounded text-xs bg-blue-50 text-blue-700 hover:bg-blue-100">中效 R3.5</button>
+            <button type="button" data-ab-type="strong" class="ab-type-btn flex-1 px-2 py-1 rounded text-xs bg-purple-50 text-purple-700 hover:bg-purple-100">强效 R4.5</button>
+          </div>
+          <%= form_with url: place_antibiotic_game_session_path(@game_session), method: :post, local: true, id: "place-ab-form", class: "hidden" do |f| %>
+            <input type="hidden" name="x" id="ab-x">
+            <input type="hidden" name="y" id="ab-y">
+            <input type="hidden" name="type" id="ab-type" value="weak">
+            <input type="hidden" name="radius" value="2.5">
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">🎯 实验操作</h2>
+      <div class="space-y-3">
+        <% if !@game_session.completed? && !@game_session.abandoned? %>
+          <%= form_with url: simulate_growth_game_session_path(@game_session), method: :post, local: true do |f| %>
+            <%= f.submit "▶️ 执行一轮生长模拟", class: "w-full px-4 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-bold text-base cursor-pointer shadow-sm transition" %>
+          <% end %>
+
+          <details class="rounded-lg bg-warning-50 border border-warning-200 p-3">
+            <summary class="cursor-pointer font-semibold text-warning-700 text-sm">⚠️ 手动触发污染 (测试)</summary>
+            <div class="mt-3 space-y-2">
+              <% GameSession::CONTAMINANTS.each do |sid, info| %>
+                <%= form_with url: simulate_contamination_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+                  <input type="hidden" name="contaminant_id" value="<%= sid %>">
+                  <span class="flex-1 text-xs text-slate-700 flex items-center gap-1">
+                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: <%= info[:color] %>"></span>
+                    <%= info[:name] %> (竞争力<%= info[:competitiveness] %>)
+                  </span>
+                  <%= f.submit "引入", class: "px-3 py-1 rounded bg-warning-500 text-white text-xs hover:bg-warning-600 cursor-pointer" %>
+                <% end %>
+              <% end %>
+            </div>
+          </details>
+
+          <% if @game_session.current_round > 0 %>
+            <details class="rounded-lg bg-danger-50 border border-danger-200 p-3">
+              <summary class="cursor-pointer font-semibold text-danger-700 text-sm">🔄 回滚 / 重算</summary>
+              <div class="mt-3 space-y-2">
+                <div class="text-xs text-slate-600 mb-2">回滚到指定回合 (会清除后续所有记录并重建状态)</div>
+                <%= form_with url: rollback_game_session_path(@game_session), method: :post, local: true, class: "flex gap-2" do |f| %>
+                  <select name="round" class="flex-1 px-2 py-1 border border-slate-300 rounded text-sm">
+                    <% (1...@game_session.current_round).each do |r| %>
+                      <option value="<%= r %>">回滚到第 <%= r %> 轮</option>
+                    <% end %>
+                  </select>
+                  <%= f.submit "回滚", class: "px-3 py-1 rounded bg-danger-500 text-white text-xs hover:bg-danger-600 cursor-pointer" %>
+                <% end %>
+                <%= form_with url: recalculate_game_session_path(@game_session), method: :post, local: true do |f| %>
+                  <input type="hidden" name="force" value="true">
+                  <%= f.submit "🔁 强制重新模拟并结算", class: "w-full mt-2 px-3 py-1.5 rounded bg-danger-500 text-white text-xs hover:bg-danger-600 cursor-pointer" %>
+                <% end %>
+              </div>
+            </details>
+          <% end %>
+
+          <% if @game_session.current_round >= @game_session.max_rounds || @game_session.actual_coverage >= @game_session.target_coverage * 1.2 %>
+            <div class="p-3 bg-primary-50 rounded-lg text-primary-700 text-sm text-center font-semibold">
+              <%= @game_session.current_round >= @game_session.max_rounds ? "已达最大回合数" : "已达标" %>，建议结算！
+            </div>
+          <% end %>
+          <%= form_with url: finalize_game_session_path(@game_session), method: :post, local: true do |f| %>
+            <%= f.submit "🏁 结算实验 (后端按明细重算)", class: "w-full px-4 py-2.5 rounded-lg border-2 border-primary-600 text-primary-700 hover:bg-primary-50 font-semibold cursor-pointer" %>
+          <% end %>
+        <% else %>
+          <% details = @game_session.settlement_details_hash %>
+          <div class="space-y-4">
+            <div class="text-center p-4 rounded-lg <%= details['outcome'] == 'success' ? 'bg-primary-50 text-primary-700' : details['outcome'] == 'partial' ? 'bg-warning-50 text-warning-700' : 'bg-danger-50 text-danger-700' %>">
+              <div class="text-4xl font-bold mb-1"><%= @game_session.final_score %></div>
+              <div class="text-sm font-semibold">
+                <%= case details['outcome']
+                    when 'success' then '🎉 实验完美成功！'
+                    when 'partial' then '✅ 部分成功，继续努力'
+                    else '❌ 实验失败，建议调整策略重试'
+                    end %>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <% score_breakdown = details['score_breakdown'] || {} %>
+              <div class="p-2 bg-slate-50 rounded"><div class="text-xs text-slate-500">覆盖率分</div><div class="font-bold text-primary-600"><%= score_breakdown['coverage'] || 0 %></div></div>
+              <div class="p-2 bg-slate-50 rounded"><div class="text-xs text-slate-500">目标区分</div><div class="font-bold text-info-600"><%= score_breakdown['target_zone'] || 0 %></div></div>
+              <div class="p-2 bg-slate-50 rounded"><div class="text-xs text-slate-500">效率分</div><div class="font-bold text-purple-600"><%= score_breakdown['efficiency'] || 0 %></div></div>
+              <div class="p-2 bg-slate-50 rounded"><div class="text-xs text-slate-500">清洁分</div><div class="font-bold text-success-600"><%= score_breakdown['cleanliness'] || 0 %></div></div>
+            </div>
+            <div class="text-xs text-slate-500 p-2 bg-slate-50 rounded border border-slate-100">
+              <div>✅ 分数由后端按局次明细重算</div>
+              <div>📅 重算时间: <%= details['recalculation_timestamp'] %></div>
+            </div>
+            <%= link_to "再来一局", new_game_session_path, class: "w-full block text-center px-4 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-bold text-base" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @contaminations.any? %>
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-danger-200">
+        <h2 class="text-lg font-semibold text-danger-700 mb-4">🦠 污染事件 (最近5次)</h2>
+        <div class="space-y-3">
+          <% @contaminations.each do |c| %>
+            <div class="p-3 rounded-lg bg-danger-50/50 border border-danger-100">
+              <div class="flex justify-between items-start mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full" style="background-color: <%= c.contaminant_info[:color] %>"></span>
+                  <span class="font-semibold text-sm text-slate-800"><%= c.contaminant_name %></span>
+                  <span class="text-xs px-2 py-0.5 rounded-full <%= severity_class(c.severity) %>"><%= c.severity_label %></span>
+                </div>
+                <span class="text-xs text-slate-500">R<%= c.round_number %></span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-xs mt-2">
+                <div><span class="text-slate-500">营养掠夺</span><div class="font-semibold"><%= c.nutrient_consumed %></div></div>
+                <div><span class="text-slate-500">污染覆盖</span><div class="font-semibold text-danger-600"><%= c.contaminant_coverage %>%</div></div>
+                <div><span class="text-slate-500">目标影响</span><div class="font-semibold text-warning-600">-<%= c.target_growth_impact %>%</div></div>
+              </div>
+              <div class="mt-2 text-xs text-slate-600"><%= c.event_description %></div>
+              <%= link_to "查看前后差异", contamination_diff_game_session_path(@game_session, contamination_id: c.id), class: "mt-1 inline-block text-xs text-info-600 hover:underline" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">📝 操作日志 (最近15条)</h2>
+      <% if @operations.empty? %>
+        <p class="text-sm text-slate-400 text-center py-4">暂无操作</p>
+      <% else %>
+        <div class="space-y-1.5 max-h-60 overflow-y-auto">
+          <% @operations.each do |op| %>
+            <div class="flex items-start gap-2 text-sm py-1.5 border-b border-slate-50 last:border-b-0">
+              <span class="px-1.5 py-0.5 rounded text-xs font-mono bg-slate-100 text-slate-500 shrink-0 mt-0.5">R<%= op.round_number %></span>
+              <div class="flex-1 min-w-0">
+                <span class="font-semibold text-slate-700"><%= op.operation_label %></span>
+                <span class="text-xs text-slate-500 ml-1"><%= op.operation_note %></span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-ab-btn');
+    const form = document.getElementById('place-ab-form');
+    const abTypeInputs = document.querySelectorAll('.ab-type-btn');
+    const abTypeField = document.getElementById('ab-type');
+    const zones = document.querySelectorAll('.ab-click-zone');
+
+    function setAbType(type) {
+      antibioticType = type;
+      if (abTypeField) abTypeField.value = type;
+      abTypeInputs.forEach(btn => {
+        if (btn.dataset.abType === type) {
+          const colors = {weak:'green', medium:'blue', strong:'purple'};
+          const c = colors[type];
+          btn.className = `ab-type-btn flex-1 px-2 py-1 rounded text-xs ring-2 ring-${c}-600 bg-${c}-50 text-${c}-700 font-semibold`;
+          btn.style.cssText = `--tw-ring-color: ${type==='weak'?'#16a34a':type==='medium'?'#2563eb':'#9333ea'}; background-color: ${type==='weak'?'#f0fdf4':type==='medium'?'#eff6ff':'#faf5ff'}; color: ${type==='weak'?'#15803d':type==='medium'?'#1d4ed8':'#7e22ce'}`;
+        } else {
+          btn.className = 'ab-type-btn flex-1 px-2 py-1 rounded text-xs bg-slate-50 text-slate-600 hover:bg-slate-100';
+          btn.style.cssText = '';
+        }
+      });
+    }
+
+    abTypeInputs.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        setAbType(btn.dataset.abType);
+      });
+    });
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        placingAntibiotic = !placingAntibiotic;
+        toggleBtn.textContent = `放置模式: ${placingAntibiotic ? '开(点皿选位置)' : '关'}`;
+        toggleBtn.className = placingAntibiotic
+          ? "text-xs px-2 py-1 rounded bg-purple-600 text-white hover:bg-purple-700"
+          : "text-xs px-2 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200";
+      });
+    }
+
+    zones.forEach(zone => {
+      zone.addEventListener('click', () => {
+        if (!placingAntibiotic) return;
+        const x = zone.dataset.x;
+        const y = zone.dataset.y;
+        if (confirm(`在 (${x}, ${y}) 放置${{weak:'弱效', medium:'中效', strong:'强效'}[antibioticType]}抑菌圈？`)) {
+          document.getElementById('ab-x').value = x;
+          document.getElementById('ab-y').value = y;
+          document.getElementById('ab-type').value = antibioticType;
+          form.submit();
+        }
+      });
+      zone.addEventListener('mouseenter', () => {
+        if (placingAntibiotic) zone.setAttribute('fill', 'rgba(147, 51, 234, 0.15)');
+      });
+      zone.addEventListener('mouseleave', () => zone.setAttribute('fill', 'transparent'));
+    });
+
+    setAbType('weak');
+  });
+</script>

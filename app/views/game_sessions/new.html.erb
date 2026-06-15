@@ -1,0 +1,93 @@
+<% content_for :title, "新建实验 | 微生物培养皿领地游戏" %>
+
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+    <span>🧫</span> 准备新的培养皿实验
+  </h1>
+
+  <%= form_with model: @game_session, url: game_sessions_path, method: :post, local: true, class: "bg-white rounded-xl p-6 shadow-sm border border-slate-100 space-y-6" do |f| %>
+    <% if @game_session.errors.any? %>
+      <div class="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700">
+        <h3 class="font-semibold mb-2"><%= pluralize(@game_session.errors.count, "个错误") %> 阻止了此实验的创建:</h3>
+        <ul class="list-disc list-inside text-sm">
+          <% @game_session.errors.each do |error| %>
+            <li><%= error.full_message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <h2 class="text-lg font-semibold text-slate-800 mb-3 pb-2 border-b border-slate-100">实验基本信息</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :player_name, "研究员名称", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :player_name, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500", placeholder: "请输入您的名字" %>
+        </div>
+        <div>
+          <%= f.label :batch_tag, "批次标签", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.text_field :batch_tag, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500", placeholder: "如：BATCH-2026-001" %>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-lg font-semibold text-slate-800 mb-3 pb-2 border-b border-slate-100">选择目标菌株</h2>
+      <div class="grid md:grid-cols-2 gap-3">
+        <% @strains.each do |name, id, info| %>
+          <label class="cursor-pointer block">
+            <input type="radio" name="game_session[target_strain_id]" value="<%= id %>" class="peer sr-only" <%= id == 1 ? 'checked' : '' %>>
+            <div class="p-4 rounded-lg border-2 border-slate-200 peer-checked:border-primary-500 peer-checked:bg-primary-50 hover:border-primary-300 transition">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="w-4 h-4 rounded-full" style="background-color: <%= info[:color] %>"></span>
+                <span class="font-semibold text-slate-800"><%= name %></span>
+              </div>
+              <div class="text-xs text-slate-500 space-y-1">
+                <div>🌡️ 最适温度: <%= info[:optimal_temp] %>°C (<%= info[:temp_range][0] %>-<%= info[:temp_range][1] %>°C)</div>
+                <div>⚗️ pH范围: <%= info[:ph_range][0] %>-<%= info[:ph_range][1] %></div>
+                <div>📈 生长速率: <%= (info[:growth_rate]*100).round %>%/轮</div>
+              </div>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-lg font-semibold text-slate-800 mb-3 pb-2 border-b border-slate-100">初始培养条件</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :initial_nutrient_level, "初始营养水平 (0-100)", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :initial_nutrient_level, in: 10..100, step: 1, value: 50, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" %>
+          <p class="text-xs text-slate-500 mt-1">营养越多初始生长越快，但会吸引污染菌</p>
+        </div>
+        <div>
+          <%= f.label :temperature, "培养温度 (°C)", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :temperature, in: 10..60, step: 0.5, value: 37, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" %>
+        </div>
+        <div>
+          <%= f.label :ph_level, "初始 pH 值", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :ph_level, in: 3..11, step: 0.1, value: 7.0, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" %>
+        </div>
+        <div>
+          <%= f.label :target_coverage, "目标区域覆盖率目标 (%)", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :target_coverage, in: 30..100, step: 5, value: 70, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" %>
+        </div>
+        <div>
+          <%= f.label :max_rounds, "最大回合数", class: "block text-sm font-medium text-slate-700 mb-1" %>
+          <%= f.number_field :max_rounds, in: 5..50, step: 1, value: 20, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" %>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <%= f.label :notes, "实验备注", class: "block text-sm font-medium text-slate-700 mb-1" %>
+      <%= f.text_area :notes, rows: 2, class: "w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500", placeholder: "记录实验目的或备注..." %>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+      <%= link_to "取消", game_sessions_path, class: "px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition" %>
+      <%= f.submit "启动培养皿", class: "px-6 py-2 rounded-lg bg-primary-600 text-white font-semibold hover:bg-primary-700 transition cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

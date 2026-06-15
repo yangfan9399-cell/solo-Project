@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "微生物培养皿领地游戏" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="微生物培养皿领地游戏">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: { 50:'#f0fdf4',100:'#dcfce7',500:'#22c55e',600:'#16a34a',700:'#15803d',900:'#14532d' },
+              danger: { 50:'#fef2f2',100:'#fee2e2',500:'#ef4444',600:'#dc2626',700:'#b91c1c' },
+              warning: { 50:'#fffbeb',100:'#fef3c7',500:'#f59e0b',600:'#d97706' },
+              info: { 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb' }
+            }
+          }
+        }
+      }
+    </script>
+
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <a href="/" class="flex items-center gap-2 text-primary-700 font-bold text-xl">
+              <span class="text-2xl">🧫</span>
+              <span>微生物领地实验</span>
+            </a>
+            <div class="hidden sm:ml-10 sm:flex sm:space-x-4">
+              <%= link_to "实验大厅", game_sessions_path, class: "inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500" %>
+              <%= link_to "新建实验", new_game_session_path, class: "inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500" %>
+              <%= link_to "实验时间线", experiments_path, class: "inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500" %>
+              <%= link_to "菌株图鉴", strains_path, class: "inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500" %>
+              <%= link_to "批次对比", batch_comparison_list_game_sessions_path, class: "inline-flex items-center px-3 py-2 text-sm font-medium text-slate-700 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <% if notice %>
+        <div class="mb-4 p-4 rounded-lg bg-primary-50 border border-primary-200 text-primary-700 flex items-start gap-2">
+          <span class="text-lg">✅</span>
+          <div class="flex-1"><%= notice %></div>
+        </div>
+      <% end %>
+      <% if alert %>
+        <div class="mb-4 p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700 flex items-start gap-2">
+          <span class="text-lg">⚠️</span>
+          <div class="flex-1"><%= alert %></div>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="mt-16 border-t border-slate-200 bg-white">
+      <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-slate-500">
+        🧫 微生物培养皿领地游戏 · Rails 8 + SQLite
+      </div>
+    </footer>
+  </body>
+</html>

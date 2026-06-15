@@ -1,0 +1,81 @@
+<% content_for :title, "批次对比 | 微生物培养皿领地游戏" %>
+
+<div class="mb-6">
+  <%= link_to "← 返回实验大厅", game_sessions_path, class: "text-primary-600 hover:underline text-sm" %>
+  <h1 class="text-2xl font-bold text-slate-800 mt-2 flex items-center gap-2">
+    <span>📊</span> 批次对比总览
+  </h1>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-semibold text-slate-800 mb-4">📦 按批次标签分组</h2>
+    <% if @batch_groups.empty? %>
+      <p class="text-slate-400 text-sm text-center py-8">暂无带批次标签的实验。创建实验时填写批次标签即可归类。</p>
+    <% else %>
+      <div class="space-y-4">
+        <% @batch_groups.each do |tag, sessions| %>
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-3 py-1 rounded-full bg-info-100 text-info-700 font-semibold text-sm"><%= tag %></span>
+                <span class="text-xs text-slate-500"><%= sessions.size %> 次实验</span>
+              </div>
+              <% if sessions.size >= 2 %>
+                <%= link_to "对比本组", batch_comparison_game_session_path(sessions.first, compare_with: sessions[1..-1].map(&:id)), class: "text-xs px-3 py-1 rounded bg-primary-600 text-white hover:bg-primary-700" %>
+              <% end %>
+            </div>
+            <div class="space-y-1.5">
+              <% sessions.each do |s| %>
+                <%= link_to game_session_path(s), class: "flex items-center justify-between p-2 rounded bg-white hover:bg-primary-50 transition border border-slate-100" do %>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: <%= s.target_strain_info[:color] %>"></span>
+                    <span class="text-sm font-mono text-slate-600"><%= s.session_code %></span>
+                    <span class="text-xs text-slate-500 truncate max-w-[120px]"><%= s.target_strain_info[:name] %></span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs px-2 py-0.5 rounded-full <%= status_class(s.status) %>"><%= status_label(s.status) %></span>
+                    <% if s.completed? %>
+                      <span class="text-sm font-bold text-primary-700"><%= s.final_score %></span>
+                    <% end %>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-semibold text-slate-800 mb-4">🔀 自定义多实验对比</h2>
+    <% recent = GameSession.order(created_at: :desc).limit(20) %>
+    <% if recent.size < 2 %>
+      <p class="text-slate-400 text-sm text-center py-8">至少需要 2 次实验才能对比。先去做几个实验吧！</p>
+    <% else %>
+      <form action="<%= batch_comparison_game_session_path(recent.first) %>" method="get" class="space-y-4">
+        <p class="text-sm text-slate-600">选择 2-5 个实验进行对比分析：</p>
+        <div class="space-y-2 max-h-80 overflow-y-auto p-2 border border-slate-200 rounded-lg">
+          <% recent.each do |s| %>
+            <label class="flex items-center gap-3 p-2 rounded hover:bg-slate-50 cursor-pointer">
+              <input type="checkbox" name="compare_with[]" value="<%= s.id %>" class="rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: <%= s.target_strain_info[:color] %>"></span>
+              <div class="flex-1 min-w-0">
+                <div class="font-mono text-xs text-slate-600"><%= s.session_code %></div>
+                <div class="text-sm font-medium truncate"><%= s.target_strain_info[:name] %><%= s.batch_tag.present? ? " (#{s.batch_tag})" : "" %></div>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-full <%= status_class(s.status) %>"><%= status_label(s.status) %></span>
+              <% if s.completed? %>
+                <span class="text-sm font-bold text-primary-700 w-10 text-right"><%= s.final_score %></span>
+              <% end %>
+            </label>
+          <% end %>
+        </div>
+        <button type="submit" class="w-full px-4 py-2.5 rounded-lg bg-primary-600 text-white font-semibold hover:bg-primary-700 transition">
+          📊 生成对比报告
+        </button>
+      </form>
+    <% end %>
+  </div>
+</div>

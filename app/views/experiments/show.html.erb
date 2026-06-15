@@ -1,0 +1,110 @@
+<% content_for :title, "实验时间线" %>
+
+<div class="mb-6">
+  <%= link_to "← 返回列表", experiments_path, class: "text-primary-600 hover:underline text-sm" %>
+  <h1 class="text-2xl font-bold text-slate-800 mt-2 flex items-center gap-2">
+    <span>⏱️</span> 实验时间线
+    <span class="text-sm font-mono text-slate-500"><%= @session.session_code %></span>
+    <% if @session.batch_tag.present? %>
+      <span class="text-xs px-2 py-1 rounded bg-info-50 text-info-700"><%= @session.batch_tag %></span>
+    <% end %>
+  </h1>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 sticky top-20">
+      <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: <%= @session.target_strain_info[:color] %>20;">
+          <span class="w-5 h-5 rounded-full" style="background-color: <%= @session.target_strain_info[:color] %>;"></span>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-800"><%= @session.target_strain_info[:name] %></h3>
+          <p class="text-xs text-slate-500">研究员: <%= @session.player_name %></p>
+        </div>
+      </div>
+
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="text-slate-500">实验状态</dt><dd><span class="px-2 py-0.5 rounded-full text-xs <%= status_class(@session.status) %>"><%= status_label(@session.status) %></span></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">当前回合</dt><dd class="font-semibold"><%= @session.current_round %> / <%= @session.max_rounds %></dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">实际覆盖率</dt><dd class="font-semibold text-primary-600"><%= @session.actual_coverage %>%</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">目标阈值</dt><dd class="font-semibold"><%= @session.target_coverage %>%</dd></div>
+        <% if @session.completed? %>
+          <div class="flex justify-between pt-2 mt-2 border-t border-slate-100"><dt class="text-slate-700 font-semibold">最终得分</dt><dd class="text-2xl font-bold text-primary-700"><%= @session.final_score %></dd></div>
+        <% end %>
+      </dl>
+
+      <div class="mt-4 pt-4 border-t border-slate-100">
+        <h4 class="font-semibold text-sm text-slate-700 mb-2">📈 样本分类</h4>
+        <% @sample_categories.each do |name, tag| %>
+          <% is_match = @session.batch_tag.to_s.include?(tag) || @session.notes.to_s.include?(tag) %>
+          <div class="flex items-center gap-2 text-xs mb-1 p-1.5 rounded <%= is_match ? 'bg-primary-50 text-primary-700' : 'text-slate-500' %>">
+            <span><%= is_match ? '✅' : '⬜' %></span>
+            <span><%= name %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2">
+    <% if @timeline.empty? %>
+      <div class="bg-white rounded-xl p-12 shadow-sm border border-slate-100 text-center">
+        <div class="text-6xl mb-4">⏱️</div>
+        <p class="text-slate-500">实验尚未开始，暂无时间线记录</p>
+        <%= link_to "开始实验", game_session_path(@session), class: "mt-4 inline-block px-4 py-2 rounded bg-primary-600 text-white hover:bg-primary-700" %>
+      </div>
+    <% else %>
+      <div class="relative">
+        <div class="absolute left-6 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+        <div class="space-y-4">
+          <% @timeline.each_with_index do |e, idx| %>
+            <% icon = {growth:'🌱', contamination:'🦠', operation:'⚙️'}[e[:type]] || '📌' %>
+            <% color_class = e[:type] == :contamination ? 'danger' : (e[:type] == :growth ? 'primary' : 'info') %>
+            <div class="relative pl-16">
+              <div class="absolute left-0 w-12 h-12 rounded-full flex items-center justify-center bg-white border-2 border-<%= color_class %>-200 text-xl shadow-sm">
+                <%= icon %>
+              </div>
+              <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition">
+                <div class="flex justify-between items-start mb-2 flex-wrap gap-2">
+                  <div>
+                    <span class="inline-block px-2 py-0.5 text-xs font-mono rounded bg-slate-100 text-slate-600 mb-1">回合 <%= e[:round] %></span>
+                    <h3 class="font-semibold text-slate-800"><%= e[:label] %></h3>
+                  </div>
+                  <% if e[:type] == :contamination && e[:severity] %>
+                    <span class="px-2 py-0.5 text-xs rounded-full <%= severity_class(e[:severity]) %>"><%= ContaminationResult::SEVERITY_LABELS[e[:severity].to_sym] || e[:severity] %></span>
+                  <% end %>
+                </div>
+                <p class="text-sm text-slate-600 mb-2"><%= e[:description].presence || '(无详情)' %></p>
+
+                <% if e[:type] == :growth && e[:data].is_a?(GrowthHistory) %>
+                  <div class="grid grid-cols-4 gap-2 text-xs mt-2 p-2 bg-primary-50 rounded">
+                    <div><span class="text-slate-500">覆盖率</span><div class="font-bold text-primary-700"><%= e[:data].target_coverage %>%</div></div>
+                    <div><span class="text-slate-500">目标区</span><div class="font-bold text-info-700"><%= e[:data].target_zone_coverage %>%</div></div>
+                    <div><span class="text-slate-500">细胞数</span><div class="font-bold"><%= e[:data].target_colony_cells %></div></div>
+                    <div><span class="text-slate-500">温度系数</span><div class="font-bold <%= factor_color(e[:data].temperature_factor) %>"><%= e[:data].temperature_factor.round(2) %></div></div>
+                  </div>
+                <% end %>
+
+                <% if e[:type] == :contamination && e[:data].is_a?(ContaminationResult) %>
+                  <div class="mt-2 p-2 bg-danger-50 rounded text-xs space-y-1">
+                    <div class="grid grid-cols-3 gap-2">
+                      <div><span class="text-slate-500">营养掠夺</span><div class="font-bold text-danger-700"><%= e[:data].nutrient_consumed %></div></div>
+                      <div><span class="text-slate-500">污染覆盖</span><div class="font-bold text-danger-700"><%= e[:data].contaminant_coverage %>%</div></div>
+                      <div><span class="text-slate-500">目标影响</span><div class="font-bold text-warning-700">-<%= e[:data].target_growth_impact %>%</div></div>
+                    </div>
+                    <%= link_to "查看前后差异", contamination_diff_game_session_path(@session, contamination_id: e[:data].id), class: "inline-block mt-1 text-info-600 hover:underline" %>
+                  </div>
+                <% end %>
+
+                <div class="mt-2 text-xs text-slate-400 text-right">
+                  <%= l(e[:time] || e[:created_at] || e[:data].try(:created_at) || Time.current, format: :long) %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

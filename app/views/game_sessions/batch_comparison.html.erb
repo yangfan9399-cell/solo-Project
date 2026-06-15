@@ -1,0 +1,248 @@
+<% content_for :title, "批次对比报告 | 微生物培养皿领地游戏" %>
+
+<div class="mb-6">
+  <%= link_to "← 返回对比列表", batch_comparison_list_game_sessions_path, class: "text-primary-600 hover:underline text-sm" %>
+  <h1 class="text-2xl font-bold text-slate-800 mt-2 flex items-center gap-2">
+    <span>📊</span> 批次对比报告
+  </h1>
+</div>
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 mb-6">
+  <h2 class="text-lg font-semibold text-slate-800 mb-4">📋 对比概览 (<%= @sessions.size %> 个实验)</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="bg-slate-50 text-left text-slate-600 text-xs uppercase">
+          <th class="px-3 py-3">实验编号</th>
+          <th class="px-3 py-3">菌株</th>
+          <th class="px-3 py-3">批次</th>
+          <th class="px-3 py-3">状态</th>
+          <th class="px-3 py-3">回合数</th>
+          <th class="px-3 py-3">最大覆盖</th>
+          <th class="px-3 py-3">目标区最高</th>
+          <th class="px-3 py-3">污染次数</th>
+          <th class="px-3 py-3">总分</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @comparison_data.each do |d| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-3">
+              <%= link_to d[:code], game_session_path(d[:id]), class: "font-mono text-xs text-info-600 hover:underline" %>
+            </td>
+            <td class="px-3 py-3"><%= d[:strain] %></td>
+            <td class="px-3 py-3"><%= d[:label].include?('(') ? d[:label].split('(').last.gsub(')','') : '-' %></td>
+            <td class="px-3 py-3"><span class="px-2 py-0.5 text-xs rounded-full <%= status_class(d[:status]) %>"><%= status_label(d[:status]) %></span></td>
+            <td class="px-3 py-3 text-center font-mono"><%= d[:rounds] %></td>
+            <td class="px-3 py-3 text-center font-semibold"><%= d[:max_coverage] %>%</td>
+            <td class="px-3 py-3 text-center text-info-700 font-semibold"><%= d[:max_zone] %>%</td>
+            <td class="px-3 py-3 text-center <%= d[:contaminations] > 0 ? 'text-danger-600' : 'text-primary-600' %> font-semibold"><%= d[:contaminations] %></td>
+            <td class="px-3 py-3 text-center text-xl font-bold text-primary-700"><%= d[:score] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h3 class="font-semibold text-slate-800 mb-4">📈 全皿覆盖率对比</h3>
+    <div class="h-72">
+      <svg viewBox="0 0 600 280" class="w-full h-full">
+        <g stroke="#e2e8f0" stroke-width="1">
+          <% 5.times do |i| %>
+            <line x1="50" y1="<%= 30 + i*50 %>" x2="580" y2="<%= 30 + i*50 %>" stroke-dasharray="4,4"/>
+          <% end %>
+        </g>
+        <g font-size="10" fill="#64748b" text-anchor="end">
+          <% 5.times do |i| %>
+            <text x="45" y="<%= 34 + i*50 %>"><%= 100 - i*25 %>%</text>
+          <% end %>
+        </g>
+        <% colors = ['#16a34a', '#2563eb', '#f59e0b', '#8b5cf6', '#ef4444'] %>
+        <% max_round = [@comparison_data.map{|d| d[:rounds].to_i}.max, 1].max %>
+        <% @comparison_data.each_with_index do |d, idx| %>
+          <% series = d[:coverage_series] || [] %>
+          <% next if series.empty? %>
+          <% pts = series.map{|r,c| r_i=r.to_i; c_f=c.to_f; "#{50 + r_i.to_f / max_round * 530},#{230 - c_f / 100 * 200}"}.join(' ') %>
+          <polyline fill="none" stroke="<%= colors[idx % colors.size] %>" stroke-width="2.5" points="<%= pts %>"/>
+          <% series.last(1).each do |r,c| %>
+            <text x="<%= 50 + r.to_i.to_f / max_round * 530 + 5 %>" y="<%= 230 - c.to_f / 100 * 200 + 3 %>" font-size="10" fill="<%= colors[idx % colors.size] %>" font-weight="bold">
+              <%= d[:code].split('-').last(2).join('-') %>
+            </text>
+          <% end %>
+        <% end %>
+      </svg>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h3 class="font-semibold text-slate-800 mb-4">🎯 目标区覆盖率对比</h3>
+    <div class="h-72">
+      <svg viewBox="0 0 600 280" class="w-full h-full">
+        <g stroke="#e2e8f0" stroke-width="1">
+          <% 5.times do |i| %>
+            <line x1="50" y1="<%= 30 + i*50 %>" x2="580" y2="<%= 30 + i*50 %>" stroke-dasharray="4,4"/>
+          <% end %>
+        </g>
+        <g font-size="10" fill="#64748b" text-anchor="end">
+          <% 5.times do |i| %>
+            <text x="45" y="<%= 34 + i*50 %>"><%= 100 - i*25 %>%</text>
+          <% end %>
+        </g>
+        <% colors = ['#16a34a', '#2563eb', '#f59e0b', '#8b5cf6', '#ef4444'] %>
+        <% max_round = [@comparison_data.map{|d| d[:rounds].to_i}.max, 1].max %>
+        <% @comparison_data.each_with_index do |d, idx| %>
+          <% series = d[:zone_series] || [] %>
+          <% next if series.empty? %>
+          <% pts = series.map{|r,z| r_i=r.to_i; z_f=z.to_f; "#{50 + r_i.to_f / max_round * 530},#{230 - z_f / 100 * 200}"}.join(' ') %>
+          <polyline fill="none" stroke="<%= colors[idx % colors.size] %>" stroke-width="2.5" stroke-dasharray="5,3" points="<%= pts %>"/>
+        <% end %>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 mb-6">
+  <h3 class="font-semibold text-slate-800 mb-4">🏆 分数维度对比雷达</h3>
+  <div class="grid md:grid-cols-2 gap-6 items-center">
+    <div>
+      <svg viewBox="0 0 400 400" class="w-full max-w-md mx-auto">
+        <% axes = [
+          {name:'覆盖率', key:'coverage'},
+          {name:'目标区', key:'target_zone'},
+          {name:'效率', key:'efficiency'},
+          {name:'清洁度', key:'cleanliness'},
+          {name:'最大覆盖', key:'max_cov'},
+          {name:'回合利用', key:'round_use'}
+        ] %>
+        <% cx_f = 200.0; cy_f = 200.0; radius_f = 140.0; axes_n = axes.size.to_f %>
+        <% (1..4).each do |l| %>
+          <% l_f = l.to_f %>
+          <% grid_pts = axes.each_with_index.map do |_, i|
+               i_f = i.to_f
+               a = Math::PI * 2.0 / axes_n * i_f - Math::PI / 2.0
+               factor = radius_f * l_f / 4.0
+               x = cx_f + Math.cos(a) * factor
+               y = cy_f + Math.sin(a) * factor
+               "#{x},#{y}"
+             end.join(' ') %>
+          <polygon points="<%= grid_pts %>" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+        <% end %>
+        <% axes.each_with_index do |ax, i| %>
+          <% a = Math::PI * 2.0 / axes_n * i.to_f - Math::PI / 2.0 %>
+          <line x1="<%=cx_f%>" y1="<%=cy_f%>" x2="<%=cx_f+Math.cos(a)*radius_f%>" y2="<%=cy_f+Math.sin(a)*radius_f%>" stroke="#e2e8f0"/>
+          <text x="<%=cx_f+Math.cos(a)*(radius_f+18.0)%>" y="<%=cy_f+Math.sin(a)*(radius_f+18.0)+4.0%>" text-anchor="middle" font-size="11" fill="#64748b" font-weight="600"><%= ax[:name] %></text>
+        <% end %>
+        <% colors = ['rgba(22,163,74,0.3)', 'rgba(37,99,235,0.3)', 'rgba(245,158,11,0.3)', 'rgba(139,92,246,0.3)'] %>
+        <% stroke_colors = ['#16a34a', '#2563eb', '#f59e0b', '#8b5cf6'] %>
+        <% @comparison_data.each_with_index do |d, idx| %>
+          <% scores = d[:details] ? (d[:details]['score_breakdown'] || {}) : {} %>
+          <% safe_rounds = d[:rounds].to_i %>
+          <% values = [
+            (scores['coverage'].presence || 0).to_f / 40.0,
+            (scores['target_zone'].presence || 0).to_f / 30.0,
+            (scores['efficiency'].presence || 0).to_f / 20.0,
+            (scores['cleanliness'].presence || 0).to_f / 10.0,
+            d[:max_coverage].to_f / 100.0,
+            safe_rounds.to_f / [safe_rounds, 20, 1].max.to_f
+          ] %>
+          <% safe_values = values.map { |v| [[v.to_f, 0.0].max, 1.0].min } %>
+          <% data_pts = axes.each_with_index.map do |_, i|
+               a = Math::PI * 2.0 / axes_n * i.to_f - Math::PI / 2.0
+               v = safe_values[i].to_f
+               x = cx_f + Math.cos(a) * radius_f * v
+               y = cy_f + Math.sin(a) * radius_f * v
+               "#{x},#{y}"
+             end.join(' ') %>
+          <polygon points="<%= data_pts %>"
+                   fill="<%= colors[idx % colors.size] %>" stroke="<%= stroke_colors[idx % stroke_colors.size] %>" stroke-width="2"/>
+        <% end %>
+      </svg>
+    </div>
+    <div class="space-y-3">
+      <h4 class="font-medium text-slate-700 mb-2">📌 图例</h4>
+      <% colors = ['#16a34a', '#2563eb', '#f59e0b', '#8b5cf6', '#ef4444'] %>
+      <% @comparison_data.each_with_index do |d, idx| %>
+        <% details = d[:details] || {} %>
+        <% scores = details['score_breakdown'] || {} %>
+        <div class="p-3 rounded-lg border border-slate-200">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-4 h-4 rounded" style="background-color: <%= colors[idx % colors.size] %>"></span>
+            <span class="font-semibold text-sm"><%= d[:code] %></span>
+            <span class="ml-auto text-lg font-bold text-primary-700"><%= d[:score].presence || '-' %></span>
+          </div>
+          <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+            <div>覆盖率: <span class="font-semibold"><%= scores['coverage'].presence || 0 %>/40</span></div>
+            <div>目标区: <span class="font-semibold"><%= scores['target_zone'].presence || 0 %>/30</span></div>
+            <div>效率: <span class="font-semibold"><%= scores['efficiency'].presence || 0 %>/20</span></div>
+            <div>清洁: <span class="font-semibold"><%= scores['cleanliness'].presence || 0 %>/10</span></div>
+          </div>
+          <% outcome = details['outcome'] %>
+          <% if outcome.present? %>
+            <div class="mt-1 text-xs px-2 py-0.5 inline-block rounded <%= outcome=='success' ? 'bg-primary-100 text-primary-700' : outcome=='partial' ? 'bg-warning-100 text-warning-700' : 'bg-danger-100 text-danger-700' %>">
+              <%= {success:'完美成功', partial:'部分成功', failure:'失败'}[outcome.to_sym] || outcome %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+  <h3 class="font-semibold text-slate-800 mb-4">🔍 差异归因分析</h3>
+  <% best = @comparison_data.max_by { |d| d[:score].to_f } %>
+  <% worst = @comparison_data.min_by { |d| d[:score].to_f } %>
+  <% if best && worst && best[:id] != worst[:id] %>
+    <% best_cov = best[:max_coverage].to_f.round(2) %>
+    <% best_zone = best[:max_zone].to_f.round(2) %>
+    <% worst_cov = worst[:max_coverage].to_f.round(2) %>
+    <% worst_zone = worst[:max_zone].to_f.round(2) %>
+    <% best_cont = best[:contaminations].to_i %>
+    <% worst_cont = worst[:contaminations].to_i %>
+    <% best_rounds = best[:rounds].to_i %>
+    <% worst_rounds = worst[:rounds].to_i %>
+    <% diff_cov = (best_cov - worst_cov).round(2) %>
+    <% diff_zone = (best_zone - worst_zone).round(2) %>
+    <% diff_cont = worst_cont - best_cont %>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="p-4 rounded-lg bg-primary-50 border border-primary-200">
+        <h4 class="font-semibold text-primary-800 mb-2">🏆 最佳: <%= best[:code] %> (<%= best[:score].presence || '-' %>分)</h4>
+        <ul class="text-sm text-primary-700 space-y-1.5">
+          <li>✅ 最大覆盖率达到 <strong><%= best_cov %>%</strong></li>
+          <li>✅ 目标区最高 <strong><%= best_zone %>%</strong></li>
+          <li>✅ 污染事件 <strong><%= best_cont %></strong> 次</li>
+          <li>✅ <%= best_rounds %> 回合完成</li>
+        </ul>
+      </div>
+      <div class="p-4 rounded-lg bg-danger-50 border border-danger-200">
+        <h4 class="font-semibold text-danger-800 mb-2">⚠️ 待改进: <%= worst[:code] %> (<%= worst[:score].presence || '-' %>分)</h4>
+        <ul class="text-sm text-danger-700 space-y-1.5">
+          <li>❌ 最大覆盖率仅 <strong><%= worst_cov %>%</strong> (差 <%= diff_cov %>%)</li>
+          <li>❌ 目标区仅 <strong><%= worst_zone %>%</strong></li>
+          <li>❌ 污染事件 <strong><%= worst_cont %></strong> 次 (多 <%= diff_cont %> 次)</li>
+          <li>❌ 使用了 <%= worst_rounds %> 回合</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-4 p-4 rounded-lg bg-info-50 border border-info-200">
+      <h4 class="font-semibold text-info-800 mb-2">💡 关键差异原因</h4>
+      <div class="text-sm text-info-700 space-y-1.5">
+        <% reasons = [] %>
+        <% reasons << "覆盖率差距是主要因素，相差 #{diff_cov}%" if diff_cov > 20 %>
+        <% reasons << "目标区完成度相差 #{diff_zone}%" if diff_zone > 30 %>
+        <% reasons << "污染控制差异明显，相差 #{diff_cont} 次污染事件" if diff_cont >= 2 %>
+        <% reasons << "回合效率不同，#{best[:code]} 更高效地利用了回合" if best_rounds < worst_rounds && best[:score].to_f > worst[:score].to_f %>
+        <% if reasons.empty? %>
+          <p>两个实验表现相近，建议进一步比较每轮参数调整策略。</p>
+        <% else %>
+          <% reasons.each do |r| %>
+            <p>🔸 <%= r %></p>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

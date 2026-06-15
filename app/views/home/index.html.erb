@@ -1,0 +1,111 @@
+<% content_for :title, "首页 | 微生物培养皿领地游戏" %>
+
+<div class="mb-8">
+  <div class="bg-gradient-to-r from-primary-600 to-emerald-500 rounded-2xl p-8 text-white shadow-lg">
+    <h1 class="text-3xl font-bold mb-3">🧫 微生物培养皿领地游戏</h1>
+    <p class="text-primary-50 text-lg mb-6">调控培养皿环境，让目标菌落扩张到指定区域！控制营养、温度、水分和抑菌圈，抵御污染菌入侵。</p>
+    <div class="flex flex-wrap gap-3">
+      <%= link_to "开始新实验", new_game_session_path, class: "bg-white text-primary-700 hover:bg-primary-50 px-5 py-2.5 rounded-lg font-semibold shadow transition" %>
+      <%= link_to "查看全部实验", game_sessions_path, class: "bg-primary-700/50 text-white hover:bg-primary-700/70 border border-white/30 px-5 py-2.5 rounded-lg font-semibold transition" %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+  <% [
+    {label:'总实验次数', value:@stats[:total], icon:'🧪', color:'info'},
+    {label:'已完成', value:@stats[:completed], icon:'✅', color:'primary'},
+    {label:'平均分', value:@stats[:avg_score], icon:'📊', color:'warning'},
+    {label:'最高分', value:@stats[:best_score], icon:'🏆', color:'danger'}
+  ].each do |item| %>
+    <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+      <div class="flex items-center justify-between">
+        <span class="text-2xl"><%= item[:icon] %></span>
+        <span class="text-3xl font-bold text-<%= item[:color] %>-600"><%= item[:value] %></span>
+      </div>
+      <div class="text-sm text-slate-500 mt-2"><%= item[:label] %></div>
+    </div>
+  <% end %>
+</div>
+
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+      <span>🎮</span> 最近实验
+    </h2>
+    <% if @recent_sessions.empty? %>
+      <p class="text-slate-400 text-sm py-8 text-center">暂无实验记录，<%= link_to "开始第一个实验吧！", new_game_session_path, class: "text-primary-600 hover:underline" %></p>
+    <% else %>
+      <div class="space-y-3">
+        <% @recent_sessions.each do |s| %>
+          <%= link_to game_session_path(s), class: "block p-3 rounded-lg hover:bg-slate-50 transition border border-slate-100" do %>
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="font-mono text-xs text-slate-500"><%= s.session_code %></div>
+                <div class="font-semibold text-slate-800"><%= s.target_strain_info[:name] %></div>
+                <% if s.batch_tag.present? %>
+                  <span class="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-info-50 text-info-700"><%= s.batch_tag %></span>
+                <% end %>
+              </div>
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full <%= status_class(s.status) %>">
+                <%= status_label(s.status) %>
+              </span>
+            </div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500">
+              <span>回合 <%= s.current_round %>/<%= s.max_rounds %></span>
+              <span>覆盖率 <%= s.actual_coverage %>%</span>
+              <span><%= l(s.created_at, format: :short) %></span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+      <span>🏆</span> 排行榜
+    </h2>
+    <% if @completed_sessions.empty? %>
+      <p class="text-slate-400 text-sm py-8 text-center">暂无完成的实验</p>
+    <% else %>
+      <div class="space-y-3">
+        <% @completed_sessions.each_with_index do |s, idx| %>
+          <%= link_to game_session_path(s), class: "flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition border border-slate-100" do %>
+            <span class="w-8 h-8 flex items-center justify-center rounded-full <%= idx == 0 ? 'bg-yellow-100 text-yellow-700' : idx == 1 ? 'bg-slate-200 text-slate-700' : idx == 2 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500' %> font-bold">
+              <%= idx + 1 %>
+            </span>
+            <div class="flex-1">
+              <div class="font-mono text-xs text-slate-500"><%= s.session_code %></div>
+              <div class="font-semibold text-sm text-slate-800"><%= s.target_strain_info[:name] %></div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-lg text-primary-600"><%= s.final_score %></div>
+              <div class="text-xs text-slate-500">分</div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+  <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+    <span>📖</span> 快速入门
+  </h2>
+  <div class="grid md:grid-cols-4 gap-4 text-sm">
+    <% [
+      {step:1, title:'选择菌株', desc:'选择目标菌落，了解其最适温度和pH'},
+      {step:2, title:'调控参数', desc:'调整温度、水分、营养以优化生长条件'},
+      {step:3, title:'模拟生长', desc:'每轮推进观察菌落扩张到目标区域'},
+      {step:4, title:'对抗污染', desc:'使用抑菌圈控制意外出现的污染菌'}
+    ].each do |s| %>
+      <div class="p-4 rounded-lg bg-slate-50">
+        <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold mb-2"><%= s[:step] %></div>
+        <h3 class="font-semibold text-slate-800 mb-1"><%= s[:title] %></h3>
+        <p class="text-slate-600 text-xs"><%= s[:desc] %></p>
+      </div>
+    <% end %>
+  </div>
+</div>

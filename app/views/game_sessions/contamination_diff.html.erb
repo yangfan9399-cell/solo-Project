@@ -1,0 +1,170 @@
+<% content_for :title, "污染事件差异 | #{@game_session.session_code}" %>
+
+<div class="mb-6">
+  <%= link_to "← 返回实验", game_session_path(@game_session), class: "text-primary-600 hover:underline text-sm" %>
+  <h1 class="text-2xl font-bold text-slate-800 mt-2 flex items-center gap-2">
+    <span>🦠</span> 污染事件前后差异分析
+    <span class="text-sm font-mono text-slate-500"><%= @game_session.session_code %></span>
+  </h1>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6 mb-6">
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 sticky top-20">
+      <h3 class="font-semibold text-slate-800 mb-3">📋 污染事件列表</h3>
+      <% if @contaminations.empty? %>
+        <p class="text-sm text-slate-400 text-center py-6">本实验暂无污染事件 🎉</p>
+      <% else %>
+        <div class="space-y-2">
+          <% @contaminations.each do |c| %>
+            <%= link_to contamination_diff_game_session_path(@game_session, contamination_id: c.id), class: "block p-3 rounded-lg border-2 #{params[:contamination_id].to_i == c.id ? 'border-danger-500 bg-danger-50' : 'border-slate-100 hover:border-danger-300'}" do %>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="w-3 h-3 rounded-full" style="background-color: <%= c.contaminant_info[:color] %>"></span>
+                <span class="font-semibold text-sm"><%= c.contaminant_name %></span>
+                <span class="text-xs px-2 py-0.5 rounded-full ml-auto <%= severity_class(c.severity) %>"><%= c.severity_label %></span>
+              </div>
+              <div class="text-xs text-slate-500">第 <%= c.round_number %> 轮 · 覆盖 <%= c.contaminant_coverage %>%</div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2">
+    <% if @contamination %>
+      <% before = @contamination.before_state_hash %>
+      <% after = @contamination.after_state_hash %>
+      <% impact = @contamination.impact_assessment %>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-danger-200 mb-6">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full" style="background-color: <%= @contamination.contaminant_info[:color] %>"></span>
+              <%= @contamination.contaminant_name %> 入侵事件
+            </h2>
+            <div class="text-sm text-slate-500 mt-1">发生于第 <%= @contamination.round_number %> 轮 · <%= l(@contamination.created_at, format: :long) %></div>
+          </div>
+          <span class="px-3 py-1 text-sm rounded-full <%= severity_class(@contamination.severity) %> font-semibold"><%= @contamination.severity_label %> · <%= impact[:overall] %></span>
+        </div>
+
+        <p class="p-3 bg-slate-50 rounded-lg text-sm text-slate-700 mb-4"><%= @contamination.event_description %></p>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+          <div class="p-3 bg-danger-50 rounded-lg text-center">
+            <div class="text-xs text-danger-600 mb-1">营养掠夺</div>
+            <div class="text-2xl font-bold text-danger-700"><%= @contamination.nutrient_consumed %></div>
+            <div class="text-xs text-slate-500">营养单位</div>
+          </div>
+          <div class="p-3 bg-warning-50 rounded-lg text-center">
+            <div class="text-xs text-warning-600 mb-1">目标生长影响</div>
+            <div class="text-2xl font-bold text-warning-700">-<%= @contamination.target_growth_impact %>%</div>
+            <div class="text-xs text-slate-500">相对影响</div>
+          </div>
+          <div class="p-3 bg-purple-50 rounded-lg text-center">
+            <div class="text-xs text-purple-600 mb-1">竞争指数</div>
+            <div class="text-2xl font-bold text-purple-700"><%= impact[:competition_risk] %>%</div>
+            <div class="text-xs text-slate-500">综合风险</div>
+          </div>
+        </div>
+
+        <h3 class="font-semibold text-slate-800 mb-3">📊 关键指标变化对比</h3>
+        <div class="space-y-3">
+          <% [
+              {label:'培养皿营养水平', before:before['nutrient'] || 0, after:after['nutrient'] || 0, unit:''},
+              {label:'目标菌落覆盖率', before:before['target_coverage'] || 0, after:after['target_coverage'] || 0, unit:'%'},
+              {label:'污染菌覆盖率', before:before['contaminant_coverage'] || 0, after:after['contaminant_coverage'] || 0, unit:'%'}
+          ].each do |row| %>
+            <% b = row[:before].to_f; a = row[:after].to_f; diff = a - b; pct = b > 0 ? (diff / b * 100).round(1) : 0 %>
+            <div class="p-3 bg-slate-50 rounded-lg">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-slate-700"><%= row[:label] %></span>
+                <span class="text-xs px-2 py-0.5 rounded <%= diff > 0 ? (row[:label].include?('污染') ? 'bg-danger-100 text-danger-700' : 'bg-primary-100 text-primary-700') : (row[:label].include?('污染') ? 'bg-primary-100 text-primary-700' : 'bg-danger-100 text-danger-700') %>">
+                  <%= diff > 0 ? '+' : '' %><%= diff.round(2) %><%= row[:unit] %> (<%= pct %>%)
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="text-xs text-slate-500 mb-1">污染前 (BEFORE)</div>
+                  <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden">
+                    <% w = row[:label].include?('营养') ? [(b / 100.0 * 100).round, 100].min : b %>
+                    <div class="h-full bg-info-500" style="width: <%= w %>%"></div>
+                  </div>
+                  <div class="text-sm font-semibold mt-1"><%= b %><%= row[:unit] %></div>
+                </div>
+                <div>
+                  <div class="text-xs text-slate-500 mb-1">污染后 (AFTER)</div>
+                  <div class="w-full h-5 bg-slate-200 rounded-full overflow-hidden">
+                    <% w = row[:label].include?('营养') ? [(a / 100.0 * 100).round, 100].min : a %>
+                    <div class="h-full <%= row[:label].include?('污染') ? 'bg-danger-500' : 'bg-primary-500' %>" style="width: <%= w %>%"></div>
+                  </div>
+                  <div class="text-sm font-semibold mt-1"><%= a %><%= row[:unit] %></div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+        <h3 class="font-semibold text-slate-800 mb-4">🔬 污染前后培养皿状态</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <% [:before, :after].each do |state| %>
+            <% grid_data = state == :before ? (before['grid_snapshot'] || []) : (after['grid_snapshot'] || []) %>
+            <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+              <div class="text-center mb-3">
+                <span class="text-sm font-semibold px-3 py-1 rounded-full <%= state == :before ? 'bg-info-100 text-info-700' : 'bg-danger-100 text-danger-700' %>">
+                  <%= state == :before ? '污染前 BEFORE' : '污染后 AFTER' %>
+                </span>
+              </div>
+              <svg viewBox="0 0 240 240" class="w-full h-60">
+                <circle cx="120" cy="120" r="115" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5"/>
+                <% zone_points = @game_session.target_zone_as_array %>
+                <% zone_points.each do |(zx, zy)| %>
+                  <rect x="<%= 8 + zx * 11 %>" y="<%= 8 + zy * 11 %>" width="10" height="10"
+                        fill="#93c5fd" fill-opacity="0.25" stroke="#3b82f6" stroke-width="0.5" stroke-dasharray="2,1"/>
+                <% end %>
+                <% (0...GameSession::GRID_SIZE).each do |x| %>
+                  <% (0...GameSession::GRID_SIZE).each do |y| %>
+                    <% cell = grid_data[x] ? grid_data[x][y] : 0 %>
+                    <% if cell == GameSession::CELL_TARGET %>
+                      <circle cx="<%= 13 + x * 11 %>" cy="<%= 13 + y * 11 %>" r="4.5"
+                              fill="<%= @game_session.target_strain_info[:color] %>" opacity="0.9"/>
+                    <% elsif cell == GameSession::CELL_CONTAMINANT %>
+                      <circle cx="<%= 13 + x * 11 %>" cy="<%= 13 + y * 11 %>" r="4.5"
+                              fill="#ef4444" opacity="0.9"/>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </svg>
+              <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-center">
+                <div><span class="text-slate-500">目标菌</span><div class="font-semibold text-primary-700"><%= state == :before ? (before['target_coverage']||0) : (after['target_coverage']||0) %>%</div></div>
+                <div><span class="text-slate-500">污染菌</span><div class="font-semibold text-danger-700"><%= state == :before ? (before['contaminant_coverage']||0) : (after['contaminant_coverage']||0) %>%</div></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <% cells = @contamination.competition_zones_array %>
+        <% if cells.any? %>
+          <div class="mt-4 p-3 bg-warning-50 rounded-lg border border-warning-200">
+            <div class="text-sm font-semibold text-warning-800 mb-2">⚔️ 竞争区域 (共 <%= cells.size %> 处邻近目标菌落)</div>
+            <div class="flex flex-wrap gap-1">
+              <% cells.first(50).each do |(x,y)| %>
+                <span class="px-1.5 py-0.5 bg-warning-100 text-warning-800 text-xs font-mono rounded">(<%=x%>,<%=y%>)</span>
+              <% end %>
+              <% if cells.size > 50 %><span class="text-xs text-warning-600">...共<%= cells.size %>处</span><% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-white rounded-xl p-12 shadow-sm border border-slate-100 text-center">
+        <div class="text-5xl mb-4">🦠</div>
+        <h3 class="text-lg font-semibold text-slate-700 mb-2">选择左侧污染事件查看详情</h3>
+        <p class="text-sm text-slate-500">或在实验界面触发手动污染事件以观察差异</p>
+      </div>
+    <% end %>
+  </div>
+</div>

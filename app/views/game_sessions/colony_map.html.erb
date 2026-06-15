@@ -1,0 +1,148 @@
+<% content_for :title, "菌落图谱 | #{@game_session.session_code}" %>
+
+<div class="mb-6">
+  <%= link_to "← 返回实验", game_session_path(@game_session), class: "text-primary-600 hover:underline text-sm" %>
+  <h1 class="text-2xl font-bold text-slate-800 mt-2 flex items-center gap-2">
+    <span>📊</span> 菌落图谱 & 生长趋势
+    <span class="text-sm font-mono text-slate-500"><%= @game_session.session_code %></span>
+  </h1>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6 mb-6">
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-semibold text-slate-800 mb-4">📈 覆盖率随回合变化</h2>
+    <div class="h-72">
+      <svg viewBox="0 0 600 280" class="w-full h-full">
+        <g stroke="#e2e8f0" stroke-width="1">
+          <% 5.times do |i| %>
+            <line x1="50" y1="<%= 30 + i*50 %>" x2="580" y2="<%= 30 + i*50 %>" stroke-dasharray="4,4"/>
+          <% end %>
+        </g>
+        <g font-size="10" fill="#64748b" text-anchor="end">
+          <% 5.times do |i| %>
+            <text x="45" y="<%= 34 + i*50 %>"><%= 100 - i*25 %>%</text>
+          <% end %>
+        </g>
+        <% if @coverage_data.present? && @coverage_data.any? %>
+          <% max_round = @coverage_data.last[0] %>
+          <% max_round = [max_round, 1].max %>
+          <% def xp(r, max_round); 50 + r.to_f / max_round * 530; end %>
+          <% def yp(v); 230 - v.to_f / 100 * 200; end %>
+
+          <% if @coverage_data.size > 1 %>
+            <polyline fill="none" stroke="#16a34a" stroke-width="3" points="<%= @coverage_data.map{|r,c,z| "#{xp(r,max_round)},#{yp(c)}"}.join(' ') %>"/>
+            <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="6,4" points="<%= @coverage_data.map{|r,c,z| "#{xp(r,max_round)},#{yp(z)}"}.join(' ') %>"/>
+          <% end %>
+
+          <% @coverage_data.each do |r, c, z| %>
+            <circle cx="<%= xp(r, max_round) %>" cy="<%= yp(c) %>" r="4" fill="#16a34a"/>
+            <circle cx="<%= xp(r, max_round) %>" cy="<%= yp(z) %>" r="3.5" fill="#3b82f6"/>
+          <% end %>
+        <% end %>
+        <g font-size="10" fill="#64748b" text-anchor="middle">
+          <% if @coverage_data.present? && @coverage_data.any? %>
+            <% max_round = @coverage_data.last[0] %>
+            <% step = [(max_round / 8).ceil, 1].max %>
+            <% (0..max_round).step(step) do |r| %>
+              <text x="<%= 50 + r.to_f / [max_round, 1].max * 530 %>" y="260">R<%= r %></text>
+            <% end %>
+          <% end %>
+        </g>
+      </svg>
+    </div>
+    <div class="mt-4 flex justify-center gap-6 text-sm">
+      <span class="flex items-center gap-2"><span class="w-6 h-1 bg-primary-600 rounded"></span>全皿覆盖率</span>
+      <span class="flex items-center gap-2"><span class="w-6 h-1 bg-info-600 rounded" style="border-top:3px dashed"></span>目标区域覆盖率</span>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+    <h2 class="text-lg font-semibold text-slate-800 mb-4">⚡ 生长因子变化 (温度/水分/抑菌)</h2>
+    <div class="h-72">
+      <svg viewBox="0 0 600 280" class="w-full h-full">
+        <g stroke="#e2e8f0" stroke-width="1">
+          <% 5.times do |i| %>
+            <line x1="50" y1="<%= 30 + i*50 %>" x2="580" y2="<%= 30 + i*50 %>" stroke-dasharray="4,4"/>
+          <% end %>
+        </g>
+        <g font-size="10" fill="#64748b" text-anchor="end">
+          <% 5.times do |i| %>
+            <text x="45" y="<%= 34 + i*50 %>"><%= sprintf("%.2f", 1.0 - i*0.25) %></text>
+          <% end %>
+        </g>
+        <% if @factor_data.any? %>
+          <% max_round = @factor_data.last[0] || 1 %>
+          <% def xp2(r, max_round); 50 + r.to_f / max_round * 530; end %>
+          <% def yp2(v); 230 - [v.to_f, 1.0].min * 200; end %>
+
+          <% colors = ['#f59e0b', '#3b82f6', '#8b5cf6'] %>
+          <% 3.times do |fi| %>
+            <% line = @factor_data.map{|r, t, m, a| "#{xp2(r, max_round)},#{yp2([t,m,a][fi])}"}.join(' ') %>
+            <polyline fill="none" stroke="<%= colors[fi] %>" stroke-width="2" points="<%= line %>"/>
+          <% end %>
+        <% end %>
+        <g font-size="10" fill="#64748b" text-anchor="middle">
+          <% if @factor_data.any? %>
+            <% max_round = @factor_data.last[0] || 1 %>
+            <% step = [(max_round / 8).ceil, 1].max %>
+            <% (0..max_round).step(step) do |r| %>
+              <text x="<%= 50 + r.to_f / [max_round, 1].max * 530 %>" y="260">R<%= r %></text>
+            <% end %>
+          <% end %>
+        </g>
+      </svg>
+    </div>
+    <div class="mt-4 flex justify-center gap-6 text-sm">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 bg-warning-500 rounded-full"></span>温度系数</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 bg-info-500 rounded-full"></span>水分系数</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 bg-purple-500 rounded-full"></span>抑菌系数</span>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+  <h2 class="text-lg font-semibold text-slate-800 mb-4">📸 每轮菌落快照 (从R1到R<%= @histories.size %>)</h2>
+  <% if @histories.empty? %>
+    <p class="text-slate-400 text-center py-8">暂无生长记录</p>
+  <% else %>
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <% @histories.each do |h| %>
+        <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-slate-800">第 <%= h.round_number %> 轮</span>
+            <% if h.is_overheated %>
+              <span class="px-2 py-0.5 text-xs rounded bg-danger-100 text-danger-700">过热停</span>
+            <% elsif h.event_type == 'target_reached' %>
+              <span class="px-2 py-0.5 text-xs rounded bg-primary-100 text-primary-700">达标</span>
+            <% end %>
+          </div>
+          <svg viewBox="0 0 120 120" class="w-full h-32">
+            <circle cx="60" cy="60" r="58" fill="#fef3c7" stroke="#fbbf24" stroke-width="1"/>
+            <% new_cells = h.new_cells_array %>
+            <% stagnated = h.stagnated_cells_array %>
+            <% target_cells = h.target_zone_cells_array %>
+            <% # sample for performance
+               sample = (new_cells + target_cells).first(200)
+               sample.each do |(x,y)| %>
+              <circle cx="<%= 6 + x * 5.5 %>" cy="<%= 6 + y * 5.5 %>" r="2.5"
+                      fill="<%= target_cells.include?([x,y]) ? '#2563eb' : @game_session.target_strain_info[:color] %>" opacity="0.85"/>
+            <% end %>
+            <% stagnated.first(80).each do |(x,y)| %>
+              <rect x="<%= 5 + x * 5.5 %>" y="<%= 5 + y * 5.5 %>" width="4" height="4"
+                    fill="#dc2626" opacity="0.6"/>
+            <% end %>
+          </svg>
+          <div class="mt-2 grid grid-cols-2 gap-1 text-xs">
+            <div><span class="text-slate-500">全皿</span><span class="font-semibold text-primary-700 ml-1"><%= h.target_coverage %>%</span></div>
+            <div><span class="text-slate-500">目标区</span><span class="font-semibold text-info-700 ml-1"><%= h.target_zone_coverage %>%</span></div>
+            <div><span class="text-slate-500">细胞</span><span class="font-semibold ml-1"><%= h.target_colony_cells %></span></div>
+            <div><span class="text-slate-500">速率</span><span class="font-semibold ml-1"><%= (h.growth_rate*100).round %>%</span></div>
+          </div>
+          <% if h.event_description.present? %>
+            <div class="mt-2 text-xs text-slate-500 truncate" title="<%= h.event_description %>">💬 <%= h.event_description %></div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

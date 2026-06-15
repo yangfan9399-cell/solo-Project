@@ -1,0 +1,99 @@
+<% content_for :title, "实验大厅 | 微生物培养皿领地游戏" %>
+
+<div class="mb-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
+      <span>🧪</span> 实验大厅
+    </h1>
+    <div class="flex gap-3">
+      <%= link_to "新建实验", new_game_session_path, class: "px-4 py-2 rounded-lg bg-primary-600 text-white font-semibold hover:bg-primary-700 transition" %>
+    </div>
+  </div>
+
+  <form method="get" class="mt-4 flex flex-wrap gap-3">
+    <select name="status" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+      <option value="">全部状态</option>
+      <% GameSession.statuses.each do |k, v| %>
+        <option value="<%= k %>" <%= params[:status] == k ? 'selected' : '' %>><%= status_label(k) %></option>
+      <% end %>
+    </select>
+    <input type="text" name="batch_tag" placeholder="批次标签搜索" value="<%= params[:batch_tag] %>" class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+    <button type="submit" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">筛选</button>
+    <% if params[:status] || params[:batch_tag] %>
+      <%= link_to "重置", game_sessions_path, class: "px-4 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50" %>
+    <% end %>
+  </form>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="bg-slate-50">
+        <tr class="text-left text-sm text-slate-600">
+          <th class="px-4 py-3">实验编号</th>
+          <th class="px-4 py-3">菌株</th>
+          <th class="px-4 py-3">研究员</th>
+          <th class="px-4 py-3">批次</th>
+          <th class="px-4 py-3">状态</th>
+          <th class="px-4 py-3">进度</th>
+          <th class="px-4 py-3">得分</th>
+          <th class="px-4 py-3">创建时间</th>
+          <th class="px-4 py-3">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% if @game_sessions.empty? %>
+          <tr>
+            <td colspan="9" class="px-4 py-16 text-center text-slate-400">
+              暂无实验记录，<%= link_to "创建第一个实验", new_game_session_path, class: "text-primary-600 hover:underline" %>
+            </td>
+          </tr>
+        <% else %>
+          <% @game_sessions.each do |s| %>
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3">
+                <span class="font-mono text-xs text-slate-600"><%= s.session_code %></span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full" style="background-color: <%= s.target_strain_info[:color] %>"></span>
+                  <span class="text-sm text-slate-800"><%= s.target_strain_info[:name] %></span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-600"><%= s.player_name %></td>
+              <td class="px-4 py-3">
+                <% if s.batch_tag.present? %>
+                  <span class="px-2 py-0.5 text-xs rounded bg-info-50 text-info-700"><%= s.batch_tag %></span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3">
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full <%= status_class(s.status) %>"><%= status_label(s.status) %></span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-20 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div class="h-full <%= progress_bar_color(s.progress_percentage) %> transition-all" style="width: <%= s.progress_percentage %>%"></div>
+                  </div>
+                  <span class="text-xs text-slate-500"><%= s.current_round %>/<%= s.max_rounds %></span>
+                </div>
+                <div class="text-xs text-slate-500 mt-1">覆盖: <%= s.actual_coverage %>%</div>
+              </td>
+              <td class="px-4 py-3">
+                <% if s.completed? %>
+                  <span class="font-bold text-primary-600"><%= s.final_score %></span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-sm text-slate-500"><%= l(s.created_at, format: :short) %></td>
+              <td class="px-4 py-3">
+                <div class="flex gap-1">
+                  <%= link_to "查看", game_session_path(s), class: "px-2.5 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200" %>
+                  <%= link_to "对比", batch_comparison_game_session_path(s), class: "px-2.5 py-1 text-xs rounded bg-info-50 text-info-700 hover:bg-info-100" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
