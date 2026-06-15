@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ record.batch_no }} v{{ record.version }} - 雪茄养护柜湿度轮换工具{% endblock %}
+
+{% block page_title %}{{ record.batch_no }} <span class="version-badge">v{{ record.version }}</span>{% endblock %}
+{% block page_subtitle %}{{ record.collector }} · 第{{ record.cabinet_layer }}层 · {{ record.record_date|date:"Y年m月d日" }}{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 12px; align-items: center;">
+    <span class="record-status {{ record.status }}">{{ record.get_status_display }}</span>
+    <a href="{% url 'humidor:export_record' record.id %}" class="btn btn-sm btn-primary">
+        📥 导出结果
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-section">
+    <div class="two-column">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📋 主记录信息</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">养护柜</span>
+                        <span class="info-value">{{ record.cabinet.name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">柜层</span>
+                        <span class="info-value">第{{ record.cabinet_layer }}层</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">收藏者</span>
+                        <span class="info-value">{{ record.collector }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">记录日期</span>
+                        <span class="info-value">{{ record.record_date|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">状态</span>
+                        <span class="record-status {{ record.status }}">{{ record.get_status_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">版本</span>
+                        <span class="version-badge">v{{ record.version }}</span>
+                    </div>
+                </div>
+                {% if record.tags.all %}
+                <div style="margin-top: 16px;">
+                    <div class="info-label" style="margin-bottom: 8px;">标签</div>
+                    {% for tag in record.tags.all %}
+                    <span class="tag" style="background: {{ tag.color }};">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📊 温湿度统计</h3>
+            </div>
+            <div class="card-body">
+                {% if humidity_stats %}
+                <div class="stats-summary">
+                    <div class="summary-card">
+                        <div class="summary-value">{{ humidity_stats.avg_temp|floatformat:1 }}°C</div>
+                        <div class="summary-label">平均温度</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">{{ humidity_stats.avg_humidity|floatformat:1 }}%</div>
+                        <div class="summary-label">平均湿度</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" style="color: var(--danger-color);">{{ humidity_stats.alert_count }}</div>
+                        <div class="summary-label">告警次数</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">温度范围</span>
+                        <span class="info-value">{{ humidity_stats.min_temp|floatformat:1 }} - {{ humidity_stats.max_temp|floatformat:1 }}°C</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">湿度范围</span>
+                        <span class="info-value">{{ humidity_stats.min_humidity|floatformat:1 }} - {{ humidity_stats.max_humidity|floatformat:1 }}%</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <div class="empty-text">暂无温湿度数据</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">📈 温湿度历史曲线</h3>
+    </div>
+    <div class="card-body">
+        <div class="chart-wrapper" style="height: 280px;">
+            <canvas id="recordChart"></canvas>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                <span>温度</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                <span>湿度</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ef4444;"></div>
+                <span>告警点</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="two-column">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📍 雪茄位置历史</h3>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for pos in positions %}
+                <div class="timeline-item {{ pos.position_type }}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">
+                            <strong>{{ pos.cigar_name }}</strong>
+                            <span style="color: var(--text-muted); font-size: 11px;">{{ pos.cigar_code }}</span>
+                        </div>
+                        <div class="timeline-meta">
+                            <span>{{ pos.get_position_type_display }}</span>
+                            {% if pos.from_layer and pos.from_slot %}
+                            <span>{{ pos.from_layer }}层{{ pos.from_slot }}格 → {{ pos.to_layer }}层{{ pos.to_slot }}格</span>
+                            {% else %}
+                            <span>→ {{ pos.to_layer }}层{{ pos.to_slot }}格</span>
+                            {% endif %}
+                            {% if pos.operator %}
+                            <span>操作人: {{ pos.operator }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-meta" style="margin-top: 4px;">
+                            <span>{{ pos.operation_time|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <div class="empty-icon">📍</div>
+                    <div class="empty-text">暂无位置记录</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        {% if rotation_result %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">✅ 轮换结果</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">轮换日期</span>
+                        <span class="info-value">{{ rotation_result.rotation_date|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">轮换结果</span>
+                        <span class="record-status {{ rotation_result.result }}">{{ rotation_result.get_result_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">轮换数量</span>
+                        <span class="info-value">{{ rotation_result.cigar_count }} 支</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">轮换耗时</span>
+                        <span class="info-value">{{ rotation_result.duration_minutes }} 分钟</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">执行人</span>
+                        <span class="info-value">{{ rotation_result.executor|default:"-" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">导出版本</span>
+                        <span class="info-value">{{ rotation_result.export_version|default:"-" }}</span>
+                    </div>
+                </div>
+                {% if rotation_result.summary %}
+                <div class="notes-box" style="margin-top: 16px;">
+                    <strong>轮换总结：</strong><br>
+                    {{ rotation_result.summary }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if record.tasting_notes %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">👅 品吸备注</h3>
+            </div>
+            <div class="card-body">
+                <div class="notes-box">
+                    {{ record.tasting_notes|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if record.remarks %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📝 备注</h3>
+            </div>
+            <div class="card-body">
+                <div class="notes-box">
+                    {{ record.remarks|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if reminders %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">🔔 相关告警提醒</h3>
+    </div>
+    <div class="card-body">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>严重程度</th>
+                    <th>类型</th>
+                    <th>标题</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reminder in reminders %}
+                <tr>
+                    <td>
+                        <span class="severity-dot {{ reminder.severity }}"></span>
+                        {{ reminder.get_severity_display }}
+                    </td>
+                    <td>{{ reminder.get_reminder_type_display }}</td>
+                    <td>{{ reminder.title }}</td>
+                    <td><span class="record-status {{ reminder.status }}">{{ reminder.get_status_display }}</span></td>
+                    <td>{{ reminder.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function drawRecordChart() {
+    const canvas = document.getElementById('recordChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 30, right: 50, bottom: 50, left: 50 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    const details = JSON.parse('{{ humidity_details_json|default:"[]" }}');
+    
+    const labels = [];
+    const temperatures = [];
+    const humidities = [];
+    const alerts = [];
+
+    {% for detail in humidity_details %}
+    labels.push("{{ detail.measure_time|date:'m-d H:i' }}");
+    temperatures.push({{ detail.temperature }});
+    humidities.push({{ detail.humidity }});
+    {% if detail.is_alert %}
+    alerts.push({
+        time: "{{ detail.measure_time|date:'m-d H:i' }}",
+        type: "{{ detail.alert_type }}",
+        temp: {{ detail.temperature }},
+        humidity: {{ detail.humidity }}
+    });
+    {% endif %}
+    {% endfor %}
+
+    if (labels.length === 0) return;
+
+    const tempMin = Math.min(...temperatures) - 2;
+    const tempMax = Math.max(...temperatures) + 2;
+    const humMin = Math.min(...humidities) - 5;
+    const humMax = Math.max(...humidities) + 5;
+
+    const points = labels.length;
+    const xStep = points > 1 ? chartWidth / (points - 1) : chartWidth;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+    }
+
+    const cabinet = {
+        temp_min: {{ record.cabinet.target_temp_min }},
+        temp_max: {{ record.cabinet.target_temp_max }},
+        hum_min: {{ record.cabinet.target_humidity_min }},
+        hum_max: {{ record.cabinet.target_humidity_max }}
+    };
+
+    const tempMinY = padding.top + chartHeight - ((cabinet.temp_min - tempMin) / (tempMax - tempMin)) * chartHeight;
+    const tempMaxY = padding.top + chartHeight - ((cabinet.temp_max - tempMin) / (tempMax - tempMin)) * chartHeight;
+    const humMinY = padding.top + chartHeight - ((cabinet.hum_min - humMin) / (humMax - humMin)) * chartHeight;
+    const humMaxY = padding.top + chartHeight - ((cabinet.hum_max - humMin) / (humMax - humMin)) * chartHeight;
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.06)';
+    ctx.fillRect(padding.left, tempMaxY, chartWidth, tempMinY - tempMaxY);
+    ctx.fillRect(padding.left, humMaxY, chartWidth, humMinY - humMaxY);
+
+    ctx.strokeStyle = 'rgba(46, 204, 113, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    [tempMinY, tempMaxY, humMinY, humMaxY].forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#e74c3c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    temperatures.forEach((temp, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((temp - tempMin) / (tempMax - tempMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = '#3498db';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    humidities.forEach((hum, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((hum - humMin) / (humMax - humMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const alertPoints = [
+        {% for detail in humidity_details %}{% if detail.is_alert %}{{ forloop.counter0 }},{% endif %}{% endfor %}
+    ];
+    alertPoints.forEach(idx => {
+        const x = padding.left + idx * xStep;
+        const tempY = padding.top + chartHeight - ((temperatures[idx] - tempMin) / (tempMax - tempMin)) * chartHeight;
+        const humY = padding.top + chartHeight - ((humidities[idx] - humMin) / (humMax - humMin)) * chartHeight;
+
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+        ctx.beginPath();
+        ctx.arc(x, tempY, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, humY, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, tempY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, humY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight / 4) * i;
+        const tempVal = (tempMax - (tempMax - tempMin) * (i / 4)).toFixed(1);
+        const humVal = (humMax - (humMax - humMin) * (i / 4)).toFixed(1);
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillText(tempVal + '°', padding.left - 8, y + 3);
+        ctx.fillStyle = '#3498db';
+        ctx.fillText(humVal + '%', width - padding.right + 40, y + 3);
+    }
+
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'center';
+    const labelStep = Math.ceil(points / 8);
+    labels.forEach((label, i) => {
+        if (i % labelStep === 0 || i === points - 1) {
+            const x = padding.left + i * xStep;
+            ctx.fillText(label, x, height - 25);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    drawRecordChart();
+});
+
+window.addEventListener('resize', function() {
+    drawRecordChart();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}雪茄养护柜湿度轮换工具{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">💨</div>
+                    <div class="logo-text">
+                        <h1>雪茄养护柜</h1>
+                        <p>湿度轮换工具</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="{% url 'humidor:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-text">仪表盘</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'humidor:reminder_list' %}" class="{% if 'reminder' in request.resolver_match.url_name %}active{% endif %}">
+                            <span class="nav-icon">🔔</span>
+                            <span class="nav-text">告警提醒</span>
+                            {% if all_reminders_count %}
+                            <span class="nav-badge">{{ all_reminders_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="version-info">
+                    <p>版本 v1.0.0</p>
+                    <p class="version-date">专业养护工具</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <h2>{% block page_title %}仪表盘{% endblock %}</h2>
+                    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                <div class="header-right">
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </header>
+
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

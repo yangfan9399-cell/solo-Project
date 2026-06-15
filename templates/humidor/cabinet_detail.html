@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cabinet.name }} - 雪茄养护柜湿度轮换工具{% endblock %}
+
+{% block page_title %}{{ cabinet.name }}{% endblock %}
+{% block page_subtitle %}{{ cabinet.cabinet_code }} · {{ cabinet.get_status_display }}{% endblock %}
+
+{% block header_actions %}
+<span class="status-badge {{ cabinet.status }}">{{ cabinet.get_status_display }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="two-column">
+    <div>
+        <div class="cabinet-grid-container">
+            <div class="card-header" style="padding: 0 0 16px 0; margin-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                <h3 class="card-title">📐 柜位图</h3>
+            </div>
+            <div class="cabinet-visual">
+                {% for layer in grid %}
+                <div class="cabinet-layer">
+                    <div class="layer-label">
+                        <span>第{{ forloop.counter }}层</span>
+                        {% if latest_record and latest_record.cabinet_layer == forloop.counter %}
+                        <span class="version-badge">当前批次</span>
+                        {% endif %}
+                    </div>
+                    <div class="layer-shelves">
+                        {% for slot in layer %}
+                        <div class="slot {% if slot.cigar %}occupied{% endif %} {% if slot.cigar and slot.cigar.position_type == 'placed' and slot.to_slot == slot.from_slot %}anomaly{% endif %}">
+                            <span class="slot-number">{{ slot.slot }}</span>
+                            {% if slot.cigar %}
+                            <div class="cigar-band"></div>
+                            <div class="cigar-name" title="{{ slot.cigar.cigar_name }}">{{ slot.cigar.cigar_name|truncatechars:8 }}</div>
+                            {% else %}
+                            <span>空位</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🎯 报警阈值配置</h3>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">温度下限</span>
+                        <span class="info-value">{{ cabinet.target_temp_min }}°C</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">温度上限</span>
+                        <span class="info-value">{{ cabinet.target_temp_max }}°C</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">湿度下限</span>
+                        <span class="info-value">{{ cabinet.target_humidity_min }}%</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">湿度上限</span>
+                        <span class="info-value">{{ cabinet.target_humidity_max }}%</span>
+                    </div>
+                </div>
+                <div class="notes-box" style="margin-top: 16px;">
+                    <strong>标准养护环境：</strong>温度 18-22°C，湿度 65-75%。古巴雪茄建议在 70% 左右湿度下长期养护，温度波动不宜超过 ±2°C。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📈 温湿度历史曲线</h3>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="loadChart(7, this)">7天</button>
+                    <button class="filter-btn" onclick="loadChart(30, this)">30天</button>
+                    <button class="filter-btn" onclick="loadChart(90, this)">90天</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper">
+                    <canvas id="humidityChart"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>温度</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>湿度</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2ecc71;"></div>
+                        <span>目标范围</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📋 批次记录历史</h3>
+            </div>
+            <div class="card-body">
+                <ul class="record-list">
+                    {% for record in records %}
+                    <li class="record-item">
+                        <div class="record-info">
+                            <div class="record-batch">
+                                <a href="{% url 'humidor:record_detail' record.id %}" style="color: var(--text-primary); text-decoration: none;">
+                                    {{ record.batch_no }}
+                                </a>
+                                <span class="version-badge">v{{ record.version }}</span>
+                            </div>
+                            <div class="record-meta">
+                                <span>{{ record.collector }}</span>
+                                <span>第{{ record.cabinet_layer }}层</span>
+                                <span>{{ record.record_date|date:"m-d" }}</span>
+                            </div>
+                        </div>
+                        <span class="record-status {{ record.status }}">
+                            {{ record.get_status_display }}
+                        </span>
+                    </li>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-text">暂无记录</div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔔 相关告警</h3>
+            </div>
+            <div class="card-body">
+                <ul class="reminder-list">
+                    {% for reminder in reminders %}
+                    <li class="reminder-item">
+                        <div class="reminder-icon">
+                            {% if reminder.severity == 'danger' %}🔴
+                            {% elif reminder.severity == 'warning' %}🟡
+                            {% else %}🔵{% endif %}
+                        </div>
+                        <div class="reminder-content">
+                            <div class="reminder-title">
+                                <span class="severity-dot {{ reminder.severity }}"></span>
+                                {{ reminder.title }}
+                            </div>
+                            <div class="reminder-desc">{{ reminder.content|truncatechars:50 }}</div>
+                        </div>
+                        <div class="reminder-time">{{ reminder.created_at|date:"m-d H:i" }}</div>
+                    </li>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <div class="empty-text">暂无告警</div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function drawChart(data) {
+    const canvas = document.getElementById('humidityChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 30, right: 50, bottom: 50, left: 50 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const allTemps = [...data.temperatures, data.temp_min, data.temp_max];
+    const allHums = [...data.humidities, data.humidity_min, data.humidity_max];
+    const tempMin = Math.min(...allTemps) - 2;
+    const tempMax = Math.max(...allTemps) + 2;
+    const humMin = Math.min(...allHums) - 5;
+    const humMax = Math.max(...allHums) + 5;
+
+    const points = data.labels.length;
+    const xStep = points > 1 ? chartWidth / (points - 1) : chartWidth;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+    }
+
+    const tempMinY = padding.top + chartHeight - ((data.temp_min - tempMin) / (tempMax - tempMin)) * chartHeight;
+    const tempMaxY = padding.top + chartHeight - ((data.temp_max - tempMin) / (tempMax - tempMin)) * chartHeight;
+    const humMinY = padding.top + chartHeight - ((data.humidity_min - humMin) / (humMax - humMin)) * chartHeight;
+    const humMaxY = padding.top + chartHeight - ((data.humidity_max - humMin) / (humMax - humMin)) * chartHeight;
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.08)';
+    ctx.fillRect(padding.left, tempMaxY, chartWidth, tempMinY - tempMaxY);
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.08)';
+    ctx.fillRect(padding.left, humMaxY, chartWidth, humMinY - humMaxY);
+
+    ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, tempMinY);
+    ctx.lineTo(width - padding.right, tempMinY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding.left, tempMaxY);
+    ctx.lineTo(width - padding.right, tempMaxY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMinY);
+    ctx.lineTo(width - padding.right, humMinY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMaxY);
+    ctx.lineTo(width - padding.right, humMaxY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#e74c3c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.temperatures.forEach((temp, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((temp - tempMin) / (tempMax - tempMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.strokeStyle = '#3498db';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.humidities.forEach((hum, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((hum - humMin) / (humMax - humMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    data.alerts.forEach(alert => {
+        const idx = data.labels.indexOf(alert.time);
+        if (idx >= 0) {
+            const x = padding.left + idx * xStep;
+            const tempY = padding.top + chartHeight - ((alert.temp - tempMin) / (tempMax - tempMin)) * chartHeight;
+            const humY = padding.top + chartHeight - ((alert.humidity - humMin) / (humMax - humMin)) * chartHeight;
+
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, tempY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x, humY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, tempY, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x, humY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    ctx.fillStyle = '#888';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight / 4) * i;
+        const tempVal = (tempMax - (tempMax - tempMin) * (i / 4)).toFixed(1);
+        const humVal = (humMax - (humMax - humMin) * (i / 4)).toFixed(1);
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillText(tempVal + '°', padding.left - 8, y + 3);
+        ctx.fillStyle = '#3498db';
+        ctx.fillText(humVal + '%', width - padding.right + 40, y + 3);
+    }
+
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'center';
+    const labelStep = Math.ceil(points / 6);
+    data.labels.forEach((label, i) => {
+        if (i % labelStep === 0 || i === points - 1) {
+            const x = padding.left + i * xStep;
+            ctx.fillText(label.split(' ')[0], x, height - 25);
+        }
+    });
+}
+
+let currentDays = 7;
+
+function loadChart(days, btn) {
+    currentDays = days;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    fetch(`/api/cabinet/{{ cabinet.id }}/humidity-data/?days=${days}`)
+        .then(res => res.json())
+        .then(data => {
+            drawChart(data);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadChart(7, document.querySelector('.filter-btn'));
+});
+
+window.addEventListener('resize', function() {
+    loadChart(currentDays);
+});
+</script>
+{% endblock %}

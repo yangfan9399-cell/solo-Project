@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}告警提醒 - 雪茄养护柜湿度轮换工具{% endblock %}
+
+{% block page_title %}告警提醒{% endblock %}
+{% block page_subtitle %}温湿度告警、位置异常、轮换到期等所有提醒{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <div class="filter-group">
+        <span style="padding: 6px 12px; font-size: 12px; color: var(--text-muted);">状态:</span>
+        {% for status_key, status_count in status_counts.items %}
+        <a href="?status={{ status_key }}&type={{ current_type }}" 
+           class="filter-btn {% if current_status == status_key %}active{% endif %}">
+            {{ status_key|title }}{{ status_count }}
+            <span class="count">({{ status_count }})</span>
+        </a>
+        {% endfor %}
+    </div>
+    <div class="filter-group">
+        <span style="padding: 6px 12px; font-size: 12px; color: var(--text-muted);">类型:</span>
+        {% for type_key, type_count in type_counts.items %}
+        <a href="?status={{ current_status }}&type={{ type_key }}" 
+           class="filter-btn {% if current_type == type_key %}active{% endif %}">
+            {% if type_key == 'all' %}全部
+            {% elif type_key == 'temperature' %}温度
+            {% elif type_key == 'humidity' %}湿度
+            {% elif type_key == 'rotation_due' %}轮换到期
+            {% elif type_key == 'position_anomaly' %}位置异常
+            {% elif type_key == 'system' %}系统
+            {% endif %}
+            <span class="count">({{ type_count }})</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">级别</th>
+                    <th style="width: 100px;">类型</th>
+                    <th>标题</th>
+                    <th style="width: 100px;">状态</th>
+                    <th style="width: 160px;">创建时间</th>
+                    <th style="width: 160px;">关联记录</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reminder in reminders %}
+                <tr>
+                    <td>
+                        <span class="severity-dot {{ reminder.severity }}"></span>
+                        <span style="font-size: 12px; color: var(--text-secondary);">
+                            {{ reminder.get_severity_display }}
+                        </span>
+                    </td>
+                    <td>{{ reminder.get_reminder_type_display }}</td>
+                    <td>
+                        <div style="font-weight: 500; margin-bottom: 4px;">{{ reminder.title }}</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">{{ reminder.content|truncatechars:80 }}</div>
+                    </td>
+                    <td><span class="record-status {{ reminder.status }}">{{ reminder.get_status_display }}</span></td>
+                    <td style="font-size: 12px; color: var(--text-secondary);">
+                        {{ reminder.created_at|date:"Y-m-d H:i" }}
+                    </td>
+                    <td>
+                        {% if reminder.record %}
+                        <a href="{% url 'humidor:record_detail' reminder.record.id %}" 
+                           style="color: var(--accent-color); text-decoration: none; font-size: 12px;">
+                            {{ reminder.record.batch_no }} v{{ reminder.record.version }}
+                        </a>
+                        {% elif reminder.cabinet %}
+                        <a href="{% url 'humidor:cabinet_detail' reminder.cabinet.id %}"
+                           style="color: var(--accent-color); text-decoration: none; font-size: 12px;">
+                            {{ reminder.cabinet.name }}
+                        </a>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 12px;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-icon">🔔</div>
+                            <div class="empty-text">暂无提醒数据</div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="two-column" style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 告警级别分布</h3>
+        </div>
+        <div class="card-body">
+            <div class="stats-summary">
+                <div class="summary-card" style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.2);">
+                    <div class="summary-value" style="color: var(--danger-color);">
+                        {{ type_counts.humidity|default:0 }}
+                    </div>
+                    <div class="summary-label">湿度告警</div>
+                </div>
+                <div class="summary-card" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2);">
+                    <div class="summary-value" style="color: var(--warning-color);">
+                        {{ type_counts.temperature|default:0 }}
+                    </div>
+                    <div class="summary-label">温度告警</div>
+                </div>
+                <div class="summary-card" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2);">
+                    <div class="summary-value" style="color: var(--info-color);">
+                        {{ type_counts.rotation_due|default:0 }}
+                    </div>
+                    <div class="summary-label">轮换到期</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">💡 养护小贴士</h3>
+        </div>
+        <div class="card-body">
+            <div class="notes-box">
+                <p><strong>1. 温湿度控制：</strong>古巴雪茄最佳养护环境为温度 18-22°C，湿度 65-75%。</p>
+                <p style="margin-top: 8px;"><strong>2. 定期轮换：</strong>建议每 2-4 周进行一次位置轮换，确保雪茄均匀养护。</p>
+                <p style="margin-top: 8px;"><strong>3. 位置异常：</strong>避免同一格位放置多支雪茄，保持通风良好。</p>
+                <p style="margin-top: 8px;"><strong>4. 异常处理：</strong>温湿度超标时请及时检查设备，必要时执行回滚操作。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

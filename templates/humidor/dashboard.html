@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}仪表盘 - 雪茄养护柜湿度轮换工具{% endblock %}
+
+{% block page_title %}仪表盘{% endblock %}
+{% block page_subtitle %}雪茄养护状态总览与轮换管理{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">🗄️</div>
+        <div class="stat-value">{{ stats.total_cabinets }}</div>
+        <div class="stat-label">养护柜数量</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">{{ stats.total_records }}</div>
+        <div class="stat-label">总记录数</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-value">{{ stats.active_batches }}</div>
+        <div class="stat-label">进行中批次</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value">{{ stats.alert_count }}</div>
+        <div class="stat-label">严重告警</div>
+    </div>
+</div>
+
+<div class="two-column">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🗄️ 养护柜列表</h3>
+            </div>
+            <div class="card-body">
+                <div class="cabinet-list">
+                    {% for cabinet in cabinets %}
+                    <a href="{% url 'humidor:cabinet_detail' cabinet.id %}" class="cabinet-card">
+                        <div class="cabinet-card-header">
+                            <div>
+                                <div class="cabinet-name">{{ cabinet.name }}</div>
+                                <div class="cabinet-code">{{ cabinet.cabinet_code }}</div>
+                            </div>
+                            <span class="status-badge {{ cabinet.status }}">
+                                {{ cabinet.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="cabinet-stats">
+                            <div class="cabinet-stat-item">
+                                <div class="cabinet-stat-value">{{ cabinet.layers }}层</div>
+                                <div class="cabinet-stat-label">总层数</div>
+                            </div>
+                            <div class="cabinet-stat-item">
+                                <div class="cabinet-stat-value">{{ cabinet.target_humidity_min }}-{{ cabinet.target_humidity_max }}%</div>
+                                <div class="cabinet-stat-label">湿度范围</div>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">🗄️</div>
+                        <div class="empty-text">暂无养护柜数据</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🔔 最新告警</h3>
+                <a href="{% url 'humidor:reminder_list' %}" class="btn btn-sm btn-outline">查看全部</a>
+            </div>
+            <div class="card-body">
+                <ul class="reminder-list">
+                    {% for reminder in unread_reminders %}
+                    <li class="reminder-item">
+                        <div class="reminder-icon">
+                            {% if reminder.severity == 'danger' %}🔴
+                            {% elif reminder.severity == 'warning' %}🟡
+                            {% else %}🔵{% endif %}
+                        </div>
+                        <div class="reminder-content">
+                            <div class="reminder-title">
+                                <span class="severity-dot {{ reminder.severity }}"></span>
+                                {{ reminder.title }}
+                            </div>
+                            <div class="reminder-desc">{{ reminder.content|truncatechars:60 }}</div>
+                        </div>
+                        <div class="reminder-time">{{ reminder.created_at|date:"m-d H:i" }}</div>
+                    </li>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <div class="empty-text">暂无未读告警</div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📋 最近记录</h3>
+            </div>
+            <div class="card-body">
+                <ul class="record-list">
+                    {% for record in recent_records %}
+                    <li class="record-item">
+                        <div class="record-info">
+                            <div class="record-batch">{{ record.batch_no }} <span class="version-badge">v{{ record.version }}</span></div>
+                            <div class="record-meta">
+                                <span>{{ record.collector }}</span>
+                                <span>第{{ record.cabinet_layer }}层</span>
+                                <span>{{ record.record_date|date:"Y-m-d" }}</span>
+                            </div>
+                        </div>
+                        <span class="record-status {{ record.status }}">
+                            {{ record.get_status_display }}
+                        </span>
+                    </li>
+                    {% empty %}
+                    <div class="empty-state">
+                        <div class="empty-icon">📋</div>
+                        <div class="empty-text">暂无记录</div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
