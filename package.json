@@ -1,8 +1,9 @@
 {
   "name": "castle-butler-keyring-game",
   "version": "1.0.0",
-  "description": "古堡管家钥匙环管理游戏 - Remix + TypeScript + SQLite",
+  "description": "古堡管家钥匙环管理游戏 - Remix + TypeScript + JSON",
   "private": true,
+  "type": "module",
   "sideEffects": false,
   "scripts": {
     "build": "remix build",

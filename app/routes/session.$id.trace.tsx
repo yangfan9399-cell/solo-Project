@@ -6,6 +6,7 @@ import {
   getAllRooms,
   getAllKeys,
   getAllPeople,
+  getAllKeyRingGroups,
   getAssignmentDetails,
   getAccessLogs,
   addAccessLog,
@@ -24,6 +25,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   const allPeople = getAllPeople();
   const allKeys = getAllKeys();
   const rooms = getAllRooms();
+  const keyRingGroups = getAllKeyRingGroups();
   const details = getAssignmentDetails(sessionId);
   const logs = getAccessLogs(sessionId);
   const rollbackCount = logs.filter((l) => l.event_type === "ROLLBACK").length;
@@ -35,7 +37,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
     rooms,
     getResultRecords(sessionId),
     rollbackCount,
-    valid
+    valid,
+    keyRingGroups
   );
   return json({
     session,
@@ -49,6 +52,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     findings,
     previewScore,
     rollbackCount,
+    recomputeNote: previewScore.recomputeFromDetailsNote,
   });
 }
 
@@ -59,6 +63,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const allPeople = getAllPeople();
   const allKeys = getAllKeys();
   const rooms = getAllRooms();
+  const keyRingGroups = getAllKeyRingGroups();
   const details = getAssignmentDetails(sessionId);
   const results = getResultRecords(sessionId);
   const rollbackCount = getAccessLogs(sessionId).filter((l) => l.event_type === "ROLLBACK").length;
@@ -66,7 +71,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   for (const f of findings) {
     addAccessLog(sessionId, null, null, null, valid ? "TRACE_COMPLETE" : "DUPLICATION_RISK", f, { tracing: true }, { valid });
   }
-  const breakdown = calculateSessionScore(details, allPeople, allKeys, rooms, results, rollbackCount, valid);
+  const breakdown = calculateSessionScore(details, allPeople, allKeys, rooms, results, rollbackCount, valid, keyRingGroups);
   const status = breakdown.total >= 50 ? "completed" : "failed";
   completeSession(sessionId, breakdown.total, status);
   return redirect(`/session/${sessionId}/result`);
@@ -76,7 +81,7 @@ export default function TracePage() {
   const data = useLoaderData<typeof loader>();
   const {
     session, level, allPeople, allKeys, rooms, details, logs,
-    traceValid, findings, previewScore, rollbackCount,
+    traceValid, findings, previewScore, rollbackCount, recomputeNote,
   } = data;
 
   return (
@@ -163,12 +168,21 @@ export default function TracePage() {
         <div>
           <div className="card" style={{ marginBottom: 20 }}>
             <div className="card-title">📝 分数预览（按局次明细重算）</div>
+            <div style={{ fontSize: 11, color: "#8888a8", marginBottom: 12, fontStyle: "italic" }}>
+              ℹ️ {recomputeNote}
+            </div>
             <div className="score-breakdown">
               <div className="score-line pos"><span>基础分</span><span>+{previewScore.baseScore}</span></div>
               <div className="score-line pos"><span>正确分配奖励 ({details.filter((_, i) => previewScore.total > 50).length} 个)</span><span>+{previewScore.correctAssignments}</span></div>
               <div className="score-line pos"><span>时段匹配奖励</span><span>+{previewScore.slotBonus}</span></div>
               <div className="score-line pos"><span>房间覆盖奖励</span><span>+{previewScore.coverageBonus}</span></div>
               <div className="score-line pos"><span>信任度匹配奖励</span><span>+{previewScore.trustBonus}</span></div>
+              {previewScore.keyRingMatchBonus > 0 && (
+                <div className="score-line pos"><span>🔗 钥匙环编组匹配奖励</span><span>+{previewScore.keyRingMatchBonus}</span></div>
+              )}
+              {previewScore.keyRingMismatchPenalty > 0 && (
+                <div className="score-line neg"><span>🔗 钥匙环编组错误惩罚</span><span>-{previewScore.keyRingMismatchPenalty}</span></div>
+              )}
               {previewScore.traceBonus > 0 && (
                 <div className="score-line pos"><span>事后追踪完成奖励</span><span>+{previewScore.traceBonus}</span></div>
               )}

@@ -2,5 +2,4 @@
 export default {
   ignoredRouteFiles: ["**/.*"],
   serverModuleFormat: "esm",
-  unstable_vite: true,
 };

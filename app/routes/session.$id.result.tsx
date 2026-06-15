@@ -68,7 +68,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
     rooms,
     results,
     rollbackCount,
-    traceCompleted || traceResult.valid
+    traceCompleted || traceResult.valid,
+    groups
   );
 
   const initialLocks = computeInitialLockStates(rooms);
@@ -183,18 +184,27 @@ export default function ResultPage() {
       <div className="grid grid-3">
         <div className="card">
           <div className="card-title">💰 分数结算明细（后端按明细重算）</div>
+          <div style={{ fontSize: 11, color: "#8888a8", marginBottom: 12, fontStyle: "italic" }}>
+            ℹ️ {breakdown.recomputeFromDetailsNote}
+          </div>
           <div className="score-breakdown">
             <div className="score-line pos"><span>基础分</span><span>+{breakdown.baseScore}</span></div>
             <div className="score-line pos"><span>正确分配 × 20 分</span><span>+{breakdown.correctAssignments}</span></div>
             <div className="score-line pos"><span>时段匹配奖励</span><span>+{breakdown.slotBonus}</span></div>
             <div className="score-line pos"><span>房间覆盖奖励</span><span>+{breakdown.coverageBonus}</span></div>
             <div className="score-line pos"><span>信任度匹配奖励</span><span>+{breakdown.trustBonus}</span></div>
+            {breakdown.keyRingMatchBonus > 0 && (
+              <div className="score-line pos"><span>🔗 钥匙环编组匹配</span><span>+{breakdown.keyRingMatchBonus}</span></div>
+            )}
             {breakdown.traceBonus > 0 && (
               <div className="score-line pos"><span>事后追踪完成</span><span>+{breakdown.traceBonus}</span></div>
             )}
             <div style={{ height: 1, background: "#3a3a5c", margin: "8px 0" }} />
             {breakdown.rollbackPenalty > 0 && (
               <div className="score-line neg"><span>回滚惩罚 ({rollbackCount} × 10)</span><span>-{breakdown.rollbackPenalty}</span></div>
+            )}
+            {breakdown.keyRingMismatchPenalty > 0 && (
+              <div className="score-line neg"><span>🔗 钥匙环编组错误</span><span>-{breakdown.keyRingMismatchPenalty}</span></div>
             )}
             {breakdown.theftPenalty > 0 && (
               <div className="score-line neg"><span>失窃事件惩罚</span><span>-{breakdown.theftPenalty}</span></div>

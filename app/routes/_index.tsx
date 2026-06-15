@@ -8,13 +8,16 @@ import {
   getAllRooms,
   getAllKeys,
   getAllPeople,
+  getAllKeyRingGroups,
   addAssignmentDetail,
   addHistoryRecord,
   addResultRecord,
   addAccessLog,
   completeSession,
+  updateSessionStep,
   getAssignmentDetails,
   getResultRecords,
+  rollbackToStep,
 } from "~/models/db.server";
 import {
   validateAssignment,
@@ -65,6 +68,8 @@ export async function action({ request }: ActionFunctionArgs) {
     const lockStates = computeInitialLockStates(rooms);
     let rollbackCount = 0;
 
+    const keyRingGroups = getAllKeyRingGroups();
+
     if (sample.data.type === "ROLLBACK_RESOLVE" && sample.data.firstAttempt) {
       for (let i = 0; i < sample.data.firstAttempt.length; i++) {
         const a = sample.data.firstAttempt[i];
@@ -74,6 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
         addAssignmentDetail(session.id, i, a.person_id, a.key_id, a.slot as TimeSlot);
         addHistoryRecord(session.id, i, a.person_id, `首次尝试分配${key.label}`, a.slot as TimeSlot, result.ok);
+        addResultRecord(session.id, key.id, key.room_ids, [a.slot as TimeSlot], key.duplication_risk >= 8 && person.trust_level <= 4);
 
         for (const ev of result.events) {
           addAccessLog(
@@ -88,6 +94,9 @@ export async function action({ request }: ActionFunctionArgs) {
           );
         }
       }
+
+      const detailsBeforeRollback = getAssignmentDetails(session.id);
+      const preRollbackScore = calculateSessionScore(detailsBeforeRollback, people, keys, rooms, getResultRecords(session.id), 0, false, keyRingGroups);
 
       if (sample.data.rollbackAssignments) {
         for (const a of sample.data.rollbackAssignments) {
@@ -105,12 +114,25 @@ export async function action({ request }: ActionFunctionArgs) {
             a.person_id,
             a.key_id,
             "ROLLBACK",
-            `管家发现风险，立即回滚了 ${people.find((p) => p.id === a.person_id)?.name} 的钥匙分配。`,
-            { assigned: true },
-            { assigned: false, rollback_reason: "DUPLICATION_RISK / TRUST_MISMATCH" }
+            `管家发现风险，立即回滚了 ${people.find((p) => p.id === a.person_id)?.name} 的钥匙分配。回滚前预估分数：${preRollbackScore.total}，即将按局次明细重算。`,
+            { assigned: true, estimated_score_before_rollback: preRollbackScore.total, details_count_before: detailsBeforeRollback.length, recompute_trigger: "钥匙环编组冲突" },
+            { assigned: false, rollback_reason: "DUPLICATION_RISK / TRUST_MISMATCH", recompute_note: `将删除 step>=${sample.data.rollbackStep} 的所有分配明细与结果记录` }
           );
         }
         rollbackCount = sample.data.rollbackAssignments.length;
+        rollbackToStep(session.id, sample.data.rollbackStep);
+        updateSessionStep(session.id, sample.data.rollbackStep);
+
+        addAccessLog(
+          session.id,
+          null,
+          null,
+          null,
+          "KEY_GROUP_OK",
+          `已完成回滚：删除错误分配后，局次明细已按步骤 ${sample.data.rollbackStep} 为基准重建。`,
+          { rollback_count: rollbackCount, session_step_reset_to: sample.data.rollbackStep, action: "CLEAR_ASSIGNMENTS_AND_RESULTS" },
+          { remaining_details: getAssignmentDetails(session.id).length, recompute_ready: true }
+        );
       }
     }
 
@@ -190,7 +212,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     }
 
-    const breakdown = calculateSessionScore(details, people, keys, rooms, results, rollbackCount, traceCompleted);
+    const breakdown = calculateSessionScore(details, people, keys, rooms, results, rollbackCount, traceCompleted, keyRingGroups);
     const finalStatus = breakdown.total >= 50 ? "completed" : "failed";
     completeSession(session.id, breakdown.total, finalStatus);
 

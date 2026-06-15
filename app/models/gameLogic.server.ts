@@ -172,11 +172,14 @@ export interface ScoreBreakdown {
   slotBonus: number;
   coverageBonus: number;
   trustBonus: number;
+  keyRingMatchBonus: number;
+  keyRingMismatchPenalty: number;
   rollbackPenalty: number;
   theftPenalty: number;
   lockedInPenalty: number;
   duplicationPenalty: number;
   traceBonus: number;
+  recomputeFromDetailsNote: string;
   total: number;
 }
 
@@ -187,7 +190,8 @@ export function calculateSessionScore(
   rooms: Room[],
   resultRecords: ResultRecord[],
   rollbackCount: number = 0,
-  traceCompleted: boolean = false
+  traceCompleted: boolean = false,
+  keyRingGroups?: { id: string; name: string; key_ids: string[]; description: string }[]
 ): ScoreBreakdown {
   const base = 100;
   let correct = 0;
@@ -197,6 +201,14 @@ export function calculateSessionScore(
   let theftPenalty = 0;
   let lockedInPenalty = 0;
   let dupPenalty = 0;
+  let keyRingMatchBonus = 0;
+  let keyRingMismatchPenalty = 0;
+
+  const ROLE_GROUP_RULE: Record<string, string[]> = {
+    visitor: ["g01"],
+    maintenance: ["g02"],
+    nightwatch: ["g03"],
+  };
 
   for (const d of details) {
     const person = people.find((p) => p.id === d.person_id);
@@ -225,6 +237,19 @@ export function calculateSessionScore(
     else if (!trustOk) theftPenalty += 10;
     if (!dupOk) dupPenalty += 20;
     else if (key.duplication_risk >= 7 && person.trust_level <= 6) dupPenalty += 8;
+
+    if (key.ring_group_id && keyRingGroups) {
+      const allowedGroups = ROLE_GROUP_RULE[person.role] || [];
+      const match = allowedGroups.includes(key.ring_group_id);
+      const group = keyRingGroups.find((g) => g.id === key.ring_group_id);
+      if (match) {
+        keyRingMatchBonus += 8;
+      } else {
+        keyRingMismatchPenalty += 15;
+      }
+    } else if (keyRingGroups && !key.ring_group_id) {
+      keyRingMatchBonus += 2;
+    }
   }
 
   const correctScore = correct * 20;
@@ -239,8 +264,10 @@ export function calculateSessionScore(
         slotBonus +
         coverageBonus +
         trustBonus +
+        keyRingMatchBonus +
         traceBonus -
         rollbackPenalty -
+        keyRingMismatchPenalty -
         theftPenalty -
         lockedInPenalty -
         dupPenalty
@@ -253,11 +280,14 @@ export function calculateSessionScore(
     slotBonus,
     coverageBonus,
     trustBonus,
+    keyRingMatchBonus,
+    keyRingMismatchPenalty,
     rollbackPenalty,
     theftPenalty,
     lockedInPenalty,
     duplicationPenalty: dupPenalty,
     traceBonus,
+    recomputeFromDetailsNote: `基于 ${details.length} 条局次明细(assignment_details) 重算，编组校验组数：${keyRingGroups?.length ?? 0}`,
     total,
   };
 }

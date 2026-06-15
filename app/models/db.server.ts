@@ -411,11 +411,16 @@ export function rollbackToStep(sessionId: string, rollbackStep: number): Assignm
   const toRemove = db.assignment_details.filter(
     (d) => d.session_id === sessionId && d.step_index >= rollbackStep
   );
+  const removedKeyIds = toRemove.map((d) => d.key_id);
   db.assignment_details = db.assignment_details.filter(
     (d) => !(d.session_id === sessionId && d.step_index >= rollbackStep)
   );
   db.history_records = db.history_records.filter(
     (r) => !(r.session_id === sessionId && r.step_index >= rollbackStep)
+  );
+  db.result_records = db.result_records.filter(
+    (r) =>
+      !(r.session_id === sessionId && removedKeyIds.includes(r.key_id) && db.assignment_details.findIndex((x) => x.session_id === sessionId && x.key_id === r.key_id) === -1)
   );
   saveDb(db);
   return toRemove;
