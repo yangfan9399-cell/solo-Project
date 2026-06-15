@@ -1,0 +1,30 @@
+{
+  "name": "cyanotype-batch-recorder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "qwik build",
+    "build.client": "vite build",
+    "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.types": "tsc --incremental --noEmit",
+    "dev": "vite --mode ssr",
+    "dev.debug": "node --inspect-brk vite --mode ssr",
+    "preview": "vite preview --open",
+    "qwik": "qwik",
+    "start": "vite --open --mode ssr",
+    "serve": "node server/entry.express"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "1.2.13",
+    "@builder.io/qwik-city": "1.2.13",
+    "@types/node": "20.8.2",
+    "typescript": "5.2.2",
+    "vite": "4.4.9",
+    "vite-tsconfig-paths": "4.2.1"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=16.8.0"
+  }
+}
