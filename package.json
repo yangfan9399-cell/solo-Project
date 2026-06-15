@@ -1,0 +1,26 @@
+{
+  "name": "cliff-tea-garden-game",
+  "version": "1.0.0",
+  "description": "悬崖茶园采摘索道调度游戏",
+  "type": "module",
+  "scripts": {
+    "dev": "solid-start dev",
+    "build": "solid-start build",
+    "start": "solid-start start",
+    "seed": "node --loader ts-node/esm src/server/seed.ts"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.29.0",
+    "@solidjs/router": "^0.10.0",
+    "better-sqlite3": "^11.0.0",
+    "solid-js": "^1.8.0",
+    "solid-start": "^0.3.11",
+    "solid-start-node": "^0.3.11"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.10",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9",
+    "vite-plugin-solid": "^2.8.0"
+  }
+}
