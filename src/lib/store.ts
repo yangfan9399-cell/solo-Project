@@ -169,6 +169,11 @@ export function finishGame(stateId: string): GameRecord | null {
 		? Math.min(...result.absorptionEvents.map(e => e.outputIntensity))
 		: result.finalIntensity;
 
+	const reachesTargetPos = result.segments.some(s =>
+		s.end.x === level.targetPrism.gridX && s.end.y === level.targetPrism.gridY
+	);
+	const intensityAtTarget = reachesTargetPos ? result.finalIntensity : 0;
+
 	const record: GameRecord = {
 		id: `record-${Date.now()}`,
 		levelId: state.levelId,
@@ -192,9 +197,9 @@ export function finishGame(stateId: string): GameRecord | null {
 			score,
 			status: state.status,
 			failureReason,
-			intensityAtTarget: result.finalIntensity,
+			intensityAtTarget,
 			requiredIntensity: level.targetPrism.requiredIntensity,
-			intensityDeficit: result.targetReached ? 0 : level.targetPrism.requiredIntensity - result.finalIntensity
+			intensityDeficit: result.targetReached ? 0 : Math.max(0, level.targetPrism.requiredIntensity - intensityAtTarget)
 		},
 		createdAt: Date.now()
 	};
@@ -250,4 +255,23 @@ export function saveLevel(level: Level): Level {
 export function deleteLevel(id: string): boolean {
 	initializeStore();
 	return store.levels.delete(id);
+}
+
+export function simulateLevel(level: Level): {
+	segments: import('./simulation').BeamSegment[];
+	absorptionEvents: import('./types').AbsorptionEvent[];
+	finalIntensity: number;
+	targetReached: boolean;
+	failureReason: string | null;
+} {
+	initializeStore();
+	const materials = Array.from(store.materials.values());
+	const result = simulateBeam(level.lightSource, level.glassBlocks, level.targetPrism, materials);
+	return {
+		segments: result.segments,
+		absorptionEvents: result.absorptionEvents,
+		finalIntensity: result.finalIntensity,
+		targetReached: result.targetReached,
+		failureReason: determineFailureReason(result, level.targetPrism)
+	};
 }
