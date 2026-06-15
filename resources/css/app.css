@@ -1,9 +1,56 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+@layer components {
+    .gradient-bg {
+        background: linear-gradient(135deg, #43302b 0%, #846358 50%, #bfa094 100%);
+    }
+    .drum-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f7f5f3 100%);
+        border: 1px solid #e0cec7;
+    }
+    .section-title {
+        position: relative;
+        padding-left: 1rem;
+    }
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 1.25rem;
+        background: linear-gradient(180deg, #846358 0%, #bfa094 100%);
+        border-radius: 2px;
+    }
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .badge-success {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    .badge-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    .badge-secondary {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
 }

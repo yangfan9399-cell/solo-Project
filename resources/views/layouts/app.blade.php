@@ -4,82 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', '传统鼓皮张力调校工具')</title>
-    <script src="{{ asset('vendor/tailwind.min.js') }}"></script>
-    <script src="{{ asset('vendor/chart.umd.min.js') }}"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'drum': {
-                            50: '#fdf8f6',
-                            100: '#f2e8e5',
-                            200: '#eaddd7',
-                            300: '#e0cec7',
-                            400: '#d2bab0',
-                            500: '#bfa094',
-                            600: '#a18072',
-                            700: '#977669',
-                            800: '#846358',
-                            900: '#43302b',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #43302b 0%, #846358 50%, #bfa094 100%);
-        }
-        .drum-card {
-            background: linear-gradient(145deg, #ffffff 0%, #f7f5f3 100%);
-            border: 1px solid #e0cec7;
-        }
-        .section-title {
-            position: relative;
-            padding-left: 1rem;
-        }
-        .section-title::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 1.25rem;
-            background: linear-gradient(180deg, #846358 0%, #bfa094 100%);
-            border-radius: 2px;
-        }
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.625rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-        .badge-success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .badge-warning {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .badge-danger {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        .badge-info {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        .badge-secondary {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('build/app.css') }}">
+    <script src="{{ asset('build/chart.umd.min.js') }}"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <nav class="gradient-bg text-white shadow-lg">
