@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>调试</title>
+  <script src="/vendor/react.js"></script>
+  <script src="/vendor/react-dom.js"></script>
+  <style>
+    body { background: #111; color: #0f0; font-family: monospace; font-size: 13px; padding: 10px; }
+    .err { color: #f55; }
+    .ok { color: #5f5; }
+  </style>
+</head>
+<body>
+  <div id="log"></div>
+  <div id="root" style="display:none"></div>
+  <script>
+    var logEl = document.getElementById('log');
+    function log(msg, cls) {
+      var d = document.createElement('div');
+      if (cls) d.className = cls;
+      d.textContent = msg;
+      logEl.appendChild(d);
+    }
+    log('React version: ' + React.version);
+    log('React.useRef: ' + typeof React.useRef);
+    log('React.createElement: ' + typeof React.createElement);
+    log('ReactDOM.createRoot: ' + typeof ReactDOM.createRoot);
+  </script>
+  <script src="/js/single.js" onerror="log('single.js LOAD FAILED', 'err')"></script>
+  <script>
+    log('ContourTool: ' + typeof ContourTool);
+    log('ContourTool.mount: ' + typeof (ContourTool && ContourTool.mount));
+    
+    log('Attempting mount...', 'ok');
+    try {
+      var root = document.getElementById('root');
+      root.style.display = 'block';
+      ContourTool.mount('root');
+      log('Mount called OK', 'ok');
+    } catch(e) {
+      log('MOUNT ERROR: ' + e.message, 'err');
+      log(e.stack, 'err');
+    }
+    
+    setTimeout(function() {
+      var r = document.getElementById('root');
+      log('Root innerHTML length: ' + r.innerHTML.length);
+      log('Root children: ' + r.children.length);
+      if (r.children.length > 0) {
+        log('RENDER SUCCESS', 'ok');
+      } else {
+        log('NO RENDER OUTPUT', 'err');
+      }
+    }, 3000);
+  </script>
+</body>
+</html>

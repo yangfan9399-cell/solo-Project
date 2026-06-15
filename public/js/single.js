@@ -36,9 +36,9 @@ var ContourTool;
         return path;
     }
     function MapCanvas(props) {
-        const master = props.master, details = props.details, histories = props.histories, result = props.result, drawPts = props.drawPoints || [], at = props.activeTool || 'none', onClick = props.onCanvasClick;
+        const master = props.master, details = props.details, histories = props.histories, result = props.result || { layers: [], pointLabels: [], errorNotes: [] }, drawPts = props.drawPoints || [], at = props.activeTool || 'none', onClick = props.onCanvasClick;
         const visibleLayers = useMemo(function () {
-            const lm = new Map(result.layers.map(function (l) { return [l.layerId, l]; }));
+            const lm = new Map((result.layers || []).map(function (l) { return [l.layerId, l]; }));
             return details.filter(function (d) {
                 const l = lm.get(d.id);
                 return l ? l.visible : true;
@@ -85,11 +85,11 @@ var ContourTool;
             return e('g', { key: a.id }, e('line', { x1: ad.position.x, y1: ad.position.y, x2: x2, y2: y2, stroke: '#6bcfff', strokeWidth: 2, markerEnd: 'url(#arrowhead)' }), e('circle', { cx: ad.position.x, cy: ad.position.y, r: 3, fill: '#6bcfff' }));
         })));
         svgChildren.push(e('defs', { key: 'defs2' }, e('marker', { id: 'arrowhead', markerWidth: 10, markerHeight: 7, refX: 9, refY: 3.5, orient: 'auto' }, e('polygon', { points: '0 0, 10 3.5, 0 7', fill: '#6bcfff' }))));
-        svgChildren.push(e('g', { key: 'lbls', className: 'labels-layer' }, result.pointLabels.map(function (lbl) {
+        svgChildren.push(e('g', { key: 'lbls', className: 'labels-layer' }, (result.pointLabels || []).map(function (lbl) {
             const ch = lbl.type === 'elevation' ? String(lbl.elevation) : lbl.text.charAt(0);
             return e('g', { key: lbl.id }, e('circle', { cx: lbl.x, cy: lbl.y, r: 6, fill: 'white', stroke: '#333', strokeWidth: 1.5 }), e('text', { x: lbl.x, y: lbl.y + 4, fontSize: 9, fontWeight: 'bold', textAnchor: 'middle', fill: '#333' }, ch), e('text', { x: lbl.x + 10, y: lbl.y + 4, fontSize: 11, fill: 'white' }, lbl.text));
         })));
-        svgChildren.push(e('g', { key: 'errs', className: 'error-notes-layer' }, result.errorNotes.filter(function (n) { return !n.resolved; }).map(function (note) {
+        svgChildren.push(e('g', { key: 'errs', className: 'error-notes-layer' }, (result.errorNotes || []).filter(function (n) { return !n.resolved; }).map(function (note) {
             const fc = note.severity === 'high' ? '#ff4757' : note.severity === 'medium' ? '#ffa502' : '#70a1ff';
             return e('g', { key: note.id }, e('circle', { cx: note.x, cy: note.y, r: 8, fill: fc, opacity: 0.8 }), e('text', { x: note.x, y: note.y + 4, fontSize: 10, fontWeight: 'bold', textAnchor: 'middle', fill: 'white' }, '!'));
         })));
@@ -117,11 +117,11 @@ var ContourTool;
         }, svgChildren), e('div', { className: 'scale-bar' }, e('div', { className: 'scale-bar-line' }), e('span', { className: 'scale-bar-text' }, master.scale + ' ' + master.scaleUnit)), e('div', { className: 'map-info' }, e('span', null, '比例尺 1:' + master.scale), e('span', null, master.mapWidth + '×' + master.mapHeight + 'px'))));
     }
     function LayerPanel(props) {
-        const { details, result, onToggleLayer } = props;
-        const lm = new Map(result.layers.map(function (l) { return [l.layerId, l]; }));
+        const details = props.details, result = props.result || { layers: [], pointLabels: [], errorNotes: [] }, onToggleLayer = props.onToggleLayer;
+        const lm = new Map((result.layers || []).map(function (l) { return [l.layerId, l]; }));
         const maxE = details.length > 0 ? Math.max.apply(null, details.map(function (d) { return d.elevation; })) : 0;
         const minE = details.length > 0 ? Math.min.apply(null, details.map(function (d) { return d.elevation; })) : 0;
-        const visC = result.layers.filter(function (l) { return l.visible; }).length;
+        const visC = (result.layers || []).filter(function (l) { return l.visible; }).length;
         return e('div', { className: 'layer-panel' }, e('div', { className: 'panel-section' }, e('h3', { className: 'panel-title' }, '等高线图层'), e('p', { className: 'panel-desc' }, '共 ' + details.length + ' 条等高线，可分层显示/隐藏')), e('div', { className: 'layer-list' }, details.map(function (det) {
             const l = lm.get(det.id);
             const vis = l ? l.visible : true;
@@ -195,26 +195,28 @@ var ContourTool;
         return e('div', { className: 'profile-chart' }, e('svg', { width: cw, height: ch, className: 'chart-svg' }, e('defs', null, e('linearGradient', { id: 'profileGrad', x1: '0%', y1: '0%', x2: '0%', y2: '100%' }, e('stop', { offset: '0%', stopColor: '#4ecdc4', stopOpacity: 0.5 }), e('stop', { offset: '100%', stopColor: '#4ecdc4', stopOpacity: 0.05 }))), gls, e('path', { d: ad, fill: 'url(#profileGrad)' }), e('path', { d: pd, fill: 'none', stroke: '#4ecdc4', strokeWidth: 2 }), e('text', { x: p.left - 5, y: yp(maxE) + 4, fontSize: 10, fill: '#8a9aae', textAnchor: 'end' }, maxE + 'm'), e('text', { x: p.left - 5, y: yp(minE) + 4, fontSize: 10, fill: '#8a9aae', textAnchor: 'end' }, minE + 'm'), e('text', { x: cw - p.right, y: ch - 5, fontSize: 10, fill: '#8a9aae', textAnchor: 'end' }, td.toFixed(0) + 'm')), e('div', { className: 'chart-stats' }, e('div', { className: 'chart-stat' }, e('span', { className: 'stat-label' }, '最高'), e('span', { className: 'stat-value' }, maxE + 'm')), e('div', { className: 'chart-stat' }, e('span', { className: 'stat-label' }, '最低'), e('span', { className: 'stat-value' }, minE + 'm')), e('div', { className: 'chart-stat' }, e('span', { className: 'stat-label' }, '总距'), e('span', { className: 'stat-value' }, td.toFixed(0) + 'm'))));
     }
     function ResultPanel(props) {
-        const { result, onToggleError, onExportImage, onExportData } = props;
+        const result = props.result || { layers: [], pointLabels: [], errorNotes: [], status: 'pending', version: '1' }, onToggleError = props.onToggleError, onExportImage = props.onExportImage, onExportData = props.onExportData;
         const [tab, setTab] = useState('labels');
-        const uh = result.errorNotes.filter(function (n) { return n.severity === 'high' && !n.resolved; }).length;
-        const uc = result.errorNotes.filter(function (n) { return !n.resolved; }).length;
+        const uh = (result.errorNotes || []).filter(function (n) { return n.severity === 'high' && !n.resolved; }).length;
+        const uc = (result.errorNotes || []).filter(function (n) { return !n.resolved; }).length;
         const sl = { pending: '待处理', ready: '就绪', exported: '已导出', rolled_back: '已回滚' };
         function gsl(s) { const m = { high: { t: '高', c: 'sev-high' }, medium: { t: '中', c: 'sev-medium' }, low: { t: '低', c: 'sev-low' } }; return m[s] || { t: s, c: '' }; }
         function gtl(t) { const m = { elevation: '高程', landmark: '地标', annotation: '注释' }; return m[t] || t; }
-        const tl = { labels: '点位标签 (' + result.pointLabels.length + ')', errors: '误差备注 (' + uc + '/' + result.errorNotes.length + ')', export: '导出' };
-        const lc = result.pointLabels.length === 0 ? e('p', { className: 'empty-text' }, '暂无标签')
-            : e('div', { className: 'labels-list' }, result.pointLabels.map(function (lbl) {
+        const tl = { labels: '点位标签 (' + (result.pointLabels || []).length + ')', errors: '误差备注 (' + uc + '/' + (result.errorNotes || []).length + ')', export: '导出' };
+        const pl = result.pointLabels || [];
+        const en = result.errorNotes || [];
+        const lc = pl.length === 0 ? e('p', { className: 'empty-text' }, '暂无标签')
+            : e('div', { className: 'labels-list' }, pl.map(function (lbl) {
                 return e('div', { key: lbl.id, className: 'label-item' }, e('div', { className: 'label-type type-' + lbl.type }, gtl(lbl.type)), e('div', { className: 'label-info' }, e('div', { className: 'label-text' }, lbl.text), lbl.elevation !== undefined ? e('div', { className: 'label-elev' }, lbl.elevation + 'm') : null, e('div', { className: 'label-pos' }, '(' + lbl.x + ', ' + lbl.y + ')')));
             }));
-        const ei = result.errorNotes.length === 0 ? e('p', { className: 'empty-text' }, '暂无误差备注')
-            : result.errorNotes.map(function (note) {
+        const ei = en.length === 0 ? e('p', { className: 'empty-text' }, '暂无误差备注')
+            : en.map(function (note) {
                 const s = gsl(note.severity);
                 return e('div', { key: note.id, className: 'error-item' + (note.resolved ? ' resolved' : '') }, e('div', { className: 'error-severity ' + s.c }, s.t), e('div', { className: 'error-content' }, e('div', { className: 'error-message' }, note.message), e('div', { className: 'error-pos' }, '位置: (' + note.x + ', ' + note.y + ')')), e('button', { className: 'btn-tiny', onClick: function () { onToggleError(note.id); } }, note.resolved ? '重开' : '解决'));
             });
         const ec = e('div', { className: 'errors-list' }, uh > 0 ? e('div', { className: 'error-alert' }, e('span', null, '⚠ ' + uh + ' 个高优先级误差待处理')) : null, ei);
-        const vlc = result.layers.filter(function (l) { return l.visible; }).length;
-        const xpc = e('div', { className: 'export-section' }, e('div', { className: 'export-preview' }, e('h4', { className: 'panel-subtitle' }, '剖面预览'), e(ProfileChart, { result: result })), e('div', { className: 'export-info' }, e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '导出格式'), e('span', { className: 'info-value' }, 'PNG / JSON')), e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '包含内容'), e('span', { className: 'info-value' }, vlc + ' 个图层 · ' + result.pointLabels.length + ' 个标签')), e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '结果状态'), e('span', { className: 'info-value' }, sl[result.status] || result.status))), e('div', { className: 'export-actions' }, e('button', { className: 'btn-small btn-primary', disabled: result.status === 'rolled_back', onClick: onExportImage }, '导出图片'), e('button', { className: 'btn-small', onClick: onExportData }, '导出数据')), result.status === 'rolled_back' ? e('div', { className: 'rollback-notice' }, '⚠ 此结果为回滚版本，请重新校验后再导出') : null);
+        const vlc = (result.layers || []).filter(function (l) { return l.visible; }).length;
+        const xpc = e('div', { className: 'export-section' }, e('div', { className: 'export-preview' }, e('h4', { className: 'panel-subtitle' }, '剖面预览'), e(ProfileChart, { result: result })), e('div', { className: 'export-info' }, e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '导出格式'), e('span', { className: 'info-value' }, 'PNG / JSON')), e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '包含内容'), e('span', { className: 'info-value' }, vlc + ' 个图层 · ' + (result.pointLabels || []).length + ' 个标签')), e('div', { className: 'info-row' }, e('span', { className: 'info-label' }, '结果状态'), e('span', { className: 'info-value' }, sl[result.status] || result.status))), e('div', { className: 'export-actions' }, e('button', { className: 'btn-small btn-primary', disabled: result.status === 'rolled_back', onClick: onExportImage }, '导出图片'), e('button', { className: 'btn-small', onClick: onExportData }, '导出数据')), result.status === 'rolled_back' ? e('div', { className: 'rollback-notice' }, '⚠ 此结果为回滚版本，请重新校验后再导出') : null);
         let ac = null;
         if (tab === 'labels')
             ac = lc;
@@ -293,9 +295,9 @@ var ContourTool;
             }
         }
         async function toggleErr(errId) {
-            if (!sid || !fd)
+            if (!sid || !fd || !fd.result)
                 return;
-            const un = fd.result.errorNotes.map(function (n) { return n.id === errId ? Object.assign({}, n, { resolved: !n.resolved }) : n; });
+            const un = (fd.result.errorNotes || []).map(function (n) { return n.id === errId ? Object.assign({}, n, { resolved: !n.resolved }) : n; });
             try {
                 await fetch('/api/results/' + sid, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ errorNotes: un }) });
                 fetchF(sid);
@@ -305,9 +307,9 @@ var ContourTool;
             }
         }
         async function toggleLayer(lid) {
-            if (!sid || !fd)
+            if (!sid || !fd || !fd.result)
                 return;
-            const ul = fd.result.layers.map(function (l) { return l.layerId === lid ? Object.assign({}, l, { visible: !l.visible }) : l; });
+            const ul = (fd.result.layers || []).map(function (l) { return l.layerId === lid ? Object.assign({}, l, { visible: !l.visible }) : l; });
             try {
                 await fetch('/api/results/' + sid, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ layers: ul }) });
                 fetchF(sid);
@@ -493,7 +495,7 @@ var ContourTool;
                         })
                     });
                     const detail = await detailRes.json();
-                    const newLayers = fd.result.layers.concat([{ layerId: detail.id, visible: true, color: detail.color, opacity: 1 }]);
+                    const newLayers = (fd.result && fd.result.layers || []).concat([{ layerId: detail.id, visible: true, color: detail.color, opacity: 1 }]);
                     await fetch('/api/results/' + sid, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -600,13 +602,13 @@ var ContourTool;
             const l = { draft: '草稿', processing: '处理中', completed: '已完成', error: '异常' };
             return e('span', { className: 'status-badge ' + (c[status] || '') }, l[status] || status);
         }
-        const hhe = fd ? fd.result.errorNotes.some(function (n) { return n.severity === 'high' && !n.resolved; }) : false;
+        const hhe = fd && fd.result ? (fd.result.errorNotes || []).some(function (n) { return n.severity === 'high' && !n.resolved; }) : false;
         const tabLabels = { layers: '图层', info: '信息', history: '历史', result: '结果' };
         return e('div', { className: 'app-container' }, e('input', { ref: fileRef, type: 'file', accept: '.svg,.png,.jpg,.jpeg', style: { display: 'none' }, onChange: handleFile }), e('header', { className: 'app-header' }, e('div', { className: 'header-left' }, e('h1', null, '沙盘地形等高线描绘工具'), e('span', { className: 'header-subtitle' }, 'Sandbox Topographic Contour Tool')), e('div', { className: 'header-right' }, e('span', { className: 'header-info' }, '共 ' + masters.length + ' 个记录'))), e('div', { className: 'workflow-bar' }, TOOL_STEPS.map(function (step, idx) {
             return e(React.Fragment, { key: step.id }, e('button', { className: 'workflow-step' + (at === step.id ? ' active' : ''), onClick: function () { actTool(step.id); }, title: step.desc }, e('span', { className: 'wf-icon' }, step.icon), e('span', { className: 'wf-label' }, step.label), e('span', { className: 'wf-num' }, String(idx + 1))), idx < TOOL_STEPS.length - 1 ? e('div', { className: 'wf-connector' }) : null);
         }), at !== 'none' ? e('div', { className: 'workflow-actions' }, dp.length > 0 ? e('button', { className: 'btn-small btn-primary', onClick: finishDraw }, '完成') : null, e('button', { className: 'btn-tiny', onClick: cancelDraw }, '取消')) : null), rb ? e('div', { className: 'rollback-banner' }, e('span', null, '↺ ' + rb)) : null, hhe ? e('div', { className: 'error-banner' }, e('span', null, '⚠ 存在未解决的高优先级误差备注，请检查"结果"面板')) : null, tm && !rb && !hhe ? e('div', { className: 'tool-banner' }, e('span', null, '🛠 ' + tm)) : null, e('div', { className: 'main-content' }, e('aside', { className: 'sidebar left-sidebar' }, e('div', { className: 'sidebar-title' }, '记录列表'), e('div', { className: 'record-list' }, loading ? e('div', { className: 'loading' }, '加载中...') : null, !loading ? masters.map(function (m) {
             return e('div', { key: m.id, className: 'record-item' + (sid === m.id ? ' active' : ''), onClick: function () { setSid(m.id); } }, e('div', { className: 'record-name' }, m.name), e('div', { className: 'record-meta' }, e('span', { className: 'record-batch' }, m.batch), sb(m.status)), e('div', { className: 'record-version' }, 'v' + m.version + ' · ' + m.terrainType));
-        }) : null), fd ? e('div', { className: 'data-structure-hint' }, e('div', { className: 'hint-title' }, '数据结构'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot master' }), '主记录 · 地形图'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot detail' }), '明细 · ' + fd.details.length + ' 条等高线'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot history' }), '历史 · ' + fd.histories.length + ' 条操作'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot result' }), '结果 · ' + fd.result.pointLabels.length + ' 标签')) : null), e('main', { className: 'canvas-area' }, fd ? e(MapCanvas, { master: fd.master, details: fd.details, histories: fd.histories, result: fd.result, drawPoints: dp, activeTool: at, onCanvasClick: canvasClick })
+        }) : null), fd && fd.result ? e('div', { className: 'data-structure-hint' }, e('div', { className: 'hint-title' }, '数据结构'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot master' }), '主记录 · 地形图'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot detail' }), '明细 · ' + fd.details.length + ' 条等高线'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot history' }), '历史 · ' + fd.histories.length + ' 条操作'), e('div', { className: 'hint-item' }, e('span', { className: 'hint-dot result' }), '结果 · ' + (fd.result.pointLabels || []).length + ' 标签')) : null), e('main', { className: 'canvas-area' }, fd ? e(MapCanvas, { master: fd.master, details: fd.details, histories: fd.histories, result: fd.result, drawPoints: dp, activeTool: at, onCanvasClick: canvasClick })
             : e('div', { className: 'empty-state' }, e('div', { className: 'empty-icon' }, '🗺️'), e('h3', null, '选择一个记录开始'), e('p', null, '从左侧列表选择一个沙盘地形记录'))), e('aside', { className: 'sidebar right-sidebar' }, e('div', { className: 'tab-bar' }, ['layers', 'info', 'history', 'result'].map(function (t) {
             return e('button', { key: t, className: 'tab-btn' + (tab === t ? ' active' : ''), onClick: function () { setTab(t); } }, tabLabels[t]);
         })), e('div', { className: 'tab-content' }, fd && tab === 'layers' ? e(LayerPanel, { details: fd.details, result: fd.result, onToggleLayer: toggleLayer }) : null, fd && tab === 'info' ? e(InfoPanel, { master: fd.master, snapshots: fd.snapshots, onCreateSnapshot: createSnap, onRestoreSnapshot: restoreSnap }) : null, fd && tab === 'history' ? e(HistoryPanel, { histories: fd.histories }) : null, fd && tab === 'result' ? e(ResultPanel, { result: fd.result, onToggleError: toggleErr, onExportImage: expImg, onExportData: expData }) : null, !fd ? e('div', { className: 'empty-tab' }, '请选择记录') : null))));
