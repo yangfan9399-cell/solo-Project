@@ -66,18 +66,38 @@ class GameManager
     public function executeProbe(
         GameSession $session,
         float $direction,
-        float $frequency
+        float $frequency,
+        ?int $launchX = null,
+        ?int $launchY = null
     ): array {
         if ($session->status !== 'playing') {
             return ['success' => false, 'message' => '游戏已结束'];
+        }
+
+        $launchX = $launchX ?? $session->player_x;
+        $launchY = $launchY ?? $session->player_y;
+
+        $width = $session->cave_data['width'];
+        $height = $session->cave_data['height'];
+        $grid = $session->cave_data['grid'];
+        $revealedMap = $session->revealed_map;
+
+        if ($launchX < 0 || $launchX >= $width || $launchY < 0 || $launchY >= $height) {
+            return ['success' => false, 'message' => '发射点超出洞穴边界'];
+        }
+        if ($grid[$launchY][$launchX] === 1) {
+            return ['success' => false, 'message' => '发射点必须在通道上，不能选在墙壁中'];
+        }
+        if (!isset($revealedMap[$launchY][$launchX]) || !$revealedMap[$launchY][$launchX]['revealed']) {
+            return ['success' => false, 'message' => '发射点必须选择在已探测的区域内'];
         }
 
         $sequenceNumber = $session->probeRecords()->count() + 1;
 
         $probeRecord = ProbeRecord::create([
             'game_session_id' => $session->id,
-            'launch_point_x' => $session->player_x,
-            'launch_point_y' => $session->player_y,
+            'launch_point_x' => $launchX,
+            'launch_point_y' => $launchY,
             'probe_direction' => $direction,
             'frequency' => $frequency,
             'sequence_number' => $sequenceNumber,
@@ -85,8 +105,8 @@ class GameManager
 
         $result = $this->sonarService->probe(
             $session->cave_data,
-            $session->player_x,
-            $session->player_y,
+            $launchX,
+            $launchY,
             $direction,
             $frequency
         );
@@ -142,8 +162,11 @@ class GameManager
 
         $this->consumeResources($session, $result['oxygen_cost'], $result['durability_cost']);
 
+        $isCustomLaunch = $launchX !== $session->player_x || $launchY !== $session->player_y;
+        $launchInfo = $isCustomLaunch ? "发射点 ({$launchX},{$launchY})，" : '';
+
         $logTitle = "声波探测 #{$sequenceNumber}";
-        $logMessage = "方向 {$direction}°，频率 {$frequency}kHz，探测到{$wallTypeLabel}，距离 {$result['measured_distance']}，置信度 " . round($result['confidence'] * 100, 1) . "%";
+        $logMessage = "{$launchInfo}方向 {$direction}°，频率 {$frequency}kHz，探测到{$wallTypeLabel}，距离 {$result['measured_distance']}，置信度 " . round($result['confidence'] * 100, 1) . "%";
         if ($result['is_false_echo']) {
             $logMessage .= ' [假回声警告]';
         }
@@ -155,6 +178,9 @@ class GameManager
             'message' => $logMessage,
             'details' => [
                 'probe_record_id' => $probeRecord->id,
+                'launch_point_x' => $launchX,
+                'launch_point_y' => $launchY,
+                'is_custom_launch' => $isCustomLaunch,
                 'direction' => $direction,
                 'frequency' => $frequency,
                 'wall_type' => $result['wall_type'],
@@ -428,6 +454,7 @@ class GameManager
                 'oxygen_change' => 0,
                 'durability_change' => 0,
             ]);
+            $session->save();
         } elseif ($session->equipment_durability <= 0) {
             ExpeditionLog::create([
                 'game_session_id' => $session->id,
@@ -437,6 +464,7 @@ class GameManager
                 'oxygen_change' => 0,
                 'durability_change' => 0,
             ]);
+            $session->save();
         }
     }
 }

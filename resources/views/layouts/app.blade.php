@@ -178,6 +178,11 @@
         .cell-conf-low { opacity: 0.5; }
         .cell-conf-med { opacity: 0.75; }
         .cell-conf-high { opacity: 1; }
+        .cell-launch {
+            box-shadow: 0 0 0 2px #ff9800, 0 0 10px rgba(255, 152, 0, 0.8) !important;
+            border-radius: 3px;
+            z-index: 2;
+        }
         .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; font-size: 12px; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .legend-color { width: 16px; height: 16px; border-radius: 3px; }

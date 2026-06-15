@@ -57,12 +57,23 @@ class GameController extends Controller
         $request->validate([
             'direction' => 'required|numeric|min:0|max:360',
             'frequency' => 'required|numeric|min:10|max:100',
+            'launch_x' => 'nullable|integer|min:0',
+            'launch_y' => 'nullable|integer|min:0',
         ]);
+
+        $launchX = $request->has('launch_x') && $request->has('launch_y')
+            ? (int)$request->launch_x
+            : null;
+        $launchY = $request->has('launch_x') && $request->has('launch_y')
+            ? (int)$request->launch_y
+            : null;
 
         $result = $this->gameManager->executeProbe(
             $session,
             (float)$request->direction,
-            (float)$request->frequency
+            (float)$request->frequency,
+            $launchX,
+            $launchY
         );
 
         if (!$result['success']) {
@@ -79,6 +90,8 @@ class GameController extends Controller
             'confidence' => $result['result']['confidence'],
             'is_false_echo' => $result['result']['is_false_echo'],
             'revealed_count' => count($result['result']['revealed_points']),
+            'launch_point_x' => $result['probe_record']->launch_point_x,
+            'launch_point_y' => $result['probe_record']->launch_point_y,
             'session' => [
                 'oxygen' => $result['session']->oxygen,
                 'max_oxygen' => $result['session']->max_oxygen,

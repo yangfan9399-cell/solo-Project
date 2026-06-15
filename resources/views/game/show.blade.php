@@ -78,23 +78,40 @@
             <div class="card-title">📡 声波探测控制</div>
             <div class="grid grid-2">
                 <div class="form-group">
+                    <label class="form-label">
+                        发射点: <span id="launchPointValue" class="text-info">({{ $session->player_x }}, {{ $session->player_y }})</span>
+                        <span id="launchPointStatus" class="badge badge-secondary" style="margin-left:8px;">当前位置</span>
+                    </label>
+                    <button id="selectLaunchBtn" class="btn btn-info btn-sm mt-5" style="width:100%;" @if($session->status !== 'playing') disabled @endif>
+                        🎯 选择地图上的发射点
+                    </button>
+                    <button id="resetLaunchBtn" class="btn btn-secondary btn-sm mt-5 hidden" style="width:100%;" @if($session->status !== 'playing') disabled @endif>
+                        ↩️ 重置为玩家位置
+                    </button>
+                    <div class="text-muted mt-10" style="font-size:11px;">
+                        可选择已探测区域内任意通道作为声波发射源，方便从不同位置拼接洞穴轮廓
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-label">探测方向 (°): <span id="directionValue" class="text-info">0</span></label>
                     <input type="range" id="direction" class="form-range" min="0" max="360" value="0" step="1" @if($session->status !== 'playing') disabled @endif>
-                    <div class="flex gap-10 mt-10">
+                    <div class="flex gap-10 mt-10 flex-wrap">
                         @foreach([0, 45, 90, 135, 180, 225, 270, 315] as $d)
                             <button type="button" class="btn btn-secondary btn-sm set-direction" data-dir="{{ $d }}" @if($session->status !== 'playing') disabled @endif>{{ $d }}°</button>
                         @endforeach
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">探测频率 (kHz): <span id="frequencyValue" class="text-info">40</span></label>
-                    <input type="range" id="frequency" class="form-range" min="10" max="100" value="40" step="1" @if($session->status !== 'playing') disabled @endif>
-                    <div class="flex gap-10 mt-10">
-                        @foreach([20, 30, 40, 50, 60, 80] as $f)
-                            <button type="button" class="btn btn-secondary btn-sm set-frequency" data-freq="{{ $f }}" @if($session->status !== 'playing') disabled @endif>{{ $f }}kHz</button>
-                        @endforeach
-                    </div>
-                    <div class="text-muted mt-10" style="font-size:11px;">推荐频率 30-55kHz，准确率较高</div>
+            </div>
+            <div class="form-group mt-10">
+                <label class="form-label">探测频率 (kHz): <span id="frequencyValue" class="text-info">40</span></label>
+                <input type="range" id="frequency" class="form-range" min="10" max="100" value="40" step="1" @if($session->status !== 'playing') disabled @endif>
+                <div class="flex gap-10 mt-10 flex-wrap">
+                    @foreach([15, 25, 35, 45, 55, 70, 90] as $f)
+                        <button type="button" class="btn btn-secondary btn-sm set-frequency" data-freq="{{ $f }}" @if($session->status !== 'playing') disabled @endif>{{ $f }}kHz</button>
+                    @endforeach
+                </div>
+                <div class="text-muted mt-10" style="font-size:11px;">
+                    推荐频率 30-55kHz，准确率较高；频率过低或过高会大幅增加假回声概率和氧气消耗
                 </div>
             </div>
             <div class="flex gap-10 mt-10">
@@ -105,8 +122,11 @@
                     👣 点击地图移动
                 </button>
             </div>
+            <div id="launchHint" class="alert alert-info mt-10 hidden">
+                🎯 发射点选择模式：点击地图上<strong>已探测的通道格</strong>作为声波发射源（不能选墙壁）
+            </div>
             <div id="moveHint" class="alert alert-warning mt-10 hidden">
-                👆 点击地图上已探测的通道区域进行移动（单次移动不超过5格）
+                👆 移动模式：点击地图上已探测的通道区域进行移动（单次移动不超过5格）
             </div>
         </div>
     </div>
@@ -203,12 +223,19 @@ let mapDataUrl = document.getElementById('mapDataUrl').value;
 
 let currentMapData = null;
 let isMovingMode = false;
+let isSelectingLaunchMode = false;
+let selectedLaunchX = {{ $session->player_x }};
+let selectedLaunchY = {{ $session->player_y }};
 let echoChart = null;
 
 const directionSlider = document.getElementById('direction');
 const frequencySlider = document.getElementById('frequency');
 const directionValue = document.getElementById('directionValue');
 const frequencyValue = document.getElementById('frequencyValue');
+const launchPointValue = document.getElementById('launchPointValue');
+const launchPointStatus = document.getElementById('launchPointStatus');
+const selectLaunchBtn = document.getElementById('selectLaunchBtn');
+const resetLaunchBtn = document.getElementById('resetLaunchBtn');
 
 directionSlider?.addEventListener('input', e => directionValue.textContent = e.target.value);
 frequencySlider?.addEventListener('input', e => frequencyValue.textContent = e.target.value);
@@ -229,6 +256,49 @@ document.querySelectorAll('.set-frequency').forEach(btn => {
 
 document.getElementById('probeBtn')?.addEventListener('click', executeProbe);
 document.getElementById('moveBtn')?.addEventListener('click', toggleMoveMode);
+selectLaunchBtn?.addEventListener('click', toggleSelectLaunchMode);
+resetLaunchBtn?.addEventListener('click', resetLaunchPoint);
+
+function updateLaunchPointDisplay() {
+    if (!launchPointValue) return;
+    launchPointValue.textContent = `(${selectedLaunchX}, ${selectedLaunchY})`;
+    const playerX = currentMapData?.player_x ?? {{ $session->player_x }};
+    const playerY = currentMapData?.player_y ?? {{ $session->player_y }};
+    if (selectedLaunchX === playerX && selectedLaunchY === playerY) {
+        launchPointStatus.textContent = '当前位置';
+        launchPointStatus.className = 'badge badge-secondary';
+        resetLaunchBtn?.classList.add('hidden');
+    } else {
+        launchPointStatus.textContent = '自定义发射点';
+        launchPointStatus.className = 'badge badge-info';
+        resetLaunchBtn?.classList.remove('hidden');
+    }
+}
+
+function toggleSelectLaunchMode() {
+    isSelectingLaunchMode = !isSelectingLaunchMode;
+    const hint = document.getElementById('launchHint');
+    if (isSelectingLaunchMode) {
+        selectLaunchBtn.classList.add('btn-primary');
+        selectLaunchBtn.classList.remove('btn-info');
+        selectLaunchBtn.textContent = '❌ 取消选择';
+        hint.classList.remove('hidden');
+        if (isMovingMode) toggleMoveMode();
+    } else {
+        selectLaunchBtn.classList.remove('btn-primary');
+        selectLaunchBtn.classList.add('btn-info');
+        selectLaunchBtn.textContent = '🎯 选择地图上的发射点';
+        hint.classList.add('hidden');
+    }
+    if (currentMapData) renderMap(currentMapData);
+}
+
+function resetLaunchPoint() {
+    selectedLaunchX = currentMapData?.player_x ?? {{ $session->player_x }};
+    selectedLaunchY = currentMapData?.player_y ?? {{ $session->player_y }};
+    updateLaunchPointDisplay();
+    if (currentMapData) renderMap(currentMapData);
+}
 
 async function executeProbe() {
     const btn = document.getElementById('probeBtn');
@@ -236,10 +306,15 @@ async function executeProbe() {
     btn.textContent = '探测中...';
 
     try {
-        const result = await api(probeUrl, 'POST', {
+        const body = {
             direction: parseFloat(directionSlider.value),
             frequency: parseFloat(frequencySlider.value),
-        });
+        };
+        if (selectedLaunchX !== null && selectedLaunchY !== null) {
+            body.launch_x = selectedLaunchX;
+            body.launch_y = selectedLaunchY;
+        }
+        const result = await api(probeUrl, 'POST', body);
 
         drawEchoCurve(result.echo_curve, result.measured_distance, result.is_false_echo);
         updateStats(result.session);
@@ -263,6 +338,7 @@ function toggleMoveMode() {
         btn.classList.remove('btn-warning');
         btn.textContent = '❌ 取消移动';
         hint.classList.remove('hidden');
+        if (isSelectingLaunchMode) toggleSelectLaunchMode();
     } else {
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-warning');
@@ -287,9 +363,12 @@ function showProbeResult(result) {
     const wallLabels = { normal: '普通岩壁', wet: '潮湿墙面', crack: '裂隙', collapse: '塌方区域', empty: '空洞' };
     const wallType = wallLabels[result.wall_type] || result.wall_type;
 
-    let html = `<div class="flex gap-10">`;
+    let html = `<div class="flex gap-10 flex-wrap">`;
     html += `<span class="badge ${result.is_false_echo ? 'badge-warning' : 'badge-info'}">${result.is_false_echo ? '⚠️ 假回声' : '✓ 正常回波'}</span>`;
     html += `<span class="badge badge-secondary">${wallType}</span>`;
+    if (result.launch_point_x !== undefined && result.launch_point_y !== undefined) {
+        html += `<span class="badge badge-info">🎯 发射点 (${result.launch_point_x}, ${result.launch_point_y})</span>`;
+    }
     html += `</div>`;
     html += `<div style="margin-top:8px;">`;
     html += `📏 测量距离: <strong class="text-info">${result.measured_distance}</strong>`;
@@ -369,6 +448,7 @@ async function loadMapData() {
         const data = await api(mapDataUrl);
         currentMapData = data;
         renderMap(data);
+        updateLaunchPointDisplay();
         document.getElementById('mapCoverage').textContent = `覆盖率: ${data.revealed_percentage}%`;
         document.getElementById('mapAccuracy').textContent = `准确率: ${data.accuracy_percentage}%`;
     } catch (e) {
@@ -392,6 +472,7 @@ function renderMap(data) {
             const cell = data.revealed_map[y][x];
             const isPlayer = data.player_x === x && data.player_y === y;
             const isExit = data.exit_x === x && data.exit_y === y;
+            const isSelectedLaunch = selectedLaunchX === x && selectedLaunchY === y;
 
             let cellClass = 'map-cell ';
             let title = `(${x}, ${y}) `;
@@ -439,8 +520,22 @@ function renderMap(data) {
                 }
             }
 
-            const clickable = isMovingMode && cell.revealed && (cell.type === 'path' || isPlayer || isExit);
-            html += `<div class="${cellClass}" title="${title}" data-x="${x}" data-y="${y}" ${clickable ? 'style="cursor:pointer;"' : ''}></div>`;
+            if (isSelectedLaunch) {
+                cellClass += ' cell-launch';
+                title += ' [🎯 发射点]';
+            }
+
+            let isClickable = false;
+            let extraStyle = '';
+            if (isMovingMode) {
+                isClickable = cell.revealed && (cell.type === 'path' || isPlayer || isExit);
+                if (isClickable) extraStyle = 'cursor:pointer; outline:1px dashed rgba(255,193,7,0.6);';
+            } else if (isSelectingLaunchMode) {
+                isClickable = cell.revealed && (cell.type === 'path' || isPlayer || isExit);
+                if (isClickable) extraStyle = 'cursor:pointer; outline:1px dashed rgba(79,172,254,0.8);';
+            }
+
+            html += `<div class="${cellClass}" title="${title}" data-x="${x}" data-y="${y}" ${isClickable ? `style="${extraStyle}"` : ''}></div>`;
         }
         html += '</div>';
     }
@@ -449,12 +544,46 @@ function renderMap(data) {
 
     container.querySelectorAll('.map-cell').forEach(cell => {
         cell.addEventListener('click', () => {
-            if (!isMovingMode) return;
             const x = parseInt(cell.dataset.x);
             const y = parseInt(cell.dataset.y);
-            movePlayer(x, y);
+            if (isMovingMode) {
+                movePlayer(x, y);
+            } else if (isSelectingLaunchMode) {
+                selectLaunchPoint(x, y);
+            }
         });
     });
+}
+
+function selectLaunchPoint(x, y) {
+    if (!currentMapData) return;
+    const cell = currentMapData.revealed_map[y][x];
+    if (!cell || !cell.revealed || cell.type === 'path' === false) {
+        if (!(currentMapData.player_x === x && currentMapData.player_y === y)) {
+            if (!(currentMapData.exit_x === x && currentMapData.exit_y === y)) {
+                if (cell.type === 'unknown' || cell.type !== 'path') {
+                    alert('发射点必须选择已探测的通道格（墙壁不可选）');
+                    return;
+                }
+            }
+        }
+    }
+    if (cell && cell.revealed) {
+        const isWall = cell.type && cell.type !== 'path' && cell.type !== 'unknown';
+        if (isWall) {
+            alert('发射点必须选择已探测的通道格（墙壁不可选）');
+            return;
+        }
+    }
+    selectedLaunchX = x;
+    selectedLaunchY = y;
+    updateLaunchPointDisplay();
+    isSelectingLaunchMode = false;
+    selectLaunchBtn.classList.remove('btn-primary');
+    selectLaunchBtn.classList.add('btn-info');
+    selectLaunchBtn.textContent = '🎯 选择地图上的发射点';
+    document.getElementById('launchHint')?.classList.add('hidden');
+    renderMap(currentMapData);
 }
 
 async function movePlayer(x, y) {

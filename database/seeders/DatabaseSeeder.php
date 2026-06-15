@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         $directions = [0, 45, 90, 135, 180, 225, 270, 315];
         $frequencies = [35, 40, 45, 50];
 
-        $probeCount = min(15, count($directions) * 2);
+        $probeCount = min(10, count($directions));
         for ($i = 0; $i < $probeCount; $i++) {
             $dir = $directions[$i % count($directions)];
             $freq = $frequencies[array_rand($frequencies)];
@@ -40,15 +40,35 @@ class DatabaseSeeder extends Seeder
 
         if ($session->status === 'playing') {
             $path = $this->findPath($caveData['grid'], $startPos, $exitPos);
-            foreach ($path as $step) {
+            $halfLen = (int)(count($path) / 2);
+            $midPoint = $path[$halfLen] ?? $exitPos;
+            for ($j = 0; $j <= $halfLen; $j++) {
                 if ($session->status !== 'playing') break;
-                $gameManager->movePlayer($session, $step['x'], $step['y']);
+                $gameManager->movePlayer($session, $path[$j]['x'], $path[$j]['y']);
                 $session = $session->fresh();
+            }
+
+            if ($session->status === 'playing') {
+                $customLaunchDirs = [45, 135, 225, 315];
+                foreach ($customLaunchDirs as $idx => $dir) {
+                    if ($session->status !== 'playing') break;
+                    $freq = $frequencies[$idx % count($frequencies)];
+                    $gameManager->executeProbe($session, $dir, $freq, $midPoint['x'], $midPoint['y']);
+                    $session = $session->fresh();
+                }
+            }
+
+            if ($session->status === 'playing') {
+                for ($j = $halfLen + 1; $j < count($path); $j++) {
+                    if ($session->status !== 'playing') break;
+                    $gameManager->movePlayer($session, $path[$j]['x'], $path[$j]['y']);
+                    $session = $session->fresh();
+                }
             }
         }
 
         if ($session->status === 'playing') {
-            $session = $gameManager->endSession($session, '种子样本：正常完成探险');
+            $session = $gameManager->endSession($session, '种子样本：正常完成探险，含自定义发射点探测');
         }
 
         $finalScore = $scoreCalculator->recalculate($session);
@@ -63,32 +83,76 @@ class DatabaseSeeder extends Seeder
         $session = $gameManager->createNewSession('样本-氧气耗尽-李探险家');
         $caveData = $session->cave_data;
 
-        $badDirections = [10, 20, 30, 350, 340, 330];
-        $badFrequencies = [15, 85, 90, 10];
+        $badDirections = [10, 25, 350, 340, 170, 190];
+        $badFrequencies = [12, 15, 82, 88, 92, 10];
 
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 8; $i++) {
             $dir = $badDirections[array_rand($badDirections)];
             $freq = $badFrequencies[array_rand($badFrequencies)];
             $gameManager->executeProbe($session, $dir, $freq);
             $session = $session->fresh();
+            if ($session->status !== 'playing') break;
+        }
 
-            if ($session->status !== 'playing') {
-                break;
-            }
-
-            if ($i % 3 === 0) {
-                $badX = $session->player_x + rand(-8, 8);
-                $badY = $session->player_y + rand(-8, 8);
+        if ($session->status === 'playing') {
+            for ($wander = 0; $wander < 6; $wander++) {
+                if ($session->status !== 'playing') break;
+                $badX = $session->player_x + rand(-6, 6);
+                $badY = $session->player_y + rand(-6, 6);
                 $gameManager->movePlayer($session, $badX, $badY);
                 $session = $session->fresh();
             }
         }
 
         if ($session->status === 'playing') {
-            $session->oxygen = 1;
+            $revealedMap = $session->revealed_map;
+            $farLaunchX = null;
+            $farLaunchY = null;
+            $playerX = $session->player_x;
+            $playerY = $session->player_y;
+            $maxDist = 0;
+            for ($y = 0; $y < count($revealedMap); $y++) {
+                for ($x = 0; $x < count($revealedMap[0]); $x++) {
+                    $cell = $revealedMap[$y][$x] ?? null;
+                    if ($cell && $cell['revealed'] && ($cell['type'] ?? null) === 'path') {
+                        $dist = abs($x - $playerX) + abs($y - $playerY);
+                        if ($dist > $maxDist && $dist >= 3) {
+                            $maxDist = $dist;
+                            $farLaunchX = $x;
+                            $farLaunchY = $y;
+                        }
+                    }
+                }
+            }
+
+            for ($k = 0; $k < 12; $k++) {
+                if ($session->status !== 'playing') break;
+                $dir = $badDirections[array_rand($badDirections)];
+                $freq = $badFrequencies[array_rand($badFrequencies)];
+                if ($farLaunchX !== null && $k % 2 === 0) {
+                    $gameManager->executeProbe($session, $dir, $freq, $farLaunchX, $farLaunchY);
+                } else {
+                    $gameManager->executeProbe($session, $dir, $freq);
+                }
+                $session = $session->fresh();
+
+                if ($session->status === 'playing' && $k % 4 === 0) {
+                    $badX = $session->player_x + rand(-8, 8);
+                    $badY = $session->player_y + rand(-8, 8);
+                    $gameManager->movePlayer($session, $badX, $badY);
+                    $session = $session->fresh();
+                }
+            }
+        }
+
+        if ($session->status === 'playing') {
+            $session->oxygen = 2;
             $session->save();
-            $gameManager->executeProbe($session, 45, 80);
-            $session = $session->fresh();
+            for ($f = 0; $f < 3; $f++) {
+                if ($session->status !== 'playing') break;
+                $gameManager->executeProbe($session, 180, 95);
+                $session = $session->fresh();
+            }
         }
 
         $finalScore = $scoreCalculator->recalculate($session);
