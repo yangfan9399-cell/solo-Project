@@ -1,4 +1,4 @@
-import { createContextId, useContextProvider, useStore } from '@builder.io/qwik';
+import { createContextId, useContextProvider, useStore, component$, Slot } from '@builder.io/qwik';
 import type {
   GameSession,
   BlindBox,
@@ -89,3 +89,9 @@ export function createGameStore(): GameState {
 export function provideGameStore(store: GameState): void {
   useContextProvider(GameContext, store);
 }
+
+export const GameStoreProvider = component$(() => {
+  const store = createGameStore();
+  provideGameStore(store);
+  return <Slot />;
+});

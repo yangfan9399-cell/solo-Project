@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { getMainRecordBySessionAndRound, getPriceCurveByMainId } from '~/server/gameService';
+import { getMainRecordBySessionAndRound, getPriceCurveByMainId } from '~/server/repositories';
 
 export const onGet: RequestHandler = async ({ params, json }) => {
   try {

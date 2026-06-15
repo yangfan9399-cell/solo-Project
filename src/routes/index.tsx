@@ -211,8 +211,8 @@ const GameIntro = component$(() => {
         store.session = data.data.session;
         store.ledgerEntries = data.data.ledgerEntries;
         store.allRounds = data.data.rounds;
-        store.totalScore = data.data.session.total_score;
-        store.currentMoney = data.data.session.current_money;
+        store.totalScore = data.data.session.totalScore;
+        store.currentMoney = data.data.session.currentMoney;
       }
     } catch (e) {
       console.error('Failed to load session data:', e);
@@ -229,7 +229,7 @@ const GameIntro = component$(() => {
       
       if (data.success) {
         store.totalScore = data.data.newScore;
-        store.currentMoney = data.data.session.current_money;
+        store.currentMoney = data.data.session.currentMoney;
         await loadSessionData();
       }
     } catch (e) {
@@ -619,16 +619,22 @@ const GamePlay = component$<GamePlayProps>(({
       
       {store.roundSummary && store.phase === 'settled' && (
         <div class="space-y-6">
-          <BlindBoxComparison summary={store.roundSummary} />
-          
-          {store.priceCurve.length > 0 && (
-            <PriceCurveChart
-              pricePoints={store.priceCurve}
-              playerPrice={store.roundSummary.playerPrice}
-              marketPrice={store.marketSuggestedPrice}
-              actualValue={store.roundSummary.actualValue}
-            />
+          {store.feedback && (
+            <FeedbackCard feedback={store.feedback} returnEvent={store.returnEvent} />
           )}
+          
+          <div class="grid lg:grid-cols-2 gap-6">
+            <BlindBoxComparison summary={store.roundSummary} />
+            
+            {store.priceCurve.length > 0 && (
+              <PriceCurveChart
+                pricePoints={store.priceCurve}
+                playerPrice={store.roundSummary.playerPrice}
+                marketPrice={store.marketSuggestedPrice}
+                actualValue={store.roundSummary.actualValue}
+              />
+            )}
+          </div>
           
           <LedgerView
             entries={store.ledgerEntries}
@@ -660,12 +666,18 @@ const GamePlay = component$<GamePlayProps>(({
             </div>
           </div>
           
-          <div class="flex justify-center gap-4">
+          <div class="flex justify-center gap-4 flex-wrap">
             <button
               onClick$={onNextRound$}
               class="px-8 py-4 bg-book-brown text-white text-xl font-bold rounded-lg shadow-lg hover:bg-book-sepia transition-all"
             >
               🔄 下一轮
+            </button>
+            <button
+              onClick$={onRecalculateScore$}
+              class="px-6 py-4 bg-gray-600 text-white text-lg font-bold rounded-lg shadow-lg hover:bg-gray-700 transition-all"
+            >
+              🔁 后端重算分数
             </button>
           </div>
         </div>

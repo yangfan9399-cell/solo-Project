@@ -9,8 +9,9 @@ function getLastInsertId(db: Database): number {
 
 function runQuery(db: Database, sql: string, params: any[] = []): number {
   db.run(sql, params);
+  const id = getLastInsertId(db);
   saveDatabase();
-  return getLastInsertId(db);
+  return id;
 }
 
 function getOne<T>(db: Database, sql: string, params: any[] = []): T | null {
@@ -206,10 +207,11 @@ export async function updateGameSession(sessionId: number, updates: Partial<{ ro
 
 export async function insertBlindBox(blindBox: Omit<BlindBox, 'id' | 'books'>, bookIds: number[]): Promise<number> {
   const db = await getDb();
-  db.run('BEGIN TRANSACTION');
   
   try {
-    const blindBoxId = runQuery(db, `
+    db.run('BEGIN TRANSACTION');
+    
+    db.run(`
       INSERT INTO blind_boxes (session_id, name, description, total_base_price, total_actual_value)
       VALUES (?, ?, ?, ?, ?)
     `, [
@@ -220,15 +222,17 @@ export async function insertBlindBox(blindBox: Omit<BlindBox, 'id' | 'books'>, b
       blindBox.totalActualValue,
     ]);
     
+    const blindBoxId = getLastInsertId(db);
+    
     for (const bookId of bookIds) {
-      runQuery(db, 'INSERT INTO blind_box_books (blind_box_id, book_id) VALUES (?, ?)', [blindBoxId, bookId]);
+      db.run('INSERT INTO blind_box_books (blind_box_id, book_id) VALUES (?, ?)', [blindBoxId, bookId]);
     }
     
     db.run('COMMIT');
     saveDatabase();
     return blindBoxId;
   } catch (e) {
-    db.run('ROLLBACK');
+    try { db.run('ROLLBACK'); } catch (_) {}
     throw e;
   }
 }
@@ -554,18 +558,19 @@ export async function getLedgerEntriesBySession(sessionId: number): Promise<Ledg
 
 export async function rollbackLedgerEntry(entryId: number, sessionId: number, roundNumber: number): Promise<number> {
   const db = await getDb();
-  db.run('BEGIN TRANSACTION');
   
   try {
+    db.run('BEGIN TRANSACTION');
+    
     const entry = getOne<any>(db, 'SELECT * FROM ledger_entries WHERE id = ?', [entryId]);
     if (!entry || entry.rolled_back === 1) {
       db.run('ROLLBACK');
       throw new Error('Entry not found or already rolled back');
     }
     
-    runQuery(db, 'UPDATE ledger_entries SET rolled_back = 1 WHERE id = ?', [entryId]);
+    db.run('UPDATE ledger_entries SET rolled_back = 1 WHERE id = ?', [entryId]);
     
-    const rollbackId = runQuery(db, `
+    db.run(`
       INSERT INTO ledger_entries (session_id, round_number, type, amount, description, reference_id, rolled_back, rollback_id)
       VALUES (?, ?, 'rollback', ?, ?, ?, 0, ?)
     `, [
@@ -577,11 +582,13 @@ export async function rollbackLedgerEntry(entryId: number, sessionId: number, ro
       entryId,
     ]);
     
+    const rollbackId = getLastInsertId(db);
+    
     db.run('COMMIT');
     saveDatabase();
     return rollbackId;
   } catch (e) {
-    db.run('ROLLBACK');
+    try { db.run('ROLLBACK'); } catch (_) {}
     throw e;
   }
 }

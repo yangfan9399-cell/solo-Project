@@ -1,12 +1,11 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
 import {
   submitPrice,
-  getBlindBoxById,
-  getCustomerById,
   recordInventoryCost,
   recordSale,
   recordReturn,
 } from '~/server/gameService';
+import { getBlindBoxById, getCustomerById } from '~/server/repositories';
 
 export const onPost: RequestHandler = async ({ params, request, json }) => {
   try {

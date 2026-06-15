@@ -1,5 +1,6 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import { calculateRoundScore, getMainRecordBySessionAndRound } from '~/server/gameService';
+import { calculateRoundScore } from '~/server/gameService';
+import { getMainRecordBySessionAndRound } from '~/server/repositories';
 
 export const onPost: RequestHandler = async ({ params, json }) => {
   try {
