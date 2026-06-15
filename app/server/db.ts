@@ -1,26 +1,26 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import fs from 'fs';
 
-let db: Database.Database | null = null;
+let db: DatabaseSync | null = null;
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DATA_DIR, 'bell_tower.db');
 
-export function getDb(): Database.Database {
+export function getDb(): DatabaseSync {
   if (!db) {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+    db = new DatabaseSync(DB_PATH);
+    db.exec('PRAGMA journal_mode = WAL');
+    db.exec('PRAGMA foreign_keys = ON');
     initTables(db);
   }
   return db;
 }
 
-function initTables(database: Database.Database) {
+function initTables(database: DatabaseSync) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS game_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,4 +122,26 @@ export function closeDb() {
     db.close();
     db = null;
   }
+}
+
+export function withTransaction<T>(db: DatabaseSync, fn: () => T): T {
+  db.exec('BEGIN');
+  try {
+    const result = fn();
+    db.exec('COMMIT');
+    return result;
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
+}
+
+export function queryAll<T>(stmt: ReturnType<DatabaseSync['prepare']>, ...params: unknown[]): T[] {
+  return (stmt.all as any)(...params) as unknown as T[];
+}
+
+export function queryGet<T>(stmt: ReturnType<DatabaseSync['prepare']>, ...params: unknown[]): T | undefined {
+  const row = (stmt.get as any)(...params);
+  if (!row) return undefined;
+  return row as unknown as T;
 }

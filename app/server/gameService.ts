@@ -1,4 +1,4 @@
-import { getDb } from './db';
+import { getDb, withTransaction } from './db';
 import type {
   GameSession,
   AdjustmentDetail,
@@ -161,7 +161,7 @@ export function createSession(
 ): RuntimeState {
   const db = getDb();
   const uuid = generateUuid();
-  const tx = db.transaction(() => {
+  withTransaction(db, () => {
     const info = db.prepare(`
       INSERT INTO game_sessions (session_uuid, player_name, status, current_day, total_days, seed_scenario)
       VALUES (?, ?, 'playing', 1, ?, ?)
@@ -232,7 +232,6 @@ export function createSession(
       VALUES (?, 1, 'change_gear_ratio', '初始化齿轮齿数', '48:36:24', ? || ':' || ? || ':' || ?)
     `).run(sessionId, gearA, gearB, gearC);
   });
-  tx();
   const state = getRuntimeState(uuid);
   if (!state) throw new Error('Failed to create session');
   return state;
@@ -252,7 +251,7 @@ export function applyAdjustment(sessionUuid: string, action: AdjustAction): Runt
   const sessionId = state.session.id;
   const day = state.session.current_day;
 
-  const tx = db.transaction(() => {
+  withTransaction(db, () => {
     if (action.type === 'pendulum') {
       const newLen = Number(action.payload.length);
       if (isNaN(newLen) || newLen < 900 || newLen > 1100) throw new Error('摆长必须在900-1100mm之间');
@@ -301,7 +300,7 @@ export function applyAdjustment(sessionUuid: string, action: AdjustAction): Runt
       const before = state.strikeOrder;
       const lastCal = db.prepare(`
         SELECT * FROM calibration_results WHERE session_id = ? AND day = ? ORDER BY id DESC LIMIT 1
-      `).get(sessionId, day) as CalibrationResult | undefined;
+      `).get(sessionId, day) as unknown as CalibrationResult | undefined;
       const lub = lastCal ? lastCal.lubrication_level_after : state.lubrication;
       db.prepare(`
         INSERT INTO calibration_results (session_id, day, lubrication_level_before, lubrication_level_after, strike_order_before, strike_order_after, error_seconds, target_error, pass_threshold)
@@ -332,7 +331,6 @@ export function applyAdjustment(sessionUuid: string, action: AdjustAction): Runt
       `).run(sessionId, day, part, before.toFixed(1) + '%', after.toFixed(1) + '%');
     }
   });
-  tx();
 
   const s = getRuntimeState(sessionUuid);
   if (!s) throw new Error('Session lost');
@@ -358,10 +356,10 @@ export function advanceDay(sessionUuid: string): RuntimeState {
     partWears: state.partWears,
   });
 
-  const tx = db.transaction(() => {
+  withTransaction(db, () => {
     const lastCal = db.prepare(`
       SELECT * FROM calibration_results WHERE session_id = ? AND day = ? ORDER BY id DESC LIMIT 1
-    `).get(sessionId, state.session.current_day) as CalibrationResult | undefined;
+    `).get(sessionId, state.session.current_day) as unknown as CalibrationResult | undefined;
 
     if (lastCal) {
       db.prepare(`
@@ -372,7 +370,7 @@ export function advanceDay(sessionUuid: string): RuntimeState {
 
     const lastErr = db.prepare(`
       SELECT * FROM error_data_points WHERE session_id = ? AND day = ?
-    `).get(sessionId, state.session.current_day) as ErrorDataPoint | undefined;
+    `).get(sessionId, state.session.current_day) as unknown as ErrorDataPoint | undefined;
     if (lastErr) {
       db.prepare(`UPDATE error_data_points SET error_seconds = ? WHERE id = ?`).run(eveningError, lastErr.id);
     }
@@ -431,7 +429,6 @@ export function advanceDay(sessionUuid: string): RuntimeState {
       `).run(sessionId, nextDay, morningError, TARGET_ERROR_SECONDS, TOLERANCE_SECONDS);
     }
   });
-  tx();
 
   const s = getRuntimeState(sessionUuid);
   if (!s) throw new Error('Session lost');
@@ -446,7 +443,7 @@ export function rollbackToDay(sessionUuid: string, targetDay: number): RuntimeSt
   const db = getDb();
   const sessionId = state.session.id;
 
-  const tx = db.transaction(() => {
+  withTransaction(db, () => {
     db.prepare(`DELETE FROM adjustment_details WHERE session_id = ? AND day > ?`).run(sessionId, targetDay);
     db.prepare(`DELETE FROM gear_ratio_history WHERE session_id = ? AND day > ?`).run(sessionId, targetDay);
     db.prepare(`DELETE FROM calibration_results WHERE session_id = ? AND day > ?`).run(sessionId, targetDay);
@@ -464,7 +461,6 @@ export function rollbackToDay(sessionUuid: string, targetDay: number): RuntimeSt
       VALUES (?, ?, 'rollback', '回滚游戏状态到第' || ? || '天', ?, ?)
     `).run(sessionId, targetDay, targetDay, `day=${state.session.current_day}`, `day=${targetDay}`);
   });
-  tx();
 
   const s = getRuntimeState(sessionUuid);
   if (!s) throw new Error('Session lost');
@@ -602,5 +598,5 @@ export function generateReport(sessionUuid: string): CalibrationReport | null {
 
 export function listSessions(limit = 20) {
   const db = getDb();
-  return db.prepare(`SELECT * FROM game_sessions ORDER BY id DESC LIMIT ?`).all(limit) as GameSession[];
+  return db.prepare(`SELECT * FROM game_sessions ORDER BY id DESC LIMIT ?`).all(limit) as unknown as GameSession[];
 }
