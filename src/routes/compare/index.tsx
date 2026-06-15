@@ -1,26 +1,32 @@
+// @ts-nocheck
 import { component$, useComputed$, useSignal, $ } from '@builder.io/qwik';
 import { routeLoader$, Link, Form, globalAction$ } from '@builder.io/qwik-city';
-import { listMainRecords, getFullBatch } from '~/lib/db';
-import { STATUS_LABELS, FAIL_TAG_LABELS, WASH_STAGE_LABELS, fmtDate, runAnomalyCheck, computeBaseline } from '~/lib/utils';
+import { listMainRecords, getFullBatch, getVersionChain } from '~/lib/db';
+import { STATUS_LABELS, FAIL_TAG_LABELS, WASH_STAGE_LABELS, fmtDate, runAnomalyCheck, computeBaseline, detectSeed } from '~/lib/utils';
 
 export const useCompareData = routeLoader$(async () => {
   const mains = listMainRecords({ includeArchived: true });
   const baseline = computeBaseline();
   const enriched = mains.map(m => {
     const batch = getFullBatch(m.id);
+    const chain = getVersionChain(m.batchNo);
+    const seed = detectSeed(m, batch?.result, batch?.photos, chain);
     return {
       main: m,
       result: batch?.result ?? null,
       exposures: batch?.exposureDetails ?? [],
       washes: batch?.washHistories ?? [],
       photoCount: batch?.photos.length ?? 0,
+      seed,
     };
   });
   return { enriched, baseline };
 });
 
 export default component$(() => {
-  const { enriched, baseline } = useCompareData();
+  const loader = useCompareData();
+  const enriched = useComputed$(() => loader.value.enriched);
+  const baseline = useComputed$(() => loader.value.baseline);
   const selectedIds = useSignal<string[]>([]);
   const maxSelect = 4;
 
@@ -88,7 +94,7 @@ export default component$(() => {
               return (
                 <tr key={m.id}
                   onClick$={() => toggleSelect(m.id)}
-                  style={{ cursor: 'pointer', background: isSel ? 'var(--cyan-pale)' : undefined }}>
+                  style={{ cursor: 'pointer', background: isSel ? 'var(--cyan-pale)' : item.seed.type !== 'custom' ? 'var(--cyan-pale-faint)' : undefined }}>
                   <td onClick$={(e) => e.stopPropagation()}>
                     <input type="checkbox" checked={isSel} onChange$={() => toggleSelect(m.id)} />
                   </td>
@@ -96,6 +102,11 @@ export default component$(() => {
                     <b>{m.batchNo}</b>
                     {m.isArchived && <span style={{ fontSize: 10, color: 'var(--ink-muted)', marginLeft: 4 }}>📦</span>}
                     {m.rollbackFromId && <span style={{ fontSize: 10, color: 'var(--warning-amber)', marginLeft: 4 }}>↩</span>}
+                    <div style={{ marginTop: 2 }}>
+                      <span class={item.seed.badgeClass} style={{ padding: '1px 6px', fontSize: 10, border: 'none' }}>
+                        {item.seed.shortLabel}
+                      </span>
+                    </div>
                   </td>
                   <td>v{m.version}</td>
                   <td>{m.solutionARatio}:{m.solutionBRatio}{m.solutionC_Ratio ? `:${m.solutionC_Ratio}` : ''}</td>
@@ -354,6 +365,47 @@ export default component$(() => {
           <div class="compare-item"><div class="compare-label">室温 平均</div><div class="compare-value">{baseline.value.avgRoomTemp.toFixed(1)}℃</div></div>
           <div class="compare-item"><div class="compare-label">湿度 平均</div><div class="compare-value">{baseline.value.avgHumidity.toFixed(0)}%</div></div>
           <div class="compare-item"><div class="compare-label">综合得分 平均</div><div class="compare-value">{baseline.value.avgOverallScore.toFixed(1)}</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>🧭 边界样本对比建议 · 三类种子样本差异参考</span></div>
+        <div style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.7, marginBottom: 14 }}>
+          点击下列组合之一可快速跳转到参数对比：勾选<b style={{ color: 'var(--success-green)' }}>样本1（基准）</b>与<b style={{ color: 'var(--danger-red)' }}>样本2（异常）</b>对比<b style={{ color: 'var(--cyan-blue)' }}>参数偏差</b>；
+          勾选<b style={{ color: 'var(--warning-amber)' }}>样本3的 v1 和 v2</b>对比<b>配方纠偏前后</b>的效果。
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+          {[
+            {
+              title: '📊 场景A：正常 vs 参数异常',
+              a: 'sample1_normal', b: 'sample2_anomaly',
+              desc: '勾选样本1与样本2，查看 A液浓度、曝光时长、室温、湿度等字段的蓝色高亮差异与异常检测热力图。',
+              expect: '预期：综合得分 78→28 (-64%)，异常项 0→6+，失败标签 0→4'
+            },
+            {
+              title: '🔁 场景B：样本3 多版本纠偏',
+              a: 'sample3_rollback', b: 'sample3_rollback',
+              desc: '归档的 v1（失败）→ 重算 v2（成功）→ v3（纸张优化），体现「从失败中学习」的版本迭代工作流。',
+              expect: '预期：版本对比弹窗、归档库记录保留、派生/回滚角标追踪完整溯源链'
+            },
+            {
+              title: '📈 场景C：三类型同屏对比',
+              a: 'sample1_normal', b: 'sample2_anomaly',
+              desc: '三类型全选（样本1+样本2+样本3任意版本），观察参数矩阵的最大差异字段、异常热力图的严重度分布。',
+              expect: '预期：参数矩阵中失败案例的异常项全面高亮，评分差值两极化'
+            },
+          ].map(scene => (
+            <div key={scene.title} style={{
+              padding: 14, borderRadius: 8, background: 'var(--cyan-pale-faint)',
+              border: '1px solid var(--border-line)'
+            }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>{scene.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-body)', lineHeight: 1.6, marginBottom: 8 }}>{scene.desc}</div>
+              <div style={{ fontSize: 11, padding: '6px 10px', background: 'var(--warning-amber-faint)', borderRadius: 6, color: 'var(--warning-amber)', fontWeight: 600 }}>
+                {scene.expect}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -2,12 +2,17 @@
   --cyan-blue: #0e4d92;
   --cyan-light: #2a7de1;
   --cyan-pale: #e8f4fc;
+  --cyan-pale-faint: #f4f9fd;
   --paper-cream: #f5f0e1;
   --paper-dark: #d9d3c3;
   --success-green: #2e7d57;
+  --success-green-faint: #e6f3ec;
   --warning-amber: #c7821e;
+  --warning-amber-faint: #faf1e2;
   --danger-red: #b33030;
+  --danger-red-faint: #f7e5e5;
   --ink-dark: #1a1a2e;
+  --ink-body: #2c2c42;
   --ink-muted: #4a4a5e;
   --border-line: #c9c4b5;
   --shadow-soft: 0 2px 8px rgba(14, 77, 146, 0.08);

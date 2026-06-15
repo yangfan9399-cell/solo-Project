@@ -33,7 +33,7 @@ export interface MainRecord {
 
   paperType: string;
   paperWeightGsm: number;
-  notes: string;
+  notes: string | null;
 
   createdBy: string;
   createdAt: number;
@@ -74,7 +74,7 @@ export interface WashHistory {
   phValue: number | null;
   agitationHz: number | null;
 
-  operatorNote: string;
+  operatorNote: string | null;
   createdAt: number;
 }
 

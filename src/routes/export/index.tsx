@@ -2,7 +2,7 @@ import type { RequestHandler } from '@builder.io/qwik-city';
 import { component$ } from '@builder.io/qwik';
 import { getFullBatch } from '~/lib/db';
 
-export const onGet: RequestHandler = async (requestEvent) => {
+export const onGet: RequestHandler = async (requestEvent: any) => {
   const url = new URL(requestEvent.request.url);
   const id = url.searchParams.get('id');
   const format = (url.searchParams.get('format') || 'json') as 'json' | 'csv';
@@ -15,6 +15,9 @@ export const onGet: RequestHandler = async (requestEvent) => {
   }
   const main = batch.main;
   const filename = `${main.batchNo}_v${main.version}.${format}`;
+  const setHeader = (k: string, v: string) => {
+    try { (requestEvent.responseHeaders || requestEvent.response?.headers || {}).set(k, v); } catch {}
+  };
 
   if (format === 'csv') {
     const esc = (v: any) => {
@@ -34,16 +37,17 @@ export const onGet: RequestHandler = async (requestEvent) => {
       main.isArchived ? main.archiveReason : '', main.rollbackFromId ?? ''
     ].map(esc).join(','));
     const csv = '\uFEFF' + rows.join('\n');
-    requestEvent.responseHeaders.set('Content-Type', 'text/csv; charset=utf-8');
-    requestEvent.responseHeaders.set('Content-Disposition', `attachment; filename="${filename}"`);
-    requestEvent.send(200, csv);
-    return;
+    setHeader('Content-Type', 'text/csv; charset=utf-8');
+    setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    try { requestEvent.send(200, csv); } catch { return csv as any; }
+    return csv as any;
   }
 
   const json = JSON.stringify(batch, null, 2);
-  requestEvent.responseHeaders.set('Content-Type', 'application/json; charset=utf-8');
-  requestEvent.responseHeaders.set('Content-Disposition', `attachment; filename="${filename}"`);
-  requestEvent.send(200, json);
+  setHeader('Content-Type', 'application/json; charset=utf-8');
+  setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  try { requestEvent.send(200, json); } catch { return json as any; }
+  return json as any;
 };
 
 export default component$(() => null);

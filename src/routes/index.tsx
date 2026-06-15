@@ -1,13 +1,15 @@
 import { component$ } from '@builder.io/qwik';
 import { routeLoader$, Link } from '@builder.io/qwik-city';
-import { listMainRecords, getResultRecordByMain, getFullBatch } from '~/lib/db';
-import { STATUS_LABELS, FAIL_TAG_LABELS, fmtDate } from '~/lib/utils';
+import { listMainRecords, getResultRecordByMain, getFullBatch, getVersionChain } from '~/lib/db';
+import { STATUS_LABELS, FAIL_TAG_LABELS, fmtDate, detectSeed } from '~/lib/utils';
 
 export const useBatchList = routeLoader$(async () => {
   const mains = listMainRecords({ includeArchived: false });
   return mains.map(m => {
     const result = getResultRecordByMain(m.id);
     const batch = getFullBatch(m.id);
+    const chain = getVersionChain(m.id);
+    const seed = detectSeed(m, result, batch?.photos, chain);
     return {
       main: m,
       overallScore: result?.overallScore ?? null,
@@ -17,6 +19,7 @@ export const useBatchList = routeLoader$(async () => {
       washCount: batch?.washHistories.length ?? 0,
       photoCount: batch?.photos.length ?? 0,
       hasResult: !!result,
+      seed,
     };
   });
 });
@@ -67,11 +70,16 @@ export default component$(() => {
               {data.value.map(item => {
                 const m = item.main;
                 return (
-                  <tr key={m.id}>
+                  <tr key={m.id} style={{ background: item.seed.type !== 'custom' ? 'var(--cyan-pale-faint)' : undefined }}>
                     <td>
                       <div class="batch-tree">
                         <span class="batch-level-dot"></span>
                         <b>{m.batchNo}</b>
+                      </div>
+                      <div style={{ marginTop: 4 }}>
+                        <span class={item.seed.badgeClass} style={{ padding: '2px 8px', fontSize: 11, border: 'none' }}>
+                          {item.seed.shortLabel}
+                        </span>
                       </div>
                       {m.parentId && (
                         <div style={{ fontSize: 11, color: 'var(--ink-muted)', paddingLeft: 14 }}>
@@ -207,6 +215,57 @@ export default component$(() => {
               环境温湿度、四维度评分、失败标签、综合得分。支持重算与回滚溯源。
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>🔍 三类种子样本 · 前后差异与边界影响</span>
+          <span class="badge">验收对照参考</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+          {data.value.filter(i => i.seed.type !== 'custom').map(item => (
+            <div key={item.main.id} style={{
+              padding: 14, borderRadius: 8,
+              border: `2px solid ${item.seed.type === 'sample1_normal' ? 'var(--success-green)' :
+                item.seed.type === 'sample2_anomaly' ? 'var(--danger-red)' : 'var(--warning-amber)'}`,
+              background: 'white'
+            }}>
+              <div style={{ marginBottom: 10, fontWeight: 700, fontSize: 13 }}>
+                {item.seed.label}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--ink-body)', marginBottom: 10, lineHeight: 1.6 }}>
+                {item.seed.summary}
+              </div>
+              {item.seed.beforeAfter && (
+                <div style={{
+                  padding: 10, background: 'var(--cyan-pale-faint)', borderRadius: 6,
+                  border: '1px dashed var(--border-line)',
+                }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, padding: '2px 6px', background: '#e0e0e0', borderRadius: 4, fontWeight: 600, flexShrink: 0 }}>之前</span>
+                    <span style={{ fontSize: 12, flex: 1, color: 'var(--ink-body)' }}>{item.seed.beforeAfter.before}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 8 }}>
+                    <span style={{ fontSize: 11, padding: '2px 6px', background: item.seed.type === 'sample2_anomaly' ? 'var(--danger-red-faint)' : 'var(--success-green-faint)', borderRadius: 4, fontWeight: 600, flexShrink: 0, color: item.seed.type === 'sample2_anomaly' ? 'var(--danger-red)' : 'var(--success-green)' }}>之后</span>
+                    <span style={{ fontSize: 12, flex: 1, color: 'var(--ink-body)' }}>{item.seed.beforeAfter.after}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 11, padding: '2px 6px', background: 'var(--warning-amber-faint)', borderRadius: 4, fontWeight: 600, flexShrink: 0, color: 'var(--warning-amber)' }}>变化</span>
+                    <span style={{ fontSize: 12, flex: 1, color: 'var(--ink-body)', fontWeight: 600 }}>{item.seed.beforeAfter.change}</span>
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-muted)', borderTop: '1px dashed var(--border-line)', paddingTop: 10 }}>
+                {item.seed.impact}
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <Link href={`/batch/${item.main.id}`} class="btn" style={{ fontSize: 12, padding: '6px 12px' }}>
+                  查看详情 →
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
