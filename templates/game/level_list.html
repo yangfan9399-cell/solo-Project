@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}关卡列表 - 纸上邮差{% endblock %}
+
+{% block content %}
+<div class="level-list-page">
+    <h2>所有关卡</h2>
+    
+    <div class="level-cards">
+        {% for level in levels %}
+        <div class="level-card">
+            <div class="level-header">
+                <h4>{{ level.name }}</h4>
+                <span class="level-id">#{{ level.id }}</span>
+            </div>
+            <p class="level-desc">{{ level.description }}</p>
+            <div class="level-info">
+                <div class="info-row">
+                    <span>网格大小：{{ level.grid_width }}×{{ level.grid_height }}</span>
+                    <span>信件数量：{{ level.letters|length }}</span>
+                </div>
+                <div class="info-row">
+                    <span>最大步数：{{ level.max_steps }}</span>
+                    <span>最少折叠：{{ level.min_folds }}</span>
+                </div>
+                {% if level.required_folds %}
+                <div class="info-row">
+                    <span class="required-folds">必需折叠：{{ level.required_folds|join:", " }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="addresses-preview">
+                <h5>地址列表：</h5>
+                <ul>
+                    {% for addr in level.addresses %}
+                    <li>
+                        <span class="color-dot" style="background-color: {{ addr.color }};"></span>
+                        {{ addr.name }} ({{ addr.x }}, {{ addr.y }})
+                        {% if addr.requires_fold %}
+                        <span class="requires-fold">需要{{ addr.requires_fold }}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            {% if level.min_solution %}
+            <div class="optimal-solution">
+                <h5>最短解：</h5>
+                <p>{{ level.min_solution.description }}</p>
+                <p>步数：{{ level.min_solution.steps }} | 折叠：{{ level.min_solution.folds }}</p>
+            </div>
+            {% endif %}
+            
+            <button class="btn btn-primary start-game-btn" data-level-id="{{ level.id }}">
+                开始游戏
+            </button>
+        </div>
+        {% empty %}
+        <p class="no-levels">暂无关卡数据</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.start-game-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const levelId = this.dataset.levelId;
+            startGame(levelId);
+        });
+    });
+});
+
+function startGame(levelId) {
+    fetch(`/api/game/start/${levelId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.error || '创建游戏失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

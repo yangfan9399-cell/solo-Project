@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 - 纸上邮差{% endblock %}
+
+{% block content %}
+<div class="home-page">
+    <section class="hero">
+        <h2>欢迎来到纸上邮差路线折叠游戏</h2>
+        <p class="tagline">通过折叠纸地图改变道路相邻关系，让邮差在有限步数内送完所有信件！</p>
+    </section>
+
+    <section class="game-rules">
+        <h3>游戏规则</h3>
+        <div class="rules-grid">
+            <div class="rule-card">
+                <span class="rule-icon">📬</span>
+                <h4>送信任务</h4>
+                <p>将不同颜色的信件送到对应颜色的地址</p>
+            </div>
+            <div class="rule-card">
+                <span class="rule-icon">📄</span>
+                <h4>折叠地图</h4>
+                <p>折叠纸张可以改变道路连通关系，缩短路线</p>
+            </div>
+            <div class="rule-card">
+                <span class="rule-icon">👣</span>
+                <h4>步数限制</h4>
+                <p>每次移动消耗1步，每次折叠消耗2步</p>
+            </div>
+            <div class="rule-card">
+                <span class="rule-icon">🏆</span>
+                <h4>最优解</h4>
+                <p>尝试用最少的步数和折叠次数完成挑战</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="level-selection">
+        <h3>选择关卡开始游戏</h3>
+        <div class="level-cards">
+            {% for level in levels %}
+            <div class="level-card">
+                <div class="level-header">
+                    <h4>{{ level.name }}</h4>
+                    <span class="level-id">#{{ level.id }}</span>
+                </div>
+                <p class="level-desc">{{ level.description|truncatechars:80 }}</p>
+                <div class="level-info">
+                    <span>📐 {{ level.grid_width }}×{{ level.grid_height }}</span>
+                    <span>📨 {{ level.letters|length }}封信</span>
+                    <span>👣 {{ level.max_steps }}步</span>
+                </div>
+                <button class="btn btn-primary start-game-btn" data-level-id="{{ level.id }}">
+                    开始游戏
+                </button>
+            </div>
+            {% empty %}
+            <p class="no-levels">暂无关卡，请先运行数据初始化命令。</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if recent_sessions %}
+    <section class="recent-games">
+        <h3>最近游戏记录</h3>
+        <div class="session-list">
+            {% for session in recent_sessions %}
+            <div class="session-item">
+                <span class="session-id">{{ session.session_id }}</span>
+                <span class="session-level">{{ session.level.name }}</span>
+                <span class="session-status status-{{ session.status }}">
+                    {{ session.get_status_display }}
+                </span>
+                <span class="session-score">{{ session.score }}分</span>
+                <a href="{% url 'game_board' session.session_id %}" class="btn btn-small">查看</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="data-hint">
+        <p>💡 如果没有看到关卡数据，请运行初始化命令：<code>python manage.py seed_levels</code></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.start-game-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const levelId = this.dataset.levelId;
+            startGame(levelId);
+        });
+    });
+});
+
+function startGame(levelId) {
+    fetch(`/api/game/start/${levelId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.error || '创建游戏失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('创建游戏失败，请检查服务器是否正常运行');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1102 @@
+{% extends 'base.html' %}
+
+{% block title %}关卡编辑器 - 纸上邮差{% endblock %}
+
+{% block extra_css %}
+<style>
+.editor-container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.editor-area {
+    background: #f8f6f0;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.tool-btn {
+    padding: 8px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.tool-btn:hover {
+    background: #e8f4fd;
+    border-color: #3498db;
+}
+
+.tool-btn.active {
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+}
+
+.editor-grid {
+    display: inline-block;
+    background: #fffdf5;
+    border: 3px solid #d4c4a8;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 0 auto;
+    display: block;
+}
+
+.editor-row {
+    display: flex;
+}
+
+.editor-cell {
+    width: 70px;
+    height: 70px;
+    border: 1px solid rgba(139, 119, 80, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 253, 245, 0.9);
+}
+
+.editor-cell:hover {
+    background: rgba(255, 220, 150, 0.3);
+}
+
+.editor-cell.has-post-office {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+.editor-cell.has-address {
+    background: rgba(46, 204, 113, 0.2);
+}
+
+.cell-content {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    font-weight: bold;
+}
+
+.post-office-icon {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-radius: 50%;
+}
+
+.address-icon {
+    border: 3px solid white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.properties-panel {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.properties-panel h4 {
+    margin: 0 0 12px 0;
+    color: #5d4e37;
+    font-size: 15px;
+    border-bottom: 2px solid #e0d8c8;
+    padding-bottom: 8px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.color-picker {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+}
+
+.color-option.selected {
+    border-color: #333;
+    transform: scale(1.15);
+}
+
+.letters-list-editor {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.letter-item-editor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.letter-color-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.letter-info {
+    flex: 1;
+    font-size: 12px;
+}
+
+.letter-remove {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.fold-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fold-option {
+    padding: 6px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.fold-option.selected {
+    background: #3498db;
+    color: white;
+    border-color: #2980b9;
+}
+
+.min-solution-area {
+    font-size: 12px;
+}
+
+.min-solution-area textarea {
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.preview-section {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.json-preview {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 11px;
+    max-height: 300px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9, #2573a7);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #27ae60, #219653);
+    transform: translateY(-1px);
+}
+
+.message-box {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.message-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.message-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.road-toggle {
+    position: absolute;
+    z-index: 10;
+}
+
+.road-toggle.horizontal {
+    width: 30px;
+    height: 12px;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #8b7355;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.road-toggle.horizontal.disabled {
+    background: #ddd;
+}
+
+.road-toggle.vertical {
+    width: 12px;
+    height: 30px;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #8b7355;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.road-toggle.vertical.disabled {
+    background: #ddd;
+}
+
+.selected-cell {
+    outline: 3px solid #e67e22;
+    outline-offset: -3px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-page">
+    <h2>🧩 关卡编辑器</h2>
+    <p style="color: #666; margin-bottom: 20px;">
+        创建自定义关卡。选择工具后点击网格进行编辑。
+    </p>
+    
+    <div id="editor-message"></div>
+    
+    <div class="editor-container">
+        <div class="editor-area">
+            <div class="editor-toolbar">
+                <button class="tool-btn active" data-tool="select">👆 选择</button>
+                <button class="tool-btn" data-tool="post-office">🏤 邮局</button>
+                <button class="tool-btn" data-tool="address">🏠 地址</button>
+                <button class="tool-btn" data-tool="road">🛣️ 道路</button>
+                <button class="tool-btn" data-tool="letter">✉️ 信件</button>
+                <button class="tool-btn" data-tool="eraser">🗑️ 清除</button>
+            </div>
+            
+            <div style="text-align: center;">
+                <div class="editor-grid" id="editor-grid"></div>
+            </div>
+            
+            <div class="preview-section">
+                <h4>📋 关卡数据预览</h4>
+                <button class="btn btn-secondary btn-small" onclick="toggleJsonPreview()" style="float: right; padding: 5px 10px; font-size: 12px;">
+                    切换JSON
+                </button>
+                <div style="clear: both;"></div>
+                <div id="json-preview" class="json-preview" style="display: none;"></div>
+                <div id="summary-preview"></div>
+            </div>
+        </div>
+        
+        <div class="properties-panel">
+            <h4>⚙️ 关卡属性</h4>
+            
+            <div class="form-group">
+                <label>关卡名称</label>
+                <input type="text" id="level-name" placeholder="输入关卡名称" value="新关卡">
+            </div>
+            
+            <div class="form-group">
+                <label>关卡描述</label>
+                <textarea id="level-description" rows="3" placeholder="描述关卡特点和攻略提示"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>网格宽度</label>
+                    <input type="number" id="grid-width" value="5" min="3" max="8">
+                </div>
+                <div class="form-group">
+                    <label>网格高度</label>
+                    <input type="number" id="grid-height" value="5" min="3" max="8">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>最大步数</label>
+                    <input type="number" id="max-steps" value="20" min="5">
+                </div>
+                <div class="form-group">
+                    <label>最少折叠</label>
+                    <input type="number" id="min-folds" value="0" min="0">
+                </div>
+            </div>
+            
+            <h4 style="margin-top: 20px;">🎨 选中单元格属性</h4>
+            <div id="cell-properties">
+                <p style="color: #888; font-size: 13px;">选择一个单元格编辑其属性</p>
+            </div>
+            
+            <h4 style="margin-top: 20px;">✉️ 信件列表</h4>
+            <div class="letters-list-editor" id="letters-list-editor"></div>
+            <button class="btn btn-secondary btn-small" onclick="addLetter()" style="width: 100%; margin-top: 8px;">
+                + 添加信件
+            </button>
+            
+            <h4 style="margin-top: 20px;">📄 折叠设置</h4>
+            <div class="form-group">
+                <label>允许的折叠方向</label>
+                <div class="fold-options" id="fold-options">
+                    <span class="fold-option selected" data-dir="horizontal_up">↑上</span>
+                    <span class="fold-option selected" data-dir="horizontal_down">↓下</span>
+                    <span class="fold-option selected" data-dir="vertical_left">←左</span>
+                    <span class="fold-option selected" data-dir="vertical_right">→右</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>必需折叠方向（用逗号分隔）</label>
+                <input type="text" id="required-folds" placeholder="如: horizontal_up, vertical_right">
+            </div>
+            
+            <h4 style="margin-top: 20px;">🏆 最短解（可选）</h4>
+            <div class="min-solution-area">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>最短步数</label>
+                        <input type="number" id="optimal-steps" placeholder="最短解步数">
+                    </div>
+                    <div class="form-group">
+                        <label>最少折叠</label>
+                        <input type="number" id="optimal-folds" placeholder="最短解折叠数">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>最短解描述</label>
+                    <textarea id="optimal-description" rows="2" placeholder="描述最短解的策略"></textarea>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="clearEditor()">清空</button>
+                <button class="btn btn-primary" onclick="testLevel()">测试关卡</button>
+                <button class="btn btn-success" onclick="saveLevel()">保存关卡</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTool = 'select';
+let selectedCell = null;
+let gridWidth = 5;
+let gridHeight = 5;
+let postOffice = null;
+let addresses = {};
+let roads = {};
+let letters = [];
+let allowedFolds = ['horizontal_up', 'horizontal_down', 'vertical_left', 'vertical_right'];
+
+const COLORS = [
+    { name: 'red', value: '#e74c3c' },
+    { name: 'blue', value: '#3498db' },
+    { name: 'green', value: '#2ecc71' },
+    { name: 'yellow', value: '#f1c40f' },
+    { name: 'purple', value: '#9b59b6' },
+    { name: 'orange', value: '#e67e22' },
+    { name: 'cyan', value: '#1abc9c' },
+    { name: 'pink', value: '#e91e63' },
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupToolbar();
+    setupGridControls();
+    setupFoldOptions();
+    renderEditor();
+    updatePreview();
+});
+
+function setupToolbar() {
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTool = this.dataset.tool;
+            showMessage(`当前工具: ${this.textContent}`, 'info');
+        });
+    });
+}
+
+function setupGridControls() {
+    document.getElementById('grid-width').addEventListener('change', function() {
+        gridWidth = parseInt(this.value) || 5;
+        renderEditor();
+    });
+    
+    document.getElementById('grid-height').addEventListener('change', function() {
+        gridHeight = parseInt(this.value) || 5;
+        renderEditor();
+    });
+}
+
+function setupFoldOptions() {
+    document.querySelectorAll('.fold-option').forEach(option => {
+        option.addEventListener('click', function() {
+            this.classList.toggle('selected');
+            const dir = this.dataset.dir;
+            if (this.classList.contains('selected')) {
+                if (!allowedFolds.includes(dir)) allowedFolds.push(dir);
+            } else {
+                allowedFolds = allowedFolds.filter(d => d !== dir);
+            }
+            updatePreview();
+        });
+    });
+}
+
+function renderEditor() {
+    const container = document.getElementById('editor-grid');
+    container.innerHTML = '';
+    
+    for (let y = 0; y < gridHeight; y++) {
+        const row = document.createElement('div');
+        row.className = 'editor-row';
+        
+        for (let x = 0; x < gridWidth; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'editor-cell';
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            
+            if (postOffice && postOffice.x === x && postOffice.y === y) {
+                cell.classList.add('has-post-office');
+                const po = document.createElement('div');
+                po.className = 'cell-content post-office-icon';
+                po.textContent = '🏤';
+                cell.appendChild(po);
+            }
+            
+            const addrKey = `${x}_${y}`;
+            if (addresses[addrKey]) {
+                cell.classList.add('has-address');
+                const addr = addresses[addrKey];
+                const addrDiv = document.createElement('div');
+                addrDiv.className = 'cell-content address-icon';
+                addrDiv.style.background = getColorValue(addr.color);
+                addrDiv.textContent = '🏠';
+                if (addr.requires_fold) {
+                    addrDiv.title = `需要${addr.requires_fold}折叠`;
+                    addrDiv.style.opacity = '0.8';
+                }
+                cell.appendChild(addrDiv);
+            }
+            
+            if (selectedCell && selectedCell.x === x && selectedCell.y === y) {
+                cell.classList.add('selected-cell');
+            }
+            
+            cell.addEventListener('click', () => handleCellClick(x, y));
+            
+            if (x < gridWidth - 1) {
+                const roadH = document.createElement('div');
+                roadH.className = 'road-toggle horizontal';
+                const roadKey = `${x}_${y}-h`;
+                if (roads[roadKey] === false) {
+                    roadH.classList.add('disabled');
+                }
+                roadH.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleRoad(x, y, 'horizontal');
+                });
+                cell.appendChild(roadH);
+            }
+            
+            if (y < gridHeight - 1) {
+                const roadV = document.createElement('div');
+                roadV.className = 'road-toggle vertical';
+                const roadKey = `${x}_${y}-v`;
+                if (roads[roadKey] === false) {
+                    roadV.classList.add('disabled');
+                }
+                roadV.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleRoad(x, y, 'vertical');
+                });
+                cell.appendChild(roadV);
+            }
+            
+            row.appendChild(cell);
+        }
+        
+        container.appendChild(row);
+    }
+    
+    renderLettersList();
+}
+
+function handleCellClick(x, y) {
+    const addrKey = `${x}_${y}`;
+    
+    switch (currentTool) {
+        case 'select':
+            selectedCell = { x, y };
+            renderEditor();
+            showCellProperties(x, y);
+            break;
+            
+        case 'post-office':
+            postOffice = { x, y };
+            selectedCell = { x, y };
+            renderEditor();
+            showCellProperties(x, y);
+            updatePreview();
+            showMessage('已设置邮局位置', 'success');
+            break;
+            
+        case 'address':
+            if (!addresses[addrKey]) {
+                addresses[addrKey] = {
+                    id: `addr_${Date.now()}`,
+                    x, y,
+                    color: 'red',
+                    name: '新地址',
+                    requires_fold: null
+                };
+            }
+            selectedCell = { x, y };
+            renderEditor();
+            showCellProperties(x, y);
+            updatePreview();
+            showMessage('已添加地址，在右侧编辑属性', 'success');
+            break;
+            
+        case 'eraser':
+            if (postOffice && postOffice.x === x && postOffice.y === y) {
+                postOffice = null;
+            }
+            if (addresses[addrKey]) {
+                delete addresses[addrKey];
+                letters = letters.filter(l => l.address_id !== addrKey);
+            }
+            selectedCell = null;
+            renderEditor();
+            document.getElementById('cell-properties').innerHTML = 
+                '<p style="color: #888; font-size: 13px;">选择一个单元格编辑其属性</p>';
+            updatePreview();
+            showMessage('已清除该单元格', 'info');
+            break;
+            
+        case 'letter':
+            if (addresses[addrKey]) {
+                addLetterForAddress(addrKey);
+            } else {
+                showMessage('请先在该位置创建地址', 'error');
+            }
+            break;
+            
+        case 'road':
+            showMessage('点击道路线（棕色条）切换道路状态', 'info');
+            break;
+    }
+}
+
+function toggleRoad(x, y, direction) {
+    const roadKey = `${x}_${y}-${direction.charAt(0)}`;
+    roads[roadKey] = roads[roadKey] === false ? true : false;
+    renderEditor();
+    updatePreview();
+}
+
+function showCellProperties(x, y) {
+    const container = document.getElementById('cell-properties');
+    const addrKey = `${x}_${y}`;
+    const isPostOffice = postOffice && postOffice.x === x && postOffice.y === y;
+    const address = addresses[addrKey];
+    
+    let html = `<p style="font-size: 12px; color: #666;">坐标: (${x}, ${y})</p>`;
+    
+    if (isPostOffice) {
+        html += `<div style="padding: 8px; background: #ffebee; border-radius: 6px; font-size: 13px;">
+            🏤 邮局位置
+        </div>`;
+    }
+    
+    if (address) {
+        html += `
+            <div class="form-group">
+                <label>地址名称</label>
+                <input type="text" value="${address.name}" onchange="updateAddress('${addrKey}', 'name', this.value)">
+            </div>
+            <div class="form-group">
+                <label>颜色</label>
+                <div class="color-picker">
+                    ${COLORS.map(c => `
+                        <span class="color-option ${address.color === c.name ? 'selected' : ''}" 
+                              style="background: ${c.value}"
+                              onclick="updateAddress('${addrKey}', 'color', '${c.name}')"></span>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>需要特定折叠才能连通</label>
+                <select onchange="updateAddress('${addrKey}', 'requires_fold', this.value)">
+                    <option value="">不需要</option>
+                    <option value="horizontal_up" ${address.requires_fold === 'horizontal_up' ? 'selected' : ''}>向上折叠</option>
+                    <option value="horizontal_down" ${address.requires_fold === 'horizontal_down' ? 'selected' : ''}>向下折叠</option>
+                    <option value="vertical_left" ${address.requires_fold === 'vertical_left' ? 'selected' : ''}>向左折叠</option>
+                    <option value="vertical_right" ${address.requires_fold === 'vertical_right' ? 'selected' : ''}>向右折叠</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    if (!isPostOffice && !address) {
+        html += `<p style="color: #888; font-size: 13px;">该单元格为空</p>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+function updateAddress(addrKey, field, value) {
+    if (addresses[addrKey]) {
+        addresses[addrKey][field] = value || null;
+        renderEditor();
+        updatePreview();
+    }
+}
+
+function addLetterForAddress(addrKey) {
+    const address = addresses[addrKey];
+    const letter = {
+        id: `letter_${Date.now()}`,
+        color: address.color,
+        address_id: address.id,
+        address_key: addrKey
+    };
+    letters.push(letter);
+    renderLettersList();
+    updatePreview();
+    showMessage(`已添加 ${address.color} 信件`, 'success');
+}
+
+function addLetter() {
+    const addressList = Object.values(addresses);
+    if (addressList.length === 0) {
+        showMessage('请先创建至少一个地址', 'error');
+        return;
+    }
+    
+    const firstAddr = addressList[0];
+    const letter = {
+        id: `letter_${Date.now()}`,
+        color: firstAddr.color,
+        address_id: firstAddr.id,
+        address_key: Object.keys(addresses)[0]
+    };
+    letters.push(letter);
+    renderLettersList();
+    updatePreview();
+}
+
+function removeLetter(index) {
+    letters.splice(index, 1);
+    renderLettersList();
+    updatePreview();
+}
+
+function renderLettersList() {
+    const container = document.getElementById('letters-list-editor');
+    
+    if (letters.length === 0) {
+        container.innerHTML = '<p style="color: #888; font-size: 12px;">暂无信件</p>';
+        return;
+    }
+    
+    container.innerHTML = letters.map((letter, index) => {
+        const address = addresses[letter.address_key];
+        const colorValue = getColorValue(letter.color);
+        return `
+            <div class="letter-item-editor">
+                <div class="letter-color-dot" style="background: ${colorValue}"></div>
+                <div class="letter-info">
+                    <div>${letter.color}信件</div>
+                    <div style="color: #888;">→ ${address ? address.name : '未设置地址'}</div>
+                </div>
+                <button class="letter-remove" onclick="removeLetter(${index})">×</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function getColorValue(colorName) {
+    const color = COLORS.find(c => c.name === colorName);
+    return color ? color.value : '#999';
+}
+
+function getLevelData() {
+    const roadsList = [];
+    for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+            if (x < gridWidth - 1) {
+                const roadKey = `${x}_${y}-h`;
+                if (roads[roadKey] !== false) {
+                    roadsList.push({
+                        from: `cell_${x}_${y}`,
+                        to: `cell_${x+1}_${y}`
+                    });
+                }
+            }
+            if (y < gridHeight - 1) {
+                const roadKey = `${x}_${y}-v`;
+                if (roads[roadKey] !== false) {
+                    roadsList.push({
+                        from: `cell_${x}_${y}`,
+                        to: `cell_${x}_${y+1}`
+                    });
+                }
+            }
+        }
+    }
+    
+    const addressesList = Object.values(addresses).map(addr => ({
+        id: addr.id,
+        x: addr.x,
+        y: addr.y,
+        color: addr.color,
+        name: addr.name,
+        ...(addr.requires_fold ? { requires_fold: addr.requires_fold } : {})
+    }));
+    
+    const lettersList = letters.map(l => ({
+        id: l.id,
+        color: l.color,
+        address_id: l.address_id
+    }));
+    
+    const requiredFolds = document.getElementById('required-folds').value
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s);
+    
+    const optimalSteps = document.getElementById('optimal-steps').value;
+    const optimalFolds = document.getElementById('optimal-folds').value;
+    const optimalDesc = document.getElementById('optimal-description').value;
+    
+    let minSolution = null;
+    if (optimalSteps || optimalFolds || optimalDesc) {
+        minSolution = {
+            steps: optimalSteps ? parseInt(optimalSteps) : null,
+            folds: optimalFolds ? parseInt(optimalFolds) : null,
+            description: optimalDesc || ''
+        };
+    }
+    
+    return {
+        name: document.getElementById('level-name').value,
+        description: document.getElementById('level-description').value,
+        grid_width: gridWidth,
+        grid_height: gridHeight,
+        addresses: addressesList,
+        roads: roadsList,
+        letters: lettersList,
+        post_office: postOffice,
+        max_steps: parseInt(document.getElementById('max-steps').value),
+        min_folds: parseInt(document.getElementById('min-folds').value),
+        fold_directions: allowedFolds,
+        required_folds: requiredFolds,
+        min_solution: minSolution
+    };
+}
+
+function updatePreview() {
+    const data = getLevelData();
+    
+    const summary = document.getElementById('summary-preview');
+    summary.innerHTML = `
+        <div style="font-size: 13px; line-height: 1.8;">
+            <div><strong>关卡名称:</strong> ${data.name || '未命名'}</div>
+            <div><strong>网格大小:</strong> ${data.grid_width} × ${data.grid_height}</div>
+            <div><strong>邮局位置:</strong> ${data.post_office ? `(${data.post_office.x}, ${data.post_office.y})` : '未设置'}</div>
+            <div><strong>地址数量:</strong> ${data.addresses.length}</div>
+            <div><strong>信件数量:</strong> ${data.letters.length}</div>
+            <div><strong>道路数量:</strong> ${data.roads.length}</div>
+            <div><strong>最大步数:</strong> ${data.max_steps}</div>
+            <div><strong>允许折叠:</strong> ${data.fold_directions.join(', ') || '无'}</div>
+            ${data.required_folds.length > 0 ? `<div><strong>必需折叠:</strong> ${data.required_folds.join(', ')}</div>` : ''}
+            ${data.min_solution ? `<div><strong>最短解:</strong> ${data.min_solution.steps || '?'}步, ${data.min_solution.folds || '?'}次折叠</div>` : ''}
+        </div>
+    `;
+    
+    document.getElementById('json-preview').textContent = JSON.stringify(data, null, 2);
+}
+
+function toggleJsonPreview() {
+    const preview = document.getElementById('json-preview');
+    preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+}
+
+function validateLevelData() {
+    const data = getLevelData();
+    
+    if (!data.name.trim()) {
+        return { valid: false, error: '请输入关卡名称' };
+    }
+    
+    if (!data.post_office) {
+        return { valid: false, error: '请设置邮局位置' };
+    }
+    
+    if (data.addresses.length === 0) {
+        return { valid: false, error: '请至少创建一个地址' };
+    }
+    
+    if (data.letters.length === 0) {
+        return { valid: false, error: '请至少添加一封信件' };
+    }
+    
+    for (const letter of data.letters) {
+        const hasMatchingAddress = data.addresses.some(a => 
+            a.id === letter.address_id && a.color === letter.color
+        );
+        if (!hasMatchingAddress) {
+            return { valid: false, error: `信件 ${letter.id} 没有匹配的同颜色地址` };
+        }
+    }
+    
+    return { valid: true };
+}
+
+function clearEditor() {
+    if (confirm('确定要清空所有内容吗？')) {
+        postOffice = null;
+        addresses = {};
+        roads = {};
+        letters = [];
+        selectedCell = null;
+        document.getElementById('level-name').value = '新关卡';
+        document.getElementById('level-description').value = '';
+        document.getElementById('grid-width').value = '5';
+        document.getElementById('grid-height').value = '5';
+        document.getElementById('max-steps').value = '20';
+        document.getElementById('min-folds').value = '0';
+        document.getElementById('required-folds').value = '';
+        document.getElementById('optimal-steps').value = '';
+        document.getElementById('optimal-folds').value = '';
+        document.getElementById('optimal-description').value = '';
+        gridWidth = 5;
+        gridHeight = 5;
+        renderEditor();
+        updatePreview();
+        showMessage('编辑器已清空', 'info');
+    }
+}
+
+function testLevel() {
+    const validation = validateLevelData();
+    if (!validation.valid) {
+        showMessage(validation.error, 'error');
+        return;
+    }
+    
+    showMessage('正在创建测试关卡...', 'info');
+    
+    const data = getLevelData();
+    data.name = '[测试] ' + data.name;
+    
+    fetch('/api/levels/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            fetch(`/api/game/start/${result.level_id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(gameResult => {
+                if (gameResult.success) {
+                    window.location.href = gameResult.redirect_url;
+                } else {
+                    showMessage(gameResult.error || '创建游戏失败', 'error');
+                }
+            });
+        } else {
+            showMessage(result.error || '保存失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('保存失败，请检查网络连接', 'error');
+    });
+}
+
+function saveLevel() {
+    const validation = validateLevelData();
+    if (!validation.valid) {
+        showMessage(validation.error, 'error');
+        return;
+    }
+    
+    showMessage('正在保存关卡...', 'info');
+    
+    const data = getLevelData();
+    
+    fetch('/api/levels/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showMessage(`关卡保存成功！ID: ${result.level_id}`, 'success');
+            setTimeout(() => {
+                window.location.href = '/levels/';
+            }, 1500);
+        } else {
+            showMessage(result.error || '保存失败', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('保存失败，请检查网络连接', 'error');
+    });
+}
+
+function showMessage(text, type = 'info') {
+    const container = document.getElementById('editor-message');
+    container.innerHTML = `<div class="message-box message-${type}">${text}</div>`;
+    
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 3000);
+}
+</script>
+{% endblock %}
