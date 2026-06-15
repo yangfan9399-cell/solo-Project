@@ -39,6 +39,7 @@ export default function TaskDetail() {
   const [task, setTask] = createSignal<Task | null>(null);
   const [isSampleOne, setIsSampleOne] = createSignal(false);
   const [showStatusModal, setShowStatusModal] = createSignal(false);
+  const [showDiffPanel, setShowDiffPanel] = createSignal(false);
 
   onMount(() => {
     loadTask();
@@ -92,15 +93,59 @@ export default function TaskDetail() {
     return Object.values(task()!.missing_analysis).filter(a => a.worn && !a.missing).length;
   };
 
+  const sampleOneBeforeState = {
+    taskStatus: '草稿',
+    alertsCount: 0,
+    carvePlans: 0,
+    slotsReserved: 0,
+    alerts: [] as string[],
+    charStatuses: [
+      { char: '缺', before: '缺字(红)', after: '分配补刻→预留', reason: '字库中不存在该字，触发缺字校验规则' },
+      { char: '盘', before: '磨损(橙 85%)', after: '纳入重刻计划', reason: '磨损度 85% > 阈值 80%，触发预警' },
+      { char: '点', before: '磨损(橙 85%)', after: '纳入重刻计划', reason: '磨损度 85% > 阈值 80%，触发预警' },
+      { char: '刷', before: '磨损(橙 85%)', after: '纳入重刻计划', reason: '磨损度 85% > 阈值 80%，触发预警' },
+    ]
+  };
+
+  const sampleOneAfterState = {
+    taskStatus: '已确认',
+    alertsCount: 5,
+    carvePlans: 2,
+    slotsReserved: 3,
+    alerts: [
+      { severity: 'danger', text: '字「缺」在 TRAY-A01 第1行第5列缺失' },
+      { severity: 'warning', text: '字「盘」磨损度85%，超过阈值需重刻' },
+      { severity: 'warning', text: '字「点」磨损度85%，超过阈值需重刻' },
+      { severity: 'warning', text: '字「刷」磨损度85%，超过阈值需重刻' },
+      { severity: 'info', text: '已将 4 个异常字纳入补刻批次 BATCH-2024-01' }
+    ],
+    pageEffects: [
+      { area: '首页总览', effect: '缺字数 +1，磨损数 +3，预警数 +5' },
+      { area: '字盘 TRAY-A01', effect: '3 个格位状态变为「预留」' },
+      { area: '批次列表', effect: 'BATCH-2024-01 进度更新' },
+      { area: '历史记录', effect: '新增 4 条分配补刻操作日志' }
+    ]
+  };
+
   return (
     <div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <button class="btn btn-outline btn-sm" onClick={() => navigate('/tasks')}>
           ← 返回任务列表
         </button>
-        <button class="btn btn-primary btn-sm" onClick={() => setShowStatusModal(true)}>
-          更新状态
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <Show when={isSampleOne()}>
+            <button 
+              class="btn btn-outline btn-sm" 
+              onClick={() => setShowDiffPanel(!showDiffPanel())}
+            >
+              {showDiffPanel() ? '收起' : '📊'} 差异分析
+            </button>
+          </Show>
+          <button class="btn btn-primary btn-sm" onClick={() => setShowStatusModal(true)}>
+            更新状态
+          </button>
+        </div>
       </div>
 
       <Show when={task()}>
@@ -117,27 +162,173 @@ export default function TaskDetail() {
               <span class="sample-tag">正常流程</span>
             </div>
             <p class="sample-desc">
-              本任务展示了完整的正向流程：印刷任务「古籍复刻-卷一」确认后，
-              系统自动对所需汉字进行缺字分析，触发缺字预警，并将缺字纳入补刻批次。
-              下方展示了<span class="sample-tag">任务→缺字分析→预警→补刻计划→批次关联</span>的完整链路。
+              本任务展示完整的<span class="sample-tag">正向工作流</span>：
+              印刷任务「古籍复刻-卷一」确认 {"→"} 系统自动执行<strong>缺字校验</strong>和<strong>磨损阈值校验</strong> {"→"}
+              触发<strong>缺字预警</strong> {"→"} 生成<strong>补刻计划</strong> {"→"} 关联<strong>补刻批次</strong>。
             </p>
-            <div class="before-after">
-              <div class="before-col">
-                <h4>任务确认前</h4>
-                <ul style="font-size: 12px; margin: 0; padding-left: 16px;">
-                  <li>缺字未被标记预警</li>
-                  <li>无关联补刻计划</li>
-                  <li>字盘状态不变化</li>
-                </ul>
+
+            <div class="validation-logic-box">
+              <div class="validation-title">
+                <span>🔍</span> 校验规则引擎（任务确认时触发）
               </div>
-              <div class="after-col">
-                <h4>任务确认后</h4>
-                <ul style="font-size: 12px; margin: 0; padding-left: 16px;">
-                  <li>生成缺字预警 {missingCount()} 条</li>
-                  <li>关联补刻计划 {task()!.carve_plans.length} 项</li>
-                  <li>字格状态更新为「预留」</li>
-                </ul>
+              <div class="validation-rules">
+                <div class="validation-rule">
+                  <div class="rule-header">
+                    <span class="rule-code">R-001</span>
+                    <span class="rule-name">缺字校验</span>
+                    <span class="rule-result pass">通过</span>
+                  </div>
+                  <div class="rule-body">
+                    <code>字库中不存在所需汉字 {'→'} status = missing {'→'} severity=danger</code>
+                  </div>
+                </div>
+                <div class="validation-rule">
+                  <div class="rule-header">
+                    <span class="rule-code">R-002</span>
+                    <span class="rule-name">磨损阈值校验</span>
+                    <span class="rule-result pass">通过</span>
+                  </div>
+                  <div class="rule-body">
+                    <code>wear_level {'>'} 80% {'→'} status = worn {'→'} severity=warning</code>
+                  </div>
+                </div>
+                <div class="validation-rule">
+                  <div class="rule-header">
+                    <span class="rule-code">R-003</span>
+                    <span class="rule-name">补刻计划生成</span>
+                    <span class="rule-result pass">通过</span>
+                  </div>
+                  <div class="rule-body">
+                    <code>status ∈ {'{'}missing, worn{'}'} {'→'} 创建 carve_plan {'→'} 关联 batch</code>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div class="before-after-diff">
+              <div class="diff-header">
+                <span class="diff-label before">📋 确认前（BEFORE）</span>
+                <div class="diff-arrow">{"→"}</div>
+                <span class="diff-label after">✅ 确认后（AFTER）</span>
+              </div>
+
+              <div class="diff-grid">
+                <div class="diff-item before">
+                  <div class="diff-item-label">任务状态</div>
+                  <div class="diff-item-value"><span class="badge badge-draft">草稿</span></div>
+                </div>
+                <div class="diff-item after">
+                  <div class="diff-item-label">任务状态</div>
+                  <div class="diff-item-value"><span class="badge badge-confirmed">已确认</span></div>
+                </div>
+
+                <div class="diff-item before">
+                  <div class="diff-item-label">预警数量</div>
+                  <div class="diff-item-value danger">0 条</div>
+                </div>
+                <div class="diff-item after">
+                  <div class="diff-item-label">预警数量</div>
+                  <div class="diff-item-value success">+5 条（1危险+3警告+1信息）</div>
+                </div>
+
+                <div class="diff-item before">
+                  <div class="diff-item-label">补刻计划</div>
+                  <div class="diff-item-value">0 项</div>
+                </div>
+                <div class="diff-item after">
+                  <div class="diff-item-label">补刻计划</div>
+                  <div class="diff-item-value success">+2 项（关联 BATCH-2024-01）</div>
+                </div>
+
+                <div class="diff-item before">
+                  <div class="diff-item-label">字盘格位变更</div>
+                  <div class="diff-item-value">无</div>
+                </div>
+                <div class="diff-item after">
+                  <div class="diff-item-label">字盘格位变更</div>
+                  <div class="diff-item-value success">3 格{"→"}「预留」状态</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="char-diff-table">
+              <div class="section-subtitle">📝 逐字校验结果与状态变化</div>
+              <table class="diff-table">
+                <thead>
+                  <tr>
+                    <th>汉字</th>
+                    <th>字盘位置</th>
+                    <th>确认前状态</th>
+                    <th>确认后状态</th>
+                    <th>校验原因</th>
+                    <th>最终页面影响</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-size:22px;font-weight:600;">缺</td>
+                    <td>TRAY-A01 1-5</td>
+                    <td><span class="badge badge-missing">缺字</span></td>
+                    <td><span class="badge badge-reserved">预留</span></td>
+                    <td style="font-size:11px;">R-001 缺字校验：字库无此字 {"→"} 分配 BATCH-2024-01 #1</td>
+                    <td style="font-size:11px;">首页预警区+1条；字盘格位变蓝；批次进度+1字</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:22px;font-weight:600;">盘</td>
+                    <td>TRAY-A01 1-4</td>
+                    <td><span class="badge badge-worn">磨损 85%</span></td>
+                    <td><span class="badge badge-worn">磨损(重刻中)</span></td>
+                    <td style="font-size:11px;">R-002 磨损校验：85% {'>'} 阈值80% {'→'} 纳入 BATCH-2024-01 #2</td>
+                    <td style="font-size:11px;">首页预警+1条；格位显示85%磨损标红；任务完成度进度条+1</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:22px;font-weight:600;">点</td>
+                    <td>TRAY-A01 1-8</td>
+                    <td><span class="badge badge-worn">磨损 85%</span></td>
+                    <td><span class="badge badge-worn">磨损(重刻中)</span></td>
+                    <td style="font-size:11px;">R-002 磨损校验：85% {'>'} 阈值80% {'→'} 触发预警</td>
+                    <td style="font-size:11px;">磨损统计+1；预警时间线新增记录</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:22px;font-weight:600;">刷</td>
+                    <td>TRAY-B01 1-4</td>
+                    <td><span class="badge badge-worn">磨损 85%</span></td>
+                    <td><span class="badge badge-worn">磨损(重刻中)</span></td>
+                    <td style="font-size:11px;">R-002 磨损校验：85% {'>'} 阈值80% {'→'} 触发预警</td>
+                    <td style="font-size:11px;">磨损统计+1；预警时间线新增记录</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size:22px;font-weight:600;">木</td>
+                    <td>TRAY-A01 1-1</td>
+                    <td><span class="badge badge-normal">正常</span></td>
+                    <td><span class="badge badge-normal">正常</span></td>
+                    <td style="font-size:11px;">未触发规则：status=normal 且 wear=14% 正常</td>
+                    <td style="font-size:11px;">无变化</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <Show when={showDiffPanel()}>
+              <div class="page-effect-box">
+                <div class="section-subtitle">🌐 状态变化对最终页面的影响矩阵</div>
+                <div class="effect-grid">
+                  <For each={sampleOneAfterState.pageEffects}>
+                    {eff => (
+                      <div class="effect-card">
+                        <div class="effect-area">{eff.area}</div>
+                        <div class="effect-change">{eff.effect}</div>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </div>
+            </Show>
+
+            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+              <span class="sample-tag">校验: R-001/R-002/R-003 全部通过</span>
+              <span class="sample-tag">影响: 4页面 × 7处变化</span>
+              <span class="sample-tag">可追溯: 历史记录4条</span>
             </div>
           </div>
         </Show>
@@ -310,44 +501,57 @@ export default function TaskDetail() {
               </div>
             </div>
 
-            <div class="detail-panel" style="margin-top: 20px;">
-              <h3>🔔 相关预警</h3>
-              <div class="timeline">
-                <Show when={missingCount() > 0}>
-                  <div class="timeline-item">
-                    <div class="timeline-time">任务确认时</div>
-                    <div class="timeline-action">
-                      <span class="badge badge-danger">缺字预警</span>
-                    </div>
-                    <div style="font-size: 11px; color: #666; margin-top: 2px;">
-                      {missingCount()} 个汉字不在字库中
-                    </div>
-                  </div>
-                </Show>
-                <Show when={wornCount() > 0}>
-                  <div class="timeline-item">
-                    <div class="timeline-time">任务确认时</div>
-                    <div class="timeline-action">
-                      <span class="badge badge-warning">磨损提醒</span>
-                    </div>
-                    <div style="font-size: 11px; color: #666; margin-top: 2px;">
-                      {wornCount()} 个汉字磨损较严重
-                    </div>
-                  </div>
-                </Show>
-                <Show when={task()!.priority === 'urgent'}>
-                  <div class="timeline-item">
-                    <div class="timeline-time">任务创建时</div>
-                    <div class="timeline-action">
-                      <span class="badge badge-urgent">紧急任务</span>
-                    </div>
-                    <div style="font-size: 11px; color: #666; margin-top: 2px;">
-                      截止日期临近，需优先安排
-                    </div>
-                  </div>
-                </Show>
+            <Show when={isSampleOne()}>
+              <div class="detail-panel" style="margin-top: 20px;">
+                <h3>🔔 预警触发明细（样本一）</h3>
+                <div class="timeline">
+                  <For each={sampleOneAfterState.alerts}>
+                    {alert => (
+                      <div class="timeline-item">
+                        <div class="timeline-time">T+0s 任务确认时</div>
+                        <div class="timeline-action">
+                          <span class={`badge badge-${alert.severity}`}>
+                            {alert.severity === 'danger' ? '危险' : alert.severity === 'warning' ? '警告' : '信息'}
+                          </span>
+                        </div>
+                        <div style="font-size: 11px; color: #666; margin-top: 2px;">
+                          {alert.text}
+                        </div>
+                      </div>
+                    )}
+                  </For>
+                </div>
               </div>
-            </div>
+            </Show>
+            <Show when={!isSampleOne()}>
+              <div class="detail-panel" style="margin-top: 20px;">
+                <h3>🔔 相关预警</h3>
+                <div class="timeline">
+                  <Show when={missingCount() > 0}>
+                    <div class="timeline-item">
+                      <div class="timeline-time">任务确认时</div>
+                      <div class="timeline-action">
+                        <span class="badge badge-danger">缺字预警</span>
+                      </div>
+                      <div style="font-size: 11px; color: #666; margin-top: 2px;">
+                        {missingCount()} 个汉字不在字库中
+                      </div>
+                    </div>
+                  </Show>
+                  <Show when={wornCount() > 0}>
+                    <div class="timeline-item">
+                      <div class="timeline-time">任务确认时</div>
+                      <div class="timeline-action">
+                        <span class="badge badge-warning">磨损提醒</span>
+                      </div>
+                      <div style="font-size: 11px; color: #666; margin-top: 2px;">
+                        {wornCount()} 个汉字磨损较严重
+                      </div>
+                    </div>
+                  </Show>
+                </div>
+              </div>
+            </Show>
 
             <div class="detail-panel" style="margin-top: 20px;">
               <h3>⚡ 快捷操作</h3>

@@ -164,7 +164,7 @@ export default function History() {
                       <span class={`badge badge-${item.old_status}`}>
                         {statusLabels[item.old_status] || item.old_status}
                       </span>
-                      <span style="margin: 0 4px;">→</span>
+                      <span style="margin: 0 4px;">{"→"}</span>
                       <span class={`badge badge-${item.new_status}`}>
                         {statusLabels[item.new_status] || item.new_status}
                       </span>

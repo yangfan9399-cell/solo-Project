@@ -58,7 +58,7 @@ export default function BatchesList() {
         <p class="sample-desc">
           补刻批次是系统的<span class="sample-tag">结果记录</span>，保存补刻生产的批次信息和完成情况。
           每个批次包含多个补刻计划项，支持版本管理和回滚操作。
-          批次状态流转：草稿 → 已审核 → 生产中 → 已完成（异常时可回滚）。
+          批次状态流转：草稿 {"→"} 已审核 {"→"} 生产中 {"→"} 已完成（异常时可回滚）。
         </p>
       </div>
 
