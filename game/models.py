@@ -121,6 +121,37 @@ class PatienceResult(models.Model):
     note = models.TextField(default='')
 
 
+class RollbackSnapshot(models.Model):
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='rollback_snapshots')
+    rollback_tick = models.IntegerField()
+    to_tick = models.IntegerField()
+    rolled_back_count = models.IntegerField(default=0)
+
+    before_complaints = models.IntegerField(default=0)
+    before_score = models.IntegerField(default=0)
+    before_income = models.IntegerField(default=0)
+    before_served = models.IntegerField(default=0)
+
+    after_complaints = models.IntegerField(default=0)
+    after_score = models.IntegerField(default=0)
+    after_income = models.IntegerField(default=0)
+    after_served = models.IntegerField(default=0)
+
+    delta_complaints = models.IntegerField(default=0)
+    delta_score = models.IntegerField(default=0)
+    delta_income = models.IntegerField(default=0)
+    delta_penalty = models.IntegerField(default=0)
+
+    transfer_rolled_back = models.IntegerField(default=0)
+    normal_rolled_back = models.IntegerField(default=0)
+    restored_queue_count = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-rollback_tick']
+
+
 class Complaint(models.Model):
     session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='complaints')
     tick = models.IntegerField()

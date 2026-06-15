@@ -305,6 +305,15 @@ def rollback_complaints(session, to_tick):
         if count == 0:
             return 0
 
+        from game.models import RollbackSnapshot
+
+        before_score, before_breakdown = calculate_score(session)
+        before_complaints = active_complaints.count() + Complaint.objects.filter(
+            session=session, rolled_back=False, tick__lte=to_tick
+        ).count()
+        before_income = session.total_income
+        before_served = session.total_served
+
         queue = session.get_queue()
         restored_to_queue = []
 
@@ -350,16 +359,43 @@ def rollback_complaints(session, to_tick):
 
         session.save()
 
+        after_score, after_breakdown = calculate_score(session)
+        after_complaints = active_complaint_count
+        after_income = session.total_income
+        after_served = session.total_served
+
         transfer_restored = sum(1 for t in restored_to_queue if t.get('needs_transfer', False))
         normal_restored = len(restored_to_queue) - transfer_restored
         transfer_rolled_back = active_complaints.filter(tourist__needs_transfer=True).count()
         normal_rolled_back = active_complaints.filter(tourist__needs_transfer=False).count()
 
+        RollbackSnapshot.objects.create(
+            session=session,
+            rollback_tick=session.current_tick,
+            to_tick=to_tick,
+            rolled_back_count=count,
+            before_complaints=before_complaints,
+            before_score=before_score,
+            before_income=before_income,
+            before_served=before_served,
+            after_complaints=after_complaints,
+            after_score=after_score,
+            after_income=after_income,
+            after_served=after_served,
+            delta_complaints=after_complaints - before_complaints,
+            delta_score=after_score - before_score,
+            delta_income=after_income - before_income,
+            delta_penalty=count * 50,
+            transfer_rolled_back=transfer_rolled_back,
+            normal_rolled_back=normal_rolled_back,
+            restored_queue_count=len(restored_to_queue),
+        )
+
         PatienceResult.objects.create(
             session=session,
             tick=session.current_tick,
-            patience_before=0,
-            patience_after=0,
+            patience_before=before_score,
+            patience_after=after_score,
             action=f'rollback:{to_tick}',
             tourist_count=len(restored_to_queue),
             complaint_count=count,
@@ -370,7 +406,7 @@ def rollback_complaints(session, to_tick):
             transfer_served=0,
             normal_served=0,
             transfer_revenue_bonus=0,
-            note=f'回滚至回合{to_tick}，恢复{len(restored_to_queue)}名游客到队列(换乘{transfer_restored})，撤销{count}条投诉(换乘{transfer_rolled_back})',
+            note=f'回滚至回合{to_tick}，恢复{len(restored_to_queue)}名游客到队列(换乘{transfer_restored})，撤销{count}条投诉(换乘{transfer_rolled_back})，分数{before_score}→{after_score}',
         )
 
     return count

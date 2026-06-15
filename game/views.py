@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, get_object_or_404, redirect
 from game.models import (
     Level, GameSession, DispatchDetail, TouristHistory,
-    PatienceResult, Complaint, IncomeSnapshot,
+    PatienceResult, Complaint, IncomeSnapshot, RollbackSnapshot,
 )
 from game.engine import (
     advance_tick, calculate_score, finalize_session,
@@ -122,21 +122,46 @@ def report(request, session_id):
         if t.needs_transfer:
             destination_stats[dest]['transfer'] += 1
 
-    before_rollback_stats = None
-    after_rollback_stats = None
-    has_rollback = rolled_back_complaints.exists()
-    if has_rollback:
-        rollback_events = patience_results.filter(action__startswith='rollback:')
-        if rollback_events.exists():
-            first_rollback = rollback_events.first()
-            before_rollback_stats = {
-                'total_complaints': first_rollback.complaint_count,
-                'score_before': first_rollback.patience_before,
-            }
-            after_rollback_stats = {
-                'total_complaints': active_complaints.count(),
-                'score_after': score,
-            }
+    rollback_snapshots = RollbackSnapshot.objects.filter(session=session).order_by('-rollback_tick')
+    rollback_compare = None
+    income_curve_before_rollback = None
+
+    if rollback_snapshots.exists():
+        latest = rollback_snapshots.first()
+        rollback_compare = {
+            'rollback_tick': latest.rollback_tick,
+            'to_tick': latest.to_tick,
+            'rolled_back_count': latest.rolled_back_count,
+            'before': {
+                'complaints': latest.before_complaints,
+                'score': latest.before_score,
+                'income': latest.before_income,
+                'served': latest.before_served,
+                'penalty': latest.before_complaints * 50,
+            },
+            'after': {
+                'complaints': latest.after_complaints,
+                'score': latest.after_score,
+                'income': latest.after_income,
+                'served': latest.after_served,
+                'penalty': latest.after_complaints * 50,
+            },
+            'delta': {
+                'complaints': latest.delta_complaints,
+                'score': latest.delta_score,
+                'income': latest.delta_income,
+                'penalty_removed': latest.delta_penalty,
+            },
+            'transfer_rolled_back': latest.transfer_rolled_back,
+            'normal_rolled_back': latest.normal_rolled_back,
+            'restored_queue': latest.restored_queue_count,
+        }
+
+        before_snapshots = snapshots.filter(tick__lte=latest.rollback_tick)
+        income_curve_before_rollback = json.dumps([
+            {'tick': s.tick, 'cumulative': s.cumulative_income, 'tick_income': s.tick_income}
+            for s in before_snapshots
+        ])
 
     consistency_check = {
         'session_complaints': session.total_complaints,
@@ -159,15 +184,15 @@ def report(request, session_id):
         'rolled_back_complaints': rolled_back_complaints,
         'destination_stats': destination_stats,
         'income_curve': income_curve,
+        'income_curve_before_rollback': income_curve_before_rollback,
         'patience_data': patience_data,
         'transfer_impact': transfer_impact,
         'total_dispatches': dispatches.count(),
         'total_tourists': tourists.count(),
         'total_complaints': active_complaints.count(),
         'total_rolled_back': rolled_back_complaints.count(),
-        'before_rollback_stats': before_rollback_stats,
-        'after_rollback_stats': after_rollback_stats,
-        'has_rollback': has_rollback,
+        'rollback_compare': rollback_compare,
+        'has_rollback': rollback_compare is not None,
         'consistency_check': consistency_check,
     })
 

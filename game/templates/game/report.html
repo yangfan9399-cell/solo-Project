@@ -82,34 +82,94 @@
 </p>
 </div>
 
-{% if has_rollback and before_rollback_stats and after_rollback_stats %}
+{% if has_rollback and rollback_compare %}
 <div class="card" style="border:2px solid var(--warning);">
-<h3>⏪ 回滚前后差异对比</h3>
-<p style="opacity:0.6;font-size:0.85em;margin-bottom:12px;">回滚后投诉数、分数和收入曲线的变化</p>
+<h3>⏪ 回滚前后差异对比（同一次回滚快照）</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:12px;">
+  回滚发生在回合 <strong>{{ rollback_compare.rollback_tick }}</strong>，撤销回至回合 <strong>{{ rollback_compare.to_tick }}</strong>
+  ，共回滚 <strong>{{ rollback_compare.rolled_back_count }}</strong> 条投诉
+  （换乘 {{ rollback_compare.transfer_rolled_back }} / 普通 {{ rollback_compare.normal_rolled_back }}），
+  恢复 <strong>{{ rollback_compare.restored_queue }}</strong> 名游客到队首
+</p>
 <div class="compare-box">
   <div class="compare-item compare-before">
-    <h4 style="color:var(--danger);margin-bottom:8px;">回滚前</h4>
-    <div style="font-size:2em;font-weight:bold;">{{ before_rollback_stats.total_complaints }}</div>
-    <div style="opacity:0.7;font-size:0.9em;">投诉数</div>
-    <div style="margin-top:8px;font-size:1.2em;color:var(--danger);">投诉罚分: {{ before_rollback_stats.total_complaints }} × 50 = {{ before_rollback_stats.total_complaints|mul:50 }}</div>
+    <h4 style="color:var(--danger);margin-bottom:12px;">📸 回滚前快照</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div>
+        <div style="font-size:1.8em;font-weight:bold;">{{ rollback_compare.before.complaints }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">投诉数</div>
+      </div>
+      <div>
+        <div style="font-size:1.8em;font-weight:bold;color:var(--danger);">{{ rollback_compare.before.penalty }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">投诉罚分</div>
+      </div>
+      <div>
+        <div style="font-size:1.4em;font-weight:bold;">{{ rollback_compare.before.score }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">分数</div>
+      </div>
+      <div>
+        <div style="font-size:1.4em;font-weight:bold;color:var(--success);">¥{{ rollback_compare.before.income }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">累计收入</div>
+      </div>
+    </div>
   </div>
   <div class="compare-item compare-after">
-    <h4 style="color:var(--success);margin-bottom:8px;">回滚后</h4>
-    <div style="font-size:2em;font-weight:bold;">{{ after_rollback_stats.total_complaints }}</div>
-    <div style="opacity:0.7;font-size:0.9em;">投诉数</div>
-    <div style="margin-top:8px;font-size:1.2em;color:var(--success);">投诉罚分: {{ after_rollback_stats.total_complaints }} × 50 = {{ after_rollback_stats.total_complaints|mul:50 }}</div>
+    <h4 style="color:var(--success);margin-bottom:12px;">📸 回滚后快照</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div>
+        <div style="font-size:1.8em;font-weight:bold;">{{ rollback_compare.after.complaints }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">投诉数</div>
+      </div>
+      <div>
+        <div style="font-size:1.8em;font-weight:bold;color:var(--success);">{{ rollback_compare.after.penalty }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">投诉罚分</div>
+      </div>
+      <div>
+        <div style="font-size:1.4em;font-weight:bold;">{{ rollback_compare.after.score }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">分数</div>
+      </div>
+      <div>
+        <div style="font-size:1.4em;font-weight:bold;color:var(--success);">¥{{ rollback_compare.after.income }}</div>
+        <div style="opacity:0.7;font-size:0.85em;">累计收入</div>
+      </div>
+    </div>
   </div>
 </div>
-<div style="text-align:center;margin-top:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;">
-  <div style="font-size:1.1em;">
-    回滚减少投诉: <strong style="color:var(--success);">{{ before_rollback_stats.total_complaints|sub:after_rollback_stats.total_complaints }}</strong> 条，
-    罚分减少: <strong style="color:var(--success);">+{{ before_rollback_stats.total_complaints|sub:after_rollback_stats.total_complaints|mul:50 }}</strong> 分，
-    分数提升: <strong style="color:var(--success);">{{ after_rollback_stats.score_after|sub:before_rollback_stats.score_before }}</strong>
+<div style="text-align:center;margin-top:12px;padding:16px;background:rgba(255,255,255,0.05);border-radius:8px;">
+  <div style="font-size:1.05em;line-height:1.8;">
+    <span>投诉变化: </span>
+    <strong style="color:var(--success);font-size:1.2em;">{{ rollback_compare.delta.complaints }}</strong> 条
+    <span style="opacity:0.5;margin:0 8px;">|</span>
+    <span>罚分减少: </span>
+    <strong style="color:var(--success);font-size:1.2em;">+{{ rollback_compare.delta.penalty_removed }}</strong> 分
+    <span style="opacity:0.5;margin:0 8px;">|</span>
+    <span>分数变化: </span>
+    <strong style="color:{% if rollback_compare.delta.score >= 0 %}var(--success){% else %}var(--danger){% endif %};font-size:1.2em;">{% if rollback_compare.delta.score >= 0 %}+{% endif %}{{ rollback_compare.delta.score }}</strong>
+  </div>
+  <div style="margin-top:6px;font-size:0.9em;opacity:0.7;">
+    回滚后罚分恢复 = 回滚投诉数 × 50 = {{ rollback_compare.rolled_back_count }} × 50 = {{ rollback_compare.delta.penalty_removed }}
   </div>
 </div>
+
+{% if income_curve_before_rollback %}
+<div style="margin-top:16px;">
+  <h4 style="margin-bottom:8px;">📈 收入曲线前后对比</h4>
+  <div class="grid grid-2">
+    <div style="padding:8px;border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
+      <div style="font-size:0.85em;opacity:0.7;margin-bottom:4px;color:var(--danger);">回滚前（截至回合{{ rollback_compare.rollback_tick }}）</div>
+      <div class="chart-container" style="height:120px;"><canvas id="income-before-chart"></canvas></div>
+    </div>
+    <div style="padding:8px;border:1px solid rgba(74,222,128,0.3);border-radius:8px;">
+      <div style="font-size:0.85em;opacity:0.7;margin-bottom:4px;color:var(--success);">回滚后（完整曲线）</div>
+      <div class="chart-container" style="height:120px;"><canvas id="income-after-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <p style="margin-top:12px;opacity:0.7;font-size:0.85em;">
-  收入曲线变化：回滚后恢复的游客会重新加入队列，后续发车将产生新的收入，收入曲线将继续上升。
-  已回滚的 {{ total_rolled_back }} 条投诉标记为已撤销，不再计入罚分。
+  💡 说明：回滚后恢复的游客会重新加入队首，后续回合将继续发车产生新的收入和可能的投诉。
+  本对比基于同一次回滚操作保存的真实快照，不受后续游戏进度影响。
 </p>
 </div>
 {% endif %}
@@ -322,6 +382,11 @@
 const INCOME_DATA = {{ income_curve|safe }};
 const PATIENCE_DATA = {{ patience_data|safe }};
 const SESSION_ID = {{ session.id }};
+{% if income_curve_before_rollback %}
+const INCOME_BEFORE_ROLLBACK = {{ income_curve_before_rollback|safe }};
+{% else %}
+const INCOME_BEFORE_ROLLBACK = null;
+{% endif %}
 
 function getCookie(name) {
   let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
@@ -445,6 +510,11 @@ drawLineChart('income-curve', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128
 drawLineChart('patience-chart', PATIENCE_DATA, 'tick', 'after', 'rgb(251,191,36)', '平均耐心值');
 drawPriceQueueChart();
 
+if (INCOME_BEFORE_ROLLBACK) {
+  drawLineChart('income-before-chart', INCOME_BEFORE_ROLLBACK, 'tick', 'cumulative', 'rgb(239,68,68)', '回滚前收入');
+  drawLineChart('income-after-chart', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128)', '回滚后收入');
+}
+
 async function doRollback() {
   const tick = parseInt(document.getElementById('rollback-tick').value) || 0;
   const data = await apiCall(`/api/rollback/${SESSION_ID}/`, {to_tick: tick});
@@ -464,6 +534,10 @@ window.addEventListener('resize', () => {
   drawLineChart('income-curve', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128)', '累计收入');
   drawLineChart('patience-chart', PATIENCE_DATA, 'tick', 'after', 'rgb(251,191,36)', '平均耐心值');
   drawPriceQueueChart();
+  if (INCOME_BEFORE_ROLLBACK) {
+    drawLineChart('income-before-chart', INCOME_BEFORE_ROLLBACK, 'tick', 'cumulative', 'rgb(239,68,68)', '回滚前收入');
+    drawLineChart('income-after-chart', INCOME_DATA, 'tick', 'cumulative', 'rgb(74,222,128)', '回滚后收入');
+  }
 });
 </script>
 {% endblock %}

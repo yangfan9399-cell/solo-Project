@@ -1,7 +1,7 @@
 from django.contrib import admin
 from game.models import (
     Level, GameSession, DispatchDetail, TouristHistory,
-    PatienceResult, Complaint, IncomeSnapshot,
+    PatienceResult, Complaint, IncomeSnapshot, RollbackSnapshot,
 )
 
 
@@ -50,3 +50,14 @@ class ComplaintAdmin(admin.ModelAdmin):
 class IncomeSnapshotAdmin(admin.ModelAdmin):
     list_display = ['session', 'tick', 'cumulative_income', 'tick_income', 'ticket_price', 'queue_length']
     list_filter = ['session']
+
+
+@admin.register(RollbackSnapshot)
+class RollbackSnapshotAdmin(admin.ModelAdmin):
+    list_display = [
+        'session', 'rollback_tick', 'to_tick', 'rolled_back_count',
+        'before_complaints', 'after_complaints', 'delta_complaints',
+        'before_score', 'after_score', 'delta_score',
+    ]
+    list_filter = ['session']
+    readonly_fields = ['created_at']
