@@ -10,7 +10,7 @@
     "seed": "node --loader ts-node/esm scripts/seed.mts"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "better-sqlite3": "^11.10.0",
     "next": "15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
