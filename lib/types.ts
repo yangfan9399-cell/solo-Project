@@ -36,6 +36,8 @@ export interface GameSession {
   tramplingCount: number;
   route: string[];
   visitedPools: string[];
+  recoveryBonusResearch: number;
+  recoveryBonusEco: number;
 }
 
 export interface ObservationRecord {
@@ -76,6 +78,9 @@ export interface SessionResult {
   finalScore: number;
   recoveryTasksAssigned: string[];
   completedAt: number;
+  preRecoveryResearch: number;
+  preRecoveryEco: number;
+  preRecoveryFinal: number;
 }
 
 export interface RecoveryTask {

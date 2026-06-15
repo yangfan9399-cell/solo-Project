@@ -103,8 +103,7 @@ function initSchema(db: Database.Database) {
       eco_score INTEGER NOT NULL,
       final_score INTEGER NOT NULL,
       recovery_tasks TEXT NOT NULL,
-      completed_at INTEGER NOT NULL,
-      FOREIGN KEY (session_id) REFERENCES game_sessions(id)
+      completed_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS recovery_tasks (
@@ -126,6 +125,12 @@ function initSchema(db: Database.Database) {
       FOREIGN KEY (session_id) REFERENCES game_sessions(id)
     );
   `);
+
+  try { db.prepare("ALTER TABLE game_sessions ADD COLUMN recovery_bonus_research INTEGER NOT NULL DEFAULT 0").run(); } catch (_) {}
+  try { db.prepare("ALTER TABLE game_sessions ADD COLUMN recovery_bonus_eco INTEGER NOT NULL DEFAULT 0").run(); } catch (_) {}
+  try { db.prepare("ALTER TABLE session_results ADD COLUMN pre_recovery_research INTEGER NOT NULL DEFAULT 0").run(); } catch (_) {}
+  try { db.prepare("ALTER TABLE session_results ADD COLUMN pre_recovery_eco INTEGER NOT NULL DEFAULT 0").run(); } catch (_) {}
+  try { db.prepare("ALTER TABLE session_results ADD COLUMN pre_recovery_final INTEGER NOT NULL DEFAULT 0").run(); } catch (_) {}
 }
 
 export function resetDb() {

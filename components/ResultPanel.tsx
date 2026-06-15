@@ -5,9 +5,6 @@ import type { SessionResult, GameSession } from "@/lib/types";
 interface ResultPanelProps {
   result: SessionResult;
   session: GameSession;
-  preRecoveryScore?: number;
-  preRecoveryResearch?: number;
-  preRecoveryEco?: number;
   onRecalculate: () => Promise<void>;
   onNewGame: () => void;
 }
@@ -15,17 +12,13 @@ interface ResultPanelProps {
 export default function ResultPanel({
   result,
   session,
-  preRecoveryScore,
-  preRecoveryResearch,
-  preRecoveryEco,
   onRecalculate,
   onNewGame,
 }: ResultPanelProps) {
   const hasRecoveryDiff =
-    preRecoveryScore !== undefined &&
-    (preRecoveryScore !== result.finalScore ||
-      preRecoveryResearch !== result.researchPoints ||
-      preRecoveryEco !== result.ecoScore);
+    result.preRecoveryFinal !== result.finalScore ||
+    result.preRecoveryResearch !== result.researchPoints ||
+    result.preRecoveryEco !== result.ecoScore;
 
   const ecoLevel = result.ecoScore >= 80 ? "good" : result.ecoScore >= 50 ? "warn" : "bad";
   const ecoColor = ecoLevel === "good" ? "text-emerald-600" : ecoLevel === "warn" ? "text-amber-600" : "text-red-600";
@@ -40,27 +33,27 @@ export default function ResultPanel({
 
       {hasRecoveryDiff && (
         <div className="mb-4 p-3 bg-emerald-50 border border-emerald-300 rounded-lg">
-          <p className="text-sm font-semibold text-emerald-700 mb-2">✨ 恢复任务完成后变化</p>
+          <p className="text-sm font-semibold text-emerald-700 mb-2">✨ 恢复任务完成后变化（持久化）</p>
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div>
               <div className="text-slate-500">研究积分</div>
               <div className="font-bold text-emerald-600">
-                {preRecoveryResearch} → {result.researchPoints}
-                <span className="ml-1">+{result.researchPoints - (preRecoveryResearch || 0)}</span>
+                {result.preRecoveryResearch} → {result.researchPoints}
+                <span className="ml-1">+{result.researchPoints - result.preRecoveryResearch}</span>
               </div>
             </div>
             <div>
               <div className="text-slate-500">生态评分</div>
               <div className="font-bold text-emerald-600">
-                {preRecoveryEco} → {result.ecoScore}
-                <span className="ml-1">+{result.ecoScore - (preRecoveryEco || 0)}</span>
+                {result.preRecoveryEco} → {result.ecoScore}
+                <span className="ml-1">+{result.ecoScore - result.preRecoveryEco}</span>
               </div>
             </div>
             <div>
               <div className="text-slate-500">总分</div>
               <div className="font-bold text-emerald-600">
-                {preRecoveryScore} → {result.finalScore}
-                <span className="ml-1">+{result.finalScore - (preRecoveryScore || 0)}</span>
+                {result.preRecoveryFinal} → {result.finalScore}
+                <span className="ml-1">+{result.finalScore - result.preRecoveryFinal}</span>
               </div>
             </div>
           </div>

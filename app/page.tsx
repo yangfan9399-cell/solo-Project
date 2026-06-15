@@ -34,11 +34,6 @@ export default function HomePage() {
 
   const [tab, setTab] = useState<Tab>("game");
   const [loading, setLoading] = useState(true);
-  const [preRecoverySnapshot, setPreRecoverySnapshot] = useState<{
-    score: number;
-    research: number;
-    eco: number;
-  } | null>(null);
 
   const loadCatalog = useCallback(async () => {
     const res = await fetch("/api/catalog");
@@ -62,7 +57,6 @@ export default function HomePage() {
     setNotebookEntries([]);
     setRecoveryTasks([]);
     setResult(null);
-    setPreRecoverySnapshot(null);
     setTab("game");
     await loadHistory();
   }, [loadHistory]);
@@ -145,14 +139,6 @@ export default function HomePage() {
     async (taskId: string) => {
       if (!session) return;
 
-      if (result && !preRecoverySnapshot) {
-        setPreRecoverySnapshot({
-          score: result.finalScore,
-          research: result.researchPoints,
-          eco: result.ecoScore,
-        });
-      }
-
       const res = await fetch("/api/recovery", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -172,12 +158,11 @@ export default function HomePage() {
       }
       await loadHistory();
     },
-    [session, result, preRecoverySnapshot, loadHistory]
+    [session, loadHistory]
   );
 
   const handleRecalculate = useCallback(async () => {
     if (!session) return;
-    setPreRecoverySnapshot(null);
     const res = await fetch(`/api/records?sessionId=${session.id}`);
     const data = await res.json();
     setResult(data.result || null);
@@ -349,9 +334,6 @@ export default function HomePage() {
                 <ResultPanel
                   result={result}
                   session={session}
-                  preRecoveryScore={preRecoverySnapshot?.score}
-                  preRecoveryResearch={preRecoverySnapshot?.research}
-                  preRecoveryEco={preRecoverySnapshot?.eco}
                   onRecalculate={handleRecalculate}
                   onNewGame={startNewGame}
                 />

@@ -30,13 +30,16 @@ export function createNewSession(): GameSession {
     tramplingCount: 0,
     route: [],
     visitedPools: [],
+    recoveryBonusResearch: 0,
+    recoveryBonusEco: 0,
   };
 
   const stmt = db.prepare(`
     INSERT INTO game_sessions
     (id, created_at, status, current_tide_level, current_tide_phase, time_step,
-     total_steps, research_points, eco_score, trample_count, route, visited_pools)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     total_steps, research_points, eco_score, trample_count, route, visited_pools,
+     recovery_bonus_research, recovery_bonus_eco)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     session.id,
@@ -50,7 +53,9 @@ export function createNewSession(): GameSession {
     session.ecoScore,
     session.tramplingCount,
     JSON.stringify(session.route),
-    JSON.stringify(session.visitedPools)
+    JSON.stringify(session.visitedPools),
+    session.recoveryBonusResearch,
+    session.recoveryBonusEco
   );
 
   return session;
@@ -73,6 +78,8 @@ export function getSession(sessionId: string): GameSession | null {
     tramplingCount: row.trample_count,
     route: JSON.parse(row.route),
     visitedPools: JSON.parse(row.visited_pools),
+    recoveryBonusResearch: row.recovery_bonus_research ?? 0,
+    recoveryBonusEco: row.recovery_bonus_eco ?? 0,
   };
 }
 
@@ -88,7 +95,9 @@ export function updateSession(session: GameSession) {
       eco_score = ?,
       trample_count = ?,
       route = ?,
-      visited_pools = ?
+      visited_pools = ?,
+      recovery_bonus_research = ?,
+      recovery_bonus_eco = ?
     WHERE id = ?
   `);
   stmt.run(
@@ -101,6 +110,8 @@ export function updateSession(session: GameSession) {
     session.tramplingCount,
     JSON.stringify(session.route),
     JSON.stringify(session.visitedPools),
+    session.recoveryBonusResearch,
+    session.recoveryBonusEco,
     session.id
   );
 }
@@ -256,25 +267,52 @@ export function recalculateSessionScore(sessionId: string): SessionResult {
   const missedTidePenalty = Math.max(0, session.totalSteps - observations.length) * 3;
 
   const baseResearch = uniqueSpecies * 20 + observations.filter((o) => o.noted).length * 5;
-  const baseResearchAfterPenalty = Math.max(0, baseResearch - missedTidePenalty);
+  const preRecoveryResearch = Math.max(0, baseResearch - missedTidePenalty);
 
-  const completedTasks = db
-    .prepare("SELECT SUM(points_reward) as total, COUNT(*) as cnt FROM recovery_tasks WHERE session_id = ? AND completed = 1")
-    .get(sessionId) as any;
-  const recoveryResearchBonus = completedTasks?.total || 0;
+  const preRecoveryEco = Math.max(0, 100 - tramplingPenalty);
 
-  const completedTrampleOrEcoTasks = db
-    .prepare("SELECT COUNT(*) as cnt FROM recovery_tasks WHERE session_id = ? AND completed = 1 AND type IN ('trampling', 'low_eco')")
-    .get(sessionId) as any;
-  const recoveryEcoBonus = Math.min(100, (completedTrampleOrEcoTasks?.cnt || 0) * 10);
+  const recoveryBonusResearch = session.recoveryBonusResearch || 0;
+  const recoveryBonusEco = session.recoveryBonusEco || 0;
 
-  const baseEco = Math.max(0, 100 - tramplingPenalty);
-  const ecoScore = Math.min(100, baseEco + recoveryEcoBonus);
-  const researchPoints = baseResearchAfterPenalty + recoveryResearchBonus;
-
+  const researchPoints = preRecoveryResearch + recoveryBonusResearch;
+  const ecoScore = Math.min(100, preRecoveryEco + recoveryBonusEco);
   const finalScore = researchPoints + ecoScore;
+  const preRecoveryFinal = preRecoveryResearch + preRecoveryEco;
 
-  const recoveryTasks = generateRecoveryTasks(sessionId, trampleCount, missedSpecies, baseEco);
+  const existingCompleted = db
+    .prepare("SELECT type FROM recovery_tasks WHERE session_id = ? AND completed = 1")
+    .all(sessionId)
+    .map((r: any) => r.type);
+
+  db.prepare("DELETE FROM recovery_tasks WHERE session_id = ? AND completed = 0").run(sessionId);
+
+  const newTasks = generateRecoveryTasks(sessionId, trampleCount, missedSpecies, preRecoveryEco);
+  const recoveryTasks: RecoveryTask[] = [];
+
+  for (const task of newTasks) {
+    if (existingCompleted.includes(task.type)) continue;
+    db.prepare(
+      `INSERT INTO recovery_tasks (id, session_id, type, description, points_reward, completed)
+       VALUES (?, ?, ?, ?, ?, 0)`
+    ).run(task.id, task.sessionId, task.type, task.description, task.pointsReward);
+    recoveryTasks.push(task);
+  }
+
+  const keptCompleted = db
+    .prepare("SELECT * FROM recovery_tasks WHERE session_id = ? AND completed = 1")
+    .all(sessionId) as any[];
+  for (const row of keptCompleted) {
+    recoveryTasks.push({
+      id: row.id,
+      sessionId: row.session_id,
+      type: row.type,
+      description: row.description,
+      pointsReward: row.points_reward,
+      completed: true,
+    });
+  }
+
+  const allTaskIds = recoveryTasks.map((t) => t.id);
 
   const result: SessionResult = {
     id: generateId(),
@@ -287,21 +325,24 @@ export function recalculateSessionScore(sessionId: string): SessionResult {
     researchPoints,
     ecoScore,
     finalScore,
-    recoveryTasksAssigned: recoveryTasks.map((t) => t.id),
+    recoveryTasksAssigned: allTaskIds,
     completedAt: Date.now(),
+    preRecoveryResearch,
+    preRecoveryEco,
+    preRecoveryFinal,
   };
 
   const existing = db.prepare("SELECT id FROM session_results WHERE session_id = ?").get(sessionId) as any;
   if (existing) {
     db.prepare(`DELETE FROM session_results WHERE id = ?`).run(existing.id);
-    db.prepare(`DELETE FROM recovery_tasks WHERE session_id = ?`).run(sessionId);
   }
 
   db.prepare(
     `INSERT INTO session_results
      (id, session_id, total_observations, unique_species, missed_species, trample_penalty,
-      missed_tide_penalty, research_points, eco_score, final_score, recovery_tasks, completed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      missed_tide_penalty, research_points, eco_score, final_score, recovery_tasks, completed_at,
+      pre_recovery_research, pre_recovery_eco, pre_recovery_final)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     result.id,
     result.sessionId,
@@ -314,15 +355,11 @@ export function recalculateSessionScore(sessionId: string): SessionResult {
     result.ecoScore,
     result.finalScore,
     JSON.stringify(result.recoveryTasksAssigned),
-    result.completedAt
+    result.completedAt,
+    result.preRecoveryResearch,
+    result.preRecoveryEco,
+    result.preRecoveryFinal
   );
-
-  for (const task of recoveryTasks) {
-    db.prepare(
-      `INSERT INTO recovery_tasks (id, session_id, type, description, points_reward, completed)
-       VALUES (?, ?, ?, ?, ?, 0)`
-    ).run(task.id, task.sessionId, task.type, task.description, task.pointsReward);
-  }
 
   return result;
 }
@@ -383,6 +420,9 @@ export function getSessionResult(sessionId: string): SessionResult | null {
     finalScore: row.final_score,
     recoveryTasksAssigned: JSON.parse(row.recovery_tasks),
     completedAt: row.completed_at,
+    preRecoveryResearch: row.pre_recovery_research ?? 0,
+    preRecoveryEco: row.pre_recovery_eco ?? 0,
+    preRecoveryFinal: row.pre_recovery_final ?? 0,
   };
 }
 
@@ -403,14 +443,24 @@ export function completeRecoveryTask(taskId: string): RecoveryTask | null {
   const db = getDb();
   const task = db.prepare("SELECT * FROM recovery_tasks WHERE id = ?").get(taskId) as any;
   if (!task) return null;
+  if (task.completed === 1) {
+    return {
+      id: task.id,
+      sessionId: task.session_id,
+      type: task.type,
+      description: task.description,
+      pointsReward: task.points_reward,
+      completed: true,
+    };
+  }
 
   db.prepare("UPDATE recovery_tasks SET completed = 1 WHERE id = ?").run(taskId);
 
   const session = getSession(task.session_id);
   if (session) {
-    session.researchPoints += task.points_reward;
+    session.recoveryBonusResearch += task.points_reward;
     if (task.type === "trampling" || task.type === "low_eco") {
-      session.ecoScore = Math.min(100, session.ecoScore + 10);
+      session.recoveryBonusEco = Math.min(100, session.recoveryBonusEco + 10);
     }
     updateSession(session);
   }
