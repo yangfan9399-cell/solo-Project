@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪山缆绳救援节点游戏</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>🏔️ 雪山缆绳救援节点游戏</h1>
+            <p class="subtitle">布置锚点、绳结、滑轮和保护站，把被困者安全转移！</p>
+        </header>
+
+        <main class="main-content">
+            <section class="seed-section">
+                <h2>🎯 选择救援场景</h2>
+                <div class="seed-cards">
+                    {% for seed in seeds %}
+                    <div class="seed-card" data-seed="{{ seed.seed_type }}">
+                        <div class="seed-header">
+                            <span class="seed-badge difficulty-{{ seed.difficulty }}">难度 {{ seed.difficulty }}</span>
+                            <span class="seed-terrain terrain-{{ seed.terrain_type }}">
+                                {{ seed.get_terrain_type_display }}
+                            </span>
+                        </div>
+                        <h3>{{ seed.name }}</h3>
+                        <p class="seed-desc">{{ seed.description }}</p>
+                        <div class="seed-meta">
+                            <span>🌤️ {{ seed.get_weather_display }}</span>
+                            <span>📊 {{ seed.get_expected_outcome_display|default:seed.expected_outcome }}</span>
+                        </div>
+                        <button class="btn btn-primary start-game-btn" data-seed="{{ seed.seed_type }}">
+                            开始救援
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="history-section">
+                <h2>📜 历史局次</h2>
+                {% if sessions %}
+                <div class="session-list">
+                    {% for session in sessions %}
+                    <div class="session-item">
+                        <div class="session-info">
+                            <span class="session-id">{{ session.session_id }}</span>
+                            <span class="session-status status-{{ session.status }}">
+                                {{ session.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="session-meta">
+                            <span>🗺️ {{ session.get_terrain_type_display }}</span>
+                            <span>🌤️ {{ session.get_weather_display }}</span>
+                            <span>⭐ {{ session.total_score|floatformat:1 }}分</span>
+                        </div>
+                        <div class="session-actions">
+                            <a href="{% url 'rescue_game:game_board' session.session_id %}" class="btn btn-sm btn-secondary">
+                                查看
+                            </a>
+                            <a href="{% url 'rescue_game:replay' session.session_id %}" class="btn btn-sm btn-primary">
+                                回放
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-hint">暂无历史记录，开始你的第一次救援吧！</p>
+                {% endif %}
+            </section>
+        </main>
+
+        <footer class="main-footer">
+            <p>💡 提示：冰面、岩壁和雪檐的承力不同，错误节点会导致绳路失效</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.start-game-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const seedType = this.dataset.seed;
+                    const playerName = prompt('请输入你的名字:', '玩家') || '玩家';
+
+                    fetch('{% url "rescue_game:api_create_session" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            seed_type: seedType,
+                            player_name: playerName
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = `/game/${data.session_id}/`;
+                        } else {
+                            alert('创建游戏失败: ' + data.error);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        alert('网络错误，请重试');
+                    });
+                });
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+</body>
+</html>

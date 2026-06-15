@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪山救援 - {{ session.session_id }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/game.css' %}">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <div class="header-left">
+                <h1>🏔️ 雪山缆绳救援</h1>
+                <span class="session-badge">局次: {{ session.session_id }}</span>
+            </div>
+            <div class="header-center">
+                <div class="weather-display" id="weatherDisplay">
+                    <span class="weather-icon">🌤️</span>
+                    <span class="weather-text">{{ session.get_weather_display }}</span>
+                </div>
+                <div class="terrain-display">
+                    <span>地形: {{ session.get_terrain_type_display }}</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="score-display">
+                    <div class="score-item">
+                        <span class="score-label">安全评分</span>
+                        <span class="score-value" id="safetyScore">{{ session.safety_score|floatformat:1 }}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">总分</span>
+                        <span class="score-value" id="totalScore">{{ session.total_score|floatformat:1 }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'rescue_game:index' %}" class="btn btn-sm btn-secondary">返回首页</a>
+            </div>
+        </header>
+
+        <div class="game-body">
+            <aside class="sidebar-left">
+                <div class="tool-panel">
+                    <h3>🛠️ 救援工具</h3>
+                    <div class="tool-list">
+                        <div class="tool-item" data-tool="anchor" data-type="anchor">
+                            <span class="tool-icon">⚓</span>
+                            <span class="tool-name">锚点</span>
+                            <span class="tool-desc">基础固定点</span>
+                        </div>
+                        <div class="tool-item" data-tool="pulley" data-type="pulley">
+                            <span class="tool-icon">🔘</span>
+                            <span class="tool-name">滑轮</span>
+                            <span class="tool-desc">改变力的方向</span>
+                        </div>
+                        <div class="tool-item" data-tool="protection" data-type="protection">
+                            <span class="tool-icon">🛡️</span>
+                            <span class="tool-name">保护站</span>
+                            <span class="tool-desc">安全保护装置</span>
+                        </div>
+                        <div class="tool-item" data-tool="knot" data-type="knot">
+                            <span class="tool-icon">🔗</span>
+                            <span class="tool-name">绳结</span>
+                            <span class="tool-desc">连接节点</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="terrain-panel">
+                    <h3>🗺️ 地形承力</h3>
+                    <div class="terrain-list">
+                        <div class="terrain-item">
+                            <span class="terrain-color rock-color"></span>
+                            <span class="terrain-name">岩壁</span>
+                            <span class="terrain-load">25 KN</span>
+                        </div>
+                        <div class="terrain-item">
+                            <span class="terrain-color ice-color"></span>
+                            <span class="terrain-name">冰面</span>
+                            <span class="terrain-load">8 KN</span>
+                        </div>
+                        <div class="terrain-item">
+                            <span class="terrain-color snow-color"></span>
+                            <span class="terrain-name">雪檐</span>
+                            <span class="terrain-load">3 KN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="node-panel">
+                    <h3>📋 节点列表</h3>
+                    <div class="node-list" id="nodeList">
+                        <p class="empty-hint">暂无节点</p>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="game-canvas-container">
+                <div class="canvas-wrapper">
+                    <canvas id="gameCanvas" width="800" height="500"></canvas>
+                    <div class="canvas-overlay" id="canvasOverlay">
+                        <div class="hint-text" id="hintText">
+                            点击左侧工具，然后在地图上点击放置节点
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-panel">
+                    <div class="control-left">
+                        <button class="btn btn-primary" id="startBtn" {% if session.status == 'playing' %}style="display:none"{% endif %}>
+                            ▶️ 开始救援
+                        </button>
+                        <button class="btn btn-success" id="calculateBtn">
+                            📊 计算受力
+                        </button>
+                        <button class="btn btn-warning" id="weatherBtn">
+                            🌦️ 模拟天气
+                        </button>
+                    </div>
+                    <div class="control-right">
+                        <button class="btn btn-danger" id="rollbackBtn" style="display:none">
+                            ⏪ 回滚到安全步骤
+                        </button>
+                        <button class="btn btn-success" id="completeBtn">
+                            ✅ 完成救援
+                        </button>
+                        <a href="{% url 'rescue_game:replay' session.session_id %}" class="btn btn-secondary">
+                            🎬 查看回放
+                        </a>
+                    </div>
+                </div>
+
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="status-label">状态:</span>
+                        <span class="status-value status-{{ session.status }}" id="statusText">
+                            {{ session.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">节点数:</span>
+                        <span class="status-value" id="nodeCount">{{ session.anchor_count }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">当前步骤:</span>
+                        <span class="status-value" id="stepCount">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">用时:</span>
+                        <span class="status-value" id="timerDisplay">00:00</span>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="sidebar-right">
+                <div class="info-panel">
+                    <h3>📖 操作指南</h3>
+                    <ol class="guide-list">
+                        <li>选择救援工具</li>
+                        <li>在地图上点击放置</li>
+                        <li>合理分布在不同地形</li>
+                        <li>点击「计算受力」验证</li>
+                        <li>开始救援转移被困者</li>
+                        <li>注意天气事件影响</li>
+                    </ol>
+                </div>
+
+                <div class="history-panel">
+                    <h3>📜 操作历史</h3>
+                    <div class="history-list" id="historyList">
+                        <p class="empty-hint">暂无记录</p>
+                    </div>
+                </div>
+
+                <div class="warning-panel" id="warningPanel" style="display:none">
+                    <h3>⚠️ 安全警告</h3>
+                    <div class="warning-content" id="warningContent">
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div class="result-modal" id="resultModal" style="display:none">
+            <div class="modal-content">
+                <h2 id="resultTitle">救援完成</h2>
+                <div class="result-scores">
+                    <div class="result-item">
+                        <span class="result-label">最终得分</span>
+                        <span class="result-value big" id="resultFinal">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">安全评分</span>
+                        <span class="result-value" id="resultSafety">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">速度评分</span>
+                        <span class="result-value" id="resultSpeed">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">技术评分</span>
+                        <span class="result-value" id="resultTech">0</span>
+                    </div>
+                </div>
+                <div class="result-grade" id="resultGrade">S</div>
+                <p class="result-eval" id="resultEval"></p>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="location.reload()">再来一次</button>
+                    <a href="{% url 'rescue_game:replay' session.session_id %}" class="btn btn-secondary">查看回放</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SESSION_ID = '{{ session.session_id }}';
+        const INITIAL_STATUS = '{{ session.status }}';
+        const SEED_TYPE = '{{ session.seed_type }}';
+    </script>
+    {% load static %}
+    <script src="{% static 'js/game.js' %}"></script>
+</body>
+</html>
