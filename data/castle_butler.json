@@ -552,11 +552,155 @@
       "trace_required": true
     }
   ],
-  "game_sessions": [],
-  "assignment_details": [],
-  "history_records": [],
-  "result_records": [],
-  "access_logs": [],
+  "game_sessions": [
+    {
+      "id": "sess_1781493678311_ikb8m0",
+      "puzzle_level": 3,
+      "status": "active",
+      "current_step": 0,
+      "total_steps": 3,
+      "created_at": "2026-06-15T03:21:18.311Z",
+      "completed_at": null,
+      "final_score": null,
+      "notes": "验证脚本：样本三·回滚重算"
+    }
+  ],
+  "assignment_details": [
+    {
+      "id": "ad_1781493678317_c6he",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 0,
+      "person_id": "p06",
+      "key_id": "k06",
+      "assigned_slot": "morning",
+      "created_at": "2026-06-15T03:21:18.317Z"
+    },
+    {
+      "id": "ad_1781493678318_em65",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 1,
+      "person_id": "p08",
+      "key_id": "k11",
+      "assigned_slot": "night",
+      "created_at": "2026-06-15T03:21:18.318Z"
+    },
+    {
+      "id": "ad_1781493678319_270r",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 2,
+      "person_id": "p03",
+      "key_id": "k10",
+      "assigned_slot": "night",
+      "created_at": "2026-06-15T03:21:18.319Z"
+    }
+  ],
+  "history_records": [
+    {
+      "id": "hr_1781493678317_vf2p",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 0,
+      "person_id": "p06",
+      "action": "领取 保险库天钥",
+      "slot": "morning",
+      "success": 1,
+      "created_at": "2026-06-15T03:21:18.317Z"
+    },
+    {
+      "id": "hr_1781493678318_kruh",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 1,
+      "person_id": "p08",
+      "action": "领取 塔楼顶匙",
+      "slot": "night",
+      "success": 1,
+      "created_at": "2026-06-15T03:21:18.318Z"
+    },
+    {
+      "id": "hr_1781493678319_0yos",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "step_index": 2,
+      "person_id": "p03",
+      "action": "领取 夜巡通用",
+      "slot": "night",
+      "success": 1,
+      "created_at": "2026-06-15T03:21:18.319Z"
+    }
+  ],
+  "result_records": [
+    {
+      "id": "rr_1781493678318_81wv",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "key_id": "k06",
+      "rooms_covered": [
+        "r001",
+        "r007",
+        "r012"
+      ],
+      "allowed_slots_used": [
+        "morning"
+      ],
+      "duplication_triggered": 0,
+      "created_at": "2026-06-15T03:21:18.318Z"
+    },
+    {
+      "id": "rr_1781493678319_mp5g",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "key_id": "k11",
+      "rooms_covered": [
+        "r001",
+        "r011"
+      ],
+      "allowed_slots_used": [
+        "night"
+      ],
+      "duplication_triggered": 0,
+      "created_at": "2026-06-15T03:21:18.319Z"
+    },
+    {
+      "id": "rr_1781493678319_6xoj",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "key_id": "k10",
+      "rooms_covered": [
+        "r001",
+        "r002",
+        "r003",
+        "r004",
+        "r011",
+        "r012"
+      ],
+      "allowed_slots_used": [
+        "night"
+      ],
+      "duplication_triggered": 0,
+      "created_at": "2026-06-15T03:21:18.319Z"
+    }
+  ],
+  "access_logs": [
+    {
+      "id": "log_1781493678315_iqrcy9",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "timestamp": "2026-06-15T03:21:18.315Z",
+      "room_id": null,
+      "person_id": "p06",
+      "key_id": "k04",
+      "event_type": "ROLLBACK",
+      "message": "管家发现风险，立即回滚了 金融审计师 的钥匙分配。",
+      "before_state": "{\"assigned\":true,\"estimated_score_before_rollback\":54}",
+      "after_state": "{\"assigned\":false,\"rollback_reason\":\"DUPLICATION_RISK / TRUST_MISMATCH\"}"
+    },
+    {
+      "id": "log_1781493678315_rdq9yz",
+      "session_id": "sess_1781493678311_ikb8m0",
+      "timestamp": "2026-06-15T03:21:18.315Z",
+      "room_id": null,
+      "person_id": "p08",
+      "key_id": "k12",
+      "event_type": "ROLLBACK",
+      "message": "管家发现风险，立即回滚了 新招募夜巡员 的钥匙分配。",
+      "before_state": "{\"assigned\":true,\"estimated_score_before_rollback\":54}",
+      "after_state": "{\"assigned\":false,\"rollback_reason\":\"DUPLICATION_RISK / TRUST_MISMATCH\"}"
+    }
+  ],
   "seed_samples": [
     {
       "id": 1,
@@ -637,7 +781,7 @@
       "description": "钥匙环编组冲突：先错配编组触发回滚，再重算正确编组通过",
       "data": {
         "level": 3,
-        "rollbackStep": 1,
+        "rollbackStep": 0,
         "firstAttempt": [
           {
             "person_id": "p06",
@@ -651,6 +795,11 @@
           }
         ],
         "rollbackAssignments": [
+          {
+            "person_id": "p06",
+            "key_id": "k04",
+            "slot": "morning"
+          },
           {
             "person_id": "p08",
             "key_id": "k12",
@@ -680,12 +829,14 @@
         ],
         "events": [
           "ASSIGN_OK",
+          "DUPLICATION_RISK",
           "ROLLBACK",
+          "ASSIGN_OK",
           "ASSIGN_OK",
           "ASSIGN_OK",
           "TRACE_COMPLETE"
         ],
-        "notes": "首次p08误领k12(全通)→触发DUPLICATION_RISK→回滚；重算后分配k11(塔楼)，p03领k10，p06领k06；最终钥匙环g03正确拆分。"
+        "notes": "首次分配两条全错(p06错拿k04书房专用未覆盖保险库；p08误领k12全通极危复制)→编组冲突→全部回滚（rollbackStep=0，清空局次明细与结果记录）→按步骤从零重建三条正确分配→钥匙环g01/g02/g03匹配正确。"
       }
     }
   ]

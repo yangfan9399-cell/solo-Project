@@ -163,12 +163,13 @@ const samples = [
     description: "钥匙环编组冲突：先错配编组触发回滚，再重算正确编组通过",
     data: {
       level: 3,
-      rollbackStep: 1,
+      rollbackStep: 0,
       firstAttempt: [
         { person_id: "p06", key_id: "k04", slot: "morning" },
         { person_id: "p08", key_id: "k12", slot: "night" },
       ],
       rollbackAssignments: [
+        { person_id: "p06", key_id: "k04", slot: "morning" },
         { person_id: "p08", key_id: "k12", slot: "night" },
       ],
       finalAssignments: [
@@ -177,8 +178,8 @@ const samples = [
         { person_id: "p03", key_id: "k10", slot: "night" },
       ],
       expectedScoreBracket: [70, 90],
-      events: ["ASSIGN_OK", "ROLLBACK", "ASSIGN_OK", "ASSIGN_OK", "TRACE_COMPLETE"],
-      notes: "首次p08误领k12(全通)→触发DUPLICATION_RISK→回滚；重算后分配k11(塔楼)，p03领k10，p06领k06；最终钥匙环g03正确拆分。",
+      events: ["ASSIGN_OK", "DUPLICATION_RISK", "ROLLBACK", "ASSIGN_OK", "ASSIGN_OK", "ASSIGN_OK", "TRACE_COMPLETE"],
+      notes: "首次分配两条全错(p06错拿k04书房专用未覆盖保险库；p08误领k12全通极危复制)→编组冲突→全部回滚（rollbackStep=0，清空局次明细与结果记录）→按步骤从零重建三条正确分配→钥匙环g01/g02/g03匹配正确。",
     },
   },
 ];
