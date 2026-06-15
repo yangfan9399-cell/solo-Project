@@ -677,8 +677,19 @@ function triggerWeatherEvent(weatherType) {
                 <span class="weather-text">${getWeatherName(weatherType)}</span>
             `;
 
-            if (data.failed_nodes && data.failed_nodes.length > 0) {
+            const failedItems = data.failed_items || data.failed_nodes || [];
+            const hintText = document.getElementById('hintText');
+            if (failedItems.length > 0) {
+                const names = failedItems.map(f => f.node_id || f.id).join('、');
+                hintText.innerHTML = `⚠️ 天气事件触发！${failedItems.length}个装置失效：${names}<br><span style="font-size:0.85em;color:#94a3b8;">可点击「回滚」撤销本次天气事件</span>`;
+                hintText.style.color = '#ef4444';
                 document.getElementById('rollbackBtn').style.display = 'inline-block';
+            } else {
+                hintText.textContent = `🌤️ 天气变为：${getWeatherName(weatherType)}，救援继续`;
+                hintText.style.color = '#f59e0b';
+                if (data.can_rollback) {
+                    document.getElementById('rollbackBtn').style.display = 'inline-block';
+                }
             }
 
             loadSessionState();

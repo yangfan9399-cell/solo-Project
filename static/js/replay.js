@@ -367,17 +367,25 @@ function loadAndRenderStep() {
     const snapValid = snap.valid_node_count !== undefined ? `${snap.valid_node_count}/${snap.total_node_count}` : '-';
     const snapMinSF = snap.min_safety_factor !== undefined && snap.min_safety_factor !== null ? snap.min_safety_factor : '-';
 
-    const snapNodes = snap.nodes || [];
-    const snapDetails = snap.details || [];
+    const snapNodes = (snap && snap.nodes && Array.isArray(snap.nodes) && snap.nodes.length > 0)
+        ? snap.nodes
+        : null;
+    const snapDetails = (snap && snap.details && Array.isArray(snap.details) && snap.details.length > 0)
+        ? snap.details
+        : null;
 
     let invalidNodes = [];
-    snapNodes.forEach(n => {
-        if (!n.is_valid) invalidNodes.push(`${n.node_id}(${n.terrain_type})`);
-    });
+    if (snapNodes) {
+        snapNodes.forEach(n => {
+            if (!n.is_valid) invalidNodes.push(`${n.node_id}(${n.terrain_type})`);
+        });
+    }
     let invalidDetails = [];
-    snapDetails.forEach(d => {
-        if (!d.is_valid) invalidDetails.push(`${d.detail_id}(${d.detail_type})`);
-    });
+    if (snapDetails) {
+        snapDetails.forEach(d => {
+            if (!d.is_valid) invalidDetails.push(`${d.detail_id}(${d.detail_type})`);
+        });
+    }
 
     stepDetailDiv.style.display = 'block';
     stepDetailContent.innerHTML = `
@@ -415,12 +423,8 @@ function loadAndRenderStep() {
         </div>
     `;
 
-    if (snapNodes.length > 0) {
-        replayState.currentSnapNodes = snapNodes;
-    }
-    if (snapDetails.length > 0) {
-        replayState.currentSnapDetails = snapDetails;
-    }
+    replayState.currentSnapNodes = snapNodes;
+    replayState.currentSnapDetails = snapDetails;
 
     replayState.currentVictimPos = {
         x: history.victim_x,

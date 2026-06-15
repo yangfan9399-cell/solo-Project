@@ -285,12 +285,26 @@ def api_calculate_loads(request, session_id):
 
         failures = engine.validate_nodes()
 
+        failed_list = []
+        for f in failures:
+            if isinstance(f, dict):
+                failed_list.append({
+                    'node_id': f.get('id'),
+                    'type': f.get('type'),
+                    'reason': f.get('reason'),
+                    'load': f.get('load'),
+                    'capacity': f.get('capacity'),
+                })
+            else:
+                failed_list.append({
+                    'node_id': getattr(f, 'node_id', str(f)),
+                    'reason': getattr(f, 'failure_reason', str(f)),
+                })
+
         return JsonResponse({
             'success': True,
-            'failed_nodes': [
-                {'node_id': n.node_id, 'reason': n.failure_reason}
-                for n in failures
-            ],
+            'failed_nodes': failed_list,
+            'failed_items': failed_list,
             'nodes': [
                 {
                     'node_id': n.node_id,
