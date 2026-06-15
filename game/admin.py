@@ -32,7 +32,11 @@ class TouristHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(PatienceResult)
 class PatienceResultAdmin(admin.ModelAdmin):
-    list_display = ['session', 'tick', 'action', 'tourist_count', 'complaint_count']
+    list_display = [
+        'session', 'tick', 'action', 'tourist_count', 'complaint_count',
+        'transfer_patience_loss', 'normal_patience_loss',
+        'transfer_complaints', 'transfer_served', 'transfer_revenue_bonus',
+    ]
     list_filter = ['session', 'action']
 
 

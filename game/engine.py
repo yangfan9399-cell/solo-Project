@@ -71,27 +71,55 @@ def advance_tick(session):
     departed_count = 0
     complaint_count = 0
 
+    transfer_patience_loss = 0
+    normal_patience_loss = 0
+    transfer_complaints = 0
+    normal_complaints = 0
+    transfer_served = 0
+    normal_served = 0
+    transfer_revenue_bonus = 0
+
     patience_before_avg = 0
     if queue:
         patience_before_avg = sum(t['patience'] for t in queue) / len(queue)
 
     updated_queue = []
     for t in queue:
+        old_patience = t['patience']
         t['patience'] -= 1
+        patience_loss = 1
+        if t['needs_transfer']:
+            transfer_patience_loss += patience_loss
+        else:
+            normal_patience_loss += patience_loss
+
         if t['patience'] <= 0:
             departed_count += 1
-            TouristHistory.objects.filter(
+            matched_tourists = TouristHistory.objects.filter(
                 session=session,
                 tick_entered=t['tick_entered'],
+                destination=t['destination'],
                 served=False,
-            ).update(complained=True, wait_ticks=tick - t['tick_entered'])
+                complained=False,
+            )
+            th = None
+            if matched_tourists.exists():
+                th = matched_tourists.first()
+                th.complained = True
+                th.wait_ticks = tick - t['tick_entered']
+                th.save()
             Complaint.objects.create(
                 session=session,
                 tick=tick,
+                tourist=th,
                 reason=f"等待超时离开-{t['destination']}",
-                severity=2 if t['needs_transfer'] else 1,
+                severity=3 if t['needs_transfer'] else 1,
             )
             complaint_count += 1
+            if t['needs_transfer']:
+                transfer_complaints += 1
+            else:
+                normal_complaints += 1
         else:
             updated_queue.append(t)
 
@@ -108,13 +136,32 @@ def advance_tick(session):
             p_count = len(passengers)
             wait_times = [tick - p['tick_entered'] for p in passengers]
             destinations = [p['destination'] for p in passengers]
-            revenue = p_count * session.ticket_price
-
-            if any(p['needs_transfer'] for p in passengers):
-                revenue = int(revenue * 1.3)
+            base_revenue = p_count * session.ticket_price
+            has_transfer = any(p['needs_transfer'] for p in passengers)
+            revenue = int(base_revenue * 1.3) if has_transfer else base_revenue
+            if has_transfer:
+                transfer_revenue_bonus += (revenue - base_revenue)
 
             tick_income += revenue
             served_count += p_count
+
+            for p in passengers:
+                matched = TouristHistory.objects.filter(
+                    session=session,
+                    tick_entered=p['tick_entered'],
+                    destination=p['destination'],
+                    served=False,
+                )
+                if matched.exists():
+                    th = matched.first()
+                    th.served = True
+                    th.wait_ticks = tick - p['tick_entered']
+                    th.revenue = session.ticket_price
+                    th.save()
+                if p['needs_transfer']:
+                    transfer_served += 1
+                else:
+                    normal_served += 1
 
             dd = DispatchDetail.objects.create(
                 session=session,
@@ -126,16 +173,6 @@ def advance_tick(session):
             dd.set_wait_times(wait_times)
             dd.set_destinations(destinations)
             dd.save()
-
-            TouristHistory.objects.filter(
-                session=session,
-                tick_entered__in=[p['tick_entered'] for p in passengers],
-                served=False,
-            ).update(
-                served=True,
-                wait_ticks=tick - passengers[0]['tick_entered'] if passengers else 0,
-                revenue=session.ticket_price,
-            )
 
     session.total_income += tick_income
     session.total_complaints += complaint_count
@@ -154,7 +191,14 @@ def advance_tick(session):
         action='tick',
         tourist_count=len(queue),
         complaint_count=complaint_count,
-        note=f'新到{len(new_tourists)}人,服务{served_count}人,离开{departed_count}人',
+        transfer_patience_loss=transfer_patience_loss,
+        normal_patience_loss=normal_patience_loss,
+        transfer_complaints=transfer_complaints,
+        normal_complaints=normal_complaints,
+        transfer_served=transfer_served,
+        normal_served=normal_served,
+        transfer_revenue_bonus=transfer_revenue_bonus,
+        note=f'新到{len(new_tourists)}人,服务{served_count}人(换乘{transfer_served}),离开{departed_count}人(换乘{transfer_complaints}),换乘补贴{transfer_revenue_bonus}',
     )
 
     IncomeSnapshot.objects.update_or_create(
@@ -193,14 +237,26 @@ def calculate_score(session):
     level = session.level
     dispatches = DispatchDetail.objects.filter(session=session)
     tourists = TouristHistory.objects.filter(session=session)
+    active_complaints = Complaint.objects.filter(session=session, rolled_back=False)
 
     total_revenue = sum(d.revenue for d in dispatches)
     served_count = tourists.filter(served=True).count()
-    complaint_count = tourists.filter(complained=True).count()
+    complaint_count = active_complaints.count()
     avg_wait = 0
     served_tourists = tourists.filter(served=True)
     if served_tourists.exists():
         avg_wait = sum(t.wait_ticks for t in served_tourists) / served_tourists.count()
+
+    transfer_served = tourists.filter(served=True, needs_transfer=True).count()
+    normal_served = tourists.filter(served=True, needs_transfer=False).count()
+    transfer_complaints = active_complaints.filter(tourist__needs_transfer=True).count()
+    normal_complaints = active_complaints.filter(tourist__needs_transfer=False).count()
+
+    patience_results = PatienceResult.objects.filter(session=session, action='tick')
+    transfer_patience_loss = sum(p.transfer_patience_loss for p in patience_results)
+    normal_patience_loss = sum(p.normal_patience_loss for p in patience_results)
+
+    transfer_revenue_bonus = sum(p.transfer_revenue_bonus for p in patience_results)
 
     income_score = total_revenue
     complaint_penalty = complaint_count * 50
@@ -208,7 +264,7 @@ def calculate_score(session):
     target_bonus = 0
     if total_revenue >= level.target_income:
         target_bonus = (total_revenue - level.target_income) // 2
-    transfer_bonus = tourists.filter(served=True, needs_transfer=True).count() * 20
+    transfer_bonus = transfer_served * 20
 
     final_score = income_score - complaint_penalty - wait_penalty + target_bonus + transfer_bonus
     return max(final_score, 0), {
@@ -221,6 +277,13 @@ def calculate_score(session):
         'served_count': served_count,
         'complaint_count': complaint_count,
         'avg_wait': round(avg_wait, 1),
+        'transfer_served': transfer_served,
+        'normal_served': normal_served,
+        'transfer_complaints': transfer_complaints,
+        'normal_complaints': normal_complaints,
+        'transfer_patience_loss': transfer_patience_loss,
+        'normal_patience_loss': normal_patience_loss,
+        'transfer_revenue_bonus': transfer_revenue_bonus,
     }
 
 
@@ -232,75 +295,170 @@ def finalize_session(session):
 
 
 def rollback_complaints(session, to_tick):
-    complaints = Complaint.objects.filter(
-        session=session,
-        tick__gt=to_tick,
-        rolled_back=False,
-    )
-    count = complaints.count()
+    with transaction.atomic():
+        active_complaints = Complaint.objects.filter(
+            session=session,
+            tick__gt=to_tick,
+            rolled_back=False,
+        )
+        count = active_complaints.count()
+        if count == 0:
+            return 0
 
-    complaints.update(rolled_back=True, rollback_tick=session.current_tick)
+        queue = session.get_queue()
+        restored_to_queue = []
 
-    session.total_complaints -= count
-    session.total_complaints = max(session.total_complaints, 0)
+        for c in active_complaints:
+            c.rolled_back = True
+            c.rollback_tick = session.current_tick
+            c.save()
 
-    if session.status == 'failed' and session.total_complaints < session.level.max_complaints:
-        session.status = 'active'
+            if c.tourist is not None:
+                th = c.tourist
+                th.complained = False
+                th.served = False
+                th.wait_ticks = 0
+                th.save()
 
-    session.save()
+                restored_to_queue.append({
+                    'id': th.id,
+                    'tick_entered': th.tick_entered,
+                    'destination': th.destination,
+                    'patience': th.patience,
+                    'max_patience': th.patience,
+                    'needs_transfer': th.needs_transfer,
+                    'ticket_price_at_entry': th.ticket_price_at_entry,
+                })
 
-    tourists_affected = TouristHistory.objects.filter(
-        session=session,
-        complained=True,
-    )
-    tourists_to_restore = []
-    for t in tourists_affected:
-        if t.tick_entered > to_tick and t.complained:
-            t.complained = False
-            t.served = False
-            t.wait_ticks = 0
-            tourists_to_restore.append(t)
-    TouristHistory.objects.bulk_update(tourists_to_restore, ['complained', 'served', 'wait_ticks'])
+        queue = restored_to_queue + queue
+        session.set_queue(queue)
+
+        active_complaint_count = Complaint.objects.filter(
+            session=session,
+            rolled_back=False,
+        ).count()
+        complained_tourist_count = TouristHistory.objects.filter(
+            session=session,
+            complained=True,
+        ).count()
+
+        session.total_complaints = active_complaint_count
+        session.total_departed = complained_tourist_count
+
+        if session.status == 'failed' and active_complaint_count < session.level.max_complaints:
+            session.status = 'active'
+
+        session.save()
+
+        transfer_restored = sum(1 for t in restored_to_queue if t.get('needs_transfer', False))
+        normal_restored = len(restored_to_queue) - transfer_restored
+        transfer_rolled_back = active_complaints.filter(tourist__needs_transfer=True).count()
+        normal_rolled_back = active_complaints.filter(tourist__needs_transfer=False).count()
+
+        PatienceResult.objects.create(
+            session=session,
+            tick=session.current_tick,
+            patience_before=0,
+            patience_after=0,
+            action=f'rollback:{to_tick}',
+            tourist_count=len(restored_to_queue),
+            complaint_count=count,
+            transfer_patience_loss=0,
+            normal_patience_loss=0,
+            transfer_complaints=transfer_rolled_back,
+            normal_complaints=normal_rolled_back,
+            transfer_served=0,
+            normal_served=0,
+            transfer_revenue_bonus=0,
+            note=f'回滚至回合{to_tick}，恢复{len(restored_to_queue)}名游客到队列(换乘{transfer_restored})，撤销{count}条投诉(换乘{transfer_rolled_back})',
+        )
 
     return count
 
 
 def recalculate_from_details(session):
-    dispatches = DispatchDetail.objects.filter(session=session)
-    tourists = TouristHistory.objects.filter(session=session)
+    with transaction.atomic():
+        dispatches = DispatchDetail.objects.filter(session=session)
+        tourists = TouristHistory.objects.filter(session=session)
+        active_complaints = Complaint.objects.filter(session=session, rolled_back=False)
 
-    total_income = sum(d.revenue for d in dispatches)
-    total_served = tourists.filter(served=True).count()
-    total_departed = tourists.filter(complained=True).count()
-    total_complaints = total_departed
+        total_income = sum(d.revenue for d in dispatches)
+        total_served = tourists.filter(served=True).count()
 
-    session.total_income = total_income
-    session.total_served = total_served
-    session.total_departed = total_departed
-    session.total_complaints = total_complaints
+        active_complaint_ids = active_complaints.values_list('tourist_id', flat=True).exclude(tourist_id__isnull=True)
+        tourists.update(complained=False)
+        tourists.filter(id__in=list(active_complaint_ids)).update(complained=True)
 
-    score, breakdown = calculate_score(session)
-    session.final_score = score
-    session.save()
+        total_departed = tourists.filter(served=True).count()
+        total_complaints = active_complaints.count()
+        total_complained_tourists = tourists.filter(complained=True).count()
 
-    IncomeSnapshot.objects.filter(session=session).delete()
+        session.total_income = total_income
+        session.total_served = total_served
+        session.total_departed = total_departed
+        session.total_complaints = total_complaints
 
-    tick_revenues = {}
-    for d in dispatches.order_by('tick'):
-        tick_revenues[d.tick] = tick_revenues.get(d.tick, 0) + d.revenue
+        if session.status == 'failed' and total_complaints < session.level.max_complaints:
+            session.status = 'active'
 
-    snapshots = []
-    cumulative = 0
-    for tick in sorted(tick_revenues.keys()):
-        cumulative += tick_revenues[tick]
-        snapshots.append(IncomeSnapshot(
+        score, breakdown = calculate_score(session)
+        session.final_score = score
+        session.save()
+
+        PatienceResult.objects.create(
             session=session,
-            tick=tick,
-            cumulative_income=cumulative,
-            tick_income=tick_revenues[tick],
-            ticket_price=session.ticket_price,
-            queue_length=0,
-        ))
-    IncomeSnapshot.objects.bulk_create(snapshots)
+            tick=session.current_tick,
+            action=f'recalc:{session.current_tick}',
+            tourist_count=tourists.count(),
+            complaint_count=total_complaints,
+            patience_before=0,
+            patience_after=0,
+            transfer_patience_loss=breakdown.get('transfer_patience_loss', 0),
+            normal_patience_loss=breakdown.get('normal_patience_loss', 0),
+            transfer_complaints=breakdown.get('transfer_complaints', 0),
+            normal_complaints=breakdown.get('normal_complaints', 0),
+            transfer_served=breakdown.get('transfer_served', 0),
+            normal_served=breakdown.get('normal_served', 0),
+            transfer_revenue_bonus=breakdown.get('transfer_revenue_bonus', 0),
+        )
+
+        IncomeSnapshot.objects.filter(session=session).delete()
+
+        tick_revenues = {}
+        for d in dispatches.order_by('tick'):
+            tick_revenues[d.tick] = tick_revenues.get(d.tick, 0) + d.revenue
+
+        snapshots = []
+        cumulative = 0
+        for tick in sorted(tick_revenues.keys()):
+            cumulative += tick_revenues[tick]
+            queue_len = len(session.get_queue())
+            snapshots.append(IncomeSnapshot(
+                session=session,
+                tick=tick,
+                cumulative_income=cumulative,
+                tick_income=tick_revenues[tick],
+                ticket_price=session.ticket_price,
+                queue_length=queue_len,
+            ))
+        IncomeSnapshot.objects.bulk_create(snapshots)
+
+        PatienceResult.objects.create(
+            session=session,
+            tick=session.current_tick,
+            patience_before=session.final_score,
+            patience_after=score,
+            action='recalculate',
+            tourist_count=total_served,
+            complaint_count=total_complaints,
+            transfer_patience_loss=breakdown.get('transfer_patience_loss', 0),
+            normal_patience_loss=breakdown.get('normal_patience_loss', 0),
+            transfer_complaints=breakdown.get('transfer_complaints', 0),
+            normal_complaints=breakdown.get('normal_complaints', 0),
+            transfer_served=breakdown.get('transfer_served', 0),
+            normal_served=breakdown.get('normal_served', 0),
+            transfer_revenue_bonus=breakdown.get('transfer_revenue_bonus', 0),
+            note=f'重算完成：收入{total_income}，投诉{total_complaints}，分数{score}',
+        )
 
     return score, breakdown

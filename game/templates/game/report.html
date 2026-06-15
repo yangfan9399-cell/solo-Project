@@ -52,6 +52,143 @@
 </div>
 </div>
 
+<div class="card" style="border:2px solid {% if consistency_check.is_consistent %}var(--success){% else %}var(--danger){% endif %};">
+<h3>🔍 数据一致性校验</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:12px;">
+  GameSession.total_complaints / Complaint 生效记录 / TouristHistory.complained / 报表统计 必须四者统一
+</p>
+<div class="grid grid-4">
+  <div class="compare-item {% if consistency_check.session_complaints == total_complaints %}compare-after{% else %}compare-before{% endif %}">
+    <div style="font-size:1.4em;font-weight:bold;">{{ consistency_check.session_complaints }}</div>
+    <div style="font-size:0.8em;opacity:0.7;">GameSession.total_complaints</div>
+  </div>
+  <div class="compare-item {% if consistency_check.active_complaints_count == total_complaints %}compare-after{% else %}compare-before{% endif %}">
+    <div style="font-size:1.4em;font-weight:bold;">{{ consistency_check.active_complaints_count }}</div>
+    <div style="font-size:0.8em;opacity:0.7;">Complaint 生效记录</div>
+  </div>
+  <div class="compare-item {% if consistency_check.complained_tourists == total_complaints %}compare-after{% else %}compare-before{% endif %}">
+    <div style="font-size:1.4em;font-weight:bold;">{{ consistency_check.complained_tourists }}</div>
+    <div style="font-size:0.8em;opacity:0.7;">TouristHistory.complained</div>
+  </div>
+  <div class="compare-item {% if consistency_check.breakdown_complaints == total_complaints %}compare-after{% else %}compare-before{% endif %}">
+    <div style="font-size:1.4em;font-weight:bold;">{{ consistency_check.breakdown_complaints }}</div>
+    <div style="font-size:0.8em;opacity:0.7;">结算 breakdown 统计</div>
+  </div>
+</div>
+<p style="margin-top:8px;text-align:center;">
+  <span class="badge {% if consistency_check.is_consistent %}badge-success{% else %}badge-danger{% endif %}">
+    {% if consistency_check.is_consistent %}✅ 四者数据一致{% else %}❌ 数据不一致，请重算{% endif %}
+  </span>
+</p>
+</div>
+
+{% if has_rollback and before_rollback_stats and after_rollback_stats %}
+<div class="card" style="border:2px solid var(--warning);">
+<h3>⏪ 回滚前后差异对比</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:12px;">回滚后投诉数、分数和收入曲线的变化</p>
+<div class="compare-box">
+  <div class="compare-item compare-before">
+    <h4 style="color:var(--danger);margin-bottom:8px;">回滚前</h4>
+    <div style="font-size:2em;font-weight:bold;">{{ before_rollback_stats.total_complaints }}</div>
+    <div style="opacity:0.7;font-size:0.9em;">投诉数</div>
+    <div style="margin-top:8px;font-size:1.2em;color:var(--danger);">投诉罚分: {{ before_rollback_stats.total_complaints }} × 50 = {{ before_rollback_stats.total_complaints|mul:50 }}</div>
+  </div>
+  <div class="compare-item compare-after">
+    <h4 style="color:var(--success);margin-bottom:8px;">回滚后</h4>
+    <div style="font-size:2em;font-weight:bold;">{{ after_rollback_stats.total_complaints }}</div>
+    <div style="opacity:0.7;font-size:0.9em;">投诉数</div>
+    <div style="margin-top:8px;font-size:1.2em;color:var(--success);">投诉罚分: {{ after_rollback_stats.total_complaints }} × 50 = {{ after_rollback_stats.total_complaints|mul:50 }}</div>
+  </div>
+</div>
+<div style="text-align:center;margin-top:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;">
+  <div style="font-size:1.1em;">
+    回滚减少投诉: <strong style="color:var(--success);">{{ before_rollback_stats.total_complaints|sub:after_rollback_stats.total_complaints }}</strong> 条，
+    罚分减少: <strong style="color:var(--success);">+{{ before_rollback_stats.total_complaints|sub:after_rollback_stats.total_complaints|mul:50 }}</strong> 分，
+    分数提升: <strong style="color:var(--success);">{{ after_rollback_stats.score_after|sub:before_rollback_stats.score_before }}</strong>
+  </div>
+</div>
+<p style="margin-top:12px;opacity:0.7;font-size:0.85em;">
+  收入曲线变化：回滚后恢复的游客会重新加入队列，后续发车将产生新的收入，收入曲线将继续上升。
+  已回滚的 {{ total_rolled_back }} 条投诉标记为已撤销，不再计入罚分。
+</p>
+</div>
+{% endif %}
+
+<div class="card" style="border:2px solid var(--info);">
+<h3>🔄 换乘需求影响分析</h3>
+<p style="opacity:0.6;font-size:0.85em;margin-bottom:12px;">
+  结果记录 PatienceResult 中保存的换乘需求对耐心、投诉和分数的具体影响（非仅均值）
+</p>
+<div class="grid grid-4">
+  <div class="compare-item" style="background:rgba(96,165,250,0.1);">
+    <div style="font-size:1.8em;font-weight:bold;color:var(--info);">{{ transfer_impact.total_transfer }}</div>
+    <div style="opacity:0.7;font-size:0.85em;">换乘游客总数</div>
+  </div>
+  <div class="compare-item" style="background:rgba(239,68,68,0.1);">
+    <div style="font-size:1.8em;font-weight:bold;color:var(--danger);">{{ transfer_impact.transfer_complained }}</div>
+    <div style="opacity:0.7;font-size:0.85em;">换乘投诉数</div>
+    <div style="font-size:0.75em;opacity:0.6;">换乘游客更易投诉</div>
+  </div>
+  <div class="compare-item" style="background:rgba(74,222,128,0.1);">
+    <div style="font-size:1.8em;font-weight:bold;color:var(--success);">{{ transfer_impact.transfer_served }}</div>
+    <div style="opacity:0.7;font-size:0.85em;">换乘已服务</div>
+  </div>
+  <div class="compare-item" style="background:rgba(251,191,36,0.1);">
+    <div style="font-size:1.8em;font-weight:bold;color:var(--warning);">+{{ transfer_impact.transfer_revenue_bonus }}</div>
+    <div style="opacity:0.7;font-size:0.85em;">换乘收入补贴</div>
+    <div style="font-size:0.75em;opacity:0.6;">含换乘游客收入×1.3</div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-top:12px;">
+  <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;">
+    <h4 style="margin-bottom:8px;">耐心损失对比</h4>
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px;">
+      <div style="flex:1;">
+        <div style="font-size:0.85em;opacity:0.7;margin-bottom:4px;">换乘游客耐心损失</div>
+        <div class="progress-bar" style="height:16px;">
+          <div class="progress-fill" style="width:{% if transfer_impact.transfer_patience_loss_total > 0 %}{% widthratio transfer_impact.transfer_patience_loss_total transfer_impact.normal_patience_loss_total|add:transfer_impact.transfer_patience_loss_total 100 %}{% else %}0{% endif %}%;background:var(--danger);"></div>
+        </div>
+        <div style="text-align:center;font-size:0.9em;margin-top:2px;font-weight:bold;color:var(--danger);">{{ transfer_impact.transfer_patience_loss_total }}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:0.85em;opacity:0.7;margin-bottom:4px;">普通游客耐心损失</div>
+        <div class="progress-bar" style="height:16px;">
+          <div class="progress-fill" style="width:{% if transfer_impact.normal_patience_loss_total > 0 %}{% widthratio transfer_impact.normal_patience_loss_total transfer_impact.normal_patience_loss_total|add:transfer_impact.transfer_patience_loss_total 100 %}{% else %}0{% endif %}%;background:var(--warning);"></div>
+        </div>
+        <div style="text-align:center;font-size:0.9em;margin-top:2px;font-weight:bold;color:var(--warning);">{{ transfer_impact.normal_patience_loss_total }}</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;">
+    <h4 style="margin-bottom:8px;">队列中换乘分布</h4>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:2em;font-weight:bold;color:var(--info);">{{ transfer_impact.transfer_in_queue }}</div>
+        <div style="font-size:0.85em;opacity:0.7;">换乘游客</div>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:2em;font-weight:bold;color:var(--warning);">{{ transfer_impact.normal_in_queue }}</div>
+        <div style="font-size:0.85em;opacity:0.7;">普通游客</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:0.8em;opacity:0.6;text-align:center;">
+      换乘游客耐心更低，需优先安排发车
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:12px;padding:12px;background:rgba(233,69,96,0.08);border-radius:8px;border-left:4px solid var(--accent);">
+  <h5 style="color:var(--accent);margin-bottom:4px;">换乘影响机制</h5>
+  <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.6;">
+    <li><strong>耐心影响</strong>：换乘游客与普通游客每回合各损失1点耐心，但换乘游客投诉严重度+2</li>
+    <li><strong>投诉影响</strong>：换乘游客投诉严重度=3，普通游客=1，换乘投诉罚分权重更高</li>
+    <li><strong>收入影响</strong>：含换乘游客的车厢收入×1.3，带来额外收入补贴</li>
+    <li><strong>分数影响</strong>：每服务1名换乘游客额外+20分，换乘投诉同样-50分/条</li>
+  </ul>
+</div>
+</div>
+
 <div class="grid grid-2">
 <div class="card">
   <h3>📈 收入曲线</h3>
@@ -83,22 +220,43 @@
     <span id="recalc-result" style="margin-left:8px;font-size:0.9em;"></span>
   </div>
 </div>
+
 {% if complaints %}
+<h4 style="color:var(--success);margin-top:12px;margin-bottom:8px;">✅ 生效投诉 ({{ total_complaints }}条)</h4>
 <table>
-<thead><tr><th>回合</th><th>原因</th><th>严重度</th><th>是否回滚</th></tr></thead>
+<thead><tr><th>回合</th><th>游客ID</th><th>原因</th><th>严重度</th><th>换乘需求</th></tr></thead>
 <tbody>
 {% for c in complaints %}
-<tr style="{% if c.rolled_back %}opacity:0.4;text-decoration:line-through;{% endif %}">
+<tr>
   <td>{{ c.tick }}</td>
+  <td>{% if c.tourist %}#{{ c.tourist.id }}{% else %}N/A{% endif %}</td>
   <td>{{ c.reason }}</td>
   <td>{% for i in "x"|rjust:c.severity %}⚠{% endfor %}</td>
-  <td>{% if c.rolled_back %}<span class="badge badge-warning">已回滚(回合{{ c.rollback_tick }})</span>{% else %}<span class="badge badge-danger">生效</span>{% endif %}</td>
+  <td>{% if c.tourist and c.tourist.needs_transfer %}<span class="badge badge-info">需换乘</span>{% else %}<span class="badge badge-success">直达</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 {% else %}
-<p style="opacity:0.5;">无投诉记录</p>
+<p style="opacity:0.5;">无生效投诉记录</p>
+{% endif %}
+
+{% if rolled_back_complaints %}
+<h4 style="color:var(--warning);margin-top:16px;margin-bottom:8px;">⏪ 已回滚投诉 ({{ total_rolled_back }}条)</h4>
+<table style="opacity:0.6;">
+<thead><tr><th>回合</th><th>回滚于回合</th><th>原因</th><th>严重度</th><th>换乘需求</th></tr></thead>
+<tbody>
+{% for c in rolled_back_complaints %}
+<tr>
+  <td>{{ c.tick }}</td>
+  <td>{{ c.rollback_tick }}</td>
+  <td>{{ c.reason }}</td>
+  <td>{% for i in "x"|rjust:c.severity %}⚠{% endfor %}</td>
+  <td>{% if c.tourist and c.tourist.needs_transfer %}需换乘{% else %}直达{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 {% endif %}
 </div>
 

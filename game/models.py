@@ -111,6 +111,13 @@ class PatienceResult(models.Model):
     action = models.CharField(max_length=50)
     tourist_count = models.IntegerField(default=0)
     complaint_count = models.IntegerField(default=0)
+    transfer_patience_loss = models.IntegerField(default=0)
+    normal_patience_loss = models.IntegerField(default=0)
+    transfer_complaints = models.IntegerField(default=0)
+    normal_complaints = models.IntegerField(default=0)
+    transfer_served = models.IntegerField(default=0)
+    normal_served = models.IntegerField(default=0)
+    transfer_revenue_bonus = models.IntegerField(default=0)
     note = models.TextField(default='')
 
 
