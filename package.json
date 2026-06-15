@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
-    "dev": "node ./server.js",
-    "start": "node ./server.js",
+    "dev": "node ./dist/server/index.js",
+    "start": "node ./dist/server/index.js",
     "seed": "node ./scripts/seed.js",
     "postinstall": "npm run build"
   },
