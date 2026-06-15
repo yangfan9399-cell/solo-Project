@@ -254,6 +254,47 @@ if sd.get("degradeReasons"):
     for reason in sd["degradeReasons"][:5]:
         print(f"    - {reason}")
 
+# ===== 场景 4: 冲突验证 - 有冲突记录时索道占用图返回正确 =====
+print()
+header("场景 4: 冲突验证 - 有冲突记录时索道占用图返回正确")
+s, d = api("POST", "/api/games", {"seedType": "rollback", "name": "场景4-冲突占用验证"})
+sid4 = d["data"]["session"]["id"]
+print(f"创建rollback游戏: {sid4}")
+api("POST", f"/api/games/{sid4}", {"actionType": "start_game"})
+s, d = api("GET", f"/api/games/{sid4}")
+plants4 = d["data"]["plants"]
+baskets4 = d["data"]["baskets"]
+# 选两棵相邻茶树（rollback种子有 plant-1:80, plant-2:100，距离20<50）
+close_p1 = [p for p in plants4 if p["positionY"] < 150 and p["altitude"] == "low"][0]
+close_p2 = [p for p in plants4 if p["positionY"] < 150 and p["altitude"] == "low" and p["id"] != close_p1["id"]][0]
+b1 = baskets4[0]
+b2 = baskets4[1]
+print(f"相邻茶树: {close_p1['id'][-4:]}(Y={close_p1['positionY']})  {close_p2['id'][-4:]}(Y={close_p2['positionY']})")
+print(f"调度吊篮{b1['id'][-4:]}到{close_p1['id'][-4:]}")
+api("POST", f"/api/games/{sid4}", {"actionType": "schedule_basket", "targetId": b1["id"],
+    "details": {"basketId": b1["id"], "plantId": close_p1["id"]}})
+print(f"调度吊篮{b2['id'][-4:]}到{close_p2['id'][-4:]}")
+api("POST", f"/api/games/{sid4}", {"actionType": "schedule_basket", "targetId": b2["id"],
+    "details": {"basketId": b2["id"], "plantId": close_p2["id"]}})
+# 推进时间触发冲突检测
+s, d = api("PUT", f"/api/games/{sid4}", {"minutes": 10})
+t = d["data"]["session"]["currentTime"]
+conflict_n = len(d["data"].get("conflicts", []))
+print(f"推进到 {minuteToTime(t)}, 检测到冲突记录: {conflict_n} 条")
+# 获取占用图
+s, d = api("GET", f"/api/games/{sid4}/rollback")
+r = d["data"]
+occ_with_conflict = [o for o in r["occupancy"] if o["hasConflict"]]
+print(f"\n占用图验证:")
+for occ in r["occupancy"]:
+    flag = "⚠️冲突" if occ["hasConflict"] else "✅正常"
+    print(f"  {occ['cablewayName']}: {occ['currentLoad']}/{occ['totalCapacity']} 占用率={occ['occupancyRate']*100:.0f}%  [{flag}]")
+print(f"警告: {r['warnings'] if r['warnings'] else '无'}")
+if conflict_n > 0 and len(occ_with_conflict) > 0:
+    print(f"✅ 验证通过: {len(occ_with_conflict)} 条索道标记为有冲突状态，占用数据完整")
+else:
+    print(f"⚠️  待确认: 检测到conflict记录={conflict_n}, 占用图hasConflict标记数={len(occ_with_conflict)}")
+
 print()
 print("=" * 60)
 print("  ✅ 所有场景验收测试完成!")

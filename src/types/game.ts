@@ -103,6 +103,7 @@ export interface GameAction {
 }
 
 export type ActionType =
+  | "start_game" // 开始游戏
   | "schedule_basket" // 调度吊篮
   | "pick_tea" // 采摘茶青
   | "send_to_station" // 送往工位
@@ -137,6 +138,18 @@ export interface GameResult {
   conflictCount: number;
   settlementDetails: string; // JSON 字符串
   calculatedAt: number;
+}
+
+// 索道占用数据（用于占用图可视化）
+export interface CablewayOccupancy {
+  cablewayId: string;
+  cablewayName: string;
+  totalCapacity: number;
+  currentLoad: number;
+  occupancyRate: number;
+  hasConflict: boolean;
+  basketPositions: { currentY: number; state: string }[];
+  timeSlots: Record<string, number>;
 }
 
 // 种子类型

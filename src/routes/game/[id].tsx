@@ -933,7 +933,7 @@ export default function GamePage() {
                       style={{
                         height: "6px",
                         background: "rgba(0,0,0,0.3)",
-                        borderRadius: "3px",
+                        "border-radius": "3px",
                         overflow: "hidden",
                       }}
                     >
@@ -988,7 +988,7 @@ export default function GamePage() {
 
       {/* 结算结果弹窗 */}
       <Show when={settleResult()}>
-        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" style={{ overflowY: "auto" }}>
+        <div class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" style={{ overflow: "auto" }}>
           <div class="card max-w-3xl w-full mx-4 my-8">
             <h2 class="text-xl font-bold mb-4 text-center">💰 收益结算报告</h2>
 

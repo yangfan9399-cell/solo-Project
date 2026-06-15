@@ -216,19 +216,17 @@ export function detectConflicts(
 
   for (const cableway of state.cableways) {
     const cwBaskets = state.baskets.filter((b) => b.cableCarId === cableway.id);
-    const activePositions = cwBaskets
+    const allPositions = cwBaskets
       .map((b) => state.basketPositions[b.id])
-      .filter((p) => p && (p.state === "moving_up" || p.state === "moving_down"));
+      .filter((p) => p && p.state !== "idle");
 
-    // 检测位置接近的移动吊篮
-    for (let i = 0; i < activePositions.length; i++) {
-      for (let j = i + 1; j < activePositions.length; j++) {
-        const posA = activePositions[i];
-        const posB = activePositions[j];
+    // 检测位置接近的吊篮（简化模型：非空闲即视为运行中参与检查）
+    for (let i = 0; i < allPositions.length; i++) {
+      for (let j = i + 1; j < allPositions.length; j++) {
+        const posA = allPositions[i];
+        const posB = allPositions[j];
         const distance = Math.abs(posA.currentY - posB.currentY);
-        // 如果两个移动吊篮距离小于50单位，视为冲突风险
         if (distance < 50) {
-          // 检查是否已有记录过这个冲突
           const existingConflict = state.conflicts.find(
             (c) =>
               c.cablewayId === cableway.id &&
@@ -236,7 +234,6 @@ export function detectConflicts(
                 (c.carAId === posB.basketId && c.carBId === posA.basketId)) &&
               state.session.currentTime - c.startTime < c.duration
           );
-
           if (!existingConflict) {
             const causedDegrade = state.session.currentTime >= NOON_MINUTE;
             const conflict: CableConflict = {
@@ -245,17 +242,17 @@ export function detectConflicts(
               carAId: posA.basketId,
               carBId: posB.basketId,
               startTime: state.session.currentTime,
-              duration: 15, // 冲突延误15分钟
+              duration: 15,
               causedDegrade,
             };
             newConflicts.push(conflict);
 
-            // 添加冲突操作记录
             state.actions.push(
               createAction(state.session.id, "conflict_occur", cableway.id, state.session.currentTime, {
                 cablewayName: cableway.name,
                 carA: posA.basketId.slice(-4),
                 carB: posB.basketId.slice(-4),
+                distance,
                 duration: 15,
                 causedDegrade,
                 reason: causedDegrade ? "冲突延误导致茶青过午降级" : "发生索道冲突，延误15分钟",
@@ -266,23 +263,28 @@ export function detectConflicts(
       }
     }
 
-    // 容量超载检测
+    // 容量超载检测（>= capacity 即超载）
     const totalActive = cwBaskets.filter((b) => {
       const pos = state.basketPositions[b.id];
       return pos && pos.state !== "idle";
     }).length;
 
-    if (totalActive > cableway.capacity) {
-      const conflict: CableConflict = {
-        id: generateId("conflict"),
-        cablewayId: cableway.id,
-        carAId: cwBaskets[0]?.id || "",
-        carBId: cwBaskets[1]?.id || "",
-        startTime: state.session.currentTime,
-        duration: 20,
-        causedDegrade: state.session.currentTime >= NOON_MINUTE - 30,
-      };
-      newConflicts.push(conflict);
+    if (totalActive >= cableway.capacity && cableway.capacity > 0 && totalActive > 0) {
+      const alreadyCapacityConflict = state.conflicts.some(
+        (c) => c.cablewayId === cableway.id && state.session.currentTime - c.startTime < 30
+      ) || newConflicts.some((c) => c.cablewayId === cableway.id);
+      if (!alreadyCapacityConflict && totalActive > cableway.capacity * 0.9) {
+        const conflict: CableConflict = {
+          id: generateId("conflict"),
+          cablewayId: cableway.id,
+          carAId: cwBaskets[0]?.id || "",
+          carBId: cwBaskets[1]?.id || "",
+          startTime: state.session.currentTime,
+          duration: 20,
+          causedDegrade: state.session.currentTime >= NOON_MINUTE - 30,
+        };
+        newConflicts.push(conflict);
+      }
     }
   }
 

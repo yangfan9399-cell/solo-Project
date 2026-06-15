@@ -170,7 +170,7 @@ export function getMaturityHistory(sessionId: string): TeaMaturityHistory[] {
 }
 
 function normalizeResult(row: any): GameResult {
-  const sdetails = typeof row.settlementDetails ?? row.settlement_details;
+  const sdetails = row.settlementDetails ?? row.settlement_details;
   let details: any = {};
   if (sdetails) {
     if (typeof sdetails === "string") {

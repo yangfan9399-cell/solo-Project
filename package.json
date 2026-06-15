@@ -12,13 +12,11 @@
   "dependencies": {
     "@solidjs/meta": "^0.29.0",
     "@solidjs/router": "^0.10.0",
-    "better-sqlite3": "^11.0.0",
     "solid-js": "^1.8.0",
     "solid-start": "^0.3.11",
     "solid-start-node": "^0.3.11"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.10",
     "typescript": "^5.1.6",
     "vite": "^4.4.9",
     "vite-plugin-solid": "^2.8.0"

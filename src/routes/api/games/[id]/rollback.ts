@@ -63,7 +63,7 @@ export async function GET({ params }: APIEvent) {
         totalCapacity: cw.capacity,
         currentLoad: cwBaskets.length,
         occupancyRate: cw.capacity > 0 ? cwBaskets.length / cw.capacity : 0,
-        hasConflict: state.conflicts.some((c) => c.cableways.includes(cw.id)),
+        hasConflict: state.conflicts.some((c) => c.cablewayId === cw.id),
         basketPositions: posList.map((p) => ({
           currentY: p?.currentY || 0,
           state: p?.state || "unknown",
