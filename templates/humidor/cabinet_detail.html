@@ -27,11 +27,19 @@
                     </div>
                     <div class="layer-shelves">
                         {% for slot in layer %}
-                        <div class="slot {% if slot.cigar %}occupied{% endif %} {% if slot.cigar and slot.cigar.position_type == 'placed' and slot.to_slot == slot.from_slot %}anomaly{% endif %}">
+                        <div class="slot {% if slot.cigar %}occupied{% endif %} {% if slot.is_anomaly %}anomaly{% endif %}"
+                             {% if slot.is_anomaly %}
+                             data-tooltip="冲突：{{ slot.conflict.count }}支雪茄 | {{ slot.conflict.reason }}"
+                             {% endif %}>
                             <span class="slot-number">{{ slot.slot }}</span>
                             {% if slot.cigar %}
                             <div class="cigar-band"></div>
                             <div class="cigar-name" title="{{ slot.cigar.cigar_name }}">{{ slot.cigar.cigar_name|truncatechars:8 }}</div>
+                            {% if slot.is_anomaly %}
+                            <div class="conflict-badge" title="共{{ slot.conflict.count }}支：{% for c in slot.conflict.cigars %}{{ c.cigar_name }} ({{ c.cigar_code }}){% if not forloop.last %}, {% endif %}{% endfor %}">
+                                {{ slot.conflict.count }}x
+                            </div>
+                            {% endif %}
                             {% else %}
                             <span>空位</span>
                             {% endif %}
@@ -41,7 +49,154 @@
                 </div>
                 {% endfor %}
             </div>
+
+            {% if anomalies %}
+            <div class="anomaly-details">
+                <h4>⚠️ 检测到 {{ anomalies|length }} 个位置异常</h4>
+                {% for slot in anomalies %}
+                <div class="anomaly-item">
+                    <div class="anomaly-location">
+                        <div style="font-size: 18px;">{{ slot.layer }}层</div>
+                        <div style="font-size: 14px;">{{ slot.slot }}格</div>
+                    </div>
+                    <div class="anomaly-info">
+                        <strong>位置冲突 - {{ slot.conflict.count }}支雪茄重叠放置</strong>
+                        <p>{{ slot.conflict.reason }}</p>
+                        <div class="anomaly-cigars">
+                            {% for cigar in slot.conflict.cigars %}
+                            <span class="anomaly-cigar-tag">
+                                🚬 {{ cigar.cigar_name }} <span style="opacity: 0.7;">({{ cigar.cigar_code }})</span>
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
+
+        {% if multi_version_batches %}
+        <div class="card" style="margin-top: 24px;">
+            <div class="card-header">
+                <h3 class="card-title">🔄 批次版本对比 - 回滚前后差异分析</h3>
+            </div>
+            <div class="card-body">
+                {% for batch in multi_version_batches %}
+                <div class="version-compare" id="compare-{{ batch.batch_no }}">
+                    <div class="compare-grid">
+                        <div class="compare-column old">
+                            <div class="compare-column-header">
+                                <div class="compare-version">
+                                    <span class="batch">{{ batch.batch_no }}</span>
+                                    <span class="ver">v{{ batch.old_version.record.version }} · 回滚前版本</span>
+                                </div>
+                                <span class="record-status {{ batch.old_version.record.status }}">
+                                    {{ batch.old_version.record.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="compare-body">
+                                <div class="compare-stats">
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="color: var(--danger-color);">
+                                            {{ batch.old_version.details_count }}
+                                        </div>
+                                        <div class="compare-stat-label">温湿度记录</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="color: var(--danger-color);">
+                                            {{ batch.old_version.alert_count }}
+                                        </div>
+                                        <div class="compare-stat-label">告警次数</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="font-size: 16px; color: var(--text-secondary);">
+                                            {{ batch.old_version.avg_humidity }}%
+                                        </div>
+                                        <div class="compare-stat-label">平均湿度</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="font-size: 16px; color: var(--text-secondary);">
+                                            {{ batch.old_version.max_humidity }}%
+                                        </div>
+                                        <div class="compare-stat-label">最高湿度</div>
+                                    </div>
+                                </div>
+                                <div class="compare-chart-wrapper">
+                                    <canvas id="compare-chart-old-{{ forloop.counter }}"></canvas>
+                                </div>
+                                <div class="compare-alert danger">
+                                    <strong>⚠️ 问题：</strong>连续{{ batch.old_version.alert_count }}小时湿度超标，最高达{{ batch.old_version.max_humidity }}%，超过阈值上限({{ cabinet.target_humidity_max }}%)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="compare-column new">
+                            <div class="compare-column-header">
+                                <div class="compare-version">
+                                    <span class="batch">{{ batch.batch_no }}</span>
+                                    <span class="ver">v{{ batch.new_version.record.version }} · 回滚后重算版本</span>
+                                </div>
+                                <span class="record-status {{ batch.new_version.record.status }}">
+                                    {{ batch.new_version.record.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="compare-body">
+                                <div class="compare-stats">
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="color: var(--success-color);">
+                                            {{ batch.new_version.details_count }}
+                                        </div>
+                                        <div class="compare-stat-label">温湿度记录</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="color: var(--success-color);">
+                                            {{ batch.new_version.alert_count }}
+                                        </div>
+                                        <div class="compare-stat-label">告警次数</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="font-size: 16px; color: var(--text-secondary);">
+                                            {{ batch.new_version.avg_humidity }}%
+                                        </div>
+                                        <div class="compare-stat-label">平均湿度</div>
+                                    </div>
+                                    <div class="compare-stat">
+                                        <div class="compare-stat-value" style="font-size: 16px; color: var(--text-secondary);">
+                                            {{ batch.new_version.max_humidity }}%
+                                        </div>
+                                        <div class="compare-stat-label">最高湿度</div>
+                                    </div>
+                                </div>
+                                <div class="compare-chart-wrapper">
+                                    <canvas id="compare-chart-new-{{ forloop.counter }}"></canvas>
+                                </div>
+                                <div class="compare-alert success">
+                                    <strong>✅ 改善：</strong>调整摆放位置，避开温湿度波动高峰时段，环境恢复稳定，湿度稳定在{{ batch.new_version.min_humidity }}%-{{ batch.new_version.max_humidity }}%范围
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="change-reason">
+                            <h4>� 变化原因分析</h4>
+                            <div class="change-reason-content">
+                                {% for change in batch.changes %}
+                                <div class="change-item">
+                                    <div class="change-icon">{{ change.icon }}</div>
+                                    <div class="change-text">
+                                        <strong>{{ change.title }}</strong>
+                                        <p>{{ change.desc }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <div class="card">
             <div class="card-header">
@@ -176,8 +331,127 @@
 
 {% block extra_js %}
 <script>
+const cabinetConfig = {
+    temp_min: {{ cabinet.target_temp_min }},
+    temp_max: {{ cabinet.target_temp_max }},
+    humidity_min: {{ cabinet.target_humidity_min }},
+    humidity_max: {{ cabinet.target_humidity_max }}
+};
+
+const allCompareData = {{ multi_version_json | safe }};
+
+function drawCompareChart(canvasId, versionData, cabinet) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 20, right: 30, bottom: 25, left: 40 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const temps = versionData.temperatures || [];
+    const hums = versionData.humidities || [];
+    const times = versionData.times || [];
+
+    if (hums.length === 0) return;
+
+    const humMin = cabinet.humidity_min || 65;
+    const humMax = cabinet.humidity_max || 75;
+
+    const allHums = [...hums, humMin, humMax];
+    const humAxisMin = Math.min(...allHums) - 3;
+    const humAxisMax = Math.max(...allHums) + 3;
+
+    const points = times.length;
+    const xStep = points > 1 ? chartWidth / (points - 1) : chartWidth;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+    }
+
+    const humMinY = padding.top + chartHeight - ((humMin - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+    const humMaxY = padding.top + chartHeight - ((humMax - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.1)';
+    ctx.fillRect(padding.left, humMaxY, chartWidth, humMinY - humMaxY);
+
+    ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMinY);
+    ctx.lineTo(width - padding.right, humMinY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMaxY);
+    ctx.lineTo(width - padding.right, humMaxY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#3498db';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    hums.forEach((hum, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((hum - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const alerts = versionData.alert_points || [];
+    for (const alert of alerts) {
+        const idx = times.indexOf(alert.time);
+        if (idx >= 0) {
+            const x = padding.left + idx * xStep;
+            const y = padding.top + chartHeight - ((alert.humidity - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    ctx.fillStyle = '#888';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    const labelStep = Math.ceil(points / 4);
+    times.forEach((time, i) => {
+        if (i % labelStep === 0 || i === points - 1) {
+            const x = padding.left + i * xStep;
+            ctx.fillText(time, x, height - 8);
+        }
+    });
+
+    ctx.fillStyle = '#3498db';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(humAxisMax) + '%', padding.left - 4, padding.top + 8);
+    ctx.fillStyle = '#3498db';
+    ctx.fillText(Math.round(humAxisMin) + '%', padding.left - 4, height - padding.bottom + 8);
+}
+
 function drawChart(data) {
     const canvas = document.getElementById('humidityChart');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -220,7 +494,6 @@ function drawChart(data) {
 
     ctx.fillStyle = 'rgba(46, 204, 113, 0.08)';
     ctx.fillRect(padding.left, tempMaxY, chartWidth, tempMinY - tempMaxY);
-
     ctx.fillStyle = 'rgba(46, 204, 113, 0.08)';
     ctx.fillRect(padding.left, humMaxY, chartWidth, humMinY - humMaxY);
 
@@ -330,12 +603,21 @@ function loadChart(days, btn) {
         });
 }
 
+function drawAllCompareCharts() {
+    allCompareData.forEach((batch, idx) => {
+        drawCompareChart('compare-chart-old-' + (idx + 1), batch.old_version, cabinetConfig);
+        drawCompareChart('compare-chart-new-' + (idx + 1), batch.new_version, cabinetConfig);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadChart(7, document.querySelector('.filter-btn'));
+    drawAllCompareCharts();
 });
 
 window.addEventListener('resize', function() {
     loadChart(currentDays);
+    drawAllCompareCharts();
 });
 </script>
 {% endblock %}

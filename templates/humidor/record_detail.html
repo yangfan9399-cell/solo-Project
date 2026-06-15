@@ -271,10 +271,260 @@
     </div>
 </div>
 {% endif %}
+
+{% if versions_data|length > 1 %}
+<div class="card version-compare">
+    <div class="card-header">
+        <h3 class="card-title">🔄 批次版本对比 · {{ record.batch_no }}</h3>
+        <span class="text-muted">共 {{ versions_data|length }} 个版本</span>
+    </div>
+    <div class="card-body">
+        <div class="compare-grid" style="grid-template-columns: repeat({{ versions_data|length }}, 1fr);">
+            {% for v in versions_data %}
+            <div class="compare-column {% if v.record.id == record.id %}current{% elif v.record.status == 'rolled_back' %}old{% else %}new{% endif %}">
+                <div class="compare-column-header">
+                    <div class="compare-version">
+                        <span class="batch">{{ v.record.batch_no }}</span>
+                        <span class="ver">v{{ v.record.version }}
+                            {% if v.record.id == record.id %}· 当前版本{% endif %}
+                            {% if v.record.status == 'rolled_back' %}· 已回滚{% endif %}
+                        </span>
+                    </div>
+                    <span class="record-status {{ v.record.status }}">
+                        {{ v.record.get_status_display }}
+                    </span>
+                </div>
+                <div class="compare-body">
+                    <div class="compare-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" style="color: {% if v.stats.alert_count > 0 %}#ef4444{% else %}#2ecc71{% endif %};">
+                                {{ v.stats.alert_count }}
+                            </span>
+                            <span class="stat-label">告警</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ v.stats.avg_humidity|floatformat:1 }}%</span>
+                            <span class="stat-label">平均湿度</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ v.stats.max_humidity|floatformat:1 }}%</span>
+                            <span class="stat-label">最大湿度</span>
+                        </div>
+                    </div>
+                    <div class="compare-chart-wrapper">
+                        <canvas id="version-chart-{{ forloop.counter }}"></canvas>
+                    </div>
+                    {% if v.reminders %}
+                    <div class="compare-alert {% if v.record.status == 'rolled_back' %}danger{% else %}info{% endif %}">
+                        <div class="alert-icon">{% if v.record.status == 'rolled_back' %}⚠️{% else %}✅{% endif %}</div>
+                        <div class="alert-content">
+                            {% for r in v.reminders|slice:":2" %}
+                            <div class="alert-text">{{ r.title }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <a href="{% url 'humidor:record_detail' v.record.id %}" class="compare-link">查看详情 →</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if versions_data|length >= 2 %}
+        <div class="change-reason">
+            <h4 class="change-title">版本变化分析</h4>
+            <div class="change-grid">
+                <div class="change-item">
+                    <div class="change-icon">📈</div>
+                    <div class="change-content">
+                        <div class="change-title-text">历史曲线差异</div>
+                        <div class="change-desc">
+                            v{{ versions_data.0.record.version }} 平均湿度 {{ versions_data.0.stats.avg_humidity|floatformat:1 }}%，
+                            v{{ versions_data.1.record.version }} 平均湿度 {{ versions_data.1.stats.avg_humidity|floatformat:1 }}%。
+                            {% if versions_data.0.stats.avg_humidity > versions_data.1.stats.avg_humidity %}
+                            湿度下降，更接近目标范围。
+                            {% elif versions_data.0.stats.avg_humidity < versions_data.1.stats.avg_humidity %}
+                            湿度上升，更接近目标范围。
+                            {% else %}
+                            湿度保持稳定。
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="change-item">
+                    <div class="change-icon">🔔</div>
+                    <div class="change-content">
+                        <div class="change-title-text">提醒变化</div>
+                        <div class="change-desc">
+                            v{{ versions_data.0.record.version }} 有 {{ versions_data.0.stats.alert_count }} 次告警，
+                            v{{ versions_data.1.record.version }} 有 {{ versions_data.1.stats.alert_count }} 次告警。
+                            {% if versions_data.0.stats.alert_count > versions_data.1.stats.alert_count %}
+                            告警数量减少，状态改善。
+                            {% elif versions_data.0.stats.alert_count < versions_data.1.stats.alert_count %}
+                            告警数量增加，需要关注。
+                            {% else %}
+                            告警数量相同。
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if versions_data.0.record.status == 'rolled_back' %}
+                <div class="change-item">
+                    <div class="change-icon">🔄</div>
+                    <div class="change-content">
+                        <div class="change-title-text">回滚触发原因</div>
+                        <div class="change-desc">
+                            v{{ versions_data.0.record.version }} 版本中，
+                            {% for r in versions_data.0.reminders|slice:":3" %}
+                            {% if not forloop.first %}、{% endif %}{{ r.title }}
+                            {% endfor %}，
+                            连续 {{ versions_data.0.stats.alert_count }} 次测量超出阈值范围，触发回滚机制。
+                        </div>
+                    </div>
+                </div>
+                <div class="change-item">
+                    <div class="change-icon">⚙️</div>
+                    <div class="change-content">
+                        <div class="change-title-text">重算调整措施</div>
+                        <div class="change-desc">
+                            v{{ versions_data.1.record.version }} 重新采集测量数据，校准养护柜湿度控制系统，
+                            使湿度恢复至 {{ cabinet.target_humidity_min }}%-{{ cabinet.target_humidity_max }}% 目标范围内。
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
+const versionData = {{ version_json | safe }};
+const cabinetCfg = {
+    temp_min: {{ cabinet.target_temp_min }},
+    temp_max: {{ cabinet.target_temp_max }},
+    humidity_min: {{ cabinet.target_humidity_min }},
+    humidity_max: {{ cabinet.target_humidity_max }}
+};
+
+function drawMiniChart(canvasId, vData, cabinet) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 20, right: 30, bottom: 25, left: 40 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const hums = vData.humidities || [];
+    const times = vData.times || [];
+
+    if (hums.length === 0) return;
+
+    const humMin = cabinet.humidity_min || 65;
+    const humMax = cabinet.humidity_max || 75;
+
+    const allHums = [...hums, humMin, humMax];
+    const humAxisMin = Math.min(...allHums) - 3;
+    const humAxisMax = Math.max(...allHums) + 3;
+
+    const points = times.length;
+    const xStep = points > 1 ? chartWidth / (points - 1) : chartWidth;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+    }
+
+    const humMinY = padding.top + chartHeight - ((humMin - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+    const humMaxY = padding.top + chartHeight - ((humMax - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.1)';
+    ctx.fillRect(padding.left, humMaxY, chartWidth, humMinY - humMaxY);
+
+    ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMinY);
+    ctx.lineTo(width - padding.right, humMinY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(padding.left, humMaxY);
+    ctx.lineTo(width - padding.right, humMaxY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#3498db';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    hums.forEach((hum, i) => {
+        const x = padding.left + i * xStep;
+        const y = padding.top + chartHeight - ((hum - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const alerts = vData.alert_points || [];
+    for (const alert of alerts) {
+        const idx = times.indexOf(alert.time);
+        if (idx >= 0) {
+            const x = padding.left + idx * xStep;
+            const y = padding.top + chartHeight - ((alert.humidity - humAxisMin) / (humAxisMax - humAxisMin)) * chartHeight;
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    ctx.fillStyle = '#888';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    const labelStep = Math.ceil(points / 4);
+    times.forEach((time, i) => {
+        if (i % labelStep === 0 || i === points - 1) {
+            const x = padding.left + i * xStep;
+            ctx.fillText(time, x, height - 8);
+        }
+    });
+
+    ctx.fillStyle = '#3498db';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(humAxisMax) + '%', padding.left - 4, padding.top + 8);
+    ctx.fillStyle = '#3498db';
+    ctx.fillText(Math.round(humAxisMin) + '%', padding.left - 4, height - padding.bottom + 8);
+}
+
+function drawAllVersionCharts() {
+    versionData.forEach((v, idx) => {
+        drawMiniChart('version-chart-' + (idx + 1), v, cabinetCfg);
+    });
+}
+
 function drawRecordChart() {
     const canvas = document.getElementById('recordChart');
     const ctx = canvas.getContext('2d');
@@ -430,10 +680,12 @@ function drawRecordChart() {
 
 document.addEventListener('DOMContentLoaded', function() {
     drawRecordChart();
+    drawAllVersionCharts();
 });
 
 window.addEventListener('resize', function() {
     drawRecordChart();
+    drawAllVersionCharts();
 });
 </script>
 {% endblock %}
