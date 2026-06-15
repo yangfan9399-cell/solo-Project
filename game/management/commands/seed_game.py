@@ -3,11 +3,15 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from game.models import (
     Level, GameSession, DispatchDetail, TouristHistory,
-    PatienceResult, Complaint, IncomeSnapshot,
+    PatienceResult, Complaint, IncomeSnapshot, RollbackSnapshot,
 )
 from game.engine import advance_tick, finalize_session, rollback_complaints, recalculate_from_details
 
 DESTINATIONS = ['洪崖洞', '解放碑', '南山一棵树', '磁器口', '长江索道', '朝天门', '李子坝', '弹子石']
+
+FIXED_ID_SEED1 = 20
+FIXED_ID_SEED2 = 21
+FIXED_ID_SEED3 = 22
 
 
 class Command(BaseCommand):
@@ -17,6 +21,7 @@ class Command(BaseCommand):
         self.stdout.write('=== 初始化山城缆车售票排队游戏 ===')
 
         Level.objects.all().delete()
+        self._clear_and_reset_game_sessions()
 
         l1 = Level.objects.create(
             name='朝天门-洪崖洞线',
@@ -56,18 +61,37 @@ class Command(BaseCommand):
         )
         self.stdout.write(f'  创建 {Level.objects.count()} 个关卡')
 
-        self._seed_normal(l1)
-        self._seed_exception(l2)
-        self._seed_rollback(l3)
+        self._seed_normal(l1, FIXED_ID_SEED1)
+        self._seed_exception(l2, FIXED_ID_SEED2)
+        self._seed_rollback(l3, FIXED_ID_SEED3)
 
         self.stdout.write(self.style.SUCCESS('=== 种子数据初始化完成 ==='))
 
-    def _seed_normal(self, level):
+    def _clear_and_reset_game_sessions(self):
+        from django.db import connection
+        RollbackSnapshot.objects.all().delete()
+        IncomeSnapshot.objects.all().delete()
+        Complaint.objects.all().delete()
+        PatienceResult.objects.all().delete()
+        DispatchDetail.objects.all().delete()
+        TouristHistory.objects.all().delete()
+        GameSession.objects.all().delete()
+
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('game_gamesession', 'game_rollbacksnapshot', 'game_incomesnapshot', 'game_complaint', 'game_patienceresult', 'game_dispatchdetail', 'game_touristhistory')")
+
+    def _create_session_with_id(self, level, session_id, **kwargs):
+        session = GameSession(id=session_id, level=level, **kwargs)
+        session.save()
+        return session
+
+    def _seed_normal(self, level, session_id):
         self.stdout.write('  种子1: 票价调整影响排队长度 - 正常完成')
 
         random.seed(42)
-        session = GameSession.objects.create(
+        session = self._create_session_with_id(
             level=level,
+            session_id=session_id,
             ticket_price=10,
             open_windows=2,
             car_capacity=6,
@@ -116,12 +140,13 @@ class Command(BaseCommand):
         score, breakdown = finalize_session(session)
         self.stdout.write(f'    会话{session.id}: 分数={score}, 收入={session.total_income}, 投诉={session.total_complaints}')
 
-    def _seed_exception(self, level):
+    def _seed_exception(self, level, session_id):
         self.stdout.write('  种子2: 队列模拟触发异常')
 
         random.seed(99)
-        session = GameSession.objects.create(
+        session = self._create_session_with_id(
             level=level,
+            session_id=session_id,
             ticket_price=12,
             open_windows=1,
             car_capacity=4,
@@ -158,12 +183,13 @@ class Command(BaseCommand):
             score, breakdown = finalize_session(session)
             self.stdout.write(f'    会话{session.id}: 分数={score}, 投诉={session.total_complaints}')
 
-    def _seed_rollback(self, level):
+    def _seed_rollback(self, level, session_id):
         self.stdout.write('  种子3: 投诉记录需要回滚或重算')
 
         random.seed(77)
-        session = GameSession.objects.create(
+        session = self._create_session_with_id(
             level=level,
+            session_id=session_id,
             ticket_price=15,
             open_windows=3,
             car_capacity=8,
