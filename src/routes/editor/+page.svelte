@@ -22,6 +22,14 @@
 	let currentSim: SimResult | null = null;
 	let simulating = false;
 
+	let saveDiffData: {
+		before: SimResult;
+		after: SimResult;
+		summary: string;
+		improved: boolean;
+		worsened: boolean;
+	} | null = null;
+
 	let newBlockMaterial = 'clear-glass';
 	let newBlockShape: 'rectangle' | 'triangle' | 'prism' = 'rectangle';
 
@@ -58,6 +66,7 @@
 		editingLevel = JSON.parse(JSON.stringify(level));
 		history = [JSON.parse(JSON.stringify(level))];
 		historyIndex = 0;
+		saveDiffData = null;
 
 		baselineSim = await runSim(selectedLevel);
 		currentSim = baselineSim ? JSON.parse(JSON.stringify(baselineSim)) : null;
@@ -159,6 +168,15 @@
 			levels = await lRes.json();
 
 			const diff = computeDiff(beforeSim, currentSim);
+			if (beforeSim && currentSim) {
+				saveDiffData = {
+					before: beforeSim,
+					after: currentSim,
+					summary: diff.summary,
+					improved: diff.improved,
+					worsened: diff.worsened
+				};
+			}
 			showMessage(
 				`💾 关卡已保存！${diff.summary}`,
 				diff.improved ? 'success' : diff.worsened ? 'warning' : 'info'
@@ -640,6 +658,105 @@
 					<a href="/play/{editingLevel.id}" class="btn btn-primary">▶ 测试关卡</a>
 				{/if}
 			</div>
+
+			{#if saveDiffData}
+				<div class="card save-diff-card" style="margin-top:16px;">
+					<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+						<h3 style="margin:0;">📌 本次保存触发的光线重算差异</h3>
+						<button class="mini-btn" style="width:auto; padding:2px 8px; font-size:12px;" on:click={() => saveDiffData = null}>✕ 关闭</button>
+					</div>
+
+					<div class="save-diff-grid">
+						<div class="save-diff-col before">
+							<div class="save-diff-col-header">保存前（基准光线模拟）</div>
+							<div class="save-diff-stat">
+								<span class="badge {saveDiffData.before.targetReached ? 'badge-success' : 'badge-danger'}">
+									{saveDiffData.before.targetReached ? '✓ 可达' : '✗ 不可达'}
+								</span>
+							</div>
+							<div class="save-diff-stat">
+								<span>光强: <strong>{saveDiffData.before.finalIntensity.toFixed(3)}</strong></span>
+							</div>
+							<div class="save-diff-stat">
+								<span>光段: {saveDiffData.before.segments.length}</span>
+							</div>
+							<div class="save-diff-stat">
+								<span>吸收事件: {saveDiffData.before.absorptionEvents.length}</span>
+							</div>
+							{#if saveDiffData.before.failureReason}
+								<div class="save-diff-stat" style="color:var(--danger); font-size:11px; word-break:break-all;">
+									{saveDiffData.before.failureReason}
+								</div>
+							{/if}
+						</div>
+
+						<div class="save-diff-arrow-col">
+							<div style="font-size:22px; color:var(--accent);">→</div>
+							<div style="font-size:10px; color:var(--text-muted); margin-top:4px;">编辑保存</div>
+						</div>
+
+						<div class="save-diff-col after" class:improved={saveDiffData.improved} class:worsened={saveDiffData.worsened}>
+							<div class="save-diff-col-header">保存后（当前光线模拟）</div>
+							<div class="save-diff-stat">
+								<span class="badge {saveDiffData.after.targetReached ? 'badge-success' : 'badge-danger'}">
+									{saveDiffData.after.targetReached ? '✓ 可达' : '✗ 不可达'}
+								</span>
+								{#if saveDiffData.before.targetReached !== saveDiffData.after.targetReached}
+									<span
+										class="badge"
+										style="margin-left:4px; background:{saveDiffData.after.targetReached ? '#166534' : '#7f1d1d'}; color:{saveDiffData.after.targetReached ? '#86efac' : '#fca5a5'};"
+									>变更!</span>
+								{/if}
+							</div>
+							<div class="save-diff-stat">
+								<span>光强: <strong>{saveDiffData.after.finalIntensity.toFixed(3)}</strong></span>
+								{#if Math.abs(saveDiffData.after.finalIntensity - saveDiffData.before.finalIntensity) > 0.001}
+									<span
+										class="badge"
+										style="margin-left:6px; background:{saveDiffData.after.finalIntensity > saveDiffData.before.finalIntensity ? '#166534' : '#7f1d1d'}; color:{saveDiffData.after.finalIntensity > saveDiffData.before.finalIntensity ? '#86efac' : '#fca5a5'};"
+									>
+										{saveDiffData.after.finalIntensity > saveDiffData.before.finalIntensity ? '↑' : '↓'}
+										{Math.abs(saveDiffData.after.finalIntensity - saveDiffData.before.finalIntensity).toFixed(3)}
+									</span>
+								{/if}
+							</div>
+							<div class="save-diff-stat">
+								<span>光段: {saveDiffData.after.segments.length}</span>
+								{#if saveDiffData.after.segments.length !== saveDiffData.before.segments.length}
+									<span style="color:var(--accent); margin-left:4px;">
+										({saveDiffData.after.segments.length > saveDiffData.before.segments.length ? '+' : ''}{saveDiffData.after.segments.length - saveDiffData.before.segments.length})
+									</span>
+								{/if}
+							</div>
+							<div class="save-diff-stat">
+								<span>吸收事件: {saveDiffData.after.absorptionEvents.length}</span>
+								{#if saveDiffData.after.absorptionEvents.length !== saveDiffData.before.absorptionEvents.length}
+									<span style="color:var(--warning); margin-left:4px;">
+										({saveDiffData.after.absorptionEvents.length > saveDiffData.before.absorptionEvents.length ? '+' : ''}{saveDiffData.after.absorptionEvents.length - saveDiffData.before.absorptionEvents.length})
+									</span>
+								{/if}
+							</div>
+							{#if saveDiffData.after.failureReason}
+								<div class="save-diff-stat" style="color:var(--danger); font-size:11px; word-break:break-all;">
+									{saveDiffData.after.failureReason}
+								</div>
+							{/if}
+						</div>
+					</div>
+
+					<div style="margin-top:12px; padding:10px; border-radius:6px; background:{saveDiffData.improved ? '#16653433' : saveDiffData.worsened ? '#7f1d1d33' : 'var(--bg-hover)'}; border-left:3px solid {saveDiffData.improved ? 'var(--success)' : saveDiffData.worsened ? 'var(--danger)' : 'var(--text-muted)'};">
+						<div style="font-size:13px; font-weight:600; color:{saveDiffData.improved ? 'var(--success)' : saveDiffData.worsened ? 'var(--danger)' : 'var(--text-secondary)'};">
+							{saveDiffData.improved ? '✓ 改善' : saveDiffData.worsened ? '⚠ 恶化' : '— 无明显变化'}
+						</div>
+						<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+							{saveDiffData.summary}
+						</div>
+						<div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+							此差异由本次编辑保存触发的光线重算产生。若需回滚，可使用上方"撤销"按钮恢复到保存前的历史快照。
+						</div>
+					</div>
+				</div>
+			{/if}
 		{:else}
 			<div class="card" style="text-align:center; color:var(--text-muted); padding:40px;">
 				<p>← 从左侧选择一个关卡开始编辑，或创建新关卡</p>
@@ -785,6 +902,57 @@
 	.msg-success { background: #16653433; color: #86efac; border-left: 3px solid var(--success); }
 	.msg-warning { background: #713f1233; color: #fde68a; border-left: 3px solid var(--warning); }
 	.msg-error { background: #7f1d1d33; color: #fca5a5; border-left: 3px solid var(--danger); }
+	.save-diff-card {
+		border: 2px solid var(--accent);
+		animation: fadeSlideIn 0.3s ease;
+	}
+	@keyframes fadeSlideIn {
+		from { opacity: 0; transform: translateY(-8px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+	.save-diff-grid {
+		display: grid;
+		grid-template-columns: 1fr 50px 1fr;
+		gap: 10px;
+		align-items: start;
+	}
+	.save-diff-col {
+		background: var(--bg-hover);
+		border-radius: 6px;
+		padding: 10px;
+	}
+	.save-diff-col.before {
+		border-left: 3px solid var(--text-muted);
+	}
+	.save-diff-col.after {
+		border-left: 3px solid var(--accent);
+	}
+	.save-diff-col.after.improved {
+		border-left-color: var(--success);
+	}
+	.save-diff-col.after.worsened {
+		border-left-color: var(--danger);
+	}
+	.save-diff-col-header {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--text-secondary);
+		margin-bottom: 8px;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+	.save-diff-arrow-col {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding-top: 16px;
+	}
+	.save-diff-stat {
+		font-size: 12px;
+		padding: 3px 0;
+		color: var(--text-secondary);
+	}
 	:global(button[disabled]) {
 		opacity: 0.5;
 		cursor: not-allowed;

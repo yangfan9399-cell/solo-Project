@@ -10,7 +10,9 @@
 	let gameState: GameState | null = null;
 	let gameRecord: GameRecord | null = null;
 	let bestSolutionUpdated = false;
-	let previousBestScoreDelta = 0;
+	let previousBestScore = 0;
+	let newBestScore = 0;
+	let scoreImprovement = 0;
 	let isNewRecord = false;
 	let previousBest: BestSolution | null = null;
 	let currentBest: BestSolution | null = null;
@@ -109,7 +111,9 @@
 				gameRecord = data.gameRecord;
 				gameState = data.gameState;
 				bestSolutionUpdated = data.bestSolutionUpdated;
-				previousBestScoreDelta = data.previousBestScoreDelta;
+				previousBestScore = data.previousBestScore;
+				newBestScore = data.newBestScore;
+				scoreImprovement = data.scoreImprovement;
 				isNewRecord = data.isNewRecord;
 				const bestRes = await fetch(`/api/best-solutions?levelId=${gameRecord.levelId}`);
 				if (bestRes.ok) {
@@ -486,11 +490,11 @@
 
 					{#if isNewRecord}
 						<div class="new-record-banner" style="margin-bottom:12px;">
-							🏆 新纪录！分数提升了 +{previousBestScoreDelta}
+							🏆 新纪录！分数从 {previousBestScore} 提升到 {newBestScore}（+{scoreImprovement}）
 						</div>
 					{:else if bestSolutionUpdated && gameRecord.resultRecord.score > 0}
 						<div class="new-record-banner" style="margin-bottom:12px; background:var(--bg-hover); color:var(--accent);">
-							✓ 最佳解法已更新
+							✓ 最佳解法已更新：{previousBestScore} → {newBestScore}
 						</div>
 					{/if}
 
