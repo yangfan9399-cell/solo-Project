@@ -21,7 +21,7 @@ function getOne<T>(db: Database, sql: string, params: any[] = []): T | null {
   const columns = result[0].columns;
   const values = result[0].values[0];
   const row: any = {};
-  columns.forEach((col, idx) => {
+  columns.forEach((col: string, idx: number) => {
     row[col] = values[idx];
   });
   return row as T;
@@ -32,9 +32,9 @@ function getAll<T>(db: Database, sql: string, params: any[] = []): T[] {
   if (result.length === 0) return [];
   
   const columns = result[0].columns;
-  return result[0].values.map(values => {
+  return result[0].values.map((values: any[]) => {
     const row: any = {};
-    columns.forEach((col, idx) => {
+    columns.forEach((col: string, idx: number) => {
       row[col] = values[idx];
     });
     return row as T;
@@ -205,7 +205,7 @@ export async function updateGameSession(sessionId: number, updates: Partial<{ ro
   }
 }
 
-export async function insertBlindBox(blindBox: Omit<BlindBox, 'id' | 'books'>, bookIds: number[]): Promise<number> {
+export async function insertBlindBox(blindBox: Omit<BlindBox, 'id' | 'books' | 'createdAt'>, bookIds: number[]): Promise<number> {
   const db = await getDb();
   
   try {
@@ -260,7 +260,7 @@ export async function getBlindBoxById(id: number): Promise<BlindBox | null> {
   };
 }
 
-export async function insertMainRecord(record: Omit<MainRecord, 'id'>): Promise<number> {
+export async function insertMainRecord(record: Omit<MainRecord, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO main_records (session_id, round_number, blind_box_id, player_price, market_suggested_price, status)
@@ -328,7 +328,7 @@ export async function getMainRecordBySessionAndRound(sessionId: number, roundNum
   };
 }
 
-export async function insertDetailRecord(record: Omit<DetailRecord, 'id'>): Promise<number> {
+export async function insertDetailRecord(record: Omit<DetailRecord, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO detail_records (main_record_id, book_id, condition, condition_desc, condition_weight, has_inscription, inscription_content, clue_revealed)
@@ -363,7 +363,7 @@ export async function getDetailRecordsByMainId(mainRecordId: number): Promise<De
   }));
 }
 
-export async function insertHistoryRecord(record: Omit<HistoryRecord, 'id'>): Promise<number> {
+export async function insertHistoryRecord(record: Omit<HistoryRecord, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO history_records (main_record_id, book_id, has_seal, seal_name, seal_owner, seal_provenance, seal_value_multiplier, historical_note)
@@ -398,7 +398,7 @@ export async function getHistoryRecordsByMainId(mainRecordId: number): Promise<H
   }));
 }
 
-export async function insertResultRecord(record: Omit<ResultRecord, 'id'>): Promise<number> {
+export async function insertResultRecord(record: Omit<ResultRecord, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO result_records (main_record_id, book_id, is_rare, rarity_level, rarity_desc, rarity_multiplier, customer_preference, customer_preference_match, preference_bonus, final_value)
@@ -437,7 +437,7 @@ export async function getResultRecordsByMainId(mainRecordId: number): Promise<Re
   }));
 }
 
-export async function insertPricingFeedback(feedback: Omit<PricingFeedback, 'id'>): Promise<number> {
+export async function insertPricingFeedback(feedback: Omit<PricingFeedback, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO pricing_feedback (main_record_id, customer_id, customer_name, reaction, feedback, purchased, price_difference, price_difference_percent)
@@ -473,7 +473,7 @@ export async function getPricingFeedbackByMainId(mainRecordId: number): Promise<
   };
 }
 
-export async function insertReturnEvent(event: Omit<ReturnEvent, 'id'>): Promise<number> {
+export async function insertReturnEvent(event: Omit<ReturnEvent, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO return_events (main_record_id, book_id, reason, refund_amount, damage_penalty, impact_on_reputation)
@@ -521,7 +521,7 @@ export async function getPriceCurveByMainId(mainRecordId: number): Promise<Price
   }));
 }
 
-export async function insertLedgerEntry(entry: Omit<LedgerEntry, 'id'>): Promise<number> {
+export async function insertLedgerEntry(entry: Omit<LedgerEntry, 'id' | 'createdAt'>): Promise<number> {
   const db = await getDb();
   const id = runQuery(db, `
     INSERT INTO ledger_entries (session_id, round_number, type, amount, description, reference_id, rolled_back, rollback_id)

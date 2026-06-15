@@ -24,7 +24,7 @@ async function initSql(): Promise<SqlJsStatic> {
       locateFile: (file: string) => path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file)
     });
   }
-  return SQL;
+  return SQL!;
 }
 
 export async function getDb(): Promise<Database> {

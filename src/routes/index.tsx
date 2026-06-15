@@ -1,6 +1,6 @@
 import { component$, useContext, $, useSignal } from '@builder.io/qwik';
 import { DocumentHead } from '@builder.io/qwik-city';
-import { GameContext, createGameStore, provideGameStore } from '~/components/game-store';
+import { GameContext, createGameStore, provideGameStore, type GameState } from '~/components/game-store';
 import { ClueCard } from '~/components/ClueCard';
 import { BlindBoxCard } from '~/components/BlindBoxCard';
 import { CustomerCard } from '~/components/CustomerCard';
@@ -414,7 +414,7 @@ const GameIntro = component$(() => {
 });
 
 interface GamePlayProps {
-  store: ReturnType<typeof useContext<typeof GameContext>>;
+  store: GameState;
   onSubmitPrice$: () => Promise<void>;
   onSettleRound$: () => Promise<void>;
   onNextRound$: () => Promise<void>;

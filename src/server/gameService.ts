@@ -441,7 +441,7 @@ async function processReturnEvent(
 export async function recordInventoryCost(sessionId: number, roundNumber: number, blindBox: BlindBox): Promise<LedgerEntry> {
   const cost = blindBox.totalBasePrice * 0.6;
   
-  const entry: Omit<LedgerEntry, 'id'> = {
+  const entry: Omit<LedgerEntry, 'id' | 'createdAt'> = {
     sessionId,
     roundNumber,
     type: 'inventory',
@@ -462,7 +462,7 @@ export async function recordInventoryCost(sessionId: number, roundNumber: number
     });
   }
   
-  return { ...entry, id: entryId };
+  return { ...entry, id: entryId, createdAt: new Date().toISOString() };
 }
 
 export async function recordSale(
@@ -474,7 +474,7 @@ export async function recordSale(
 ): Promise<LedgerEntry | null> {
   if (!purchased) return null;
   
-  const entry: Omit<LedgerEntry, 'id'> = {
+  const entry: Omit<LedgerEntry, 'id' | 'createdAt'> = {
     sessionId,
     roundNumber,
     type: 'sale',
@@ -494,7 +494,7 @@ export async function recordSale(
     });
   }
   
-  return { ...entry, id: entryId };
+  return { ...entry, id: entryId, createdAt: new Date().toISOString() };
 }
 
 export async function recordReturn(
@@ -503,7 +503,7 @@ export async function recordReturn(
   mainRecordId: number,
   returnEvent: ReturnEvent
 ): Promise<{ refundEntry: LedgerEntry; penaltyEntry: LedgerEntry }> {
-  const refundEntryData: Omit<LedgerEntry, 'id'> = {
+  const refundEntryData: Omit<LedgerEntry, 'id' | 'createdAt'> = {
     sessionId,
     roundNumber,
     type: 'refund',
@@ -514,7 +514,7 @@ export async function recordReturn(
     rollbackId: null,
   };
   
-  const penaltyEntryData: Omit<LedgerEntry, 'id'> = {
+  const penaltyEntryData: Omit<LedgerEntry, 'id' | 'createdAt'> = {
     sessionId,
     roundNumber,
     type: 'penalty',
@@ -536,8 +536,8 @@ export async function recordReturn(
   }
   
   return {
-    refundEntry: { ...refundEntryData, id: refundEntryId },
-    penaltyEntry: { ...penaltyEntryData, id: penaltyEntryId },
+    refundEntry: { ...refundEntryData, id: refundEntryId, createdAt: new Date().toISOString() },
+    penaltyEntry: { ...penaltyEntryData, id: penaltyEntryId, createdAt: new Date().toISOString() },
   };
 }
 
@@ -713,7 +713,7 @@ export async function recalculateSessionScore(sessionId: number): Promise<number
     const columns = result[0].columns;
     for (const values of result[0].values) {
       const round: any = {};
-      columns.forEach((col, idx) => {
+      columns.forEach((col: string, idx: number) => {
         round[col] = values[idx];
       });
       

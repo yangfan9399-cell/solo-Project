@@ -96,7 +96,7 @@ export const PriceCurveChart = component$<PriceCurveChartProps>(({
               stroke="#FFF"
               stroke-width="2"
             />
-            <title>价格: ¥{p.price.toFixed(2)}, 需求: {(p.demand * 100).toFixed(0)}%</title>
+            <title>{`价格: ¥${p.price.toFixed(2)}, 需求: ${(p.demand * 100).toFixed(0)}%`}</title>
           </g>
         ))}
         

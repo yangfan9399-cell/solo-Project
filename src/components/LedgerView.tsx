@@ -71,7 +71,7 @@ export const LedgerView = component$<LedgerViewProps>(({
           <tbody>
             {entries.length === 0 ? (
               <tr>
-                <td colspan="5" class="p-4 text-center text-gray-500">暂无台账记录</td>
+                <td colSpan={5} class="p-4 text-center text-gray-500">暂无台账记录</td>
               </tr>
             ) : (
               entries.map((entry) => (
