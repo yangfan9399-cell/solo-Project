@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 15, 23, 42;
+  --background-start-rgb: 224, 242, 254;
+  --background-end-rgb: 240, 249, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+.tide-gradient {
+  background: linear-gradient(90deg, #1e3a8a 0%, #0369a1 33%, #0891b2 66%, #06b6d4 100%);
+}
+
+.pool-card {
+  @apply bg-white/80 backdrop-blur rounded-xl shadow-lg border border-sky-200 p-4;
+}
+
+.btn-primary {
+  @apply bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+}
+
+.btn-warn {
+  @apply bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors;
+}
