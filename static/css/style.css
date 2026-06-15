@@ -703,29 +703,71 @@ body {
     margin-bottom: 4px;
 }
 
-.anomaly-info p {
+.anomaly-info .anomaly-reason {
     font-size: 12px;
     color: var(--text-secondary);
     margin: 0;
+    padding: 6px 8px;
+    background: rgba(139, 69, 19, 0.08);
+    border-radius: 4px;
+    margin-bottom: 8px;
 }
 
 .anomaly-cigars {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     margin-top: 8px;
 }
 
 .anomaly-cigar-tag {
-    display: inline-flex;
+    display: block;
+    padding: 8px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 8px;
+    min-width: 200px;
+}
+
+.cigar-name-row {
+    display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 12px;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.cigar-icon {
+    font-size: 14px;
+}
+
+.cigar-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cigar-batch {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.cigar-code-row {
     font-size: 11px;
-    color: var(--danger-color);
+    color: var(--text-muted);
+}
+
+.cigar-code-row code {
+    background: var(--bg-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent-color);
+    font-family: 'Menlo', monospace;
+    font-size: 10px;
 }
 
 .version-compare {

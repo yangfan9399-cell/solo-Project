@@ -77,9 +77,9 @@ def cabinet_detail(request, cabinet_id):
                     'count': count,
                     'cigars': [
                         {
-                            'name': c.cigar_name,
-                            'code': c.cigar_code,
-                            'batch': c.record.batch_no,
+                            'cigar_name': c.cigar_name,
+                            'cigar_code': c.cigar_code,
+                            'batch_no': c.record.batch_no,
                         } for c in slot_cigars[key]
                     ],
                     'reason': f'{count}支雪茄放置在同一格位，影响通风和养护效果',

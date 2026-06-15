@@ -56,17 +56,24 @@
                 {% for slot in anomalies %}
                 <div class="anomaly-item">
                     <div class="anomaly-location">
-                        <div style="font-size: 18px;">{{ slot.layer }}层</div>
-                        <div style="font-size: 14px;">{{ slot.slot }}格</div>
+                        <div style="font-size: 18px;">第{{ slot.layer }}层</div>
+                        <div style="font-size: 14px;">第{{ slot.slot }}格</div>
                     </div>
                     <div class="anomaly-info">
                         <strong>位置冲突 - {{ slot.conflict.count }}支雪茄重叠放置</strong>
-                        <p>{{ slot.conflict.reason }}</p>
+                        <p class="anomaly-reason">🔍 {{ slot.conflict.reason }}</p>
                         <div class="anomaly-cigars">
                             {% for cigar in slot.conflict.cigars %}
-                            <span class="anomaly-cigar-tag">
-                                🚬 {{ cigar.cigar_name }} <span style="opacity: 0.7;">({{ cigar.cigar_code }})</span>
-                            </span>
+                            <div class="anomaly-cigar-tag">
+                                <div class="cigar-name-row">
+                                    <span class="cigar-icon">🚬</span>
+                                    <span class="cigar-title">{{ cigar.cigar_name }}</span>
+                                    <span class="cigar-batch">{{ cigar.batch_no }}</span>
+                                </div>
+                                <div class="cigar-code-row">
+                                    编号：<code>{{ cigar.cigar_code }}</code>
+                                </div>
+                            </div>
                             {% endfor %}
                         </div>
                     </div>
