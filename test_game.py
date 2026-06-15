@@ -325,6 +325,141 @@ def test_delivery_detail_records():
     assert details.count() >= 3, f"至少应有3条操作记录，实际{details.count()}条"
     print("✓ 明细记录正确\n")
 
+def test_fold_over_steps_limit():
+    """测试折叠超过步数限制时不写入历史记录"""
+    print("=" * 60)
+    print("测试11: 折叠超步数限制（不污染历史）")
+    print("=" * 60)
+    
+    level = Level.objects.get(name="样本1：邻里送信")
+    session = GameService.start_new_game(level.id)
+    
+    # 把步费用到只剩1步（折叠需要2步，这样折叠就会超过）
+    target_steps = level.max_steps - 1
+    print(f"目标步数: {target_steps}/{level.max_steps}")
+    
+    current_pos = (session.postman_position['x'], session.postman_position['y'])
+    while session.step_count < target_steps:
+        # 来回移动消耗步数
+        next_x = current_pos[0] + 1 if current_pos[0] < level.grid_width - 1 else current_pos[0] - 1
+        if next_x == current_pos[0]:
+            next_x = current_pos[0] - 1 if current_pos[0] > 0 else current_pos[0] + 1
+        
+        success, _, _ = GameService.move_postman(session, next_x, current_pos[1])
+        if success:
+            current_pos = (next_x, current_pos[1])
+        session.refresh_from_db()
+    
+    session.refresh_from_db()
+    fold_count_before = session.fold_count
+    fold_history_before = session.fold_histories.count()
+    detail_count_before = session.delivery_details.filter(action='fold').count()
+    
+    print(f"折叠前: 步数={session.step_count}/{level.max_steps}")
+    print(f"        折叠次数={fold_count_before}, FoldHistory记录={fold_history_before}")
+    
+    # 尝试折叠（需要2步，会超过限制）
+    success, message, result = GameService.fold_map(session, 'horizontal_up', 2)
+    session.refresh_from_db()
+    
+    print(f"尝试折叠: {success} - {message}")
+    print(f"折叠后: 折叠次数={session.fold_count}, FoldHistory记录={session.fold_histories.count()}")
+    print(f"        fold明细数={session.delivery_details.filter(action='fold').count()}")
+    
+    assert not success, "超出步数限制时折叠应该失败"
+    assert session.fold_count == fold_count_before, "折叠次数不应增加"
+    assert session.fold_histories.count() == fold_history_before, "FoldHistory记录不应增加"
+    assert session.delivery_details.filter(action='fold').count() == detail_count_before, "fold明细记录不应增加"
+    assert session.step_count == target_steps, "步数不应变化"
+    
+    print("✓ 超步数折叠不污染历史\n")
+
+def test_game_result_after_finish():
+    """测试游戏结束后结算数据（从明细重算）"""
+    print("=" * 60)
+    print("测试12: 游戏结束结算数据（从明细重算）")
+    print("=" * 60)
+    
+    level = Level.objects.get(name="样本1：邻里送信")
+    session = GameService.start_new_game(level.id)
+    
+    # 完成游戏（投递所有信件）
+    for letter in level.letters:
+        address = [a for a in level.addresses if a['color'] == letter['color']][0]
+        GameService.move_postman(session, address['x'], address['y'])
+        GameService.deliver_letter(session, letter['id'])
+    
+    session.refresh_from_db()
+    
+    print(f"游戏状态: {session.status}")
+    print(f"已投递: {len(session.delivered_letters)}/{len(level.letters)}")
+    print(f"总步数: {session.step_count}, 总折叠: {session.fold_count}")
+    
+    # 验证GameResult存在
+    try:
+        result = session.result
+        print(f"\nGameResult存在:")
+        print(f"  是否成功: {result.is_success}")
+        print(f"  最终分数: {result.final_score}")
+        print(f"  评级: {result.final_rank}")
+        print(f"  步数使用: {result.steps_used}")
+        print(f"  折叠使用: {result.folds_used}")
+        print(f"  最短解步数: {result.optimal_steps}")
+        print(f"  最短解折叠: {result.optimal_folds}")
+        print(f"  是否达到最优: {result.is_optimal}")
+        print(f"  分数明细项数: {len(result.score_breakdown)}")
+        for key, value in result.score_breakdown.items():
+            print(f"    {key}: {value}")
+        
+        # 验证分数是从明细重算的
+        from game.game_logic import calculate_score
+        recalc_score, recalc_breakdown = calculate_score(session, level)
+        print(f"\n重新计算分数: {recalc_score}")
+        print(f"重新计算明细项数: {len(recalc_breakdown)}")
+        
+        assert result.final_score == recalc_score, f"分数不一致: result={result.final_score}, recalc={recalc_score}"
+        assert result.final_rank is not None, "应有评级"
+        assert result.score_breakdown is not None, "应有分数明细"
+        assert result.optimal_steps is not None, "应有最短解步数"
+        
+        print("\n✓ 结算数据正确（从明细重算）\n")
+    except GameSession.result.RelatedObjectDoesNotExist:
+        print("✗ GameResult不存在")
+        assert False, "游戏结束后应创建GameResult"
+
+def test_get_game_history_with_result():
+    """测试get_game_history在游戏结束后返回正确的result数据"""
+    print("=" * 60)
+    print("测试13: get_game_history返回结算数据")
+    print("=" * 60)
+    
+    level = Level.objects.get(name="样本1：邻里送信")
+    session = GameService.start_new_game(level.id)
+    
+    # 完成游戏
+    for letter in level.letters:
+        address = [a for a in level.addresses if a['color'] == letter['color']][0]
+        GameService.move_postman(session, address['x'], address['y'])
+        GameService.deliver_letter(session, letter['id'])
+    
+    session.refresh_from_db()
+    
+    history = GameService.get_game_history(session)
+    
+    print(f"history包含result: {history['result'] is not None}")
+    if history['result']:
+        print(f"  最终分数: {history['result']['final_score']}")
+        print(f"  评级: {history['result']['final_rank']}")
+        print(f"  分数明细存在: {history['result']['score_breakdown'] is not None}")
+        print(f"  最优步数: {history['result']['optimal_steps']}")
+    
+    assert history['result'] is not None, "history中应包含result数据"
+    assert 'final_score' in history['result'], "应包含final_score"
+    assert 'final_rank' in history['result'], "应包含final_rank"
+    assert 'score_breakdown' in history['result'], "应包含score_breakdown"
+    
+    print("✓ get_game_history返回正确的结算数据\n")
+
 def main():
     """运行所有测试"""
     print("\n" + "=" * 60)
@@ -342,6 +477,9 @@ def main():
         test_score_calculation()
         test_validation_edge_cases()
         test_delivery_detail_records()
+        test_fold_over_steps_limit()
+        test_game_result_after_finish()
+        test_get_game_history_with_result()
         
         print("=" * 60)
         print("  ✓ 所有测试通过！")

@@ -177,6 +177,10 @@ class GameService:
         if allowed_directions and direction not in allowed_directions:
             return False, f"不允许的折叠方向: {direction}", {}
         
+        fold_step_cost = 2
+        if session.step_count + fold_step_cost > session.level.max_steps:
+            return False, "折叠会超过最大步数限制", {}
+        
         state_before = copy.deepcopy(session.current_state)
         new_state, fold_info = fold_paper(state_before, direction, fold_line, session.level)
         
@@ -201,15 +205,12 @@ class GameService:
             state_before=state_before,
             state_after=new_state,
             is_valid=True,
-            step_cost=2,
+            step_cost=fold_step_cost,
         )
-        
-        if session.step_count + detail.step_cost > session.level.max_steps:
-            return False, "折叠会超过最大步数限制", {}
         
         session.current_state = new_state
         session.fold_count += 1
-        session.step_count += detail.step_cost
+        session.step_count += fold_step_cost
         session.save()
         
         GameService._check_game_end(session)
@@ -330,13 +331,35 @@ class GameService:
         fold_histories = list(session.fold_histories.order_by('fold_number').values())
         delivery_details = list(session.delivery_details.order_by('step_number').values())
         
+        result_data = None
+        try:
+            result = session.result
+            result_data = {
+                'is_success': result.is_success,
+                'final_score': result.final_score,
+                'steps_used': result.steps_used,
+                'folds_used': result.folds_used,
+                'delivered_count': result.delivered_count,
+                'total_letters': result.total_letters,
+                'optimal_steps': result.optimal_steps,
+                'optimal_folds': result.optimal_folds,
+                'is_optimal': result.is_optimal,
+                'special_addresses_unlocked': result.special_addresses_unlocked,
+                'required_folds_used': result.required_folds_used,
+                'score_breakdown': result.score_breakdown,
+                'final_rank': result.final_rank,
+                'validated_at': result.validated_at.isoformat() if result.validated_at else None,
+            }
+        except GameSession.result.RelatedObjectDoesNotExist:
+            pass
+        
         return {
             'session_id': session.session_id,
             'status': session.status,
             'status_display': session.get_status_display(),
             'fold_histories': fold_histories,
             'delivery_details': delivery_details,
-            'result': session.result.values() if hasattr(session, 'result') else None,
+            'result': result_data,
         }
     
     @staticmethod

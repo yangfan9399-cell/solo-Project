@@ -705,6 +705,7 @@ let gameState = null;
 let selectedLetter = null;
 let validateMode = false;
 let validateStart = null;
+let isReloadingForResult = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadGameState();
@@ -721,7 +722,11 @@ function loadGameState() {
                 renderGame();
                 updateStats();
                 renderLetters();
-                checkGameStatus();
+                if (gameState.status === 'won' || gameState.status === 'lost') {
+                    if (isReloadingForResult || gameState.result) {
+                        showGameOver();
+                    }
+                }
             }
         })
         .catch(error => console.error('Error loading game state:', error));
@@ -1291,7 +1296,12 @@ function showMessage(text, type = 'info') {
 
 function checkGameStatus() {
     if (gameState.status === 'won' || gameState.status === 'lost') {
-        showGameOver();
+        if (!gameState.result) {
+            isReloadingForResult = true;
+            loadGameState();
+        } else {
+            showGameOver();
+        }
     }
 }
 
