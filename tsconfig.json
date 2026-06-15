@@ -16,13 +16,16 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": false,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"]
-    }
+      "~/*": ["src/*"],
+      "solid-start": ["./typings/solid-start/index.d.ts"],
+      "solid-start/*": ["./typings/solid-start/index.d.ts"]
+    },
+    "typeRoots": ["./node_modules/@types", "./typings"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

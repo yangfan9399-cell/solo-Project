@@ -1,9 +1,10 @@
 import { renderSync } from "solid-start/entry-server";
 import Root from "./root";
 
-const exchange = renderSync(Root);
+// 中间件工厂类型 - 无需严格匹配，用 any 适配 solid-start 内部复杂签名
+const exchange: any = renderSync(Root);
 
-const handler = exchange({
+const handler: (event: any) => Promise<Response> = exchange({
   forward: async () =>
     new Response("Not Found", {
       status: 404,

@@ -6,19 +6,19 @@
   "scripts": {
     "dev": "solid-start dev",
     "build": "solid-start build",
-    "start": "solid-start start",
-    "seed": "node --loader ts-node/esm src/server/seed.ts"
+    "start": "solid-start start"
   },
   "dependencies": {
-    "@solidjs/meta": "^0.29.0",
-    "@solidjs/router": "^0.10.0",
-    "solid-js": "^1.8.0",
+    "@solidjs/meta": "^0.29.1",
+    "@solidjs/router": "^0.8.2",
+    "solid-js": "^1.8.4",
     "solid-start": "^0.3.11",
     "solid-start-node": "^0.3.11"
   },
   "devDependencies": {
+    "@types/node": "^18.19.130",
     "typescript": "^5.1.6",
-    "vite": "^4.4.9",
-    "vite-plugin-solid": "^2.8.0"
+    "vite": "^4.4.6",
+    "vite-plugin-solid": "^2.7.0"
   }
 }
