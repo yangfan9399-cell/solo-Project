@@ -125,9 +125,14 @@ def report(request, session_id):
     rollback_snapshots = RollbackSnapshot.objects.filter(session=session).order_by('-rollback_tick')
     rollback_compare = None
     income_curve_before_rollback = None
+    income_curve_after_rollback = None
 
     if rollback_snapshots.exists():
         latest = rollback_snapshots.first()
+
+        current_income = session.total_income
+        income_gained_after_rollback = current_income - latest.before_income
+
         rollback_compare = {
             'rollback_tick': latest.rollback_tick,
             'to_tick': latest.to_tick,
@@ -146,22 +151,44 @@ def report(request, session_id):
                 'served': latest.after_served,
                 'penalty': latest.after_complaints * 50,
             },
+            'current': {
+                'complaints': session.total_complaints,
+                'score': session.final_score,
+                'income': current_income,
+                'served': session.total_served,
+            },
             'delta': {
                 'complaints': latest.delta_complaints,
                 'score': latest.delta_score,
                 'income': latest.delta_income,
                 'penalty_removed': latest.delta_penalty,
+                'income_gained_after': income_gained_after_rollback,
             },
             'transfer_rolled_back': latest.transfer_rolled_back,
             'normal_rolled_back': latest.normal_rolled_back,
             'restored_queue': latest.restored_queue_count,
         }
 
-        before_snapshots = snapshots.filter(tick__lte=latest.rollback_tick)
-        income_curve_before_rollback = json.dumps([
-            {'tick': s.tick, 'cumulative': s.cumulative_income, 'tick_income': s.tick_income}
-            for s in before_snapshots
-        ])
+        if latest.income_curve_json:
+            income_curve_before_rollback = latest.income_curve_json
+        else:
+            before_snapshots = snapshots.filter(tick__lte=latest.rollback_tick)
+            income_curve_before_rollback = json.dumps([
+                {'tick': s.tick, 'cumulative': s.cumulative_income, 'tick_income': s.tick_income}
+                for s in before_snapshots
+            ])
+
+        after_snapshots = snapshots.filter(tick__gt=latest.rollback_tick).order_by('tick')
+        if after_snapshots.exists():
+            last_before_cum = latest.before_income
+            after_points = []
+            for s in after_snapshots:
+                after_points.append({
+                    'tick': s.tick,
+                    'cumulative': s.cumulative_income,
+                    'tick_income': s.tick_income,
+                })
+            income_curve_after_rollback = json.dumps(after_points)
 
     consistency_check = {
         'session_complaints': session.total_complaints,
@@ -185,6 +212,7 @@ def report(request, session_id):
         'destination_stats': destination_stats,
         'income_curve': income_curve,
         'income_curve_before_rollback': income_curve_before_rollback,
+        'income_curve_after_rollback': income_curve_after_rollback,
         'patience_data': patience_data,
         'transfer_impact': transfer_impact,
         'total_dispatches': dispatches.count(),

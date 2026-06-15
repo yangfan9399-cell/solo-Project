@@ -58,6 +58,7 @@ class RollbackSnapshotAdmin(admin.ModelAdmin):
         'session', 'rollback_tick', 'to_tick', 'rolled_back_count',
         'before_complaints', 'after_complaints', 'delta_complaints',
         'before_score', 'after_score', 'delta_score',
+        'before_income', 'after_income', 'delta_income',
     ]
     list_filter = ['session']
-    readonly_fields = ['created_at']
+    readonly_fields = ['created_at', 'income_curve_json']

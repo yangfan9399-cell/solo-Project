@@ -146,6 +146,9 @@ class RollbackSnapshot(models.Model):
     normal_rolled_back = models.IntegerField(default=0)
     restored_queue_count = models.IntegerField(default=0)
 
+    income_curve_json = models.TextField(default='')
+    income_curve_tick_labels_json = models.TextField(default='')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

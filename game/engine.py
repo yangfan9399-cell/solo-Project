@@ -1,3 +1,4 @@
+import json
 import random
 from django.db import transaction
 from game.models import (
@@ -314,6 +315,12 @@ def rollback_complaints(session, to_tick):
         before_income = session.total_income
         before_served = session.total_served
 
+        before_snapshots = IncomeSnapshot.objects.filter(session=session).order_by('tick')
+        income_curve_before = json.dumps([
+            {'tick': s.tick, 'cumulative': s.cumulative_income, 'tick_income': s.tick_income}
+            for s in before_snapshots
+        ])
+
         queue = session.get_queue()
         restored_to_queue = []
 
@@ -389,6 +396,7 @@ def rollback_complaints(session, to_tick):
             transfer_rolled_back=transfer_rolled_back,
             normal_rolled_back=normal_rolled_back,
             restored_queue_count=len(restored_to_queue),
+            income_curve_json=income_curve_before,
         )
 
         PatienceResult.objects.create(
