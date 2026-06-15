@@ -1,7 +1,7 @@
 {
   "masters": [
     {
-      "id": "master_1781539286719_2z6g0wmqz",
+      "id": "master_1781545236137_w3shbwgdu",
       "name": "北岭山地沙盘",
       "batch": "SB-2024-001",
       "version": "1.2.0",
@@ -17,7 +17,7 @@
       "terrainType": "山地"
     },
     {
-      "id": "master_1781539286728_cqigl111m",
+      "id": "master_1781545236139_v6fv1qjkb",
       "name": "河谷地形测绘",
       "batch": "SB-2024-002",
       "version": "2.1.0",
@@ -33,7 +33,7 @@
       "terrainType": "河谷"
     },
     {
-      "id": "master_1781539286729_vrbja1hb1",
+      "id": "master_1781545236141_yal57s2h8",
       "name": "丘陵地貌分析",
       "batch": "SB-2024-003",
       "version": "3.2.0",
@@ -51,8 +51,8 @@
   ],
   "details": [
     {
-      "id": "detail_1781539286720_38fv6jd6s",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236137_hdgjwukla",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 1,
       "elevation": 120,
       "points": [
@@ -164,12 +164,12 @@
       ],
       "isSmooth": true,
       "color": "#7bed9f",
-      "createdAt": "2026-06-15T09:01:26.720Z",
-      "updatedAt": "2026-06-15T09:01:26.728Z"
+      "createdAt": "2026-06-15T10:40:36.138Z",
+      "updatedAt": "2026-06-15T10:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_s8cdrzgcs",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_p6j7jh0n7",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 2,
       "elevation": 140,
       "points": [
@@ -291,12 +291,12 @@
       ],
       "isSmooth": true,
       "color": "#70a1ff",
-      "createdAt": "2026-06-15T10:01:26.728Z",
-      "updatedAt": "2026-06-15T10:01:26.728Z"
+      "createdAt": "2026-06-15T11:40:36.139Z",
+      "updatedAt": "2026-06-15T11:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_e6oxfu357",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_7g8d2vnfv",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 3,
       "elevation": 160,
       "points": [
@@ -428,12 +428,12 @@
       ],
       "isSmooth": true,
       "color": "#ff6b81",
-      "createdAt": "2026-06-15T11:01:26.728Z",
-      "updatedAt": "2026-06-15T11:01:26.728Z"
+      "createdAt": "2026-06-15T12:40:36.139Z",
+      "updatedAt": "2026-06-15T12:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_vsnnfskj9",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_sr40wt6ik",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 4,
       "elevation": 180,
       "points": [
@@ -575,12 +575,12 @@
       ],
       "isSmooth": true,
       "color": "#ffa502",
-      "createdAt": "2026-06-15T12:01:26.728Z",
-      "updatedAt": "2026-06-15T12:01:26.728Z"
+      "createdAt": "2026-06-15T13:40:36.139Z",
+      "updatedAt": "2026-06-15T13:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_26cffd909",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_0s44hrmhx",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 5,
       "elevation": 200,
       "points": [
@@ -732,12 +732,12 @@
       ],
       "isSmooth": true,
       "color": "#a55eea",
-      "createdAt": "2026-06-15T13:01:26.728Z",
-      "updatedAt": "2026-06-15T13:01:26.728Z"
+      "createdAt": "2026-06-15T14:40:36.139Z",
+      "updatedAt": "2026-06-15T14:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_5jphvkoiv",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_5tze43bfu",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 6,
       "elevation": 220,
       "points": [
@@ -899,12 +899,12 @@
       ],
       "isSmooth": true,
       "color": "#2ed573",
-      "createdAt": "2026-06-15T14:01:26.728Z",
-      "updatedAt": "2026-06-15T14:01:26.728Z"
+      "createdAt": "2026-06-15T15:40:36.139Z",
+      "updatedAt": "2026-06-15T15:40:36.139Z"
     },
     {
-      "id": "detail_1781539286728_oxo9h41y3",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "detail_1781545236139_h6xvzphlm",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "contourIndex": 7,
       "elevation": 240,
       "points": [
@@ -1076,12 +1076,12 @@
       ],
       "isSmooth": true,
       "color": "#1e90ff",
-      "createdAt": "2026-06-15T15:01:26.728Z",
-      "updatedAt": "2026-06-15T15:01:26.728Z"
+      "createdAt": "2026-06-15T16:40:36.139Z",
+      "updatedAt": "2026-06-15T16:40:36.139Z"
     },
     {
-      "id": "detail_1781539286729_gc016tw2j",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_2w49gd2ou",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 1,
       "elevation": 80,
       "points": [
@@ -1193,12 +1193,12 @@
       ],
       "isSmooth": true,
       "color": "#ff6b81",
-      "createdAt": "2026-06-15T08:01:26.729Z",
-      "updatedAt": "2026-06-15T08:01:26.729Z"
+      "createdAt": "2026-06-15T09:40:36.140Z",
+      "updatedAt": "2026-06-15T09:40:36.140Z"
     },
     {
-      "id": "detail_1781539286729_jl1p47re0",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_ipk50qi0t",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 2,
       "elevation": 90,
       "points": [
@@ -1320,12 +1320,12 @@
       ],
       "isSmooth": true,
       "color": "#ffa502",
-      "createdAt": "2026-06-15T09:01:26.729Z",
-      "updatedAt": "2026-06-15T09:01:26.729Z"
+      "createdAt": "2026-06-15T10:40:36.140Z",
+      "updatedAt": "2026-06-15T10:40:36.140Z"
     },
     {
-      "id": "detail_1781539286729_h84nkbq0g",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_74qw0s6sx",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 3,
       "elevation": 100,
       "points": [
@@ -1457,12 +1457,12 @@
       ],
       "isSmooth": true,
       "color": "#a55eea",
-      "createdAt": "2026-06-15T10:01:26.729Z",
-      "updatedAt": "2026-06-15T10:01:26.729Z"
+      "createdAt": "2026-06-15T11:40:36.140Z",
+      "updatedAt": "2026-06-15T11:40:36.140Z"
     },
     {
-      "id": "detail_1781539286729_u3wi7a4ud",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_1385ocajp",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 4,
       "elevation": 110,
       "points": [
@@ -1604,12 +1604,12 @@
       ],
       "isSmooth": true,
       "color": "#2ed573",
-      "createdAt": "2026-06-15T11:01:26.729Z",
-      "updatedAt": "2026-06-15T11:01:26.729Z"
+      "createdAt": "2026-06-15T12:40:36.140Z",
+      "updatedAt": "2026-06-15T12:40:36.140Z"
     },
     {
-      "id": "detail_1781539286729_j5fo71g3x",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_t5dchnq7s",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 5,
       "elevation": 120,
       "points": [
@@ -1761,12 +1761,12 @@
       ],
       "isSmooth": true,
       "color": "#1e90ff",
-      "createdAt": "2026-06-15T12:01:26.729Z",
-      "updatedAt": "2026-06-15T12:01:26.729Z"
+      "createdAt": "2026-06-15T13:40:36.140Z",
+      "updatedAt": "2026-06-15T13:40:36.140Z"
     },
     {
-      "id": "detail_1781539286729_02m13b5ve",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236140_pq39zpr07",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 6,
       "elevation": 130,
       "points": [
@@ -1928,12 +1928,12 @@
       ],
       "isSmooth": false,
       "color": "#ff4757",
-      "createdAt": "2026-06-15T13:01:26.729Z",
-      "updatedAt": "2026-06-15T13:01:26.729Z"
+      "createdAt": "2026-06-15T14:40:36.140Z",
+      "updatedAt": "2026-06-15T14:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_uxu6lfnfr",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236141_butjqcklw",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 7,
       "elevation": 140,
       "points": [
@@ -2105,12 +2105,12 @@
       ],
       "isSmooth": false,
       "color": "#eccc68",
-      "createdAt": "2026-06-15T14:01:26.729Z",
-      "updatedAt": "2026-06-15T14:01:26.729Z"
+      "createdAt": "2026-06-15T15:40:36.141Z",
+      "updatedAt": "2026-06-15T15:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_rpm2nqnl5",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "detail_1781545236141_gy4rkgge8",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "contourIndex": 8,
       "elevation": 150,
       "points": [
@@ -2292,12 +2292,12 @@
       ],
       "isSmooth": false,
       "color": "#8b5cf6",
-      "createdAt": "2026-06-15T15:01:26.729Z",
-      "updatedAt": "2026-06-15T15:01:26.729Z"
+      "createdAt": "2026-06-15T16:40:36.141Z",
+      "updatedAt": "2026-06-15T16:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_iv0905plj",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_dmvlcfp3y",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 1,
       "elevation": 150,
       "points": [
@@ -2409,12 +2409,12 @@
       ],
       "isSmooth": true,
       "color": "#a55eea",
-      "createdAt": "2026-06-15T10:01:26.729Z",
-      "updatedAt": "2026-06-15T10:01:26.729Z"
+      "createdAt": "2026-06-15T11:40:36.141Z",
+      "updatedAt": "2026-06-15T11:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_hf1usu2p1",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_04lats3bx",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 2,
       "elevation": 175,
       "points": [
@@ -2536,12 +2536,12 @@
       ],
       "isSmooth": true,
       "color": "#2ed573",
-      "createdAt": "2026-06-15T11:01:26.729Z",
-      "updatedAt": "2026-06-15T11:01:26.729Z"
+      "createdAt": "2026-06-15T12:40:36.141Z",
+      "updatedAt": "2026-06-15T12:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_5twfmu5g8",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_twv97f54d",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 3,
       "elevation": 200,
       "points": [
@@ -2673,12 +2673,12 @@
       ],
       "isSmooth": true,
       "color": "#1e90ff",
-      "createdAt": "2026-06-15T12:01:26.729Z",
-      "updatedAt": "2026-06-15T12:01:26.729Z"
+      "createdAt": "2026-06-15T13:40:36.141Z",
+      "updatedAt": "2026-06-15T13:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_nwjby6ey0",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_5z6p228s6",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 4,
       "elevation": 225,
       "points": [
@@ -2820,12 +2820,12 @@
       ],
       "isSmooth": true,
       "color": "#ff4757",
-      "createdAt": "2026-06-15T13:01:26.729Z",
-      "updatedAt": "2026-06-15T13:01:26.729Z"
+      "createdAt": "2026-06-15T14:40:36.141Z",
+      "updatedAt": "2026-06-15T14:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_7o91cgr98",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_b8i67qq76",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 5,
       "elevation": 250,
       "points": [
@@ -2977,12 +2977,12 @@
       ],
       "isSmooth": true,
       "color": "#eccc68",
-      "createdAt": "2026-06-15T14:01:26.729Z",
-      "updatedAt": "2026-06-15T14:01:26.729Z"
+      "createdAt": "2026-06-15T15:40:36.141Z",
+      "updatedAt": "2026-06-15T15:40:36.141Z"
     },
     {
-      "id": "detail_1781539286729_hqs3hzfkj",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "detail_1781545236141_w8h7ejdcb",
+      "masterId": "master_1781545236141_yal57s2h8",
       "contourIndex": 6,
       "elevation": 275,
       "points": [
@@ -3144,17 +3144,17 @@
       ],
       "isSmooth": true,
       "color": "#8b5cf6",
-      "createdAt": "2026-06-15T15:01:26.729Z",
-      "updatedAt": "2026-06-15T15:01:26.729Z"
+      "createdAt": "2026-06-15T16:40:36.141Z",
+      "updatedAt": "2026-06-15T16:40:36.141Z"
     }
   ],
   "histories": [
     {
-      "id": "history_1781539286728_1ar1ieuhy",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "history_1781545236139_kczlovti3",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "type": "ridge",
       "data": {
-        "id": "ridge_1781539286728_egdq1la53",
+        "id": "ridge_1781545236139_nlnqd1mvs",
         "points": [
           {
             "x": 350,
@@ -3190,11 +3190,11 @@
       "remark": "主峰山脊线描绘完成，共5个控制点"
     },
     {
-      "id": "history_1781539286728_u6d0ded4m",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "history_1781545236139_5yyrk7dzv",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "type": "ridge",
       "data": {
-        "id": "ridge_1781539286728_uau21qxfl",
+        "id": "ridge_1781545236139_168466d12",
         "points": [
           {
             "x": 250,
@@ -3225,11 +3225,11 @@
       "remark": "补充次山脊线"
     },
     {
-      "id": "history_1781539286728_dbw0jimwu",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "history_1781545236139_f1ekudpde",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "type": "profile",
       "data": {
-        "id": "profile_1781539286728_kqvfjpezn",
+        "id": "profile_1781545236139_ybj6cr3r3",
         "name": "A-A' 剖面",
         "startPoint": {
           "x": 200,
@@ -3317,11 +3317,11 @@
       "remark": "主剖面线生成完成，高程数据核验通过"
     },
     {
-      "id": "history_1781539286728_pta7ow0te",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "history_1781545236139_lfcxtekmw",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "type": "aspect",
       "data": {
-        "id": "aspect_1781539286728_iidmixq2s",
+        "id": "aspect_1781545236139_2k1qgjh4p",
         "direction": 45,
         "slope": 28,
         "position": {
@@ -3336,11 +3336,11 @@
       "remark": "东坡坡向测量"
     },
     {
-      "id": "history_1781539286729_zggijnk1n",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "history_1781545236141_0g2diejhc",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "type": "ridge",
       "data": {
-        "id": "ridge_1781539286729_pjb3ppfw1",
+        "id": "ridge_1781545236141_cj6z0j0t2",
         "points": [
           {
             "x": 300,
@@ -3376,11 +3376,11 @@
       "remark": "东岸山脊线初步描绘"
     },
     {
-      "id": "history_1781539286729_gxa31h81h",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "history_1781545236141_vrewwop5r",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "type": "profile",
       "data": {
-        "id": "profile_1781539286729_1hmtwrods",
+        "id": "profile_1781545236141_pjzkua7zn",
         "name": "B-B' 剖面",
         "startPoint": {
           "x": 150,
@@ -3468,11 +3468,11 @@
       "remark": "跨河谷剖面生成，中间段数据存疑"
     },
     {
-      "id": "history_1781539286729_wjrbk8cli",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "history_1781545236141_xabinoqua",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "type": "aspect",
       "data": {
-        "id": "aspect_1781539286729_86854vuu6",
+        "id": "aspect_1781545236141_f5lskr9ue",
         "direction": 180,
         "slope": 15,
         "position": {
@@ -3487,11 +3487,11 @@
       "remark": "南坡坡向测量"
     },
     {
-      "id": "history_1781539286729_ov89aztjk",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "history_1781545236141_d0jy56fn3",
+      "masterId": "master_1781545236141_yal57s2h8",
       "type": "ridge",
       "data": {
-        "id": "ridge_1781539286729_bpu7mwiey",
+        "id": "ridge_1781545236141_i0oetoxky",
         "points": [
           {
             "x": 325,
@@ -3532,11 +3532,11 @@
       "remark": "主丘陵山脊线描绘"
     },
     {
-      "id": "history_1781539286729_ag2rgdb35",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "history_1781545236141_m53je4wbv",
+      "masterId": "master_1781545236141_yal57s2h8",
       "type": "profile",
       "data": {
-        "id": "profile_1781539286729_lghsuqfb1",
+        "id": "profile_1781545236141_29c193gdm",
         "name": "C-C' 剖面",
         "startPoint": {
           "x": 180,
@@ -3624,11 +3624,11 @@
       "remark": "初版剖面生成，已回滚一次"
     },
     {
-      "id": "history_1781539286729_nxc7zco0b",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "history_1781545236141_9qcas2kjs",
+      "masterId": "master_1781545236141_yal57s2h8",
       "type": "aspect",
       "data": {
-        "id": "aspect_1781539286729_id10pfrb4",
+        "id": "aspect_1781545236141_7jrlskki6",
         "direction": 135,
         "slope": 22,
         "position": {
@@ -3643,11 +3643,11 @@
       "remark": "东南坡测量"
     },
     {
-      "id": "history_1781539286729_0ve6xwgbn",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "history_1781545236141_5yfaziky7",
+      "masterId": "master_1781545236141_yal57s2h8",
       "type": "aspect",
       "data": {
-        "id": "aspect_1781539286729_xic9wc7k6",
+        "id": "aspect_1781545236141_nvwtiz1jo",
         "direction": 315,
         "slope": 18,
         "position": {
@@ -3664,56 +3664,56 @@
   ],
   "results": [
     {
-      "id": "result_1781539286728_p6uaglwot",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "result_1781545236139_vu0kn8grh",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "version": "1.2.0",
       "status": "exported",
       "layers": [
         {
-          "id": "layer_1781539286728_szy7j2w2s",
-          "layerId": "detail_1781539286720_38fv6jd6s",
+          "id": "layer_1781545236139_cf642fn62",
+          "layerId": "detail_1781545236137_hdgjwukla",
           "visible": true,
           "opacity": 1,
           "color": "#7bed9f"
         },
         {
-          "id": "layer_1781539286728_bkmd0v2x4",
-          "layerId": "detail_1781539286728_s8cdrzgcs",
+          "id": "layer_1781545236139_5ju8fn7n0",
+          "layerId": "detail_1781545236139_p6j7jh0n7",
           "visible": true,
           "opacity": 1,
           "color": "#70a1ff"
         },
         {
-          "id": "layer_1781539286728_7ylg95d6z",
-          "layerId": "detail_1781539286728_e6oxfu357",
+          "id": "layer_1781545236139_f4grodp7b",
+          "layerId": "detail_1781545236139_7g8d2vnfv",
           "visible": true,
           "opacity": 1,
           "color": "#ff6b81"
         },
         {
-          "id": "layer_1781539286728_psjj1sz9w",
-          "layerId": "detail_1781539286728_vsnnfskj9",
+          "id": "layer_1781545236139_cdaubwaq1",
+          "layerId": "detail_1781545236139_sr40wt6ik",
           "visible": true,
           "opacity": 1,
           "color": "#ffa502"
         },
         {
-          "id": "layer_1781539286728_6yks0vxem",
-          "layerId": "detail_1781539286728_26cffd909",
+          "id": "layer_1781545236139_1ovm0wl82",
+          "layerId": "detail_1781545236139_0s44hrmhx",
           "visible": true,
           "opacity": 1,
           "color": "#a55eea"
         },
         {
-          "id": "layer_1781539286728_6k2ae4uj7",
-          "layerId": "detail_1781539286728_5jphvkoiv",
+          "id": "layer_1781545236139_5ly1oq1ag",
+          "layerId": "detail_1781545236139_5tze43bfu",
           "visible": true,
           "opacity": 1,
           "color": "#2ed573"
         },
         {
-          "id": "layer_1781539286728_be2ev98br",
-          "layerId": "detail_1781539286728_oxo9h41y3",
+          "id": "layer_1781545236139_wtak2yb0k",
+          "layerId": "detail_1781545236139_h6xvzphlm",
           "visible": true,
           "opacity": 1,
           "color": "#1e90ff"
@@ -3721,7 +3721,7 @@
       ],
       "pointLabels": [
         {
-          "id": "label_1781539286728_6wtzzkk7b",
+          "id": "label_1781545236139_vvauvll7g",
           "x": 350,
           "y": 160,
           "text": "主峰",
@@ -3729,7 +3729,7 @@
           "elevation": 240
         },
         {
-          "id": "label_1781539286728_u4v3pvu0y",
+          "id": "label_1781545236139_qqhtnchx6",
           "x": 280,
           "y": 280,
           "text": "观景台",
@@ -3737,7 +3737,7 @@
           "elevation": 175
         },
         {
-          "id": "label_1781539286728_t56zv9sem",
+          "id": "label_1781545236139_moap03g0l",
           "x": 450,
           "y": 320,
           "text": "200m",
@@ -3745,7 +3745,7 @@
           "elevation": 200
         },
         {
-          "id": "label_1781539286728_7ehbcwsoa",
+          "id": "label_1781545236139_p1mn9sow5",
           "x": 200,
           "y": 350,
           "text": "入口",
@@ -3755,7 +3755,7 @@
       ],
       "errorNotes": [
         {
-          "id": "error_1781539286728_tfok78lky",
+          "id": "error_1781545236139_w1tk5sxd4",
           "x": 380,
           "y": 200,
           "message": "此处等高线间距略密，建议复核",
@@ -3769,63 +3769,63 @@
       "updatedAt": "2024-01-20T14:30:00.000Z"
     },
     {
-      "id": "result_1781539286729_1b6r532zl",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "result_1781545236141_62pomtyzu",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "version": "2.1.0",
       "status": "ready",
       "layers": [
         {
-          "id": "layer_1781539286729_azo6hmhak",
-          "layerId": "detail_1781539286729_gc016tw2j",
+          "id": "layer_1781545236141_jnqzearh4",
+          "layerId": "detail_1781545236140_2w49gd2ou",
           "visible": true,
           "opacity": 1,
           "color": "#ff6b81"
         },
         {
-          "id": "layer_1781539286729_k22l8b269",
-          "layerId": "detail_1781539286729_jl1p47re0",
+          "id": "layer_1781545236141_04yckecay",
+          "layerId": "detail_1781545236140_ipk50qi0t",
           "visible": true,
           "opacity": 1,
           "color": "#ffa502"
         },
         {
-          "id": "layer_1781539286729_upr84wpo5",
-          "layerId": "detail_1781539286729_h84nkbq0g",
+          "id": "layer_1781545236141_s9e9lyk0i",
+          "layerId": "detail_1781545236140_74qw0s6sx",
           "visible": true,
           "opacity": 1,
           "color": "#a55eea"
         },
         {
-          "id": "layer_1781539286729_d8kj0w3nt",
-          "layerId": "detail_1781539286729_u3wi7a4ud",
+          "id": "layer_1781545236141_tvirjippf",
+          "layerId": "detail_1781545236140_1385ocajp",
           "visible": true,
           "opacity": 1,
           "color": "#2ed573"
         },
         {
-          "id": "layer_1781539286729_rrh4t9z44",
-          "layerId": "detail_1781539286729_j5fo71g3x",
+          "id": "layer_1781545236141_9lyws70gy",
+          "layerId": "detail_1781545236140_t5dchnq7s",
           "visible": true,
           "opacity": 1,
           "color": "#1e90ff"
         },
         {
-          "id": "layer_1781539286729_y78bt2f7t",
-          "layerId": "detail_1781539286729_02m13b5ve",
+          "id": "layer_1781545236141_5q12wjri9",
+          "layerId": "detail_1781545236140_pq39zpr07",
           "visible": true,
           "opacity": 1,
           "color": "#ff4757"
         },
         {
-          "id": "layer_1781539286729_xo1qnl3kj",
-          "layerId": "detail_1781539286729_uxu6lfnfr",
+          "id": "layer_1781545236141_gnpf10f8w",
+          "layerId": "detail_1781545236141_butjqcklw",
           "visible": true,
           "opacity": 1,
           "color": "#eccc68"
         },
         {
-          "id": "layer_1781539286729_4t0hy4nvg",
-          "layerId": "detail_1781539286729_rpm2nqnl5",
+          "id": "layer_1781545236141_8mwc4k5vy",
+          "layerId": "detail_1781545236141_gy4rkgge8",
           "visible": true,
           "opacity": 1,
           "color": "#8b5cf6"
@@ -3833,7 +3833,7 @@
       ],
       "pointLabels": [
         {
-          "id": "label_1781539286729_0y0zaq51o",
+          "id": "label_1781545236141_nvku8xjbq",
           "x": 300,
           "y": 130,
           "text": "高点1",
@@ -3841,7 +3841,7 @@
           "elevation": 165
         },
         {
-          "id": "label_1781539286729_w0icetfmx",
+          "id": "label_1781545236141_mz837yycd",
           "x": 200,
           "y": 350,
           "text": "河谷",
@@ -3851,7 +3851,7 @@
       ],
       "errorNotes": [
         {
-          "id": "error_1781539286729_uigowjf88",
+          "id": "error_1781545236141_eocxsmncr",
           "x": 340,
           "y": 220,
           "message": "等高线不闭合，存在断裂",
@@ -3860,7 +3860,7 @@
           "createdAt": "2024-02-09T11:00:00.000Z"
         },
         {
-          "id": "error_1781539286729_snkhntv5a",
+          "id": "error_1781545236141_65oglzrkv",
           "x": 420,
           "y": 180,
           "message": "高程点与等高线偏差超过阈值",
@@ -3869,7 +3869,7 @@
           "createdAt": "2024-02-09T14:00:00.000Z"
         },
         {
-          "id": "error_1781539286729_t42eym3c4",
+          "id": "error_1781545236141_4tvk8j3p5",
           "x": 180,
           "y": 280,
           "message": "山脊线位置需校核",
@@ -3878,7 +3878,7 @@
           "createdAt": "2024-02-08T16:00:00.000Z"
         },
         {
-          "id": "error_1781539286729_nino40eiq",
+          "id": "error_1781545236141_lh8w6v0op",
           "x": 280,
           "y": 380,
           "message": "坡向数据精度待提升",
@@ -3891,49 +3891,49 @@
       "updatedAt": "2024-02-10T16:00:00.000Z"
     },
     {
-      "id": "result_1781539286729_g4u0xxjd5",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "result_1781545236141_uq2amv3ki",
+      "masterId": "master_1781545236141_yal57s2h8",
       "version": "3.2.0",
       "status": "rolled_back",
       "layers": [
         {
-          "id": "layer_1781539286730_fv9zgelev",
-          "layerId": "detail_1781539286729_iv0905plj",
+          "id": "layer_1781545236141_nho8t9ocb",
+          "layerId": "detail_1781545236141_dmvlcfp3y",
           "visible": true,
           "opacity": 1,
           "color": "#a55eea"
         },
         {
-          "id": "layer_1781539286730_560kc1viw",
-          "layerId": "detail_1781539286729_hf1usu2p1",
+          "id": "layer_1781545236141_6fc2t9ciz",
+          "layerId": "detail_1781545236141_04lats3bx",
           "visible": false,
           "opacity": 0.5,
           "color": "#2ed573"
         },
         {
-          "id": "layer_1781539286730_l9i13ul4s",
-          "layerId": "detail_1781539286729_5twfmu5g8",
+          "id": "layer_1781545236141_k15ixmu85",
+          "layerId": "detail_1781545236141_twv97f54d",
           "visible": true,
           "opacity": 1,
           "color": "#1e90ff"
         },
         {
-          "id": "layer_1781539286730_aahmr1m0w",
-          "layerId": "detail_1781539286729_nwjby6ey0",
+          "id": "layer_1781545236141_awelz62mq",
+          "layerId": "detail_1781545236141_5z6p228s6",
           "visible": false,
           "opacity": 0.5,
           "color": "#ff4757"
         },
         {
-          "id": "layer_1781539286730_roqh6e75x",
-          "layerId": "detail_1781539286729_7o91cgr98",
+          "id": "layer_1781545236141_uw8k7iaak",
+          "layerId": "detail_1781545236141_b8i67qq76",
           "visible": true,
           "opacity": 1,
           "color": "#eccc68"
         },
         {
-          "id": "layer_1781539286730_khwt1pz9v",
-          "layerId": "detail_1781539286729_hqs3hzfkj",
+          "id": "layer_1781545236141_hbovnh66y",
+          "layerId": "detail_1781545236141_w8h7ejdcb",
           "visible": false,
           "opacity": 0.5,
           "color": "#8b5cf6"
@@ -3941,7 +3941,7 @@
       ],
       "pointLabels": [
         {
-          "id": "label_1781539286730_1018jbkm3",
+          "id": "label_1781545236141_ksziusmuw",
           "x": 325,
           "y": 120,
           "text": "最高点",
@@ -3949,7 +3949,7 @@
           "elevation": 280
         },
         {
-          "id": "label_1781539286730_e69yh3idd",
+          "id": "label_1781545236141_g9ta7z6zt",
           "x": 220,
           "y": 350,
           "text": "洼地",
@@ -3957,7 +3957,7 @@
           "elevation": 160
         },
         {
-          "id": "label_1781539286730_l0eogea15",
+          "id": "label_1781545236141_ony375y1t",
           "x": 480,
           "y": 200,
           "text": "观测点",
@@ -3965,14 +3965,14 @@
           "elevation": 240
         },
         {
-          "id": "label_1781539286730_piyn4jyum",
+          "id": "label_1781545236141_8ayql4dmf",
           "x": 150,
           "y": 280,
           "text": "起点",
           "type": "annotation"
         },
         {
-          "id": "label_1781539286730_1cj6ko871",
+          "id": "label_1781545236141_xdbgamxn4",
           "x": 550,
           "y": 340,
           "text": "终点",
@@ -3981,7 +3981,7 @@
       ],
       "errorNotes": [
         {
-          "id": "error_1781539286730_8yw8osind",
+          "id": "error_1781545236141_rmgzv1ll1",
           "x": 350,
           "y": 160,
           "message": "回滚后需重新校验",
@@ -3996,13 +3996,13 @@
   ],
   "snapshots": [
     {
-      "id": "snapshot_1781539286728_cueso21pc",
-      "masterId": "master_1781539286719_2z6g0wmqz",
+      "id": "snapshot_1781545236139_j3szr2jne",
+      "masterId": "master_1781545236137_w3shbwgdu",
       "version": "1.2.0",
       "name": "v1.2.0 - 最终版本",
       "createdAt": "2024-01-20T15:00:00.000Z",
       "masterData": {
-        "id": "master_1781539286719_2z6g0wmqz",
+        "id": "master_1781545236137_w3shbwgdu",
         "name": "北岭山地沙盘",
         "batch": "SB-2024-001",
         "version": "1.2.0",
@@ -4019,8 +4019,8 @@
       },
       "details": [
         {
-          "id": "detail_1781539286720_38fv6jd6s",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236137_hdgjwukla",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 1,
           "elevation": 120,
           "points": [
@@ -4132,12 +4132,12 @@
           ],
           "isSmooth": true,
           "color": "#7bed9f",
-          "createdAt": "2026-06-15T09:01:26.720Z",
-          "updatedAt": "2026-06-15T09:01:26.728Z"
+          "createdAt": "2026-06-15T10:40:36.138Z",
+          "updatedAt": "2026-06-15T10:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_s8cdrzgcs",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_p6j7jh0n7",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 2,
           "elevation": 140,
           "points": [
@@ -4259,12 +4259,12 @@
           ],
           "isSmooth": true,
           "color": "#70a1ff",
-          "createdAt": "2026-06-15T10:01:26.728Z",
-          "updatedAt": "2026-06-15T10:01:26.728Z"
+          "createdAt": "2026-06-15T11:40:36.139Z",
+          "updatedAt": "2026-06-15T11:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_e6oxfu357",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_7g8d2vnfv",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 3,
           "elevation": 160,
           "points": [
@@ -4396,12 +4396,12 @@
           ],
           "isSmooth": true,
           "color": "#ff6b81",
-          "createdAt": "2026-06-15T11:01:26.728Z",
-          "updatedAt": "2026-06-15T11:01:26.728Z"
+          "createdAt": "2026-06-15T12:40:36.139Z",
+          "updatedAt": "2026-06-15T12:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_vsnnfskj9",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_sr40wt6ik",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 4,
           "elevation": 180,
           "points": [
@@ -4543,12 +4543,12 @@
           ],
           "isSmooth": true,
           "color": "#ffa502",
-          "createdAt": "2026-06-15T12:01:26.728Z",
-          "updatedAt": "2026-06-15T12:01:26.728Z"
+          "createdAt": "2026-06-15T13:40:36.139Z",
+          "updatedAt": "2026-06-15T13:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_26cffd909",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_0s44hrmhx",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 5,
           "elevation": 200,
           "points": [
@@ -4700,12 +4700,12 @@
           ],
           "isSmooth": true,
           "color": "#a55eea",
-          "createdAt": "2026-06-15T13:01:26.728Z",
-          "updatedAt": "2026-06-15T13:01:26.728Z"
+          "createdAt": "2026-06-15T14:40:36.139Z",
+          "updatedAt": "2026-06-15T14:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_5jphvkoiv",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_5tze43bfu",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 6,
           "elevation": 220,
           "points": [
@@ -4867,12 +4867,12 @@
           ],
           "isSmooth": true,
           "color": "#2ed573",
-          "createdAt": "2026-06-15T14:01:26.728Z",
-          "updatedAt": "2026-06-15T14:01:26.728Z"
+          "createdAt": "2026-06-15T15:40:36.139Z",
+          "updatedAt": "2026-06-15T15:40:36.139Z"
         },
         {
-          "id": "detail_1781539286728_oxo9h41y3",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "detail_1781545236139_h6xvzphlm",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "contourIndex": 7,
           "elevation": 240,
           "points": [
@@ -5044,17 +5044,17 @@
           ],
           "isSmooth": true,
           "color": "#1e90ff",
-          "createdAt": "2026-06-15T15:01:26.728Z",
-          "updatedAt": "2026-06-15T15:01:26.728Z"
+          "createdAt": "2026-06-15T16:40:36.139Z",
+          "updatedAt": "2026-06-15T16:40:36.139Z"
         }
       ],
       "histories": [
         {
-          "id": "history_1781539286728_1ar1ieuhy",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "history_1781545236139_kczlovti3",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "type": "ridge",
           "data": {
-            "id": "ridge_1781539286728_egdq1la53",
+            "id": "ridge_1781545236139_nlnqd1mvs",
             "points": [
               {
                 "x": 350,
@@ -5090,11 +5090,11 @@
           "remark": "主峰山脊线描绘完成，共5个控制点"
         },
         {
-          "id": "history_1781539286728_u6d0ded4m",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "history_1781545236139_5yyrk7dzv",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "type": "ridge",
           "data": {
-            "id": "ridge_1781539286728_uau21qxfl",
+            "id": "ridge_1781545236139_168466d12",
             "points": [
               {
                 "x": 250,
@@ -5125,11 +5125,11 @@
           "remark": "补充次山脊线"
         },
         {
-          "id": "history_1781539286728_dbw0jimwu",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "history_1781545236139_f1ekudpde",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "type": "profile",
           "data": {
-            "id": "profile_1781539286728_kqvfjpezn",
+            "id": "profile_1781545236139_ybj6cr3r3",
             "name": "A-A' 剖面",
             "startPoint": {
               "x": 200,
@@ -5217,11 +5217,11 @@
           "remark": "主剖面线生成完成，高程数据核验通过"
         },
         {
-          "id": "history_1781539286728_pta7ow0te",
-          "masterId": "master_1781539286719_2z6g0wmqz",
+          "id": "history_1781545236139_lfcxtekmw",
+          "masterId": "master_1781545236137_w3shbwgdu",
           "type": "aspect",
           "data": {
-            "id": "aspect_1781539286728_iidmixq2s",
+            "id": "aspect_1781545236139_2k1qgjh4p",
             "direction": 45,
             "slope": 28,
             "position": {
@@ -5237,56 +5237,56 @@
         }
       ],
       "result": {
-        "id": "result_1781539286728_p6uaglwot",
-        "masterId": "master_1781539286719_2z6g0wmqz",
+        "id": "result_1781545236139_vu0kn8grh",
+        "masterId": "master_1781545236137_w3shbwgdu",
         "version": "1.2.0",
         "status": "exported",
         "layers": [
           {
-            "id": "layer_1781539286728_szy7j2w2s",
-            "layerId": "detail_1781539286720_38fv6jd6s",
+            "id": "layer_1781545236139_cf642fn62",
+            "layerId": "detail_1781545236137_hdgjwukla",
             "visible": true,
             "opacity": 1,
             "color": "#7bed9f"
           },
           {
-            "id": "layer_1781539286728_bkmd0v2x4",
-            "layerId": "detail_1781539286728_s8cdrzgcs",
+            "id": "layer_1781545236139_5ju8fn7n0",
+            "layerId": "detail_1781545236139_p6j7jh0n7",
             "visible": true,
             "opacity": 1,
             "color": "#70a1ff"
           },
           {
-            "id": "layer_1781539286728_7ylg95d6z",
-            "layerId": "detail_1781539286728_e6oxfu357",
+            "id": "layer_1781545236139_f4grodp7b",
+            "layerId": "detail_1781545236139_7g8d2vnfv",
             "visible": true,
             "opacity": 1,
             "color": "#ff6b81"
           },
           {
-            "id": "layer_1781539286728_psjj1sz9w",
-            "layerId": "detail_1781539286728_vsnnfskj9",
+            "id": "layer_1781545236139_cdaubwaq1",
+            "layerId": "detail_1781545236139_sr40wt6ik",
             "visible": true,
             "opacity": 1,
             "color": "#ffa502"
           },
           {
-            "id": "layer_1781539286728_6yks0vxem",
-            "layerId": "detail_1781539286728_26cffd909",
+            "id": "layer_1781545236139_1ovm0wl82",
+            "layerId": "detail_1781545236139_0s44hrmhx",
             "visible": true,
             "opacity": 1,
             "color": "#a55eea"
           },
           {
-            "id": "layer_1781539286728_6k2ae4uj7",
-            "layerId": "detail_1781539286728_5jphvkoiv",
+            "id": "layer_1781545236139_5ly1oq1ag",
+            "layerId": "detail_1781545236139_5tze43bfu",
             "visible": true,
             "opacity": 1,
             "color": "#2ed573"
           },
           {
-            "id": "layer_1781539286728_be2ev98br",
-            "layerId": "detail_1781539286728_oxo9h41y3",
+            "id": "layer_1781545236139_wtak2yb0k",
+            "layerId": "detail_1781545236139_h6xvzphlm",
             "visible": true,
             "opacity": 1,
             "color": "#1e90ff"
@@ -5294,7 +5294,7 @@
         ],
         "pointLabels": [
           {
-            "id": "label_1781539286728_6wtzzkk7b",
+            "id": "label_1781545236139_vvauvll7g",
             "x": 350,
             "y": 160,
             "text": "主峰",
@@ -5302,7 +5302,7 @@
             "elevation": 240
           },
           {
-            "id": "label_1781539286728_u4v3pvu0y",
+            "id": "label_1781545236139_qqhtnchx6",
             "x": 280,
             "y": 280,
             "text": "观景台",
@@ -5310,7 +5310,7 @@
             "elevation": 175
           },
           {
-            "id": "label_1781539286728_t56zv9sem",
+            "id": "label_1781545236139_moap03g0l",
             "x": 450,
             "y": 320,
             "text": "200m",
@@ -5318,7 +5318,7 @@
             "elevation": 200
           },
           {
-            "id": "label_1781539286728_7ehbcwsoa",
+            "id": "label_1781545236139_p1mn9sow5",
             "x": 200,
             "y": 350,
             "text": "入口",
@@ -5328,7 +5328,7 @@
         ],
         "errorNotes": [
           {
-            "id": "error_1781539286728_tfok78lky",
+            "id": "error_1781545236139_w1tk5sxd4",
             "x": 380,
             "y": 200,
             "message": "此处等高线间距略密，建议复核",
@@ -5343,13 +5343,13 @@
       }
     },
     {
-      "id": "snapshot_1781539286729_02qxhyciq",
-      "masterId": "master_1781539286728_cqigl111m",
+      "id": "snapshot_1781545236141_izqjhijvm",
+      "masterId": "master_1781545236139_v6fv1qjkb",
       "version": "2.1.0",
       "name": "v2.1.0 - 待修正版本",
       "createdAt": "2024-02-10T17:00:00.000Z",
       "masterData": {
-        "id": "master_1781539286728_cqigl111m",
+        "id": "master_1781545236139_v6fv1qjkb",
         "name": "河谷地形测绘",
         "batch": "SB-2024-002",
         "version": "2.1.0",
@@ -5366,8 +5366,8 @@
       },
       "details": [
         {
-          "id": "detail_1781539286729_gc016tw2j",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_2w49gd2ou",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 1,
           "elevation": 80,
           "points": [
@@ -5479,12 +5479,12 @@
           ],
           "isSmooth": true,
           "color": "#ff6b81",
-          "createdAt": "2026-06-15T08:01:26.729Z",
-          "updatedAt": "2026-06-15T08:01:26.729Z"
+          "createdAt": "2026-06-15T09:40:36.140Z",
+          "updatedAt": "2026-06-15T09:40:36.140Z"
         },
         {
-          "id": "detail_1781539286729_jl1p47re0",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_ipk50qi0t",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 2,
           "elevation": 90,
           "points": [
@@ -5606,12 +5606,12 @@
           ],
           "isSmooth": true,
           "color": "#ffa502",
-          "createdAt": "2026-06-15T09:01:26.729Z",
-          "updatedAt": "2026-06-15T09:01:26.729Z"
+          "createdAt": "2026-06-15T10:40:36.140Z",
+          "updatedAt": "2026-06-15T10:40:36.140Z"
         },
         {
-          "id": "detail_1781539286729_h84nkbq0g",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_74qw0s6sx",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 3,
           "elevation": 100,
           "points": [
@@ -5743,12 +5743,12 @@
           ],
           "isSmooth": true,
           "color": "#a55eea",
-          "createdAt": "2026-06-15T10:01:26.729Z",
-          "updatedAt": "2026-06-15T10:01:26.729Z"
+          "createdAt": "2026-06-15T11:40:36.140Z",
+          "updatedAt": "2026-06-15T11:40:36.140Z"
         },
         {
-          "id": "detail_1781539286729_u3wi7a4ud",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_1385ocajp",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 4,
           "elevation": 110,
           "points": [
@@ -5890,12 +5890,12 @@
           ],
           "isSmooth": true,
           "color": "#2ed573",
-          "createdAt": "2026-06-15T11:01:26.729Z",
-          "updatedAt": "2026-06-15T11:01:26.729Z"
+          "createdAt": "2026-06-15T12:40:36.140Z",
+          "updatedAt": "2026-06-15T12:40:36.140Z"
         },
         {
-          "id": "detail_1781539286729_j5fo71g3x",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_t5dchnq7s",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 5,
           "elevation": 120,
           "points": [
@@ -6047,12 +6047,12 @@
           ],
           "isSmooth": true,
           "color": "#1e90ff",
-          "createdAt": "2026-06-15T12:01:26.729Z",
-          "updatedAt": "2026-06-15T12:01:26.729Z"
+          "createdAt": "2026-06-15T13:40:36.140Z",
+          "updatedAt": "2026-06-15T13:40:36.140Z"
         },
         {
-          "id": "detail_1781539286729_02m13b5ve",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236140_pq39zpr07",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 6,
           "elevation": 130,
           "points": [
@@ -6214,12 +6214,12 @@
           ],
           "isSmooth": false,
           "color": "#ff4757",
-          "createdAt": "2026-06-15T13:01:26.729Z",
-          "updatedAt": "2026-06-15T13:01:26.729Z"
+          "createdAt": "2026-06-15T14:40:36.140Z",
+          "updatedAt": "2026-06-15T14:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_uxu6lfnfr",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236141_butjqcklw",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 7,
           "elevation": 140,
           "points": [
@@ -6391,12 +6391,12 @@
           ],
           "isSmooth": false,
           "color": "#eccc68",
-          "createdAt": "2026-06-15T14:01:26.729Z",
-          "updatedAt": "2026-06-15T14:01:26.729Z"
+          "createdAt": "2026-06-15T15:40:36.141Z",
+          "updatedAt": "2026-06-15T15:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_rpm2nqnl5",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "detail_1781545236141_gy4rkgge8",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "contourIndex": 8,
           "elevation": 150,
           "points": [
@@ -6578,17 +6578,17 @@
           ],
           "isSmooth": false,
           "color": "#8b5cf6",
-          "createdAt": "2026-06-15T15:01:26.729Z",
-          "updatedAt": "2026-06-15T15:01:26.729Z"
+          "createdAt": "2026-06-15T16:40:36.141Z",
+          "updatedAt": "2026-06-15T16:40:36.141Z"
         }
       ],
       "histories": [
         {
-          "id": "history_1781539286729_zggijnk1n",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "history_1781545236141_0g2diejhc",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "type": "ridge",
           "data": {
-            "id": "ridge_1781539286729_pjb3ppfw1",
+            "id": "ridge_1781545236141_cj6z0j0t2",
             "points": [
               {
                 "x": 300,
@@ -6624,11 +6624,11 @@
           "remark": "东岸山脊线初步描绘"
         },
         {
-          "id": "history_1781539286729_gxa31h81h",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "history_1781545236141_vrewwop5r",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "type": "profile",
           "data": {
-            "id": "profile_1781539286729_1hmtwrods",
+            "id": "profile_1781545236141_pjzkua7zn",
             "name": "B-B' 剖面",
             "startPoint": {
               "x": 150,
@@ -6716,11 +6716,11 @@
           "remark": "跨河谷剖面生成，中间段数据存疑"
         },
         {
-          "id": "history_1781539286729_wjrbk8cli",
-          "masterId": "master_1781539286728_cqigl111m",
+          "id": "history_1781545236141_xabinoqua",
+          "masterId": "master_1781545236139_v6fv1qjkb",
           "type": "aspect",
           "data": {
-            "id": "aspect_1781539286729_86854vuu6",
+            "id": "aspect_1781545236141_f5lskr9ue",
             "direction": 180,
             "slope": 15,
             "position": {
@@ -6736,63 +6736,63 @@
         }
       ],
       "result": {
-        "id": "result_1781539286729_1b6r532zl",
-        "masterId": "master_1781539286728_cqigl111m",
+        "id": "result_1781545236141_62pomtyzu",
+        "masterId": "master_1781545236139_v6fv1qjkb",
         "version": "2.1.0",
         "status": "ready",
         "layers": [
           {
-            "id": "layer_1781539286729_azo6hmhak",
-            "layerId": "detail_1781539286729_gc016tw2j",
+            "id": "layer_1781545236141_jnqzearh4",
+            "layerId": "detail_1781545236140_2w49gd2ou",
             "visible": true,
             "opacity": 1,
             "color": "#ff6b81"
           },
           {
-            "id": "layer_1781539286729_k22l8b269",
-            "layerId": "detail_1781539286729_jl1p47re0",
+            "id": "layer_1781545236141_04yckecay",
+            "layerId": "detail_1781545236140_ipk50qi0t",
             "visible": true,
             "opacity": 1,
             "color": "#ffa502"
           },
           {
-            "id": "layer_1781539286729_upr84wpo5",
-            "layerId": "detail_1781539286729_h84nkbq0g",
+            "id": "layer_1781545236141_s9e9lyk0i",
+            "layerId": "detail_1781545236140_74qw0s6sx",
             "visible": true,
             "opacity": 1,
             "color": "#a55eea"
           },
           {
-            "id": "layer_1781539286729_d8kj0w3nt",
-            "layerId": "detail_1781539286729_u3wi7a4ud",
+            "id": "layer_1781545236141_tvirjippf",
+            "layerId": "detail_1781545236140_1385ocajp",
             "visible": true,
             "opacity": 1,
             "color": "#2ed573"
           },
           {
-            "id": "layer_1781539286729_rrh4t9z44",
-            "layerId": "detail_1781539286729_j5fo71g3x",
+            "id": "layer_1781545236141_9lyws70gy",
+            "layerId": "detail_1781545236140_t5dchnq7s",
             "visible": true,
             "opacity": 1,
             "color": "#1e90ff"
           },
           {
-            "id": "layer_1781539286729_y78bt2f7t",
-            "layerId": "detail_1781539286729_02m13b5ve",
+            "id": "layer_1781545236141_5q12wjri9",
+            "layerId": "detail_1781545236140_pq39zpr07",
             "visible": true,
             "opacity": 1,
             "color": "#ff4757"
           },
           {
-            "id": "layer_1781539286729_xo1qnl3kj",
-            "layerId": "detail_1781539286729_uxu6lfnfr",
+            "id": "layer_1781545236141_gnpf10f8w",
+            "layerId": "detail_1781545236141_butjqcklw",
             "visible": true,
             "opacity": 1,
             "color": "#eccc68"
           },
           {
-            "id": "layer_1781539286729_4t0hy4nvg",
-            "layerId": "detail_1781539286729_rpm2nqnl5",
+            "id": "layer_1781545236141_8mwc4k5vy",
+            "layerId": "detail_1781545236141_gy4rkgge8",
             "visible": true,
             "opacity": 1,
             "color": "#8b5cf6"
@@ -6800,7 +6800,7 @@
         ],
         "pointLabels": [
           {
-            "id": "label_1781539286729_0y0zaq51o",
+            "id": "label_1781545236141_nvku8xjbq",
             "x": 300,
             "y": 130,
             "text": "高点1",
@@ -6808,7 +6808,7 @@
             "elevation": 165
           },
           {
-            "id": "label_1781539286729_w0icetfmx",
+            "id": "label_1781545236141_mz837yycd",
             "x": 200,
             "y": 350,
             "text": "河谷",
@@ -6818,7 +6818,7 @@
         ],
         "errorNotes": [
           {
-            "id": "error_1781539286729_uigowjf88",
+            "id": "error_1781545236141_eocxsmncr",
             "x": 340,
             "y": 220,
             "message": "等高线不闭合，存在断裂",
@@ -6827,7 +6827,7 @@
             "createdAt": "2024-02-09T11:00:00.000Z"
           },
           {
-            "id": "error_1781539286729_snkhntv5a",
+            "id": "error_1781545236141_65oglzrkv",
             "x": 420,
             "y": 180,
             "message": "高程点与等高线偏差超过阈值",
@@ -6836,7 +6836,7 @@
             "createdAt": "2024-02-09T14:00:00.000Z"
           },
           {
-            "id": "error_1781539286729_t42eym3c4",
+            "id": "error_1781545236141_4tvk8j3p5",
             "x": 180,
             "y": 280,
             "message": "山脊线位置需校核",
@@ -6845,7 +6845,7 @@
             "createdAt": "2024-02-08T16:00:00.000Z"
           },
           {
-            "id": "error_1781539286729_nino40eiq",
+            "id": "error_1781545236141_lh8w6v0op",
             "x": 280,
             "y": 380,
             "message": "坡向数据精度待提升",
@@ -6859,13 +6859,13 @@
       }
     },
     {
-      "id": "snapshot_1781539286730_la6yoxheq",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "snapshot_1781545236141_3ot4dc3mp",
+      "masterId": "master_1781545236141_yal57s2h8",
       "version": "2.0.0",
       "name": "v2.0.0 - 初始剖面版本",
       "createdAt": "2024-03-08T16:00:00.000Z",
       "masterData": {
-        "id": "master_1781539286729_vrbja1hb1",
+        "id": "master_1781545236141_yal57s2h8",
         "name": "丘陵地貌分析",
         "batch": "SB-2024-003",
         "version": "2.0.0",
@@ -6882,8 +6882,8 @@
       },
       "details": [
         {
-          "id": "detail_1781539286729_iv0905plj",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_dmvlcfp3y",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 1,
           "elevation": 150,
           "points": [
@@ -6995,12 +6995,12 @@
           ],
           "isSmooth": true,
           "color": "#a55eea",
-          "createdAt": "2026-06-15T10:01:26.729Z",
-          "updatedAt": "2026-06-15T10:01:26.729Z"
+          "createdAt": "2026-06-15T11:40:36.141Z",
+          "updatedAt": "2026-06-15T11:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_hf1usu2p1",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_04lats3bx",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 2,
           "elevation": 175,
           "points": [
@@ -7122,12 +7122,12 @@
           ],
           "isSmooth": true,
           "color": "#2ed573",
-          "createdAt": "2026-06-15T11:01:26.729Z",
-          "updatedAt": "2026-06-15T11:01:26.729Z"
+          "createdAt": "2026-06-15T12:40:36.141Z",
+          "updatedAt": "2026-06-15T12:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_5twfmu5g8",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_twv97f54d",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 3,
           "elevation": 200,
           "points": [
@@ -7259,12 +7259,12 @@
           ],
           "isSmooth": true,
           "color": "#1e90ff",
-          "createdAt": "2026-06-15T12:01:26.729Z",
-          "updatedAt": "2026-06-15T12:01:26.729Z"
+          "createdAt": "2026-06-15T13:40:36.141Z",
+          "updatedAt": "2026-06-15T13:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_nwjby6ey0",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_5z6p228s6",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 4,
           "elevation": 225,
           "points": [
@@ -7406,17 +7406,17 @@
           ],
           "isSmooth": true,
           "color": "#ff4757",
-          "createdAt": "2026-06-15T13:01:26.729Z",
-          "updatedAt": "2026-06-15T13:01:26.729Z"
+          "createdAt": "2026-06-15T14:40:36.141Z",
+          "updatedAt": "2026-06-15T14:40:36.141Z"
         }
       ],
       "histories": [
         {
-          "id": "history_1781539286729_ov89aztjk",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "history_1781545236141_d0jy56fn3",
+          "masterId": "master_1781545236141_yal57s2h8",
           "type": "ridge",
           "data": {
-            "id": "ridge_1781539286729_bpu7mwiey",
+            "id": "ridge_1781545236141_i0oetoxky",
             "points": [
               {
                 "x": 325,
@@ -7457,11 +7457,11 @@
           "remark": "主丘陵山脊线描绘"
         },
         {
-          "id": "history_1781539286729_ag2rgdb35",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "history_1781545236141_m53je4wbv",
+          "masterId": "master_1781545236141_yal57s2h8",
           "type": "profile",
           "data": {
-            "id": "profile_1781539286729_lghsuqfb1",
+            "id": "profile_1781545236141_29c193gdm",
             "name": "C-C' 剖面",
             "startPoint": {
               "x": 180,
@@ -7550,49 +7550,49 @@
         }
       ],
       "result": {
-        "id": "result_1781539286729_g4u0xxjd5",
-        "masterId": "master_1781539286729_vrbja1hb1",
+        "id": "result_1781545236141_uq2amv3ki",
+        "masterId": "master_1781545236141_yal57s2h8",
         "version": "2.0.0",
         "status": "pending",
         "layers": [
           {
-            "id": "layer_1781539286730_fv9zgelev",
-            "layerId": "detail_1781539286729_iv0905plj",
+            "id": "layer_1781545236141_nho8t9ocb",
+            "layerId": "detail_1781545236141_dmvlcfp3y",
             "visible": true,
             "opacity": 1,
             "color": "#a55eea"
           },
           {
-            "id": "layer_1781539286730_560kc1viw",
-            "layerId": "detail_1781539286729_hf1usu2p1",
+            "id": "layer_1781545236141_6fc2t9ciz",
+            "layerId": "detail_1781545236141_04lats3bx",
             "visible": false,
             "opacity": 0.5,
             "color": "#2ed573"
           },
           {
-            "id": "layer_1781539286730_l9i13ul4s",
-            "layerId": "detail_1781539286729_5twfmu5g8",
+            "id": "layer_1781545236141_k15ixmu85",
+            "layerId": "detail_1781545236141_twv97f54d",
             "visible": true,
             "opacity": 1,
             "color": "#1e90ff"
           },
           {
-            "id": "layer_1781539286730_aahmr1m0w",
-            "layerId": "detail_1781539286729_nwjby6ey0",
+            "id": "layer_1781545236141_awelz62mq",
+            "layerId": "detail_1781545236141_5z6p228s6",
             "visible": false,
             "opacity": 0.5,
             "color": "#ff4757"
           },
           {
-            "id": "layer_1781539286730_roqh6e75x",
-            "layerId": "detail_1781539286729_7o91cgr98",
+            "id": "layer_1781545236141_uw8k7iaak",
+            "layerId": "detail_1781545236141_b8i67qq76",
             "visible": true,
             "opacity": 1,
             "color": "#eccc68"
           },
           {
-            "id": "layer_1781539286730_khwt1pz9v",
-            "layerId": "detail_1781539286729_hqs3hzfkj",
+            "id": "layer_1781545236141_hbovnh66y",
+            "layerId": "detail_1781545236141_w8h7ejdcb",
             "visible": false,
             "opacity": 0.5,
             "color": "#8b5cf6"
@@ -7600,7 +7600,7 @@
         ],
         "pointLabels": [
           {
-            "id": "label_1781539286730_1018jbkm3",
+            "id": "label_1781545236141_ksziusmuw",
             "x": 325,
             "y": 120,
             "text": "最高点",
@@ -7608,7 +7608,7 @@
             "elevation": 280
           },
           {
-            "id": "label_1781539286730_e69yh3idd",
+            "id": "label_1781545236141_g9ta7z6zt",
             "x": 220,
             "y": 350,
             "text": "洼地",
@@ -7616,7 +7616,7 @@
             "elevation": 160
           },
           {
-            "id": "label_1781539286730_l0eogea15",
+            "id": "label_1781545236141_ony375y1t",
             "x": 480,
             "y": 200,
             "text": "观测点",
@@ -7624,14 +7624,14 @@
             "elevation": 240
           },
           {
-            "id": "label_1781539286730_piyn4jyum",
+            "id": "label_1781545236141_8ayql4dmf",
             "x": 150,
             "y": 280,
             "text": "起点",
             "type": "annotation"
           },
           {
-            "id": "label_1781539286730_1cj6ko871",
+            "id": "label_1781545236141_xdbgamxn4",
             "x": 550,
             "y": 340,
             "text": "终点",
@@ -7640,7 +7640,7 @@
         ],
         "errorNotes": [
           {
-            "id": "error_1781539286730_8yw8osind",
+            "id": "error_1781545236141_rmgzv1ll1",
             "x": 350,
             "y": 160,
             "message": "回滚后需重新校验",
@@ -7654,13 +7654,13 @@
       }
     },
     {
-      "id": "snapshot_1781539286730_hr304ttoi",
-      "masterId": "master_1781539286729_vrbja1hb1",
+      "id": "snapshot_1781545236141_n5831l10t",
+      "masterId": "master_1781545236141_yal57s2h8",
       "version": "3.1.0",
       "name": "v3.1.0 - 坡向测量完成",
       "createdAt": "2024-03-13T16:00:00.000Z",
       "masterData": {
-        "id": "master_1781539286729_vrbja1hb1",
+        "id": "master_1781545236141_yal57s2h8",
         "name": "丘陵地貌分析",
         "batch": "SB-2024-003",
         "version": "3.1.0",
@@ -7677,8 +7677,8 @@
       },
       "details": [
         {
-          "id": "detail_1781539286729_iv0905plj",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_dmvlcfp3y",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 1,
           "elevation": 150,
           "points": [
@@ -7790,12 +7790,12 @@
           ],
           "isSmooth": true,
           "color": "#a55eea",
-          "createdAt": "2026-06-15T10:01:26.729Z",
-          "updatedAt": "2026-06-15T10:01:26.729Z"
+          "createdAt": "2026-06-15T11:40:36.141Z",
+          "updatedAt": "2026-06-15T11:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_hf1usu2p1",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_04lats3bx",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 2,
           "elevation": 175,
           "points": [
@@ -7917,12 +7917,12 @@
           ],
           "isSmooth": true,
           "color": "#2ed573",
-          "createdAt": "2026-06-15T11:01:26.729Z",
-          "updatedAt": "2026-06-15T11:01:26.729Z"
+          "createdAt": "2026-06-15T12:40:36.141Z",
+          "updatedAt": "2026-06-15T12:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_5twfmu5g8",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_twv97f54d",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 3,
           "elevation": 200,
           "points": [
@@ -8054,12 +8054,12 @@
           ],
           "isSmooth": true,
           "color": "#1e90ff",
-          "createdAt": "2026-06-15T12:01:26.729Z",
-          "updatedAt": "2026-06-15T12:01:26.729Z"
+          "createdAt": "2026-06-15T13:40:36.141Z",
+          "updatedAt": "2026-06-15T13:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_nwjby6ey0",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_5z6p228s6",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 4,
           "elevation": 225,
           "points": [
@@ -8201,12 +8201,12 @@
           ],
           "isSmooth": true,
           "color": "#ff4757",
-          "createdAt": "2026-06-15T13:01:26.729Z",
-          "updatedAt": "2026-06-15T13:01:26.729Z"
+          "createdAt": "2026-06-15T14:40:36.141Z",
+          "updatedAt": "2026-06-15T14:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_7o91cgr98",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_b8i67qq76",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 5,
           "elevation": 250,
           "points": [
@@ -8358,12 +8358,12 @@
           ],
           "isSmooth": true,
           "color": "#eccc68",
-          "createdAt": "2026-06-15T14:01:26.729Z",
-          "updatedAt": "2026-06-15T14:01:26.729Z"
+          "createdAt": "2026-06-15T15:40:36.141Z",
+          "updatedAt": "2026-06-15T15:40:36.141Z"
         },
         {
-          "id": "detail_1781539286729_hqs3hzfkj",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "detail_1781545236141_w8h7ejdcb",
+          "masterId": "master_1781545236141_yal57s2h8",
           "contourIndex": 6,
           "elevation": 275,
           "points": [
@@ -8525,17 +8525,17 @@
           ],
           "isSmooth": true,
           "color": "#8b5cf6",
-          "createdAt": "2026-06-15T15:01:26.729Z",
-          "updatedAt": "2026-06-15T15:01:26.729Z"
+          "createdAt": "2026-06-15T16:40:36.141Z",
+          "updatedAt": "2026-06-15T16:40:36.141Z"
         }
       ],
       "histories": [
         {
-          "id": "history_1781539286729_ov89aztjk",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "history_1781545236141_d0jy56fn3",
+          "masterId": "master_1781545236141_yal57s2h8",
           "type": "ridge",
           "data": {
-            "id": "ridge_1781539286729_bpu7mwiey",
+            "id": "ridge_1781545236141_i0oetoxky",
             "points": [
               {
                 "x": 325,
@@ -8576,11 +8576,11 @@
           "remark": "主丘陵山脊线描绘"
         },
         {
-          "id": "history_1781539286729_ag2rgdb35",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "history_1781545236141_m53je4wbv",
+          "masterId": "master_1781545236141_yal57s2h8",
           "type": "profile",
           "data": {
-            "id": "profile_1781539286729_lghsuqfb1",
+            "id": "profile_1781545236141_29c193gdm",
             "name": "C-C' 剖面",
             "startPoint": {
               "x": 180,
@@ -8668,11 +8668,11 @@
           "remark": "初版剖面生成，已回滚一次"
         },
         {
-          "id": "history_1781539286729_nxc7zco0b",
-          "masterId": "master_1781539286729_vrbja1hb1",
+          "id": "history_1781545236141_9qcas2kjs",
+          "masterId": "master_1781545236141_yal57s2h8",
           "type": "aspect",
           "data": {
-            "id": "aspect_1781539286729_id10pfrb4",
+            "id": "aspect_1781545236141_7jrlskki6",
             "direction": 135,
             "slope": 22,
             "position": {
@@ -8688,49 +8688,49 @@
         }
       ],
       "result": {
-        "id": "result_1781539286729_g4u0xxjd5",
-        "masterId": "master_1781539286729_vrbja1hb1",
+        "id": "result_1781545236141_uq2amv3ki",
+        "masterId": "master_1781545236141_yal57s2h8",
         "version": "3.1.0",
         "status": "exported",
         "layers": [
           {
-            "id": "layer_1781539286730_fv9zgelev",
-            "layerId": "detail_1781539286729_iv0905plj",
+            "id": "layer_1781545236141_nho8t9ocb",
+            "layerId": "detail_1781545236141_dmvlcfp3y",
             "visible": true,
             "opacity": 1,
             "color": "#a55eea"
           },
           {
-            "id": "layer_1781539286730_560kc1viw",
-            "layerId": "detail_1781539286729_hf1usu2p1",
+            "id": "layer_1781545236141_6fc2t9ciz",
+            "layerId": "detail_1781545236141_04lats3bx",
             "visible": false,
             "opacity": 0.5,
             "color": "#2ed573"
           },
           {
-            "id": "layer_1781539286730_l9i13ul4s",
-            "layerId": "detail_1781539286729_5twfmu5g8",
+            "id": "layer_1781545236141_k15ixmu85",
+            "layerId": "detail_1781545236141_twv97f54d",
             "visible": true,
             "opacity": 1,
             "color": "#1e90ff"
           },
           {
-            "id": "layer_1781539286730_aahmr1m0w",
-            "layerId": "detail_1781539286729_nwjby6ey0",
+            "id": "layer_1781545236141_awelz62mq",
+            "layerId": "detail_1781545236141_5z6p228s6",
             "visible": false,
             "opacity": 0.5,
             "color": "#ff4757"
           },
           {
-            "id": "layer_1781539286730_roqh6e75x",
-            "layerId": "detail_1781539286729_7o91cgr98",
+            "id": "layer_1781545236141_uw8k7iaak",
+            "layerId": "detail_1781545236141_b8i67qq76",
             "visible": true,
             "opacity": 1,
             "color": "#eccc68"
           },
           {
-            "id": "layer_1781539286730_khwt1pz9v",
-            "layerId": "detail_1781539286729_hqs3hzfkj",
+            "id": "layer_1781545236141_hbovnh66y",
+            "layerId": "detail_1781545236141_w8h7ejdcb",
             "visible": false,
             "opacity": 0.5,
             "color": "#8b5cf6"
@@ -8738,7 +8738,7 @@
         ],
         "pointLabels": [
           {
-            "id": "label_1781539286730_1018jbkm3",
+            "id": "label_1781545236141_ksziusmuw",
             "x": 325,
             "y": 120,
             "text": "最高点",
@@ -8746,7 +8746,7 @@
             "elevation": 280
           },
           {
-            "id": "label_1781539286730_e69yh3idd",
+            "id": "label_1781545236141_g9ta7z6zt",
             "x": 220,
             "y": 350,
             "text": "洼地",
@@ -8754,7 +8754,7 @@
             "elevation": 160
           },
           {
-            "id": "label_1781539286730_l0eogea15",
+            "id": "label_1781545236141_ony375y1t",
             "x": 480,
             "y": 200,
             "text": "观测点",
@@ -8762,14 +8762,14 @@
             "elevation": 240
           },
           {
-            "id": "label_1781539286730_piyn4jyum",
+            "id": "label_1781545236141_8ayql4dmf",
             "x": 150,
             "y": 280,
             "text": "起点",
             "type": "annotation"
           },
           {
-            "id": "label_1781539286730_1cj6ko871",
+            "id": "label_1781545236141_xdbgamxn4",
             "x": 550,
             "y": 340,
             "text": "终点",
@@ -8778,7 +8778,7 @@
         ],
         "errorNotes": [
           {
-            "id": "error_1781539286730_8yw8osind",
+            "id": "error_1781545236141_rmgzv1ll1",
             "x": 350,
             "y": 160,
             "message": "回滚后需重新校验",

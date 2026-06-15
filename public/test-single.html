@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Single.js 测试</title>
+  <script src="/vendor/react.js"></script>
+  <script src="/vendor/react-dom.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #0f1621; color: white; padding: 20px; }
+    .ok { color: #0f0; }
+    .err { color: #f00; }
+  </style>
+</head>
+<body>
+  <h1>Single.js 加载测试</h1>
+  <div id="log"></div>
+  <div id="root"></div>
+  <script>
+    function log(msg, cls) {
+      var d = document.createElement('div');
+      d.className = cls || '';
+      d.textContent = msg;
+      document.getElementById('log').appendChild(d);
+    }
+    log('1. React 已加载: ' + (typeof React !== 'undefined' ? '✅' : '❌'), typeof React !== 'undefined' ? 'ok' : 'err');
+    log('2. ReactDOM 已加载: ' + (typeof ReactDOM !== 'undefined' ? '✅' : '❌'), typeof ReactDOM !== 'undefined' ? 'ok' : 'err');
+  </script>
+  <script src="/js/single.js"></script>
+  <script>
+    log('3. ContourTool 已定义: ' + (typeof ContourTool !== 'undefined' ? '✅' : '❌'), typeof ContourTool !== 'undefined' ? 'ok' : 'err');
+    if (typeof ContourTool !== 'undefined') {
+      log('4. ContourTool.mount 是函数: ' + (typeof ContourTool.mount === 'function' ? '✅' : '❌'), typeof ContourTool.mount === 'function' ? 'ok' : 'err');
+      log('5. TOOL_STEPS 数量: ' + (ContourTool.TOOL_STEPS ? ContourTool.TOOL_STEPS.length : 'N/A'));
+    }
+    log('--- 测试完成 ---');
+  </script>
+</body>
+</html>

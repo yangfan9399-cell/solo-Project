@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Mount 测试</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/react.js"></script>
+  <script src="/vendor/react-dom.js"></script>
+  <style>
+    #dbg {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.9);
+      color: #0f0;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 11px;
+      z-index: 99999;
+      max-width: 350px;
+      max-height: 400px;
+      overflow: auto;
+      border: 1px solid #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="dbg"></div>
+  <div id="root"></div>
+  <script>
+    var dbg = document.getElementById('dbg');
+    function log(msg, color) {
+      var d = document.createElement('div');
+      if (color) d.style.color = color;
+      d.textContent = msg;
+      dbg.appendChild(d);
+      dbg.scrollTop = dbg.scrollHeight;
+    }
+    window.onerror = function(msg, url, line) {
+      log('ERROR: ' + msg + ' (line ' + line + ')', '#f00');
+      return true;
+    };
+    window.onunhandledrejection = function(e) {
+      log('PROMISE ERR: ' + e.reason, '#f00');
+    };
+    
+    log('1. 页面加载中...');
+  </script>
+  <script src="/js/single.js"></script>
+  <script>
+    log('2. single.js 已加载');
+    log('3. ContourTool: ' + (typeof ContourTool));
+    log('4. ContourTool.mount: ' + (typeof (ContourTool && ContourTool.mount)));
+    
+    setTimeout(function() {
+      try {
+        log('5. 调用 mount...');
+        ContourTool.mount('root');
+        log('6. mount 调用完成', '#0f0');
+      } catch(e) {
+        log('6. mount 失败: ' + e.message, '#f00');
+        log('   ' + e.stack, '#f00');
+      }
+    }, 100);
+    
+    setTimeout(function() {
+      log('7. 2秒后检查 root 内容...');
+      var root = document.getElementById('root');
+      log('   root.children.length: ' + root.children.length);
+      if (root.children.length > 0) {
+        log('   ✅ 渲染成功！', '#0f0');
+      } else {
+        log('   ❌ 没有内容', '#f00');
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

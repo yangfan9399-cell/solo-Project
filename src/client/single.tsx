@@ -50,6 +50,15 @@ namespace ContourTool {
   const useState = React.useState;
   const useEffect = React.useEffect;
   const useMemo = React.useMemo;
+  const useRef = React.useRef;
+
+  function genId(prefix: string): string {
+    return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+  }
+
+  function nowStr(): string {
+    return new Date().toISOString();
+  }
 
   const TOOL_STEPS: { id: ToolType; label: string; icon: string; desc: string }[] = [
     { id: 'import', label: '导入底图', icon: '📥', desc: '导入手绘地形图' },
@@ -113,7 +122,9 @@ namespace ContourTool {
     ));
 
     svgChildren.push(e('rect', { key: 'bg', x: 0, y: 0, width: master.mapWidth, height: master.mapHeight, fill: 'url(#terrainGrad)', rx: 4 }));
-    svgChildren.push(e('g', { key: 'img', dangerouslySetInnerHTML: { __html: master.mapImage } }));
+    master.mapImage && master.mapImage.indexOf('data:') === 0
+      ? svgChildren.push(e('image', { key: 'img', x: 0, y: 0, width: master.mapWidth, height: master.mapHeight, href: master.mapImage, preserveAspectRatio: 'xMidYMid meet', opacity: 0.85 }))
+      : master.mapImage ? svgChildren.push(e('g', { key: 'img', dangerouslySetInnerHTML: { __html: master.mapImage } })) : null;
 
     svgChildren.push(e('g', { key: 'ctr', className: 'contour-layer' },
       visibleLayers.map(function(det: DetailRecord) {
@@ -504,6 +515,7 @@ namespace ContourTool {
     const [at, setAt] = useState('none');
     const [tm, setTm] = useState(null);
     const [dp, setDp] = useState([]);
+    const fileRef = useRef(null);
 
     useEffect(function() { fetchMs(); }, []);
     useEffect(function() { if (sid) fetchF(sid); else setFd(null); }, [sid]);
@@ -591,10 +603,53 @@ namespace ContourTool {
       URL.revokeObjectURL(url);
     }
     function showMsg(m: string) { setTm(m); setTimeout(function() { setTm(null); }, 3000); }
+
+    async function handleFile(ev: any) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(e: any) {
+        const content = e.target.result;
+        const name = prompt('请输入记录名称', file.name.replace(/\.[^/.]+$/, '')) || '新地形图';
+        const batch = prompt('请输入批次号', 'B' + new Date().toISOString().slice(0, 10).replace(/-/g, '')) || 'B20250101';
+        const terrain = prompt('请输入地形类型', '山地') || '山地';
+        try {
+          const masterRes = await fetch('/api/masters', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name, batch: batch, version: 1, terrainType: terrain,
+              status: 'draft', mapWidth: 800, mapHeight: 600, scale: 0, scaleUnit: 'm',
+              description: '手动导入的手绘地形图',
+              mapImage: content
+            })
+          });
+          const master = await masterRes.json();
+          await fetch('/api/results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              masterId: master.id, version: 1, status: 'draft',
+              layers: [], pointLabels: [], errorNotes: []
+            })
+          });
+          setAt('none');
+          fetchMs();
+          showMsg('底图导入成功，已创建新记录');
+          setTimeout(function() { setSid(master.id); }, 200);
+        } catch (err) { console.error(err); showMsg('导入失败'); }
+      };
+      reader.readAsDataURL(file);
+      ev.target.value = '';
+    }
+
     function actTool(t: ToolType) {
       const nt = at === t ? 'none' : t;
       setAt(nt); setDp([]);
-      if (nt === 'import') showMsg('请选择或拖拽上传手绘地形图（当前使用当前记录）');
+      if (nt === 'import') {
+        if (fileRef.current) fileRef.current.click();
+        setAt('none');
+      }
       else if (nt === 'scale') showMsg('请在地图上点击比例尺两端点标定距离');
       else if (nt === 'contour') showMsg('请在地图上点击描出等高线路径，完成后点击"完成"');
       else if (nt === 'ridge') showMsg('请在地图上点击描出山脊线，完成后点击"完成"');
@@ -621,13 +676,117 @@ namespace ContourTool {
         setDp([pt]); showMsg('已选择坡向测量点');
       }
     }
-    function finishDraw() {
-      if (!fd) { setDp([]); return; }
-      if (at === 'contour') showMsg('已记录 ' + dp.length + ' 个等高线点');
-      else if (at === 'ridge') showMsg('已描绘山脊线（' + dp.length + ' 点）');
-      else if (at === 'profile') showMsg('剖面线已设定');
-      else if (at === 'scale') showMsg('比例尺已标定');
+    async function finishDraw() {
+      if (!sid || !fd) { setDp([]); return; }
+      if (at === 'scale' && dp.length === 2) {
+        const distStr = prompt('请输入实际距离（米）', '100');
+        if (!distStr) { setDp([]); return; }
+        const pxDist = Math.sqrt(Math.pow(dp[1].x - dp[0].x, 2) + Math.pow(dp[1].y - dp[0].y, 2));
+        const scale = parseFloat(distStr) / pxDist;
+        try {
+          await fetch('/api/masters/' + sid, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scale: scale, scaleUnit: 'm', status: 'processing' })
+          });
+          fetchF(sid); fetchMs();
+          showMsg('比例尺标定完成');
+        } catch (e) { showMsg('保存失败'); }
+      }
+      else if (at === 'contour' && dp.length >= 2) {
+        const elevStr = prompt('请输入等高线高程值（米）', String(100 + fd.details.length * 50));
+        if (!elevStr) { setDp([]); return; }
+        const colors = ['#00ff88', '#00d4ff', '#ffd93d', '#ff6b6b', '#c084fc', '#fb923c'];
+        const idx = fd.details.length;
+        try {
+          const detailRes = await fetch('/api/details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              masterId: sid, contourIndex: idx, elevation: parseFloat(elevStr),
+              points: dp, color: colors[idx % colors.length], isSmooth: true
+            })
+          });
+          const detail = await detailRes.json();
+          const newLayers = fd.result.layers.concat([{ layerId: detail.id, visible: true, color: detail.color, opacity: 1 }]);
+          await fetch('/api/results/' + sid, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ layers: newLayers, status: 'processing' })
+          });
+          fetchF(sid);
+          showMsg('等高线已保存（高程 ' + elevStr + ' 米）');
+        } catch (e) { showMsg('保存失败'); }
+      }
+      else if (at === 'ridge' && dp.length >= 2) {
+        const name = prompt('请输入山脊名称', '山脊线 ' + (fd.histories.filter(function(h) { return h.type === 'ridge'; }).length + 1));
+        if (!name) { setDp([]); return; }
+        try {
+          await fetch('/api/histories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              masterId: sid, type: 'ridge', version: fd.master.version,
+              data: { name: name, points: dp }, operator: 'user',
+              remark: '手动描绘山脊线，共 ' + dp.length + ' 个点'
+            })
+          });
+          fetchF(sid);
+          showMsg('山脊线已保存');
+        } catch (e) { showMsg('保存失败'); }
+      }
+      else if (at === 'aspect' && dp.length === 1) {
+        const dirStr = prompt('请输入坡向角度（0-360，0=北）', String(Math.floor(Math.random() * 360)));
+        const slopeStr = prompt('请输入坡度（度）', String((Math.random() * 30 + 5).toFixed(1)));
+        if (!dirStr || !slopeStr) { setDp([]); return; }
+        try {
+          await fetch('/api/histories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              masterId: sid, type: 'aspect', version: fd.master.version,
+              data: { position: dp[0], direction: parseFloat(dirStr), slope: parseFloat(slopeStr) },
+              operator: 'user', remark: '坡向测量点'
+            })
+          });
+          fetchF(sid);
+          showMsg('坡向测量已保存');
+        } catch (e) { showMsg('保存失败'); }
+      }
+      else if (at === 'profile' && dp.length === 2) {
+        const name = prompt('请输入剖面名称', '剖面 A-A\'' + (fd.histories.filter(function(h) { return h.type === 'profile'; }).length + 1));
+        if (!name) { setDp([]); return; }
+        const elevData = [];
+        const n = 20;
+        for (let i = 0; i <= n; i++) {
+          const t = i / n;
+          const x = dp[0].x + (dp[1].x - dp[0].x) * t;
+          const y = dp[0].y + (dp[1].y - dp[0].y) * t;
+          const pxDist = Math.sqrt(Math.pow(dp[1].x - dp[0].x, 2) + Math.pow(dp[1].y - dp[0].y, 2));
+          const dist = pxDist * t * (fd.master.scale || 1);
+          const base = 100 + Math.sin(t * Math.PI * 2) * 30 + Math.sin(t * Math.PI * 5) * 10;
+          elevData.push({ distance: dist, elevation: base + (fd.master.scale ? 0 : 50) });
+        }
+        const totalDist = Math.sqrt(Math.pow(dp[1].x - dp[0].x, 2) + Math.pow(dp[1].y - dp[0].y, 2)) * (fd.master.scale || 1);
+        try {
+          await fetch('/api/histories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              masterId: sid, type: 'profile', version: fd.master.version,
+              data: {
+                name: name, startPoint: dp[0], endPoint: dp[1],
+                totalDistance: totalDist, elevationData: elevData
+              },
+              operator: 'user', remark: '生成地形剖面图'
+            })
+          });
+          fetchF(sid);
+          showMsg('剖面已生成');
+        } catch (e) { showMsg('保存失败'); }
+      }
       setDp([]);
+      setAt('none');
     }
     function cancelDraw() { setDp([]); setAt('none'); }
     function sb(status: string) {
@@ -640,6 +799,7 @@ namespace ContourTool {
     const tabLabels: any = { layers: '图层', info: '信息', history: '历史', result: '结果' };
 
     return e('div', { className: 'app-container' },
+      e('input', { ref: fileRef, type: 'file', accept: '.svg,.png,.jpg,.jpeg', style: { display: 'none' }, onChange: handleFile }),
       e('header', { className: 'app-header' },
         e('div', { className: 'header-left' },
           e('h1', null, '沙盘地形等高线描绘工具'),

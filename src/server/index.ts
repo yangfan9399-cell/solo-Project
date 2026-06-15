@@ -125,7 +125,17 @@ app.get('/api/masters/:id/full', (req, res) => {
   }
   const details = detailService.getByMasterId(masterId);
   const histories = historyService.getByMasterId(masterId);
-  const result = resultService.getByMasterId(masterId);
+  let result = resultService.getByMasterId(masterId);
+  if (!result) {
+    result = resultService.create({
+      masterId,
+      version: String(master.version),
+      status: 'pending',
+      layers: [],
+      pointLabels: [],
+      errorNotes: [],
+    });
+  }
   const snapshots = getSnapshotsByMasterId(masterId);
   res.json({ master, details, histories, result, snapshots });
 });
