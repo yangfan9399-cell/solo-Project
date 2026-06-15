@@ -330,6 +330,8 @@ function pausePlay() {
 function resetPlay() {
     pausePlay();
     replayState.currentStep = 0;
+    replayState.currentSnapNodes = null;
+    replayState.currentSnapDetails = null;
     document.getElementById('progressSlider').value = 0;
     updateCurrentStepDisplay();
     loadAndRenderStep();
@@ -437,9 +439,16 @@ function render() {
     drawTarget();
 
     const victimPos = replayState.currentVictimPos || replayState.victimStart;
-    drawRopes(victimPos);
-    drawNodes();
-    drawDetails();
+    const nodesForRender = replayState.currentSnapNodes && replayState.currentSnapNodes.length > 0
+        ? replayState.currentSnapNodes
+        : replayState.nodes;
+    const detailsForRender = replayState.currentSnapDetails && replayState.currentSnapDetails.length > 0
+        ? replayState.currentSnapDetails
+        : replayState.details;
+
+    drawRopes(victimPos, nodesForRender);
+    drawNodes(nodesForRender);
+    drawDetails(detailsForRender);
     drawVictim(victimPos);
 
     if (replayState.currentWeather && replayState.currentWeather !== 'clear') {
@@ -522,8 +531,9 @@ function drawTarget() {
     ctx.textAlign = 'left';
 }
 
-function drawRopes(victimPos) {
-    const anchors = replayState.nodes.filter(n => n.node_type === 'anchor');
+function drawRopes(victimPos, nodes) {
+    nodes = nodes || replayState.nodes;
+    const anchors = nodes.filter(n => n.node_type === 'anchor');
     if (anchors.length < 1) return;
 
     ctx.strokeStyle = colors.rope;
@@ -548,8 +558,9 @@ function drawRopes(victimPos) {
     ctx.globalAlpha = 1;
 }
 
-function drawNodes() {
-    replayState.nodes.forEach(node => {
+function drawNodes(nodes) {
+    nodes = nodes || replayState.nodes;
+    nodes.forEach(node => {
         const color = colors[node.node_type] || '#6b7280';
         const radius = 12;
 
@@ -590,8 +601,9 @@ function drawNodes() {
     });
 }
 
-function drawDetails() {
-    replayState.details.forEach(detail => {
+function drawDetails(details) {
+    details = details || replayState.details;
+    details.forEach(detail => {
         const color = detail.detail_type === 'pulley' ? '#f59e0b' : '#10b981';
         const size = 14;
 

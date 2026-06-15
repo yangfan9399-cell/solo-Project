@@ -68,11 +68,41 @@ class GameEngine:
             if node.actual_load > capacity:
                 node.is_valid = False
                 node.failure_reason = f'受力{node.actual_load:.2f}KN超过承力{capacity:.2f}KN'
-                failures.append(node)
+                failures.append({
+                    'type': 'node',
+                    'id': node.node_id,
+                    'model_id': node.id,
+                    'reason': node.failure_reason,
+                    'load': round(float(node.actual_load), 4),
+                    'capacity': round(float(capacity), 4),
+                    'terrain_type': node.terrain_type,
+                })
             else:
                 node.is_valid = True
                 node.failure_reason = None
             node.save()
+        for detail in self.details:
+            terrain_capacity = TERRAIN_LOAD_CAPACITY.get(
+                self._get_detail_terrain(detail), 5.0
+            )
+            base_capacity = 12.0 if detail.detail_type == 'pulley' else 10.0
+            capacity = min(terrain_capacity, base_capacity) * self.weather_effect['load_factor']
+            detail.load_capacity = capacity
+            detail.efficiency = 0.95 if detail.detail_type == 'pulley' else 1.0
+            if detail.actual_load > capacity:
+                detail.is_valid = False
+                failures.append({
+                    'type': 'detail',
+                    'id': detail.detail_id,
+                    'model_id': detail.id,
+                    'reason': f'{detail.get_detail_type_display()}受力{detail.actual_load:.2f}KN超过承力{capacity:.2f}KN',
+                    'load': round(float(detail.actual_load), 4),
+                    'capacity': round(float(capacity), 4),
+                    'detail_type': detail.detail_type,
+                })
+            else:
+                detail.is_valid = True
+            detail.save()
         return failures
 
     def check_route_integrity(self):
@@ -354,7 +384,7 @@ class GameEngine:
             'final_safety_score': self.calculate_safety_score(),
         }
 
-    def apply_weather_event(self, weather_type, current_global_step):
+    def apply_weather_event(self, weather_type, current_global_step=None):
         self.session.weather = weather_type
         self.session.save()
         self.weather_effect = WEATHER_EFFECTS.get(weather_type, WEATHER_EFFECTS[WeatherType.CLEAR])
@@ -365,16 +395,30 @@ class GameEngine:
         last_victim_y = self.histories[-1].victim_y if self.histories else 0
         last_tension = self.histories[-1].rope_tension if self.histories else 0
 
+        if current_global_step is None:
+            if self.histories:
+                current_global_step = max(h.step for h in self.histories)
+            else:
+                current_global_step = 0
+
         new_step_num = current_global_step + 1
         safety_score = self.calculate_safety_score()
         technique_score = self.calculate_technique_score()
+
+        min_safety_factor = float('inf')
+        for n in self.nodes:
+            if n.actual_load > 0 and n.load_capacity > 0 and n.is_valid:
+                sf = n.load_capacity / n.actual_load
+                if sf < min_safety_factor:
+                    min_safety_factor = sf
 
         nodes_snapshot = []
         for n in self.nodes:
             nodes_snapshot.append({
                 'id': n.id, 'node_id': n.node_id, 'node_type': n.node_type,
                 'x': n.x, 'y': n.y, 'terrain_type': n.terrain_type,
-                'actual_load': round(n.actual_load, 4), 'load_capacity': round(n.load_capacity, 4),
+                'actual_load': round(float(n.actual_load), 4) if n.actual_load else 0,
+                'load_capacity': round(float(n.load_capacity), 4) if n.load_capacity else 0,
                 'is_valid': n.is_valid, 'failure_reason': n.failure_reason,
             })
         details_snapshot = []
@@ -382,9 +426,21 @@ class GameEngine:
             details_snapshot.append({
                 'id': d.id, 'detail_id': d.detail_id, 'detail_type': d.detail_type,
                 'x': d.x, 'y': d.y,
-                'actual_load': round(d.actual_load, 4), 'load_capacity': round(d.load_capacity, 4),
+                'actual_load': round(float(d.actual_load), 4) if d.actual_load else 0,
+                'load_capacity': round(float(d.load_capacity), 4) if d.load_capacity else 0,
                 'efficiency': d.efficiency, 'is_valid': d.is_valid,
             })
+
+        serializable_failures = []
+        for f in failures:
+            if isinstance(f, dict):
+                serializable_failures.append(f)
+            else:
+                serializable_failures.append({
+                    'type': 'node',
+                    'id': getattr(f, 'node_id', str(f)),
+                    'reason': getattr(f, 'failure_reason', str(f)),
+                })
 
         state_snapshot = {
             'nodes': nodes_snapshot,
@@ -393,15 +449,17 @@ class GameEngine:
             'weather_effect': self.weather_effect,
             'node_validity': {str(n.id): n.is_valid for n in self.nodes},
             'detail_validity': {str(d.id): d.is_valid for d in self.details},
-            'failures': failures,
+            'failures': serializable_failures,
             'safety_score': safety_score,
             'technique_score': technique_score,
+            'min_safety_factor': None if min_safety_factor == float('inf') else round(min_safety_factor, 4),
             'pulley_count': len([d for d in self.details if d.detail_type == 'pulley']),
             'protection_count': len([d for d in self.details if d.detail_type == 'protection']),
             'valid_node_count': len([n for n in self.nodes if n.is_valid]),
             'total_node_count': len(self.nodes),
         }
 
+        remark = f'天气事件导致{len(serializable_failures)}个装置失效' if serializable_failures else '天气变化，无装置失效'
         history = RescueHistory(
             session=self.session,
             step=new_step_num,
@@ -411,8 +469,8 @@ class GameEngine:
             victim_y=last_victim_y,
             weather=weather_type,
             rope_tension=last_tension,
-            is_safe=len(failures) == 0,
-            remark=f'天气事件导致{len(failures)}个节点失效' if failures else '天气变化，无节点失效',
+            is_safe=len(serializable_failures) == 0,
+            remark=remark,
         )
         history.set_state_snapshot(state_snapshot)
         history.save()

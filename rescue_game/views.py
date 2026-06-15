@@ -312,18 +312,36 @@ def api_weather_event(request, session_id):
         weather_type = data.get('weather_type')
 
         engine = GameEngine(session)
-        engine.histories = list(session.histories.all().order_by('step'))
+        engine.histories = list(session.histories.all().order_by('step', 'id'))
         engine.nodes = list(session.nodes.all())
+        engine.details = list(session.details.all())
+        if not hasattr(engine, 'weather_effect') or engine.weather_effect is None:
+            from rescue_game.game_logic import WEATHER_EFFECTS, WeatherType
+            engine.weather_effect = WEATHER_EFFECTS.get(session.weather, WEATHER_EFFECTS[WeatherType.CLEAR])
 
-        failures = engine.apply_weather_event(weather_type)
+        failures, new_step_num = engine.apply_weather_event(weather_type)
+
+        failed_list = []
+        for f in failures:
+            if isinstance(f, dict):
+                failed_list.append({
+                    'node_id': f.get('id'),
+                    'type': f.get('type'),
+                    'reason': f.get('reason'),
+                    'load': f.get('load'),
+                    'capacity': f.get('capacity'),
+                })
+            else:
+                failed_list.append({
+                    'node_id': getattr(f, 'node_id', str(f)),
+                    'reason': getattr(f, 'failure_reason', str(f)),
+                })
 
         return JsonResponse({
             'success': True,
             'weather': weather_type,
-            'failed_nodes': [
-                {'node_id': n.node_id, 'reason': n.failure_reason}
-                for n in failures
-            ],
+            'new_step': new_step_num,
+            'failed_items': failed_list,
             'can_rollback': len(engine.histories) > 1,
         })
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
