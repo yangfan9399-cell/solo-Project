@@ -1,0 +1,232 @@
+:root {
+	--bg-primary: #0a0e1a;
+	--bg-secondary: #111827;
+	--bg-card: #1a2332;
+	--bg-hover: #243044;
+	--text-primary: #e2e8f0;
+	--text-secondary: #94a3b8;
+	--text-muted: #64748b;
+	--accent: #38bdf8;
+	--accent-hover: #7dd3fc;
+	--accent-glow: rgba(56, 189, 248, 0.3);
+	--success: #4ade80;
+	--danger: #f87171;
+	--warning: #fbbf24;
+	--border: #1e293b;
+	--beam-yellow: #fde047;
+	--beam-glow: rgba(253, 224, 71, 0.4);
+	--radius: 8px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	line-height: 1.6;
+	min-height: 100vh;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+	transition: color 0.2s;
+}
+a:hover {
+	color: var(--accent-hover);
+}
+
+.app-shell {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.nav-bar {
+	background: var(--bg-secondary);
+	border-bottom: 1px solid var(--border);
+	padding: 0 24px;
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	height: 56px;
+	flex-shrink: 0;
+}
+
+.nav-brand {
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--accent) !important;
+	white-space: nowrap;
+}
+
+.nav-links {
+	display: flex;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.nav-links a {
+	font-size: 14px;
+	color: var(--text-secondary);
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: all 0.2s;
+}
+
+.nav-links a:hover {
+	color: var(--accent);
+	background: var(--bg-hover);
+}
+
+.main-content {
+	flex: 1;
+	padding: 24px;
+	max-width: 1400px;
+	width: 100%;
+	margin: 0 auto;
+}
+
+.page-title {
+	font-size: 28px;
+	font-weight: 700;
+	margin-bottom: 24px;
+	color: var(--text-primary);
+}
+
+.card {
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 20px;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border: none;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.btn-primary {
+	background: var(--accent);
+	color: var(--bg-primary);
+}
+.btn-primary:hover {
+	background: var(--accent-hover);
+	box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.btn-secondary {
+	background: var(--bg-hover);
+	color: var(--text-primary);
+	border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+	border-color: var(--accent);
+}
+
+.btn-danger {
+	background: #7f1d1d;
+	color: #fca5a5;
+}
+.btn-danger:hover {
+	background: #991b1b;
+}
+
+.btn-success {
+	background: #166534;
+	color: #86efac;
+}
+.btn-success:hover {
+	background: #15803d;
+}
+
+.grid {
+	display: grid;
+	gap: 16px;
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 768px) {
+	.grid-2, .grid-3, .grid-4 {
+		grid-template-columns: 1fr;
+	}
+	.nav-bar {
+		flex-direction: column;
+		height: auto;
+		padding: 12px;
+		gap: 8px;
+	}
+	.main-content {
+		padding: 12px;
+	}
+}
+
+.badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.badge-success { background: #166534; color: #86efac; }
+.badge-danger { background: #7f1d1d; color: #fca5a5; }
+.badge-warning { background: #713f12; color: #fde68a; }
+.badge-info { background: #1e3a5f; color: #93c5fd; }
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th, td {
+	padding: 10px 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--border);
+	font-size: 14px;
+}
+
+th {
+	color: var(--text-secondary);
+	font-weight: 600;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.intensity-bar {
+	height: 6px;
+	background: var(--bg-hover);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.intensity-bar-fill {
+	height: 100%;
+	border-radius: 3px;
+	transition: width 0.3s;
+}
+
+.tag {
+	display: inline-block;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-size: 11px;
+	margin-right: 4px;
+}
