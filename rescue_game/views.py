@@ -90,10 +90,24 @@ def api_session_state(request, session_id):
             'load_capacity', 'actual_load', 'efficiency', 'is_valid',
             'order_index', 'properties'
         ))
-        histories = list(session.histories.all().order_by('step').values(
-            'step', 'action', 'action_type', 'victim_x', 'victim_y',
-            'weather', 'rope_tension', 'is_safe', 'remark'
-        ))
+        histories_qs = session.histories.all().order_by('step', 'id')
+        histories = []
+        for h in histories_qs:
+            snap = h.get_state_snapshot()
+            histories.append({
+                'id': h.id,
+                'step': h.step,
+                'action': h.action,
+                'action_type': h.action_type,
+                'victim_x': h.victim_x,
+                'victim_y': h.victim_y,
+                'weather': h.weather,
+                'rope_tension': h.rope_tension,
+                'is_safe': h.is_safe,
+                'remark': h.remark,
+                'timestamp': h.timestamp.isoformat() if h.timestamp else None,
+                'state_snapshot': snap,
+            })
 
         seed = None
         if session.seed_type:
@@ -449,11 +463,12 @@ def api_get_transfer_step(request, session_id, step):
     if request.method == 'GET':
         session = get_object_or_404(RescueSession, session_id=session_id)
 
-        try:
-            history = RescueHistory.objects.get(session=session, step=step)
-        except RescueHistory.DoesNotExist:
+        histories = list(RescueHistory.objects.filter(session=session).order_by('step', 'id'))
+        if not histories:
             return JsonResponse({'success': False, 'error': '步骤不存在'}, status=404)
 
+        idx = max(0, min(step - 1, len(histories) - 1))
+        history = histories[idx]
         state_snapshot = history.get_state_snapshot()
 
         return JsonResponse({
@@ -470,7 +485,8 @@ def api_get_transfer_step(request, session_id, step):
                 'remark': history.remark,
                 'timestamp': history.timestamp.isoformat(),
                 'state_snapshot': state_snapshot,
-            }
+            },
+            'total_steps': len(histories),
         })
     return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
 
@@ -480,72 +496,110 @@ def api_score_analysis(request, session_id):
     if request.method == 'GET':
         session = get_object_or_404(RescueSession, session_id=session_id)
 
-        engine = GameEngine(session)
+        histories = list(RescueHistory.objects.filter(session=session).order_by('step', 'id'))
 
-        initial_safety_score = 0
-        if session.nodes.exists():
-            for n in session.nodes.all():
-                n.actual_load = 0
-                n.is_valid = True
-                n.failure_reason = None
-            for d in session.details.all():
-                d.actual_load = 0
-                d.is_valid = True
-            initial_safety_score = engine.calculate_safety_score()
+        initial_snap = None
+        final_snap = None
+        if histories:
+            initial_snap = histories[0].get_state_snapshot() or {}
+            final_snap = histories[-1].get_state_snapshot() or {}
 
-        final_safety_score = engine.calculate_safety_score()
-        technique_score = engine.calculate_technique_score()
-
-        before_score = round(initial_safety_score * 0.5 + technique_score * 0.3, 2)
-
+        details = list(RescueDetail.objects.filter(session=session))
         result = None
-        after_score = 0
-        if hasattr(session, 'result') and session.result:
-            result = session.result
+        try:
+            result = RescueResult.objects.get(session=session)
+        except RescueResult.DoesNotExist:
+            pass
+
+        initial_safety_score = initial_snap.get('safety_score', 0) if initial_snap else 0
+        final_safety_score = final_snap.get('safety_score', 0) if final_snap else 0
+        initial_technique_score = initial_snap.get('technique_score', 0) if initial_snap else 0
+        final_technique_score = final_snap.get('technique_score', 0) if final_snap else 0
+
+        pulley_count = len([d for d in details if d.detail_type == 'pulley'])
+        protection_count = len([d for d in details if d.detail_type == 'protection'])
+        anchor_count = len([n for n in session.nodes.all() if n.node_type == 'anchor'])
+
+        if result:
             after_score = result.final_score
+            after_speed_score = result.speed_score
+            after_safety_score = result.safety_score
+            after_technique_score = result.technique_score
+        else:
+            after_score = round(final_safety_score * 0.5 + final_technique_score * 0.3, 2)
+            after_speed_score = 0
+            after_safety_score = final_safety_score
+            after_technique_score = final_technique_score
+
+        before_score = round(initial_safety_score * 0.5 + initial_technique_score * 0.3, 2)
 
         reasons = []
-        valid_count = len([n for n in session.nodes.all() if n.is_valid])
-        invalid_count = len([n for n in session.nodes.all() if not n.is_valid])
-        if invalid_count > 0:
+
+        initial_valid = initial_snap.get('valid_node_count', 0) if initial_snap else 0
+        final_valid = final_snap.get('valid_node_count', 0) if final_snap else 0
+        total_nodes = initial_snap.get('total_node_count', session.nodes.count()) if initial_snap else session.nodes.count()
+        invalid_delta = initial_valid - final_valid
+        if invalid_delta > 0:
+            node_impact = round((invalid_delta / max(total_nodes, 1)) * 30, 1)
             reasons.append({
                 'icon': '📈',
                 'title': '节点有效性下降',
-                'detail': f'救援过程中{invalid_count}个节点因受力过载失效，有效节点从{session.nodes.count()}降至{valid_count}个',
-                'impact': f'-{round((invalid_count / max(session.nodes.count(), 1)) * 30, 1)}分'
+                'detail': f'救援过程中{invalid_delta}个节点因受力过载或天气事件失效，有效节点从{initial_valid}降至{final_valid}个（共{total_nodes}个）',
+                'impact': f'-{node_impact}分'
             })
 
-        weather_count = len([h for h in session.histories.all() if h.action_type == 'weather'])
+        weather_events = [h for h in histories if h.action_type == 'weather']
+        weather_count = len(weather_events)
         if weather_count > 0:
+            weather_names = [h.action.replace('天气变化: ', '') for h in weather_events]
+            weather_impact = weather_count * 5
             reasons.append({
                 'icon': '🌦️',
                 'title': '天气事件影响',
-                'detail': f'遭遇{weather_count}次天气事件，导致地形承力系数下降',
-                'impact': f'-{weather_count * 5}分'
+                'detail': f'遭遇{weather_count}次天气事件（{", ".join(weather_names)}），导致地形承力系数下降',
+                'impact': f'-{weather_impact}分'
             })
 
-        min_safety_factor = float('inf')
-        for node in session.nodes.all():
-            if node.actual_load > 0 and node.load_capacity > 0:
-                sf = node.load_capacity / node.actual_load
-                if sf < min_safety_factor:
-                    min_safety_factor = sf
-        if min_safety_factor < 3.0 and min_safety_factor != float('inf'):
+        min_safety_factor = final_snap.get('min_safety_factor') if final_snap else None
+        if min_safety_factor is not None and min_safety_factor < 3.0:
+            safety_impact = round((3.0 - min_safety_factor) * 13, 1)
             reasons.append({
                 'icon': '⚖️',
                 'title': '安全储备不足',
                 'detail': f'最小安全系数仅{round(min_safety_factor, 2)}，目标为3.0，受力分布不均',
-                'impact': f'-{round((3.0 - min_safety_factor) * 13, 1)}分'
+                'impact': f'-{safety_impact}分'
             })
 
-        pulley_count = len([d for d in session.details.all() if d.detail_type == 'pulley'])
-        protection_count = len([d for d in session.details.all() if d.detail_type == 'protection'])
+        technique_detail = f'滑轮{pulley_count}×10={min(pulley_count*10,30)} + 保护站{protection_count}×15={min(protection_count*15,40)} + 锚点{anchor_count}×8={min(anchor_count*8,30)}'
+        technique_impact = round(after_technique_score * 0.3, 1)
         reasons.append({
             'icon': '🔧',
             'title': '滑轮与保护站明细影响',
-            'detail': f'使用了{pulley_count}个滑轮(效率系数0.95)和{protection_count}个保护站，技术评分{technique_score}分',
-            'impact': f'+{round(technique_score * 0.3, 1)}分'
+            'detail': f'使用了{pulley_count}个滑轮（效率系数0.95）和{protection_count}个保护站、{anchor_count}个锚点；技术评分计算：{technique_detail} = {after_technique_score}分',
+            'impact': f'+{technique_impact}分'
         })
+
+        terrain_rock_load = result.terrain_rock_load if result else 0
+        terrain_ice_load = result.terrain_ice_load if result else 0
+        terrain_snow_load = result.terrain_snow_load if result else 0
+        terrain_impact_detail = f'岩壁最大承力{terrain_rock_load}KN（上限25）、冰面{terrain_ice_load}KN（上限8）、雪檐{terrain_snow_load}KN（上限3）'
+        if result and result.safety_factor:
+            terrain_impact_detail += f'；综合安全系数 {result.safety_factor:.2f}'
+
+        details_list = []
+        for d in details:
+            details_list.append({
+                'id': d.id,
+                'detail_id': d.detail_id,
+                'detail_type': d.detail_type,
+                'detail_type_label': '滑轮' if d.detail_type == 'pulley' else ('保护站' if d.detail_type == 'protection' else d.detail_type),
+                'x': d.x,
+                'y': d.y,
+                'load_capacity': d.load_capacity,
+                'actual_load': d.actual_load,
+                'efficiency': d.efficiency,
+                'is_valid': d.is_valid,
+            })
 
         return JsonResponse({
             'success': True,
@@ -554,15 +608,26 @@ def api_score_analysis(request, session_id):
                 'after_score': after_score,
                 'score_diff': round(after_score - before_score, 2),
                 'initial_safety_score': round(initial_safety_score, 2),
-                'final_safety_score': round(final_safety_score, 2),
-                'technique_score': technique_score,
+                'final_safety_score': round(after_safety_score, 2),
+                'technique_score': round(after_technique_score, 2),
+                'speed_score': round(after_speed_score, 2),
+                'safety_factor': round(result.safety_factor, 2) if result and result.safety_factor else None,
+                'grade': result.grade if result else None,
+                'evaluation_text': result.evaluation if result else ('基于历史记录快照计算得出' if histories else '暂无数据'),
                 'reasons': reasons,
                 'details_summary': {
                     'pulley_count': pulley_count,
                     'protection_count': protection_count,
-                    'anchor_count': len([n for n in session.nodes.all() if n.node_type == 'anchor']),
+                    'anchor_count': anchor_count,
                     'total_nodes': session.nodes.count(),
-                    'total_details': session.details.count(),
+                    'total_details': len(details),
+                    'technique_score_detail': technique_detail,
+                    'avg_efficiency': round(sum(d.efficiency for d in details) / max(len(details), 1), 3),
+                    'terrain_detail': terrain_impact_detail,
+                    'terrain_rock_load': terrain_rock_load,
+                    'terrain_ice_load': terrain_ice_load,
+                    'terrain_snow_load': terrain_snow_load,
+                    'details': details_list,
                 }
             }
         })

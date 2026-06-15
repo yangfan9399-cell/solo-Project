@@ -106,12 +106,17 @@ function updateScoreComparison() {
 
     document.getElementById('beforeScore').textContent = analysis.before_score;
     document.getElementById('afterScore').textContent = analysis.after_score;
-    document.getElementById('beforeSafety').textContent = `初始安全分: ${analysis.initial_safety_score}`;
-    document.getElementById('afterSafety').textContent = `最终安全分: ${analysis.final_safety_score}`;
+    document.getElementById('beforeSafety').textContent = `初始安全分: ${analysis.initial_safety_score}（来自初始历史快照）`;
+    document.getElementById('afterSafety').textContent = `最终安全分: ${analysis.final_safety_score}（来自RescueResult）`;
 
     const diffValue = document.getElementById('diffValue');
     diffValue.textContent = `${analysis.score_diff > 0 ? '+' : ''}${analysis.score_diff}`;
     diffValue.style.color = analysis.score_diff >= 0 ? '#059669' : '#dc2626';
+
+    const gradeBox = document.getElementById('gradeDisplay');
+    if (gradeBox && analysis.grade) {
+        gradeBox.textContent = `评级: ${analysis.grade}`;
+    }
 }
 
 function updateChangeReasons() {
@@ -122,7 +127,7 @@ function updateChangeReasons() {
         return;
     }
 
-    let html = '';
+    let html = `<p style="font-size:0.78em;color:#64748b;margin-bottom:10px;">以下原因基于 RescueHistory 历史记录快照、RescueDetail 明细数据和 RescueResult 结算结果计算得出：</p>`;
     analysis.reasons.forEach(reason => {
         html += `
             <div class="reason-item">
@@ -135,6 +140,10 @@ function updateChangeReasons() {
         `;
     });
 
+    if (analysis.evaluation_text) {
+        html += `<div style="margin-top:10px;padding:8px;background:#f8fafc;border-left:3px solid #667eea;font-size:0.8em;color:#475569;">📋 ${analysis.evaluation_text}</div>`;
+    }
+
     reasonContent.innerHTML = html;
 }
 
@@ -143,12 +152,12 @@ function updateDetailsSummary() {
     const summaryDiv = document.getElementById('detailsSummary');
 
     if (!analysis || !analysis.details_summary) {
-        summaryDiv.innerHTML = '<p style="color:#94a3b8;font-size:0.85em;text-align:center;padding:10px;">暂无明细数据</p>';
+        summaryDiv.innerHTML = '<p style="color:#94a3b8;font-size:0.85em;text-align:center;padding:10px;">暂无明细数据（需先执行救援转移）</p>';
         return;
     }
 
     const ds = analysis.details_summary;
-    const detailItems = replayState.details;
+    const detailItems = ds.details || replayState.details || [];
 
     let html = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
@@ -162,21 +171,29 @@ function updateDetailsSummary() {
             </div>
         </div>
         <div style="font-size:0.8em;color:#64748b;line-height:1.6;">
-            <p>滑轮效率系数: 0.95</p>
+            <p>滑轮效率系数: ${ds.avg_efficiency !== undefined ? ds.avg_efficiency : 0.95}</p>
             <p>锚点数量: ${ds.anchor_count}</p>
             <p>总节点数: ${ds.total_nodes}</p>
             <p>总明细数: ${ds.total_details}</p>
+            <p style="margin-top:6px;"><strong>技术评分计算:</strong><br><span style="font-family:monospace;font-size:0.85em;color:#334155;">${ds.technique_score_detail || '-'}</span></p>
+            <p style="margin-top:6px;"><strong>地形承力:</strong><br><span style="font-size:0.85em;color:#334155;">${ds.terrain_detail || '-'}</span></p>
         </div>
     `;
 
     if (detailItems && detailItems.length > 0) {
-        html += '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f0;"><h5 style="font-size:0.85em;margin-bottom:8px;color:#475569;">明细列表:</h5>';
+        html += '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f0;"><h5 style="font-size:0.85em;margin-bottom:8px;color:#475569;">RescueDetail 明细表:</h5>';
         detailItems.forEach(d => {
+            const typeLabel = d.detail_type_label || (d.detail_type === 'pulley' ? '滑轮' : '保护站');
+            const icon = d.detail_type === 'pulley' ? '🔘' : '🛡️';
+            const validity = d.is_valid ? '✅有效' : '❌失效';
             html += `
-                <div style="font-size:0.75em;padding:6px 8px;background:#f8fafc;border-radius:4px;margin-bottom:4px;">
-                    <strong>${d.detail_type === 'pulley' ? '🔘 滑轮' : '🛡️ 保护站'}</strong>
-                    <span style="color:#64748b;margin-left:8px;">(${d.x.toFixed(0)}, ${d.y.toFixed(0)})</span>
-                    ${d.actual_load > 0 ? `<span style="color:#059669;margin-left:8px;">受力:${d.actual_load.toFixed(2)}KN</span>` : ''}
+                <div style="font-size:0.75em;padding:6px 8px;background:#f8fafc;border-radius:4px;margin-bottom:4px;border-left:3px solid ${d.is_valid ? '#10b981' : '#ef4444'};">
+                    <strong>${icon} ${typeLabel} [${d.detail_id}]</strong> ${validity}
+                    <div style="color:#64748b;margin-top:2px;">
+                        坐标: (${(d.x||0).toFixed(0)}, ${(d.y||0).toFixed(0)})
+                        ${d.actual_load > 0 ? ` | 受力: ${(d.actual_load||0).toFixed(2)}KN / 承力: ${(d.load_capacity||0).toFixed(2)}KN` : ` | 承力上限: ${(d.load_capacity||0).toFixed(2)}KN`}
+                        ${d.efficiency !== undefined ? ` | 效率: ${d.efficiency}` : ''}
+                    </div>
                 </div>
             `;
         });
@@ -186,7 +203,7 @@ function updateDetailsSummary() {
     if (analysis.technique_score !== undefined) {
         html += `
             <div style="margin-top:12px;padding:10px;background:#fef3c7;border-radius:6px;text-align:center;">
-                <div style="font-size:0.75em;color:#92400e;">技术评分</div>
+                <div style="font-size:0.75em;color:#92400e;">技术评分（来自 RescueDetail 明细计算）</div>
                 <div style="font-size:1.4em;font-weight:bold;color:#b45309;">${analysis.technique_score}</div>
             </div>
         `;
@@ -196,22 +213,34 @@ function updateDetailsSummary() {
 }
 
 function updateTerrainLoads() {
-    const sessionData = replayState.sessionData;
-    const nodes = replayState.nodes;
+    const analysis = replayState.scoreAnalysis;
+    const ds = analysis && analysis.details_summary;
 
-    if (!nodes || nodes.length === 0) return;
+    let rockLoad = 0, iceLoad = 0, snowLoad = 0;
+    if (ds) {
+        rockLoad = ds.terrain_rock_load || 0;
+        iceLoad = ds.terrain_ice_load || 0;
+        snowLoad = ds.terrain_snow_load || 0;
+    } else {
+        const nodes = replayState.nodes || [];
+        if (nodes.length > 0) {
+            rockLoad = Math.max(...nodes.filter(n => n.terrain_type === 'rock').map(n => n.actual_load || 0), 0);
+            iceLoad = Math.max(...nodes.filter(n => n.terrain_type === 'ice').map(n => n.actual_load || 0), 0);
+            snowLoad = Math.max(...nodes.filter(n => n.terrain_type === 'snow_cornice').map(n => n.actual_load || 0), 0);
+        }
+    }
 
-    const rockLoad = Math.max(...nodes.filter(n => n.terrain_type === 'rock').map(n => n.actual_load || 0), 0);
-    const iceLoad = Math.max(...nodes.filter(n => n.terrain_type === 'ice').map(n => n.actual_load || 0), 0);
-    const snowLoad = Math.max(...nodes.filter(n => n.terrain_type === 'snow_cornice').map(n => n.actual_load || 0), 0);
-
-    document.getElementById('rockLoadValue').textContent = `${rockLoad.toFixed(2)} KN`;
-    document.getElementById('iceLoadValue').textContent = `${iceLoad.toFixed(2)} KN`;
-    document.getElementById('snowLoadValue').textContent = `${snowLoad.toFixed(2)} KN`;
+    document.getElementById('rockLoadValue').textContent = `${rockLoad.toFixed(2)} KN / 25KN上限`;
+    document.getElementById('iceLoadValue').textContent = `${iceLoad.toFixed(2)} KN / 8KN上限`;
+    document.getElementById('snowLoadValue').textContent = `${snowLoad.toFixed(2)} KN / 3KN上限`;
 
     document.getElementById('rockLoadBar').style.width = `${Math.min(rockLoad / 25 * 100, 100)}%`;
     document.getElementById('iceLoadBar').style.width = `${Math.min(iceLoad / 8 * 100, 100)}%`;
     document.getElementById('snowLoadBar').style.width = `${Math.min(snowLoad / 3 * 100, 100)}%`;
+
+    document.getElementById('rockLoadBar').style.background = rockLoad > 20 ? '#ef4444' : (rockLoad > 12 ? '#f59e0b' : '#10b981');
+    document.getElementById('iceLoadBar').style.background = iceLoad > 6 ? '#ef4444' : (iceLoad > 4 ? '#f59e0b' : '#10b981');
+    document.getElementById('snowLoadBar').style.background = snowLoad > 2 ? '#ef4444' : (snowLoad > 1 ? '#f59e0b' : '#10b981');
 }
 
 function updateTimeline() {
@@ -326,12 +355,31 @@ function loadAndRenderStep() {
         return;
     }
 
+    const snap = history.state_snapshot || (typeof history.get_state_snapshot === 'function' ? history.get_state_snapshot() : null) || {};
+
     const stepDetailDiv = document.getElementById('stepDetail');
     const stepDetailContent = document.getElementById('stepDetailContent');
 
+    const snapSafety = snap.safety_score !== undefined ? snap.safety_score : '-';
+    const snapTech = snap.technique_score !== undefined ? snap.technique_score : '-';
+    const snapValid = snap.valid_node_count !== undefined ? `${snap.valid_node_count}/${snap.total_node_count}` : '-';
+    const snapMinSF = snap.min_safety_factor !== undefined && snap.min_safety_factor !== null ? snap.min_safety_factor : '-';
+
+    const snapNodes = snap.nodes || [];
+    const snapDetails = snap.details || [];
+
+    let invalidNodes = [];
+    snapNodes.forEach(n => {
+        if (!n.is_valid) invalidNodes.push(`${n.node_id}(${n.terrain_type})`);
+    });
+    let invalidDetails = [];
+    snapDetails.forEach(d => {
+        if (!d.is_valid) invalidDetails.push(`${d.detail_id}(${d.detail_type})`);
+    });
+
     stepDetailDiv.style.display = 'block';
     stepDetailContent.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.85em;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:0.85em;">
             <div>
                 <strong>被困者位置:</strong><br>
                 (${history.victim_x?.toFixed?.(0) || 0}, ${history.victim_y?.toFixed?.(0) || 0})
@@ -344,13 +392,33 @@ function loadAndRenderStep() {
                 <strong>状态:</strong><br>
                 <span style="color:${history.is_safe ? '#059669' : '#dc2626'};">${history.is_safe ? '✅ 安全' : '❌ 危险'}</span>
             </div>
+            <div>
+                <strong>动作类型:</strong><br>
+                ${history.action_type || 'transfer'}
+            </div>
         </div>
         <div style="margin-top:8px;font-size:0.85em;">
             <strong>天气:</strong> ${getWeatherName(history.weather)} |
             <strong>动作:</strong> ${history.action}
             ${history.remark ? ` | <strong>备注:</strong> ${history.remark}` : ''}
         </div>
+        <div style="margin-top:8px;padding:8px;background:#f8fafc;border-radius:6px;font-size:0.8em;">
+            <strong>📸 状态快照 (state_snapshot 来自 RescueHistory):</strong><br>
+            <span style="color:#475569;">
+                有效节点: ${snapValid} | 步骤安全分: ${snapSafety} | 技术分: ${snapTech} | 最小安全系数: ${snapMinSF}
+                ${snap.weather_effect ? ` | 天气系数: ${snap.weather_effect}` : ''}
+            </span>
+            ${invalidNodes.length > 0 ? `<br><span style="color:#dc2626;">❌ 失效节点: ${invalidNodes.join(', ')}</span>` : ''}
+            ${invalidDetails.length > 0 ? `<br><span style="color:#dc2626;">❌ 失效明细: ${invalidDetails.join(', ')}</span>` : ''}
+        </div>
     `;
+
+    if (snapNodes.length > 0) {
+        replayState.currentSnapNodes = snapNodes;
+    }
+    if (snapDetails.length > 0) {
+        replayState.currentSnapDetails = snapDetails;
+    }
 
     replayState.currentVictimPos = {
         x: history.victim_x,

@@ -180,7 +180,7 @@ class GameEngine:
                 return node.terrain_type
         return TerrainType.ROCK
 
-    def save_transfer_step(self, step_num, victim_x, victim_y, action):
+    def save_transfer_step(self, step_num, victim_x, victim_y, action, action_type='transfer'):
         is_safe, failures, node_loads, detail_loads, max_tension = self.check_safety_at_position(victim_x, victim_y)
 
         for node in self.nodes:
@@ -188,21 +188,69 @@ class GameEngine:
         for detail in self.details:
             detail.save()
 
+        nodes_snapshot = []
+        for n in self.nodes:
+            nodes_snapshot.append({
+                'id': n.id,
+                'node_id': n.node_id,
+                'node_type': n.node_type,
+                'x': n.x,
+                'y': n.y,
+                'terrain_type': n.terrain_type,
+                'actual_load': round(n.actual_load, 4),
+                'load_capacity': round(n.load_capacity, 4),
+                'is_valid': n.is_valid,
+                'failure_reason': n.failure_reason,
+            })
+
+        details_snapshot = []
+        for d in self.details:
+            details_snapshot.append({
+                'id': d.id,
+                'detail_id': d.detail_id,
+                'detail_type': d.detail_type,
+                'x': d.x,
+                'y': d.y,
+                'actual_load': round(d.actual_load, 4),
+                'load_capacity': round(d.load_capacity, 4),
+                'efficiency': d.efficiency,
+                'is_valid': d.is_valid,
+            })
+
+        safety_score = self.calculate_safety_score()
+        technique_score = self.calculate_technique_score()
+        min_safety_factor = float('inf')
+        for n in self.nodes:
+            if n.actual_load > 0 and n.load_capacity > 0 and n.is_valid:
+                sf = n.load_capacity / n.actual_load
+                if sf < min_safety_factor:
+                    min_safety_factor = sf
+
         state_snapshot = {
+            'nodes': nodes_snapshot,
+            'details': details_snapshot,
             'node_loads': {str(k): round(v, 4) for k, v in node_loads.items()},
             'detail_loads': {str(k): round(v, 4) for k, v in detail_loads.items()},
             'max_tension': round(max_tension, 4),
             'weather': self.session.weather,
+            'weather_effect': self.weather_effect,
             'node_validity': {str(n.id): n.is_valid for n in self.nodes},
             'detail_validity': {str(d.id): d.is_valid for d in self.details},
             'failures': failures,
+            'safety_score': safety_score,
+            'technique_score': technique_score,
+            'min_safety_factor': None if min_safety_factor == float('inf') else round(min_safety_factor, 4),
+            'valid_node_count': len([n for n in self.nodes if n.is_valid]),
+            'total_node_count': len(self.nodes),
+            'pulley_count': len([d for d in self.details if d.detail_type == 'pulley']),
+            'protection_count': len([d for d in self.details if d.detail_type == 'protection']),
         }
 
         history = RescueHistory(
             session=self.session,
             step=step_num,
             action=action,
-            action_type='transfer',
+            action_type=action_type,
             victim_x=victim_x,
             victim_y=victim_y,
             weather=self.session.weather,
@@ -223,35 +271,10 @@ class GameEngine:
             'failures': failures,
             'rope_tension': round(max_tension, 4),
             'weather': self.session.weather,
-            'nodes': [
-                {
-                    'id': n.id,
-                    'node_id': n.node_id,
-                    'node_type': n.node_type,
-                    'x': n.x,
-                    'y': n.y,
-                    'terrain_type': n.terrain_type,
-                    'actual_load': round(n.actual_load, 4),
-                    'load_capacity': round(n.load_capacity, 4),
-                    'is_valid': n.is_valid,
-                    'failure_reason': n.failure_reason,
-                }
-                for n in self.nodes
-            ],
-            'details': [
-                {
-                    'id': d.id,
-                    'detail_id': d.detail_id,
-                    'detail_type': d.detail_type,
-                    'x': d.x,
-                    'y': d.y,
-                    'actual_load': round(d.actual_load, 4),
-                    'load_capacity': round(d.load_capacity, 4),
-                    'efficiency': d.efficiency,
-                    'is_valid': d.is_valid,
-                }
-                for d in self.details
-            ],
+            'nodes': nodes_snapshot,
+            'details': details_snapshot,
+            'safety_score': safety_score,
+            'technique_score': technique_score,
         }
 
     def execute_full_transfer(self, start_x, start_y, end_x, end_y, steps=20, weather_events=None):
@@ -263,6 +286,7 @@ class GameEngine:
         all_steps = []
         transfer_success = True
         stop_reason = None
+        global_step = 0
 
         for i in range(steps + 1):
             current_x = start_x + step_size_x * i
@@ -275,7 +299,8 @@ class GameEngine:
             else:
                 action = f'转移中... 进度{int(i/steps*100)}%'
 
-            step_result = self.save_transfer_step(i + 1, current_x, current_y, action)
+            global_step += 1
+            step_result = self.save_transfer_step(global_step, current_x, current_y, action, 'transfer')
             all_steps.append(step_result)
 
             if weather_events:
@@ -283,19 +308,29 @@ class GameEngine:
                     if we.get('step') == i and not we.get('triggered'):
                         we['triggered'] = True
                         weather_type = we.get('weather')
-                        weather_failures = self.apply_weather_event(weather_type)
+                        weather_failures, weather_step_num = self.apply_weather_event(weather_type, global_step)
+                        global_step = weather_step_num
                         step_result['weather_event'] = {
                             'weather': weather_type,
                             'failures_count': len(weather_failures),
-                            'description': we.get('description', '')
+                            'description': we.get('description', ''),
+                            'step': weather_step_num,
                         }
 
             if not step_result['is_safe']:
                 transfer_success = False
-                stop_reason = f'步骤{i+1}: 救援路线失效 - {len(step_result["failures"])}个装置过载'
+                stop_reason = f'步骤{global_step}: 救援路线失效 - {len(step_result["failures"])}个装置过载'
+                global_step += 1
+                failure_snap = step_result.get('nodes', [])
+                snap = {
+                    'nodes': failure_snap,
+                    'details': step_result.get('details', []),
+                    'safety_score': self.calculate_safety_score(),
+                    'technique_score': self.calculate_technique_score(),
+                }
                 failure_history = RescueHistory(
                     session=self.session,
-                    step=i + 2,
+                    step=global_step,
                     action=f'救援失败: {stop_reason}',
                     action_type='failure',
                     victim_x=current_x,
@@ -305,6 +340,7 @@ class GameEngine:
                     is_safe=False,
                     remark=stop_reason,
                 )
+                failure_history.set_state_snapshot(snap)
                 failure_history.save()
                 self.histories.append(failure_history)
                 break
@@ -312,33 +348,77 @@ class GameEngine:
         return {
             'success': transfer_success,
             'total_steps': len(all_steps),
+            'total_history_steps': global_step,
             'steps': all_steps,
             'stop_reason': stop_reason,
             'final_safety_score': self.calculate_safety_score(),
         }
 
-    def apply_weather_event(self, weather_type):
+    def apply_weather_event(self, weather_type, current_global_step):
         self.session.weather = weather_type
         self.session.save()
         self.weather_effect = WEATHER_EFFECTS.get(weather_type, WEATHER_EFFECTS[WeatherType.CLEAR])
 
         failures = self.validate_nodes()
 
+        last_victim_x = self.histories[-1].victim_x if self.histories else 0
+        last_victim_y = self.histories[-1].victim_y if self.histories else 0
+        last_tension = self.histories[-1].rope_tension if self.histories else 0
+
+        new_step_num = current_global_step + 1
+        safety_score = self.calculate_safety_score()
+        technique_score = self.calculate_technique_score()
+
+        nodes_snapshot = []
+        for n in self.nodes:
+            nodes_snapshot.append({
+                'id': n.id, 'node_id': n.node_id, 'node_type': n.node_type,
+                'x': n.x, 'y': n.y, 'terrain_type': n.terrain_type,
+                'actual_load': round(n.actual_load, 4), 'load_capacity': round(n.load_capacity, 4),
+                'is_valid': n.is_valid, 'failure_reason': n.failure_reason,
+            })
+        details_snapshot = []
+        for d in self.details:
+            details_snapshot.append({
+                'id': d.id, 'detail_id': d.detail_id, 'detail_type': d.detail_type,
+                'x': d.x, 'y': d.y,
+                'actual_load': round(d.actual_load, 4), 'load_capacity': round(d.load_capacity, 4),
+                'efficiency': d.efficiency, 'is_valid': d.is_valid,
+            })
+
+        state_snapshot = {
+            'nodes': nodes_snapshot,
+            'details': details_snapshot,
+            'weather': weather_type,
+            'weather_effect': self.weather_effect,
+            'node_validity': {str(n.id): n.is_valid for n in self.nodes},
+            'detail_validity': {str(d.id): d.is_valid for d in self.details},
+            'failures': failures,
+            'safety_score': safety_score,
+            'technique_score': technique_score,
+            'pulley_count': len([d for d in self.details if d.detail_type == 'pulley']),
+            'protection_count': len([d for d in self.details if d.detail_type == 'protection']),
+            'valid_node_count': len([n for n in self.nodes if n.is_valid]),
+            'total_node_count': len(self.nodes),
+        }
+
         history = RescueHistory(
             session=self.session,
-            step=len(self.histories) + 1,
+            step=new_step_num,
             action=f'天气变化: {dict(WeatherType.choices).get(weather_type, weather_type)}',
             action_type='weather',
-            victim_x=self.histories[-1].victim_x if self.histories else 0,
-            victim_y=self.histories[-1].victim_y if self.histories else 0,
+            victim_x=last_victim_x,
+            victim_y=last_victim_y,
             weather=weather_type,
-            rope_tension=self.histories[-1].rope_tension if self.histories else 0,
+            rope_tension=last_tension,
             is_safe=len(failures) == 0,
             remark=f'天气事件导致{len(failures)}个节点失效' if failures else '天气变化，无节点失效',
         )
+        history.set_state_snapshot(state_snapshot)
         history.save()
+        self.histories.append(history)
 
-        return failures
+        return failures, new_step_num
 
     def calculate_safety_score(self):
         valid_nodes = [n for n in self.nodes if n.is_valid]
