@@ -1,0 +1,33 @@
+{
+  "name": "castle-butler-keyring-game",
+  "version": "1.0.0",
+  "description": "古堡管家钥匙环管理游戏 - Remix + TypeScript + SQLite",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix dev",
+    "start": "remix-serve ./build/index.js",
+    "typecheck": "tsc",
+    "init-db": "tsx scripts/init-db.ts",
+    "seed": "tsx scripts/seed-db.ts"
+  },
+  "dependencies": {
+    "@remix-run/node": "^2.9.0",
+    "@remix-run/react": "^2.9.0",
+    "@remix-run/serve": "^2.9.0",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.9.0",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "tsx": "^4.7.0",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

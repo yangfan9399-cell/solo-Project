@@ -1,0 +1,692 @@
+{
+  "rooms": [
+    {
+      "id": "r001",
+      "name": "主大厅",
+      "floor": 1,
+      "zone": "public",
+      "security_level": 1,
+      "x": 50,
+      "y": 50,
+      "description": "古堡入口，访客必经之地"
+    },
+    {
+      "id": "r002",
+      "name": "东翼客房",
+      "floor": 1,
+      "zone": "public",
+      "security_level": 2,
+      "x": 85,
+      "y": 50,
+      "description": "接待普通访客的客房"
+    },
+    {
+      "id": "r003",
+      "name": "西翼展览厅",
+      "floor": 1,
+      "zone": "exhibition",
+      "security_level": 3,
+      "x": 15,
+      "y": 50,
+      "description": "藏有古董艺术品的展览区"
+    },
+    {
+      "id": "r004",
+      "name": "餐厅",
+      "floor": 1,
+      "zone": "public",
+      "security_level": 1,
+      "x": 50,
+      "y": 85,
+      "description": "供用餐的公共区域"
+    },
+    {
+      "id": "r005",
+      "name": "书房",
+      "floor": 2,
+      "zone": "private",
+      "security_level": 4,
+      "x": 50,
+      "y": 30,
+      "description": "存放家族档案和古籍"
+    },
+    {
+      "id": "r006",
+      "name": "主卧室",
+      "floor": 2,
+      "zone": "private",
+      "security_level": 5,
+      "x": 85,
+      "y": 30,
+      "description": "主人的私人卧室"
+    },
+    {
+      "id": "r007",
+      "name": "保险库",
+      "floor": 2,
+      "zone": "secure",
+      "security_level": 5,
+      "x": 15,
+      "y": 30,
+      "description": "存放贵重物品的密室"
+    },
+    {
+      "id": "r008",
+      "name": "锅炉房",
+      "floor": 0,
+      "zone": "utility",
+      "security_level": 3,
+      "x": 15,
+      "y": 85,
+      "description": "供暖设备所在，维修工常去"
+    },
+    {
+      "id": "r009",
+      "name": "电工房",
+      "floor": 0,
+      "zone": "utility",
+      "security_level": 3,
+      "x": 50,
+      "y": 85,
+      "description": "配电系统维护区域"
+    },
+    {
+      "id": "r010",
+      "name": "地下酒窖",
+      "floor": 0,
+      "zone": "storage",
+      "security_level": 4,
+      "x": 85,
+      "y": 85,
+      "description": "存放珍贵葡萄酒"
+    },
+    {
+      "id": "r011",
+      "name": "观景塔楼",
+      "floor": 3,
+      "zone": "public",
+      "security_level": 2,
+      "x": 50,
+      "y": 10,
+      "description": "古堡最高处，夜巡重点"
+    },
+    {
+      "id": "r012",
+      "name": "北走廊",
+      "floor": 1,
+      "zone": "transit",
+      "security_level": 2,
+      "x": 15,
+      "y": 68,
+      "description": "连接西翼与地下层"
+    }
+  ],
+  "key_ring_groups": [
+    {
+      "id": "g01",
+      "name": "公共区域环",
+      "key_ids": [
+        "k01",
+        "k02",
+        "k03"
+      ],
+      "description": "所有访客可借用的基础钥匙环"
+    },
+    {
+      "id": "g02",
+      "name": "维护工具环",
+      "key_ids": [
+        "k07",
+        "k08",
+        "k09"
+      ],
+      "description": "维修工专用，含地下层通道"
+    },
+    {
+      "id": "g03",
+      "name": "夜巡全环",
+      "key_ids": [
+        "k10",
+        "k11",
+        "k12"
+      ],
+      "description": "夜巡专用全权限，限时使用"
+    }
+  ],
+  "keys_data": [
+    {
+      "id": "k01",
+      "label": "大厅铜匙",
+      "room_ids": [
+        "r001",
+        "r004"
+      ],
+      "allowed_slots": [
+        "morning",
+        "afternoon",
+        "evening"
+      ],
+      "duplication_risk": 2,
+      "color": "#d4a017",
+      "ring_group_id": "g01"
+    },
+    {
+      "id": "k02",
+      "label": "东翼客房匙",
+      "room_ids": [
+        "r001",
+        "r002"
+      ],
+      "allowed_slots": [
+        "morning",
+        "afternoon"
+      ],
+      "duplication_risk": 3,
+      "color": "#5dade2",
+      "ring_group_id": "g01"
+    },
+    {
+      "id": "k03",
+      "label": "展览厅许可",
+      "room_ids": [
+        "r001",
+        "r003",
+        "r012"
+      ],
+      "allowed_slots": [
+        "morning",
+        "afternoon"
+      ],
+      "duplication_risk": 6,
+      "color": "#c0392b",
+      "ring_group_id": "g01"
+    },
+    {
+      "id": "k04",
+      "label": "书房专用",
+      "room_ids": [
+        "r001",
+        "r005"
+      ],
+      "allowed_slots": [
+        "afternoon",
+        "evening"
+      ],
+      "duplication_risk": 7,
+      "color": "#8e44ad",
+      "ring_group_id": null
+    },
+    {
+      "id": "k05",
+      "label": "主卧室禁钥",
+      "room_ids": [
+        "r001",
+        "r006"
+      ],
+      "allowed_slots": [
+        "evening",
+        "night"
+      ],
+      "duplication_risk": 9,
+      "color": "#1a1a2e",
+      "ring_group_id": null
+    },
+    {
+      "id": "k06",
+      "label": "保险库天钥",
+      "room_ids": [
+        "r001",
+        "r007",
+        "r012"
+      ],
+      "allowed_slots": [
+        "morning"
+      ],
+      "duplication_risk": 10,
+      "color": "#f1c40f",
+      "ring_group_id": null
+    },
+    {
+      "id": "k07",
+      "label": "锅炉房检修",
+      "room_ids": [
+        "r008",
+        "r012"
+      ],
+      "allowed_slots": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "duplication_risk": 3,
+      "color": "#7f8c8d",
+      "ring_group_id": "g02"
+    },
+    {
+      "id": "k08",
+      "label": "电工房检修",
+      "room_ids": [
+        "r009",
+        "r012"
+      ],
+      "allowed_slots": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "duplication_risk": 4,
+      "color": "#f39c12",
+      "ring_group_id": "g02"
+    },
+    {
+      "id": "k09",
+      "label": "酒窖专匙",
+      "room_ids": [
+        "r010",
+        "r012"
+      ],
+      "allowed_slots": [
+        "afternoon",
+        "evening"
+      ],
+      "duplication_risk": 5,
+      "color": "#6c3483",
+      "ring_group_id": "g02"
+    },
+    {
+      "id": "k10",
+      "label": "夜巡通用",
+      "room_ids": [
+        "r001",
+        "r002",
+        "r003",
+        "r004",
+        "r011",
+        "r012"
+      ],
+      "allowed_slots": [
+        "night"
+      ],
+      "duplication_risk": 5,
+      "color": "#2c3e50",
+      "ring_group_id": "g03"
+    },
+    {
+      "id": "k11",
+      "label": "塔楼顶匙",
+      "room_ids": [
+        "r001",
+        "r011"
+      ],
+      "allowed_slots": [
+        "evening",
+        "night"
+      ],
+      "duplication_risk": 4,
+      "color": "#16a085",
+      "ring_group_id": "g03"
+    },
+    {
+      "id": "k12",
+      "label": "全通终极匙",
+      "room_ids": [
+        "r001",
+        "r002",
+        "r003",
+        "r004",
+        "r005",
+        "r006",
+        "r007",
+        "r008",
+        "r009",
+        "r010",
+        "r011",
+        "r012"
+      ],
+      "allowed_slots": [
+        "night"
+      ],
+      "duplication_risk": 10,
+      "color": "#000000",
+      "ring_group_id": "g03"
+    }
+  ],
+  "people": [
+    {
+      "id": "p01",
+      "name": "艾琳娜·伯爵夫人",
+      "role": "visitor",
+      "purpose": "鉴赏古董收藏",
+      "requested_room_ids": [
+        "r001",
+        "r003",
+        "r002"
+      ],
+      "preferred_slot": "afternoon",
+      "trust_level": 9,
+      "scheduled_minutes": 120
+    },
+    {
+      "id": "p02",
+      "name": "托马斯·工程师",
+      "role": "maintenance",
+      "purpose": "检修供暖系统",
+      "requested_room_ids": [
+        "r008",
+        "r009"
+      ],
+      "preferred_slot": "morning",
+      "trust_level": 8,
+      "scheduled_minutes": 180
+    },
+    {
+      "id": "p03",
+      "name": "维克多·守夜人",
+      "role": "nightwatch",
+      "purpose": "例行塔楼夜巡",
+      "requested_room_ids": [
+        "r011",
+        "r001",
+        "r004",
+        "r012"
+      ],
+      "preferred_slot": "night",
+      "trust_level": 10,
+      "scheduled_minutes": 240
+    },
+    {
+      "id": "p04",
+      "name": "神秘客人X",
+      "role": "visitor",
+      "purpose": "查阅家族档案",
+      "requested_room_ids": [
+        "r005"
+      ],
+      "preferred_slot": "evening",
+      "trust_level": 3,
+      "scheduled_minutes": 60
+    },
+    {
+      "id": "p05",
+      "name": "索菲亚·侍酒师",
+      "role": "maintenance",
+      "purpose": "清点酒窖库存",
+      "requested_room_ids": [
+        "r010"
+      ],
+      "preferred_slot": "evening",
+      "trust_level": 7,
+      "scheduled_minutes": 90
+    },
+    {
+      "id": "p06",
+      "name": "金融审计师",
+      "role": "visitor",
+      "purpose": "核查保险库清单",
+      "requested_room_ids": [
+        "r007",
+        "r005"
+      ],
+      "preferred_slot": "morning",
+      "trust_level": 8,
+      "scheduled_minutes": 150
+    },
+    {
+      "id": "p07",
+      "name": "幽灵猎人",
+      "role": "nightwatch",
+      "purpose": "调查传闻异象",
+      "requested_room_ids": [
+        "r006",
+        "r011",
+        "r010"
+      ],
+      "preferred_slot": "night",
+      "trust_level": 2,
+      "scheduled_minutes": 300
+    },
+    {
+      "id": "p08",
+      "name": "新招募夜巡员",
+      "role": "nightwatch",
+      "purpose": "熟悉夜巡路线",
+      "requested_room_ids": [
+        "r001",
+        "r011",
+        "r012",
+        "r002"
+      ],
+      "preferred_slot": "night",
+      "trust_level": 6,
+      "scheduled_minutes": 200
+    }
+  ],
+  "puzzle_levels": [
+    {
+      "id": 1,
+      "name": "入门关卡·午后访客日",
+      "description": "学习基础钥匙分配：匹配房间范围与时段",
+      "scenario": "伯爵夫人来访鉴赏古董，工程师需检修锅炉房。请为两人分配正确的钥匙和时段。",
+      "people_ids": [
+        "p01",
+        "p02"
+      ],
+      "expected_assignments": [
+        {
+          "person_id": "p01",
+          "key_id": "k03",
+          "slot": "afternoon"
+        },
+        {
+          "person_id": "p02",
+          "key_id": "k07",
+          "slot": "morning"
+        }
+      ],
+      "trace_required": false
+    },
+    {
+      "id": 2,
+      "name": "挑战关卡·暮色迷局",
+      "description": "识别信任风险：错发钥匙将触发失窃或幽闭事件",
+      "scenario": "神秘客人要求查阅档案，侍酒师清点酒窖，守夜人开始夜巡。小心不可信人员获取保险库等高风险钥匙！",
+      "people_ids": [
+        "p04",
+        "p05",
+        "p03",
+        "p07"
+      ],
+      "expected_assignments": [
+        {
+          "person_id": "p04",
+          "key_id": "k04",
+          "slot": "evening"
+        },
+        {
+          "person_id": "p05",
+          "key_id": "k09",
+          "slot": "evening"
+        },
+        {
+          "person_id": "p03",
+          "key_id": "k10",
+          "slot": "night"
+        },
+        {
+          "person_id": "p07",
+          "key_id": "k11",
+          "slot": "night"
+        }
+      ],
+      "trace_required": true
+    },
+    {
+      "id": 3,
+      "name": "大师关卡·深夜风暴",
+      "description": "钥匙环编组冲突 + 回滚重算：需要编组正确且事后追踪验证",
+      "scenario": "审计师核查保险库，新巡员夜间训练，维克多守夜。编组时避免高风险钥匙落入低信任者手中，随时准备回滚错误分配。",
+      "people_ids": [
+        "p06",
+        "p08",
+        "p03"
+      ],
+      "expected_assignments": [
+        {
+          "person_id": "p06",
+          "key_id": "k06",
+          "slot": "morning"
+        },
+        {
+          "person_id": "p08",
+          "key_id": "k11",
+          "slot": "night"
+        },
+        {
+          "person_id": "p03",
+          "key_id": "k10",
+          "slot": "night"
+        }
+      ],
+      "trace_required": true
+    }
+  ],
+  "game_sessions": [],
+  "assignment_details": [],
+  "history_records": [],
+  "result_records": [],
+  "access_logs": [],
+  "seed_samples": [
+    {
+      "id": 1,
+      "name": "样本一·正常完成",
+      "type": "NORMAL_COMPLETE",
+      "description": "可借时段和复制风险正常完成：关卡1 艾琳娜+托马斯 全对分配",
+      "data": {
+        "level": 1,
+        "assignments": [
+          {
+            "person_id": "p01",
+            "key_id": "k03",
+            "slot": "afternoon"
+          },
+          {
+            "person_id": "p02",
+            "key_id": "k07",
+            "slot": "morning"
+          }
+        ],
+        "expectedScoreBracket": [
+          85,
+          100
+        ],
+        "events": [
+          "ASSIGN_OK",
+          "ASSIGN_OK"
+        ],
+        "notes": "所有分配匹配预期：时段正确、房间覆盖完整、复制风险可控。"
+      }
+    },
+    {
+      "id": 2,
+      "name": "样本二·异常触发",
+      "type": "ABNORMAL_TRIGGER",
+      "description": "错发钥匙触发失窃或幽闭事件：神秘客人获得保险库钥匙，侍酒师超时锁入酒窖",
+      "data": {
+        "level": 2,
+        "assignments": [
+          {
+            "person_id": "p04",
+            "key_id": "k06",
+            "slot": "morning"
+          },
+          {
+            "person_id": "p05",
+            "key_id": "k09",
+            "slot": "night"
+          },
+          {
+            "person_id": "p03",
+            "key_id": "k12",
+            "slot": "night"
+          },
+          {
+            "person_id": "p07",
+            "key_id": "k05",
+            "slot": "night"
+          }
+        ],
+        "expectedScoreBracket": [
+          0,
+          40
+        ],
+        "events": [
+          "THEFT",
+          "LOCKED_IN",
+          "DUPLICATION_RISK",
+          "THEFT"
+        ],
+        "notes": "p04获k06(保险库)→失窃；p05在night使用k09(酒窖仅下午/傍晚)→幽闭；p03获k12(全通高复制)→复制风险；p07获k05(主卧室禁钥)→失窃。"
+      }
+    },
+    {
+      "id": 3,
+      "name": "样本三·回滚重算",
+      "type": "ROLLBACK_RESOLVE",
+      "description": "钥匙环编组冲突：先错配编组触发回滚，再重算正确编组通过",
+      "data": {
+        "level": 3,
+        "rollbackStep": 1,
+        "firstAttempt": [
+          {
+            "person_id": "p06",
+            "key_id": "k04",
+            "slot": "morning"
+          },
+          {
+            "person_id": "p08",
+            "key_id": "k12",
+            "slot": "night"
+          }
+        ],
+        "rollbackAssignments": [
+          {
+            "person_id": "p08",
+            "key_id": "k12",
+            "slot": "night"
+          }
+        ],
+        "finalAssignments": [
+          {
+            "person_id": "p06",
+            "key_id": "k06",
+            "slot": "morning"
+          },
+          {
+            "person_id": "p08",
+            "key_id": "k11",
+            "slot": "night"
+          },
+          {
+            "person_id": "p03",
+            "key_id": "k10",
+            "slot": "night"
+          }
+        ],
+        "expectedScoreBracket": [
+          70,
+          90
+        ],
+        "events": [
+          "ASSIGN_OK",
+          "ROLLBACK",
+          "ASSIGN_OK",
+          "ASSIGN_OK",
+          "TRACE_COMPLETE"
+        ],
+        "notes": "首次p08误领k12(全通)→触发DUPLICATION_RISK→回滚；重算后分配k11(塔楼)，p03领k10，p06领k06；最终钥匙环g03正确拆分。"
+      }
+    }
+  ]
+}
