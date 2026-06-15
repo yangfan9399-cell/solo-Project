@@ -335,7 +335,7 @@ class DrumTuningController extends Controller
         $result = $this->comparisonService->executeComparison($comparison);
 
         if ($result['success']) {
-            return redirect()->route('drum-tuning.comparison.show', $comparison->id)
+            return redirect()->route('comparison.show', $comparison->id)
                 ->with('success', '比较方案创建并执行成功');
         } else {
             return back()->with('error', $result['message']);
