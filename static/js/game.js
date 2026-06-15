@@ -531,6 +531,13 @@ function startGame() {
         return;
     }
 
+    const protections = gameState.details.filter(d => d.detail_type === 'protection');
+    if (protections.length === 0) {
+        if (!confirm('建议至少布置1个保护站以确保救援安全。是否继续？')) {
+            return;
+        }
+    }
+
     fetch(`/api/session/${SESSION_ID}/start/`, {
         method: 'POST',
         headers: {
@@ -547,46 +554,110 @@ function startGame() {
             document.getElementById('statusText').textContent = '进行中';
             document.getElementById('statusText').className = 'status-value status-playing';
 
-            startSimulation();
+            executeBackendTransfer();
         }
     })
     .catch(err => console.error('开始游戏失败:', err));
 }
 
-function startSimulation() {
-    const steps = 20;
-    let currentStep = 0;
+function executeBackendTransfer() {
+    document.getElementById('hintText').textContent = '正在执行救援转移（后端计算每一步受力...）';
 
-    const interval = setInterval(() => {
-        if (currentStep > steps || gameState.isGameOver) {
-            clearInterval(interval);
-            return;
+    fetch(`/api/session/${SESSION_ID}/transfer/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            start_x: gameState.victimPosition.x,
+            start_y: gameState.victimPosition.y,
+            end_x: gameState.targetPosition.x,
+            end_y: gameState.targetPosition.y,
+            steps: 20
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            gameState.transferSteps = data.steps;
+            gameState.transferSuccess = data.transfer_success;
+            gameState.transferStopReason = data.stop_reason;
+
+            animateTransferSteps(0);
         }
-
-        const progress = currentStep / steps;
-        gameState.victimPosition.x = gameState.targetPosition.x +
-            (700 - gameState.targetPosition.x) * (1 - progress);
-        gameState.victimPosition.y = gameState.targetPosition.y +
-            (150 - gameState.targetPosition.y) * (1 - progress);
-
-        gameState.currentStep = currentStep;
-
-        checkWeatherEvents(currentStep);
-
-        calculateLoadsSilent();
-
-        render();
-        currentStep++;
-    }, 500);
+    })
+    .catch(err => {
+        console.error('执行救援转移失败:', err);
+        alert('救援转移执行失败，请重试');
+    });
 }
 
-function checkWeatherEvents(step) {
-    gameState.weatherEvents.forEach(event => {
-        if (event.step === step && !event.triggered) {
-            event.triggered = true;
-            triggerWeatherEvent(event.weather);
-        }
+function animateTransferSteps(currentStepIndex) {
+    const steps = gameState.transferSteps;
+    if (currentStepIndex >= steps.length) {
+        finishTransfer();
+        return;
+    }
+
+    const step = steps[currentStepIndex];
+    gameState.victimPosition.x = step.victim_x;
+    gameState.victimPosition.y = step.victim_y;
+    gameState.currentStep = currentStepIndex;
+
+    gameState.nodes = step.nodes || gameState.nodes;
+    gameState.details = step.details || gameState.details;
+
+    if (step.weather_event) {
+        const weatherType = step.weather_event.weather;
+        document.getElementById('weatherDisplay').innerHTML = `
+            <span class="weather-icon">${getWeatherIcon(weatherType)}</span>
+            <span class="weather-text">${getWeatherName(weatherType)}</span>
+        `;
+    }
+
+    if (!step.is_safe) {
+        document.getElementById('rollbackBtn').style.display = 'inline-block';
+    }
+
+    updateNodeList();
+    updateHistoryListFromSteps(currentStepIndex);
+    updateUI();
+    render();
+
+    setTimeout(() => {
+        animateTransferSteps(currentStepIndex + 1);
+    }, 400);
+}
+
+function updateHistoryListFromSteps(upToIndex) {
+    const steps = gameState.transferSteps.slice(0, upToIndex + 1);
+    const list = document.getElementById('historyList');
+
+    let html = '';
+    steps.slice(-10).forEach(h => {
+        const dangerClass = !h.is_safe ? 'danger' : '';
+        const weatherClass = h.weather_event ? 'weather' : '';
+        html += `
+            <div class="history-item ${dangerClass} ${weatherClass}">
+                <div style="font-weight:600;margin-bottom:2px;">步骤${h.step}</div>
+                <div>位置: (${h.victim_x.toFixed(0)}, ${h.victim_y.toFixed(0)})</div>
+                <div>张力: ${h.rope_tension.toFixed(2)} KN</div>
+                ${h.weather_event ? `<div style="color:#fbbf24;font-size:0.8em;">天气: ${h.weather_event.description || getWeatherName(h.weather_event.weather)}</div>` : ''}
+                ${h.failures && h.failures.length > 0 ? `<div style="color:#f87171;font-size:0.8em;">${h.failures.length}个装置失效</div>` : ''}
+            </div>
+        `;
     });
+
+    list.innerHTML = html || '<p class="empty-hint">暂无记录</p>';
+}
+
+function finishTransfer() {
+    document.getElementById('hintText').textContent = gameState.transferSuccess
+        ? '✅ 救援转移完成！点击「完成救援」结算分数'
+        : `❌ 救援失败: ${gameState.transferStopReason || '路线失效'}`;
+
+    loadSessionState();
 }
 
 function triggerWeatherEvent(weatherType) {

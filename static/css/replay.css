@@ -496,3 +496,39 @@ body {
     color: #64748b;
     line-height: 1.5;
 }
+
+.details-summary {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.details-summary h3 {
+    font-size: 1.05em;
+    margin-bottom: 15px;
+    color: #1e293b;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.timeline-item.active {
+    background: #eff6ff;
+    border-radius: 8px;
+    margin: 0 -8px;
+    padding: 0 8px;
+}
+
+.timeline-item.active .timeline-dot {
+    box-shadow: 0 0 0 4px #dbeafe;
+}
+
+.replay-sidebar .details-summary,
+.replay-sidebar .result-summary,
+.replay-sidebar .terrain-loads,
+.replay-sidebar .history-timeline {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}

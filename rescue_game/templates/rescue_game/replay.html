@@ -27,28 +27,30 @@
         <div class="replay-body">
             <div class="replay-main">
                 <div class="score-comparison">
-                    <h2>📊 安全评分对比</h2>
+                    <h2>📊 安全评分对比（基于局次明细和历史记录计算）</h2>
                     <div class="score-compare-wrapper">
                         <div class="score-card before">
                             <div class="score-label">救援前评估</div>
-                            <div class="score-value">{{ before_score }}</div>
+                            <div class="score-value" id="beforeScore">加载中...</div>
                             <div class="score-sub">初始节点布置预估</div>
+                            <div class="score-sub" style="margin-top:8px;color:#64748b;font-size:0.8em;" id="beforeSafety"></div>
                         </div>
                         <div class="score-arrow">→</div>
                         <div class="score-card after">
                             <div class="score-label">救援后评分</div>
-                            <div class="score-value">{{ after_score }}</div>
+                            <div class="score-value" id="afterScore">加载中...</div>
                             <div class="score-sub">实际救援结果计算</div>
+                            <div class="score-sub" style="margin-top:8px;color:#64748b;font-size:0.8em;" id="afterSafety"></div>
                         </div>
                     </div>
                     <div class="score-diff" id="scoreDiff">
                         <span class="diff-label">评分变化:</span>
-                        <span class="diff-value">{{ after_score|add:before_score|default:0 }}</span>
+                        <span class="diff-value" id="diffValue">计算中...</span>
                     </div>
                 </div>
 
                 <div class="replay-canvas-section">
-                    <h2>🎥 救援过程回放</h2>
+                    <h2>🎥 救援过程回放（基于后端历史记录）</h2>
                     <div class="canvas-wrapper">
                         <canvas id="replayCanvas" width="800" height="500"></canvas>
                     </div>
@@ -68,40 +70,30 @@
                         <div class="progress-container">
                             <span id="currentStep">0</span>
                             <input type="range" id="progressSlider" min="0" max="100" value="0">
-                            <span id="totalSteps">{{ histories|length }}</span>
+                            <span id="totalSteps">加载中...</span>
                         </div>
+                    </div>
+                    <div class="step-detail" id="stepDetail" style="margin-top:15px;padding:12px;background:#f8fafc;border-radius:8px;display:none;">
+                        <h4 style="margin-bottom:8px;">当前步骤详情</h4>
+                        <div id="stepDetailContent"></div>
                     </div>
                 </div>
 
                 <div class="change-reason-section">
-                    <h2>🔍 评分变化原因</h2>
+                    <h2>🔍 评分变化原因（后端计算）</h2>
                     <div class="reason-content" id="reasonContent">
-                        <div class="reason-item">
-                            <span class="reason-icon">📈</span>
-                            <div class="reason-text">
-                                <h4>节点有效性</h4>
-                                <p>救援过程中部分节点因受力过大或天气影响失效，降低了安全评分</p>
-                            </div>
-                        </div>
-                        <div class="reason-item">
-                            <span class="reason-icon">🌦️</span>
-                            <div class="reason-text">
-                                <h4>天气事件影响</h4>
-                                <p>天气变化导致地形承力下降，部分锚点安全储备不足</p>
-                            </div>
-                        </div>
-                        <div class="reason-item">
-                            <span class="reason-icon">⚖️</span>
-                            <div class="reason-text">
-                                <h4>受力分布</h4>
-                                <p>节点受力分布不均，部分关键点负荷过大</p>
-                            </div>
-                        </div>
+                        <p style="color:#94a3b8;text-align:center;padding:20px;">正在从后端加载分析数据...</p>
                     </div>
                 </div>
             </div>
 
             <aside class="replay-sidebar">
+                <div class="details-summary">
+                    <h3>🔧 滑轮与保护站明细</h3>
+                    <div id="detailsSummary">
+                        <p style="color:#94a3b8;font-size:0.85em;text-align:center;padding:10px;">加载中...</p>
+                    </div>
+                </div>
                 {% if result %}
                 <div class="result-summary">
                     <h3>🏆 救援结果</h3>
@@ -152,70 +144,59 @@
                 {% endif %}
 
                 <div class="terrain-loads">
-                    <h3>🗻 地形承力记录</h3>
+                    <h3>🗻 地形承力记录（结果记录）</h3>
                     <div class="load-bars">
                         <div class="load-item">
                             <span class="load-label">岩壁承力</span>
                             <div class="load-bar-wrapper">
-                                <div class="load-bar rock-bar" style="width: {% if result %}{{ result.terrain_rock_load|divisibleby:25|yesno:"100%,50%" }}{% else %}0%{% endif %}"></div>
+                                <div class="load-bar rock-bar" id="rockLoadBar" style="width: 0%"></div>
                             </div>
-                            <span class="load-value">{{ result.terrain_rock_load|default:0 }} KN</span>
+                            <span class="load-value" id="rockLoadValue">0 KN</span>
                         </div>
                         <div class="load-item">
                             <span class="load-label">冰面承力</span>
                             <div class="load-bar-wrapper">
-                                <div class="load-bar ice-bar" style="width: {% if result %}{{ result.terrain_ice_load|divisibleby:8|yesno:"100%,50%" }}{% else %}0%{% endif %}"></div>
+                                <div class="load-bar ice-bar" id="iceLoadBar" style="width: 0%"></div>
                             </div>
-                            <span class="load-value">{{ result.terrain_ice_load|default:0 }} KN</span>
+                            <span class="load-value" id="iceLoadValue">0 KN</span>
                         </div>
                         <div class="load-item">
                             <span class="load-label">雪檐承力</span>
                             <div class="load-bar-wrapper">
-                                <div class="load-bar snow-bar" style="width: {% if result %}{{ result.terrain_snow_load|divisibleby:3|yesno:"100%,50%" }}{% else %}0%{% endif %}"></div>
+                                <div class="load-bar snow-bar" id="snowLoadBar" style="width: 0%"></div>
                             </div>
-                            <span class="load-value">{{ result.terrain_snow_load|default:0 }} KN</span>
+                            <span class="load-value" id="snowLoadValue">0 KN</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="history-timeline">
-                    <h3>📜 时间线</h3>
+                    <h3>📜 时间线（历史记录）</h3>
                     <div class="timeline-list" id="timelineList">
-                        {% for h in histories %}
-                        <div class="timeline-item step-{{ h.step }}" data-step="{{ h.step }}">
-                            <div class="timeline-dot {% if not h.is_safe %}danger{% endif %}"></div>
-                            <div class="timeline-content">
-                                <span class="timeline-step">步骤{{ h.step }}</span>
-                                <p class="timeline-action">{{ h.action }}</p>
-                                {% if h.remark %}
-                                <p class="timeline-remark">{{ h.remark }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
+                        <p style="color:#94a3b8;font-size:0.85em;text-align:center;padding:10px;">加载中...</p>
                     </div>
                 </div>
             </aside>
         </div>
 
         <div class="record-explanation">
-            <h2>📋 专属记录结构说明</h2>
+            <h2>📋 专属记录结构说明（数据如何影响最终页面）</h2>
             <div class="record-grid">
                 <div class="record-card">
                     <h4>📌 主记录 (RescueSession)</h4>
-                    <p>保存玩家在雪山救援中布置锚点的整体信息，包括局次状态、地形类型、天气、总分等</p>
+                    <p>保存玩家在雪山救援中布置锚点的整体信息，包括局次状态、地形类型、天气、总分、安全评分等。决定游戏状态展示和首页历史列表。</p>
                 </div>
                 <div class="record-card">
                     <h4>📝 明细记录 (RescueDetail)</h4>
-                    <p>保存滑轮和保护站的详细信息，包括位置、承力、效率系数等技术参数</p>
+                    <p>保存滑轮和保护站的详细信息，包括位置、承力值、实际受力、效率系数等技术参数。直接影响技术评分计算和回放展示。</p>
                 </div>
                 <div class="record-card">
                     <h4>🕐 历史记录 (RescueHistory)</h4>
-                    <p>保存把被困者安全转移的每一步过程，支持回放和状态回滚</p>
+                    <p>保存把被困者安全转移的每一步过程：被困者坐标、绳索张力、天气、安全状态和完整状态快照。支持救援回放动画和进度控制。</p>
                 </div>
                 <div class="record-card">
                     <h4>🏁 结果记录 (RescueResult)</h4>
-                    <p>保存岩壁和雪檐的承力不同数据，以及最终评分、安全系数等统计信息</p>
+                    <p>保存岩壁和雪檐的承力不同数据、安全系数、最终评分、评级、评价等。决定结果页展示的地形承力条形图和最终评级。</p>
                 </div>
             </div>
         </div>
@@ -223,7 +204,6 @@
 
     <script>
         const SESSION_ID = '{{ session.session_id }}';
-        const HISTORIES = {{ histories|safe }};
     </script>
     {% load static %}
     <script src="{% static 'js/replay.js' %}"></script>

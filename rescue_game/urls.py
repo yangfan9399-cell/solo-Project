@@ -23,4 +23,7 @@ urlpatterns = [
 
     path('api/session/<str:session_id>/weather/', views.api_weather_event, name='api_weather_event'),
     path('api/session/<str:session_id>/rollback/', views.api_rollback, name='api_rollback'),
+    path('api/session/<str:session_id>/transfer/', views.api_execute_transfer, name='api_execute_transfer'),
+    path('api/session/<str:session_id>/step/<int:step>/', views.api_get_transfer_step, name='api_get_transfer_step'),
+    path('api/session/<str:session_id>/analysis/', views.api_score_analysis, name='api_score_analysis'),
 ]

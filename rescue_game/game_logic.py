@@ -86,39 +86,187 @@ class GameEngine:
 
         return True, '路线检查通过'
 
-    def simulate_transfer(self, start_x, start_y, end_x, end_y, steps=20):
-        histories = []
+    def calculate_position_loads(self, victim_x, victim_y):
+        total_load = VICTIM_WEIGHT + RESCUER_WEIGHT
+        valid_nodes = [n for n in self.nodes if n.is_valid]
+        node_loads = {}
+        detail_loads = {}
+        max_tension = 0
+
+        if not valid_nodes:
+            return node_loads, detail_loads, 0
+
+        load_per_node = total_load / len(valid_nodes)
+
+        for node in valid_nodes:
+            tension = self.calculate_rope_tension(
+                (node.x, node.y),
+                (victim_x, victim_y),
+                load_per_node
+            )
+            node_loads[node.id] = tension
+            node.actual_load = tension
+            if tension > max_tension:
+                max_tension = tension
+
+        for detail in self.details:
+            if not detail.is_valid:
+                continue
+            tension = self.calculate_rope_tension(
+                (detail.x, detail.y),
+                (victim_x, victim_y),
+                load_per_node
+            )
+            detail_loads[detail.id] = tension
+            detail.actual_load = tension
+
+        return node_loads, detail_loads, max_tension
+
+    def check_safety_at_position(self, victim_x, victim_y):
+        node_loads, detail_loads, max_tension = self.calculate_position_loads(victim_x, victim_y)
+
+        is_safe = True
+        failures = []
+
+        for node in self.nodes:
+            if node.id in node_loads:
+                load = node_loads[node.id]
+                capacity = self.calculate_node_load(node)
+                node.load_capacity = capacity
+                if load > capacity:
+                    is_safe = False
+                    node.is_valid = False
+                    node.failure_reason = f'受力{load:.2f}KN超过承力{capacity:.2f}KN'
+                    failures.append({
+                        'type': 'node',
+                        'id': node.node_id,
+                        'reason': node.failure_reason,
+                        'load': load,
+                        'capacity': capacity
+                    })
+                else:
+                    node.is_valid = True
+                    node.failure_reason = None
+
+        for detail in self.details:
+            if detail.id in detail_loads:
+                load = detail_loads[detail.id]
+                terrain_capacity = TERRAIN_LOAD_CAPACITY.get(
+                    self._get_detail_terrain(detail), 5.0
+                )
+                base_capacity = 12.0 if detail.detail_type == 'pulley' else 10.0
+                capacity = min(terrain_capacity, base_capacity) * self.weather_effect['load_factor']
+                detail.load_capacity = capacity
+                detail.efficiency = 0.95 if detail.detail_type == 'pulley' else 1.0
+                if load > capacity:
+                    is_safe = False
+                    detail.is_valid = False
+                    failures.append({
+                        'type': 'detail',
+                        'id': detail.detail_id,
+                        'reason': f'{detail.get_detail_type_display()}受力{load:.2f}KN超过承力{capacity:.2f}KN',
+                        'load': load,
+                        'capacity': capacity
+                    })
+                else:
+                    detail.is_valid = True
+
+        return is_safe, failures, node_loads, detail_loads, max_tension
+
+    def _get_detail_terrain(self, detail):
+        for node in self.nodes:
+            dist = math.sqrt((node.x - detail.x)**2 + (node.y - detail.y)**2)
+            if dist < 50:
+                return node.terrain_type
+        return TerrainType.ROCK
+
+    def save_transfer_step(self, step_num, victim_x, victim_y, action):
+        is_safe, failures, node_loads, detail_loads, max_tension = self.check_safety_at_position(victim_x, victim_y)
+
+        for node in self.nodes:
+            node.save()
+        for detail in self.details:
+            detail.save()
+
+        state_snapshot = {
+            'node_loads': {str(k): round(v, 4) for k, v in node_loads.items()},
+            'detail_loads': {str(k): round(v, 4) for k, v in detail_loads.items()},
+            'max_tension': round(max_tension, 4),
+            'weather': self.session.weather,
+            'node_validity': {str(n.id): n.is_valid for n in self.nodes},
+            'detail_validity': {str(d.id): d.is_valid for d in self.details},
+            'failures': failures,
+        }
+
+        history = RescueHistory(
+            session=self.session,
+            step=step_num,
+            action=action,
+            action_type='transfer',
+            victim_x=victim_x,
+            victim_y=victim_y,
+            weather=self.session.weather,
+            rope_tension=round(max_tension, 4),
+            is_safe=is_safe,
+            remark=f'{len(failures)}个装置失效' if failures else '状态安全',
+        )
+        history.set_state_snapshot(state_snapshot)
+        history.save()
+
+        self.histories.append(history)
+
+        return {
+            'step': step_num,
+            'victim_x': victim_x,
+            'victim_y': victim_y,
+            'is_safe': is_safe,
+            'failures': failures,
+            'rope_tension': round(max_tension, 4),
+            'weather': self.session.weather,
+            'nodes': [
+                {
+                    'id': n.id,
+                    'node_id': n.node_id,
+                    'node_type': n.node_type,
+                    'x': n.x,
+                    'y': n.y,
+                    'terrain_type': n.terrain_type,
+                    'actual_load': round(n.actual_load, 4),
+                    'load_capacity': round(n.load_capacity, 4),
+                    'is_valid': n.is_valid,
+                    'failure_reason': n.failure_reason,
+                }
+                for n in self.nodes
+            ],
+            'details': [
+                {
+                    'id': d.id,
+                    'detail_id': d.detail_id,
+                    'detail_type': d.detail_type,
+                    'x': d.x,
+                    'y': d.y,
+                    'actual_load': round(d.actual_load, 4),
+                    'load_capacity': round(d.load_capacity, 4),
+                    'efficiency': d.efficiency,
+                    'is_valid': d.is_valid,
+                }
+                for d in self.details
+            ],
+        }
+
+    def execute_full_transfer(self, start_x, start_y, end_x, end_y, steps=20, weather_events=None):
+        RescueHistory.objects.filter(session=self.session).delete()
+        self.histories = []
+
         step_size_x = (end_x - start_x) / steps
         step_size_y = (end_y - start_y) / steps
-        total_load = VICTIM_WEIGHT + RESCUER_WEIGHT
+        all_steps = []
+        transfer_success = True
+        stop_reason = None
 
         for i in range(steps + 1):
             current_x = start_x + step_size_x * i
             current_y = start_y + step_size_y * i
-
-            max_tension = 0
-            node_loads = {}
-
-            for j, node in enumerate(self.nodes):
-                if not node.is_valid:
-                    continue
-                tension = self.calculate_rope_tension(
-                    (node.x, node.y),
-                    (current_x, current_y),
-                    total_load / len([n for n in self.nodes if n.is_valid])
-                )
-                node_loads[node.id] = tension
-                if tension > max_tension:
-                    max_tension = tension
-
-            is_safe = True
-            for node in self.nodes:
-                if node.id in node_loads:
-                    load = node_loads[node.id]
-                    capacity = self.calculate_node_load(node)
-                    if load > capacity:
-                        is_safe = False
-                        break
 
             if i == 0:
                 action = '救援开始，被困者准备转移'
@@ -127,30 +275,47 @@ class GameEngine:
             else:
                 action = f'转移中... 进度{int(i/steps*100)}%'
 
-            state_snapshot = {
-                'node_loads': {str(k): v for k, v in node_loads.items()},
-                'max_tension': max_tension,
-                'weather': self.session.weather,
-            }
+            step_result = self.save_transfer_step(i + 1, current_x, current_y, action)
+            all_steps.append(step_result)
 
-            history = RescueHistory(
-                session=self.session,
-                step=i + 1,
-                action=action,
-                action_type='transfer',
-                victim_x=current_x,
-                victim_y=current_y,
-                weather=self.session.weather,
-                rope_tension=max_tension,
-                is_safe=is_safe,
-            )
-            history.set_state_snapshot(state_snapshot)
-            histories.append(history)
+            if weather_events:
+                for we in weather_events:
+                    if we.get('step') == i and not we.get('triggered'):
+                        we['triggered'] = True
+                        weather_type = we.get('weather')
+                        weather_failures = self.apply_weather_event(weather_type)
+                        step_result['weather_event'] = {
+                            'weather': weather_type,
+                            'failures_count': len(weather_failures),
+                            'description': we.get('description', '')
+                        }
 
-            if not is_safe:
+            if not step_result['is_safe']:
+                transfer_success = False
+                stop_reason = f'步骤{i+1}: 救援路线失效 - {len(step_result["failures"])}个装置过载'
+                failure_history = RescueHistory(
+                    session=self.session,
+                    step=i + 2,
+                    action=f'救援失败: {stop_reason}',
+                    action_type='failure',
+                    victim_x=current_x,
+                    victim_y=current_y,
+                    weather=self.session.weather,
+                    rope_tension=step_result['rope_tension'],
+                    is_safe=False,
+                    remark=stop_reason,
+                )
+                failure_history.save()
+                self.histories.append(failure_history)
                 break
 
-        return histories
+        return {
+            'success': transfer_success,
+            'total_steps': len(all_steps),
+            'steps': all_steps,
+            'stop_reason': stop_reason,
+            'final_safety_score': self.calculate_safety_score(),
+        }
 
     def apply_weather_event(self, weather_type):
         self.session.weather = weather_type
@@ -353,13 +518,19 @@ def create_session_from_seed(seed, player_name='玩家'):
 
     preset_nodes = seed.get_preset_nodes()
     for i, node_data in enumerate(preset_nodes):
+        nt = node_data.get('node_type', NodeType.ANCHOR)
+        if not isinstance(nt, str):
+            nt = getattr(nt, 'value', str(nt))
+        tt = node_data.get('terrain_type', seed.terrain_type)
+        if not isinstance(tt, str):
+            tt = getattr(tt, 'value', str(tt))
         node = RescueNode(
             session=session,
-            node_type=node_data.get('node_type', NodeType.ANCHOR),
+            node_type=nt,
             node_id=node_data.get('node_id', f'node_{i}'),
             x=node_data.get('x', 0),
             y=node_data.get('y', 0),
-            terrain_type=node_data.get('terrain_type', seed.terrain_type),
+            terrain_type=tt,
             order_index=i,
         )
         props = node_data.get('properties', {})

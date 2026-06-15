@@ -214,11 +214,22 @@ class SeedSample(models.Model):
     def __str__(self):
         return self.name
 
+    def _safe_json_load(self, text):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            import ast
+            try:
+                data = ast.literal_eval(text)
+                return data
+            except Exception:
+                return []
+
     def get_terrain_map(self):
-        return json.loads(self.terrain_map)
+        return self._safe_json_load(self.terrain_map)
 
     def get_preset_nodes(self):
-        return json.loads(self.preset_nodes)
+        return self._safe_json_load(self.preset_nodes)
 
     def get_weather_events(self):
-        return json.loads(self.weather_events)
+        return self._safe_json_load(self.weather_events)
