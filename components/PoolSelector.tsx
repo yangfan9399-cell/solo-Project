@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import type { PoolLocation, GameSession, Species } from "@/lib/types";
-import { getVisibleSpeciesAtPool } from "@/lib/gameLogic";
-import { SPECIES } from "@/lib/gameData";
+import { getVisibleSpeciesAtPool, SPECIES } from "@/lib/gameData";
 
 interface PoolSelectorProps {
   pools: PoolLocation[];
@@ -146,10 +145,18 @@ export default function PoolSelector({ pools, session, onObserve }: PoolSelector
             </button>
             <button
               onClick={handleObserve}
-              disabled={loading || visibleSpecies.length === 0}
-              className="flex-1 btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className={`flex-1 text-sm font-semibold py-2 px-4 rounded-lg transition-colors ${
+                visibleSpecies.length === 0
+                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  : "bg-sky-600 hover:bg-sky-700 text-white"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              {loading ? "记录中..." : "开始观察"}
+              {loading
+                ? "记录中..."
+                : visibleSpecies.length === 0
+                ? "🚶 错过潮位（推进时间）"
+                : "开始观察"}
             </button>
           </div>
         </div>

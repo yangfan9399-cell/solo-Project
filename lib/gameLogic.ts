@@ -1,5 +1,13 @@
 import { getDb } from "./db";
-import { SPECIES, POOL_LOCATIONS, TOTAL_STEPS, getTideLevelAtStep, getTidePhaseAtStep } from "./gameData";
+import {
+  SPECIES,
+  POOL_LOCATIONS,
+  TOTAL_STEPS,
+  getTideLevelAtStep,
+  getTidePhaseAtStep,
+  checkSpeciesVisible,
+  getVisibleSpeciesAtPool,
+} from "./gameData";
 import type { GameSession, ObservationRecord, SessionResult, RecoveryTask, TidePhase } from "./types";
 
 export function generateId(): string {
@@ -95,20 +103,6 @@ export function updateSession(session: GameSession) {
     JSON.stringify(session.visitedPools),
     session.id
   );
-}
-
-export function checkSpeciesVisible(speciesId: string, tideLevel: number, tidePhase: TidePhase): boolean {
-  const species = SPECIES.find((s) => s.id === speciesId);
-  if (!species) return false;
-  if (tideLevel < species.minTideLevel || tideLevel > species.maxTideLevel) return false;
-  if (!species.preferredTide.includes(tidePhase)) return false;
-  return true;
-}
-
-export function getVisibleSpeciesAtPool(poolId: string, tideLevel: number, tidePhase: TidePhase): string[] {
-  const pool = POOL_LOCATIONS.find((p) => p.id === poolId);
-  if (!pool) return [];
-  return pool.speciesIds.filter((sid) => checkSpeciesVisible(sid, tideLevel, tidePhase));
 }
 
 export function recordObservation(params: {
@@ -262,12 +256,25 @@ export function recalculateSessionScore(sessionId: string): SessionResult {
   const missedTidePenalty = Math.max(0, session.totalSteps - observations.length) * 3;
 
   const baseResearch = uniqueSpecies * 20 + observations.filter((o) => o.noted).length * 5;
-  const researchPoints = Math.max(0, baseResearch - missedTidePenalty);
+  const baseResearchAfterPenalty = Math.max(0, baseResearch - missedTidePenalty);
 
-  const ecoScore = Math.max(0, 100 - tramplingPenalty);
+  const completedTasks = db
+    .prepare("SELECT SUM(points_reward) as total, COUNT(*) as cnt FROM recovery_tasks WHERE session_id = ? AND completed = 1")
+    .get(sessionId) as any;
+  const recoveryResearchBonus = completedTasks?.total || 0;
+
+  const completedTrampleOrEcoTasks = db
+    .prepare("SELECT COUNT(*) as cnt FROM recovery_tasks WHERE session_id = ? AND completed = 1 AND type IN ('trampling', 'low_eco')")
+    .get(sessionId) as any;
+  const recoveryEcoBonus = Math.min(100, (completedTrampleOrEcoTasks?.cnt || 0) * 10);
+
+  const baseEco = Math.max(0, 100 - tramplingPenalty);
+  const ecoScore = Math.min(100, baseEco + recoveryEcoBonus);
+  const researchPoints = baseResearchAfterPenalty + recoveryResearchBonus;
+
   const finalScore = researchPoints + ecoScore;
 
-  const recoveryTasks = generateRecoveryTasks(sessionId, trampleCount, missedSpecies, ecoScore);
+  const recoveryTasks = generateRecoveryTasks(sessionId, trampleCount, missedSpecies, baseEco);
 
   const result: SessionResult = {
     id: generateId(),

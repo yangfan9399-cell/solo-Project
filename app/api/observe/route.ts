@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSession, updateSession, recordObservation, getVisibleSpeciesAtPool } from "@/lib/gameLogic";
-import { POOL_LOCATIONS, getTideLevelAtStep, getTidePhaseAtStep } from "@/lib/gameData";
+import { getSession, updateSession, recordObservation } from "@/lib/gameLogic";
+import { POOL_LOCATIONS, getTideLevelAtStep, getTidePhaseAtStep, getVisibleSpeciesAtPool } from "@/lib/gameData";
 
 export async function POST(request: Request) {
   try {

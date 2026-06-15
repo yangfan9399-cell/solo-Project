@@ -162,3 +162,17 @@ export function getStepLabel(step: number, total: number): string {
   };
   return labels[phase];
 }
+
+export function checkSpeciesVisible(speciesId: string, tideLevel: number, tidePhase: TidePhase): boolean {
+  const species = SPECIES.find((s) => s.id === speciesId);
+  if (!species) return false;
+  if (tideLevel < species.minTideLevel || tideLevel > species.maxTideLevel) return false;
+  if (!species.preferredTide.includes(tidePhase)) return false;
+  return true;
+}
+
+export function getVisibleSpeciesAtPool(poolId: string, tideLevel: number, tidePhase: TidePhase): string[] {
+  const pool = POOL_LOCATIONS.find((p) => p.id === poolId);
+  if (!pool) return [];
+  return pool.speciesIds.filter((sid) => checkSpeciesVisible(sid, tideLevel, tidePhase));
+}
