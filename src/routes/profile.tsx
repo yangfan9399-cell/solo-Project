@@ -1,7 +1,12 @@
 import { createSignal, createEffect, For } from "solid-js";
-import { A, useNavigate } from "@solidjs/router";
-import { getPlayerProfile, updatePlayerName, getGameHistory, resetPlayerData } from "~/utils/storage";
+import { useNavigate } from "@solidjs/router";
 import { levels } from "~/data/levels";
+import {
+  fetchPlayerProfile,
+  updatePlayerNameApi,
+  resetPlayerDataApi,
+  fetchGameHistory
+} from "~/utils/apiClient";
 import type { PlayerProfile, GameHistory } from "~/types/game";
 
 export default function ProfilePage() {
@@ -10,10 +15,25 @@ export default function ProfilePage() {
   const [history, setHistory] = createSignal<GameHistory[]>([]);
   const [editing, setEditing] = createSignal(false);
   const [newName, setNewName] = createSignal("");
+  const [loading, setLoading] = createSignal(true);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [profileData, historyData] = await Promise.all([
+        fetchPlayerProfile(),
+        fetchGameHistory(undefined, 20)
+      ]);
+      setProfile(profileData);
+      setHistory(historyData.entries);
+    } catch (error) {
+      console.error("Failed to load profile data:", error);
+    }
+    setLoading(false);
+  };
 
   createEffect(() => {
-    setProfile(getPlayerProfile());
-    setHistory(getGameHistory());
+    loadData();
   });
 
   const handleEditName = () => {
@@ -21,19 +41,27 @@ export default function ProfilePage() {
     setEditing(true);
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     if (newName().trim()) {
-      const updated = updatePlayerName(newName().trim());
-      setProfile(updated);
+      try {
+        const updated = await updatePlayerNameApi(newName().trim());
+        setProfile(updated);
+      } catch (error) {
+        console.error("Failed to update name:", error);
+      }
     }
     setEditing(false);
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm("确定要重置所有游戏数据吗？此操作不可撤销。")) {
-      const newProfile = resetPlayerData();
-      setProfile(newProfile);
-      setHistory([]);
+      try {
+        const newProfile = await resetPlayerDataApi();
+        setProfile(newProfile);
+        setHistory([]);
+      } catch (error) {
+        console.error("Failed to reset data:", error);
+      }
     }
   };
 
@@ -52,8 +80,16 @@ export default function ProfilePage() {
 
   const p = profile();
 
+  if (loading()) {
+    return (
+      <div class="profile-page">
+        <div class="loading">加载中...</div>
+      </div>
+    );
+  }
+
   if (!p) {
-    return <div class="profile-page">加载中...</div>;
+    return <div class="profile-page">加载失败</div>;
   }
 
   return (
@@ -134,7 +170,7 @@ export default function ProfilePage() {
         <h3>📜 游戏记录</h3>
         {history().length > 0 ? (
           <div class="history-list">
-            <For each={history().slice(0, 20)}>
+            <For each={history()}>
               {(entry) => (
                 <div class={`history-item ${entry.won ? "won" : "lost"}`}>
                   <div class="history-icon">{entry.won ? "✅" : "❌"}</div>

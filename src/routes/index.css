@@ -720,6 +720,20 @@ body {
   margin-bottom: 24px;
 }
 
+.new-highscore-badge {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 16px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 .rank-label {
   font-size: 14px;
   color: var(--text-muted);

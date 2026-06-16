@@ -1,15 +1,16 @@
 import { A, useNavigate } from "@solidjs/router";
 import { For, createEffect, createSignal } from "solid-js";
-import { getPlayerProfile } from "~/utils/storage";
+import { fetchPlayerProfile } from "~/utils/apiClient";
 import { levels } from "~/data/levels";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [playerName, setPlayerName] = createSignal("");
+  const [playerName, setPlayerName] = createSignal("探险家");
 
   createEffect(() => {
-    const profile = getPlayerProfile();
-    setPlayerName(profile.name);
+    fetchPlayerProfile()
+      .then((profile) => setPlayerName(profile.name))
+      .catch((e) => console.error("Failed to load profile:", e));
   });
 
   return (

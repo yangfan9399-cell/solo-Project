@@ -1,0 +1,10 @@
+{
+  "id": "player-1",
+  "name": "考古探险家",
+  "avatar": "diver",
+  "totalScore": 0,
+  "completedLevels": [],
+  "highestScores": {},
+  "gamesPlayed": 0,
+  "createdAt": 1718500000000
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "history-1",
+    "playerId": "player-1",
+    "levelId": "level-1",
+    "score": 1250,
+    "won": true,
+    "divesUsed": 3,
+    "relicsFound": 2,
+    "timestamp": 1718413600000
+  },
+  {
+    "id": "history-2",
+    "playerId": "player-1",
+    "levelId": "level-1",
+    "score": 980,
+    "won": true,
+    "divesUsed": 4,
+    "relicsFound": 2,
+    "timestamp": 1718327200000
+  }
+]

@@ -12,7 +12,7 @@ import {
   countTotalSonarScans
 } from "~/utils/gameLogic";
 import type { GameState, HistoryAction, Relic, ScoreCalculationResponse } from "~/types/game";
-import { recordGameCompletion } from "~/utils/storage";
+import { submitScore, type SubmitScoreResponse } from "~/utils/apiClient";
 
 type Tool = "sonar" | "excavate";
 
@@ -26,7 +26,7 @@ export default function GamePage() {
   const [selectedTool, setSelectedTool] = createSignal<Tool>("sonar");
   const [history, setHistory] = createSignal<HistoryAction[]>([]);
   const [showResult, setShowResult] = createSignal(false);
-  const [scoreResult, setScoreResult] = createSignal<ScoreCalculationResponse | null>(null);
+  const [scoreResult, setScoreResult] = createSignal<SubmitScoreResponse | null>(null);
   const [discoveryPopup, setDiscoveryPopup] = createSignal<Relic | null>(null);
 
   createEffect(() => {
@@ -109,42 +109,35 @@ export default function GamePage() {
     const timeElapsed = Date.now() - state.startTime;
     const totalSonarScans = countTotalSonarScans(state);
 
+    setGameState((prev) =>
+      prev ? { ...prev, gameStatus: won ? "won" : "lost" } : prev
+    );
+
     try {
-      const response = await fetch("/api/scores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          levelId: state.levelId,
-          relicsFound: state.discoveredRelics,
-          divesUsed: state.currentDive.diveNumber,
-          totalSonarScans,
-          timeElapsed
-        })
+      const result = await submitScore({
+        levelId: state.levelId,
+        relicsFound: state.discoveredRelics,
+        divesUsed: state.currentDive.diveNumber,
+        totalSonarScans,
+        timeElapsed,
+        won,
+        relicsFoundCount: state.discoveredRelics.length
       });
-      const result = await response.json();
       setScoreResult(result);
-    } catch {
+    } catch (e) {
+      console.error("Score submission failed:", e);
       setScoreResult({
         baseScore: state.score,
         relicBonus: 0,
         efficiencyBonus: 0,
         timeBonus: 0,
         totalScore: state.score,
-        rank: won ? "B" : "D"
+        rank: won ? "B" : "D",
+        saved: false,
+        playerTotalScore: 0,
+        isNewHighScore: false
       });
     }
-
-    setGameState((prev) =>
-      prev ? { ...prev, gameStatus: won ? "won" : "lost" } : prev
-    );
-
-    recordGameCompletion(
-      state.levelId,
-      state.score,
-      won,
-      state.currentDive.diveNumber,
-      state.discoveredRelics.length
-    );
 
     setTimeout(() => setShowResult(true), 800);
   };
@@ -395,6 +388,10 @@ export default function GamePage() {
                   {scoreResult()?.rank || "-"}
                 </div>
               </div>
+
+              <Show when={scoreResult()?.isNewHighScore}>
+                <div class="new-highscore-badge">🏆 新纪录！</div>
+              </Show>
 
               <div class="result-score-breakdown">
                 <div class="score-item">
