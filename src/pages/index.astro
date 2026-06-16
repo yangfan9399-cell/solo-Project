@@ -1,0 +1,16 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { INITIAL_LEVELS } from '@/data/levels';
+import ProfileManagerIsland from '@/components/ProfileManagerIsland';
+import LevelSelectorIsland from '@/components/LevelSelectorIsland';
+---
+
+<BaseLayout>
+  <section style="text-align:center;padding:48px 24px 16px;">
+    <h1 style="font-size:42px;font-weight:800;margin:0 0 8px;color:#f5a623;">虚拟制琴师</h1>
+    <p style="font-size:18px;color:#aaa;margin:0;">音板调校模拟游戏</p>
+  </section>
+
+  <ProfileManagerIsland client:load />
+  <LevelSelectorIsland client:load levels={INITIAL_LEVELS} />
+</BaseLayout>

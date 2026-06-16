@@ -1,0 +1,27 @@
+{
+  "name": "virtual-luthier",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "虚拟制琴师音板调校游戏",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "postinstall": "node scripts/fix-rollup.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^8.3.4",
+    "@astrojs/react": "^3.0.0",
+    "@rollup/wasm-node": "^4.62.0",
+    "astro": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0"
+  }
+}

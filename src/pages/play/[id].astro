@@ -1,0 +1,10 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import GamePlayIsland from '@/components/GamePlayIsland';
+
+const levelId = Astro.params.id || '';
+---
+
+<BaseLayout>
+  <GamePlayIsland client:load levelId={levelId} />
+</BaseLayout>
