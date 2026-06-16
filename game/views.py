@@ -135,7 +135,7 @@ def start_game(request, level_id):
         }
         if request.method == 'POST' or request.META.get('HTTP_ACCEPT', '').find('application/json') != -1:
             return JsonResponse(response_data)
-        return redirect('game_play', session_id=session_id)
+        return redirect('game:game_play', session_id=session_id)
 
     with transaction.atomic():
         game_session = GameSession.objects.create(
@@ -168,7 +168,7 @@ def start_game(request, level_id):
     }
     if request.method == 'POST' or request.META.get('HTTP_ACCEPT', '').find('application/json') != -1:
         return JsonResponse(response_data)
-    return redirect('game_play', session_id=game_session.id)
+    return redirect('game:game_play', session_id=game_session.id)
 
 
 @require_http_methods(['GET'])

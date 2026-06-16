@@ -732,7 +732,7 @@
       </div>
     </div>
     <div class="status-right">
-      <a href="{% url 'index' %}" class="btn btn-secondary">← 返回大厅</a>
+      <a href="{% url 'game:index' %}" class="btn btn-secondary">← 返回大厅</a>
     </div>
   </div>
 
@@ -851,7 +851,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <a href="{% url 'index' %}" class="btn btn-secondary">返回大厅</a>
+      <a href="{% url 'game:index' %}" class="btn btn-secondary">返回大厅</a>
       <button class="btn btn-primary" id="retry-btn">🔄 再玩一次</button>
     </div>
   </div>
@@ -885,7 +885,7 @@
   }
 
   async function apiCall(path, method = 'GET', body = null) {
-    const url = `/game${path.startsWith('/') ? path : '/' + path}`;
+    const url = path.startsWith('/') ? path : '/' + path;
     const opts = {
       method,
       headers: {
@@ -1292,7 +1292,7 @@
   $('retry-btn').addEventListener('click', async () => {
     closeModal('settle-modal');
     try {
-      const resp = await fetch(`/game/start/${LEVEL_ID}/`, {
+      const resp = await fetch(`/start/${LEVEL_ID}/`, {
         method: 'POST',
         headers: {
           'X-CSRFToken': getCsrfToken(),
@@ -1302,7 +1302,7 @@
       });
       const data = await resp.json();
       if (data.success && data.session_id) {
-        window.location.href = `/game/play/${data.session_id}/`;
+        window.location.href = `/play/${data.session_id}/`;
       }
     } catch (e) {
       window.location.reload();
