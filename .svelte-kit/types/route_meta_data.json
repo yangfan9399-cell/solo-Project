@@ -1,0 +1,19 @@
+{
+	"/": [],
+	"/api/history": [
+		"src/routes/api/history/+server.ts"
+	],
+	"/api/player": [
+		"src/routes/api/player/+server.ts"
+	],
+	"/api/score": [
+		"src/routes/api/score/+server.ts"
+	],
+	"/api/session": [
+		"src/routes/api/session/+server.ts"
+	],
+	"/api/simulate": [
+		"src/routes/api/simulate/+server.ts"
+	],
+	"/game/[level]": []
+}
