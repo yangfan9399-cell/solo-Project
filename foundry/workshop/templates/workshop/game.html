@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>排版中 - 铸字排版活字工坊</title>
+<link rel="stylesheet" href="{% static 'workshop/css/style.css' %}">
+</head>
+<body class="game-body">
+<div class="game-container">
+<header class="game-header">
+<div class="game-info">
+<span class="level-badge">第{{ level.level_number }}关 · {{ level.title }}</span>
+<span class="timer" id="timer">{{ level.time_limit }}秒</span>
+<span class="ink-display" id="ink-display">墨量：0/{{ level.ink_budget }}</span>
+</div>
+<div class="game-actions">
+<button class="btn btn-sm" id="btn-undo">↩ 撤销</button>
+<button class="btn btn-sm" id="btn-proofread">🔍 校对</button>
+<button class="btn btn-sm btn-danger" id="btn-submit">📜 交稿</button>
+</div>
+</header>
+
+<main class="game-main">
+<section class="target-section">
+<h3>📖 原稿</h3>
+<div class="target-text" id="target-text">
+{% for char in level.target_text %}
+<span class="target-char" data-pos="{{ forloop.counter0 }}">{{ char }}</span>
+{% endfor %}
+</div>
+</section>
+
+<section class="composing-section">
+<h3>🔧 排版架</h3>
+<div class="composing-stick" id="composing-stick">
+<div class="composing-placeholder" id="composing-placeholder">从字匣取字放入排版架</div>
+</div>
+</section>
+
+<section class="workshop-floor">
+<div class="typecase-section">
+<h3>📦 字匣 <small id="selected-char-display"></small></h3>
+<div class="typecase" id="typecase">
+{% for char in char_pool %}
+<span class="type-char" data-char="{{ char }}">{{ char }}</span>
+{% endfor %}
+</div>
+</div>
+
+<div class="ink-section">
+<h3>🖌️ 墨量控制</h3>
+<div class="ink-controls">
+<button class="btn btn-ink" id="ink-add-10" data-delta="10">+10</button>
+<button class="btn btn-ink" id="ink-add-5" data-delta="5">+5</button>
+<button class="btn btn-ink" id="ink-add-1" data-delta="1">+1</button>
+<button class="btn btn-ink" id="ink-sub-1" data-delta="-1">-1</button>
+<button class="btn btn-ink" id="ink-sub-5" data-delta="-5">-5</button>
+<button class="btn btn-ink" id="ink-sub-10" data-delta="-10">-10</button>
+</div>
+<div class="ink-bar-container">
+<div class="ink-bar" id="ink-bar"></div>
+</div>
+</div>
+
+<div class="proofread-section" id="proofread-panel" style="display:none;">
+<h3>🔍 校对结果</h3>
+<div id="proofread-result"></div>
+</div>
+</section>
+
+<section class="history-section">
+<h3>📜 操作记录 <small id="history-toggle">展开/收起</small></h3>
+<div class="history-list" id="history-list" style="display:none;"></div>
+</section>
+</main>
+</div>
+
+<input type="hidden" id="round-id" value="{{ round.id }}">
+<input type="hidden" id="level-time-limit" value="{{ level.time_limit }}">
+<input type="hidden" id="level-ink-budget" value="{{ level.ink_budget }}">
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+<script src="{% static 'workshop/js/game.js' %}"></script>
+</body>
+</html>

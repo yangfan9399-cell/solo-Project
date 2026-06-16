@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}铸字排版活字工坊{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'workshop/css/style.css' %}">
+</head>
+<body>
+<div class="app-container">
+<header class="app-header">
+<h1 class="app-title">🔤 铸字排版活字工坊</h1>
+{% if player %}
+<div class="player-bar">
+<span class="player-name">匠人：{{ player.name }}</span>
+<span class="player-stat">等级：第{{ player.current_level }}关</span>
+<span class="player-stat">收益：{{ player.total_revenue }}文</span>
+<span class="player-stat">最高分：{{ player.best_score }}</span>
+<a href="{% url 'workshop:switch_player' %}" class="btn btn-sm">切换匠人</a>
+</div>
+{% endif %}
+</header>
+<main class="app-main">
+{% block content %}{% endblock %}
+</main>
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

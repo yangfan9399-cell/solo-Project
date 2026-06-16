@@ -1,0 +1,94 @@
+{% extends "workshop/base.html" %}
+
+{% block title %}铸字排版活字工坊 - 大厅{% endblock %}
+
+{% block content %}
+{% if not player %}
+<div class="welcome-panel">
+<h2>欢迎来到铸字排版活字工坊</h2>
+<p>在这里，你将扮演一位古代活字印刷匠人，从字匣中取字、排版、校对、上墨，完成一份份精美的印件订单。</p>
+<form method="post" action="{% url 'workshop:create_player' %}" class="create-player-form">
+{% csrf_token %}
+<label for="player-name">请输入匠人名号：</label>
+<input type="text" id="player-name" name="name" maxlength="64" placeholder="你的名号" required>
+<button type="submit" class="btn btn-primary">入坊</button>
+</form>
+</div>
+{% else %}
+<div class="lobby-content">
+{% if current_round %}
+<div class="resume-panel">
+<h2>📝 你有进行中的订单</h2>
+<p>关卡：第{{ current_round.level.level_number }}关 - {{ current_round.level.title }}</p>
+<a href="{% url 'workshop:game' current_round.id %}" class="btn btn-primary btn-lg">继续排版</a>
+</div>
+{% endif %}
+
+<div class="levels-section">
+<h2>📋 订单板</h2>
+<div class="levels-grid" id="levels-grid">
+{% for level in levels %}
+<div class="level-card {% if level.level_number > player.current_level %}locked{% elif level.level_number == player.current_level %}current{% else %}cleared{% endif %}">
+<div class="level-number">第{{ level.level_number }}关</div>
+<div class="level-title">{{ level.title }}</div>
+<div class="level-difficulty">
+{% for i in "123" %}
+{% if forloop.counter <= level.difficulty %}★{% else %}☆{% endif %}
+{% endfor %}
+</div>
+<div class="level-desc">{{ level.description|truncatechars:60 }}</div>
+<div class="level-meta">
+<span class="meta-item">时限：{{ level.time_limit }}秒</span>
+<span class="meta-item">墨量：{{ level.ink_budget }}</span>
+<span class="meta-item">及格：{{ level.pass_score }}分</span>
+</div>
+{% if level.level_number <= player.current_level %}
+<button class="btn btn-primary btn-start-level" data-level="{{ level.level_number }}">接单</button>
+{% else %}
+<span class="lock-text">🔒 未解锁</span>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+
+<div class="player-section">
+<h2>👤 匠人档案</h2>
+<div class="profile-card">
+<div class="profile-row"><span>名号</span><span>{{ player.name }}</span></div>
+<div class="profile-row"><span>当前进度</span><span>第{{ player.current_level }}关</span></div>
+<div class="profile-row"><span>累计收益</span><span>{{ player.total_revenue }}文</span></div>
+<div class="profile-row"><span>完成局数</span><span>{{ player.total_rounds }}局</span></div>
+<div class="profile-row"><span>最高得分</span><span>{{ player.best_score }}分</span></div>
+</div>
+</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.btn-start-level').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const levelNum = btn.dataset.level;
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        try {
+            const resp = await fetch(`/api/round/start/${levelNum}/`, {method: 'POST', body: formData});
+            const data = await resp.json();
+            if (data.round_id) {
+                window.location.href = `/game/${data.round_id}/`;
+            } else {
+                if (data.round_id && data.error) {
+                    window.location.href = `/game/${data.round_id}/`;
+                } else {
+                    alert(data.error || '无法开始');
+                }
+            }
+        } catch(e) {
+            alert('网络错误');
+        }
+    });
+});
+</script>
+{% endblock %}

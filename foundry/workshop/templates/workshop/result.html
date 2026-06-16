@@ -1,0 +1,136 @@
+{% extends "workshop/base.html" %}
+
+{% block title %}结算 - 铸字排版活字工坊{% endblock %}
+
+{% block content %}
+<div class="result-container">
+<div class="result-header {% if evaluation.passed %}passed{% else %}failed{% endif %}">
+<h2>{% if evaluation.passed %}🎉 通关{% else %}💔 未通过{% endif %}</h2>
+<div class="result-score">{{ evaluation.final_score|floatformat:1 }}分</div>
+<div class="result-subtitle">
+{% if evaluation.passed %}订单完成！获得 {{ evaluation.revenue }} 文收益{% else %}未达到及格分 {{ level.pass_score }} 分{% endif %}
+</div>
+</div>
+
+<div class="result-details">
+<div class="detail-card">
+<h3>📊 评分明细</h3>
+<div class="detail-rows">
+<div class="detail-row">
+<span>准确率</span>
+<span>{{ evaluation.accuracy|floatformat:1 }}%</span>
+</div>
+<div class="detail-row">
+<span>错字数</span>
+<span class="penalty">{{ evaluation.wrong_char_count }} (扣{{ evaluation.wrong_char_count }}×{{ level.error_penalty }}分)</span>
+</div>
+<div class="detail-row">
+<span>倒字数</span>
+<span class="penalty">{{ evaluation.inverted_char_count }} (扣{{ evaluation.inverted_char_count }}×{{ level.inverted_penalty }}分)</span>
+</div>
+<div class="detail-row">
+<span>缺字数</span>
+<span class="penalty">{{ evaluation.missing_char_count }}</span>
+</div>
+<div class="detail-row">
+<span>多余字数</span>
+<span class="penalty">{{ evaluation.extra_char_count }}</span>
+</div>
+<div class="detail-row">
+<span>墨量效率</span>
+<span>{{ evaluation.ink_efficiency|floatformat:1 }}%</span>
+</div>
+<div class="detail-row">
+<span>墨量浪费</span>
+<span class="penalty">{{ evaluation.ink_waste }} (扣{{ evaluation.ink_waste }}×{{ level.ink_waste_penalty }}分)</span>
+</div>
+<div class="detail-row highlight">
+<span>时间奖励</span>
+<span class="bonus">+{{ evaluation.time_bonus|floatformat:1 }}</span>
+</div>
+<div class="detail-row highlight">
+<span>校对奖励</span>
+<span class="bonus">+{{ evaluation.proofread_bonus|floatformat:1 }}</span>
+</div>
+<div class="detail-row total">
+<span>原始得分</span>
+<span>{{ evaluation.raw_score|floatformat:1 }}</span>
+</div>
+<div class="detail-row total final">
+<span>最终得分</span>
+<span>{{ evaluation.final_score|floatformat:1 }}</span>
+</div>
+</div>
+</div>
+
+<div class="detail-card">
+<h3>💰 工坊收益</h3>
+<div class="detail-rows">
+<div class="detail-row">
+<span>基础赏金</span>
+<span>{{ level.base_reward }}文</span>
+</div>
+<div class="detail-row">
+<span>得分比例</span>
+<span>{{ evaluation.final_score|floatformat:1 }}%</span>
+</div>
+<div class="detail-row">
+<span>难度加成</span>
+<span>×{{ level.get_difficulty_display }}</span>
+</div>
+<div class="detail-row total final">
+<span>本次收益</span>
+<span>{{ evaluation.revenue }}文</span>
+</div>
+<div class="detail-row">
+<span>累计收益</span>
+<span>{{ player.total_revenue }}文</span>
+</div>
+</div>
+</div>
+
+<div class="detail-card">
+<h3>🔐 服务端验证</h3>
+<div class="detail-rows">
+<div class="detail-row">
+<span>服务端重新计算</span>
+<span>{% if evaluation.server_calculated %}✅ 已验证{% else %}❌ 未验证{% endif %}</span>
+</div>
+<div class="detail-row">
+<span>最终状态</span>
+<span>{{ round.get_status_display }}</span>
+</div>
+</div>
+</div>
+</div>
+
+<div class="result-actions">
+<a href="{% url 'workshop:index' %}" class="btn btn-primary btn-lg">返回工坊</a>
+{% if evaluation.passed and level.level_number < 8 %}
+<button class="btn btn-accent btn-lg" onclick="startNext({{ level.level_number|add:1 }})">挑战下一关</button>
+{% endif %}
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function startNext(levelNum) {
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    try {
+        const resp = await fetch(`/api/round/start/${levelNum}/`, {method: 'POST', body: formData});
+        const data = await resp.json();
+        if (data.round_id) {
+            window.location.href = `/game/${data.round_id}/`;
+        } else if (data.round_id && data.error) {
+            window.location.href = `/game/${data.round_id}/`;
+        } else {
+            alert(data.error || '无法开始');
+        }
+    } catch(e) {
+        alert('网络错误');
+    }
+}
+</script>
+{% endblock %}
