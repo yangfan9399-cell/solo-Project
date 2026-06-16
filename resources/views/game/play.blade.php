@@ -252,7 +252,7 @@
 @section('scripts')
 <script>
     const levelId = {{ $level->id }};
-    const sessionId = {{ $sessionId ?? 'null' }};
+    let sessionId = {{ $sessionId ?? 'null' }};
     const targetViscosity = {{ $level->target_viscosity }};
     const targetDryingTime = {{ $level->target_drying_time }};
     const targetTransparency = {{ $level->target_transparency }};
@@ -272,8 +272,29 @@
     };
     @endforeach
 
-    function init() {
+    async function init() {
         updateDisplay();
+
+        if (!sessionId) {
+            try {
+                const res = await fetch(`/game/${levelId}/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    sessionId = data.session_id;
+                    document.getElementById('attemptCount').textContent = data.attempt_count;
+                }
+            } catch (e) {
+                console.error('创建游戏会话失败:', e);
+            }
+        }
+
         updateHistoryDisplay();
     }
 
@@ -450,6 +471,11 @@
 
     function updateHistoryDisplay() {
         const container = document.getElementById('historyList');
+
+        if (!sessionId) {
+            container.innerHTML = '<p class="text-amber-500 text-sm">游戏加载中...</p>';
+            return;
+        }
 
         fetch(`/game/session/${sessionId}/history`)
             .then(res => res.json())

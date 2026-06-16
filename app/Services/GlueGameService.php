@@ -369,7 +369,8 @@ class GlueGameService
         }
 
         $level = $session->level;
-        $properties = $currentState['properties'] ?? $this->calculateProperties($currentState['materials'] ?? []);
+        $materials = $currentState['materials'] ?? [];
+        $properties = $this->calculateProperties($materials);
         $scoreResult = $this->calculateScore($level, $properties);
 
         $session->increment('attempt_count');
