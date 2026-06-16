@@ -393,13 +393,13 @@ function addDistributedClue(clue) {
             <div class="flex items-center space-x-2">
                 <span class="text-3xl">${clue.icon}</span>
                 <div>
-                    <h3 class="font-bold text-white">${clue.title}</h3>
-                    <span class="text-xs text-purple-300">${clue.category}</span>
+                    <h3 class="font-bold text-white">${escapeHtml(clue.title)}</h3>
+                    <span class="text-xs text-purple-300">${escapeHtml(clue.category)}</span>
                 </div>
             </div>
             ${clue.is_required ? '<span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">🔑 关键</span>' : ''}
         </div>
-        <p class="text-gray-300 text-sm leading-relaxed">${clue.content}</p>
+        <p class="text-gray-300 text-sm leading-relaxed">${escapeHtml(clue.content)}</p>
         <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
             <span>重要度: ${clue.importance}%</span>
         </div>
