@@ -152,7 +152,7 @@ class CustomLevelController extends Controller
         return view('custom-levels.show', compact('level'));
     }
 
-    public function encrypt(Request $request, Level $level = null): JsonResponse
+    public function encrypt(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'cipher_type' => 'required|in:caesar,substitution,vigenere,rotor',

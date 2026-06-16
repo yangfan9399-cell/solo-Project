@@ -15,6 +15,8 @@ return new class extends Migration
                 'rotor_change',
                 'substitution_add',
                 'substitution_remove',
+                'caesar_shift',
+                'vigenere_key',
                 'note_add',
                 'hint_use',
                 'undo',

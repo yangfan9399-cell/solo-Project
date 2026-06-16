@@ -77,6 +77,42 @@ class GameController extends Controller
         return response()->json($result);
     }
 
+    public function updateCaesar(Request $request, GameSession $session): JsonResponse
+    {
+        if ($session->user_id !== $request->user()->id) {
+            return response()->json(['success' => false, 'message' => '无权操作'], 403);
+        }
+
+        $validated = $request->validate([
+            'shift' => 'required|integer|min:0|max:25',
+        ]);
+
+        $result = $this->gameService->updateCaesar(
+            $session,
+            $validated['shift']
+        );
+
+        return response()->json($result);
+    }
+
+    public function updateVigenere(Request $request, GameSession $session): JsonResponse
+    {
+        if ($session->user_id !== $request->user()->id) {
+            return response()->json(['success' => false, 'message' => '无权操作'], 403);
+        }
+
+        $validated = $request->validate([
+            'key' => 'nullable|string|max:30|regex:/^[A-Za-z]*$/',
+        ]);
+
+        $result = $this->gameService->updateVigenere(
+            $session,
+            $validated['key'] ?? ''
+        );
+
+        return response()->json($result);
+    }
+
     public function addNote(Request $request, GameSession $session): JsonResponse
     {
         if ($session->user_id !== $request->user()->id) {

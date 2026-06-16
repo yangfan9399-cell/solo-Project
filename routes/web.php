@@ -16,14 +16,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/custom-levels', [CustomLevelController::class, 'index'])->name('custom-levels.index');
     Route::get('/custom-levels/create', [CustomLevelController::class, 'create'])->name('custom-levels.create');
     Route::post('/custom-levels', [CustomLevelController::class, 'store'])->name('custom-levels.store');
+    Route::post('/custom-levels/encrypt', [CustomLevelController::class, 'encrypt'])->name('custom-levels.encrypt');
     Route::get('/custom-levels/{level}', [CustomLevelController::class, 'show'])->name('custom-levels.show');
-    Route::post('/custom-levels/{level}/encrypt', [CustomLevelController::class, 'encrypt'])->name('custom-levels.encrypt');
     Route::delete('/custom-levels/{level}', [CustomLevelController::class, 'destroy'])->name('custom-levels.destroy');
 
     Route::get('/game/{session}', [GameController::class, 'show'])->name('game.show');
     Route::post('/game/start/{level}', [GameController::class, 'start'])->name('game.start');
     Route::post('/game/{session}/rotor', [GameController::class, 'updateRotor'])->name('game.rotor');
     Route::post('/game/{session}/substitution', [GameController::class, 'updateSubstitution'])->name('game.substitution');
+    Route::post('/game/{session}/caesar', [GameController::class, 'updateCaesar'])->name('game.caesar');
+    Route::post('/game/{session}/vigenere', [GameController::class, 'updateVigenere'])->name('game.vigenere');
     Route::post('/game/{session}/note', [GameController::class, 'addNote'])->name('game.note');
     Route::post('/game/{session}/hint', [GameController::class, 'useHint'])->name('game.hint');
     Route::post('/game/{session}/undo', [GameController::class, 'undo'])->name('game.undo');

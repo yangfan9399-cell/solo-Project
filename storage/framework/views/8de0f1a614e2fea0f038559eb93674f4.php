@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', '创建自定义谜题'); ?>
 
-@section('title', '创建自定义谜题')
-
-@section('styles')
+<?php $__env->startSection('styles'); ?>
 <style>
     .config-panel {
         background: rgba(15, 23, 42, 0.6);
@@ -32,82 +30,82 @@
         font-family: monospace;
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="flex justify-between items-center mb-4">
     <h1 style="font-size: 1.75rem;">🎨 创建自定义谜题</h1>
-    <a href="{{ route('custom-levels.index') }}" class="btn btn-secondary">返回列表</a>
+    <a href="<?php echo e(route('custom-levels.index')); ?>" class="btn btn-secondary">返回列表</a>
 </div>
 
 <div class="grid grid-2">
     <div class="card">
         <h2 class="card-title">📋 谜题配置</h2>
-        <form method="POST" action="{{ route('custom-levels.store') }}" id="levelForm">
-            @csrf
+        <form method="POST" action="<?php echo e(route('custom-levels.store')); ?>" id="levelForm">
+            <?php echo csrf_field(); ?>
 
             <div class="form-group">
                 <label>谜题名称 *</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name') }}" placeholder="例如：我的第一个替换密码" required maxlength="255">
+                <input type="text" name="name" class="form-control" value="<?php echo e(old('name')); ?>" placeholder="例如：我的第一个替换密码" required maxlength="255">
             </div>
 
             <div class="form-group">
                 <label>谜题描述 *</label>
-                <textarea name="description" class="form-control" rows="2" placeholder="介绍这个谜题的背景或提示..." required maxlength="1000">{{ old('description') }}</textarea>
+                <textarea name="description" class="form-control" rows="2" placeholder="介绍这个谜题的背景或提示..." required maxlength="1000"><?php echo e(old('description')); ?></textarea>
             </div>
 
             <div class="grid grid-2">
                 <div class="form-group">
                     <label>难度等级 *</label>
                     <select name="difficulty" class="form-control" required>
-                        @foreach($difficulties as $value => $label)
-                            <option value="{{ $value }}" {{ old('difficulty') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $difficulties; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($value); ?>" <?php echo e(old('difficulty') === $value ? 'selected' : ''); ?>><?php echo e($label); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>基础分数 *</label>
-                    <input type="number" name="base_score" class="form-control" value="{{ old('base_score', 200) }}" min="10" max="10000" required>
+                    <input type="number" name="base_score" class="form-control" value="<?php echo e(old('base_score', 200)); ?>" min="10" max="10000" required>
                 </div>
             </div>
 
             <div class="grid grid-2">
                 <div class="form-group">
                     <label>每次提示扣分 *</label>
-                    <input type="number" name="hint_penalty" class="form-control" value="{{ old('hint_penalty', 25) }}" min="5" max="500" required>
+                    <input type="number" name="hint_penalty" class="form-control" value="<?php echo e(old('hint_penalty', 25)); ?>" min="5" max="500" required>
                 </div>
                 <div class="form-group">
                     <label>时间奖励阈值（秒，可选）</label>
-                    <input type="number" name="time_bonus_threshold" class="form-control" value="{{ old('time_bonus_threshold') }}" min="30" placeholder="例如：180">
+                    <input type="number" name="time_bonus_threshold" class="form-control" value="<?php echo e(old('time_bonus_threshold')); ?>" min="30" placeholder="例如：180">
                 </div>
             </div>
 
             <div class="form-group">
                 <label>密码类型 *</label>
                 <select name="cipher_type" id="cipherType" class="form-control" required>
-                    @foreach($cipherTypes as $value => $label)
-                        <option value="{{ $value }}" {{ old('cipher_type') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $cipherTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($value); ?>" <?php echo e(old('cipher_type') === $value ? 'selected' : ''); ?>><?php echo e($label); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>明文 (Plaintext) *</label>
-                <textarea name="plaintext" id="plaintext" class="form-control" rows="4" placeholder="输入要加密的明文，只保留英文字母和空格..." required maxlength="5000">{{ old('plaintext', 'HELLO WORLD THIS IS A CUSTOM CIPHER CHALLENGE') }}</textarea>
+                <textarea name="plaintext" id="plaintext" class="form-control" rows="4" placeholder="输入要加密的明文，只保留英文字母和空格..." required maxlength="5000"><?php echo e(old('plaintext', 'HELLO WORLD THIS IS A CUSTOM CIPHER CHALLENGE')); ?></textarea>
                 <div class="text-xs text-muted mt-1">非英文字母会被自动过滤，只保留 A-Z 和空格</div>
             </div>
 
             <div id="caesarConfig" class="config-panel" style="display:none;">
                 <div class="form-group">
                     <label>凯撒偏移量 (1-25，留空随机)</label>
-                    <input type="number" name="caesar_shift" class="form-control" value="{{ old('caesar_shift') }}" min="1" max="25" placeholder="例如：7">
+                    <input type="number" name="caesar_shift" class="form-control" value="<?php echo e(old('caesar_shift')); ?>" min="1" max="25" placeholder="例如：7">
                 </div>
             </div>
 
             <div id="substitutionConfig" class="config-panel" style="display:none;">
                 <div class="form-group">
                     <label>替换密钥 (26个字母的排列，留空自动生成)</label>
-                    <input type="text" name="substitution_key" class="form-control font-mono" value="{{ old('substitution_key') }}" placeholder="例如：QWERTYUIOPASDFGHJKLZXCVBNM" maxlength="26">
+                    <input type="text" name="substitution_key" class="form-control font-mono" value="<?php echo e(old('substitution_key')); ?>" placeholder="例如：QWERTYUIOPASDFGHJKLZXCVBNM" maxlength="26">
                     <div class="text-xs text-muted mt-1">密钥用于生成替换表，系统会自动去重并补全26个字母</div>
                 </div>
             </div>
@@ -115,7 +113,7 @@
             <div id="vigenereConfig" class="config-panel" style="display:none;">
                 <div class="form-group">
                     <label>维吉尼亚关键词 (3-20个英文字母) *</label>
-                    <input type="text" name="vigenere_key" class="form-control font-mono" value="{{ old('vigenere_key', 'SECRET') }}" minlength="3" maxlength="20" pattern="[A-Za-z]+" placeholder="例如：SECRET">
+                    <input type="text" name="vigenere_key" class="form-control font-mono" value="<?php echo e(old('vigenere_key', 'SECRET')); ?>" minlength="3" maxlength="20" pattern="[A-Za-z]+" placeholder="例如：SECRET">
                 </div>
             </div>
 
@@ -123,16 +121,16 @@
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label>转轮数量 (1-5)</label>
-                        <input type="number" name="rotor_count" class="form-control" value="{{ old('rotor_count', 1) }}" min="1" max="5" id="rotorCount">
+                        <input type="number" name="rotor_count" class="form-control" value="<?php echo e(old('rotor_count', 1)); ?>" min="1" max="5" id="rotorCount">
                     </div>
                     <div class="form-group">
                         <label>随机种子 (整数，留空随机)</label>
-                        <input type="number" name="rotor_seed" class="form-control" value="{{ old('rotor_seed') }}" placeholder="例如：42">
+                        <input type="number" name="rotor_seed" class="form-control" value="<?php echo e(old('rotor_seed')); ?>" placeholder="例如：42">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>目标转轮位置 (用逗号分隔，留空随机)</label>
-                    <input type="text" name="rotor_target_positions" class="form-control font-mono" value="{{ old('rotor_target_positions') }}" placeholder="例如：5,13,21">
+                    <input type="text" name="rotor_target_positions" class="form-control font-mono" value="<?php echo e(old('rotor_target_positions')); ?>" placeholder="例如：5,13,21">
                     <div class="text-xs text-muted mt-1">解密需要将转轮调整到这些位置，每个数字 0-25，数量等于转轮数</div>
                 </div>
             </div>
@@ -141,7 +139,7 @@
                 <label>解谜提示（每行一条，可选）</label>
                 <textarea name="hints" class="form-control" rows="4" placeholder="提示1：这是关于凯撒密码的提示...
 提示2：高频字母 E 对应...
-提示3：...">{{ old('hints') }}</textarea>
+提示3：..."><?php echo e(old('hints')); ?></textarea>
                 <div class="text-xs text-muted mt-1">每使用一条提示会扣除对应的分数</div>
             </div>
 
@@ -177,9 +175,9 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     function toggleCipherConfig() {
         const type = document.getElementById('cipherType').value;
@@ -232,4 +230,6 @@
         }
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/resources/views/custom-levels/create.blade.php ENDPATH**/ ?>

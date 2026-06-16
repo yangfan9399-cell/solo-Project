@@ -274,26 +274,6 @@
 </div>
 
 <div id="gameContent" <?php if($isCompleted): ?> style="opacity: 0.6; pointer-events: none;" <?php endif; ?>>
-    <?php if($gameState['level']->cipher_type === 'rotor' && $gameState['level']->rotor_count > 0): ?>
-    <div class="card" style="margin-bottom: 1.5rem;">
-        <h2 class="card-title">⚙️ 转轮设置</h2>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
-            <?php $__currentLoopData = $gameState['rotor_positions']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $pos): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <div class="rotor-wheel">
-                    <button class="rotor-btn" onclick="adjustRotor(<?php echo e($idx); ?>, 1)">▲</button>
-                    <div class="rotor-value" id="rotor-<?php echo e($idx); ?>"><?php echo e(str_pad($pos, 2, '0', STR_PAD_LEFT)); ?></div>
-                    <button class="rotor-btn" onclick="adjustRotor(<?php echo e($idx); ?>, -1)">▼</button>
-                    <div class="text-sm text-muted mt-1">转轮 <?php echo e($idx + 1); ?></div>
-                </div>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-        </div>
-        <div class="text-center text-sm text-muted mt-3">
-            当前解密结果（基于转轮位置）:
-            <div class="cipher-display mt-2 font-mono" id="rotorPreview"><?php echo e($gameState['partial_solution']); ?></div>
-        </div>
-    </div>
-    <?php endif; ?>
-
     <div class="card" style="margin-bottom: 1.5rem;">
         <h2 class="card-title">📝 密文与解密预览</h2>
         <div style="margin-bottom: 1rem;">
@@ -334,6 +314,28 @@
     </div>
 
     <div class="grid grid-2" style="margin-bottom: 1.5rem;">
+
+        <?php if($gameState['level']->cipher_type === 'caesar'): ?>
+        <div class="card">
+            <h2 class="card-title">🔄 凯撒偏移设置</h2>
+            <p class="text-sm text-muted mb-3">调整偏移量 (0-25)，实时查看解密结果。</p>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <input type="range" id="caesarShift" min="0" max="25" value="0" 
+                           class="form-control" oninput="updateCaesarShift(this.value)">
+                </div>
+                <div class="text-3xl font-bold text-warning" id="caesarShiftValue" style="min-width: 60px; text-align: center;">00</div>
+            </div>
+            <div class="text-sm text-muted mb-2">💡 提示：尝试所有 25 个偏移，找到有意义的明文。</div>
+            <div class="flex gap-2 mt-3">
+                <button class="btn btn-secondary" style="flex: 1;" onclick="updateCaesarShift((parseInt(document.getElementById('caesarShift').value) + 1) % 26)">+1</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="updateCaesarShift((parseInt(document.getElementById('caesarShift').value) + 25) % 26)">-1</button>
+                <button class="btn btn-secondary" style="flex: 1;" onclick="updateCaesarShift(0)">重置</button>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if($gameState['level']->cipher_type === 'substitution'): ?>
         <div class="card">
             <h2 class="card-title">🔤 替换表 (Substitution Table)</h2>
             <p class="text-sm text-muted mb-3">点击字母输入对应的明文字母，留空表示未映射。</p>
@@ -364,6 +366,47 @@
                 </button>
             </div>
         </div>
+        <?php endif; ?>
+
+        <?php if($gameState['level']->cipher_type === 'vigenere'): ?>
+        <div class="card">
+            <h2 class="card-title">🔑 维吉尼亚关键词</h2>
+            <p class="text-sm text-muted mb-3">输入关键词来解密，关键词决定了每个字母的偏移量。</p>
+            <div class="form-group">
+                <label>关键词 (字母)</label>
+                <input type="text" id="vigenereKey" class="form-control font-mono" 
+                       value="" placeholder="例如：SECRET" 
+                       style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 1.1rem;"
+                       oninput="updateVigenereKey(this.value)">
+            </div>
+            <div class="text-sm text-muted mt-2">
+                💡 提示：通过频率分析和 Kasiski 检验推测关键词长度，再逐一猜出每个字母。
+            </div>
+            <div class="text-xs text-muted mt-2">
+                当前关键词长度: <span id="vigenereKeyLen" class="text-info font-bold">0</span>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if($gameState['level']->cipher_type === 'rotor'): ?>
+        <div class="card">
+            <h2 class="card-title">⚙️ 转轮设置</h2>
+            <p class="text-sm text-muted mb-3">调整每个转轮的位置，实时查看解密结果。</p>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem;">
+                <?php $__currentLoopData = $gameState['rotor_positions']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $pos): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="rotor-wheel">
+                        <button class="rotor-btn" onclick="adjustRotor(<?php echo e($idx); ?>, 1)">▲</button>
+                        <div class="rotor-value" id="rotor-<?php echo e($idx); ?>"><?php echo e(str_pad($pos, 2, '0', STR_PAD_LEFT)); ?></div>
+                        <button class="rotor-btn" onclick="adjustRotor(<?php echo e($idx); ?>, -1)">▼</button>
+                        <div class="text-sm text-muted mt-1">转轮 <?php echo e($idx + 1); ?></div>
+                    </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </div>
+            <div class="text-center text-sm text-muted">
+                💡 尝试不同组合，观察解密结果中是否出现有意义的单词片段。
+            </div>
+        </div>
+        <?php endif; ?>
 
         <div class="card">
             <h2 class="card-title">📊 分析面板</h2>
@@ -551,8 +594,26 @@
 <?php $__env->startSection('scripts'); ?>
 <script>
     const gameSessionId = <?php echo e($session->id); ?>;
+    const cipherType = '<?php echo e($gameState['level']->cipher_type); ?>';
+    const initialPartialSolution = <?php echo json_encode($gameState['partial_solution'] ?? ''); ?>;
     let startTime = <?php echo e($gameState['elapsed_seconds']); ?>;
     const isCompleted = <?php echo e($isCompleted ? 'true' : 'false'); ?>;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (initialPartialSolution) {
+            renderDecryptedText(initialPartialSolution);
+        }
+        if (cipherType === 'caesar') {
+            const shiftEl = document.getElementById('caesarShift');
+            const valEl = document.getElementById('caesarShiftValue');
+            if (shiftEl && valEl) {
+                valEl.textContent = String(shiftEl.value).padStart(2, '0');
+            }
+        }
+        if (cipherType === 'vigenere') {
+            updateVigenereKeyLen();
+        }
+    });
 
     if (!isCompleted) {
         setInterval(() => {
@@ -583,7 +644,38 @@
                 const el = document.getElementById('rotor-' + i);
                 if (el) el.textContent = String(pos).padStart(2, '0');
             });
+            if (result.partial_solution) {
+                renderDecryptedText(result.partial_solution);
+            }
         }
+    }
+
+    function renderDecryptedText(decrypted) {
+        const rotorPreview = document.getElementById('rotorPreview');
+        if (rotorPreview && cipherType === 'rotor') {
+            rotorPreview.textContent = decrypted;
+        }
+
+        const plainTextDisplay = document.getElementById('plainTextDisplay');
+        if (!plainTextDisplay) return;
+
+        if (cipherType === 'substitution') {
+            return;
+        }
+
+        let html = '';
+        for (let i = 0; i < decrypted.length; i++) {
+            const ch = decrypted[i];
+            if (ch === ' ') {
+                html += '<span class="cipher-char space">&nbsp;</span>';
+            } else if (/[A-Za-z]/.test(ch)) {
+                const isDecrypted = ch && cipherType !== 'substitution';
+                html += `<span class="cipher-char ${isDecrypted ? 'decrypted' : 'unknown'}">${ch.toUpperCase()}</span>`;
+            } else {
+                html += `<span class="cipher-char decrypted">${ch}</span>`;
+            }
+        }
+        plainTextDisplay.innerHTML = html;
     }
 
     async function updateSubstitution(cipherChar, plainChar) {
@@ -637,6 +729,46 @@
             });
         });
         setTimeout(() => location.reload(), 500);
+    }
+
+    let caesarDebounce = null;
+    async function updateCaesarShift(shift) {
+        shift = parseInt(shift);
+        if (isNaN(shift) || shift < 0 || shift > 25) return;
+
+        const shiftEl = document.getElementById('caesarShift');
+        const valEl = document.getElementById('caesarShiftValue');
+        if (shiftEl) shiftEl.value = shift;
+        if (valEl) valEl.textContent = String(shift).padStart(2, '0');
+
+        if (caesarDebounce) clearTimeout(caesarDebounce);
+        caesarDebounce = setTimeout(async () => {
+            const result = await apiCall(`/game/${gameSessionId}/caesar`, 'POST', { shift });
+            if (result.success && result.partial_solution) {
+                renderDecryptedText(result.partial_solution);
+            }
+        }, 150);
+    }
+
+    let vigenereDebounce = null;
+    function updateVigenereKeyLen() {
+        const keyEl = document.getElementById('vigenereKey');
+        const lenEl = document.getElementById('vigenereKeyLen');
+        if (keyEl && lenEl) {
+            lenEl.textContent = keyEl.value.replace(/[^A-Za-z]/g, '').length;
+        }
+    }
+    async function updateVigenereKey(key) {
+        updateVigenereKeyLen();
+        key = key.replace(/[^A-Za-z]/g, '').toUpperCase();
+
+        if (vigenereDebounce) clearTimeout(vigenereDebounce);
+        vigenereDebounce = setTimeout(async () => {
+            const result = await apiCall(`/game/${gameSessionId}/vigenere`, 'POST', { key });
+            if (result.success && result.partial_solution) {
+                renderDecryptedText(result.partial_solution);
+            }
+        }, 300);
     }
 
     async function addNote(e) {

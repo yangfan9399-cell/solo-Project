@@ -44,9 +44,11 @@ class GameService
             'hints_used' => 0,
             'rotor_positions' => $initialRotorPositions,
             'substitution_table' => [],
-            'caesar_shift' => 0,
-            'vigenere_key' => '',
             'partial_solution' => '',
+            'metadata' => [
+                'caesar_shift' => 0,
+                'vigenere_key' => '',
+            ],
             'started_at' => now(),
         ]);
 
@@ -104,6 +106,83 @@ class GameService
             'success' => true,
             'rotor_positions' => $positions,
             'partial_solution' => $session->partial_solution,
+        ];
+    }
+
+    public function updateCaesar(GameSession $session, int $shift): array
+    {
+        if ($session->status !== 'in_progress') {
+            return ['success' => false, 'message' => '游戏已结束'];
+        }
+
+        $shift = (($shift % 26) + 26) % 26;
+        $oldShift = $session->metadata['caesar_shift'] ?? 0;
+        $oldPartial = $session->partial_solution;
+
+        $level = $session->level;
+        $decrypted = $this->cipherService->caesarDecrypt($level->ciphertext, $shift);
+
+        $metadata = $session->metadata ?? [];
+        $metadata['caesar_shift'] = $shift;
+        $session->metadata = $metadata;
+        $session->partial_solution = $decrypted;
+        $session->save();
+
+        ActionHistory::create([
+            'game_session_id' => $session->id,
+            'action_type' => 'caesar_shift',
+            'before_state' => ['caesar_shift' => $oldShift, 'partial_solution' => $oldPartial],
+            'after_state' => ['caesar_shift' => $shift, 'partial_solution' => $decrypted],
+            'description' => "调整凯撒偏移量为 {$shift}",
+            'score_change' => 0,
+            'created_at' => now(),
+        ]);
+
+        return [
+            'success' => true,
+            'caesar_shift' => $shift,
+            'partial_solution' => $decrypted,
+        ];
+    }
+
+    public function updateVigenere(GameSession $session, string $key): array
+    {
+        if ($session->status !== 'in_progress') {
+            return ['success' => false, 'message' => '游戏已结束'];
+        }
+
+        $key = strtoupper(preg_replace('/[^A-Za-z]/', '', $key));
+        $oldKey = $session->metadata['vigenere_key'] ?? '';
+        $oldPartial = $session->partial_solution;
+
+        $level = $session->level;
+
+        if (empty($key)) {
+            $decrypted = '';
+        } else {
+            $decrypted = $this->cipherService->vigenereDecrypt($level->ciphertext, $key);
+        }
+
+        $metadata = $session->metadata ?? [];
+        $metadata['vigenere_key'] = $key;
+        $session->metadata = $metadata;
+        $session->partial_solution = $decrypted;
+        $session->save();
+
+        ActionHistory::create([
+            'game_session_id' => $session->id,
+            'action_type' => 'vigenere_key',
+            'before_state' => ['vigenere_key' => $oldKey, 'partial_solution' => $oldPartial],
+            'after_state' => ['vigenere_key' => $key, 'partial_solution' => $decrypted],
+            'description' => "更新维吉尼亚关键词为 {$key}",
+            'score_change' => 0,
+            'created_at' => now(),
+        ]);
+
+        return [
+            'success' => true,
+            'vigenere_key' => $key,
+            'partial_solution' => $decrypted,
         ];
     }
 
@@ -284,6 +363,26 @@ class GameService
                     $session->hints_used -= 1;
                     $penalty = $lastAction->score_change;
                     $session->penalty_score = max(0, $session->penalty_score + $penalty);
+                }
+                break;
+            case 'caesar_shift':
+                if (isset($lastAction->before_state['caesar_shift'])) {
+                    $metadata = $session->metadata ?? [];
+                    $metadata['caesar_shift'] = $lastAction->before_state['caesar_shift'];
+                    $session->metadata = $metadata;
+                    if (isset($lastAction->before_state['partial_solution'])) {
+                        $session->partial_solution = $lastAction->before_state['partial_solution'];
+                    }
+                }
+                break;
+            case 'vigenere_key':
+                if (isset($lastAction->before_state['vigenere_key'])) {
+                    $metadata = $session->metadata ?? [];
+                    $metadata['vigenere_key'] = $lastAction->before_state['vigenere_key'];
+                    $session->metadata = $metadata;
+                    if (isset($lastAction->before_state['partial_solution'])) {
+                        $session->partial_solution = $lastAction->before_state['partial_solution'];
+                    }
                 }
                 break;
         }
