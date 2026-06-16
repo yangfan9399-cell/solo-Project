@@ -1,4 +1,5 @@
-import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
+import initSqlJs from 'sql.js';
+import type { Database as SqlJsDatabase } from 'sql.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -7,14 +8,6 @@ let initPromise: Promise<void> | null = null;
 
 const DB_DIR = path.resolve(process.cwd(), 'data');
 const DB_PATH = path.join(DB_DIR, 'game.db');
-
-const SQL_WASM_PATH = path.resolve(
-  process.cwd(),
-  'node_modules',
-  'sql.js',
-  'dist',
-  'sql-wasm.wasm'
-);
 
 function loadFromDisk(): Buffer | undefined {
   if (fs.existsSync(DB_PATH)) {
@@ -84,8 +77,8 @@ export interface StatementResult {
 }
 
 export interface PreparedStmt {
-  get(...params: unknown[]): Record<string, unknown> | undefined;
-  all(...params: unknown[]): Record<string, unknown>[];
+  get(...params: unknown[]): any;
+  all(...params: unknown[]): any[];
   run(...params: unknown[]): StatementResult;
 }
 
@@ -93,27 +86,27 @@ export function prepare(sql: string): PreparedStmt {
   const db = ensureDb();
 
   return {
-    get(...params: unknown[]): Record<string, unknown> | undefined {
+    get(...params: unknown[]): any {
       const stmt = db.prepare(sql);
       if (params.length > 0) {
         stmt.bind(params as (string | number | null | Uint8Array)[]);
       }
-      let result: Record<string, unknown> | undefined;
+      let result: any;
       if (stmt.step()) {
-        result = stmt.getAsObject() as Record<string, unknown>;
+        result = stmt.getAsObject();
       }
       stmt.free();
       return result;
     },
 
-    all(...params: unknown[]): Record<string, unknown>[] {
-      const results: Record<string, unknown>[] = [];
+    all(...params: unknown[]): any[] {
+      const results: any[] = [];
       const stmt = db.prepare(sql);
       if (params.length > 0) {
         stmt.bind(params as (string | number | null | Uint8Array)[]);
       }
       while (stmt.step()) {
-        results.push(stmt.getAsObject() as Record<string, unknown>);
+        results.push(stmt.getAsObject());
       }
       stmt.free();
       return results;
