@@ -236,6 +236,8 @@ class ScoreRecord(models.Model):
         base_score = 0
         for enemy in session.enemies.filter(is_alive=False):
             base_score += enemy.score_value
+        for task in session.tasks.filter(status='completed'):
+            base_score += task.reward_score
         base_score += session.traps.count() * 20
         base_score += session.tasks.filter(status='completed').count() * 50
         if session.status == 'won':

@@ -72,7 +72,27 @@ def run_tests():
             break
 
     print(f"\n✅ 5. 测试反作弊校验...")
-    client_checksum = session.generate_server_checksum()
+    import hashlib
+    import json
+
+    server_checksum = session.generate_server_checksum()
+
+    client_data = {
+        'session_id': session.id,
+        'turn': session.current_turn,
+        'wall_health': session.wall_health,
+        'gold': session.gold,
+        'score': session.score,
+        'enemies_killed': session.enemies_killed,
+        'trap_count': session.traps.count(),
+        'status': session.status,
+    }
+    client_raw = json.dumps(client_data, sort_keys=True)
+    client_checksum = hashlib.sha256(client_raw.encode()).hexdigest()
+    print(f"   - 服务器校验: {server_checksum[:16]}...")
+    print(f"   - 客户端校验: {client_checksum[:16]}...")
+    print(f"   - 校验值一致: {'是' if server_checksum == client_checksum else '否'}")
+
     validation = game_logic.validate_client_state(session, {'checksum': client_checksum})
     print(f"   - 正确校验: {'通过' if validation['valid'] else '失败'}")
 

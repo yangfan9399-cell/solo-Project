@@ -40,7 +40,7 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-function generateClientChecksum(state) {
+async function generateClientChecksum(state) {
     const data = {
         session_id: SESSION_ID,
         turn: state.turn,
@@ -52,22 +52,15 @@ function generateClientChecksum(state) {
         status: state.status,
     };
     const raw = JSON.stringify(data, Object.keys(data).sort());
-    return sha256(raw);
+    return await sha256(raw);
 }
 
-function sha256(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    let hex = Math.abs(hash).toString(16).padStart(8, '0');
-    for (let i = 0; i < 7; i++) {
-        hash = ((hash << 5) - hash) + i;
-        hex += Math.abs(hash).toString(16).padStart(8, '0');
-    }
-    return hex.padEnd(64, '0');
+async function sha256(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function fetchGameState() {
@@ -108,9 +101,36 @@ function renderGame() {
     renderGrid();
     renderTasks();
     renderActionLog();
+    updateActionButtons();
 
     if (gameState.status === 'won' || gameState.status === 'lost') {
         showGameOverModal();
+    }
+}
+
+function updateActionButtons() {
+    const startBtn = document.getElementById('start-attack-btn');
+    const nextBtn = document.getElementById('next-turn-btn');
+    const reportBtn = document.getElementById('report-btn');
+    const replayBtn = document.getElementById('replay-btn');
+    const restartBtn = document.getElementById('restart-btn');
+
+    if (!startBtn || !nextBtn) return;
+
+    startBtn.classList.add('hidden');
+    nextBtn.classList.add('hidden');
+    reportBtn.classList.add('hidden');
+    replayBtn.classList.add('hidden');
+    restartBtn.classList.add('hidden');
+
+    if (gameState.status === 'setup') {
+        startBtn.classList.remove('hidden');
+    } else if (gameState.status === 'playing') {
+        nextBtn.classList.remove('hidden');
+    } else if (gameState.status === 'won' || gameState.status === 'lost') {
+        reportBtn.classList.remove('hidden');
+        replayBtn.classList.remove('hidden');
+        restartBtn.classList.remove('hidden');
     }
 }
 
@@ -459,7 +479,7 @@ async function handleNextTurn() {
     }
 
     try {
-        const clientChecksum = generateClientChecksum(gameState);
+        const clientChecksum = await generateClientChecksum(gameState);
         const response = await fetch(`/api/next_turn/${SESSION_ID}/`, {
             method: 'POST',
             headers: {

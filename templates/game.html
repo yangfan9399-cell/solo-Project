@@ -60,33 +60,27 @@
                  data-width="{{ grid_width }}" data-height="{{ grid_height }}" data-wall-x="{{ wall_x }}">
             </div>
 
-            <div class="mt-6 flex flex-wrap gap-4 justify-center">
-                {% if session.status == 'setup' %}
+            <div class="mt-6 flex flex-wrap gap-4 justify-center" id="action-buttons">
                 <button id="start-attack-btn"
                         class="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
                     ⚔️ 开始进攻！
                 </button>
-                {% endif %}
-                {% if session.status == 'playing' %}
                 <button id="next-turn-btn"
-                        class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                        class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg hidden">
                     ▶️ 下一回合
                 </button>
-                {% endif %}
-                {% if session.status == 'won' or session.status == 'lost' %}
-                <a href="{% url 'battle_report' session.id %}"
-                   class="px-8 py-4 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                <a id="report-btn" href="{% url 'battle_report' session.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg hidden">
                     📊 查看战报
                 </a>
-                <a href="{% url 'replay_view' session.id %}"
-                   class="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                <a id="replay-btn" href="{% url 'replay_view' session.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg hidden">
                     🎬 回放战斗
                 </a>
-                <a href="{% url 'start_game' session.level.id %}"
-                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                <a id="restart-btn" href="{% url 'start_game' session.level.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg hidden">
                     🔄 重新开始
                 </a>
-                {% endif %}
             </div>
         </div>
     </div>

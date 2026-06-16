@@ -287,6 +287,9 @@ def move_enemies(session):
             wall_damage += enemy.damage
             enemy.is_alive = False
             enemy.position_x = WALL_POSITION_X
+            session.score += enemy.score_value
+            session.gold += enemy.gold_value
+            session.enemies_killed += 1
             ActionHistory.objects.create(
                 game_session=session,
                 turn=session.current_turn,
@@ -295,6 +298,8 @@ def move_enemies(session):
                     'enemy_type': enemy.enemy_type,
                     'damage': enemy.damage,
                     'enemy_id': enemy.id,
+                    'score_gained': enemy.score_value,
+                    'gold_gained': enemy.gold_value,
                 }
             )
         else:
@@ -375,7 +380,49 @@ def trigger_traps(session):
 
 
 def check_game_end(session):
+    def calculate_final_score(session, is_victory):
+        trap_bonus = session.traps.count() * 20
+        task_bonus = session.tasks.filter(status='completed').count() * 50
+        session.score += trap_bonus
+        session.score += task_bonus
+        ActionHistory.objects.create(
+            game_session=session,
+            turn=session.current_turn,
+            action_type='next_turn',
+            details={
+                'message': f'结算奖励: 陷阱×20 (+{trap_bonus}), 任务×50 (+{task_bonus})',
+                'trap_bonus': trap_bonus,
+                'task_bonus': task_bonus,
+            }
+        )
+        if is_victory:
+            victory_bonus = session.level.base_reward * 2
+            wall_bonus = int(session.wall_health * 2)
+            session.score += victory_bonus
+            session.score += wall_bonus
+            ActionHistory.objects.create(
+                game_session=session,
+                turn=session.current_turn,
+                action_type='next_turn',
+                details={
+                    'message': f'胜利奖励: 关卡×2 (+{victory_bonus}), 城墙×2 (+{wall_bonus})',
+                    'victory_bonus': victory_bonus,
+                    'wall_bonus': wall_bonus,
+                }
+            )
+        else:
+            session.score = int(session.score * 0.5)
+            ActionHistory.objects.create(
+                game_session=session,
+                turn=session.current_turn,
+                action_type='next_turn',
+                details={
+                    'message': '失败惩罚: 分数 ×0.5',
+                }
+            )
+
     if session.wall_health <= 0:
+        calculate_final_score(session, False)
         session.status = 'lost'
         session.completed_at = timezone.now()
         session.save()
@@ -387,6 +434,7 @@ def check_game_end(session):
         waves = session.level.enemy_waves
         max_turn = max(w['turn'] for w in waves) if waves else 0
         if session.current_turn > max_turn + 5:
+            calculate_final_score(session, True)
             session.status = 'won'
             session.completed_at = timezone.now()
             session.save()
