@@ -311,6 +311,7 @@ export default class extends Controller {
 
     if (gameSession.berth_weights) {
       this.updateBerthWeights(gameSession.berth_weights)
+      this.updateContainerPositions(gameSession.berth_weights, gameSession.available_container_ids)
     }
 
     if (gameSession.operations) {
@@ -320,6 +321,133 @@ export default class extends Controller {
     if (this.timeRemainingValue !== gameSession.time_remaining) {
       this.timeRemainingValue = gameSession.time_remaining
       this.updateTimerDisplay()
+    }
+  }
+
+  updateContainerPositions(berths, availableContainerIds) {
+    const containerPool = document.getElementById('containers-pool')
+    if (!containerPool) return
+
+    const allContainerEls = new Map()
+    document.querySelectorAll('.container-card, .placed-container').forEach(el => {
+      const id = el.dataset.containerId
+      if (id) allContainerEls.set(id, el)
+    })
+
+    berths.forEach(berth => {
+      const berthEl = document.querySelector(`[data-berth-id="${berth.id}"]`)
+      if (!berthEl) return
+
+      const berthContainer = berthEl.querySelector('.min-h-\\[80px\\]')
+      if (!berthContainer) return
+
+      const placedContainerIds = berth.container_ids || []
+      placedContainerIds.forEach(containerId => {
+        const containerEl = allContainerEls.get(String(containerId))
+        if (containerEl) {
+          const placedEl = this.convertToPlacedContainer(containerEl, berth.id)
+          berthContainer.appendChild(placedEl)
+          allContainerEls.set(String(containerId), placedEl)
+        }
+      })
+    })
+
+    availableContainerIds.forEach(containerId => {
+      let containerEl = allContainerEls.get(String(containerId))
+      if (containerEl && containerEl.classList.contains('placed-container')) {
+        containerEl = this.convertToPoolContainer(containerEl)
+        allContainerEls.set(String(containerId), containerEl)
+      }
+      if (containerEl && !containerPool.contains(containerEl)) {
+        containerPool.appendChild(containerEl)
+      }
+    })
+
+    this.updateEmptyState(containerPool, availableContainerIds)
+  }
+
+  convertToPlacedContainer(poolEl, berthId) {
+    const containerId = poolEl.dataset.containerId
+    const color = poolEl.dataset.containerColor
+    const label = poolEl.querySelector('span.font-bold')?.textContent || `C-${containerId}`
+    const weight = poolEl.dataset.containerWeight
+
+    const placedEl = document.createElement('div')
+    placedEl.className = `placed-container bg-slate-600/80 rounded-lg p-2 border border-${color}-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-${color}-500/20 cursor-pointer animate-fade-in`
+    placedEl.dataset.containerId = containerId
+    placedEl.dataset.berthId = berthId
+    placedEl.dataset.action = 'click->game#removeContainer'
+
+    placedEl.innerHTML = `
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-bold">${label}</span>
+        <span class="text-slate-400">${weight}吨</span>
+      </div>
+      <div class="text-xs text-slate-400 mt-1">
+        目的地: <span class="text-purple-400">${poolEl.dataset.containerDestination}</span>
+        <span class="ml-2 text-red-400 opacity-0 hover:opacity-100 transition">点击移除</span>
+      </div>
+    `
+    return placedEl
+  }
+
+  convertToPoolContainer(placedEl) {
+    const containerId = placedEl.dataset.containerId
+    const color = placedEl.classList.toString().match(/border-(\w+)-500/)?.[1] || 'cyan'
+    const label = placedEl.querySelector('span.font-bold')?.textContent || `C-${containerId}`
+    const weight = placedEl.querySelector('span.text-slate-400')?.textContent?.replace('吨', '') || '0'
+    const destination = placedEl.querySelector('span.text-purple-400')?.textContent || ''
+
+    const poolEl = document.createElement('div')
+    poolEl.className = `container-card cursor-grab active:cursor-grabbing bg-slate-700/80 hover:bg-slate-600/80 rounded-lg p-3 border border-slate-600 hover:border-${color}-400/50 transition-all duration-200 shadow-lg hover:shadow-${color}-500/20 animate-fade-in`
+    poolEl.draggable = true
+    poolEl.dataset.containerId = containerId
+    poolEl.dataset.containerWeight = weight
+    poolEl.dataset.containerDestination = destination
+    poolEl.dataset.containerPriority = '1'
+    poolEl.dataset.containerColor = color
+    poolEl.dataset.action = 'dragstart->game#dragStart dragend->game#dragEnd'
+
+    poolEl.innerHTML = `
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-bold text-sm">${label}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-${color}-500/30 text-${color}-400">
+          P1
+        </span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-slate-400">重量:</span>
+          <span class="font-mono font-bold text-cyan-400">${weight}</span>
+        </div>
+        <div>
+          <span class="text-slate-400">目的地:</span>
+          <span class="font-mono text-purple-400">${destination}</span>
+        </div>
+      </div>
+      <div class="mt-2 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-${color}-400 to-${color}-600 rounded-full"
+             style="width: ${Math.min(parseInt(weight) / 50 * 100, 100)}%"></div>
+      </div>
+    `
+    return poolEl
+  }
+
+  updateEmptyState(containerPool, availableContainerIds) {
+    const emptyState = containerPool.querySelector('.text-center.py-8')
+    if (availableContainerIds.length === 0 && this.isPlaying) {
+      if (!emptyState) {
+        const emptyEl = document.createElement('div')
+        emptyEl.className = 'text-center text-slate-400 py-8'
+        emptyEl.innerHTML = `
+          <div class="text-4xl mb-2">✨</div>
+          <div>所有货柜已放置！</div>
+          <div class="text-sm mt-1">正在计算最终得分...</div>
+        `
+        containerPool.appendChild(emptyEl)
+      }
+    } else if (emptyState) {
+      emptyState.remove()
     }
   }
 

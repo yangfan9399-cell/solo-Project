@@ -93,7 +93,7 @@
             </div>
             <div class="min-h-[80px] space-y-2">
               <% placed_here.each do |placement| %>
-                <%= render partial: 'placed_container', container: placement.container, berth: berth %>
+                <%= render partial: 'placed_container', locals: { container: placement.container, berth: berth } %>
               <% end %>
             </div>
             <div class="berth-drop-hint text-xs text-slate-500 mt-2 text-center hidden">
@@ -110,7 +110,7 @@
       </h3>
       <div id="containers-pool" class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20 min-h-[300px]">
         <% @game_session.available_containers.each do |container| %>
-          <%= render partial: 'container', container: container %>
+          <%= render partial: 'container', locals: { container: container } %>
         <% end %>
         <% if @game_session.available_containers.empty? && @game_session.status == 'playing' %>
           <div class="text-center text-slate-400 py-8">

@@ -972,3 +972,458 @@ Started GET "/@vite/client" for ::1 at 2026-06-16 09:35:09 +0800
   
 ActionController::RoutingError (No route matches [GET] "/@vite/client"):
   
+Started GET "/" for ::1 at 2026-06-16 09:41:40 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.4ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.2ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 6.8ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 13.7ms | GC: 0.0ms)
+Completed 200 OK in 74ms (Views: 15.8ms | ActiveRecord: 2.6ms (6 queries, 1 cached) | GC: 9.1ms)
+
+
+Started GET "/levels" for ::1 at 2026-06-16 09:41:40 +0800
+Processing by LevelsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC, "levels"."name" ASC /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:12
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  Rendered levels/index.html.erb within layouts/application (Duration: 8.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 9.9ms | GC: 0.0ms)
+Completed 200 OK in 13ms (Views: 9.5ms | ActiveRecord: 1.0ms (16 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/levels/1" for ::1 at 2026-06-16 09:41:40 +0800
+Processing by LevelsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:20:in 'LevelsController#set_level'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:14:in 'LevelsController#show'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/show.html.erb within layouts/application
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 ORDER BY "containers"."id" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:60
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:88
+  Rendered levels/show.html.erb within layouts/application (Duration: 13.2ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 14.0ms | GC: 0.0ms)
+Completed 200 OK in 21ms (Views: 13.9ms | ActiveRecord: 0.8ms (7 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/levels/1" for ::1 at 2026-06-16 09:42:03 +0800
+Processing by LevelsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.3ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:20:in 'LevelsController#set_level'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:14:in 'LevelsController#show'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/show.html.erb within layouts/application
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 ORDER BY "containers"."id" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:60
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:88
+  Rendered levels/show.html.erb within layouts/application (Duration: 2.1ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 3.0ms | GC: 0.0ms)
+Completed 200 OK in 12ms (Views: 3.5ms | ActiveRecord: 0.6ms (7 queries, 1 cached) | GC: 0.0ms)
+
+
+Started POST "/levels/1/game_sessions" for ::1 at 2026-06-16 09:42:03 +0800
+Processing by GameSessionsController#create as */*
+  Parameters: {"authenticity_token" => "[FILTERED]", "level_id" => "1"}
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:35:in 'GameSessionsController#create'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:161:in 'GameSessionsController#current_player'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'playing' ORDER BY "game_sessions"."id" ASC LIMIT 1 /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:38:in 'GameSessionsController#create'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:41:in 'GameSessionsController#create'
+  [1m[36mGameSession Create (1.7ms)[0m  [1m[32mINSERT INTO "game_sessions" ("player_id", "level_id", "score", "started_at", "finished_at", "status", "time_remaining", "created_at", "updated_at") VALUES (1, 1, 0, '2026-06-16 01:42:03.803959', NULL, 'playing', 180, '2026-06-16 01:42:03.803845', '2026-06-16 01:42:03.803845') RETURNING "id" /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:41:in 'GameSessionsController#create'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT TRANSACTION /*action='create',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:41:in 'GameSessionsController#create'
+Redirected to http://localhost:3000/game_sessions/1
+↳ app/controllers/game_sessions_controller.rb:48:in 'GameSessionsController#create'
+Completed 302 Found in 16ms (ActiveRecord: 2.3ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/game_sessions/1" for ::1 at 2026-06-16 09:42:19 +0800
+Processing by GameSessionsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mGameSession Load (0.2ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:18:in 'GameSessionsController#show'
+  [1m[36mContainerPlacement Pluck (0.2ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:50:in 'GameScoreCalculator#calculate_detailed'
+  Rendering layout layouts/application.html.erb
+  Rendering game_sessions/show.html.erb within layouts/application
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:51
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:51
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:69
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:70
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 3 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:113
+  Rendered game_sessions/_container.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:116
+  [1m[36mOperation Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:146
+  [1m[36mOperation Load (0.0ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:156
+  Rendered game_sessions/show.html.erb within layouts/application (Duration: 16.0ms | GC: 0.0ms)
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 16.9ms | GC: 0.0ms)
+Completed 200 OK in 37ms (Views: 17.0ms | ActiveRecord: 1.6ms (22 queries, 3 cached) | GC: 0.0ms)
+
+
+Started POST "/game_sessions/1/place_container" for ::1 at 2026-06-16 09:42:19 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 1, "berth_id" => 1, "id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:52:in 'GameSessionsController#place_container'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:53:in 'GameSessionsController#place_container'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Maximum (0.3ms)[0m  [1m[34mSELECT MAX("operations"."sequence") FROM "operations" WHERE "operations"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Create (0.1ms)[0m  [1m[32mINSERT INTO "operations" ("game_session_id", "container_id", "berth_id", "action_type", "sequence", "timestamp", "undone", "created_at", "updated_at") VALUES (1, 1, 1, 'place', 1, '2026-06-16 01:42:19.767650', FALSE, '2026-06-16 01:42:19.767937', '2026-06-16 01:42:19.767937') RETURNING "id" /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."container_id" = 1 AND "container_placements"."game_session_id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Create (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("game_session_id", "container_id", "berth_id", "placed_at", "created_at", "updated_at") VALUES (1, 1, 1, '2026-06-16 01:42:19.769796', '2026-06-16 01:42:19.770443', '2026-06-16 01:42:19.770443') RETURNING "id" /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 474, "updated_at" = '2026-06-16 01:42:19.776030' WHERE "game_sessions"."id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:54:in 'GameSession#check_completion!'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT TRANSACTION /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:31:in 'OperationProcessor#place_container'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.1ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:171:in 'GameSessionsController#game_session_json'
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:178:in 'Enumerable#map'
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 2 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 3 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mOperation Load (0.0ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC LIMIT 20 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:189:in 'Enumerable#map'
+Completed 200 OK in 25ms (Views: 0.2ms | ActiveRecord: 1.7ms (30 queries, 2 cached) | GC: 0.0ms)
+
+
+Started POST "/game_sessions/1/place_container" for ::1 at 2026-06-16 09:42:33 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 2, "berth_id" => 1, "id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 2 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:52:in 'GameSessionsController#place_container'
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:53:in 'GameSessionsController#place_container'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:171:in 'GameSessionsController#game_session_json'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:178:in 'Enumerable#map'
+  [1m[36mCACHE ContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.1ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 2 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 3 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mOperation Load (0.7ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC LIMIT 20 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:189:in 'Enumerable#map'
+Completed 200 OK in 29ms (Views: 0.1ms | ActiveRecord: 1.3ms (17 queries, 3 cached) | GC: 18.8ms)
+
+
+Started POST "/game_sessions/1/place_container" for ::1 at 2026-06-16 09:42:46 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 3, "berth_id" => 1, "id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 3 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:52:in 'GameSessionsController#place_container'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:53:in 'GameSessionsController#place_container'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.2ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Maximum (0.4ms)[0m  [1m[34mSELECT MAX("operations"."sequence") FROM "operations" WHERE "operations"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Create (0.1ms)[0m  [1m[32mINSERT INTO "operations" ("game_session_id", "container_id", "berth_id", "action_type", "sequence", "timestamp", "undone", "created_at", "updated_at") VALUES (1, 3, 1, 'place', 2, '2026-06-16 01:42:46.760712', FALSE, '2026-06-16 01:42:46.760924', '2026-06-16 01:42:46.760924') RETURNING "id" /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."container_id" = 3 AND "container_placements"."game_session_id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Create (0.1ms)[0m  [1m[32mINSERT INTO "container_placements" ("game_session_id", "container_id", "berth_id", "placed_at", "created_at", "updated_at") VALUES (1, 3, 1, '2026-06-16 01:42:46.761700', '2026-06-16 01:42:46.762296', '2026-06-16 01:42:46.762296') RETURNING "id" /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (1.3ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" IN (1, 3) /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.1ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 850, "updated_at" = '2026-06-16 01:42:46.768103' WHERE "game_sessions"."id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:54:in 'GameSession#check_completion!'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT TRANSACTION /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:31:in 'OperationProcessor#place_container'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:171:in 'GameSessionsController#game_session_json'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:178:in 'Enumerable#map'
+  [1m[36mContainerPlacement Sum (0.2ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 2 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 3 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mOperation Load (0.0ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC LIMIT 20 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:189:in 'Enumerable#map'
+Completed 200 OK in 24ms (Views: 0.1ms | ActiveRecord: 3.5ms (30 queries, 2 cached) | GC: 2.9ms)
+
+
+Started POST "/game_sessions/1/undo" for ::1 at 2026-06-16 09:42:46 +0800
+Processing by GameSessionsController#undo as */*
+  Parameters: {"id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.2ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mOperation Load (1.1ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" DESC LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:22:in 'GameSession#last_operation'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:115:in 'block in OperationProcessor#undo'
+  [1m[36mContainer Load (1.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 3 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:115:in 'block in OperationProcessor#undo'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:116:in 'block in OperationProcessor#undo'
+  [1m[36mContainerPlacement Load (0.1ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."container_id" = 3 AND "container_placements"."berth_id" = 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:114:in 'block in OperationProcessor#undo'
+  [1m[36mContainerPlacement Destroy (0.0ms)[0m  [1m[31mDELETE FROM "container_placements" WHERE "container_placements"."id" = 2 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:118:in 'block in OperationProcessor#undo'
+  [1m[36mOperation Update (0.1ms)[0m  [1m[33mUPDATE "operations" SET "undone" = TRUE, "updated_at" = '2026-06-16 01:42:46.818902' WHERE "operations"."id" = 2 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/operation.rb:18:in 'Operation#undo!'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:15:in 'GameScoreCalculator#initialize'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.2ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.1ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 474, "updated_at" = '2026-06-16 01:42:46.824657' WHERE "game_sessions"."id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/operation_processor.rb:111:in 'OperationProcessor#undo'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 1[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:171:in 'GameSessionsController#game_session_json'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:178:in 'Enumerable#map'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 2 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 1 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" LEFT OUTER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."game_session_id" = 1 AND "container_placements"."berth_id" = 3 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:183:in 'block in GameSessionsController#berth_weights_json'
+  [1m[36mOperation Load (0.0ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC LIMIT 20 /*action='undo',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:189:in 'Enumerable#map'
+Completed 200 OK in 36ms (Views: 0.3ms | ActiveRecord: 3.6ms (26 queries, 1 cached) | GC: 1.5ms)
+
+
+Started GET "/" for ::1 at 2026-06-16 09:43:10 +0800
+Processing by HomeController#index as HTML
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 2.6ms | GC: 0.7ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 3.9ms | GC: 0.7ms)
+Completed 200 OK in 13ms (Views: 4.3ms | ActiveRecord: 0.5ms (5 queries, 1 cached) | GC: 1.3ms)
+
+
+Started GET "/@vite/client" for ::1 at 2026-06-16 09:43:11 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
