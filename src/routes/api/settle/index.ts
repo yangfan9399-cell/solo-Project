@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@builder.io/qwik-city';
-import type { GameSession, SettleResult, OrderWithStatus } from '~/game/types';
+import type { GameSession, SettleResult } from '~/game/types';
 import { INITIAL_LEVELS } from '~/game/levels';
+import { clamp } from '~/game/engine';
 
 export const onPost: RequestHandler = async ({ request, json }) => {
   try {
@@ -8,16 +9,20 @@ export const onPost: RequestHandler = async ({ request, json }) => {
     const session = body.session as GameSession;
 
     if (!session) {
-      return json(400, { error: '缺少游戏会话数据' });
+      json(400, { error: '缺少游戏会话数据' });
+      return;
     }
 
     const level = INITIAL_LEVELS.find((l) => l.id === session.levelId);
     if (!level) {
-      return json(400, { error: '无效的关卡 ID' });
+      json(400, { error: '无效的关卡 ID' });
+      return;
     }
 
     const allCompleted = session.completedOrders || [];
-    const pendingOrders = session.orders.filter((o) => o.status === 'accepted' || o.status === 'pending');
+    const pendingOrders = session.orders.filter(
+      (o) => o.status === 'accepted' || o.status === 'pending'
+    );
     const expiredOrders = pendingOrders.filter((o) => o.deadline < session.currentDay);
 
     const ordersCompleted = allCompleted.filter((o) => o.status === 'completed').length;
@@ -56,9 +61,15 @@ export const onPost: RequestHandler = async ({ request, json }) => {
 
     const accuracyScore = averageAccuracy * 3;
     const copperScore = clamp((session.copper / level.passCondition.minCopper) * 30, 0, 50);
-    const reputationScore = clamp((session.reputation / level.passCondition.minReputation) * 30, 0, 30);
+    const reputationScore = clamp(
+      (session.reputation / level.passCondition.minReputation) * 30,
+      0,
+      30
+    );
     const completionBonus = won ? 100 : 0;
-    const serverCalculatedScore = Math.round(accuracyScore + copperScore + reputationScore + completionBonus);
+    const serverCalculatedScore = Math.round(
+      accuracyScore + copperScore + reputationScore + completionBonus
+    );
 
     let message = '';
     if (won) {
@@ -67,7 +78,8 @@ export const onPost: RequestHandler = async ({ request, json }) => {
       const reasons: string[] = [];
       if (!minReputationMet) reasons.push(`声望不足（需${level.passCondition.minReputation}）`);
       if (!minCopperMet) reasons.push(`铜钱不足（需${level.passCondition.minCopper}）`);
-      if (!minAccuracyMet) reasons.push(`精度不足（需${Math.round(level.passCondition.minAccuracy * 100)}%）`);
+      if (!minAccuracyMet)
+        reasons.push(`精度不足（需${Math.round(level.passCondition.minAccuracy * 100)}%）`);
       message = `未能通过「${level.name}」：${reasons.join('、')}`;
     }
 
@@ -94,13 +106,13 @@ export const onPost: RequestHandler = async ({ request, json }) => {
       message,
     };
 
-    return json(200, {
+    json(200, {
       success: true,
       result,
       calculatedAt: Date.now(),
       verifiedBy: 'server',
     });
   } catch (e) {
-    return json(500, { error: '服务器结算错误', details: (e as Error).message });
+    json(500, { error: '服务器结算错误', details: (e as Error).message });
   }
 };

@@ -28,7 +28,7 @@ export const PlayerProfileCard = component$<PlayerProfileCardProps>((props) => {
           value={player.name}
           onInput$={handleNameInput}
           placeholder="请输入您的名号"
-          maxlength={20}
+          maxLength={20}
         />
       </div>
 

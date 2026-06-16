@@ -21,6 +21,7 @@ import {
   canRedo,
 } from '~/game/session';
 import { simulateCalibration } from '~/game/engine';
+import { serverCalibrate, serverSettle, serverSaveSession } from '~/server/functions';
 import type { GameSession, GameLevel, PlayerProfile, CalibrationResult, SettleResult, OrderWithStatus } from '~/game/types';
 
 export const useGameParams = routeLoader$(({ query }) => {
@@ -70,6 +71,9 @@ export default component$(() => {
     track(() => session.value);
     if (session.value) {
       upsertSession(session.value);
+      serverSaveSession(session.value).catch((e) => {
+        console.warn('服务端保存会话失败（不影响本地）:', e);
+      });
     }
   });
 
@@ -137,30 +141,26 @@ export default component$(() => {
     }, 30);
 
     try {
-      const response = await fetch('/api/calibrate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          waterClock: config,
-          environment: session.value.environment,
-          targetDuration: order.targetDuration,
-          tolerance: order.targetTolerance,
-        }),
-      });
-
       await new Promise((r) => setTimeout(r, 1500));
 
-      if (response.ok) {
-        const data = await response.json();
+      try {
+        const data = await serverCalibrate(
+          config,
+          session.value.environment,
+          order.targetDuration,
+          order.targetTolerance
+        );
         if (data.success) {
           calibrationResult.value = data.result;
         } else {
           calibrationResult.value = simulateCalibration(config, session.value.environment);
         }
-      } else {
+      } catch (serverErr) {
+        console.warn('服务端校时不可用，使用本地模拟:', serverErr);
         calibrationResult.value = simulateCalibration(config, session.value.environment);
       }
     } catch (e) {
+      console.error('校时失败', e);
       calibrationResult.value = simulateCalibration(config, session.value.environment);
     } finally {
       isCalibrating.value = false;
@@ -208,14 +208,8 @@ export default component$(() => {
     isSettling.value = true;
 
     try {
-      const response = await fetch('/api/settle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session: session.value }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      try {
+        const data = await serverSettle(session.value);
         if (data.success) {
           settleResult.value = data.result;
           session.value.finalScore = data.result.serverCalculatedScore;
@@ -242,6 +236,10 @@ export default component$(() => {
           savePlayer(player.value);
           upsertSession(session.value);
         }
+      } catch (serverErr) {
+        console.error('服务端结算失败，仍保存本地:', serverErr);
+        savePlayer(player.value);
+        upsertSession(session.value);
       }
     } catch (e) {
       console.error('结算失败', e);
