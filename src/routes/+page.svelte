@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Player, GameResult, Level } from '$types';
-  import { getPlayer, getGameHistory, getLevels } from '$lib/storage';
-  import { seedLevels } from '$lib/seedData';
 
   let player: Player | null = null;
   let history: GameResult[] = [];
@@ -15,15 +13,20 @@
   };
 
   onMount(async () => {
-    player = getPlayer();
+    const [playerRes, historyRes, levelsRes] = await Promise.all([
+      fetch('/api/player'),
+      fetch('/api/history?limit=5'),
+      fetch('/api/levels')
+    ]);
     
-    const historyRes = await fetch('/api/history?limit=5');
+    const playerData = await playerRes.json();
+    player = playerData.player;
+    
     const historyData = await historyRes.json();
     history = historyData.history || [];
 
-    const levelsRes = await fetch('/api/levels');
     const levelsData = await levelsRes.json();
-    levels = levelsData.levels || seedLevels;
+    levels = levelsData.levels || [];
 
     if (player && history.length > 0) {
       stats.totalGames = player.gamesPlayed;

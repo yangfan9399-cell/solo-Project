@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { Level, GameResult } from '$types';
-  import { seedLevels } from '$lib/seedData';
 
   let levels: Level[] = [];
   let history: GameResult[] = [];
@@ -16,7 +15,7 @@
     const levelsData = await levelsRes.json();
     const historyData = await historyRes.json();
     
-    levels = levelsData.levels || seedLevels;
+    levels = levelsData.levels || [];
     history = historyData.history || [];
     loading = false;
   });

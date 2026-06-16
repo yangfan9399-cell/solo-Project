@@ -21,7 +21,6 @@ export const POST: RequestHandler = async ({ request }) => {
     saveLevels(seedLevels);
     savePlayer(seedPlayer);
     
-    getGameHistory().forEach(() => {});
     seedHistory.forEach(result => {
       saveGameResult(result);
     });

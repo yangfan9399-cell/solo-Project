@@ -3,8 +3,6 @@
   import { page } from '$app/stores';
   import type { GameState, Level, Capsule, ActiveAnomaly } from '$types';
   import { tickGame, adjustValve, switchJunction, resolveAnomaly } from '$lib/gameEngine';
-  import { saveGameState, getGameState } from '$lib/storage';
-  import { seedLevels } from '$lib/seedData';
 
   let gameId: string;
   let gameState: GameState | null = null;
@@ -15,6 +13,7 @@
   let showResult = false;
   let resultData: any = null;
   let calculating = false;
+  let syncTimer: number | null = null;
 
   $: if (gameState) {
     timeRemaining = level ? Math.max(0, level.timeLimit - gameState.currentTime) : 0;
@@ -23,6 +22,19 @@
 
   let timeRemaining = 0;
   let timeProgress = 0;
+
+  async function syncGameStateToServer(): Promise<void> {
+    if (!gameState) return;
+    try {
+      await fetch(`/api/game/${gameState.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gameState)
+      });
+    } catch (e) {
+      console.error('Sync error:', e);
+    }
+  }
 
   onMount(async () => {
     gameId = $page.params.id;
@@ -46,12 +58,20 @@
     
     const levelRes = await fetch(`/api/levels/${loadedState.levelId}`);
     const levelData = await levelRes.json();
-    level = levelData.level || seedLevels.find(l => l.id === loadedState.levelId);
+    level = levelData.level;
+
+    if (!level) {
+      const fallbackRes = await fetch('/api/levels');
+      const fallbackData = await fallbackRes.json();
+      const allLevels: Level[] = fallbackData.levels || [];
+      level = allLevels.find(l => l.id === loadedState.levelId) || null;
+    }
     
     loading = false;
     
     if (!loadedState.isGameOver) {
       startGameLoop();
+      syncTimer = window.setInterval(syncGameStateToServer, 3000);
     } else {
       showResult = true;
       await calculateResult();
@@ -60,6 +80,13 @@
 
   onDestroy(() => {
     stopGameLoop();
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
+    if (gameState && !gameState.isGameOver) {
+      syncGameStateToServer();
+    }
   });
 
   function startGameLoop() {
@@ -82,12 +109,17 @@
     
     if (!gameState.isPaused && !gameState.isGameOver) {
       gameState = tickGame(gameState, level, deltaTime);
-      saveGameState(gameState);
       
       if (gameState.isGameOver) {
         stopGameLoop();
-        showResult = true;
-        calculateResult();
+        if (syncTimer) {
+          clearInterval(syncTimer);
+          syncTimer = null;
+        }
+        syncGameStateToServer().then(() => {
+          showResult = true;
+          calculateResult();
+        });
       }
     }
     
@@ -116,21 +148,18 @@
     const value = parseFloat(target.value);
     
     gameState = adjustValve(gameState, valveId, value);
-    saveGameState(gameState);
   }
 
   function handleJunctionClick(junctionId: string) {
     if (!gameState || gameState.isPaused || gameState.isGameOver) return;
     
     gameState = switchJunction(gameState, junctionId);
-    saveGameState(gameState);
   }
 
   function handleResolveAnomaly(anomalyId: string) {
     if (!gameState || gameState.isPaused || gameState.isGameOver) return;
     
     gameState = resolveAnomaly(gameState, anomalyId);
-    saveGameState(gameState);
   }
 
   async function handleUndo() {
@@ -146,10 +175,10 @@
     }
   }
 
-  function togglePause() {
+  async function togglePause() {
     if (!gameState || gameState.isGameOver) return;
     gameState.isPaused = !gameState.isPaused;
-    saveGameState(gameState);
+    await syncGameStateToServer();
   }
 
   function getCapsulePosition(capsule: Capsule): { x: number; y: number } {

@@ -1,71 +1,77 @@
 import type { Player, GameState, GameResult, Level } from '../types';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
 
-const STORAGE_KEYS = {
-  PLAYER: 'ulogistics_player',
-  LEVELS: 'ulogistics_levels',
-  GAME_STATE: 'ulogistics_game_state_',
-  GAME_HISTORY: 'ulogistics_game_history',
-  SEED_INITIALIZED: 'ulogistics_seed_initialized'
-};
+const DATA_DIR = join(process.cwd(), '.data');
 
-export function getFromStorage<T>(key: string, defaultValue: T): T {
+function ensureDataDir(): void {
+  if (!existsSync(DATA_DIR)) {
+    mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
+
+function readJsonFile<T>(filename: string, defaultValue: T): T {
+  ensureDataDir();
+  const filePath = join(DATA_DIR, filename);
   try {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return JSON.parse(stored) as T;
+    if (existsSync(filePath)) {
+      const content = readFileSync(filePath, 'utf-8');
+      return JSON.parse(content) as T;
     }
   } catch (e) {
-    console.error('Storage read error:', e);
+    console.error(`Error reading ${filename}:`, e);
   }
   return defaultValue;
 }
 
-export function setToStorage<T>(key: string, value: T): void {
+function writeJsonFile<T>(filename: string, value: T): void {
+  ensureDataDir();
+  const filePath = join(DATA_DIR, filename);
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    writeFileSync(filePath, JSON.stringify(value, null, 2), 'utf-8');
   } catch (e) {
-    console.error('Storage write error:', e);
-  }
-}
-
-export function removeFromStorage(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch (e) {
-    console.error('Storage remove error:', e);
+    console.error(`Error writing ${filename}:`, e);
   }
 }
 
 export function getPlayer(): Player | null {
-  return getFromStorage<Player | null>(STORAGE_KEYS.PLAYER, null);
+  return readJsonFile<Player | null>('player.json', null);
 }
 
 export function savePlayer(player: Player): void {
-  setToStorage(STORAGE_KEYS.PLAYER, player);
+  writeJsonFile('player.json', player);
 }
 
 export function getLevels(): Level[] {
-  return getFromStorage<Level[]>(STORAGE_KEYS.LEVELS, []);
+  return readJsonFile<Level[]>('levels.json', []);
 }
 
 export function saveLevels(levels: Level[]): void {
-  setToStorage(STORAGE_KEYS.LEVELS, levels);
+  writeJsonFile('levels.json', levels);
 }
 
 export function getGameState(gameId: string): GameState | null {
-  return getFromStorage<GameState | null>(STORAGE_KEYS.GAME_STATE + gameId, null);
+  return readJsonFile<GameState | null>(`game_${gameId}.json`, null);
 }
 
 export function saveGameState(state: GameState): void {
-  setToStorage(STORAGE_KEYS.GAME_STATE + state.id, state);
+  writeJsonFile(`game_${state.id}.json`, state);
 }
 
 export function removeGameState(gameId: string): void {
-  removeFromStorage(STORAGE_KEYS.GAME_STATE + gameId);
+  ensureDataDir();
+  const filePath = join(DATA_DIR, `game_${gameId}.json`);
+  try {
+    if (existsSync(filePath)) {
+      unlinkSync(filePath);
+    }
+  } catch (e) {
+    console.error(`Error removing game_${gameId}.json:`, e);
+  }
 }
 
 export function getGameHistory(): GameResult[] {
-  return getFromStorage<GameResult[]>(STORAGE_KEYS.GAME_HISTORY, []);
+  return readJsonFile<GameResult[]>('history.json', []);
 }
 
 export function saveGameResult(result: GameResult): void {
@@ -74,13 +80,13 @@ export function saveGameResult(result: GameResult): void {
   if (history.length > 100) {
     history.pop();
   }
-  setToStorage(STORAGE_KEYS.GAME_HISTORY, history);
+  writeJsonFile('history.json', history);
 }
 
 export function isSeedInitialized(): boolean {
-  return getFromStorage<boolean>(STORAGE_KEYS.SEED_INITIALIZED, false);
+  return readJsonFile<boolean>('seed_initialized.json', false);
 }
 
 export function markSeedInitialized(): void {
-  setToStorage(STORAGE_KEYS.SEED_INITIALIZED, true);
+  writeJsonFile('seed_initialized.json', true);
 }

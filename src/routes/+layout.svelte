@@ -2,16 +2,17 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import type { Player } from '$types';
-  import { getPlayer } from '$lib/storage';
-  import { initializeSeedData } from '$lib/seedData';
 
   let player: Player | null = null;
   let showSetup = false;
   let playerName = '';
 
   onMount(async () => {
-    initializeSeedData();
-    player = getPlayer();
+    await fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+    
+    const res = await fetch('/api/player');
+    const data = await res.json();
+    player = data.player;
     if (!player) {
       showSetup = true;
     }
