@@ -157,6 +157,8 @@ function initializeSchema(database: Database) {
       start_time INTEGER NOT NULL,
       end_time INTEGER,
       operation_history TEXT,
+      history_stack TEXT,
+      history_index INTEGER DEFAULT 0,
       FOREIGN KEY (player_id) REFERENCES players(id),
       FOREIGN KEY (level_id) REFERENCES levels(id)
     );
@@ -187,6 +189,20 @@ function initializeSchema(database: Database) {
     CREATE INDEX IF NOT EXISTS idx_leaderboard_level ON leaderboard(level_id);
     CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(score DESC);
   `);
+
+  try {
+    const cols = database.exec("PRAGMA table_info(game_sessions)");
+    const colNames = cols[0]?.values.map((r) => r[1]) || [];
+    
+    if (!colNames.includes("history_stack")) {
+      database.exec("ALTER TABLE game_sessions ADD COLUMN history_stack TEXT");
+    }
+    if (!colNames.includes("history_index")) {
+      database.exec("ALTER TABLE game_sessions ADD COLUMN history_index INTEGER DEFAULT 0");
+    }
+  } catch (e) {
+    console.warn("Migration check skipped:", e);
+  }
 }
 
 function seedData(database: Database) {

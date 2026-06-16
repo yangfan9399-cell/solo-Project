@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { sessionId, bridge, operations } = body;
+    const { sessionId, bridge, operations, historyStack, historyIndex } = body;
 
     if (!sessionId || !bridge) {
       return NextResponse.json({ error: "缺少必要参数" }, { status: 400 });
@@ -67,7 +67,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    await updateGameSessionBridge(sessionId, bridge, operations || []);
+    await updateGameSessionBridge(
+      sessionId,
+      bridge,
+      operations || [],
+      historyStack || [],
+      historyIndex ?? 0
+    );
 
     const updated = await getGameSession(sessionId);
     return NextResponse.json(updated);

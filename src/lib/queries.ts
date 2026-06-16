@@ -27,6 +27,15 @@ function parseOperations(data: string | null): Operation[] {
   }
 }
 
+function parseHistoryStack(data: string | null): Bridge[] {
+  if (!data) return [];
+  try {
+    return JSON.parse(data) as Bridge[];
+  } catch {
+    return [];
+  }
+}
+
 function rowToPlayer(row: Record<string, unknown>): Player {
   return {
     id: row.id as string,
@@ -62,12 +71,21 @@ function rowToLevel(row: Record<string, unknown>): Level {
 }
 
 function rowToSession(row: Record<string, unknown>): GameSession {
+  const historyStack = parseHistoryStack(row.history_stack as string | null);
+  const historyIndex = (row.history_index as number) || 0;
+  const parsedBridge = parseBridge(row.bridge_data as string | null);
+  
+  let bridge = parsedBridge;
+  if (historyStack.length > 0 && historyIndex >= 0 && historyIndex < historyStack.length) {
+    bridge = historyStack[historyIndex];
+  }
+
   return {
     id: row.id as string,
     playerId: row.player_id as string,
     levelId: row.level_id as number,
     status: row.status as GameSession["status"],
-    bridge: parseBridge(row.bridge_data as string | null),
+    bridge,
     maxWeightHeld: row.max_weight_held as number,
     breakPoint:
       row.break_point_x !== null && row.break_point_y !== null
@@ -78,6 +96,8 @@ function rowToSession(row: Record<string, unknown>): GameSession {
     startTime: row.start_time as number,
     endTime: (row.end_time as number) ?? null,
     operationHistory: parseOperations(row.operation_history as string | null),
+    historyStack,
+    historyIndex,
   };
 }
 
@@ -168,11 +188,21 @@ export async function createGameSession(
   await getDb();
   const now = Date.now();
 
+  const emptyBridge: Bridge = {
+    id: sessionId,
+    name: "我的纸桥",
+    segments: [],
+    totalPaperLength: 0,
+    createdAt: now,
+  };
+
+  const initialHistory: Bridge[] = [emptyBridge];
+
   runInsert(
     `INSERT INTO game_sessions
-     (id, player_id, level_id, status, bridge_data, max_weight_held, score, start_time, operation_history)
-     VALUES (?, ?, ?, 'designing', NULL, 0, 0, ?, '[]')`,
-    [sessionId, playerId, levelId, now]
+     (id, player_id, level_id, status, bridge_data, max_weight_held, score, start_time, operation_history, history_stack, history_index)
+     VALUES (?, ?, ?, 'designing', ?, 0, 0, ?, '[]', ?, 0)`,
+    [sessionId, playerId, levelId, JSON.stringify(emptyBridge), now, JSON.stringify(initialHistory)]
   );
 
   return getGameSession(sessionId) as Promise<GameSession>;
@@ -190,12 +220,14 @@ export async function getGameSession(
 export async function updateGameSessionBridge(
   sessionId: string,
   bridge: Bridge,
-  operations: Operation[]
+  operations: Operation[],
+  historyStack: Bridge[],
+  historyIndex: number
 ): Promise<void> {
   await getDb();
   runUpdate(
-    "UPDATE game_sessions SET bridge_data = ?, operation_history = ? WHERE id = ?",
-    [JSON.stringify(bridge), JSON.stringify(operations), sessionId]
+    "UPDATE game_sessions SET bridge_data = ?, operation_history = ?, history_stack = ?, history_index = ? WHERE id = ?",
+    [JSON.stringify(bridge), JSON.stringify(operations), JSON.stringify(historyStack), historyIndex, sessionId]
   );
 }
 

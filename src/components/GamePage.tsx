@@ -13,11 +13,12 @@ interface GamePageProps {
   level: Level;
   sessionId: string;
   initialBridge?: Bridge | null;
-  initialHistory?: Operation[];
+  initialHistory?: Bridge[];
+  initialHistoryIndex?: number;
   onBack: () => void;
 }
 
-export function GamePage({ level, sessionId, initialBridge, initialHistory, onBack }: GamePageProps) {
+export function GamePage({ level, sessionId, initialBridge, initialHistory, initialHistoryIndex, onBack }: GamePageProps) {
   const {
     bridge,
     selectedSegmentId,
@@ -34,7 +35,7 @@ export function GamePage({ level, sessionId, initialBridge, initialHistory, onBa
     loadBridge,
     history,
     historyIndex,
-  } = useBridgeEditor(initialBridge || undefined);
+  } = useBridgeEditor(initialBridge || undefined, initialHistory, initialHistoryIndex);
 
   const [foldType, setFoldType] = useState<FoldType>("flat");
   const [mode, setMode] = useState<"add" | "select" | "move">("add");
@@ -48,26 +49,6 @@ export function GamePage({ level, sessionId, initialBridge, initialHistory, onBa
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didLoadInitialRef = useRef(false);
-
-  useEffect(() => {
-    if (didLoadInitialRef.current) return;
-    if (!initialHistory || initialHistory.length === 0) {
-      didLoadInitialRef.current = true;
-      return;
-    }
-
-    const snapshots = initialHistory
-      .filter((op) => op.snapshot)
-      .map((op) => op.snapshot);
-
-    if (snapshots.length > 0) {
-      const latest = snapshots[snapshots.length - 1];
-      loadBridge(latest);
-    }
-
-    didLoadInitialRef.current = true;
-  }, [initialHistory, loadBridge]);
 
   useEffect(() => {
     const validation = validateBridgeDesign(bridge.segments, level);
@@ -94,6 +75,8 @@ export function GamePage({ level, sessionId, initialBridge, initialHistory, onBa
           sessionId,
           bridge,
           operations: ops,
+          historyStack: history,
+          historyIndex: historyIndex,
         }),
       });
     } catch (e) {
@@ -101,7 +84,7 @@ export function GamePage({ level, sessionId, initialBridge, initialHistory, onBa
     } finally {
       setIsSaving(false);
     }
-  }, [sessionId, bridge, history]);
+  }, [sessionId, bridge, history, historyIndex]);
 
   useEffect(() => {
     if (!sessionId) return;

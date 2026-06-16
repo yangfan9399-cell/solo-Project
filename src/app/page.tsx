@@ -11,7 +11,8 @@ export default function Home() {
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [initialBridge, setInitialBridge] = useState<Bridge | null>(null);
-  const [initialHistory, setInitialHistory] = useState<Operation[]>([]);
+  const [initialHistory, setInitialHistory] = useState<Bridge[]>([]);
+  const [initialHistoryIndex, setInitialHistoryIndex] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -133,7 +134,8 @@ export default function Home() {
     if (session) {
       setSessionId(session.id);
       setInitialBridge(session.bridge);
-      setInitialHistory(session.operationHistory || []);
+      setInitialHistory(session.historyStack || []);
+      setInitialHistoryIndex(session.historyIndex ?? 0);
       setSelectedLevel(level);
     }
   };
@@ -170,6 +172,7 @@ export default function Home() {
         sessionId={sessionId}
         initialBridge={initialBridge}
         initialHistory={initialHistory}
+        initialHistoryIndex={initialHistoryIndex}
         onBack={handleBackToLevels}
       />
     );

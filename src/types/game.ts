@@ -54,6 +54,8 @@ export interface GameSession {
   startTime: number;
   endTime: number | null;
   operationHistory: Operation[];
+  historyStack: Bridge[];
+  historyIndex: number;
 }
 
 export type OperationType =

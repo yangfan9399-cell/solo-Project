@@ -22,12 +22,36 @@ function cloneBridge(bridge: Bridge): Bridge {
   return JSON.parse(JSON.stringify(bridge));
 }
 
-export function useBridgeEditor(initialBridge?: Bridge) {
-  const [bridge, setBridge] = useState<Bridge>(() => initialBridge || createEmptyBridge());
-  const [history, setHistory] = useState<Bridge[]>(() => [
-    initialBridge ? cloneBridge(initialBridge) : createEmptyBridge(),
-  ]);
-  const [historyIndex, setHistoryIndex] = useState<number>(0);
+export function useBridgeEditor(
+  initialBridge?: Bridge,
+  initialHistory?: Bridge[],
+  initialHistoryIndex?: number
+) {
+  const hasInitialHistory =
+    initialHistory && initialHistory.length > 0 && initialHistoryIndex !== undefined;
+
+  const [bridge, setBridge] = useState<Bridge>(() => {
+    if (hasInitialHistory && initialHistory) {
+      const idx = Math.max(0, Math.min(initialHistoryIndex!, initialHistory.length - 1));
+      return cloneBridge(initialHistory[idx]);
+    }
+    return initialBridge || createEmptyBridge();
+  });
+
+  const [history, setHistory] = useState<Bridge[]>(() => {
+    if (hasInitialHistory && initialHistory) {
+      return initialHistory.map((b) => cloneBridge(b));
+    }
+    return [initialBridge ? cloneBridge(initialBridge) : createEmptyBridge()];
+  });
+
+  const [historyIndex, setHistoryIndex] = useState<number>(() => {
+    if (hasInitialHistory && initialHistory) {
+      return Math.max(0, Math.min(initialHistoryIndex!, initialHistory.length - 1));
+    }
+    return 0;
+  });
+
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
   const isUndoingRedoing = useRef(false);
 
