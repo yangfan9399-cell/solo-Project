@@ -1,0 +1,170 @@
+import type { SubwayMap, LevelConfig } from '../types/game';
+
+export const initialSubwayMap: SubwayMap = {
+	stations: {
+		s1: { id: 's1', name: '中央公园', lineIds: ['l1', 'l2'], x: 300, y: 200, isTransfer: true },
+		s2: { id: 's2', name: '金融街', lineIds: ['l1'], x: 180, y: 200, isTransfer: false },
+		s3: { id: 's3', name: '科技园', lineIds: ['l1'], x: 60, y: 200, isTransfer: false },
+		s4: { id: 's4', name: '体育中心', lineIds: ['l1'], x: 420, y: 200, isTransfer: false },
+		s5: { id: 's5', name: '大学城', lineIds: ['l1'], x: 540, y: 200, isTransfer: false },
+		s6: { id: 's6', name: '古镇', lineIds: ['l2'], x: 300, y: 80, isTransfer: false },
+		s7: { id: 's7', name: '博物馆', lineIds: ['l2'], x: 300, y: 320, isTransfer: false },
+		s8: { id: 's8', name: '港口', lineIds: ['l2', 'l3'], x: 300, y: 440, isTransfer: true },
+		s9: { id: 's9', name: '机场北', lineIds: ['l3'], x: 180, y: 440, isTransfer: false },
+		s10: { id: 's10', name: '机场', lineIds: ['l3'], x: 60, y: 440, isTransfer: false },
+		s11: { id: 's11', name: '会展中心', lineIds: ['l3'], x: 420, y: 440, isTransfer: false },
+		s12: { id: 's12', name: '火车站', lineIds: ['l3', 'l4'], x: 540, y: 440, isTransfer: true },
+		s13: { id: 's13', name: '商业街', lineIds: ['l4'], x: 540, y: 320, isTransfer: false },
+		s14: { id: 's14', name: '歌剧院', lineIds: ['l4'], x: 540, y: 200, isTransfer: false },
+		s15: { id: 's15', name: '图书馆', lineIds: ['l4', 'l5'], x: 540, y: 80, isTransfer: true },
+		s16: { id: 's16', name: '动物园', lineIds: ['l5'], x: 420, y: 80, isTransfer: false },
+		s17: { id: 's17', name: '游乐园', lineIds: ['l5'], x: 180, y: 80, isTransfer: false },
+		s18: { id: 's18', name: '滨江路', lineIds: ['l5', 'l6'], x: 60, y: 80, isTransfer: true },
+		s19: { id: 's19', name: '美食街', lineIds: ['l6'], x: 60, y: 320, isTransfer: false },
+		s20: { id: 's20', name: '艺术区', lineIds: ['l6'], x: 420, y: 320, isTransfer: false }
+	},
+	lines: {
+		l1: { id: 'l1', name: '1号线', color: '#E53935', stationIds: ['s3', 's2', 's1', 's4', 's5'] },
+		l2: { id: 'l2', name: '2号线', color: '#1E88E5', stationIds: ['s6', 's1', 's7', 's8'] },
+		l3: { id: 'l3', name: '3号线', color: '#43A047', stationIds: ['s10', 's9', 's8', 's11', 's12'] },
+		l4: { id: 'l4', name: '4号线', color: '#FB8C00', stationIds: ['s12', 's13', 's14', 's15'] },
+		l5: { id: 'l5', name: '5号线', color: '#8E24AA', stationIds: ['s18', 's17', 's16', 's15'] },
+		l6: { id: 'l6', name: '6号线', color: '#00ACC1', stationIds: ['s18', 's19', 's8', 's20', 's15'] }
+	},
+	connections: [
+		{ from: 's3', to: 's2', lineId: 'l1', travelTime: 2 },
+		{ from: 's2', to: 's3', lineId: 'l1', travelTime: 2 },
+		{ from: 's2', to: 's1', lineId: 'l1', travelTime: 2 },
+		{ from: 's1', to: 's2', lineId: 'l1', travelTime: 2 },
+		{ from: 's1', to: 's4', lineId: 'l1', travelTime: 2 },
+		{ from: 's4', to: 's1', lineId: 'l1', travelTime: 2 },
+		{ from: 's4', to: 's5', lineId: 'l1', travelTime: 2 },
+		{ from: 's5', to: 's4', lineId: 'l1', travelTime: 2 },
+		{ from: 's6', to: 's1', lineId: 'l2', travelTime: 2 },
+		{ from: 's1', to: 's6', lineId: 'l2', travelTime: 2 },
+		{ from: 's1', to: 's7', lineId: 'l2', travelTime: 2 },
+		{ from: 's7', to: 's1', lineId: 'l2', travelTime: 2 },
+		{ from: 's7', to: 's8', lineId: 'l2', travelTime: 2 },
+		{ from: 's8', to: 's7', lineId: 'l2', travelTime: 2 },
+		{ from: 's10', to: 's9', lineId: 'l3', travelTime: 3 },
+		{ from: 's9', to: 's10', lineId: 'l3', travelTime: 3 },
+		{ from: 's9', to: 's8', lineId: 'l3', travelTime: 2 },
+		{ from: 's8', to: 's9', lineId: 'l3', travelTime: 2 },
+		{ from: 's8', to: 's11', lineId: 'l3', travelTime: 2 },
+		{ from: 's11', to: 's8', lineId: 'l3', travelTime: 2 },
+		{ from: 's11', to: 's12', lineId: 'l3', travelTime: 2 },
+		{ from: 's12', to: 's11', lineId: 'l3', travelTime: 2 },
+		{ from: 's12', to: 's13', lineId: 'l4', travelTime: 2 },
+		{ from: 's13', to: 's12', lineId: 'l4', travelTime: 2 },
+		{ from: 's13', to: 's14', lineId: 'l4', travelTime: 2 },
+		{ from: 's14', to: 's13', lineId: 'l4', travelTime: 2 },
+		{ from: 's14', to: 's15', lineId: 'l4', travelTime: 2 },
+		{ from: 's15', to: 's14', lineId: 'l4', travelTime: 2 },
+		{ from: 's18', to: 's17', lineId: 'l5', travelTime: 2 },
+		{ from: 's17', to: 's18', lineId: 'l5', travelTime: 2 },
+		{ from: 's17', to: 's16', lineId: 'l5', travelTime: 2 },
+		{ from: 's16', to: 's17', lineId: 'l5', travelTime: 2 },
+		{ from: 's16', to: 's15', lineId: 'l5', travelTime: 2 },
+		{ from: 's15', to: 's16', lineId: 'l5', travelTime: 2 },
+		{ from: 's18', to: 's19', lineId: 'l6', travelTime: 3 },
+		{ from: 's19', to: 's18', lineId: 'l6', travelTime: 3 },
+		{ from: 's19', to: 's8', lineId: 'l6', travelTime: 2 },
+		{ from: 's8', to: 's19', lineId: 'l6', travelTime: 2 },
+		{ from: 's8', to: 's20', lineId: 'l6', travelTime: 2 },
+		{ from: 's20', to: 's8', lineId: 'l6', travelTime: 2 },
+		{ from: 's20', to: 's15', lineId: 'l6', travelTime: 3 },
+		{ from: 's15', to: 's20', lineId: 'l6', travelTime: 3 }
+	]
+};
+
+export const initialLevels: LevelConfig[] = [
+	{
+		id: 'lv1',
+		name: '新手启程',
+		description: '熟悉地铁网络，从科技园到中央公园',
+		mapId: 'main',
+		startStationId: 's3',
+		targetStationId: 's1',
+		timeLimitSeconds: 120,
+		lastTrainCountdown: 30,
+		maxTransfers: 2,
+		difficulty: 'easy',
+		eventSchedule: [],
+		parTime: 6,
+		parTransfers: 0
+	},
+	{
+		id: 'lv2',
+		name: '机场快线',
+		description: '赶飞机！从中央公园到机场，注意扶梯故障',
+		mapId: 'main',
+		startStationId: 's1',
+		targetStationId: 's10',
+		timeLimitSeconds: 180,
+		lastTrainCountdown: 40,
+		maxTransfers: 4,
+		difficulty: 'medium',
+		eventSchedule: [
+			{ time: 20, event: { type: 'ESCALATOR_DOWN', stationId: 's8', lineId: 'l2', duration: 40 } }
+		],
+		parTime: 12,
+		parTransfers: 2
+	},
+	{
+		id: 'lv3',
+		name: '艺术之旅',
+		description: '从火车站到艺术区，小心封站事件',
+		mapId: 'main',
+		startStationId: 's12',
+		targetStationId: 's20',
+		timeLimitSeconds: 150,
+		lastTrainCountdown: 35,
+		maxTransfers: 3,
+		difficulty: 'medium',
+		eventSchedule: [
+			{ time: 15, event: { type: 'STATION_CLOSED', stationId: 's8', duration: 30 } },
+			{ time: 50, event: { type: 'DELAY', lineId: 'l6', duration: 20, extraTime: 3 } }
+		],
+		parTime: 10,
+		parTransfers: 1
+	},
+	{
+		id: 'lv4',
+		name: '迷宫挑战',
+		description: '从机场到游乐园，多事件并发的极限挑战',
+		mapId: 'main',
+		startStationId: 's10',
+		targetStationId: 's17',
+		timeLimitSeconds: 240,
+		lastTrainCountdown: 50,
+		maxTransfers: 6,
+		difficulty: 'hard',
+		eventSchedule: [
+			{ time: 10, event: { type: 'ESCALATOR_DOWN', stationId: 's1', lineId: 'l1', duration: 50 } },
+			{ time: 30, event: { type: 'STATION_CLOSED', stationId: 's15', duration: 40 } },
+			{ time: 60, event: { type: 'DELAY', lineId: 'l5', duration: 30, extraTime: 4 } },
+			{ time: 90, event: { type: 'ESCALATOR_DOWN', stationId: 's8', lineId: 'l3', duration: 60 } }
+		],
+		parTime: 20,
+		parTransfers: 3
+	},
+	{
+		id: 'lv5',
+		name: '末班车狂飙',
+		description: '从美食街到图书馆，末班车倒计时压力测试',
+		mapId: 'main',
+		startStationId: 's19',
+		targetStationId: 's15',
+		timeLimitSeconds: 120,
+		lastTrainCountdown: 60,
+		maxTransfers: 3,
+		difficulty: 'hard',
+		eventSchedule: [
+			{ time: 5, event: { type: 'DELAY', lineId: 'l6', duration: 15, extraTime: 2 } },
+			{ time: 25, event: { type: 'STATION_CLOSED', stationId: 's8', duration: 20 } },
+			{ time: 50, event: { type: 'ESCALATOR_DOWN', stationId: 's15', lineId: 'l4', duration: 30 } }
+		],
+		parTime: 8,
+		parTransfers: 1
+	}
+];
