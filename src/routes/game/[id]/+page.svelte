@@ -141,25 +141,28 @@
     calculating = false;
   }
 
-  function handleValveChange(valveId: string, event: Event) {
+  async function handleValveChange(valveId: string, event: Event) {
     if (!gameState || gameState.isPaused || gameState.isGameOver) return;
     
     const target = event.target as HTMLInputElement;
     const value = parseFloat(target.value);
     
     gameState = adjustValve(gameState, valveId, value);
+    await syncGameStateToServer();
   }
 
-  function handleJunctionClick(junctionId: string) {
+  async function handleJunctionClick(junctionId: string) {
     if (!gameState || gameState.isPaused || gameState.isGameOver) return;
     
     gameState = switchJunction(gameState, junctionId);
+    await syncGameStateToServer();
   }
 
-  function handleResolveAnomaly(anomalyId: string) {
+  async function handleResolveAnomaly(anomalyId: string) {
     if (!gameState || gameState.isPaused || gameState.isGameOver) return;
     
     gameState = resolveAnomaly(gameState, anomalyId);
+    await syncGameStateToServer();
   }
 
   async function handleUndo() {

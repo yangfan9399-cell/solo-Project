@@ -1,5 +1,5 @@
 import type { GameState, GameResult, Level } from '../types';
-import { createGameState, tickGame, adjustValve, switchJunction, resolveAnomaly } from './gameEngine';
+import { tickGame } from './gameEngine';
 
 export interface ScoreBreakdown {
   baseDeliveryScore: number;
@@ -78,23 +78,40 @@ export function calculateScoreBreakdown(state: GameState, level: Level): ScoreBr
 }
 
 export function recalculateScoreFromHistory(
-  operations: GameState['operationHistory'],
-  level: Level,
-  playerId: string,
-  finalCurrentTime: number,
-  finalIsGameOver: boolean,
-  finalVictory: boolean
+  originalGameState: GameState,
+  level: Level
 ): ScoreBreakdown {
-  const simState = createGameState(level, playerId);
+  const operations = originalGameState.operationHistory;
+  const originalStartTime = originalGameState.startTime;
+
+  const simState: GameState = {
+    id: originalGameState.id,
+    levelId: originalGameState.levelId,
+    playerId: originalGameState.playerId,
+    startTime: originalStartTime,
+    currentTime: 0,
+    isPaused: false,
+    isGameOver: false,
+    victory: false,
+    score: 0,
+    deliveriesCompleted: 0,
+    deliveriesFailed: 0,
+    valves: JSON.parse(JSON.stringify(level.valves)),
+    junctions: JSON.parse(JSON.stringify(level.junctions)),
+    pipes: JSON.parse(JSON.stringify(level.pipes)),
+    capsules: [],
+    stations: JSON.parse(JSON.stringify(level.stations)),
+    activeAnomalies: [],
+    operationHistory: []
+  };
 
   const sortedOps = [...operations].sort((a, b) => a.timestamp - b.timestamp);
-  const startTime = simState.startTime;
 
   let simTime = 0;
   const tickStep = 0.016;
 
   for (const op of sortedOps) {
-    const targetSimTime = (op.timestamp - startTime) / 1000;
+    const targetSimTime = (op.timestamp - originalStartTime) / 1000;
 
     while (simTime < targetSimTime && !simState.isGameOver) {
       const delta = Math.min(tickStep, targetSimTime - simTime);
@@ -103,33 +120,42 @@ export function recalculateScoreFromHistory(
     }
 
     switch (op.type) {
-      case 'valve_adjust':
-        adjustValve(simState, op.targetId, op.newValue as number);
+      case 'valve_adjust': {
+        const valve = simState.valves.find(v => v.id === op.targetId);
+        if (valve) {
+          valve.pressure = op.newValue as number;
+        }
         break;
+      }
       case 'junction_switch': {
         const junction = simState.junctions.find(j => j.id === op.targetId);
         if (junction) {
           junction.direction = op.newValue as GameState['junctions'][0]['direction'];
-          simState.operationHistory.pop();
-          simState.operationHistory.push(op);
         }
         break;
       }
-      case 'anomaly_resolve':
-        resolveAnomaly(simState, op.targetId);
+      case 'anomaly_resolve': {
+        const anomaly = simState.activeAnomalies.find(a => a.config.id === op.targetId);
+        if (anomaly && !anomaly.resolved) {
+          anomaly.resolved = true;
+          simState.score += 200 * anomaly.config.severity;
+        }
         break;
+      }
     }
+
+    simState.operationHistory.push(op);
   }
 
-  while (simTime < finalCurrentTime && !simState.isGameOver) {
-    const delta = Math.min(tickStep, finalCurrentTime - simTime);
+  while (simTime < originalGameState.currentTime && !simState.isGameOver) {
+    const delta = Math.min(tickStep, originalGameState.currentTime - simTime);
     tickGame(simState, level, delta);
     simTime += delta;
   }
 
-  simState.isGameOver = finalIsGameOver;
-  simState.victory = finalVictory;
-  simState.currentTime = finalCurrentTime;
+  simState.isGameOver = originalGameState.isGameOver;
+  simState.victory = originalGameState.victory;
+  simState.currentTime = originalGameState.currentTime;
 
   return calculateScoreBreakdown(simState, level);
 }
