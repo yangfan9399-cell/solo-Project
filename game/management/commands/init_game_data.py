@@ -1,12 +1,17 @@
 """
 初始化游戏数据
 包含关卡、站点、车厢、食材、配方、订单模板等
+以及示例局次和分数记录
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
+from datetime import timedelta
 from game.models import (
     Level, Station, Carriage, Ingredient, Recipe,
-    RecipeIngredient, OrderTemplate, Player
+    RecipeIngredient, OrderTemplate, Player,
+    GameSession, Order, Preparation, Delivery,
+    ActionHistory, Settlement
 )
 
 
@@ -22,6 +27,7 @@ class Command(BaseCommand):
                 self._create_recipes()
                 self._create_levels()
                 self._create_test_player()
+                self._create_sample_sessions()
 
             self.stdout.write(self.style.SUCCESS('游戏数据初始化完成！'))
         except Exception as e:
@@ -447,3 +453,296 @@ class Command(BaseCommand):
             self.stdout.write(f'  已创建测试玩家: demo / demo123456')
         else:
             self.stdout.write('  测试玩家已存在')
+
+    def _create_sample_sessions(self):
+        """创建示例游戏会话和分数记录"""
+        self.stdout.write('创建示例游戏会话和分数记录...')
+
+        player = Player.objects.get(username='demo')
+        levels = Level.objects.order_by('level_number')[:3]
+
+        sample_results = [
+            {'status': 'won', 'score': 1250, 'money': 380, 'completed': 8, 'failed': 2, 'star': 3},
+            {'status': 'won', 'score': 2180, 'money': 650, 'completed': 12, 'failed': 3, 'star': 4},
+            {'status': 'lost', 'score': 780, 'money': 220, 'completed': 5, 'failed': 6, 'star': 1},
+        ]
+
+        session_count = 0
+        for i, (level, result) in enumerate(zip(levels, sample_results)):
+            session_id = i + 1
+            if GameSession.objects.filter(id=session_id).exists():
+                continue
+
+            start_time = timezone.now() - timedelta(days=3 - i, hours=2 + i)
+            end_time = start_time + timedelta(seconds=level.time_limit)
+
+            session = GameSession.objects.create(
+                id=session_id,
+                player=player,
+                level=level,
+                status=result['status'],
+                score=result['score'],
+                money=result['money'],
+                orders_completed=result['completed'],
+                orders_failed=result['failed'],
+                current_time=level.time_limit,
+                current_station=level.station_count - 1,
+                start_time=start_time,
+                end_time=end_time
+            )
+            session_count += 1
+
+            self._create_sample_orders_and_history(session, level, result)
+            self._create_sample_settlement(session, result)
+
+        self.stdout.write(f'  已创建 {session_count} 个示例游戏会话')
+        self.stdout.write(f'  已创建 {Order.objects.filter(session__player=player).count()} 个示例订单')
+        self.stdout.write(f'  已创建 {Settlement.objects.filter(session__player=player).count()} 个结算记录')
+        self.stdout.write(f'  已创建 {ActionHistory.objects.filter(session__player=player).count()} 条操作历史')
+
+    def _create_sample_orders_and_history(self, session, level, result):
+        """为示例会话创建订单和操作历史"""
+        recipes = Recipe.objects.all()[:6]
+        carriages = level.carriages.all()
+        priorities = ['normal', 'urgent', 'vip']
+        stations = level.stations.all()
+
+        stations_data = list(stations.values('id', 'station_number', 'name', 'arrival_time', 'departure_time'))
+
+        for st in stations_data:
+            ActionHistory.objects.create(
+                session=session,
+                action_type='station_arrive',
+                game_time=st['arrival_time'],
+                sequence=st['station_number'] * 10,
+                action_data={
+                    'station_id': st['id'],
+                    'station_name': st['name'],
+                    'station_number': st['station_number']
+                }
+            )
+
+        total_orders = result['completed'] + result['failed']
+        seq = len(stations_data) * 10 + 10
+        current_time = 10
+
+        for i in range(total_orders):
+            recipe = recipes[i % len(recipes)]
+            carriage = carriages[i % len(carriages)]
+            priority = priorities[i % len(priorities)]
+            is_completed = i < result['completed']
+
+            base_price = recipe.base_price
+            time_limit = {'normal': 120, 'urgent': 80, 'vip': 100}[priority]
+
+            order = Order.objects.create(
+                session=session,
+                recipe=recipe,
+                carriage=carriage,
+                priority=priority,
+                status='completed' if is_completed else 'failed',
+                base_price=base_price,
+                time_limit=time_limit,
+                created_at=current_time,
+                final_price=base_price * 1.5 if is_completed else 0,
+                tip=int(base_price * 0.3) if is_completed else 0
+            )
+
+            ActionHistory.objects.create(
+                session=session,
+                action_type='order_created',
+                game_time=current_time,
+                sequence=seq,
+                action_data={
+                    'order_id': order.id,
+                    'recipe_name': recipe.name,
+                    'carriage': carriage.name,
+                    'priority': priority,
+                    'time_limit': time_limit
+                }
+            )
+            seq += 1
+
+            if is_completed:
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='start_prep',
+                    game_time=current_time + 5,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'recipe_name': recipe.name,
+                        'prep_station': 0,
+                        'duration': 30
+                    }
+                )
+                seq += 1
+
+                prep_duration = 0
+                for ri in recipe.recipeingredient_set.all():
+                    p_time = ri.ingredient.prep_time * ri.quantity
+                    h_time = ri.ingredient.heat_time * ri.quantity
+                    prep_duration = max(prep_duration, p_time + h_time)
+
+                    ActionHistory.objects.create(
+                        session=session,
+                        action_type='ingredient_prep_complete',
+                        game_time=current_time + 5 + p_time,
+                        sequence=seq,
+                        action_data={
+                            'order_id': order.id,
+                            'ingredient': ri.ingredient.name,
+                            'task_type': 'prep'
+                        }
+                    )
+                    seq += 1
+
+                    ActionHistory.objects.create(
+                        session=session,
+                        action_type='ingredient_heat_complete',
+                        game_time=current_time + 5 + p_time + h_time,
+                        sequence=seq,
+                        action_data={
+                            'order_id': order.id,
+                            'ingredient': ri.ingredient.name,
+                            'task_type': 'heat'
+                        }
+                    )
+                    seq += 1
+
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='cooking_complete',
+                    game_time=current_time + 5 + prep_duration,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'task_type': 'cook'
+                    }
+                )
+                seq += 1
+
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='plating_complete',
+                    game_time=current_time + 5 + prep_duration + recipe.cook_time,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'task_type': 'plate'
+                    }
+                )
+                seq += 1
+
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='order_ready',
+                    game_time=current_time + 5 + prep_duration + recipe.cook_time + 5,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'recipe_name': recipe.name
+                    }
+                )
+                seq += 1
+
+                delivery_time = carriage.distance_from_kitchen * 5
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='start_delivery',
+                    game_time=current_time + 5 + prep_duration + recipe.cook_time + 8,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'recipe_name': recipe.name,
+                        'waiter_id': 1,
+                        'carriage': carriage.name,
+                        'distance': carriage.distance_from_kitchen,
+                        'travel_time': delivery_time
+                    }
+                )
+                seq += 1
+
+                final_score = int(base_price * 1.5 * {'normal': 1.0, 'urgent': 1.5, 'vip': 2.0}[priority])
+                time_remaining = time_limit - (prep_duration + recipe.cook_time + 5 + delivery_time + 15)
+
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='order_complete',
+                    game_time=current_time + 5 + prep_duration + recipe.cook_time + 8 + delivery_time,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'recipe_name': recipe.name,
+                        'score': final_score,
+                        'money': int(base_price * 1.5),
+                        'tip': int(base_price * 0.3),
+                        'time_remaining': time_remaining,
+                        'time_limit': time_limit
+                    }
+                )
+                seq += 1
+
+                current_time += 25
+            else:
+                penalty = {'normal': 50, 'urgent': 100, 'vip': 150}[priority]
+                ActionHistory.objects.create(
+                    session=session,
+                    action_type='order_failed',
+                    game_time=current_time + time_limit + 1,
+                    sequence=seq,
+                    action_data={
+                        'order_id': order.id,
+                        'recipe_name': recipe.name,
+                        'priority': priority,
+                        'penalty': penalty
+                    }
+                )
+                seq += 1
+                current_time += 15
+
+        for st in stations_data:
+            ActionHistory.objects.create(
+                session=session,
+                action_type='station_depart',
+                game_time=st['departure_time'],
+                sequence=seq + st['station_number'],
+                action_data={
+                    'station_id': st['id'],
+                    'station_name': st['name'],
+                    'station_number': st['station_number']
+                }
+            )
+
+    def _create_sample_settlement(self, session, result):
+        """为示例会话创建结算记录"""
+        level = session.level
+
+        order_income = int(result['score'] * 0.6)
+        tips = int(result['score'] * 0.3)
+        ingredient_cost = int(order_income * 0.3)
+        fines = result['failed'] * 25
+
+        efficiency = min(1000, int((result['completed'] / max(1, result['completed'] + result['failed'])) * 1000))
+        speed = min(1000, int(800 + result['completed'] * 10))
+        perfect = max(0, result['completed'] - result['failed'])
+        quality = min(1000, int((perfect / max(1, result['completed'])) * 1000))
+
+        final_score = int(result['score'] * 0.6 + efficiency * 0.2 + speed * 0.1 + quality * 0.1)
+
+        Settlement.objects.create(
+            session=session,
+            total_income=order_income,
+            total_cost=ingredient_cost,
+            total_tip=tips,
+            orders_completed=result['completed'],
+            orders_failed=result['failed'],
+            perfect_orders=perfect,
+            late_orders=max(0, result['failed'] - 1),
+            efficiency_score=efficiency,
+            speed_score=speed,
+            quality_score=quality,
+            final_score=final_score,
+            star_rating=result['star'],
+            recalculated=True
+        )

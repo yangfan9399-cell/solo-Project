@@ -615,21 +615,29 @@ def api_player_stats(request):
             total_perfect += s.perfect_orders
             total_late += s.late_orders
 
-        from django.db.models import Avg
+        from django.db.models import Avg, Sum
         avg_score = settlements.aggregate(
             avg=Avg('final_score')
         )['avg'] or 0
 
+        total_score = settlements.aggregate(
+            sum=Sum('final_score')
+        )['sum'] or 0
+
         total_games = sessions.count()
-        win_rate = (player.games_won / total_games * 100) if total_games > 0 else 0
+        games_won = sessions.filter(status='won').count()
+        win_rate = (games_won / total_games * 100) if total_games > 0 else 0
+
+        highest_level_session = sessions.filter(status='won').order_by('-level__level_number').first()
+        highest_level = highest_level_session.level.level_number if highest_level_session else 0
 
         stats = {
             'total_games': total_games,
-            'games_won': player.games_won,
+            'games_won': games_won,
             'win_rate': round(win_rate, 1),
-            'total_score': player.total_score,
+            'total_score': total_score,
             'avg_score': round(avg_score, 0),
-            'highest_level': player.highest_level,
+            'highest_level': highest_level,
             'total_orders': total_orders,
             'total_failed': total_failed,
             'total_perfect': total_perfect,

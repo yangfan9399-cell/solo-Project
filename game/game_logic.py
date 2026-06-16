@@ -142,7 +142,7 @@ class GameEngine:
                 })
 
     def _update_preparations(self, current_time: int):
-        """更新备料/烹饪任务 - 备料加热机制"""
+        """更新备料/加热/烹饪/装盘任务 - 完整备料加热机制"""
         queued_preps = Preparation.objects.filter(
             session=self.session,
             status='queued'
@@ -153,6 +153,23 @@ class GameEngine:
                 prep.start_time = current_time
                 prep.save()
                 self.state['prep_stations'][prep.station_index]['status'] = 'busy'
+
+                task_start_actions = {
+                    'prep': 'ingredient_prep_start',
+                    'heat': 'ingredient_heat_start',
+                    'cook': 'cooking_start',
+                    'plate': 'plating_start'
+                }
+                action_type = task_start_actions.get(prep.task_type, 'prep_start')
+                action_data = {
+                    'prep_id': prep.id,
+                    'order_id': prep.order.id,
+                    'task_type': prep.task_type,
+                    'duration': prep.duration
+                }
+                if prep.ingredient:
+                    action_data['ingredient'] = prep.ingredient.name
+                self.record_action(action_type, action_data)
 
         preparations = Preparation.objects.filter(
             session=self.session,
@@ -166,13 +183,24 @@ class GameEngine:
                 prep.save()
 
                 self.state['prep_stations'][prep.station_index]['status'] = 'idle'
-                self.record_action('prep_complete', {
+
+                task_complete_actions = {
+                    'prep': 'ingredient_prep_complete',
+                    'heat': 'ingredient_heat_complete',
+                    'cook': 'cooking_complete',
+                    'plate': 'plating_complete'
+                }
+                action_type = task_complete_actions.get(prep.task_type, 'prep_complete')
+                action_data = {
                     'prep_id': prep.id,
                     'order_id': prep.order.id,
                     'task_type': prep.task_type
-                })
+                }
+                if prep.ingredient:
+                    action_data['ingredient'] = prep.ingredient.name
+                self.record_action(action_type, action_data)
 
-                self._check_order_ready(prep.order)
+                self._check_order_ready(prep.order, prep.task_type)
 
     def _update_deliveries(self, current_time: int):
         """更新配送任务 - 车厢距离机制"""
@@ -288,10 +316,16 @@ class GameEngine:
                     'priority': order.priority
                 })
 
-    def _check_order_ready(self, order: Order):
-        """检查订单是否准备完成 - 装盘机制"""
-        all_preps = order.preparations.all()
-        if all_preps.exists() and all(p.status == 'completed' for p in all_preps):
+    def _check_order_ready(self, order: Order, completed_task_type: str):
+        """检查订单是否准备完成 - 装盘机制
+        
+        只有当装盘(plate)任务完成时，才将订单转为ready状态
+        """
+        if completed_task_type != 'plate':
+            return
+
+        plate_prep = order.preparations.filter(task_type='plate').first()
+        if plate_prep and plate_prep.status == 'completed':
             order.status = 'ready'
             order.save()
 
@@ -351,7 +385,7 @@ class GameEngine:
         return order
 
     def start_preparation(self, order_id: int):
-        """开始备料/烹饪"""
+        """开始备料流程：备料(prep) → 加热(heat) → 烹饪(cook) → 装盘(plate)"""
         try:
             order = Order.objects.get(id=order_id, session=self.session)
         except Order.DoesNotExist:
@@ -379,40 +413,78 @@ class GameEngine:
         if order.id not in self.state['preparing_orders']:
             self.state['preparing_orders'].append(order.id)
 
-        recipe_ingredients = RecipeIngredient.objects.filter(recipe=order.recipe)
-        total_duration = 0
+        recipe_ingredients = RecipeIngredient.objects.filter(recipe=order.recipe).select_related('ingredient')
         current_time = self.state['current_time']
+
+        max_ingredient_end_time = current_time
 
         for ri in recipe_ingredients:
             ingredient = ri.ingredient
-            prep = Preparation.objects.create(
+            prep_duration = ingredient.prep_time * ri.quantity
+            heat_duration = ingredient.heat_time * ri.quantity
+
+            prep_task = Preparation.objects.create(
                 session=self.session,
                 order=order,
                 ingredient=ingredient,
                 task_type='prep',
                 status='processing',
                 start_time=current_time,
-                duration=ingredient.prep_time * ri.quantity,
+                duration=prep_duration,
                 station_index=prep_station_idx
             )
-            total_duration = max(total_duration, prep.duration)
 
-        cook_prep = Preparation.objects.create(
+            heat_task = Preparation.objects.create(
+                session=self.session,
+                order=order,
+                ingredient=ingredient,
+                task_type='heat',
+                status='queued',
+                start_time=current_time + prep_duration,
+                duration=heat_duration,
+                station_index=prep_station_idx
+            )
+
+            ingredient_end_time = current_time + prep_duration + heat_duration
+            if ingredient_end_time > max_ingredient_end_time:
+                max_ingredient_end_time = ingredient_end_time
+
+        cook_task = Preparation.objects.create(
             session=self.session,
             order=order,
             ingredient=None,
             task_type='cook',
             status='queued',
-            start_time=current_time + total_duration,
+            start_time=max_ingredient_end_time,
             duration=order.recipe.cook_time,
             station_index=prep_station_idx
         )
+
+        plate_task = Preparation.objects.create(
+            session=self.session,
+            order=order,
+            ingredient=None,
+            task_type='plate',
+            status='queued',
+            start_time=max_ingredient_end_time + order.recipe.cook_time,
+            duration=5,
+            station_index=prep_station_idx
+        )
+
+        total_duration = (max_ingredient_end_time - current_time) + order.recipe.cook_time + 5
 
         self.record_action('start_prep', {
             'order_id': order.id,
             'recipe_name': order.recipe.name,
             'prep_station': prep_station_idx,
-            'duration': total_duration + order.recipe.cook_time
+            'duration': total_duration,
+            'ingredients_count': recipe_ingredients.count(),
+            'tasks': {
+                'prep': recipe_ingredients.count(),
+                'heat': recipe_ingredients.count(),
+                'cook': 1,
+                'plate': 1
+            }
         })
 
         self.save_state()
@@ -565,7 +637,13 @@ class GameEngine:
                 self.state['preparing_orders'].append(data['order_id'])
             self.state['prep_stations'][data['prep_station']]['status'] = 'busy'
 
-        elif action.action_type == 'prep_complete':
+        elif action.action_type in ['ingredient_prep_start', 'ingredient_heat_start', 'cooking_start', 'plating_start']:
+            for ps in self.state['prep_stations']:
+                if ps['status'] == 'idle':
+                    ps['status'] = 'busy'
+                    break
+
+        elif action.action_type in ['ingredient_prep_complete', 'ingredient_heat_complete', 'cooking_complete', 'plating_complete']:
             for ps in self.state['prep_stations']:
                 if ps['status'] == 'busy':
                     ps['status'] = 'idle'
@@ -640,9 +718,46 @@ class GameEngine:
         return state
 
     def _serialize_order(self, order: Order):
-        """序列化订单"""
+        """序列化订单，包含备料任务进度"""
         elapsed = self.state['current_time'] - order.created_at
         time_remaining = order.time_limit - elapsed
+
+        preparations = order.preparations.all().select_related('ingredient')
+        prep_tasks = []
+        for prep in preparations:
+            task_info = {
+                'id': prep.id,
+                'task_type': prep.task_type,
+                'task_type_display': {
+                    'prep': '备料',
+                    'heat': '加热',
+                    'cook': '烹饪',
+                    'plate': '装盘'
+                }.get(prep.task_type, prep.task_type),
+                'status': prep.status,
+                'start_time': prep.start_time,
+                'duration': prep.duration,
+                'ingredient': prep.ingredient.name if prep.ingredient else None,
+                'ingredient_icon': prep.ingredient.icon if prep.ingredient else None
+            }
+            if prep.status == 'processing':
+                task_elapsed = self.state['current_time'] - prep.start_time
+                task_info['progress'] = min(100, int(task_elapsed / prep.duration * 100))
+                task_info['time_remaining'] = prep.duration - task_elapsed
+            elif prep.status == 'queued':
+                task_info['progress'] = 0
+                task_info['time_remaining'] = prep.start_time - self.state['current_time']
+            else:
+                task_info['progress'] = 100
+                task_info['time_remaining'] = 0
+            prep_tasks.append(task_info)
+
+        prep_summary = {
+            'total': len(preparations),
+            'completed': len([p for p in preparations if p.status == 'completed']),
+            'processing': len([p for p in preparations if p.status == 'processing']),
+            'queued': len([p for p in preparations if p.status == 'queued'])
+        }
 
         return {
             'id': order.id,
@@ -657,5 +772,7 @@ class GameEngine:
             'time_limit': order.time_limit,
             'time_remaining': max(-999, time_remaining),
             'base_price': order.base_price,
-            'time_percentage': max(0, min(100, int(time_remaining / order.time_limit * 100)))
+            'time_percentage': max(0, min(100, int(time_remaining / order.time_limit * 100))),
+            'prep_tasks': prep_tasks,
+            'prep_summary': prep_summary
         }
