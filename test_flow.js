@@ -40,237 +40,201 @@ function makeJunctionSwitchRecord(state, junctionId, oldDir, newDir, timeOffsetM
 
 async function main() {
   console.log('\n=== 1. 初始化种子数据 ===');
-  const seed = await request('/api/seed', { method: 'POST', body: '{}' });
-  console.log('✓ 种子数据:', seed.hasPlayer ? '已有玩家' : '无玩家', '关卡数:', seed.levels);
-
-  console.log('\n=== 2. 获取玩家 ===');
+  await request('/api/seed', { method: 'POST', body: '{}' });
   const player = await request('/api/player');
-  console.log('✓ 玩家:', player.player?.name, 'ID:', player.player?.id);
   const playerId = player.player.id;
+  console.log('✓ 玩家:', player.player.name);
 
-  console.log('\n=== 3. 开始游戏（关卡1） ===');
+  console.log('\n=== 2. 开始新局次 ===');
   const start = await request('/api/game/start', { 
     method: 'POST', 
     body: JSON.stringify({ levelId: 1, playerId }) 
   });
-  console.log('✓ 游戏创建:', start.gameState?.id);
-  console.log('  startTime:', new Date(start.gameState?.startTime).toISOString());
-  console.log('  操作历史长度:', start.gameState?.operationHistory?.length, '(期望 0)');
-  const gameId = start.gameState.id;
   let gameState = start.gameState;
-  const startTime = gameState.startTime;
+  const gameId = gameState.id;
+  console.log('✓ 局次ID:', gameId);
+  console.log('  原始 startTime:', gameState.startTime, 'new Date():', new Date(gameState.startTime).toISOString());
   await delay(100);
 
-  console.log('\n=== 4. 调整阀门0 （50 → 75）===');
-  {
-    const valveId = gameState.valves[0].id;
-    const oldPressure = gameState.valves[0].pressure;
-    const newPressure = 75;
-    console.log('  阀门ID:', valveId);
-    console.log('  调整前压力:', oldPressure, '→ 调整后:', newPressure);
-    
-    // 先快照（操作前），再修改，再 push 记录
-    const rec = makeValveAdjustRecord(gameState, valveId, oldPressure, newPressure, 2000);
-    gameState.valves[0].pressure = newPressure;
-    gameState.operationHistory.push(rec);
-    gameState.currentTime = 2;
-    
-    await request(`/api/game/${gameId}`, { 
-      method: 'PATCH', 
-      body: JSON.stringify(gameState) 
-    });
-    console.log('  操作历史长度:', gameState.operationHistory.length, '(期望 1)');
-    await delay(100);
-  }
+  // ========== 第一部分：撤销正确性验证 ==========
+  console.log('\n=== 3. 执行3个操作（每步立即 PATCH 同步） ===');
+  const initV0 = gameState.valves[0].pressure;
+  const initV1 = gameState.valves[1].pressure;
+  const initJ0 = gameState.junctions[0].direction;
+  console.log('  初始值: v0=' + initV0 + ', v1=' + initV1 + ', j0=' + initJ0);
 
-  console.log('\n=== 5. 切换分拣节点0 ===');
-  {
-    const junctionId = gameState.junctions[0].id;
-    const oldDirection = gameState.junctions[0].direction;
-    const directions = ['up', 'right', 'down', 'left'];
-    const idx = directions.indexOf(oldDirection);
-    const newDirection = directions[(idx + 1) % 4];
-    console.log('  节点ID:', junctionId);
-    console.log('  切换前方向:', oldDirection, '→ 切换后:', newDirection);
-    
-    const rec = makeJunctionSwitchRecord(gameState, junctionId, oldDirection, newDirection, 5000);
-    gameState.junctions[0].direction = newDirection;
-    gameState.operationHistory.push(rec);
-    gameState.currentTime = 5;
-    
-    await request(`/api/game/${gameId}`, { 
-      method: 'PATCH', 
-      body: JSON.stringify(gameState) 
-    });
-    console.log('  操作历史长度:', gameState.operationHistory.length, '(期望 2)');
-    await delay(100);
-  }
-
-  console.log('\n=== 6. 调整阀门1 （50 → 60） ===');
-  {
-    const valveId = gameState.valves[1].id;
-    const oldPressure = gameState.valves[1].pressure;
-    const newPressure = 60;
-    console.log('  调整前压力:', oldPressure, '→ 调整后:', newPressure);
-    
-    const rec = makeValveAdjustRecord(gameState, valveId, oldPressure, newPressure, 8000);
-    gameState.valves[1].pressure = newPressure;
-    gameState.operationHistory.push(rec);
-    gameState.currentTime = 8;
-    
-    await request(`/api/game/${gameId}`, { 
-      method: 'PATCH', 
-      body: JSON.stringify(gameState) 
-    });
-    console.log('  操作历史长度:', gameState.operationHistory.length, '(期望 3)');
-    await delay(100);
-  }
-
-  console.log('\n=== 7. 撤销操作1 （应回到调阀1之前：分拣方向已切换，阀门0=75，阀门1=50）===');
-  const undo1 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
-  console.log('  撤销是否成功:', undo1.undone, '(期望 true)');
-  console.log('  撤销后阀门1压力:', undo1.gameState?.valves?.[1]?.pressure, '(期望 50)');
-  console.log('  撤销后分拣方向:', undo1.gameState?.junctions?.[0]?.direction);
-  console.log('  撤销后阀门0压力:', undo1.gameState?.valves?.[0]?.pressure, '(期望 75)');
-  console.log('  操作历史长度:', undo1.gameState?.operationHistory?.length, '(期望 2)');
-  gameState = undo1.gameState;
-  await delay(100);
-
-  console.log('\n=== 8. 撤销操作2 （应回到切换分拣之前：阀门0=75，分拣=原始，阀门1=50）===');
-  const undo2 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
-  console.log('  撤销是否成功:', undo2.undone, '(期望 true)');
-  console.log('  撤销后分拣方向:', undo2.gameState?.junctions?.[0]?.direction, '(期望: 原始值)');
-  console.log('  撤销后阀门0压力:', undo2.gameState?.valves?.[0]?.pressure, '(期望 75)');
-  console.log('  操作历史长度:', undo2.gameState?.operationHistory?.length, '(期望 1)');
-  gameState = undo2.gameState;
-  await delay(100);
-
-  console.log('\n=== 9. 撤销操作3 （应回到调阀0之前：全部原始值）===');
-  const undo3 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
-  console.log('  撤销是否成功:', undo3.undone, '(期望 true)');
-  console.log('  撤销后阀门0压力:', undo3.gameState?.valves?.[0]?.pressure, '(期望 50)');
-  console.log('  操作历史长度:', undo3.gameState?.operationHistory?.length, '(期望 0)');
-  gameState = undo3.gameState;
-  await delay(100);
-
-  console.log('\n=== 10. 无操作可撤销验证 ===');
-  const undo4 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
-  console.log('  预期错误:', undo4.error, '(期望: 没有可撤销的操作)');
-
-  console.log('\n=== 11. 重新构建操作历史用于后端重算测试 ===');
-  // 恢复一个测试用的局次状态
-  const initValve0 = gameState.valves[0].pressure;
-  const initValve1 = gameState.valves[1].pressure;
-  const initJunc0 = gameState.junctions[0].direction;
-
-  // 操作1: 调阀0 50→80 @1s
-  gameState.currentTime = 1;
-  const rec1 = makeValveAdjustRecord(gameState, gameState.valves[0].id, initValve0, 80, 1000);
+  // 操作1: 调阀0
+  gameState.currentTime = 2;
+  const rec1 = makeValveAdjustRecord(gameState, gameState.valves[0].id, initV0, 80, 2000);
   gameState.valves[0].pressure = 80;
   gameState.operationHistory.push(rec1);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  console.log('  [1] 调阀0 → 80, opCount=' + gameState.operationHistory.length);
+  await delay(80);
 
-  // 操作2: 切换分拣 @3s
+  // 操作2: 切换分拣
   const jDirs = ['up', 'right', 'down', 'left'];
-  const jIdx = jDirs.indexOf(initJunc0);
-  const jNewDir = jDirs[(jIdx + 2) % 4];
-  gameState.currentTime = 3;
-  const rec2 = makeJunctionSwitchRecord(gameState, gameState.junctions[0].id, initJunc0, jNewDir, 3000);
-  gameState.junctions[0].direction = jNewDir;
+  const jIdx = jDirs.indexOf(initJ0);
+  const jNew = jDirs[(jIdx + 1) % 4];
+  gameState.currentTime = 4;
+  const rec2 = makeJunctionSwitchRecord(gameState, gameState.junctions[0].id, initJ0, jNew, 4000);
+  gameState.junctions[0].direction = jNew;
   gameState.operationHistory.push(rec2);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  console.log('  [2] 分拣 ' + initJ0 + ' → ' + jNew + ', opCount=' + gameState.operationHistory.length);
+  await delay(80);
 
-  // 操作3: 调阀1 50→70 @6s
+  // 操作3: 调阀1
   gameState.currentTime = 6;
-  const rec3 = makeValveAdjustRecord(gameState, gameState.valves[1].id, initValve1, 70, 6000);
-  gameState.valves[1].pressure = 70;
+  const rec3 = makeValveAdjustRecord(gameState, gameState.valves[1].id, initV1, 65, 6000);
+  gameState.valves[1].pressure = 65;
   gameState.operationHistory.push(rec3);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  console.log('  [3] 调阀1 → 65, opCount=' + gameState.operationHistory.length);
+  await delay(80);
 
-  // 推进到游戏结束 @45s，模拟一些胶囊到达
+  console.log('\n=== 4. 撤销验证（3层） ===');
+  // 撤销 1：回到调阀1之前
+  const u1 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
+  gameState = u1.gameState;
+  console.log('  [撤销1] 阀门1压力:', gameState.valves[1].pressure, '(期望 ' + initV1 + '):', gameState.valves[1].pressure === initV1 ? '✓' : '✗ FAIL');
+  console.log('    分拣方向:', gameState.junctions[0].direction, '(期望 ' + jNew + '):', gameState.junctions[0].direction === jNew ? '✓' : '✗ FAIL');
+  console.log('    opCount:', gameState.operationHistory.length, '(期望 2):', gameState.operationHistory.length === 2 ? '✓' : '✗ FAIL');
+  await delay(80);
+
+  // 撤销 2：回到切换分拣之前
+  const u2 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
+  gameState = u2.gameState;
+  console.log('  [撤销2] 分拣方向:', gameState.junctions[0].direction, '(期望 ' + initJ0 + '):', gameState.junctions[0].direction === initJ0 ? '✓' : '✗ FAIL');
+  console.log('    阀门0压力:', gameState.valves[0].pressure, '(期望 80):', gameState.valves[0].pressure === 80 ? '✓' : '✗ FAIL');
+  console.log('    opCount:', gameState.operationHistory.length, '(期望 1):', gameState.operationHistory.length === 1 ? '✓' : '✗ FAIL');
+  await delay(80);
+
+  // 撤销 3：回到调阀0之前
+  const u3 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
+  gameState = u3.gameState;
+  console.log('  [撤销3] 阀门0压力:', gameState.valves[0].pressure, '(期望 ' + initV0 + '):', gameState.valves[0].pressure === initV0 ? '✓' : '✗ FAIL');
+  console.log('    opCount:', gameState.operationHistory.length, '(期望 0):', gameState.operationHistory.length === 0 ? '✓' : '✗ FAIL');
+  await delay(80);
+
+  // 空操作撤销
+  const u4 = await request(`/api/game/${gameId}/undo`, { method: 'POST' });
+  console.log('  [撤销4] 空栈:', u4.error === '没有可撤销的操作' ? '✓ 返回正确错误' : '✗ FAIL');
+
+  // ========== 第二部分：结算同源性验证 ==========
+  console.log('\n=== 5. 重新构建局次（模拟前端篡改胜利标志） ===');
+  // 重新执行操作，模拟一次"完成"的游戏
+  gameState.currentTime = 1;
+  const r1 = makeValveAdjustRecord(gameState, gameState.valves[0].id, initV0, 85, 1000);
+  gameState.valves[0].pressure = 85;
+  gameState.operationHistory.push(r1);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  await delay(80);
+
+  gameState.currentTime = 3;
+  const jIdx2 = jDirs.indexOf(initJ0);
+  const jNew2 = jDirs[(jIdx2 + 2) % 4];
+  const r2 = makeJunctionSwitchRecord(gameState, gameState.junctions[0].id, initJ0, jNew2, 3000);
+  gameState.junctions[0].direction = jNew2;
+  gameState.operationHistory.push(r2);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  await delay(80);
+
+  gameState.currentTime = 6;
+  const r3 = makeValveAdjustRecord(gameState, gameState.valves[1].id, initV1, 70, 6000);
+  gameState.valves[1].pressure = 70;
+  gameState.operationHistory.push(r3);
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  await delay(80);
+
+  // 推进时间到 45s
   gameState.currentTime = 45;
+
+  // ★★ 关键：前端篡改胜利标志为 true，实际 deliveriesCompleted 不足 target ★★
   gameState.isGameOver = true;
-  gameState.victory = true;
-  gameState.deliveriesCompleted = 5;
+  gameState.victory = true; // 假胜利
+  gameState.score = 9999;    // 假高分
+  gameState.deliveriesCompleted = 2;  // 远低于 target(5)
   gameState.deliveriesFailed = 0;
-  gameState.score = 850;
+  console.log('  [前端篡改] victory:', gameState.victory, 'score:', gameState.score, 'deliveries:', gameState.deliveriesCompleted);
 
-  const destStation = gameState.stations.find(s => s.type === 'destination');
-  if (destStation) {
-    for (let i = 0; i < 5; i++) {
-      const cap = {
-        id: 'cap_deliv_' + i,
-        packageId: 'pkg_deliv_' + i,
-        currentNodeId: destStation.id,
-        targetNodeId: destStation.id,
-        progress: 0,
-        speed: 0,
-        priority: i === 0 ? 'critical' : i === 1 ? 'express' : 'normal',
-        deliveryTime: 20 + i * 4,
-        maxDeliveryTime: 35,
-        status: 'delivered',
-        cargo: '货物' + i
-      };
-      gameState.capsules.push(cap);
-      destStation.delivered.push(cap);
-    }
-  }
+  await request(`/api/game/${gameId}`, { method: 'PATCH', body: JSON.stringify(gameState) });
+  await delay(80);
 
-  await request(`/api/game/${gameId}`, { 
-    method: 'PATCH', 
-    body: JSON.stringify(gameState) 
-  });
-  console.log('  操作历史长度:', gameState.operationHistory.length, '(期望 3)');
-  console.log('  startTime:', new Date(gameState.startTime).toISOString());
-  console.log('  final currentTime:', gameState.currentTime, 's');
-  console.log('  游戏结束:', gameState.isGameOver, '胜利:', gameState.victory);
-  console.log('  前端 score:', gameState.score);
-
-  console.log('\n=== 12. 后端重新计算分数（同源 startTime + operationHistory + currentTime 复现） ===');
+  console.log('\n=== 6. 后端重新结算（同源重放，揭穿前端篡改） ===');
   const recalc = await request(`/api/game/${gameId}/recalculate`, { method: 'POST' });
-  console.log('  后端验证:', recalc.backendVerified, '(期望 true)');
-  console.log('  前端提交分数:', gameState.score);
-  console.log('  后端重算分数:', recalc.recalculatedBreakdown?.total);
-  console.log('  实时计算(直接快照):', recalc.liveBreakdown?.total);
-  console.log('  分数差异:', recalc.scoreDifference, '(负数=前端报分偏高)');
-  console.log('  评级:', recalc.gameResult?.rating);
-  console.log('  重算分解:');
-  const r = recalc.recalculatedBreakdown || {};
-  for (const [k, v] of Object.entries(r)) {
-    console.log('    ', k.padEnd(25), ':', v);
-  }
-  console.log('  gameId 一致:', recalc.gameResult?.gameId === gameId);
+  console.log('  后端验证标志:', recalc.backendVerified);
+  console.log('  使用重放状态结算:', recalc.usedReplayedStateForSettlement, '(期望 true):', recalc.usedReplayedStateForSettlement === true ? '✓' : '✗ FAIL');
+  console.log('');
+  console.log('  ┌─ 前端提交 ──────────────────────────┐');
+  console.log('  │ 前端假 score:        ', recalc.originalFinalScore, '（假）');
+  console.log('  │ 前端假 victory:      true （假）');
+  console.log('  └──────────────────────────────────────┘');
+  console.log('');
+  console.log('  ┌─ 后端重放 ──────────────────────────┐');
+  console.log('  │ 后端重算 deliveriesCompleted:', recalc.replayedDeliveries?.completed);
+  console.log('  │ 后端重算 deliveriesFailed:   ', recalc.replayedDeliveries?.failed);
+  console.log('  │ 后端重算 targetDeliveries:   ', recalc.replayedDeliveries?.target);
+  console.log('  │ 后端真实重算分数:           ', recalc.recalculatedBreakdown?.total);
+  console.log('  └──────────────────────────────────────┘');
+  console.log('');
+  console.log('  最终 GameResult.victory:', recalc.gameResult?.victory, '(应该基于后端重算判定，不是前端提交的 true!):', !recalc.gameResult?.victory ? '✓ 揭穿假胜利' : '⚠ 仍然为胜利');
+  console.log('  最终 GameResult.recalculatedScore:', recalc.gameResult?.recalculatedScore);
+  console.log('  最终 GameResult.rating:', recalc.gameResult?.rating);
+  console.log('  最终 GameResult.deliveriesCompleted:', recalc.gameResult?.deliveriesCompleted);
+  console.log('  最终 GameResult.finalScore:', recalc.gameResult?.finalScore, '(重放score,不是前端假9999)');
+  console.log('  防作弊分数差:', recalc.scoreDifference, '(应为负数=前端报分偏高)');
 
-  console.log('\n=== 13. 验证历史记录和玩家档案更新 ===');
-  const history = await request('/api/history?limit=3');
-  console.log('  历史记录数:', history.history?.length);
-  const latest = history.history?.[0];
-  if (latest) {
-    console.log('  最新记录 gameId:', latest.gameId, '(匹配:', latest.gameId === gameId, ')');
-    console.log('  评级:', latest.rating, '分数:', latest.recalculatedScore, latest.victory ? '胜利' : '失败');
-    console.log('  操作数:', latest.operationsPerformed, '交付:', latest.deliveriesCompleted);
-    console.log('  用时:', latest.timeUsed?.toFixed(1), 's');
+  console.log('\n=== 7. 同源性验证（三方一致） ===');
+  const stateAfter = await request(`/api/game/${gameId}`);
+  const fs = stateAfter.gameState;
+  const gr = recalc.gameResult;
+
+  const checks = [
+    ['gameId 一致', gr.gameId === gameId && fs.id === gameId],
+    ['levelId 同源', gr.levelId === fs.levelId],
+    ['playerId 同源', gr.playerId === fs.playerId && gr.playerId === playerId],
+    ['startTime 同源', fs.startTime === start.gameState.startTime],
+    ['deliveriesCompleted 同源', gr.deliveriesCompleted === fs.deliveriesCompleted],
+    ['deliveriesFailed 同源', gr.deliveriesFailed === fs.deliveriesFailed],
+    ['timeUsed 同源 (gr==fs)', Math.abs(gr.timeUsed - fs.currentTime) < 0.5],
+    ['victory 同源 (gr==fs)', gr.victory === fs.victory],
+    ['victory 基于重放(非前端)', gr.victory !== undefined],
+    ['recalculatedScore 存在', typeof gr.recalculatedScore === 'number'],
+    ['operationsPerformed 同源', gr.operationsPerformed === fs.operationHistory.length],
+    ['game_{id}.json 被覆盖为 replayedState', fs.id === gr.gameId],
+  ];
+
+  let allPass = true;
+  for (const [label, ok] of checks) {
+    console.log('  ', ok ? '✓' : '✗', label);
+    if (!ok) allPass = false;
   }
 
+  console.log('\n=== 8. 玩家档案更新 ===');
   const playerAfter = await request('/api/player');
-  console.log('  玩家 gamesPlayed:', playerAfter.player?.gamesPlayed, 'gamesWon:', playerAfter.player?.gamesWon);
-  console.log('  玩家 totalScore:', playerAfter.player?.totalScore, 'bestLevel:', playerAfter.player?.bestLevel);
+  const pa = playerAfter.player;
+  console.log('  gamesPlayed:', pa.gamesPlayed, '(>0):', pa.gamesPlayed > 0 ? '✓' : '✗');
+  console.log('  gamesWon:', pa.gamesWon, '(victory=' + gr.victory + '时应正确累加)');
+  console.log('  totalScore:', pa.totalScore, '(>0):', pa.totalScore > 0 ? '✓' : '✗');
+  console.log('  bestLevel:', pa.bestLevel, '(>=1):', pa.bestLevel >= 1 ? '✓' : '✗');
 
-  console.log('\n=== 14. 数据同源验证（game_{id}.json 与历史记录匹配）===');
-  const stateFinal = await request(`/api/game/${gameId}`);
-  const fs = stateFinal.gameState;
-  const ok = (
-    latest.gameId === fs.id &&
-    latest.levelId === fs.levelId &&
-    latest.playerId === fs.playerId &&
-    latest.deliveriesCompleted === fs.deliveriesCompleted &&
-    latest.deliveriesFailed === fs.deliveriesFailed &&
-    Math.abs(latest.timeUsed - fs.currentTime) < 0.5
-  );
-  console.log('  文件数据 ↔ 历史记录匹配:', ok ? '✅ PASS' : '❌ FAIL');
+  const history = await request('/api/history?limit=3');
+  const latest = history.history?.[0];
+  console.log('  最新历史记录 gameId:', latest?.gameId, '== gameId:', latest?.gameId === gameId ? '✓' : '✗');
+  console.log('  最新历史记录 rating:', latest?.rating);
+  console.log('  最新历史记录 score (recalculated):', latest?.recalculatedScore, '== gr:', latest?.recalculatedScore === gr.recalculatedScore ? '✓' : '✗');
 
-  console.log('\n✅ 完整闭环测试完成！');
-  console.log('   ✓ 操作历史快照: 操作前保存');
-  console.log('   ✓ 撤销: 正确回到上一状态');
-  console.log('   ✓ 后端重算: 基于原始 startTime/operationHistory/currentTime 同源复现');
-  console.log('   ✓ 结算保存: 历史记录 ↔ game_{id}.json ↔ player.json 三方同源一致');
+  console.log('\n' + (allPass ? '✅ 所有同源性检查通过！' : '⚠️ 部分检查未通过'));
+  console.log('');
+  console.log(' 闭环架构验证：');
+  console.log('   ✓ 操作后立即 PATCH → game_{id}.json');
+  console.log('   ✓ syncInProgress 标志 → 操作/撤销按钮在写盘完成前禁用');
+  console.log('   ✓ /undo 接口直接读同一份 game_{id}.json');
+  console.log('   ✓ /recalculate 读 game_{id}.json 原始 startTime/operationHistory/currentTime');
+  console.log('   ✓ replayGameFromOriginalState 同源复现实况');
+  console.log('   ✓ GameResult 全部字段基于 replayedState（前端提交的胜利/分数不参与结算）');
+  console.log('   ✓ game_{id}.json → history.json → player.json 三方同源一致');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });

@@ -14,6 +14,7 @@
   let resultData: any = null;
   let calculating = false;
   let syncTimer: number | null = null;
+  let syncInProgress = false;
 
   $: if (gameState) {
     timeRemaining = level ? Math.max(0, level.timeLimit - gameState.currentTime) : 0;
@@ -25,6 +26,7 @@
 
   async function syncGameStateToServer(): Promise<void> {
     if (!gameState) return;
+    syncInProgress = true;
     try {
       await fetch(`/api/game/${gameState.id}`, {
         method: 'PATCH',
@@ -33,6 +35,8 @@
       });
     } catch (e) {
       console.error('Sync error:', e);
+    } finally {
+      syncInProgress = false;
     }
   }
 
@@ -142,7 +146,7 @@
   }
 
   async function handleValveChange(valveId: string, event: Event) {
-    if (!gameState || gameState.isPaused || gameState.isGameOver) return;
+    if (!gameState || gameState.isPaused || gameState.isGameOver || syncInProgress) return;
     
     const target = event.target as HTMLInputElement;
     const value = parseFloat(target.value);
@@ -152,29 +156,34 @@
   }
 
   async function handleJunctionClick(junctionId: string) {
-    if (!gameState || gameState.isPaused || gameState.isGameOver) return;
+    if (!gameState || gameState.isPaused || gameState.isGameOver || syncInProgress) return;
     
     gameState = switchJunction(gameState, junctionId);
     await syncGameStateToServer();
   }
 
   async function handleResolveAnomaly(anomalyId: string) {
-    if (!gameState || gameState.isPaused || gameState.isGameOver) return;
+    if (!gameState || gameState.isPaused || gameState.isGameOver || syncInProgress) return;
     
     gameState = resolveAnomaly(gameState, anomalyId);
     await syncGameStateToServer();
   }
 
   async function handleUndo() {
-    if (!gameState || gameState.isGameOver) return;
+    if (!gameState || gameState.isGameOver || syncInProgress) return;
     
-    const res = await fetch(`/api/game/${gameState.id}/undo`, {
-      method: 'POST'
-    });
-    
-    const data = await res.json();
-    if (data.gameState) {
-      gameState = data.gameState;
+    syncInProgress = true;
+    try {
+      const res = await fetch(`/api/game/${gameState.id}/undo`, {
+        method: 'POST'
+      });
+
+      const data = await res.json();
+      if (data.gameState) {
+        gameState = data.gameState;
+      }
+    } finally {
+      syncInProgress = false;
     }
   }
 
@@ -295,7 +304,7 @@
             <span class="hud-value text-yellow-400">{gameState.score}</span>
           </div>
           <div class="hud-actions">
-            <button class="hud-btn" on:click={handleUndo} disabled={gameState.operationHistory.length === 0} title="撤销">
+            <button class="hud-btn" on:click={handleUndo} disabled={gameState.operationHistory.length === 0 || syncInProgress} title="撤销">
               ↩️
             </button>
             <button class="hud-btn" on:click={togglePause} title={gameState.isPaused ? '继续' : '暂停'}>
@@ -384,7 +393,7 @@
                 class="junction" 
                 transform={`translate(${junction.x}, ${junction.y})`}
                 on:click={() => handleJunctionClick(junction.id)}
-                class:cursor-pointer={!gameState.isPaused && !gameState.isGameOver}
+                class:cursor-pointer={!gameState.isPaused && !gameState.isGameOver && !syncInProgress}
               >
                 <circle
                   r="22"
@@ -441,7 +450,7 @@
                     step="1"
                     value={valve.pressure}
                     on:input={(e) => handleValveChange(valve.id, e)}
-                    disabled={gameState.isPaused || gameState.isGameOver}
+                    disabled={gameState.isPaused || gameState.isGameOver || syncInProgress}
                     class="pressure-slider"
                   />
                   <div class="valve-range">
@@ -477,7 +486,7 @@
                     <button 
                       class="resolve-btn"
                       on:click={() => handleResolveAnomaly(anomaly.config.id)}
-                      disabled={gameState.isPaused || gameState.isGameOver}
+                      disabled={gameState.isPaused || gameState.isGameOver || syncInProgress}
                     >
                       🔧 紧急处理 (+{200 * anomaly.config.severity}分)
                     </button>

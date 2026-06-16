@@ -1,14 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getGameState, getLevels, saveGameResult, savePlayer, getPlayer } from '$lib/storage';
-import { recalculateScoreFromHistory, createGameResult, calculateScoreBreakdown } from '$lib/scoreCalculator';
+import { getGameState, getLevels, saveGameResult, savePlayer, getPlayer, saveGameState } from '$lib/storage';
+import { recalculateFullFromOriginalState, createGameResult, calculateScoreBreakdown } from '$lib/scoreCalculator';
 import { seedLevels } from '$lib/seedData';
 
 export const POST: RequestHandler = async ({ params }) => {
   try {
-    const gameState = getGameState(params.id);
+    const originalGameState = getGameState(params.id);
     
-    if (!gameState) {
+    if (!originalGameState) {
       return json({ error: '游戏不存在' }, { status: 404 });
     }
 
@@ -17,17 +17,20 @@ export const POST: RequestHandler = async ({ params }) => {
       levels = seedLevels;
     }
 
-    const level = levels.find(l => l.id === gameState.levelId);
+    const level = levels.find(l => l.id === originalGameState.levelId);
     if (!level) {
       return json({ error: '关卡不存在' }, { status: 404 });
     }
 
-    const recalculatedBreakdown = recalculateScoreFromHistory(gameState, level);
-    const liveBreakdown = calculateScoreBreakdown(gameState, level);
+    const { replayedState, breakdown: recalculatedBreakdown } = recalculateFullFromOriginalState(originalGameState, level);
+    const liveBreakdown = calculateScoreBreakdown(originalGameState, level);
 
-    const gameResult = createGameResult(gameState, level, recalculatedBreakdown);
+    const gameResult = createGameResult(replayedState, level, recalculatedBreakdown);
 
     saveGameResult(gameResult);
+
+    replayedState.isGameOver = true;
+    saveGameState(replayedState);
 
     const player = getPlayer();
     if (player) {
@@ -46,8 +49,15 @@ export const POST: RequestHandler = async ({ params }) => {
       gameResult,
       recalculatedBreakdown,
       liveBreakdown,
-      scoreDifference: recalculatedBreakdown.total - gameState.score,
-      backendVerified: true
+      originalFinalScore: originalGameState.score,
+      replayedDeliveries: {
+        completed: replayedState.deliveriesCompleted,
+        failed: replayedState.deliveriesFailed,
+        target: level.targetDeliveries
+      },
+      scoreDifference: recalculatedBreakdown.total - originalGameState.score,
+      backendVerified: true,
+      usedReplayedStateForSettlement: true
     });
   } catch (e) {
     console.error('Recalculate score error:', e);

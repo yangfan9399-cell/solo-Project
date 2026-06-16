@@ -326,25 +326,72 @@ export function undoOperation(state: GameState): GameState | null {
   return previousState;
 }
 
-export function replayOperations(operations: OperationRecord[], level: Level, playerId: string): GameState {
-  if (operations.length === 0) {
-    throw new Error('No operations to replay');
-  }
+export function replayGameFromOriginalState(originalState: GameState, level: Level): GameState {
+  const simState: GameState = {
+    id: originalState.id,
+    levelId: originalState.levelId,
+    playerId: originalState.playerId,
+    startTime: originalState.startTime,
+    currentTime: 0,
+    isPaused: false,
+    isGameOver: false,
+    victory: false,
+    score: 0,
+    deliveriesCompleted: 0,
+    deliveriesFailed: 0,
+    valves: JSON.parse(JSON.stringify(level.valves)),
+    junctions: JSON.parse(JSON.stringify(level.junctions)),
+    pipes: JSON.parse(JSON.stringify(level.pipes)),
+    capsules: [],
+    stations: JSON.parse(JSON.stringify(level.stations)),
+    activeAnomalies: [],
+    operationHistory: []
+  };
 
-  const initialState = createGameState(level, playerId);
-  const sortedOps = [...operations].sort((a, b) => a.timestamp - b.timestamp);
-  let currentState = initialState;
+  const sortedOps = [...originalState.operationHistory].sort((a, b) => a.timestamp - b.timestamp);
+  let simTime = 0;
+  const tickStep = 0.016;
 
   for (const op of sortedOps) {
-    const snapshot = JSON.parse(JSON.stringify(op.gameStateSnapshot)) as GameState;
-    snapshot.id = initialState.id;
-    snapshot.levelId = initialState.levelId;
-    snapshot.playerId = initialState.playerId;
-    snapshot.startTime = initialState.startTime;
-    snapshot.operationHistory = currentState.operationHistory;
-    snapshot.operationHistory.push(op);
-    currentState = snapshot;
+    const targetSimTime = (op.timestamp - originalState.startTime) / 1000;
+
+    while (simTime < targetSimTime && !simState.isGameOver) {
+      const delta = Math.min(tickStep, targetSimTime - simTime);
+      tickGame(simState, level, delta);
+      simTime += delta;
+    }
+
+    switch (op.type) {
+      case 'valve_adjust': {
+        const valve = simState.valves.find(v => v.id === op.targetId);
+        if (valve) valve.pressure = op.newValue as number;
+        break;
+      }
+      case 'junction_switch': {
+        const junction = simState.junctions.find(j => j.id === op.targetId);
+        if (junction) junction.direction = op.newValue as GameState['junctions'][0]['direction'];
+        break;
+      }
+      case 'anomaly_resolve': {
+        const anomaly = simState.activeAnomalies.find(a => a.config.id === op.targetId);
+        if (anomaly && !anomaly.resolved) {
+          anomaly.resolved = true;
+          simState.score += 200 * anomaly.config.severity;
+        }
+        break;
+      }
+    }
+
+    simState.operationHistory.push(op);
   }
 
-  return currentState;
+  while (simTime < originalState.currentTime && !simState.isGameOver) {
+    const delta = Math.min(tickStep, originalState.currentTime - simTime);
+    tickGame(simState, level, delta);
+    simTime += delta;
+  }
+
+  simState.currentTime = originalState.currentTime;
+
+  return simState;
 }

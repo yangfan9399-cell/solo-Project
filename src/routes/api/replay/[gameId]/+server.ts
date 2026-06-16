@@ -2,7 +2,6 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getGameHistory, getLevels } from '$lib/storage';
 import { seedLevels } from '$lib/seedData';
-import { replayOperations } from '$lib/gameEngine';
 
 export const GET: RequestHandler = async ({ params, url }) => {
   try {
