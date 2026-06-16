@@ -7,8 +7,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"postinstall": "node scripts/patch-rollup-native.cjs"
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"devDependencies": {
 		"@rollup/wasm-node": "^4.62.0",
@@ -23,6 +22,6 @@
 		"vite": "^5.4.0"
 	},
 	"overrides": {
-		"@rollup/rollup-darwin-arm64": "npm:@rollup/wasm-node@^4.62.0"
+		"@rollup/rollup-darwin-arm64": "file:./vendor/rollup-darwin-arm64"
 	}
 }
