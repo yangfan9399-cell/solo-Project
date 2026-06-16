@@ -432,6 +432,11 @@ class TrainDiningGame {
                 ? `${order.time_remaining}秒`
                 : `超时${Math.abs(order.time_remaining)}秒`;
 
+            let prepProgressHtml = '';
+            if (type === 'preparing' && order.prep_tasks && order.prep_tasks.length > 0) {
+                prepProgressHtml = this.renderPrepProgress(order);
+            }
+
             card.innerHTML = `
                 <div class="order-header">
                     <span class="order-icon">${order.recipe_icon}</span>
@@ -446,6 +451,7 @@ class TrainDiningGame {
                     <span>⏱️ ${timeDisplay}</span>
                     <span class="order-price">¥${order.base_price}</span>
                 </div>
+                ${prepProgressHtml}
                 ${actionBtn}
             `;
 
@@ -463,6 +469,110 @@ class TrainDiningGame {
                 }
             });
         });
+    }
+
+    renderPrepProgress(order) {
+        const stages = [
+            { key: 'prep', label: '备料', icon: '🥗' },
+            { key: 'heat', label: '加热', icon: '🔥' },
+            { key: 'cook', label: '烹饪', icon: '🍳' },
+            { key: 'plate', label: '装盘', icon: '🍽️' }
+        ];
+
+        const tasks = order.prep_tasks;
+        const summary = order.prep_summary || { total: 0, completed: 0, processing: 0, queued: 0 };
+
+        const ingredientTasks = tasks.filter(t => t.ingredient);
+        const stageTasks = tasks.filter(t => !t.ingredient);
+
+        let ingredientListHtml = '';
+        const ingredients = [...new Set(ingredientTasks.map(t => t.ingredient))];
+        
+        ingredients.forEach(ingName => {
+            const prepTask = ingredientTasks.find(t => t.ingredient === ingName && t.task_type === 'prep');
+            const heatTask = ingredientTasks.find(t => t.ingredient === ingName && t.task_type === 'heat');
+            
+            let statusIcon = '⏳';
+            let statusClass = 'pending';
+            
+            if (prepTask && prepTask.status === 'completed' && heatTask && heatTask.status === 'completed') {
+                statusIcon = '✅';
+                statusClass = 'completed';
+            } else if (prepTask && prepTask.status === 'processing') {
+                statusIcon = '🥗';
+                statusClass = 'prepping';
+            } else if (heatTask && heatTask.status === 'processing') {
+                statusIcon = '🔥';
+                statusClass = 'heating';
+            }
+
+            const prepIcon = prepTask ? (prepTask.status === 'completed' ? '✓' : (prepTask.status === 'processing' ? '→' : '○')) : '○';
+            const heatIcon = heatTask ? (heatTask.status === 'completed' ? '✓' : (heatTask.status === 'processing' ? '→' : '○')) : '○';
+
+            ingredientListHtml += `
+                <div class="prep-ingredient-item ${statusClass}">
+                    <span class="prep-ing-icon">${prepTask?.ingredient_icon || '🍽️'}</span>
+                    <span class="prep-ing-name">${ingName}</span>
+                    <span class="prep-ing-steps">
+                        <span class="step prep-step ${prepTask?.status || 'pending'}">备${prepIcon}</span>
+                        <span class="step heat-step ${heatTask?.status || 'pending'}">加${heatIcon}</span>
+                    </span>
+                </div>
+            `;
+        });
+
+        let stageHtml = '';
+        stages.forEach((stage, idx) => {
+            const stageTask = tasks.find(t => t.task_type === stage.key && !t.ingredient);
+            let stageStatus = 'pending';
+            let stageProgress = 0;
+            
+            if (stageTask) {
+                stageStatus = stageTask.status;
+                stageProgress = stageTask.progress || 0;
+            }
+            
+            if (stage.key === 'prep' || stage.key === 'heat') {
+                const ingredientCount = ingredients.length;
+                const completedCount = ingredients.filter(ingName => {
+                    const sTask = ingredientTasks.find(t => t.ingredient === ingName && t.task_type === stage.key);
+                    return sTask && sTask.status === 'completed';
+                }).length;
+                stageProgress = ingredientCount > 0 ? Math.round(completedCount / ingredientCount * 100) : 0;
+                stageStatus = stageProgress === 100 ? 'completed' : (stageProgress > 0 ? 'processing' : 'pending');
+            }
+
+            const isActive = stageStatus === 'processing';
+            const isDone = stageStatus === 'completed';
+            
+            stageHtml += `
+                <div class="prep-stage ${stageStatus}">
+                    <div class="prep-stage-icon">${stage.icon}</div>
+                    <div class="prep-stage-label">${stage.label}</div>
+                    <div class="prep-stage-bar">
+                        <div class="prep-stage-fill" style="width: ${stageProgress}%"></div>
+                    </div>
+                    ${idx < stages.length - 1 ? '<div class="prep-stage-arrow">→</div>' : ''}
+                </div>
+            `;
+        });
+
+        const overallProgress = summary.total > 0 ? Math.round(summary.completed / summary.total * 100) : 0;
+
+        return `
+            <div class="order-prep-progress">
+                <div class="prep-stages-row">
+                    ${stageHtml}
+                </div>
+                <div class="prep-overall-bar">
+                    <div class="prep-overall-fill" style="width: ${overallProgress}%"></div>
+                    <span class="prep-overall-text">备料进度 ${overallProgress}%</span>
+                </div>
+                <div class="prep-ingredients-list">
+                    ${ingredientListHtml}
+                </div>
+            </div>
+        `;
     }
 
     async startPreparation(orderId) {

@@ -730,6 +730,227 @@ body {
     font-size: 0.85rem;
 }
 
+.order-prep-progress {
+    margin-top: 0.75rem;
+    padding: 0.6rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 10px;
+    border: 1px solid #bae6fd;
+}
+
+.prep-stages-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    gap: 2px;
+}
+
+.prep-stage {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0.3rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.prep-stage.pending {
+    opacity: 0.4;
+    background: #f1f5f9;
+}
+
+.prep-stage.processing {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+
+.prep-stage.completed {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    opacity: 1;
+}
+
+.prep-stage-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+.prep-stage-label {
+    font-size: 0.65rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.prep-stage-bar {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.prep-stage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.prep-stage.processing .prep-stage-fill {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.prep-stage-arrow {
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: #94a3b8;
+    z-index: 1;
+    font-weight: bold;
+}
+
+.prep-overall-bar {
+    position: relative;
+    height: 20px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+
+.prep-overall-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #06b6d4, #0891b2);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.prep-overall-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.prep-ingredients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.prep-ingredient-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.4rem;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.prep-ingredient-item.prepping {
+    border-color: #fbbf24;
+    background: #fffbeb;
+}
+
+.prep-ingredient-item.heating {
+    border-color: #f97316;
+    background: #fff7ed;
+    animation: heat-shimmer 1s ease-in-out infinite alternate;
+}
+
+.prep-ingredient-item.completed {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+
+.prep-ing-icon {
+    font-size: 0.9rem;
+}
+
+.prep-ing-name {
+    flex: 1;
+    font-weight: 500;
+    color: #334155;
+}
+
+.prep-ing-steps {
+    display: flex;
+    gap: 3px;
+}
+
+.step {
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.prep-step.pending,
+.heat-step.pending {
+    background: #e2e8f0;
+    color: #94a3b8;
+}
+
+.prep-step.processing {
+    background: #fbbf24;
+    color: #78350f;
+    animation: step-pulse 0.8s ease-in-out infinite;
+}
+
+.heat-step.processing {
+    background: #f97316;
+    color: #7c2d12;
+    animation: step-pulse 0.8s ease-in-out infinite;
+}
+
+.prep-step.completed,
+.heat-step.completed {
+    background: #22c55e;
+    color: white;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+    }
+}
+
+@keyframes step-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes heat-shimmer {
+    0% {
+        box-shadow: 0 0 2px rgba(249, 115, 22, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+    }
+}
+
 .overlay {
     position: fixed;
     top: 0;
