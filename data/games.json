@@ -47,6 +47,161 @@
       "decodedChars": "MARS",
       "history": [],
       "historyIndex": -1
+    },
+    {
+      "id": "02w3P7r9CcvM",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "lost",
+      "score": 1141,
+      "startTime": 1781583993075,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 0.5,
+      "decodedChars": "HELLO",
+      "history": [
+        {
+          "timestamp": 1781583993000,
+          "type": "frequency",
+          "from": 1682.51,
+          "to": 1420.5
+        },
+        {
+          "timestamp": 1781583994000,
+          "type": "gain",
+          "from": 61.31,
+          "to": 50
+        },
+        {
+          "timestamp": 1781583995000,
+          "type": "antenna",
+          "from": 0.06,
+          "to": 30
+        },
+        {
+          "timestamp": 1781583996000,
+          "type": "filter",
+          "from": 0.3,
+          "to": 0.5
+        }
+      ],
+      "historyIndex": 3,
+      "endTime": 1781584029432
+    },
+    {
+      "id": "AgclalzaRTm1",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "lost",
+      "score": 1187,
+      "startTime": 1781584059079,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 0.14,
+      "decodedChars": "HELLO",
+      "history": [],
+      "historyIndex": -1,
+      "endTime": 1781584061155
+    },
+    {
+      "id": "qvvN8adz0o4J",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "lost",
+      "score": 1188,
+      "startTime": 1781584120654,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 1,
+      "decodedChars": "",
+      "history": [],
+      "historyIndex": -1,
+      "endTime": 1781584121730
+    },
+    {
+      "id": "8nz1j9z_b7Nt",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "lost",
+      "score": 1189,
+      "startTime": 1781584250410,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 0.24,
+      "decodedChars": "",
+      "history": [
+        {
+          "timestamp": 1781584247414,
+          "type": "frequency",
+          "from": 2447.195259904691,
+          "to": 1420.5
+        },
+        {
+          "timestamp": 1781584248414,
+          "type": "gain",
+          "from": 39.17033156409524,
+          "to": 50
+        },
+        {
+          "timestamp": 1781584249414,
+          "type": "antenna",
+          "from": 18.535374104224037,
+          "to": 30
+        },
+        {
+          "timestamp": 1781584250414,
+          "type": "filter",
+          "from": 0.3,
+          "to": 0.24
+        }
+      ],
+      "historyIndex": 3,
+      "endTime": 1781584250427
+    },
+    {
+      "id": "xmUIm5H2IOLd",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "won",
+      "score": 1249,
+      "startTime": 1781584289300,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 0.24,
+      "decodedChars": "",
+      "history": [
+        {
+          "timestamp": 1781584286302,
+          "type": "frequency",
+          "from": 4630.648152569449,
+          "to": 1420.5
+        },
+        {
+          "timestamp": 1781584287302,
+          "type": "gain",
+          "from": 44.544157351524305,
+          "to": 50
+        },
+        {
+          "timestamp": 1781584288302,
+          "type": "antenna",
+          "from": 40.38253063787914,
+          "to": 30
+        },
+        {
+          "timestamp": 1781584289302,
+          "type": "filter",
+          "from": 0.3,
+          "to": 0.24
+        }
+      ],
+      "historyIndex": 3,
+      "endTime": 1781584289311
     }
   ]
 }

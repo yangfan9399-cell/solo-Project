@@ -31,12 +31,18 @@ export function calculateSignalQuality(state: GameState, level: Level): SignalQu
 	const angleRange = ANTENNA_MAX - ANTENNA_MIN;
 	const antennaMatch = Math.max(0, 1 - angleDiff / (angleRange * 0.1));
 
-	const optimalFilter = level.noiseLevel * 0.7;
-	const filterDiff = Math.abs(state.noiseFilter - optimalFilter);
-	const filterMatch = Math.max(0, 1 - filterDiff / 0.5);
+	const targetNoiseReduction = Math.min(1, level.noiseLevel * 1.2);
+	const actualNoiseReduction = state.noiseFilter;
+	const filterEffectiveness = Math.min(actualNoiseReduction, targetNoiseReduction) / targetNoiseReduction;
+	const overFiltering = Math.max(0, actualNoiseReduction - targetNoiseReduction) / (1 - targetNoiseReduction + 0.01);
+	const filterMatch = Math.max(0, filterEffectiveness - overFiltering * 0.5);
 
 	const overall = frequencyMatch * 0.35 + gainMatch * 0.25 + antennaMatch * 0.25 + filterMatch * 0.15;
-	const snr = overall * (1 - level.noiseLevel * 0.5);
+	const noiseReduction = state.noiseFilter;
+	const effectiveNoise = level.noiseLevel * (1 - noiseReduction);
+	const baseSnr = overall * (1 - effectiveNoise * 0.5);
+	const snrBoost = Math.pow(overall, 3) * 0.15;
+	const snr = Math.min(1, baseSnr + snrBoost);
 
 	return {
 		frequencyMatch,
