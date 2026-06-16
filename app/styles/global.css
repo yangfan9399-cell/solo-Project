@@ -1,0 +1,21 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  background: #1a1a1a;
+  color: #f0e6d2;
+  min-height: 100vh;
+}
+
+:root {
+  --sepia: #f0e6d2;
+  --sepia-dark: #c4b89a;
+  --film-bg: #2a2520;
+  --film-border: #8b7355;
+  --accent: #d4a574;
+  --accent-dark: #b8956a;
+}
