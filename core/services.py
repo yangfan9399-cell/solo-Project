@@ -48,6 +48,49 @@ def detect_all_anomalies():
     return detected
 
 
+def _upsert_anomaly(anomaly_type, severity, description,
+                    core_sample=None, cutting_task=None, cutter=None):
+    """
+    增量化异常：
+    - 不存在 → 创建（未解决）
+    - 存在但已解决 → 重新打开为未解决（更新描述）
+    - 存在且未解决 → 更新描述（如果变化）
+    返回 (anomaly, is_new_or_reopened)
+    """
+    lookup = {
+        'anomaly_type': anomaly_type,
+        'core_sample': core_sample,
+        'cutting_task': cutting_task,
+        'cutter': cutter,
+    }
+
+    try:
+        anomaly = AnomalyRecord.objects.get(**lookup)
+        changed = False
+        if anomaly.resolved:
+            anomaly.resolved = False
+            anomaly.resolved_at = None
+            anomaly.resolution = ''
+            changed = True
+        if anomaly.severity != severity:
+            anomaly.severity = severity
+            changed = True
+        if anomaly.description != description:
+            anomaly.description = description
+            changed = True
+        if changed:
+            anomaly.save()
+        return anomaly, changed
+    except AnomalyRecord.DoesNotExist:
+        anomaly = AnomalyRecord.objects.create(
+            **lookup,
+            severity=severity,
+            description=description,
+            resolved=False,
+        )
+        return anomaly, True
+
+
 def _detect_length_mismatch():
     anomalies = []
     tasks = CuttingTask.objects.filter(
@@ -57,18 +100,14 @@ def _detect_length_mismatch():
     for task in tasks:
         diff = abs(task.planned_cut_length - task.actual_cut_length)
         if task.planned_cut_length > 0 and (diff / task.planned_cut_length) > 0.1:
-            anomaly, created = AnomalyRecord.objects.get_or_create(
-                anomaly_type='length_mismatch',
-                cutting_task=task,
+            desc = (f'任务 {task.task_no} 实际切割长度({task.actual_cut_length}m) '
+                    f'与计划({task.planned_cut_length}m)偏差超过10%')
+            anomaly, is_new = _upsert_anomaly(
+                'length_mismatch', 'warning', desc,
                 core_sample=task.core_sample,
-                defaults={
-                    'severity': 'warning',
-                    'description': f'任务 {task.task_no} 实际切割长度({task.actual_cut_length}m) '
-                                   f'与计划({task.planned_cut_length}m)偏差超过10%',
-                    'resolved': False,
-                }
+                cutting_task=task,
             )
-            if created:
+            if is_new or not anomaly.resolved:
                 anomalies.append(anomaly)
     return anomalies
 
@@ -82,18 +121,14 @@ def _detect_high_loss():
     for task in tasks:
         expected = task.expected_loss
         if task.loss_length > expected * 2:
-            anomaly, created = AnomalyRecord.objects.get_or_create(
-                anomaly_type='high_loss',
-                cutting_task=task,
+            desc = (f'任务 {task.task_no} 损耗({task.loss_length}m) '
+                    f'超出预期({expected:.4f}m)的2倍，损耗率{task.loss_rate}%')
+            anomaly, is_new = _upsert_anomaly(
+                'high_loss', 'warning', desc,
                 core_sample=task.core_sample,
-                defaults={
-                    'severity': 'warning',
-                    'description': f'任务 {task.task_no} 损耗({task.loss_length}m) '
-                                   f'超出预期({expected:.4f}m)的2倍，损耗率{task.loss_rate}%',
-                    'resolved': False,
-                }
+                cutting_task=task,
             )
-            if created:
+            if is_new or not anomaly.resolved:
                 anomalies.append(anomaly)
     return anomalies
 
@@ -105,16 +140,12 @@ def _detect_low_remaining():
     )
     for sample in samples:
         if sample.total_length > 0 and sample.remaining_length / sample.total_length < 0.1:
-            anomaly, created = AnomalyRecord.objects.get_or_create(
-                anomaly_type='low_remaining',
+            desc = f'岩心 {sample.sample_no} 剩余长度不足10%，剩余 {sample.remaining_length}m'
+            anomaly, is_new = _upsert_anomaly(
+                'low_remaining', 'info', desc,
                 core_sample=sample,
-                defaults={
-                    'severity': 'info',
-                    'description': f'岩心 {sample.sample_no} 剩余长度不足10%，剩余 {sample.remaining_length}m',
-                    'resolved': False,
-                }
             )
-            if created:
+            if is_new or not anomaly.resolved:
                 anomalies.append(anomaly)
     return anomalies
 
@@ -138,18 +169,14 @@ def _detect_over_scheduled():
                 next_start = timedelta(hours=nxt.scheduled_start_time.hour,
                                        minutes=nxt.scheduled_start_time.minute)
                 if curr_end > next_start:
-                    anomaly, created = AnomalyRecord.objects.get_or_create(
-                        anomaly_type='over_scheduled',
+                    desc = (f'切割机 {cutter.cutter_no} 在 {today} '
+                            f'存在排程冲突：{curr.task_no} 与 {nxt.task_no} 时间重叠')
+                    anomaly, is_new = _upsert_anomaly(
+                        'over_scheduled', 'critical', desc,
                         cutting_task=nxt,
                         cutter=cutter,
-                        defaults={
-                            'severity': 'critical',
-                            'description': f'切割机 {cutter.cutter_no} 在 {today} '
-                                           f'存在排程冲突：{curr.task_no} 与 {nxt.task_no} 时间重叠',
-                            'resolved': False,
-                        }
                     )
-                    if created:
+                    if is_new or not anomaly.resolved:
                         anomalies.append(anomaly)
     return anomalies
 
@@ -166,17 +193,13 @@ def _detect_capacity_exceeded():
         )
         total_length = tasks.aggregate(total=Sum('planned_cut_length'))['total'] or 0
         if total_length > cutter.daily_capacity:
-            anomaly, created = AnomalyRecord.objects.get_or_create(
-                anomaly_type='capacity_exceeded',
+            desc = (f'切割机 {cutter.cutter_no} 在 {today} 排程总长度 '
+                    f'({total_length:.2f}m) 超过日产能({cutter.daily_capacity}m)')
+            anomaly, is_new = _upsert_anomaly(
+                'capacity_exceeded', 'warning', desc,
                 cutter=cutter,
-                defaults={
-                    'severity': 'warning',
-                    'description': f'切割机 {cutter.cutter_no} 在 {today} 排程总长度 '
-                                   f'({total_length:.2f}m) 超过日产能({cutter.daily_capacity}m)',
-                    'resolved': False,
-                }
             )
-            if created:
+            if is_new or not anomaly.resolved:
                 anomalies.append(anomaly)
     return anomalies
 
@@ -194,16 +217,12 @@ def _detect_data_incomplete():
             missing.append('地层')
         if not sample.collected_date:
             missing.append('采集日期')
-        anomaly, created = AnomalyRecord.objects.get_or_create(
-            anomaly_type='data_incomplete',
+        desc = f'岩心 {sample.sample_no} 缺少信息：{", ".join(missing)}'
+        anomaly, is_new = _upsert_anomaly(
+            'data_incomplete', 'info', desc,
             core_sample=sample,
-            defaults={
-                'severity': 'info',
-                'description': f'岩心 {sample.sample_no} 缺少信息：{", ".join(missing)}',
-                'resolved': False,
-            }
         )
-        if created:
+        if is_new or not anomaly.resolved:
             anomalies.append(anomaly)
     return anomalies
 
@@ -222,7 +241,8 @@ def _time_to_minutes_from_daystart(t):
 def _calc_task_position(task, cutter):
     """
     返回 (left_pct, width_pct)，基于 DAY_START_HOUR~DAY_END_HOUR 的 0~100 百分比。
-    width 根据实际的 开始~结束时间 或按 planned_cut_length/daily_capacity 估算。
+    left 按 scheduled_start_time 计算；
+    width 只按 planned_cut_length / cutter.daily_capacity 占工作时长比例换算，不使用 scheduled_end_time。
     """
     wstart = _time_to_minutes_from_daystart(cutter.work_start_time)
     wend = _time_to_minutes_from_daystart(cutter.work_end_time)
@@ -234,15 +254,10 @@ def _calc_task_position(task, cutter):
 
     left_pct = max(0.0, min(98.0, start_min / DAY_SPAN_MINUTES * 100.0))
 
-    end_min = _time_to_minutes_from_daystart(task.scheduled_end_time)
-    if end_min is not None and end_min > start_min:
-        duration = end_min - start_min
-    else:
-        cap = cutter.daily_capacity if cutter.daily_capacity > 0 else 1.0
-        ratio = min(task.planned_cut_length / cap, 1.0)
-        duration = max(ratio * work_span, 30)
-
-    width_pct = max(4.0, min(100.0 - left_pct, duration / DAY_SPAN_MINUTES * 100.0))
+    cap = cutter.daily_capacity if cutter.daily_capacity > 0 else 1.0
+    ratio = min(max(task.planned_cut_length / cap, 0), 1.0)
+    duration_minutes = ratio * work_span
+    width_pct = max(4.0, min(100.0 - left_pct, duration_minutes / DAY_SPAN_MINUTES * 100.0))
     return round(left_pct, 2), round(width_pct, 2)
 
 
