@@ -4,14 +4,14 @@
     const inkBudget = parseInt(document.getElementById('level-ink-budget').value);
     const csrfToken = document.getElementById('csrf-token').value;
 
-    let arrangedChars = [];
+    let arrangedChars = (document.getElementById('initial-arranged').value || '').split('');
     let selectedChar = null;
     let selectedStickIdx = null;
-    let inkUsed = 0;
-    let proofreadCount = 0;
-    let elapsedSeconds = 0;
+    let inkUsed = parseInt(document.getElementById('initial-ink').value) || 0;
+    let proofreadCount = parseInt(document.getElementById('initial-proofread').value) || 0;
+    let elapsedSeconds = parseInt(document.getElementById('initial-elapsed').value) || 0;
     let timerInterval = null;
-    let invertedPositions = new Set();
+    let invertedPositions = new Set(JSON.parse(document.getElementById('initial-inverted').value || '[]'));
 
     const composingStick = document.getElementById('composing-stick');
     const placeholder = document.getElementById('composing-placeholder');
@@ -42,20 +42,28 @@
     }
 
     function startTimer() {
+        updateTimerDisplay();
         timerInterval = setInterval(() => {
             elapsedSeconds++;
+            updateTimerDisplay();
             const remaining = Math.max(0, timeLimit - elapsedSeconds);
-            timerEl.textContent = remaining + '秒';
-            if (remaining <= 10) {
-                timerEl.style.color = '#e74c3c';
-            } else if (remaining <= 30) {
-                timerEl.style.color = '#f39c12';
-            }
             if (remaining <= 0) {
                 clearInterval(timerInterval);
                 autoSubmit();
             }
         }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        const remaining = Math.max(0, timeLimit - elapsedSeconds);
+        timerEl.textContent = remaining + '秒';
+        if (remaining <= 10) {
+            timerEl.style.color = '#e74c3c';
+        } else if (remaining <= 30) {
+            timerEl.style.color = '#f39c12';
+        } else {
+            timerEl.style.color = '';
+        }
     }
 
     function updateComposingStick() {
@@ -101,6 +109,20 @@
         historyList.prepend(div);
     }
 
+    function syncFromServerState(data) {
+        if (data.arranged_text !== undefined) {
+            arrangedChars = data.arranged_text ? data.arranged_text.split('') : [];
+        }
+        if (data.ink_used !== undefined) {
+            inkUsed = data.ink_used;
+        }
+        if (data.inverted_positions !== undefined) {
+            invertedPositions = new Set(data.inverted_positions);
+        }
+        updateComposingStick();
+        updateInkDisplay();
+    }
+
     document.querySelectorAll('.type-char').forEach(el => {
         el.addEventListener('click', () => {
             document.querySelectorAll('.type-char').forEach(e => e.classList.remove('selected'));
@@ -109,6 +131,7 @@
             selectedStickIdx = null;
             el.classList.add('selected');
             selectedCharDisplay.textContent = '已选：' + ch;
+            updateComposingStick();
         });
     });
 
@@ -122,6 +145,8 @@
                 position: idx,
                 char_value: selectedChar,
                 old_char: oldChar,
+            }).then(data => {
+                syncFromServerState(data);
             });
             addHistoryItem('换字：位置' + (idx + 1) + ' "' + oldChar + '"→"' + selectedChar + '"');
             selectedChar = null;
@@ -136,6 +161,8 @@
                     op_type: 'flip_char',
                     position: idx,
                     char_value: arrangedChars[idx],
+                }).then(data => {
+                    syncFromServerState(data);
                 });
                 addHistoryItem('翻字：位置' + (idx + 1) + ' "' + arrangedChars[idx] + '" (倒字!)');
                 selectedStickIdx = null;
@@ -156,6 +183,8 @@
                     op_type: 'place_char',
                     position: pos,
                     char_value: selectedChar,
+                }).then(data => {
+                    syncFromServerState(data);
                 });
                 addHistoryItem('放字：位置' + (pos + 1) + ' "' + selectedChar + '"');
                 selectedChar = null;
@@ -175,6 +204,8 @@
             apiPost('/api/round/' + roundId + '/operation/', {
                 op_type: 'adjust_ink',
                 ink_delta: delta,
+            }).then(data => {
+                syncFromServerState(data);
             });
             addHistoryItem('调墨：' + (delta > 0 ? '+' : '') + delta + ' (当前' + inkUsed + ')');
         });
@@ -184,11 +215,8 @@
         try {
             const data = await apiPost('/api/round/' + roundId + '/undo/', {});
             if (data.status === 'ok') {
-                arrangedChars = data.arranged_text ? data.arranged_text.split('') : [];
-                inkUsed = data.ink_used || 0;
-                invertedPositions.clear();
-                updateComposingStick();
-                updateInkDisplay();
+                syncFromServerState(data);
+                selectedStickIdx = null;
                 addHistoryItem('撤销上一步操作');
             } else {
                 alert(data.error || '无法撤销');
@@ -204,12 +232,15 @@
 
         await apiPost('/api/round/' + roundId + '/operation/', {
             op_type: 'proofread',
+        }).then(data => {
+            syncFromServerState(data);
         });
         proofreadCount++;
         addHistoryItem('校对 (第' + proofreadCount + '次)');
 
         try {
             const data = await apiGet('/api/round/' + roundId + '/proofread/');
+            syncFromServerState(data);
             proofreadResult.innerHTML = '';
             if (data.error_count === 0) {
                 proofreadResult.innerHTML = '<div class="proofread-ok">✅ 校对通过！无误！</div>';
@@ -223,6 +254,8 @@
                         div.textContent = '位置' + (err.position + 1) + '：缺字！缺少"' + err.expected + '"';
                     } else if (err.type === 'extra') {
                         div.textContent = '位置' + (err.position + 1) + '：多余字"' + err.actual + '"';
+                    } else if (err.type === 'inverted') {
+                        div.textContent = '位置' + (err.position + 1) + '：倒字！"' + err.actual + '" 活字倒置';
                     }
                     proofreadResult.appendChild(div);
                 });

@@ -119,7 +119,10 @@ def replay_operations(round_obj):
 
         elif op.op_type == 'flip_char':
             if op.position is not None:
-                inverted_set.add(op.position)
+                if op.position in inverted_set:
+                    inverted_set.remove(op.position)
+                else:
+                    inverted_set.add(op.position)
 
         elif op.op_type == 'proofread':
             pass

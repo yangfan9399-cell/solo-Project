@@ -159,14 +159,22 @@ def record_operation(request, round_id):
     )
     op.save()
 
-    if op_type == 'adjust_ink':
-        round_obj.ink_used = max(0, round_obj.ink_used + op.ink_delta)
-        round_obj.save(update_fields=['ink_used'])
-    elif op_type == 'proofread':
+    replayed = replay_operations(round_obj)
+    round_obj.arranged_text = replayed['arranged_text']
+    round_obj.ink_used = replayed['ink_used']
+    if op_type == 'proofread':
         round_obj.proofread_count += 1
-        round_obj.save(update_fields=['proofread_count'])
+        round_obj.save(update_fields=['arranged_text', 'ink_used', 'proofread_count'])
+    else:
+        round_obj.save(update_fields=['arranged_text', 'ink_used'])
 
-    return JsonResponse({'seq': op.seq, 'status': 'ok'})
+    return JsonResponse({
+        'seq': op.seq,
+        'status': 'ok',
+        'arranged_text': round_obj.arranged_text,
+        'ink_used': round_obj.ink_used,
+        'inverted_positions': replayed['inverted_positions'],
+    })
 
 
 @csrf_exempt
@@ -281,8 +289,13 @@ def proofread(request, round_id):
         return JsonResponse({'error': '未登录'}, status=403)
     round_obj = get_object_or_404(Round, pk=round_id, player_id=player_id, status='in_progress')
     level = round_obj.level
+
+    replayed = replay_operations(round_obj)
+    arranged_text = replayed['arranged_text']
+    inverted_positions = replayed['inverted_positions']
+
     target = list(level.target_text)
-    arranged = list(round_obj.arranged_text) if round_obj.arranged_text else []
+    arranged = list(arranged_text) if arranged_text else []
 
     errors = []
     max_len = max(len(target), len(arranged))
@@ -298,10 +311,24 @@ def proofread(request, round_id):
                 'expected': target[i],
                 'actual': arranged[i],
             })
+        elif i in inverted_positions:
+            errors.append({
+                'position': i,
+                'type': 'inverted',
+                'expected': target[i],
+                'actual': arranged[i],
+                'note': '活字倒置',
+            })
+
+    round_obj.arranged_text = arranged_text
+    round_obj.ink_used = replayed['ink_used']
+    round_obj.save(update_fields=['arranged_text', 'ink_used'])
 
     return JsonResponse({
         'error_count': len(errors),
         'errors': errors,
+        'arranged_text': arranged_text,
+        'inverted_positions': sorted(inverted_positions),
         'proofread_count': round_obj.proofread_count + 1,
     })
 
@@ -312,11 +339,18 @@ def game_view(request, round_id):
         return redirect('workshop:index')
     round_obj = get_object_or_404(Round, pk=round_id, player_id=player_id, status='in_progress')
     level = round_obj.level
+
+    replayed = replay_operations(round_obj)
     return render(request, 'workshop/game.html', {
         'round': round_obj,
         'level': level,
         'char_pool': json.loads(level.char_pool),
         'player': round_obj.player,
+        'initial_arranged': replayed['arranged_text'],
+        'initial_ink': replayed['ink_used'],
+        'initial_inverted': json.dumps(sorted(replayed['inverted_positions'])),
+        'initial_proofread': round_obj.proofread_count,
+        'initial_elapsed': round_obj.elapsed_seconds,
     })
 
 

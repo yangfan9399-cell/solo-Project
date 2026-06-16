@@ -81,6 +81,11 @@
 <input type="hidden" id="level-time-limit" value="{{ level.time_limit }}">
 <input type="hidden" id="level-ink-budget" value="{{ level.ink_budget }}">
 <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+<input type="hidden" id="initial-arranged" value="{{ initial_arranged|default:'' }}">
+<input type="hidden" id="initial-ink" value="{{ initial_ink|default:0 }}">
+<input type="hidden" id="initial-inverted" value="{{ initial_inverted|default:'[]' }}">
+<input type="hidden" id="initial-proofread" value="{{ initial_proofread|default:0 }}">
+<input type="hidden" id="initial-elapsed" value="{{ initial_elapsed|default:0 }}">
 
 <script src="{% static 'workshop/js/game.js' %}"></script>
 </body>
