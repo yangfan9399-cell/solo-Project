@@ -23,7 +23,7 @@ export function getDifficultyStars(difficulty: LevelConfig['difficulty']): strin
 }
 
 export function getDifficultyTagClass(difficulty: LevelConfig['difficulty']): string {
-	return `tag-${difficulty}`;
+	return `tag tag-${difficulty}`;
 }
 
 export function getEventTypeName(type: GameEvent['type']): string {
