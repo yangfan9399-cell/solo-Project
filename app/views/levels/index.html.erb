@@ -1,0 +1,83 @@
+<% content_for :title, '关卡选择 - 河谷水磨坊' %>
+
+<div class="mb-8">
+  <div class="card mb-6">
+    <div class="flex flex-wrap justify-between items-center gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-wood-800 mb-1">关卡选择</h1>
+        <p class="text-gear-500">挑战齿轮传动谜题，成为水磨坊大师！</p>
+      </div>
+      <div class="flex gap-6 text-center">
+        <div class="bg-wood-50 rounded-xl px-6 py-3">
+          <div class="text-2xl font-bold text-wood-700"><%= @player_stats[:completed_count] %>/<%= @levels.count %></div>
+          <div class="text-sm text-gear-500">已通关</div>
+        </div>
+        <div class="bg-yellow-50 rounded-xl px-6 py-3">
+          <div class="text-2xl font-bold text-yellow-600"><%= @player_stats[:total_stars] %></div>
+          <div class="text-sm text-gear-500">总星数</div>
+        </div>
+        <div class="bg-emerald-50 rounded-xl px-6 py-3">
+          <div class="text-2xl font-bold text-emerald-600"><%= @player_stats[:total_score] %></div>
+          <div class="text-sm text-gear-500">总分数</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @levels.each do |level| %>
+      <% best_stars = current_player.best_stars_for(level) %>
+      <% best_score = current_player.best_score_for(level) %>
+      <% completed = best_stars > 0 %>
+
+      <div class="card hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold mb-2
+              <%= case level.difficulty
+                  when 'easy' then 'bg-emerald-100 text-emerald-700'
+                  when 'medium' then 'bg-yellow-100 text-yellow-700'
+                  when 'hard' then 'bg-orange-100 text-orange-700'
+                  when 'expert' then 'bg-red-100 text-red-700'
+                  else 'bg-gear-100 text-gear-700'
+                  end %>">
+              <%= { 'easy' => '简单', 'medium' => '中等', 'hard' => '困难', 'expert' => '专家' }[level.difficulty] || level.difficulty %>
+            </span>
+            <h3 class="text-xl font-bold text-wood-800">第 <%= level.level_number %> 关：<%= level.name %></h3>
+          </div>
+          <div class="flex gap-0.5">
+            <% 3.times do |i| %>
+              <span class="text-2xl <%= i < best_stars ? 'star-gold' : 'star-gray' %>">★</span>
+            <% end %>
+          </div>
+        </div>
+
+        <p class="text-gear-600 text-sm mb-4 min-h-[3rem]"><%= level.description %></p>
+
+        <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+          <div class="bg-water-50 rounded-lg p-2">
+            <span class="text-water-600">🎯 目标转速：</span>
+            <span class="font-semibold text-water-800"><%= level.target_rpm %> RPM</span>
+          </div>
+          <div class="bg-wood-50 rounded-lg p-2">
+            <span class="text-wood-600">💧 水力：</span>
+            <span class="font-semibold text-wood-800"><%= level.water_force %>x</span>
+          </div>
+        </div>
+
+        <% if completed %>
+          <div class="bg-emerald-50 rounded-lg p-3 mb-4">
+            <div class="text-sm text-emerald-700">
+              <span class="font-semibold">最佳成绩：</span>
+              <span>🏆 <%= best_score %> 分</span>
+            </div>
+          </div>
+        <% end %>
+
+        <%= link_to level_path(level), class: 'w-full btn-primary text-center block' do %>
+          <%= completed ? '再次挑战' : '开始挑战' %> →
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

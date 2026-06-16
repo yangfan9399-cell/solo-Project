@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "河谷水磨坊齿轮传动游戏" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="河谷水磨坊">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
+  </head>
+
+  <body>
+    <nav class="bg-wood-800 text-white shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">⚙️</span>
+            <span class="font-bold text-xl">河谷水磨坊</span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <% if player_signed_in? %>
+              <span class="text-wood-200">
+                <span class="mr-1">👤</span><%= current_player.name %>
+              </span>
+              <span class="text-yellow-400">
+                <span class="mr-1">⭐</span><%= current_player.total_stars %>
+              </span>
+              <span class="text-emerald-400">
+                <span class="mr-1">🏆</span><%= current_player.total_score %>
+              </span>
+              <%= link_to '关卡选择', levels_path, class: 'text-wood-200 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors' %>
+              <%= link_to '退出', session_path, method: :delete, class: 'text-wood-200 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors' %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <% if notice.present? %>
+        <div class="mb-4 p-4 bg-emerald-100 border border-emerald-400 text-emerald-700 rounded-lg">
+          <%= notice %>
+        </div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <%= alert %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

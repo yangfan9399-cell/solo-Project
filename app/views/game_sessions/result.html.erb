@@ -1,0 +1,49 @@
+<% content_for :title, '结算 - 河谷水磨坊' %>
+
+<div class="max-w-2xl mx-auto">
+  <div class="card text-center">
+    <% if @game_session.status == 'completed' %>
+      <div class="text-6xl mb-4">🎉</div>
+      <h1 class="text-4xl font-bold text-emerald-600 mb-2">恭喜通关！</h1>
+      <p class="text-gear-600 text-lg mb-8">第<%= @level.level_number %>关：<%= @level.name %></p>
+    <% else %>
+      <div class="text-6xl mb-4">😢</div>
+      <h1 class="text-4xl font-bold text-orange-600 mb-2">未能达成目标</h1>
+      <p class="text-gear-600 text-lg mb-8">再试一次吧！</p>
+    <% end %>
+
+    <div class="flex justify-center gap-2 mb-8">
+      <% 3.times do |i| %>
+        <span class="text-6xl <%= i < @game_session.stars ? 'star-gold' : 'star-gray' %> transition-all duration-500"
+              style="animation-delay: <%= i * 0.2 %>s;">
+          ★
+        </span>
+      <% end %>
+    </div>
+
+    <div class="bg-wood-50 rounded-xl p-6 mb-6">
+      <div class="text-sm text-wood-600 mb-1">最终得分</div>
+      <div class="text-6xl font-bold text-wood-800 mb-4"><%= @game_session.score %></div>
+
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div class="text-2xl font-bold text-water-700"><%= @game_session.current_rpm.round(1) %></div>
+          <div class="text-xs text-gear-500">最终转速 (目标: <%= @level.target_rpm %>)</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-wood-700"><%= @game_session.moves_count %></div>
+          <div class="text-xs text-gear-500">使用步数</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-yellow-700"><%= format_seconds(@game_session.time_spent || 0) %></div>
+          <div class="text-xs text-gear-500">用时</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <%= button_to '🔄 再玩一次', level_game_sessions_path(@level), method: :post, class: 'btn-primary' %>
+      <%= link_to '📋 关卡列表', levels_path, class: 'btn-secondary' %>
+    </div>
+  </div>
+</div>
