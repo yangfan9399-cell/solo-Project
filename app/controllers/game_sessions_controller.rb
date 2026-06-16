@@ -1,6 +1,6 @@
 class GameSessionsController < ApplicationController
   before_action :authenticate_player!
-  before_action :find_game_session, only: [:show, :update, :move_gear, :add_gear, :remove_gear, :undo, :complete, :abandon, :calculate_rpm]
+  before_action :find_game_session, only: [:show, :move_gear, :add_gear, :remove_gear, :undo, :complete, :abandon, :calculate_rpm, :result]
 
   def show
     @level = @game_session.level
