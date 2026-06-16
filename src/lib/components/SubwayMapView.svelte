@@ -60,6 +60,75 @@
 		return map.lines[session.currentLineId]?.color || '#64748b';
 	}
 
+	function buildSuggestedPath(): string {
+		if (!suggestedRoute || !map || !session) return '';
+		const points: string[] = [`${map.stations[session.currentStationId].x},${map.stations[session.currentStationId].y}`];
+		for (const step of suggestedRoute) {
+			if (!step.isTransfer) {
+				points.push(`${map.stations[step.stationId].x},${map.stations[step.stationId].y}`);
+			}
+		}
+		return points.join(' ');
+	}
+
+	function getEventKey(e: { type: string; stationId?: string; lineId?: string }): string {
+		switch (e.type) {
+			case 'STATION_CLOSED':
+				return `${e.type}:${e.stationId}`;
+			case 'ESCALATOR_DOWN':
+				return `${e.type}:${e.stationId}:${e.lineId}`;
+			case 'DELAY':
+				return `${e.type}:${e.lineId}`;
+			default:
+				return e.type;
+		}
+	}
+
+	function getActiveEvents(): string[] {
+		const events: string[] = [];
+		for (const e of session.eventState.activeEvents) {
+			const key = getEventKey(e);
+			const triggeredAt = session.eventState.triggeredAt[key];
+			if (triggeredAt === undefined) continue;
+			if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
+				switch (e.type) {
+					case 'STATION_CLOSED': {
+						const s = map.stations[e.stationId];
+						events.push(`🚫 ${s?.name || e.stationId} 封站`);
+						break;
+					}
+					case 'ESCALATOR_DOWN': {
+						const s = map.stations[e.stationId];
+						const l = map.lines[e.lineId];
+						events.push(`⚠️ ${s?.name || ''} ${l?.name || ''} 扶梯故障`);
+						break;
+					}
+					case 'DELAY': {
+						const l = map.lines[e.lineId];
+						events.push(`⏱️ ${l?.name || ''} 延误 +${e.extraTime}s`);
+						break;
+					}
+				}
+			}
+		}
+		return events;
+	}
+
+	function getEscalatorWarnings(): { x: number; y: number }[] {
+		const warns: { x: number; y: number }[] = [];
+		for (const e of session.eventState.activeEvents) {
+			if (e.type !== 'ESCALATOR_DOWN') continue;
+			const key = getEventKey(e);
+			const triggeredAt = session.eventState.triggeredAt[key];
+			if (triggeredAt === undefined) continue;
+			if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
+				const s = map.stations[e.stationId];
+				if (s) warns.push({ x: s.x + 16, y: s.y - 10 });
+			}
+		}
+		return warns;
+	}
+
 	$: svgWidth = 640;
 	$: svgHeight = 520;
 </script>
@@ -172,69 +241,6 @@
 		{/if}
 	</div>
 </div>
-
-<script lang="ts">
-	function buildSuggestedPath(): string {
-		if (!suggestedRoute || !map || !session) return '';
-		const points: string[] = [`${map.stations[session.currentStationId].x},${map.stations[session.currentStationId].y}`];
-		for (const step of suggestedRoute) {
-			if (!step.isTransfer) {
-				points.push(`${map.stations[step.stationId].x},${map.stations[step.stationId].y}`);
-			}
-		}
-		return points.join(' ');
-	}
-
-	function getActiveEvents(): string[] {
-		const events: string[] = [];
-		for (const e of session.eventState.activeEvents) {
-			let triggeredAt = 0;
-			let key = '';
-			switch (e.type) {
-				case 'STATION_CLOSED':
-					key = `${e.type}:${e.stationId}`;
-					triggeredAt = session.eventState.triggeredAt[key] || 0;
-					if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
-						const s = map.stations[e.stationId];
-						events.push(`🚫 ${s?.name || e.stationId} 封站`);
-					}
-					break;
-				case 'ESCALATOR_DOWN':
-					key = `${e.type}:${e.stationId}:${e.lineId}`;
-					triggeredAt = session.eventState.triggeredAt[key] || 0;
-					if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
-						const s = map.stations[e.stationId];
-						const l = map.lines[e.lineId];
-						events.push(`⚠️ ${s?.name || ''} ${l?.name || ''} 扶梯故障`);
-					}
-					break;
-				case 'DELAY':
-					key = `${e.type}:${e.lineId}`;
-					triggeredAt = session.eventState.triggeredAt[key] || 0;
-					if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
-						const l = map.lines[e.lineId];
-						events.push(`⏱️ ${l?.name || ''} 延误 +${e.extraTime}s`);
-					}
-					break;
-			}
-		}
-		return events;
-	}
-
-	function getEscalatorWarnings(): { x: number; y: number }[] {
-		const warns: { x: number; y: number }[] = [];
-		for (const e of session.eventState.activeEvents) {
-			if (e.type !== 'ESCALATOR_DOWN') continue;
-			const key = `${e.type}:${e.stationId}:${e.lineId}`;
-			const triggeredAt = session.eventState.triggeredAt[key] || 0;
-			if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
-				const s = map.stations[e.stationId];
-				if (s) warns.push({ x: s.x + 16, y: s.y - 10 });
-			}
-		}
-		return warns;
-	}
-</script>
 
 <style>
 	.map-container {

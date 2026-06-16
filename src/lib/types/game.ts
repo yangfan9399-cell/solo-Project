@@ -57,7 +57,8 @@ export type PlayerAction =
 	| { type: 'MOVE'; fromStationId: string; toStationId: string; lineId: string; timeSpent: number }
 	| { type: 'TRANSFER'; stationId: string; fromLineId: string; toLineId: string; timeSpent: number }
 	| { type: 'WAIT'; stationId: string; timeSpent: number }
-	| { type: 'REWIND'; toStep: number };
+	| { type: 'REWIND'; toStep: number }
+	| { type: 'TICK'; timeSpent: number };
 
 export interface GameHistory {
 	actions: PlayerAction[];

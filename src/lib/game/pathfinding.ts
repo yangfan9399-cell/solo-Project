@@ -1,18 +1,36 @@
 import type { SubwayMap, GameEvent, GameEventState, Station, Connection } from '../types/game';
 
+function getEventTriggeredAt(event: GameEvent, eventState: GameEventState): number | undefined {
+	let key: string;
+	switch (event.type) {
+		case 'STATION_CLOSED':
+			key = `${event.type}:${event.stationId}`;
+			break;
+		case 'ESCALATOR_DOWN':
+			key = `${event.type}:${event.stationId}:${event.lineId}`;
+			break;
+		case 'DELAY':
+			key = `${event.type}:${event.lineId}`;
+			break;
+	}
+	return eventState.triggeredAt[key];
+}
+
 export function isStationClosed(stationId: string, eventState: GameEventState, currentTime: number): boolean {
 	return eventState.activeEvents.some((e) => {
 		if (e.type !== 'STATION_CLOSED' || e.stationId !== stationId) return false;
-		const triggeredAt = eventState.triggeredAt[`${e.type}:${e.stationId}`] || 0;
-		return currentTime < triggeredAt + e.duration;
+		const triggeredAt = getEventTriggeredAt(e, eventState);
+		if (triggeredAt === undefined) return false;
+		return currentTime >= triggeredAt && currentTime < triggeredAt + e.duration;
 	});
 }
 
 export function isEscalatorDown(stationId: string, lineId: string, eventState: GameEventState, currentTime: number): boolean {
 	return eventState.activeEvents.some((e) => {
 		if (e.type !== 'ESCALATOR_DOWN' || e.stationId !== stationId || e.lineId !== lineId) return false;
-		const triggeredAt = eventState.triggeredAt[`${e.type}:${e.stationId}:${e.lineId}`] || 0;
-		return currentTime < triggeredAt + e.duration;
+		const triggeredAt = getEventTriggeredAt(e, eventState);
+		if (triggeredAt === undefined) return false;
+		return currentTime >= triggeredAt && currentTime < triggeredAt + e.duration;
 	});
 }
 
@@ -20,8 +38,9 @@ export function getLineDelay(lineId: string, eventState: GameEventState, current
 	let extra = 0;
 	for (const e of eventState.activeEvents) {
 		if (e.type !== 'DELAY' || e.lineId !== lineId) continue;
-		const triggeredAt = eventState.triggeredAt[`${e.type}:${e.lineId}`] || 0;
-		if (currentTime < triggeredAt + e.duration) {
+		const triggeredAt = getEventTriggeredAt(e, eventState);
+		if (triggeredAt === undefined) continue;
+		if (currentTime >= triggeredAt && currentTime < triggeredAt + e.duration) {
 			extra += e.extraTime;
 		}
 	}
@@ -139,7 +158,7 @@ function reconstructPath(endNode: PathNode): RouteStep[] {
 	let current: PathNode | null = endNode;
 
 	while (current && current.parent) {
-		const parent = current.parent;
+		const parent: PathNode = current.parent;
 		if (parent.stationId === current.stationId && parent.lineId !== current.lineId) {
 			steps.unshift({
 				stationId: current.stationId,

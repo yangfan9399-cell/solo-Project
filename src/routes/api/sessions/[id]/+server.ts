@@ -39,6 +39,7 @@ function applyRewind(session: GameSession): GameSession {
 				elapsed += action.timeSpent;
 				break;
 			case 'WAIT':
+			case 'TICK':
 				elapsed += action.timeSpent;
 				break;
 		}
@@ -181,22 +182,26 @@ export const POST: RequestHandler = async ({ request, params }) => {
 			return json({ error: '游戏未开始' }, { status: 400 });
 		}
 
-		const newActions = [...updatedSession.history.actions.slice(0, updatedSession.history.currentStep), action];
-		updatedSession.history = {
-			actions: newActions,
-			currentStep: newActions.length
-		};
+		if (action.type === 'TICK') {
+			updatedSession.elapsedSeconds += action.timeSpent;
+		} else {
+			const newActions = [...updatedSession.history.actions.slice(0, updatedSession.history.currentStep), action];
+			updatedSession.history = {
+				actions: newActions,
+				currentStep: newActions.length
+			};
 
-		if (action.type === 'MOVE') {
-			updatedSession.currentStationId = action.toStationId;
-			updatedSession.currentLineId = action.lineId;
-			updatedSession.elapsedSeconds += action.timeSpent;
-		} else if (action.type === 'TRANSFER') {
-			updatedSession.currentLineId = action.toLineId;
-			updatedSession.transfersUsed++;
-			updatedSession.elapsedSeconds += action.timeSpent;
-		} else if (action.type === 'WAIT') {
-			updatedSession.elapsedSeconds += action.timeSpent;
+			if (action.type === 'MOVE') {
+				updatedSession.currentStationId = action.toStationId;
+				updatedSession.currentLineId = action.lineId;
+				updatedSession.elapsedSeconds += action.timeSpent;
+			} else if (action.type === 'TRANSFER') {
+				updatedSession.currentLineId = action.toLineId;
+				updatedSession.transfersUsed++;
+				updatedSession.elapsedSeconds += action.timeSpent;
+			} else if (action.type === 'WAIT') {
+				updatedSession.elapsedSeconds += action.timeSpent;
+			}
 		}
 
 		for (const scheduled of level.eventSchedule) {
@@ -222,12 +227,27 @@ export const POST: RequestHandler = async ({ request, params }) => {
 
 	store.saveSession(updatedSession);
 
-	const currentScore = updatedSession.status === 'won' || updatedSession.status === 'lost'
-		? calculateScore(updatedSession, level, updatedSession.eventState)
-		: null;
+	let previewScore: ReturnType<typeof calculateScore> | null = null;
+	if (updatedSession.status === 'won' || updatedSession.status === 'lost') {
+		previewScore = calculateScore(updatedSession, level, updatedSession.eventState);
+	} else if (updatedSession.status === 'playing') {
+		const baseScore = updatedSession.transfersUsed > level.maxTransfers ? 0 : 500;
+		const timeRatio = updatedSession.elapsedSeconds / Math.max(1, level.parTime);
+		const timeBonus = timeRatio <= 1.0 ? Math.round(300 * (1 - (timeRatio - 0.5) * 0.8)) : 0;
+		const transferDiff = level.parTransfers - updatedSession.transfersUsed;
+		const transferBonus = transferDiff >= 0 ? transferDiff * 150 : transferDiff * 80;
+		previewScore = {
+			baseScore,
+			timeBonus: Math.max(0, timeBonus),
+			transferBonus,
+			eventPenalty: 0,
+			total: Math.max(0, baseScore + Math.max(0, timeBonus) + transferBonus),
+			serverValidated: false
+		};
+	}
 
 	return json({
 		session: updatedSession,
-		previewScore: currentScore
+		previewScore
 	});
 };

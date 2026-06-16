@@ -46,30 +46,34 @@
 	let realtimeElapsed = 0;
 	let tickInterval: ReturnType<typeof setInterval> | null = null;
 	let lastUpdateTime = 0;
+	let accumulatedTickTime = 0;
+	let tickSyncInProgress = false;
 
 	$: if (session && map && level) {
-		if (session.status === 'playing') {
-			adjacentStations = session.currentLineId
-				? getAdjacentStations(map, session.currentStationId, session.currentLineId, session.eventState, session.elapsedSeconds).map((c) => ({
+		const s = session;
+		if (s.status === 'playing') {
+			adjacentStations = s.currentLineId
+				? getAdjacentStations(map, s.currentStationId, s.currentLineId, s.eventState, realtimeElapsed).map((c) => ({
 						stationId: c.to,
 						lineId: c.lineId,
 						time: c.travelTime
 				  }))
 				: [];
 
-			availableTransfers = session.currentLineId
-				? getAvailableTransfers(map, session.currentStationId, session.currentLineId, session.eventState, session.elapsedSeconds)
-				: map.stations[session.currentStationId]?.lineIds.filter((l) => !isEscalatorDown(session.currentStationId, l, session.eventState, session.elapsedSeconds)) || [];
+			availableTransfers = s.currentLineId
+				? getAvailableTransfers(map, s.currentStationId, s.currentLineId, s.eventState, realtimeElapsed)
+				: map.stations[s.currentStationId]?.lineIds.filter((l) => !isEscalatorDown(s.currentStationId, l, s.eventState, realtimeElapsed)) || [];
 		}
 	}
 
 	$: if (session && map && level && session.status === 'playing') {
+		const s = session;
 		suggestedRoute = findRoute(
 			map,
-			session.currentStationId,
+			s.currentStationId,
 			level.targetStationId,
-			session.eventState,
-			session.elapsedSeconds,
+			s.eventState,
+			realtimeElapsed,
 			true
 		);
 	}
@@ -121,11 +125,35 @@
 
 	function startTick() {
 		lastUpdateTime = Date.now();
-		tickInterval = setInterval(() => {
+		accumulatedTickTime = 0;
+		tickInterval = setInterval(async () => {
 			if (!session || session.status !== 'playing') return;
 			const now = Date.now();
-			realtimeElapsed += (now - lastUpdateTime) / 1000;
+			const delta = (now - lastUpdateTime) / 1000;
+			realtimeElapsed += delta;
+			accumulatedTickTime += delta;
 			lastUpdateTime = now;
+
+			if (accumulatedTickTime >= 2 && !tickSyncInProgress) {
+				tickSyncInProgress = true;
+				const tickSeconds = Math.floor(accumulatedTickTime);
+				accumulatedTickTime -= tickSeconds;
+				try {
+					const action: PlayerAction = { type: 'TICK', timeSpent: tickSeconds };
+					const r = await sessionsApi.action(session.id, action);
+					session = r.session;
+					if (r.result) {
+						result = r.result;
+						rating = r.rating || null;
+						if (tickInterval) {
+							clearInterval(tickInterval);
+							tickInterval = null;
+						}
+					}
+				} finally {
+					tickSyncInProgress = false;
+				}
+			}
 		}, 100);
 	}
 
@@ -249,7 +277,7 @@
 
 	$: remainingSeconds = level ? Math.max(0, level.timeLimitSeconds - realtimeElapsed) : 0;
 	$: isLastTrain = level ? remainingSeconds <= level.lastTrainCountdown : false;
-	$: stationClosed = map && session && level ? isStationClosed(level.targetStationId, session.eventState, session.elapsedSeconds) : false;
+	$: stationClosed = map && session && level ? isStationClosed(level.targetStationId, session.eventState, realtimeElapsed) : false;
 </script>
 
 <div class="game-page">

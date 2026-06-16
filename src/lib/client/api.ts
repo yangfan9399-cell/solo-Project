@@ -4,7 +4,8 @@ import type {
 	LevelConfig,
 	SubwayMap,
 	PlayerAction,
-	GameResult
+	GameResult,
+	ScoreBreakdown
 } from '../types/game';
 
 const api = {
@@ -79,7 +80,7 @@ export const sessionsApi = {
 		session: GameSession;
 		result?: GameResult;
 		rating?: { stars: number; label: string };
-		previewScore?: { total: number; baseScore: number; timeBonus: number; transferBonus: number; eventPenalty: number };
+		previewScore?: ScoreBreakdown;
 	}> {
 		return api.post(`/api/sessions/${id}`, { action });
 	}

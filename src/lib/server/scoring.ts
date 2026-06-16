@@ -113,6 +113,7 @@ export function validateRoute(
 				totalTime += action.timeSpent;
 				break;
 			case 'WAIT':
+			case 'TICK':
 				totalTime += action.timeSpent;
 				break;
 		}
