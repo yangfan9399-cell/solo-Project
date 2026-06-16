@@ -2,14 +2,15 @@
   "name": "organ-stop-memory-game",
   "version": "1.0.0",
   "description": "管风琴音栓组合记忆游戏",
+  "type": "module",
   "scripts": {
-    "dev": "vite --mode ssr",
+    "dev": "node server.js",
+    "start": "node server.js",
     "build": "qwik build",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.types": "tsc --incremental --noEmit",
     "preview": "qwik build preview && vite preview --open",
-    "start": "vite --open --mode ssr",
     "init-data": "node scripts/init-data.mjs"
   },
   "devDependencies": {

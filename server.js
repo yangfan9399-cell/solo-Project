@@ -761,29 +761,103 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "GET") {
-    let filePath = path.join(DIST_DIR, pathname === "/" ? "index.html" : pathname);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      serveStaticFile(res, filePath);
-      return;
-    }
+function renderHTML(title, content, activeNav = '') {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} - 管风琴音栓记忆游戏</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-content">
+      <a href="/" class="navbar-brand">
+        <span class="navbar-brand-icon">🎵</span>
+        <span>管风琴音栓记忆</span>
+      </a>
+      <ul class="navbar-nav">
+        <li><a href="/" class="${activeNav === 'home' ? 'active' : ''}">首页</a></li>
+        <li><a href="/levels" class="${activeNav === 'levels' ? 'active' : ''}">关卡</a></li>
+        <li><a href="/history" class="${activeNav === 'history' ? 'active' : ''}">战绩</a></li>
+        <li><a href="/wrong-answers" class="${activeNav === 'wrong' ? 'active' : ''}">错题本</a></li>
+      </ul>
+    </div>
+  </nav>
+  
+  <main id="app">
+    ${content}
+  </main>
+  
+  <footer style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+    <p>🎹 管风琴音栓组合记忆游戏 · 训练你的音乐耳朵</p>
+  </footer>
+  
+  <script src="/app.js"></script>
+</body>
+</html>`;
+}
 
-    filePath = path.join(PUBLIC_DIR, pathname === "/" ? "index.html" : pathname);
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      serveStaticFile(res, filePath);
-      return;
-    }
+function getPageInfo(pathname) {
+  if (pathname === '/' || pathname === '/index.html') {
+    return { title: '首页', active: 'home' };
+  }
+  if (pathname === '/levels') {
+    return { title: '关卡选择', active: 'levels' };
+  }
+  if (pathname.startsWith('/play/')) {
+    return { title: '游戏中', active: 'levels' };
+  }
+  if (pathname.startsWith('/result/')) {
+    return { title: '结算', active: 'levels' };
+  }
+  if (pathname === '/history') {
+    return { title: '战绩中心', active: 'history' };
+  }
+  if (pathname === '/wrong-answers') {
+    return { title: '错题本', active: 'wrong' };
+  }
+  return { title: '', active: '' };
+}
 
-    if (pathname === "/" || pathname.endsWith(".html") || !path.extname(pathname)) {
-      const indexPath = path.join(DIST_DIR, "index.html");
-      if (fs.existsSync(indexPath)) {
-        serveStaticFile(res, indexPath);
+if (req.method === "GET") {
+  const pathname = url.pathname;
+  
+  if (pathname.startsWith('/api/')) {
+  } else {
+    const ext = path.extname(pathname);
+    
+    if (ext && ext !== '.html') {
+      const publicPath = path.join(PUBLIC_DIR, pathname);
+      if (fs.existsSync(publicPath) && fs.statSync(publicPath).isFile()) {
+        serveStaticFile(res, publicPath);
+        return;
+      }
+      
+      const distPath = path.join(DIST_DIR, pathname);
+      if (fs.existsSync(distPath) && fs.statSync(distPath).isFile()) {
+        serveStaticFile(res, distPath);
         return;
       }
     }
+    
+    if (!ext || ext === '.html' || pathname === '/') {
+      const pageInfo = getPageInfo(pathname);
+      const html = renderHTML(pageInfo.title, '<div class="container"><div class="card"><p>加载中...</p></div></div>', pageInfo.active);
+      
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(html);
+      return;
+    }
   }
+}
 
-  sendJSON(res, 404, { error: "Not found" });
+sendJSON(res, 404, { error: "Not found" });
 });
 
 const PORT = process.env.PORT || 5174;
