@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { levelsApi, getLocalPlayerId, playersApi } from '$lib/client/api';
+	import { getDifficultyLabel, getDifficultyStars, getDifficultyTagClass, getEventTypeName, formatTime, formatTransferCount } from '$lib/utils/format';
 	import type { LevelConfig, PlayerProfile } from '$lib/types/game';
 
 	let levels: LevelConfig[] = [];
@@ -17,14 +18,6 @@
 		}
 		isLoading = false;
 	});
-
-	function getDifficultyLabel(d: string) {
-		return d === 'easy' ? '简单' : d === 'medium' ? '中等' : '困难';
-	}
-
-	function difficultyStars(d: string) {
-		return d === 'easy' ? '⭐' : d === 'medium' ? '⭐⭐' : '⭐⭐⭐';
-	}
 </script>
 
 <div class="container">
@@ -49,8 +42,8 @@
 							<div class="text-muted text-sm mt-1">{level.description}</div>
 						</div>
 						<div>
-							<span class="tag tag-{level.difficulty}">{getDifficultyLabel(level.difficulty)}</span>
-							<div class="text-xs text-muted text-right mt-1">{difficultyStars(level.difficulty)}</div>
+							<span class={getDifficultyTagClass(level.difficulty)}>{getDifficultyLabel(level.difficulty)}</span>
+						<div class="text-xs text-muted text-right mt-1">{getDifficultyStars(level.difficulty)}</div>
 						</div>
 					</div>
 
@@ -59,28 +52,28 @@
 							<div class="info-icon">⏱️</div>
 							<div>
 								<div class="info-label">时间限制</div>
-								<div class="info-value">{level.timeLimitSeconds} 秒</div>
+								<div class="info-value">{formatTime(level.timeLimitSeconds)}</div>
 							</div>
 						</div>
 						<div class="info-item">
 							<div class="info-icon">🔄</div>
 							<div>
 								<div class="info-label">最大换乘</div>
-								<div class="info-value">{level.maxTransfers} 次</div>
+								<div class="info-value">{formatTransferCount(level.maxTransfers)}</div>
 							</div>
 						</div>
 						<div class="info-item">
 							<div class="info-icon">🎯</div>
 							<div>
 								<div class="info-label">基准时间</div>
-								<div class="info-value">{level.parTime} 秒</div>
+								<div class="info-value">{formatTime(level.parTime)}</div>
 							</div>
 						</div>
 						<div class="info-item">
 							<div class="info-icon">🚇</div>
 							<div>
 								<div class="info-label">基准换乘</div>
-								<div class="info-value">{level.parTransfers} 次</div>
+								<div class="info-value">{formatTransferCount(level.parTransfers)}</div>
 							</div>
 						</div>
 					</div>
@@ -91,7 +84,7 @@
 							<div class="flex flex-wrap gap-2">
 								{#each level.eventSchedule as ev}
 									<span class="event-tag">
-										{ev.time}s: {ev.event.type === 'ESCALATOR_DOWN' ? '扶梯故障' : ev.event.type === 'STATION_CLOSED' ? '封站' : '延误'}
+										{formatTime(ev.time)}: {getEventTypeName(ev.event.type)}
 									</span>
 								{/each}
 							</div>
@@ -113,7 +106,7 @@
 						style="width: 100%; margin-top: 16px;"
 						on:click={() => goto(`/game?level=${level.id}`)}
 					>
-						{player?.completedLevels.includes(level.id) ? '再次挑战' : '开始挑战'}
+						{player?.completedLevels.includes(level.id) ? '再来一次' : '开始挑战'}
 					</button>
 				</div>
 			{/each}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LevelConfig, GameSession, ScoreBreakdown } from '$lib/types/game';
+	import { getDifficultyLabel, getDifficultyTagClass, formatTimeLong } from '$lib/utils/format';
 
 	export let level: LevelConfig;
 	export let session: GameSession;
@@ -9,15 +10,9 @@
 	export let previewScore: ScoreBreakdown | null = null;
 	export let onBack: () => void;
 
-	$: formattedTime = formatTime(Math.floor(realtimeElapsed));
-	$: formattedRemaining = formatTime(Math.ceil(remainingSeconds));
+	$: formattedTime = formatTimeLong(Math.floor(realtimeElapsed));
+	$: formattedRemaining = formatTimeLong(Math.ceil(remainingSeconds));
 	$: progress = Math.max(0, Math.min(100, (realtimeElapsed / level.timeLimitSeconds) * 100));
-
-	function formatTime(secs: number): string {
-		const m = Math.floor(secs / 60);
-		const s = secs % 60;
-		return `${m}:${s.toString().padStart(2, '0')}`;
-	}
 </script>
 
 <div class="hud">
@@ -25,8 +20,8 @@
 		<button class="btn-secondary text-sm" on:click={onBack}>← 关卡列表</button>
 		<div class="level-info">
 			<span class="font-bold">{level.name}</span>
-			<span class="tag tag-{level.difficulty}">
-				{level.difficulty === 'easy' ? '简单' : level.difficulty === 'medium' ? '中等' : '困难'}
+			<span class={getDifficultyTagClass(level.difficulty)}>
+				{getDifficultyLabel(level.difficulty)}
 			</span>
 		</div>
 	</div>

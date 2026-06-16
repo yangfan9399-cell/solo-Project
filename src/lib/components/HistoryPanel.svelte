@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GameSession, PlayerAction } from '$lib/types/game';
+	import { formatTime } from '$lib/utils/format';
 
 	export let session: GameSession;
 	export let onRewind: (step: number) => void;
@@ -14,7 +15,7 @@
 			case 'TRANSFER':
 				return `🔄 换乘`;
 			case 'WAIT':
-				return `⏸ 等待 ${a.timeSpent}s`;
+				return `⏸ 等待 ${formatTime(a.timeSpent)}`;
 			default:
 				return a.type;
 		}
@@ -23,9 +24,9 @@
 	function getActionDetail(a: PlayerAction): string {
 		switch (a.type) {
 			case 'MOVE':
-				return `${a.timeSpent}s`;
+				return formatTime(a.timeSpent);
 			case 'TRANSFER':
-				return `${a.timeSpent}s`;
+				return formatTime(a.timeSpent);
 			default:
 				return '';
 		}

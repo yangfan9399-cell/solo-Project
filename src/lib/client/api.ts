@@ -11,7 +11,16 @@ import type {
 const api = {
 	async get<T>(path: string): Promise<T> {
 		const res = await fetch(path);
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		if (!res.ok) {
+			let message = `请求失败 (${res.status})`;
+			try {
+				const data = await res.json();
+				if (data?.error) message = data.error;
+			} catch {
+				// ignore
+			}
+			throw new Error(message);
+		}
 		return res.json() as T;
 	},
 
@@ -21,7 +30,16 @@ const api = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body)
 		});
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		if (!res.ok) {
+			let message = `请求失败 (${res.status})`;
+			try {
+				const data = await res.json();
+				if (data?.error) message = data.error;
+			} catch {
+				// ignore
+			}
+			throw new Error(message);
+		}
 		return res.json() as T;
 	},
 
@@ -31,7 +49,16 @@ const api = {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body)
 		});
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		if (!res.ok) {
+			let message = `请求失败 (${res.status})`;
+			try {
+				const data = await res.json();
+				if (data?.error) message = data.error;
+			} catch {
+				// ignore
+			}
+			throw new Error(message);
+		}
 		return res.json() as T;
 	}
 };

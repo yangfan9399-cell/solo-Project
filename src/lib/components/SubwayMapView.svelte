@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SubwayMap, LevelConfig, GameSession } from '$lib/types/game';
+	import { getEventTypeName } from '$lib/utils/format';
 	import {
 		isStationClosed,
 		isEscalatorDown
@@ -91,21 +92,22 @@
 			const triggeredAt = session.eventState.triggeredAt[key];
 			if (triggeredAt === undefined) continue;
 			if (realtimeElapsed >= triggeredAt && realtimeElapsed < triggeredAt + e.duration) {
+				const eventName = getEventTypeName(e.type);
 				switch (e.type) {
 					case 'STATION_CLOSED': {
 						const s = map.stations[e.stationId];
-						events.push(`🚫 ${s?.name || e.stationId} 封站`);
+						events.push(`🚫 ${s?.name || e.stationId} ${eventName}`);
 						break;
 					}
 					case 'ESCALATOR_DOWN': {
 						const s = map.stations[e.stationId];
 						const l = map.lines[e.lineId];
-						events.push(`⚠️ ${s?.name || ''} ${l?.name || ''} 扶梯故障`);
+						events.push(`⚠️ ${s?.name || ''} ${l?.name || ''} ${eventName}`);
 						break;
 					}
 					case 'DELAY': {
 						const l = map.lines[e.lineId];
-						events.push(`⏱️ ${l?.name || ''} 延误 +${e.extraTime}s`);
+						events.push(`⏱️ ${l?.name || ''} ${eventName} +${e.extraTime}s`);
 						break;
 					}
 				}
@@ -174,7 +176,7 @@
 			{@const isTarget = station.id === level.targetStationId}
 			{@const isStart = station.id === level.startStationId}
 			{@const isVisited = visitedStations.has(station.id)}
-			{@const closed = isStationClosed(station.id, session.eventState, session.elapsedSeconds)}
+			{@const closed = isStationClosed(station.id, session.eventState, realtimeElapsed)}
 			{@const canClick = session.status === 'playing' && isAdjacent(station.id, session.currentLineId || '')}
 
 			<g

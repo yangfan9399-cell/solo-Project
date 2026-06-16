@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { GameResult, LevelConfig } from '$lib/types/game';
+	import { formatTime, formatTransferCount } from '$lib/utils/format';
 
 	export let result: GameResult;
 	export let rating: { stars: number; label: string };
@@ -32,16 +33,16 @@
 		<div class="stats-grid">
 			<div class="stat-box">
 				<div class="stat-box-label">用时</div>
-				<div class="stat-box-value">{result.elapsedSeconds}s</div>
+				<div class="stat-box-value">{formatTime(result.elapsedSeconds)}</div>
 				<div class="stat-box-diff {timeDiff >= 0 ? 'text-success' : 'text-danger'}">
-					基准 {level.parTime}s · {timeDiff >= 0 ? '快' : '慢'} {Math.abs(timeDiff)}s
+					基准 {formatTime(level.parTime)} · {timeDiff >= 0 ? '快' : '慢'} {formatTime(Math.abs(timeDiff))}
 				</div>
 			</div>
 			<div class="stat-box">
 				<div class="stat-box-label">换乘</div>
-				<div class="stat-box-value">{result.transfersUsed}次</div>
+				<div class="stat-box-value">{formatTransferCount(result.transfersUsed)}</div>
 				<div class="stat-box-diff {transferDiff >= 0 ? 'text-success' : 'text-danger'}">
-					基准 {level.parTransfers}次 · {transferDiff >= 0 ? '少' : '多'} {Math.abs(transferDiff)}次
+					基准 {formatTransferCount(level.parTransfers)} · {transferDiff >= 0 ? '少' : '多'} {formatTransferCount(Math.abs(transferDiff))}
 				</div>
 			</div>
 		</div>
@@ -83,7 +84,7 @@
 		</div>
 
 		<div class="modal-actions">
-			<button class="btn-secondary" on:click={onBack}>返回关卡</button>
+			<button class="btn-secondary" on:click={onBack}>返回关卡列表</button>
 			<button class="btn-primary" on:click={onReplay}>再来一次</button>
 		</div>
 	</div>

@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { getLocalPlayerId, playersApi, levelsApi } from '$lib/client/api';
+	import { getDifficultyLabel, getDifficultyTagClass, formatTime, formatTransferCount } from '$lib/utils/format';
 	import type { PlayerProfile, LevelConfig } from '$lib/types/game';
 
 	let player: PlayerProfile | null = null;
@@ -124,14 +125,14 @@
 							<div class="font-bold text-lg">{level.name}</div>
 							<div class="text-sm text-muted">{level.description}</div>
 						</div>
-						<span class="tag tag-{level.difficulty}">
-							{level.difficulty === 'easy' ? '简单' : level.difficulty === 'medium' ? '中等' : '困难'}
+						<span class={getDifficultyTagClass(level.difficulty)}>
+							{getDifficultyLabel(level.difficulty)}
 						</span>
 					</div>
 					<div class="level-meta">
-						<div class="meta-item">⏱️ 时限 {level.timeLimitSeconds}s</div>
-						<div class="meta-item">🔄 最多换乘 {level.maxTransfers}次</div>
-						<div class="meta-item">🎯 目标时间 {level.parTime}s</div>
+						<div class="meta-item">⏱️ 时限 {formatTime(level.timeLimitSeconds)}</div>
+						<div class="meta-item">🔄 最多换乘 {formatTransferCount(level.maxTransfers)}</div>
+						<div class="meta-item">🎯 目标时间 {formatTime(level.parTime)}</div>
 					</div>
 					{#if player?.bestScores[level.id]}
 						<div class="best-score text-sm">
@@ -143,7 +144,7 @@
 						style="width: 100%; margin-top: 12px;"
 						on:click={() => goto(`/game?level=${level.id}`)}
 					>
-						{player?.completedLevels.includes(level.id) ? '再来一次' : '挑战'}
+						{player?.completedLevels.includes(level.id) ? '再来一次' : '开始挑战'}
 					</button>
 				</div>
 			{/each}

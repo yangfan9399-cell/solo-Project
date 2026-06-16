@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SubwayMap, LevelConfig, GameSession } from '$lib/types/game';
+	import { formatTime, formatTransferCount } from '$lib/utils/format';
 
 	export let session: GameSession;
 	export let level: LevelConfig;
@@ -41,10 +42,10 @@
 				{session.status === 'won' ? '挑战成功！' : '挑战失败'}
 			</div>
 			<div class="text-sm text-muted mb-4">
-				用时 {session.elapsedSeconds}s · 换乘 {session.transfersUsed} 次
+				用时 {formatTime(session.elapsedSeconds)} · 换乘 {formatTransferCount(session.transfersUsed)}
 			</div>
 			<div class="flex gap-2">
-				<button class="btn-secondary" style="flex: 1;" on:click={onReset}>再试一次</button>
+				<button class="btn-secondary" style="flex: 1;" on:click={onReset}>再来一次</button>
 			</div>
 		</div>
 	{:else}
@@ -103,7 +104,7 @@
 								on:click={() => onMove(adj.stationId, adj.lineId, adj.time)}
 							>
 								<span class="station-name">{map.stations[adj.stationId]?.name}</span>
-								<span class="station-time">{adj.time}s</span>
+								<span class="station-time">{formatTime(adj.time)}</span>
 							</button>
 						{/each}
 					</div>
@@ -135,13 +136,13 @@
 		{/if}
 
 		<div class="section">
-			<div class="section-title">⏸️ 等待</div>
-			<div class="btn-grid">
-				<button class="wait-btn" on:click={() => onWait(5)}>等待 5s</button>
-				<button class="wait-btn" on:click={() => onWait(10)}>等待 10s</button>
-				<button class="wait-btn" on:click={() => onWait(20)}>等待 20s</button>
-			</div>
-		</div>
+					<div class="section-title">⏸️ 等待</div>
+					<div class="btn-grid">
+						<button class="wait-btn" on:click={() => onWait(5)}>等待 {formatTime(5)}</button>
+						<button class="wait-btn" on:click={() => onWait(10)}>等待 {formatTime(10)}</button>
+						<button class="wait-btn" on:click={() => onWait(20)}>等待 {formatTime(20)}</button>
+					</div>
+				</div>
 
 		<div class="action-row">
 			{#if isAtTarget}
