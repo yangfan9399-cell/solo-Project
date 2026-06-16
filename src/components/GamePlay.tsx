@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameSession } from '@/hooks/useGameSession';
 import ToneRadar from '@/components/ToneRadar';
 import SpectrumChart from '@/components/SpectrumChart';

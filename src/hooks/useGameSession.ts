@@ -20,6 +20,8 @@ import {
   saveCurrentSessionId,
   generateId,
   saveInstrument,
+  loadPlayer,
+  savePlayer,
 } from '@/utils/storage';
 import { INITIAL_LEVELS, WOOD_TYPES } from '@/data/levels';
 
@@ -305,6 +307,27 @@ export function useGameSession({ levelId, playerId }: { levelId: string; playerI
           createdAt: Date.now(),
         };
         saveInstrument(instrument);
+
+        const player = loadPlayer(s.playerId);
+        if (player) {
+          const prevBest = player.bestScores[s.levelId] ?? 0;
+          const isNewBest = result.totalScore > prevBest;
+          const scoreDelta = isNewBest ? result.totalScore - prevBest : 0;
+          const wasCompleted = player.completedLevels.indexOf(s.levelId) !== -1;
+          const updatedPlayer = {
+            ...player,
+            totalScore: player.totalScore + (isNewBest ? scoreDelta : 0),
+            completedLevels: wasCompleted
+              ? player.completedLevels
+              : [...player.completedLevels, s.levelId],
+            bestScores: {
+              ...player.bestScores,
+              [s.levelId]: Math.max(prevBest, result.totalScore),
+            },
+            instruments: [...player.instruments, instrument],
+          };
+          savePlayer(updatedPlayer);
+        }
       }
     } catch {
       setGameStatus('playing');
