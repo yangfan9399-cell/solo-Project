@@ -1,0 +1,27 @@
+{
+	"/": [],
+	"/api/games": [
+		"src/routes/api/games/+server.ts"
+	],
+	"/api/games/[id]": [
+		"src/routes/api/games/[id]/+server.ts"
+	],
+	"/api/games/[id]/settle": [
+		"src/routes/api/games/[id]/settle/+server.ts"
+	],
+	"/api/levels": [
+		"src/routes/api/levels/+server.ts"
+	],
+	"/api/levels/[id]": [
+		"src/routes/api/levels/[id]/+server.ts"
+	],
+	"/api/players": [
+		"src/routes/api/players/+server.ts"
+	],
+	"/api/players/[id]": [
+		"src/routes/api/players/[id]/+server.ts"
+	],
+	"/game/[id]": [
+		"src/routes/game/[id]/+page.ts"
+	]
+}

@@ -1,0 +1,69 @@
+{
+  "items": [
+    {
+      "id": "level-001",
+      "name": "初级校准训练",
+      "description": "熟悉基本操作，校准低强度信号",
+      "difficulty": 1,
+      "targetFrequency": 1420.5,
+      "targetGain": 50,
+      "targetAntennaAngle": 30,
+      "noiseLevel": 0.2,
+      "telemetryMessage": "HELLO",
+      "timeLimit": 180,
+      "parScore": 800
+    },
+    {
+      "id": "level-002",
+      "name": "中频信号捕获",
+      "description": "中等噪声环境下的信号校准",
+      "difficulty": 2,
+      "targetFrequency": 8450,
+      "targetGain": 75,
+      "targetAntennaAngle": 45,
+      "noiseLevel": 0.4,
+      "telemetryMessage": "DEEP SPACE",
+      "timeLimit": 240,
+      "parScore": 1200
+    },
+    {
+      "id": "level-003",
+      "name": "深空遥测解码",
+      "description": "高噪声环境，完整解码遥测信息",
+      "difficulty": 3,
+      "targetFrequency": 2295,
+      "targetGain": 65,
+      "targetAntennaAngle": 60,
+      "noiseLevel": 0.6,
+      "telemetryMessage": "MARS PROBE OK",
+      "timeLimit": 300,
+      "parScore": 1800
+    },
+    {
+      "id": "level-004",
+      "name": "星际信标定位",
+      "description": "极弱信号，精确天线角度校准",
+      "difficulty": 4,
+      "targetFrequency": 5678.25,
+      "targetGain": 90,
+      "targetAntennaAngle": 72.5,
+      "noiseLevel": 0.75,
+      "telemetryMessage": "VOYAGER SIGNAL",
+      "timeLimit": 360,
+      "parScore": 2500
+    },
+    {
+      "id": "level-005",
+      "name": "黑洞边缘探测",
+      "description": "极限挑战，全参数精确校准",
+      "difficulty": 5,
+      "targetFrequency": 9123.75,
+      "targetGain": 95,
+      "targetAntennaAngle": 88.8,
+      "noiseLevel": 0.9,
+      "telemetryMessage": "EVENT HORIZON DATA",
+      "timeLimit": 420,
+      "parScore": 4000
+    }
+  ]
+}

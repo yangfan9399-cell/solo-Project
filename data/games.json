@@ -1,0 +1,52 @@
+{
+  "items": [
+    {
+      "id": "game-seed-001",
+      "playerId": "player-local-001",
+      "levelId": "level-001",
+      "status": "won",
+      "score": 950,
+      "startTime": 1781410811694,
+      "endTime": 1781410931694,
+      "frequency": 1420.5,
+      "gain": 50,
+      "antennaAngle": 30,
+      "noiseFilter": 0.5,
+      "decodedChars": "HELLO",
+      "history": [],
+      "historyIndex": -1
+    },
+    {
+      "id": "game-seed-002",
+      "playerId": "player-local-001",
+      "levelId": "level-002",
+      "status": "won",
+      "score": 1450,
+      "startTime": 1781497211694,
+      "endTime": 1781497391694,
+      "frequency": 8450,
+      "gain": 75,
+      "antennaAngle": 45,
+      "noiseFilter": 0.6,
+      "decodedChars": "DEEP SPACE",
+      "history": [],
+      "historyIndex": -1
+    },
+    {
+      "id": "game-seed-003",
+      "playerId": "player-local-001",
+      "levelId": "level-003",
+      "status": "lost",
+      "score": 320,
+      "startTime": 1781580011694,
+      "endTime": 1781580611694,
+      "frequency": 2100,
+      "gain": 40,
+      "antennaAngle": 30,
+      "noiseFilter": 0.3,
+      "decodedChars": "MARS",
+      "history": [],
+      "historyIndex": -1
+    }
+  ]
+}
