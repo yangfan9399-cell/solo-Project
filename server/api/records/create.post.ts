@@ -65,6 +65,7 @@ export default defineEventHandler(async (event) => {
     goldEarned,
     ordersCompleted,
     ordersFailed,
+    ordersCancelled: ordersCancelled || 0,
     totalColorDiff,
     startTime: Date.now() - 60000,
     endTime: Date.now(),

@@ -155,7 +155,7 @@ export function useGame() {
 
     const action: DyeAction = {
       id: generateId(),
-      type: 'dip',
+      type: 'cool',
       timestamp: Date.now(),
       details: { duration, newTemp: currentSession.value.temperature }
     }
@@ -413,9 +413,10 @@ export function useGame() {
   const remainingOrders = computed(() => {
     if (!currentLevel.value) return []
     const completedIds = completedOrders.value.map((o) => o.order.id)
-    const failedIds = failedOrders.value.map((o) => o.id)
+    const failedIds = failedOrders.value.map((o) => o.order.id)
+    const cancelledIds = cancelledOrders.value.map((o) => o.order.id)
     return currentLevel.value.orders.filter(
-      (o) => !completedIds.includes(o.id) && !failedIds.includes(o.id)
+      (o) => !completedIds.includes(o.id) && !failedIds.includes(o.id) && !cancelledIds.includes(o.id)
     )
   })
 

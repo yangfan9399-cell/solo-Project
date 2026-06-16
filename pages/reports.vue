@@ -59,8 +59,10 @@
                 <span class="stat-value">{{ record.score }}</span>
               </div>
               <div class="stat">
-                <span class="stat-label">完成订单</span>
-                <span class="stat-value">{{ record.ordersCompleted }} / {{ record.ordersCompleted + record.ordersFailed + (record.ordersCancelled || 0) }}</span>
+                <span class="stat-label">订单</span>
+                <span class="stat-value">
+                  {{ record.ordersCompleted }}成 / {{ record.ordersFailed }}败 / {{ record.ordersCancelled || 0 }}弃
+                </span>
               </div>
               <div class="stat">
                 <span class="stat-label">收益</span>
@@ -116,20 +118,20 @@
                     {{ getDyeName(dyeId as string) }} × {{ qty }}
                   </span>
                 </div>
-                <div v-if="session.operationHistory && session.operationHistory.length > 0" class="session-history">
+                <div v-if="session.actions && session.actions.length > 0" class="session-history">
                   <div class="history-toggle" @click.stop="toggleSessionHistory(session.id)">
-                    操作历史 ({{ session.operationHistory.length }} 步)
+                    操作历史 ({{ session.actions.length }} 步)
                     {{ expandedSessionId === session.id ? '▲' : '▼' }}
                   </div>
                   <div v-if="expandedSessionId === session.id" class="history-list">
                     <div
-                      v-for="(op, idx) in session.operationHistory"
-                      :key="op.id"
+                      v-for="(act, idx) in session.actions"
+                      :key="act.id"
                       class="history-item"
                     >
                       <span class="history-idx">{{ idx + 1 }}.</span>
-                      <span class="history-type">{{ operationTypeText(op.type) }}</span>
-                      <span class="history-detail">{{ operationDetailText(op) }}</span>
+                      <span class="history-type">{{ actionTypeText(act.type) }}</span>
+                      <span class="history-detail">{{ actionDetailText(act) }}</span>
                     </div>
                   </div>
                 </div>
@@ -183,7 +185,7 @@
 import { usePlayer } from '~/composables/usePlayer'
 import { DYES } from '~/data/gameData'
 import { rgbToHex } from '~/utils/colorUtils'
-import type { GameRecord, DyeingSession, OperationHistory, RGB } from '~/types/game'
+import type { GameRecord, DyeingSession, DyeAction, RGB } from '~/types/game'
 
 const { profile, loadFromLocal } = usePlayer()
 
@@ -337,9 +339,9 @@ const getDyeName = (dyeId: string) => {
   return dye?.name || dyeId
 }
 
-const operationTypeText = (type: string) => {
+const actionTypeText = (type: string) => {
   const map: Record<string, string> = {
-    addDye: '添加染料',
+    mix: '添加染料',
     heat: '加热',
     cool: '降温',
     dip: '浸泡',
@@ -348,19 +350,19 @@ const operationTypeText = (type: string) => {
   return map[type] || type
 }
 
-const operationDetailText = (op: OperationHistory) => {
-  const details = op.details || {}
-  switch (op.type) {
-    case 'addDye':
-      return `${getDyeName(details.dyeId)} × ${details.amount}`
+const actionDetailText = (act: DyeAction) => {
+  const d = act.details || {}
+  switch (act.type) {
+    case 'mix':
+      return `${getDyeName(d.dyeId)} × ${d.amount}`
     case 'heat':
-      return `+${details.amount}°C`
+      return `${d.duration} 秒 → ${Math.round(d.newTemp)}°C`
     case 'cool':
-      return `-${details.amount}°C`
+      return `${d.duration} 秒 → ${Math.round(d.newTemp)}°C`
     case 'dip':
-      return `${details.seconds} 秒`
+      return `${d.seconds} 秒, 渗透 ${(d.penetration * 100).toFixed(0)}%`
     case 'rinse':
-      return '漂洗'
+      return '漂洗去浮色'
     default:
       return ''
   }

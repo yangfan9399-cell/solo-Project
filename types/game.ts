@@ -30,7 +30,7 @@ export interface Order {
 
 export interface DyeAction {
   id: string
-  type: 'mix' | 'heat' | 'dip' | 'rinse'
+  type: 'mix' | 'heat' | 'cool' | 'dip' | 'rinse'
   timestamp: number
   details: Record<string, any>
 }
