@@ -110,6 +110,8 @@ function createSchema(db: Database): void {
       max_energy INTEGER NOT NULL,
       balance REAL NOT NULL DEFAULT 0,
       balance_threshold REAL NOT NULL,
+      left_weights TEXT DEFAULT '[5,3]',
+      right_weights TEXT DEFAULT '[4,2]',
       start_time TEXT NOT NULL DEFAULT (datetime('now')),
       end_time TEXT,
       created_at TEXT DEFAULT (datetime('now')),
@@ -129,11 +131,39 @@ function createSchema(db: Database): void {
       balance_after REAL NOT NULL,
       energy_before INTEGER NOT NULL,
       energy_after INTEGER NOT NULL,
+      left_weights_before TEXT,
+      left_weights_after TEXT,
+      right_weights_before TEXT,
+      right_weights_after TEXT,
       timestamp TEXT NOT NULL DEFAULT (datetime('now')),
       sequence INTEGER NOT NULL,
       FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
     );
   `);
+
+  try {
+    const cols = db.exec("PRAGMA table_info(game_sessions)");
+    const colNames = cols[0]?.values.map((r) => r[1]) || [];
+    if (!colNames.includes("left_weights")) {
+      db.run("ALTER TABLE game_sessions ADD COLUMN left_weights TEXT DEFAULT '[5,3]'");
+      db.run("ALTER TABLE game_sessions ADD COLUMN right_weights TEXT DEFAULT '[4,2]'");
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  try {
+    const cols = db.exec("PRAGMA table_info(operations)");
+    const colNames = cols[0]?.values.map((r) => r[1]) || [];
+    if (!colNames.includes("left_weights_before")) {
+      db.run("ALTER TABLE operations ADD COLUMN left_weights_before TEXT");
+      db.run("ALTER TABLE operations ADD COLUMN left_weights_after TEXT");
+      db.run("ALTER TABLE operations ADD COLUMN right_weights_before TEXT");
+      db.run("ALTER TABLE operations ADD COLUMN right_weights_after TEXT");
+    }
+  } catch (e) {
+    // ignore
+  }
 }
 
 export function runQuery(db: Database, sql: string, params: unknown[] = []): { lastInsertRowid: number; changes: number } {

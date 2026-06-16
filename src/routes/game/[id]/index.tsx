@@ -92,8 +92,8 @@ export default component$(() => {
     } : null,
     errorMsg: '',
     loadingOp: null,
-    leftWeights: [5, 3],
-    rightWeights: [4, 2],
+    leftWeights: Array.isArray(initialData.value.session.leftWeights) ? initialData.value.session.leftWeights : [5, 3],
+    rightWeights: Array.isArray(initialData.value.session.rightWeights) ? initialData.value.session.rightWeights : [4, 2],
   });
 
   const selectedWeight = useSignal<{ side: 'left' | 'right'; index: number } | null>(null);
@@ -134,9 +134,55 @@ export default component$(() => {
       state.currentFloor = result.data.state.current_floor;
       state.balance = result.data.state.balance;
       state.energy = result.data.state.energy;
+      if (Array.isArray(result.data.state.leftWeights)) {
+        state.leftWeights = result.data.state.leftWeights;
+      }
+      if (Array.isArray(result.data.state.rightWeights)) {
+        state.rightWeights = result.data.state.rightWeights;
+      }
 
       if (result.data.gameStatus !== 'playing') {
         await finishSession(result.data.gameStatus);
+      }
+    } catch (e) {
+      state.errorMsg = '网络错误';
+    } finally {
+      state.loadingOp = null;
+    }
+  });
+
+  const undoOperation = $(async () => {
+    if (state.status !== 'playing') return;
+    if (state.loadingOp) return;
+    if (state.operations.length === 0) {
+      state.errorMsg = '没有可撤销的操作';
+      return;
+    }
+
+    state.errorMsg = '';
+    state.loadingOp = 'UNDO';
+
+    try {
+      const res = await fetch(`/api/sessions/${state.sessionId}/operations`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const result = await res.json();
+      if (!result.success) {
+        state.errorMsg = result.error || '撤销失败';
+        return;
+      }
+
+      state.operations.pop();
+      state.currentFloor = result.data.state.current_floor;
+      state.balance = result.data.state.balance;
+      state.energy = result.data.state.energy;
+      if (Array.isArray(result.data.state.leftWeights)) {
+        state.leftWeights = result.data.state.leftWeights;
+      }
+      if (Array.isArray(result.data.state.rightWeights)) {
+        state.rightWeights = result.data.state.rightWeights;
       }
     } catch (e) {
       state.errorMsg = '网络错误';
@@ -564,7 +610,26 @@ export default component$(() => {
 
         {/* 操作历史 */}
         <div class="panel" style={{ padding: '20px', maxHeight: '380px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ color: '#00e5ff', marginBottom: '15px', fontSize: '1.1rem' }}>📜 操作历史 ({state.operations.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ color: '#00e5ff', fontSize: '1.1rem', margin: 0 }}>📜 操作历史 ({state.operations.length})</h3>
+            <button
+              class="btn"
+              onClick$={undoOperation}
+              disabled={state.status !== 'playing' || state.operations.length === 0 || !!state.loadingOp}
+              style={{
+                padding: '6px 12px',
+                fontSize: '0.85rem',
+                background: state.operations.length === 0 ? 'rgba(60,60,60,0.3)' : 'rgba(255, 107, 53, 0.2)',
+                border: `1px solid ${state.operations.length === 0 ? 'rgba(100,100,100,0.3)' : '#ff6b35'}`,
+                color: state.operations.length === 0 ? '#666' : '#ff6b35',
+                borderRadius: '8px',
+                cursor: state.operations.length === 0 ? 'not-allowed' : 'pointer',
+              }}
+              title="撤销上一步操作"
+            >
+              {state.loadingOp === 'UNDO' ? '撤销中...' : '↩️ 撤销'}
+            </button>
+          </div>
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse', gap: '6px' }}>
             {state.operations.length === 0 ? (
               <p style={{ color: '#8899bb', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>暂无操作记录</p>

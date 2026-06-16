@@ -35,6 +35,8 @@ export interface GameSession {
   max_energy: number;
   balance: number;
   balance_threshold: number;
+  leftWeights: number[];
+  rightWeights: number[];
   start_time: string;
   end_time: string | null;
   created_at: string;
@@ -63,6 +65,10 @@ export interface Operation {
   balance_after: number;
   energy_before: number;
   energy_after: number;
+  leftWeightsBefore: number[];
+  leftWeightsAfter: number[];
+  rightWeightsBefore: number[];
+  rightWeightsAfter: number[];
   timestamp: string;
   sequence: number;
 }
