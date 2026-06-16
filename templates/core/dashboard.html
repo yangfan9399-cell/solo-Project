@@ -82,8 +82,8 @@
               <div class="timeline-container">
                 {% for task in item.tasks %}
                   <div class="timeline-task priority-{{ task.core_sample.priority }}"
-                       style="left: {% widthratio task.scheduled_start_time.hour|add:task.scheduled_start_time.minute|divisibleby:60 24 100 %}%;
-                              width: {% widthratio task.planned_cut_length|divisibleby:item.cutter.daily_capacity|add:0.05 1 100 %}%;"
+                       style="left:{{ task.pos_left_pct }}%;
+                              width:{{ task.pos_width_pct }}%;"
                        title="{{ task.task_no }} - {{ task.core_sample.sample_no }}">
                     {{ task.task_no }}
                   </div>
@@ -94,8 +94,9 @@
                 {% endfor %}
               </div>
               <div class="timeline-hours">
-                <span>08:00</span><span>10:00</span><span>12:00</span>
-                <span>14:00</span><span>16:00</span><span>18:00</span>
+                <span>06:00</span><span>08:00</span><span>10:00</span>
+                <span>12:00</span><span>14:00</span><span>16:00</span>
+                <span>18:00</span><span>20:00</span><span>22:00</span>
               </div>
             </div>
           {% endfor %}

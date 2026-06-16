@@ -466,9 +466,9 @@ tbody tr:hover {
   background: repeating-linear-gradient(
     90deg,
     #fff,
-    #fff 8.33%,
-    #f8fafc 8.33%,
-    #f8fafc 16.66%
+    #fff 12.5%,
+    #f8fafc 12.5%,
+    #f8fafc 25%
   );
   border: 1px solid var(--border);
   border-top: none;

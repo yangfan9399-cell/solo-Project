@@ -5,15 +5,45 @@ from django.db.models import Q, Sum
 
 
 def detect_all_anomalies():
-    AnomalyRecord.objects.filter(resolved=False).update(resolved=True, resolved_at=timezone.now())
+    """增量检测异常：已存在且仍满足条件的保留未解决；已不存在的标记为自动解决；新出现的创建。"""
+    unresolved_before = set(AnomalyRecord.objects.filter(resolved=False).values_list(
+        'anomaly_type', 'core_sample_id', 'cutting_task_id', 'cutter_id'
+    ))
 
+    new_keys = set()
     detected = []
-    detected.extend(_detect_length_mismatch())
-    detected.extend(_detect_high_loss())
-    detected.extend(_detect_low_remaining())
-    detected.extend(_detect_over_scheduled())
-    detected.extend(_detect_capacity_exceeded())
-    detected.extend(_detect_data_incomplete())
+    for func in [_detect_length_mismatch, _detect_high_loss, _detect_low_remaining,
+                 _detect_over_scheduled, _detect_capacity_exceeded, _detect_data_incomplete]:
+        result = func()
+        detected.extend(result)
+        for a in result:
+            key = (a.anomaly_type, a.core_sample_id, a.cutting_task_id, a.cutter_id)
+            new_keys.add(key)
+
+    stale_keys = unresolved_before - new_keys
+    if stale_keys:
+        q_objects = Q()
+        for atype, cid, tid, mid in stale_keys:
+            q = Q(anomaly_type=atype, resolved=False)
+            if cid is not None:
+                q &= Q(core_sample_id=cid)
+            else:
+                q &= Q(core_sample__isnull=True)
+            if tid is not None:
+                q &= Q(cutting_task_id=tid)
+            else:
+                q &= Q(cutting_task__isnull=True)
+            if mid is not None:
+                q &= Q(cutter_id=mid)
+            else:
+                q &= Q(cutter__isnull=True)
+            q_objects |= q
+        if str(q_objects):
+            AnomalyRecord.objects.filter(q_objects).update(
+                resolved=True,
+                resolved_at=timezone.now(),
+                resolution='(异常条件已消除，自动标记解决)'
+            )
 
     return detected
 
@@ -178,6 +208,44 @@ def _detect_data_incomplete():
     return anomalies
 
 
+DAY_START_HOUR = 6
+DAY_END_HOUR = 22
+DAY_SPAN_MINUTES = (DAY_END_HOUR - DAY_START_HOUR) * 60
+
+
+def _time_to_minutes_from_daystart(t):
+    if t is None:
+        return None
+    return t.hour * 60 + t.minute - DAY_START_HOUR * 60
+
+
+def _calc_task_position(task, cutter):
+    """
+    返回 (left_pct, width_pct)，基于 DAY_START_HOUR~DAY_END_HOUR 的 0~100 百分比。
+    width 根据实际的 开始~结束时间 或按 planned_cut_length/daily_capacity 估算。
+    """
+    wstart = _time_to_minutes_from_daystart(cutter.work_start_time)
+    wend = _time_to_minutes_from_daystart(cutter.work_end_time)
+    work_span = max(wend - wstart, 60) if (wstart is not None and wend is not None) else 600
+
+    start_min = _time_to_minutes_from_daystart(task.scheduled_start_time)
+    if start_min is None:
+        start_min = wstart if wstart is not None else 120
+
+    left_pct = max(0.0, min(98.0, start_min / DAY_SPAN_MINUTES * 100.0))
+
+    end_min = _time_to_minutes_from_daystart(task.scheduled_end_time)
+    if end_min is not None and end_min > start_min:
+        duration = end_min - start_min
+    else:
+        cap = cutter.daily_capacity if cutter.daily_capacity > 0 else 1.0
+        ratio = min(task.planned_cut_length / cap, 1.0)
+        duration = max(ratio * work_span, 30)
+
+    width_pct = max(4.0, min(100.0 - left_pct, duration / DAY_SPAN_MINUTES * 100.0))
+    return round(left_pct, 2), round(width_pct, 2)
+
+
 def get_daily_schedule(target_date=None):
     if target_date is None:
         target_date = date.today()
@@ -187,10 +255,16 @@ def get_daily_schedule(target_date=None):
         tasks = CuttingTask.objects.filter(
             cutter=cutter,
             scheduled_date=target_date
-        ).order_by('scheduled_start_time')
+        ).select_related('core_sample', 'purpose').order_by('scheduled_start_time')
+        task_list = []
+        for task in tasks:
+            left_pct, width_pct = _calc_task_position(task, cutter)
+            task.pos_left_pct = left_pct
+            task.pos_width_pct = width_pct
+            task_list.append(task)
         schedule.append({
             'cutter': cutter,
-            'tasks': list(tasks),
+            'tasks': task_list,
         })
     return schedule
 

@@ -47,8 +47,8 @@
                   {% if item.tasks %}
                     {% for task in item.tasks %}
                       <div class="timeline-task priority-{{ task.core_sample.priority }}"
-                           style="left:{% if task.scheduled_start_time %}{% widthratio task.scheduled_start_time.hour 24 100 %}%{% else %}10%{% endif %};
-                                  width:{% widthratio task.planned_cut_length|divisibleby:item.cutter.daily_capacity 1 100 %}%;
+                           style="left:{{ task.pos_left_pct }}%;
+                                  width:{{ task.pos_width_pct }}%;
                                   min-width:60px;
                                   top:10px;bottom:10px;"
                            onclick="window.location.href='{% url 'core:task_detail' task.pk %}'">
