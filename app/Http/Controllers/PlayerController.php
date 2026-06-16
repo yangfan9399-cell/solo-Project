@@ -18,10 +18,19 @@ class PlayerController extends Controller
         $user = $request->user();
         $stats = $this->scoreService->getUserStats($user);
 
-        $levels = Level::where('is_active', true)
+        $officialLevels = Level::where('is_active', true)
+            ->where('is_custom', false)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+
+        $customLevels = Level::where('is_active', true)
+            ->where('is_custom', true)
+            ->where('created_by', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $levels = $officialLevels->merge($customLevels);
 
         $recentGames = $user->games()
             ->with('level')

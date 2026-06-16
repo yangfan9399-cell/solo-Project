@@ -26,13 +26,21 @@
 
 <div class="grid grid-2" style="margin-bottom: 2rem;">
     <div class="card">
-        <h2 class="card-title">📋 关卡列表</h2>
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="card-title" style="margin: 0;">📋 关卡列表</h2>
+            <a href="{{ route('custom-levels.index') }}" class="btn btn-secondary" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">🎨 我的自定义谜题</a>
+        </div>
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             @foreach($levels as $level)
                 <div style="background: rgba(15,23,42,0.6); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(99,102,241,0.2);">
                     <div class="flex justify-between items-start mb-2">
                         <div>
-                            <div class="font-bold text-lg">{{ $level->name }}</div>
+                            <div class="font-bold text-lg">
+                                {{ $level->name }}
+                                @if($level->is_custom)
+                                    <span class="badge badge-medium" style="font-size: 0.7rem; vertical-align: middle;">自定义</span>
+                                @endif
+                            </div>
                             <div class="text-sm text-muted mt-1">{{ $level->description }}</div>
                         </div>
                         <span class="badge badge-{{ $level->difficulty }}">{{ $level->difficulty_label }}</span>

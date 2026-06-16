@@ -239,6 +239,7 @@
         <div class="nav-links">
             @auth
                 <a href="{{ route('dashboard') }}">控制台</a>
+                <a href="{{ route('custom-levels.index') }}">自定义谜题</a>
                 <a href="{{ route('profile') }}">个人资料</a>
                 <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                     @csrf

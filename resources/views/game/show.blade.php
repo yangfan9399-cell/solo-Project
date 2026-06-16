@@ -331,7 +331,7 @@
         </div>
     </div>
 
-    <div class="grid grid-2" style="margin-bottom: 1.5rem;">
+    <div class="grid @if($gameState['level']->cipher_type === 'rotor') grid-1 @else grid-2 @endif" style="margin-bottom: 1.5rem;">
         <div class="card">
             <h2 class="card-title">🔤 替换表 (Substitution Table)</h2>
             <p class="text-sm text-muted mb-3">点击字母输入对应的明文字母，留空表示未映射。</p>
@@ -362,6 +362,7 @@
                 </button>
             </div>
         </div>
+        @endif
 
         <div class="card">
             <h2 class="card-title">📊 分析面板</h2>
@@ -547,8 +548,16 @@
 @section('scripts')
 <script>
     const gameSessionId = {{ $session->id }};
+    const cipherType = '{{ $gameState['level']->cipher_type }}';
+    const initialPartialSolution = {!! json_encode($gameState['partial_solution'] ?? '') !!};
     let startTime = {{ $gameState['elapsed_seconds'] }};
     const isCompleted = {{ $isCompleted ? 'true' : 'false' }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (cipherType === 'rotor' && initialPartialSolution) {
+            renderDecryptedText(initialPartialSolution);
+        }
+    });
 
     if (!isCompleted) {
         setInterval(() => {
@@ -579,6 +588,34 @@
                 const el = document.getElementById('rotor-' + i);
                 if (el) el.textContent = String(pos).padStart(2, '0');
             });
+            if (result.partial_solution) {
+                renderDecryptedText(result.partial_solution);
+            }
+        }
+    }
+
+    function renderDecryptedText(decrypted) {
+        const rotorPreview = document.getElementById('rotorPreview');
+        if (rotorPreview && cipherType === 'rotor') {
+            rotorPreview.textContent = decrypted;
+        }
+
+        const plainTextDisplay = document.getElementById('plainTextDisplay');
+        if (!plainTextDisplay) return;
+
+        if (cipherType === 'rotor') {
+            let html = '';
+            for (let i = 0; i < decrypted.length; i++) {
+                const ch = decrypted[i];
+                if (ch === ' ') {
+                    html += '<span class="cipher-char space">&nbsp;</span>';
+                } else if (/[A-Za-z]/.test(ch)) {
+                    html += `<span class="cipher-char decrypted">${ch.toUpperCase()}</span>`;
+                } else {
+                    html += `<span class="cipher-char decrypted">${ch}</span>`;
+                }
+            }
+            plainTextDisplay.innerHTML = html;
         }
     }
 

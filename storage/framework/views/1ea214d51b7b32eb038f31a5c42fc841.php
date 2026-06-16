@@ -239,6 +239,7 @@
         <div class="nav-links">
             <?php if(auth()->guard()->check()): ?>
                 <a href="<?php echo e(route('dashboard')); ?>">控制台</a>
+                <a href="<?php echo e(route('custom-levels.index')); ?>">自定义谜题</a>
                 <a href="<?php echo e(route('profile')); ?>">个人资料</a>
                 <form method="POST" action="<?php echo e(route('logout')); ?>" style="display: inline;">
                     <?php echo csrf_field(); ?>

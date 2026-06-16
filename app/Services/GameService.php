@@ -75,13 +75,24 @@ class GameService
         }
 
         $session->rotor_positions = $positions;
+
+        $level = $session->level;
+        if ($level->cipher_type === 'rotor' && $level->rotor_config) {
+            $decrypted = $this->cipherService->rotorDecrypt(
+                $level->ciphertext,
+                $positions,
+                $level->rotor_config
+            );
+            $session->partial_solution = $decrypted;
+        }
+
         $session->save();
 
         ActionHistory::create([
             'game_session_id' => $session->id,
             'action_type' => 'rotor_change',
-            'before_state' => ['rotor_positions' => $oldPositions],
-            'after_state' => ['rotor_positions' => $positions],
+            'before_state' => ['rotor_positions' => $oldPositions, 'partial_solution' => $session->getOriginal('partial_solution')],
+            'after_state' => ['rotor_positions' => $positions, 'partial_solution' => $session->partial_solution],
             'description' => "调整转轮 {$rotorIndex} 位置为 {$positions[$rotorIndex]}",
             'score_change' => 0,
             'created_at' => now(),
@@ -90,6 +101,7 @@ class GameService
         return [
             'success' => true,
             'rotor_positions' => $positions,
+            'partial_solution' => $session->partial_solution,
         ];
     }
 
@@ -243,6 +255,15 @@ class GameService
             case 'rotor_change':
                 if (isset($lastAction->before_state['rotor_positions'])) {
                     $session->rotor_positions = $lastAction->before_state['rotor_positions'];
+                    $level = $session->level;
+                    if ($level->cipher_type === 'rotor' && $level->rotor_config) {
+                        $decrypted = $this->cipherService->rotorDecrypt(
+                            $level->ciphertext,
+                            $session->rotor_positions,
+                            $level->rotor_config
+                        );
+                        $session->partial_solution = $decrypted;
+                    }
                 }
                 break;
             case 'substitution_add':
@@ -297,6 +318,17 @@ class GameService
         }
 
         $level = $session->level;
+
+        if ($level->cipher_type === 'rotor' && $level->rotor_config && $session->rotor_positions) {
+            $decrypted = $this->cipherService->rotorDecrypt(
+                $level->ciphertext,
+                $session->rotor_positions,
+                $level->rotor_config
+            );
+            $session->partial_solution = $decrypted;
+            $session->save();
+        }
+
         $userSolution = $session->partial_solution ?? '';
 
         $verification = $this->cipherService->verifySolution($userSolution, $level->plaintext);

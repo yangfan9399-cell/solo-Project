@@ -79,3 +79,12 @@
 #30 /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/artisan(11): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
 #31 {main}
 "} 
+[2026-06-16 16:54:11] local.ERROR: Call to undefined method App\Services\CipherService::substitutionEncrypt() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\CipherService::substitutionEncrypt() at /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/_test_cipher.php:29)
+[stacktrace]
+#0 {main}
+"} 
+[2026-06-16 16:55:29] local.ERROR: App\Services\GameService::updateRotor(): Argument #2 ($rotorIndex) must be of type int, array given, called in /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/_test_rotor_custom.php on line 33 {"exception":"[object] (TypeError(code: 0): App\\Services\\GameService::updateRotor(): Argument #2 ($rotorIndex) must be of type int, array given, called in /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/_test_rotor_custom.php on line 33 at /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/app/Services/GameService.php:64)
+[stacktrace]
+#0 /Users/yangfan/Desktop/trae-solo-generated-projects/q-333/_test_rotor_custom.php(33): App\\Services\\GameService->updateRotor(Object(App\\Models\\GameSession), Array)
+#1 {main}
+"} 
