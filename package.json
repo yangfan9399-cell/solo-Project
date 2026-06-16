@@ -1,0 +1,28 @@
+{
+  "name": "observatory-night-patrol",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "node scripts/init-db.mjs && nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "prepare": "nuxt prepare",
+    "init-db": "node scripts/init-db.mjs",
+    "setup": "node scripts/init-db.mjs"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.5.1",
+    "nuxt": "3.12.4",
+    "pinia": "^2.2.2",
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "typescript": "^5.5.4"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node@4.62.0"
+  }
+}
