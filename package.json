@@ -1,0 +1,28 @@
+{
+  "name": "underwater-archaeology-game",
+  "version": "1.0.0",
+  "description": "水下考古网格定位游戏 - Underwater Archaeology Grid Positioning Game",
+  "type": "module",
+  "scripts": {
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start"
+  },
+  "dependencies": {
+    "@solidjs/meta": "^0.29.4",
+    "@solidjs/router": "^0.14.1",
+    "@solidjs/start": "^1.0.6",
+    "solid-js": "^1.8.22",
+    "uuid": "^9.0.1",
+    "vinxi": "^0.4.3"
+  },
+  "devDependencies": {
+    "@rollup/wasm-node": "^4.62.0",
+    "@types/node": "^20.11.30",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5.4.5"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-arm64": "^4.62.0"
+  }
+}
