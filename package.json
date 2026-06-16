@@ -1,0 +1,48 @@
+{
+  "name": "space-elevator-game",
+  "version": "1.0.0",
+  "description": "太空电梯配重调度游戏 - Space Elevator Balancing Game",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true,
+  "scripts": {
+    "build": "qwik build",
+    "build.client": "vite build",
+    "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.server": "vite build -c adapters/static/vite.config.ts",
+    "build.types": "tsc --incremental --noEmit",
+    "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
+    "dev": "vite --mode ssr",
+    "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
+    "fmt": "prettier --write .",
+    "fmt.check": "prettier --check .",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "preview": "qwik build preview && vite preview --open",
+    "start": "vite --open --mode ssr",
+    "qwik": "qwik",
+    "db:init": "tsx scripts/init-db.ts",
+    "db:seed": "tsx scripts/seed-db.ts",
+    "db:reset": "tsx scripts/reset-db.ts",
+    "setup": "npm install && npm run db:init && npm run db:seed"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "^1.5.0",
+    "@builder.io/qwik-city": "^1.5.0",
+    "@types/eslint": "^8.56.5",
+    "@types/node": "^20.11.6",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-qwik": "^1.5.0",
+    "prettier": "^3.2.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "undici": "*",
+    "vite": "^5.1.4",
+    "vite-tsconfig-paths": "^4.2.1"
+  },
+  "dependencies": {
+    "sql.js": "^1.10.3"
+  }
+}

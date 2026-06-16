@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "太空电梯配重调度游戏",
+  "short_name": "太空电梯",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#00e5ff",
+  "description": "一款策略调度类游戏，平衡配重、精准调度，征服星辰大海。"
+}

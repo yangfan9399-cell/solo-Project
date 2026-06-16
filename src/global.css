@@ -1,0 +1,146 @@
+:root {
+  --space-dark: #0a0e1a;
+  --space-darker: #050810;
+  --space-blue: #1a2744;
+  --accent-cyan: #00e5ff;
+  --accent-orange: #ff6b35;
+  --accent-red: #ff3366;
+  --accent-green: #00ff88;
+  --accent-yellow: #ffcc00;
+  --text-primary: #e8f0ff;
+  --text-secondary: #8899bb;
+  --panel-bg: rgba(20, 35, 60, 0.85);
+  --panel-border: rgba(0, 229, 255, 0.25);
+  --shadow-glow: 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: radial-gradient(ellipse at top, #1a2744 0%, #0a0e1a 50%, #050810 100%);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+    radial-gradient(2px 2px at 80% 20%, rgba(0, 229, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 40% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 50%, #fff, transparent),
+    radial-gradient(2px 2px at 10% 60%, rgba(255, 107, 53, 0.5), transparent);
+  background-size: 300px 300px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+#container {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 229, 255, 0.05));
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.1));
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-cyan), #0099bb);
+  color: var(--space-darker);
+  border-color: var(--accent-cyan);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33eaff, #00aacc);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 51, 102, 0.05));
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 51, 102, 0.4), rgba(255, 51, 102, 0.1));
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.5);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05));
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.4), rgba(0, 255, 136, 0.1));
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+}
+
+input, select {
+  background: rgba(10, 14, 26, 0.8);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px currentColor;
+}
