@@ -1,0 +1,13 @@
+<div class="placed-container bg-slate-600/80 rounded-lg p-2 border border-<%= container.color %>-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-<%= container.color %>-500/20 cursor-pointer"
+     data-container-id="<%= container.id %>"
+     data-berth-id="<%= berth.id %>"
+     data-action="click->game#removeContainer">
+  <div class="flex items-center justify-between text-xs">
+    <span class="font-bold"><%= container.label %></span>
+    <span class="text-slate-400"><%= container.weight %>吨</span>
+  </div>
+  <div class="text-xs text-slate-400 mt-1">
+    目的地: <span class="text-purple-400"><%= container.destination %></span>
+    <span class="ml-2 text-red-400 opacity-0 hover:opacity-100 transition">点击移除</span>
+  </div>
+</div>

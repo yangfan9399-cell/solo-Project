@@ -1,0 +1,256 @@
+<% content_for :title, "#{@level.name} - 游戏进行中" %>
+
+<div data-controller="game"
+     data-game-session-id="<%= @game_session.id %>"
+     data-game-time-limit="<%= @level.time_limit %>"
+     data-game-target-score="<%= @level.target_score %>"
+     data-game-time-remaining="<%= @game_session.time_remaining %>"
+     class="game-container">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-3xl font-bold mb-1"><%= @level.name %></h2>
+      <p class="text-slate-400"><%= @level.description %></p>
+    </div>
+    <div class="flex items-center gap-6">
+      <div class="text-center">
+        <div class="text-xs text-slate-400">难度</div>
+        <span class="px-3 py-1 rounded-full text-sm font-medium <%= difficulty_class(@level.difficulty) %>">
+          <%= difficulty_label(@level.difficulty) %>
+        </span>
+      </div>
+      <%= link_to "取消", cancel_game_session_path(@game_session), method: :post,
+        class: "px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition",
+        data: { confirm: "确定要取消当前游戏吗？" } %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+      <div class="text-xs text-slate-400 mb-1">⏱️ 剩余时间</div>
+      <div id="timer" class="text-3xl font-mono font-bold text-cyan-400">
+        <%= format_seconds(@game_session.time_remaining) %>
+      </div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+      <div class="text-xs text-slate-400 mb-1">🎯 目标分数</div>
+      <div class="text-3xl font-mono font-bold text-purple-400">
+        <%= number_with_delimiter(@level.target_score) %>
+      </div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+      <div class="text-xs text-slate-400 mb-1">⭐ 当前分数</div>
+      <div id="current-score" class="text-3xl font-mono font-bold text-yellow-400">
+        <%= number_with_delimiter(@game_session.score) %>
+      </div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+      <div class="text-xs text-slate-400 mb-1">📦 剩余货柜</div>
+      <div id="remaining-containers" class="text-3xl font-mono font-bold text-green-400">
+        <%= @game_session.available_containers.count %> / <%= @containers.count %>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-alerts" class="mb-6 space-y-2"></div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div>
+      <h3 class="text-xl font-bold mb-4 flex items-center justify-between">
+        <span class="flex items-center gap-2">
+          <span>⚓</span> 泊位
+        </span>
+        <span class="text-sm text-slate-400">
+          将货柜拖拽到对应的泊位
+        </span>
+      </h3>
+      <div id="berths-container" class="grid grid-cols-1 md:grid-cols-<%= [@berths.count, 3].min %> gap-4">
+        <% @berths.each do |berth| %>
+          <% current_weight = berth.current_weight(@game_session) %>
+          <% placed_here = @game_session.containers_at_berth(berth) %>
+          <div class="berth-slot <%= 'berth-highlight' if @game_session.status == 'playing' %> bg-slate-800/60 backdrop-blur rounded-xl p-4 border-2 border-dashed border-slate-600 transition-all duration-200"
+               data-berth-id="<%= berth.id %>"
+               data-berth-max-weight="<%= berth.max_weight %>"
+               data-berth-allowed-destinations="<%= berth.allowed_destinations %>"
+               data-dropzone="true">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <div class="font-bold text-lg"><%= berth.name %></div>
+                <div class="text-xs text-slate-400">
+                  目的地: <%= berth.allowed_destinations.presence || '任意' %>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="font-mono font-bold <%= weight_bar_color(current_weight, berth.max_weight).sub('bg-', 'text-') %>">
+                  <%= current_weight %> / <%= berth.max_weight %>
+                </span>
+              </div>
+            </div>
+            <div class="h-2 bg-slate-700 rounded-full overflow-hidden mb-3">
+              <div class="berth-weight-bar h-full rounded-full transition-all duration-300 <%= weight_bar_color(current_weight, berth.max_weight) %>"
+                   style="width: <%= [current_weight.to_f / berth.max_weight * 100, 100].min %>%"></div>
+            </div>
+            <div class="min-h-[80px] space-y-2">
+              <% placed_here.each do |placement| %>
+                <%= render partial: 'placed_container', container: placement.container, berth: berth %>
+              <% end %>
+            </div>
+            <div class="berth-drop-hint text-xs text-slate-500 mt-2 text-center hidden">
+              拖放到此处
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span>📦</span> 待调度货柜
+      </h3>
+      <div id="containers-pool" class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20 min-h-[300px]">
+        <% @game_session.available_containers.each do |container| %>
+          <%= render partial: 'container', container: container %>
+        <% end %>
+        <% if @game_session.available_containers.empty? && @game_session.status == 'playing' %>
+          <div class="text-center text-slate-400 py-8">
+            <div class="text-4xl mb-2">✨</div>
+            <div>所有货柜已放置！</div>
+            <div class="text-sm mt-1">正在计算最终得分...</div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button data-action="game#undo"
+                class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                id="undo-btn">
+          <span>↩️</span> 撤销
+        </button>
+        <button data-action="game#redo"
+                class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                id="redo-btn">
+          <span>↪️</span> 重做
+        </button>
+        <button data-action="game#recalculateScore"
+                class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition flex items-center gap-2">
+          <span>📊</span> 重新计算分数
+        </button>
+      </div>
+      <div class="text-sm text-slate-400">
+        操作历史: <%= @operations.count %> 步
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+    <h4 class="font-bold mb-3 flex items-center gap-2">
+      <span>📋</span> 操作历史
+    </h4>
+    <div id="operations-list" class="max-h-40 overflow-y-auto space-y-1 text-sm">
+      <% @operations.reverse.each do |op| %>
+        <div class="flex items-center gap-2 text-slate-400 py-1 border-b border-slate-700/50 last:border-0">
+          <span class="text-xs font-mono text-slate-500 w-8">#<%= op.sequence %></span>
+          <span class="<%= op.action_type == 'place' ? 'text-green-400' : 'text-orange-400' %>">
+            <%= op.action_type == 'place' ? '放置' : '移除' %>
+          </span>
+          <span>货柜 <span class="text-cyan-400"><%= op.container.label %></span></span>
+          <% if op.berth %>
+            <span>→ 泊位 <span class="text-purple-400"><%= op.berth.name %></span></span>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @operations.empty? %>
+        <div class="text-slate-500 text-center py-4">
+          暂无操作记录
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-6 bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-purple-500/20">
+    <h4 class="font-bold mb-3 flex items-center gap-2">
+      <span>📊</span> 分数明细
+    </h4>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-sm">
+      <div class="text-center">
+        <div class="text-slate-400">基础分</div>
+        <div data-score-key="base_score" class="font-mono font-bold text-white"><%= number_with_delimiter(@score_details[:base_score]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">重量奖励</div>
+        <div data-score-key="weight_bonus" class="font-mono font-bold text-cyan-400"><%= number_with_delimiter(@score_details[:weight_bonus]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">优先级奖励</div>
+        <div data-score-key="priority_bonus" class="font-mono font-bold text-purple-400"><%= number_with_delimiter(@score_details[:priority_bonus]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">目的地匹配</div>
+        <div data-score-key="destination_bonus" class="font-mono font-bold text-green-400"><%= number_with_delimiter(@score_details[:destination_bonus]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">泊位利用率</div>
+        <div data-score-key="berth_utilization_bonus" class="font-mono font-bold text-yellow-400"><%= number_with_delimiter(@score_details[:berth_utilization_bonus]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">效率奖励</div>
+        <div data-score-key="efficiency_bonus" class="font-mono font-bold text-orange-400"><%= number_with_delimiter(@score_details[:efficiency_bonus]) %></div>
+      </div>
+      <div class="text-center">
+        <div class="text-slate-400">难度倍数</div>
+        <div data-score-key="multiplier" class="font-mono font-bold text-pink-400">×<%= @score_details[:multiplier] %></div>
+      </div>
+      <div class="text-center border-l border-slate-700 pl-4">
+        <div class="text-slate-400">总分</div>
+        <div data-score-key="final_score" class="font-mono font-bold text-2xl text-yellow-400"><%= number_with_delimiter(@score_details[:final_score]) %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @final_score_details %>
+  <div id="game-result-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-slate-800 rounded-2xl p-8 max-w-lg w-full mx-4 border border-purple-500/30 shadow-2xl">
+      <div class="text-center">
+        <div class="text-6xl mb-4">
+          <%= @game_session.status == 'won' ? '🎉' : '😢' %>
+        </div>
+        <h3 class="text-3xl font-bold mb-2 <%= @game_session.status == 'won' ? 'text-green-400' : 'text-red-400' %>">
+          <%= @game_session.status == 'won' ? '挑战成功！' : '挑战失败' %>
+        </h3>
+        <% if @game_session.lose_reason %>
+          <p class="text-slate-400 mb-6"><%= @game_session.lose_reason %></p>
+        <% end %>
+
+        <div class="bg-slate-700/50 rounded-xl p-6 mb-6">
+          <div class="text-sm text-slate-400 mb-2">最终得分</div>
+          <div class="text-5xl font-mono font-bold text-yellow-400 mb-4">
+            <%= number_with_delimiter(@game_session.score) %>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-slate-400">目标分数</div>
+              <div class="font-mono"><%= number_with_delimiter(@level.target_score) %></div>
+            </div>
+            <div>
+              <div class="text-slate-400">剩余时间</div>
+              <div class="font-mono"><%= format_seconds(@game_session.time_remaining) %></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <%= link_to "返回关卡", levels_path,
+            class: "flex-1 py-3 rounded-lg bg-slate-700 hover:bg-slate-600 transition text-center" %>
+          <%= link_to "再来一局", level_game_sessions_path(@level), method: :post,
+            class: "flex-1 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-medium transition text-center" %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

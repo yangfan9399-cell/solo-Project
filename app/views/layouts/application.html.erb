@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "星港货柜调度竞速游戏" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="星港货柜">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white">
+    <nav class="bg-slate-800/80 backdrop-blur-sm border-b border-purple-500/30 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center font-bold text-lg">
+              🚀
+            </div>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              星港货柜调度竞速
+            </h1>
+          </div>
+          <div class="flex items-center gap-4">
+            <% if session[:player_id] %>
+              <% player = Player.find_by(id: session[:player_id]) %>
+              <% if player %>
+                <span class="text-sm text-slate-300">
+                  👤 <%= player.name %>
+                </span>
+                <%= link_to player_path(player), class: "px-3 py-1 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 transition" do %>
+                  档案
+                <% end %>
+              <% end %>
+            <% end %>
+            <%= link_to "关卡", levels_path, class: "px-3 py-1 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 transition" %>
+            <%= link_to "排行榜", leaderboards_path, class: "px-3 py-1 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 transition" %>
+            <%= link_to "记录", game_sessions_path, class: "px-3 py-1 text-sm rounded-lg bg-slate-700 hover:bg-slate-600 transition" %>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <% if notice %>
+        <div class="mb-6 p-4 rounded-lg bg-green-500/20 border border-green-500/50 text-green-300">
+          <%= notice %>
+        </div>
+      <% end %>
+      <% if alert %>
+        <div class="mb-6 p-4 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300">
+          <%= alert %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="mt-auto py-6 border-t border-slate-700/50">
+      <div class="max-w-7xl mx-auto px-4 text-center text-slate-400 text-sm">
+        星港货柜调度竞速游戏 © 2026 | 策略 · 速度 · 智慧
+      </div>
+    </footer>
+  </body>
+</html>

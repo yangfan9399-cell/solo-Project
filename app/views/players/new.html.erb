@@ -1,0 +1,37 @@
+<% content_for :title, "创建玩家档案" %>
+
+<div class="max-w-md mx-auto">
+  <div class="bg-slate-800/60 backdrop-blur rounded-xl p-8 border border-purple-500/20">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">👤</div>
+      <h2 class="text-3xl font-bold mb-2">创建玩家档案</h2>
+      <p class="text-slate-400">输入你的名字开始游戏</p>
+    </div>
+
+    <%= form_with model: @player, url: players_path do |form| %>
+      <% if @player.errors.any? %>
+        <div class="mb-6 p-4 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300">
+          <ul>
+            <% @player.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="mb-6">
+        <%= form.label :name, "玩家名称", class: "block text-sm font-medium text-slate-300 mb-2" %>
+        <%= form.text_field :name, required: true, placeholder: "输入你的名字",
+          class: "w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition" %>
+      </div>
+
+      <%= form.submit "开始游戏",
+        class: "w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-medium transition cursor-pointer" %>
+    <% end %>
+
+    <div class="mt-6 text-center text-sm text-slate-400">
+      <p>或者使用默认玩家档案继续</p>
+      <%= link_to "以游客身份进入", root_path, class: "text-cyan-400 hover:text-cyan-300 mt-2 inline-block" %>
+    </div>
+  </div>
+</div>

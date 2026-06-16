@@ -1,0 +1,92 @@
+<% content_for :title, "游戏记录 - 星港货柜调度竞速" %>
+
+<div class="mb-8">
+  <h2 class="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+    📋 游戏记录
+  </h2>
+  <p class="text-slate-400">查看你的历史游戏记录</p>
+</div>
+
+<% if @active_session %>
+  <div class="mb-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="text-3xl animate-pulse">🎮</div>
+        <div>
+          <h3 class="font-bold text-lg text-blue-400">有进行中的游戏</h3>
+          <p class="text-slate-400"><%= @active_session.level.name %> - 得分: <%= number_with_delimiter(@active_session.score) %></p>
+        </div>
+      </div>
+      <%= link_to "继续游戏", game_session_path(@active_session),
+        class: "px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-medium transition" %>
+    </div>
+  </div>
+<% end %>
+
+<div class="bg-slate-800/60 backdrop-blur rounded-xl border border-purple-500/20 overflow-hidden">
+  <% if @game_sessions.any? %>
+    <table class="w-full">
+      <thead class="bg-slate-700/50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">关卡</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">难度</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">状态</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">得分</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">开始时间</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">结束时间</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-700/50">
+        <% @game_sessions.each do |session| %>
+          <tr class="hover:bg-slate-700/30 transition">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="font-medium"><%= session.level.name %></div>
+              <div class="text-xs text-slate-500"><%= session.level.container_count %>个货柜 · <%= session.level.berth_count %>个泊位</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 rounded text-xs <%= difficulty_class(session.level.difficulty) %>">
+                <%= difficulty_label(session.level.difficulty) %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 rounded text-xs <%= status_class(session.status) %>">
+                <%= status_label(session.status) %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="font-mono font-bold <%= session.status == 'won' ? 'text-yellow-400' : 'text-slate-300' %>">
+                <%= number_with_delimiter(session.score) %>
+              </span>
+              <% if session.status == 'won' && session.score >= session.level.target_score %>
+                <span class="ml-2 text-green-400">✓</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-slate-400 text-sm"><%= session.started_at&.strftime('%m-%d %H:%M') %></td>
+            <td class="px-6 py-4 whitespace-nowrap text-slate-400 text-sm"><%= session.finished_at&.strftime('%m-%d %H:%M') || '-' %></td>
+            <td class="px-6 py-4 whitespace-nowrap flex gap-2">
+              <%= link_to "查看", game_session_path(session), class: "text-cyan-400 hover:text-cyan-300 text-sm" %>
+              <% if session.status != 'playing' %>
+                <%= link_to "删除", game_session_path(session), method: :delete,
+                  data: { confirm: "确定要删除这条记录吗？" },
+                  class: "text-red-400 hover:text-red-300 text-sm" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center">
+      <div class="text-5xl mb-4">📭</div>
+      <p class="text-slate-400 mb-4">暂无游戏记录</p>
+      <%= link_to "开始第一局", levels_path,
+        class: "px-6 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-medium transition inline-block" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="mt-8 flex justify-center">
+  <%= link_to "返回首页", root_path,
+    class: "px-6 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition" %>
+</div>

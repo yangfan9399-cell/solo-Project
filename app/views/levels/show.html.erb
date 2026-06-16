@@ -1,0 +1,106 @@
+<% content_for :title, "#{@level.name} - 关卡详情" %>
+
+<div class="max-w-4xl mx-auto">
+  <div class="mb-8">
+    <%= link_to "← 返回关卡列表", levels_path, class: "text-cyan-400 hover:text-cyan-300 mb-4 inline-block" %>
+  </div>
+
+  <div class="bg-slate-800/60 backdrop-blur rounded-xl p-8 border border-purple-500/20">
+    <div class="flex items-start justify-between mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-4xl"><%= difficulty_emoji(@level.difficulty) %></span>
+          <div>
+            <h2 class="text-4xl font-bold mb-1"><%= @level.name %></h2>
+            <span class="px-3 py-1 rounded-full text-sm font-medium <%= difficulty_class(@level.difficulty) %>">
+              <%= difficulty_label(@level.difficulty) %>
+            </span>
+          </div>
+        </div>
+        <p class="text-slate-400 text-lg"><%= @level.description %></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+      <div class="text-center p-4 bg-slate-700/30 rounded-lg">
+        <div class="text-3xl mb-2">⏱️</div>
+        <div class="text-xs text-slate-400 mb-1">时间限制</div>
+        <div class="text-2xl font-bold text-cyan-400"><%= format_seconds(@level.time_limit) %></div>
+      </div>
+      <div class="text-center p-4 bg-slate-700/30 rounded-lg">
+        <div class="text-3xl mb-2">🎯</div>
+        <div class="text-xs text-slate-400 mb-1">目标分数</div>
+        <div class="text-2xl font-bold text-yellow-400"><%= number_with_delimiter(@level.target_score) %></div>
+      </div>
+      <div class="text-center p-4 bg-slate-700/30 rounded-lg">
+        <div class="text-3xl mb-2">📦</div>
+        <div class="text-xs text-slate-400 mb-1">货柜数量</div>
+        <div class="text-2xl font-bold text-purple-400"><%= @level.container_count %></div>
+      </div>
+      <div class="text-center p-4 bg-slate-700/30 rounded-lg">
+        <div class="text-3xl mb-2">⚓</div>
+        <div class="text-xs text-slate-400 mb-1">泊位数量</div>
+        <div class="text-2xl font-bold text-green-400"><%= @level.berth_count %></div>
+      </div>
+    </div>
+
+    <% if @best_score > 0 %>
+      <div class="mb-8 p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30 text-center">
+        <div class="text-sm text-yellow-400 mb-1">🏆 你的最佳成绩</div>
+        <div class="text-4xl font-mono font-bold text-yellow-400"><%= number_with_delimiter(@best_score) %></div>
+      </div>
+    <% end %>
+
+    <div class="mb-8">
+      <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span>📋</span> 货柜配置
+      </h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <% @level.sorted_containers.each do |container| %>
+          <div class="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-sm"><%= container.label %></span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-<%= container.color %>-500/30 text-<%= container.color %>-400">
+                P<%= container.priority %>
+              </span>
+            </div>
+            <div class="text-xs space-y-1">
+              <div class="flex justify-between">
+                <span class="text-slate-400">重量:</span>
+                <span class="font-mono text-cyan-400"><%= container.weight %>吨</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">目的地:</span>
+                <span class="text-purple-400"><%= container.destination %></span>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <span>⚓</span> 泊位配置
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% @level.sorted_berths.each do |berth| %>
+          <div class="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold"><%= berth.name %></span>
+              <span class="text-sm font-mono text-cyan-400">最大 <%= berth.max_weight %>吨</span>
+            </div>
+            <div class="text-sm text-slate-400">
+              允许目的地: <span class="text-purple-400"><%= berth.allowed_destinations.presence || '任意' %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="flex justify-center gap-4">
+      <%= link_to "开始挑战", level_game_sessions_path(@level), method: :post,
+        class: "px-12 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-bold text-lg transition shadow-lg shadow-purple-500/25" %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,974 @@
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" varchar NOT NULL PRIMARY KEY) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" varchar NOT NULL PRIMARY KEY, "value" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.1ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.2ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-16 01:27:34.699787', '2026-06-16 01:27:34.699789') RETURNING "key" /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+Migrating to CreatePlayers (20260616010655)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.7ms)[0m  [1m[35mCREATE TABLE "players" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "current_score" integer DEFAULT 0, "total_games" integer DEFAULT 0, "wins" integer DEFAULT 0, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_players_on_name" ON "players" ("name") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010655') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateLevels (20260616010704)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE TABLE "levels" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "description" text, "time_limit" integer DEFAULT 120, "target_score" integer DEFAULT 1000, "difficulty" varchar DEFAULT 'easy', "container_count" integer DEFAULT 5, "berth_count" integer DEFAULT 3, "max_weight_per_berth" integer DEFAULT 100, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_levels_on_name" ON "levels" ("name") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010704') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateContainers (20260616010712)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE TABLE "containers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "level_id" integer NOT NULL, "weight" integer, "destination" varchar, "priority" integer, "color" varchar, "label" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_c407d2ec55"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_containers_on_level_id" ON "containers" ("level_id") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010712') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateBerths (20260616010720)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE TABLE "berths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "level_id" integer NOT NULL, "name" varchar, "max_weight" integer, "allowed_destinations" varchar, "position" integer, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_90a0c0f777"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_berths_on_level_id" ON "berths" ("level_id") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010720') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateGameSessions (20260616010727)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "player_id" integer NOT NULL, "level_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "finished_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_b0ccb90bc8"
+FOREIGN KEY ("player_id")
+  REFERENCES "players" ("id")
+, CONSTRAINT "fk_rails_00a44236a7"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.3ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010727') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateOperations (20260616010734)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "game_session_id" integer NOT NULL, "container_id" integer NOT NULL, "berth_id" integer, "action_type" varchar NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_79acb49312"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+, CONSTRAINT "fk_rails_383f290f94"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010734') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Migrating to CreateContainerPlacements (20260616010743)
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.6ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "game_session_id" integer NOT NULL, "container_id" integer NOT NULL, "berth_id" integer NOT NULL, "placed_at" datetime(6), "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_a542fa44a5"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+, CONSTRAINT "fk_rails_c34c42bad8"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Create (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" ("version") VALUES ('20260616010743') RETURNING "version" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '新手泊位' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '新手泊位' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.4ms)[0m  [1m[32mINSERT INTO "levels" ("name", "description", "time_limit", "target_score", "difficulty", "container_count", "berth_count", "max_weight_per_berth", "created_at", "updated_at") VALUES ('新手泊位', '学习基础操作，掌握拖拽调度的基本要领', 180, 1500, 'easy', 5, 3, 80, '2026-06-16 01:27:45.805627', '2026-06-16 01:27:45.805627') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '货运中转站' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '货运中转站' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.1ms)[0m  [1m[32mINSERT INTO "levels" ("name", "description", "time_limit", "target_score", "difficulty", "container_count", "berth_count", "max_weight_per_berth", "created_at", "updated_at") VALUES ('货运中转站', '管理更多货柜，优化重量分配', 150, 3500, 'medium', 7, 4, 100, '2026-06-16 01:27:45.812981', '2026-06-16 01:27:45.812981') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '星际货运港' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '星际货运港' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.1ms)[0m  [1m[32mINSERT INTO "levels" ("name", "description", "time_limit", "target_score", "difficulty", "container_count", "berth_count", "max_weight_per_berth", "created_at", "updated_at") VALUES ('星际货运港', '高难度调度，需要精准的目的地匹配', 120, 6000, 'hard', 9, 4, 120, '2026-06-16 01:27:45.816876', '2026-06-16 01:27:45.816876') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '银河枢纽' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '银河枢纽' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.0ms)[0m  [1m[32mINSERT INTO "levels" ("name", "description", "time_limit", "target_score", "difficulty", "container_count", "berth_count", "max_weight_per_berth", "created_at", "updated_at") VALUES ('银河枢纽', '终极挑战！在最短时间内完成最复杂的调度', 90, 10000, 'expert', 12, 5, 150, '2026-06-16 01:27:45.820078', '2026-06-16 01:27:45.820078') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (1, 12, '地球', 3, 'cyan', 'C-001', '2026-06-16 01:27:45.835593', '2026-06-16 01:27:45.835593') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (1, 20, '火星', 4, 'purple', 'C-002', '2026-06-16 01:27:45.836580', '2026-06-16 01:27:45.836580') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (1, 13, '地球', 1, 'pink', 'C-003', '2026-06-16 01:27:45.837363', '2026-06-16 01:27:45.837363') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (1, 21, '月球', 2, 'yellow', 'C-004', '2026-06-16 01:27:45.838103', '2026-06-16 01:27:45.838103') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (1, 37, '火星', 2, 'green', 'C-005', '2026-06-16 01:27:45.839123', '2026-06-16 01:27:45.839123') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 1 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.1ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (1, '泊位 Alpha', 92, '地球', 0, '2026-06-16 01:27:45.845115', '2026-06-16 01:27:45.845115') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (1, '泊位 Beta', 80, '火星,月球', 1, '2026-06-16 01:27:45.846396', '2026-06-16 01:27:45.846396') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (1, '泊位 Gamma', 72, '*', 2, '2026-06-16 01:27:45.847288', '2026-06-16 01:27:45.847288') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 2 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 21, '地球', 4, 'cyan', 'C-001', '2026-06-16 01:27:45.848846', '2026-06-16 01:27:45.848846') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 39, '火星', 4, 'purple', 'C-002', '2026-06-16 01:27:45.849838', '2026-06-16 01:27:45.849838') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 27, '木卫二', 3, 'pink', 'C-003', '2026-06-16 01:27:45.850659', '2026-06-16 01:27:45.850659') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 16, '地球', 5, 'yellow', 'C-004', '2026-06-16 01:27:45.851564', '2026-06-16 01:27:45.851564') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 27, '月球', 2, 'green', 'C-005', '2026-06-16 01:27:45.852452', '2026-06-16 01:27:45.852452') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 35, '火星', 2, 'orange', 'C-006', '2026-06-16 01:27:45.853325', '2026-06-16 01:27:45.853325') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (2, 26, '木卫二', 5, 'blue', 'C-007', '2026-06-16 01:27:45.854114', '2026-06-16 01:27:45.854114') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 2 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.1ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (2, '泊位 Alpha', 94, '地球', 0, '2026-06-16 01:27:45.855798', '2026-06-16 01:27:45.855798') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (2, '泊位 Beta', 82, '火星', 1, '2026-06-16 01:27:45.856767', '2026-06-16 01:27:45.856767') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (2, '泊位 Gamma', 82, '木卫二,月球', 2, '2026-06-16 01:27:45.857636', '2026-06-16 01:27:45.857636') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.1ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (2, '泊位 Delta', 89, '*', 3, '2026-06-16 01:27:45.858696', '2026-06-16 01:27:45.858696') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 3 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 28, '地球', 3, 'cyan', 'C-001', '2026-06-16 01:27:45.860439', '2026-06-16 01:27:45.860439') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 33, '火星', 1, 'purple', 'C-002', '2026-06-16 01:27:45.861414', '2026-06-16 01:27:45.861414') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 26, '木卫二', 4, 'pink', 'C-003', '2026-06-16 01:27:45.862446', '2026-06-16 01:27:45.862446') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 26, '土卫六', 1, 'yellow', 'C-004', '2026-06-16 01:27:45.863307', '2026-06-16 01:27:45.863307') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 11, '地球', 2, 'green', 'C-005', '2026-06-16 01:27:45.864092', '2026-06-16 01:27:45.864092') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 13, '月球', 4, 'orange', 'C-006', '2026-06-16 01:27:45.865024', '2026-06-16 01:27:45.865024') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 40, '火星', 1, 'blue', 'C-007', '2026-06-16 01:27:45.865785', '2026-06-16 01:27:45.865785') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 27, '木卫二', 2, 'red', 'C-008', '2026-06-16 01:27:45.866529', '2026-06-16 01:27:45.866529') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (3, 32, '土卫六', 3, 'cyan', 'C-009', '2026-06-16 01:27:45.867567', '2026-06-16 01:27:45.867567') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 3 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (3, '泊位 Alpha', 140, '地球,月球', 0, '2026-06-16 01:27:45.869000', '2026-06-16 01:27:45.869000') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.1ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (3, '泊位 Beta', 103, '火星', 1, '2026-06-16 01:27:45.870081', '2026-06-16 01:27:45.870081') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (3, '泊位 Gamma', 115, '木卫二', 2, '2026-06-16 01:27:45.871030', '2026-06-16 01:27:45.871030') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (3, '泊位 Delta', 100, '土卫六', 3, '2026-06-16 01:27:45.871874', '2026-06-16 01:27:45.871874') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 4 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 24, '地球', 4, 'cyan', 'C-001', '2026-06-16 01:27:45.874002', '2026-06-16 01:27:45.874002') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 37, '火星', 5, 'purple', 'C-002', '2026-06-16 01:27:45.876340', '2026-06-16 01:27:45.876340') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 25, '木卫二', 2, 'pink', 'C-003', '2026-06-16 01:27:45.878089', '2026-06-16 01:27:45.878089') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 31, '土卫六', 1, 'yellow', 'C-004', '2026-06-16 01:27:45.880204', '2026-06-16 01:27:45.880204') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.4ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 37, '海卫一', 2, 'green', 'C-005', '2026-06-16 01:27:45.883517', '2026-06-16 01:27:45.883517') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 27, '地球', 4, 'orange', 'C-006', '2026-06-16 01:27:45.885797', '2026-06-16 01:27:45.885797') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 13, '月球', 4, 'blue', 'C-007', '2026-06-16 01:27:45.887870', '2026-06-16 01:27:45.887870') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 28, '火星', 2, 'red', 'C-008', '2026-06-16 01:27:45.897988', '2026-06-16 01:27:45.897988') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 39, '木卫二', 1, 'cyan', 'C-009', '2026-06-16 01:27:45.899012', '2026-06-16 01:27:45.899012') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 35, '土卫六', 1, 'purple', 'C-010', '2026-06-16 01:27:45.900167', '2026-06-16 01:27:45.900167') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 35, '海卫一', 4, 'pink', 'C-011', '2026-06-16 01:27:45.901039', '2026-06-16 01:27:45.901039') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("level_id", "weight", "destination", "priority", "color", "label", "created_at", "updated_at") VALUES (4, 40, '冥王星', 3, 'yellow', 'C-012', '2026-06-16 01:27:45.901804', '2026-06-16 01:27:45.901804') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 4 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (4, '泊位 Alpha', 146, '地球,月球', 0, '2026-06-16 01:27:45.903720', '2026-06-16 01:27:45.903720') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (4, '泊位 Beta', 139, '火星', 1, '2026-06-16 01:27:45.904456', '2026-06-16 01:27:45.904456') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (4, '泊位 Gamma', 160, '木卫二,土卫六', 2, '2026-06-16 01:27:45.905189', '2026-06-16 01:27:45.905189') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (4, '泊位 Delta', 163, '海卫一', 3, '2026-06-16 01:27:45.905917', '2026-06-16 01:27:45.905917') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("level_id", "name", "max_weight", "allowed_destinations", "position", "created_at", "updated_at") VALUES (4, '泊位 Epsilon', 140, '冥王星,*', 4, '2026-06-16 01:27:45.907142', '2026-06-16 01:27:45.907142') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('LocalPlayer') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("name", "current_score", "total_games", "wins", "created_at", "updated_at") VALUES ('LocalPlayer', 0, 0, 0, '2026-06-16 01:27:45.913415', '2026-06-16 01:27:45.913415') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '指挥官Nova' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('指挥官Nova') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("name", "current_score", "total_games", "wins", "created_at", "updated_at") VALUES ('指挥官Nova', 5963, 35, 16, '2026-06-16 01:27:45.916723', '2026-06-16 01:27:45.916723') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '领航员Aria' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('领航员Aria') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("name", "current_score", "total_games", "wins", "created_at", "updated_at") VALUES ('领航员Aria', 13756, 45, 29, '2026-06-16 01:27:45.920208', '2026-06-16 01:27:45.920208') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '工程师Kai' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('工程师Kai') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("name", "current_score", "total_games", "wins", "created_at", "updated_at") VALUES ('工程师Kai', 13544, 45, 12, '2026-06-16 01:27:45.923019', '2026-06-16 01:27:45.923019') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '飞行员Zoe' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (1.0ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('飞行员Zoe') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.1ms)[0m  [1m[32mINSERT INTO "players" ("name", "current_score", "total_games", "wins", "created_at", "updated_at") VALUES ('飞行员Zoe', 9082, 20, 14, '2026-06-16 01:27:45.927805', '2026-06-16 01:27:45.927805') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "levels" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" /*application='Q302'*/[0m
+  [1m[36mPlayer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "players" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Started GET "/" for ::1 at 2026-06-16 09:29:03 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.2ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.4ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 7.3ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 15.7ms | GC: 0.0ms)
+Completed 200 OK in 88ms (Views: 17.7ms | ActiveRecord: 4.7ms (6 queries, 1 cached) | GC: 7.4ms)
+
+
+Started GET "/" for ::1 at 2026-06-16 09:29:18 +0800
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.4ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.2ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 1.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 2.7ms | GC: 0.0ms)
+Completed 200 OK in 14ms (Views: 3.1ms | ActiveRecord: 0.8ms (6 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/levels" for ::1 at 2026-06-16 09:29:29 +0800
+Processing by LevelsController#index as */*
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC, "levels"."name" ASC /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:12
+  [1m[36mGameSession Maximum (0.4ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  Rendered levels/index.html.erb within layouts/application (Duration: 9.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 10.6ms | GC: 0.0ms)
+Completed 200 OK in 17ms (Views: 11.0ms | ActiveRecord: 1.0ms (16 queries, 1 cached) | GC: 0.0ms)
+
+
+Started POST "/levels/1/game_sessions" for ::1 at 2026-06-16 09:30:07 +0800
+Processing by GameSessionsController#create as */*
+  Parameters: {"level_id" => "1"}
+Can't verify CSRF token authenticity.
+Completed 422 Unprocessable Content in 1ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActionController::InvalidAuthenticityToken (Can't verify CSRF token authenticity.):
+  
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:321:in 'ActionController::RequestForgeryProtection::ProtectionMethods::Exception#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:415:in 'ActionController::RequestForgeryProtection#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:404:in 'ActionController::RequestForgeryProtection#verify_authenticity_token'
+activesupport (8.1.3) lib/active_support/callbacks.rb:362:in 'block in ActiveSupport::Callbacks::CallTemplate::MethodCall#make_lambda'
+activesupport (8.1.3) lib/active_support/callbacks.rb:179:in 'block in ActiveSupport::Callbacks::Filters::Before#call'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:36:in 'block (2 levels) in <module:Callbacks>'
+activesupport (8.1.3) lib/active_support/callbacks.rb:180:in 'ActiveSupport::Callbacks::Filters::Before#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'block in ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'Array#each'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:119:in 'block in ActiveSupport::Callbacks#run_callbacks'
+activesupport (8.1.3) lib/active_support/callbacks.rb:141:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:266:in 'AbstractController::Callbacks#process_action'
+actionpack (8.1.3) lib/action_controller/metal/rescue.rb:36:in 'ActionController::Rescue#process_action'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
+activesupport (8.1.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
+actionpack (8.1.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
+activerecord (8.1.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
+actionpack (8.1.3) lib/abstract_controller/base.rb:154:in 'AbstractController::Base#process'
+actionview (8.1.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
+actionpack (8.1.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
+actionpack (8.1.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:65:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:35:in 'block in ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:86:in 'block in ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'Array#each'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:31:in 'ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:906:in 'ActionDispatch::Routing::RouteSet#call'
+railties (8.1.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
+rack (3.2.6) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
+rack (3.2.6) lib/rack/etag.rb:29:in 'Rack::ETag#call'
+rack (3.2.6) lib/rack/conditional_get.rb:44:in 'Rack::ConditionalGet#call'
+rack (3.2.6) lib/rack/head.rb:15:in 'Rack::Head#call'
+actionpack (8.1.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/cookies.rb:708:in 'ActionDispatch::Cookies#call'
+activerecord (8.1.3) lib/active_record/migration.rb:671:in 'ActiveRecord::Migration::CheckPending#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:101:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
+web-console (4.3.0) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
+web-console (4.3.0) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'Kernel#catch'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
+railties (8.1.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
+railties (8.1.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
+propshaft (1.3.2) lib/propshaft/quiet_assets.rb:11:in 'Propshaft::QuietAssets#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/remote_ip.rb:98:in 'ActionDispatch::RemoteIp#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
+rack (3.2.6) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
+rack (3.2.6) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
+activesupport (8.1.3) lib/active_support/cache/strategy/local_cache_middleware.rb:30:in 'ActiveSupport::Cache::Strategy::LocalCache::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+propshaft (1.3.2) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
+rack (3.2.6) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
+railties (8.1.3) lib/rails/engine.rb:534:in 'Rails::Engine#call'
+puma (8.0.2) lib/puma/configuration.rb:305:in 'Puma::Configuration::ConfigMiddleware#call'
+puma (8.0.2) lib/puma/response.rb:79:in 'block in Puma::Response#handle_request'
+puma (8.0.2) lib/puma/thread_pool.rb:434:in 'Puma::ThreadPool#with_force_shutdown'
+puma (8.0.2) lib/puma/response.rb:78:in 'Puma::Response#handle_request'
+puma (8.0.2) lib/puma/server.rb:508:in 'Puma::Server#process_client'
+puma (8.0.2) lib/puma/server.rb:263:in 'block in Puma::Server#run'
+puma (8.0.2) lib/puma/thread_pool.rb:246:in 'block in Puma::ThreadPool#spawn_thread'
+Started GET "/levels" for ::1 at 2026-06-16 09:30:42 +0800
+Processing by LevelsController#index as */*
+  [1m[36mPlayer Load (0.4ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.2ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC, "levels"."name" ASC /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:12
+  [1m[36mGameSession Maximum (0.2ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  Rendered levels/index.html.erb within layouts/application (Duration: 13.0ms | GC: 0.7ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 15.3ms | GC: 0.9ms)
+Completed 200 OK in 39ms (Views: 15.6ms | ActiveRecord: 4.2ms (16 queries, 1 cached) | GC: 1.2ms)
+
+
+Started GET "/levels/1" for ::1 at 2026-06-16 09:30:42 +0800
+Processing by LevelsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:20:in 'LevelsController#set_level'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:14:in 'LevelsController#show'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/show.html.erb within layouts/application
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 ORDER BY "containers"."id" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:60
+  [1m[36mBerth Load (0.2ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:88
+  Rendered levels/show.html.erb within layouts/application (Duration: 13.0ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 13.7ms | GC: 0.0ms)
+Completed 200 OK in 17ms (Views: 13.3ms | ActiveRecord: 0.8ms (7 queries, 1 cached) | GC: 0.2ms)
+
+
+Started GET "/players/1" for ::1 at 2026-06-16 09:30:42 +0800
+Processing by PlayersController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/controllers/players_controller.rb:53:in 'PlayersController#set_player'
+  Rendering layout layouts/application.html.erb
+  Rendering players/show.html.erb within layouts/application
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:48
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:95
+  Rendered players/show.html.erb within layouts/application (Duration: 1.5ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 2.2ms | GC: 0.0ms)
+Completed 200 OK in 5ms (Views: 2.6ms | ActiveRecord: 0.2ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/leaderboards" for ::1 at 2026-06-16 09:30:42 +0800
+Processing by LeaderboardsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 50 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:10:in 'Enumerable#group_by'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:12:in 'LeaderboardsController#index'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:21:in 'LeaderboardsController#index'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering leaderboards/index.html.erb within layouts/application
+  Rendered leaderboards/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.3ms | GC: 0.0ms)
+Completed 200 OK in 9ms (Views: 1.7ms | ActiveRecord: 0.5ms (9 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/game_sessions" for ::1 at 2026-06-16 09:30:42 +0800
+Processing by GameSessionsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+Completed 404 Not Found in 2ms (ActiveRecord: 0.1ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+  
+AbstractController::ActionNotFound (The edit action could not be found for the :set_game_session
+callback on GameSessionsController, but it is listed in the controller's
+:only option.
+
+Raising for missing callback actions is a new default in Rails 7.1, if you'd
+like to turn this off you can delete the option from the environment configurations
+or set `config.action_controller.raise_on_missing_callback_actions` to `false`.
+):
+  
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:64:in 'AbstractController::Callbacks::ActionFilter#match?'
+activesupport (8.1.3) lib/active_support/callbacks.rb:385:in 'block in ActiveSupport::Callbacks::CallTemplate::ObjectCall#make_lambda'
+activesupport (8.1.3) lib/active_support/callbacks.rb:178:in 'block in ActiveSupport::Callbacks::Filters::Before#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:178:in 'Array#all?'
+activesupport (8.1.3) lib/active_support/callbacks.rb:178:in 'ActiveSupport::Callbacks::Filters::Before#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'block in ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'Array#each'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:119:in 'block in ActiveSupport::Callbacks#run_callbacks'
+turbo-rails (2.0.23) lib/turbo-rails.rb:24:in 'Turbo.with_request_id'
+turbo-rails (2.0.23) app/controllers/concerns/turbo/request_id_tracking.rb:10:in 'Turbo::RequestIdTracking#turbo_tracking_request_id'
+activesupport (8.1.3) lib/active_support/callbacks.rb:130:in 'block in ActiveSupport::Callbacks#run_callbacks'
+activesupport (8.1.3) lib/active_support/callbacks.rb:141:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:266:in 'AbstractController::Callbacks#process_action'
+actionpack (8.1.3) lib/action_controller/metal/rescue.rb:36:in 'ActionController::Rescue#process_action'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
+activesupport (8.1.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
+actionpack (8.1.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
+activerecord (8.1.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
+actionpack (8.1.3) lib/abstract_controller/base.rb:154:in 'AbstractController::Base#process'
+actionview (8.1.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
+actionpack (8.1.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
+actionpack (8.1.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:65:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:35:in 'block in ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:86:in 'block in ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'Array#each'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:31:in 'ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:906:in 'ActionDispatch::Routing::RouteSet#call'
+railties (8.1.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
+rack (3.2.6) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
+rack (3.2.6) lib/rack/etag.rb:29:in 'Rack::ETag#call'
+rack (3.2.6) lib/rack/conditional_get.rb:31:in 'Rack::ConditionalGet#call'
+rack (3.2.6) lib/rack/head.rb:15:in 'Rack::Head#call'
+actionpack (8.1.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/cookies.rb:708:in 'ActionDispatch::Cookies#call'
+activerecord (8.1.3) lib/active_record/migration.rb:671:in 'ActiveRecord::Migration::CheckPending#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:101:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
+web-console (4.3.0) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
+web-console (4.3.0) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'Kernel#catch'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
+railties (8.1.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
+railties (8.1.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
+propshaft (1.3.2) lib/propshaft/quiet_assets.rb:11:in 'Propshaft::QuietAssets#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/remote_ip.rb:98:in 'ActionDispatch::RemoteIp#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
+rack (3.2.6) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
+rack (3.2.6) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
+activesupport (8.1.3) lib/active_support/cache/strategy/local_cache_middleware.rb:30:in 'ActiveSupport::Cache::Strategy::LocalCache::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+propshaft (1.3.2) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
+rack (3.2.6) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
+railties (8.1.3) lib/rails/engine.rb:534:in 'Rails::Engine#call'
+puma (8.0.2) lib/puma/configuration.rb:305:in 'Puma::Configuration::ConfigMiddleware#call'
+puma (8.0.2) lib/puma/response.rb:79:in 'block in Puma::Response#handle_request'
+puma (8.0.2) lib/puma/thread_pool.rb:434:in 'Puma::ThreadPool#with_force_shutdown'
+puma (8.0.2) lib/puma/response.rb:78:in 'Puma::Response#handle_request'
+puma (8.0.2) lib/puma/server.rb:508:in 'Puma::Server#process_client'
+puma (8.0.2) lib/puma/server.rb:263:in 'block in Puma::Server#run'
+puma (8.0.2) lib/puma/thread_pool.rb:246:in 'block in Puma::ThreadPool#spawn_thread'
+Started GET "/" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.0ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 4.1ms | GC: 0.4ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 6.2ms | GC: 0.5ms)
+Completed 200 OK in 21ms (Views: 7.0ms | ActiveRecord: 1.6ms (6 queries, 1 cached) | GC: 1.6ms)
+
+
+Started GET "/levels" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by LevelsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC, "levels"."name" ASC /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:12
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  Rendered levels/index.html.erb within layouts/application (Duration: 6.5ms | GC: 0.2ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 7.2ms | GC: 0.2ms)
+Completed 200 OK in 10ms (Views: 7.2ms | ActiveRecord: 0.5ms (16 queries, 1 cached) | GC: 0.3ms)
+
+
+Started GET "/levels/1" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by LevelsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:20:in 'LevelsController#set_level'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:14:in 'LevelsController#show'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/show.html.erb within layouts/application
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 ORDER BY "containers"."id" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:60
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:88
+  Rendered levels/show.html.erb within layouts/application (Duration: 9.5ms | GC: 0.5ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 10.2ms | GC: 0.5ms)
+Completed 200 OK in 16ms (Views: 10.1ms | ActiveRecord: 0.5ms (7 queries, 1 cached) | GC: 0.5ms)
+
+
+Started GET "/players/1" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by PlayersController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/controllers/players_controller.rb:53:in 'PlayersController#set_player'
+  Rendering layout layouts/application.html.erb
+  Rendering players/show.html.erb within layouts/application
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:48
+  [1m[36mGameSession Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:95
+  Rendered players/show.html.erb within layouts/application (Duration: 1.4ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 2.2ms | GC: 0.0ms)
+Completed 200 OK in 6ms (Views: 2.5ms | ActiveRecord: 0.2ms (5 queries, 1 cached) | GC: 0.2ms)
+
+
+Started GET "/leaderboards" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by LeaderboardsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 50 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:10:in 'Enumerable#group_by'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:12:in 'LeaderboardsController#index'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:21:in 'LeaderboardsController#index'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering leaderboards/index.html.erb within layouts/application
+  Rendered leaderboards/index.html.erb within layouts/application (Duration: 0.8ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.6ms | GC: 0.0ms)
+Completed 200 OK in 7ms (Views: 2.0ms | ActiveRecord: 0.4ms (9 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/game_sessions" for ::1 at 2026-06-16 09:31:22 +0800
+Processing by GameSessionsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:161:in 'GameSessionsController#current_player'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'playing' ORDER BY "game_sessions"."id" ASC LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:14:in 'GameSessionsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering game_sessions/index.html.erb within layouts/application
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/index.html.erb:28
+  Rendered game_sessions/index.html.erb within layouts/application (Duration: 1.2ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.9ms | GC: 0.0ms)
+Completed 200 OK in 7ms (Views: 2.3ms | ActiveRecord: 0.3ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-06-16 09:31:44 +0800
+Processing by HomeController#index as HTML
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 1.4ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 2.4ms | GC: 0.0ms)
+Completed 200 OK in 9ms (Views: 2.7ms | ActiveRecord: 0.5ms (6 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/@vite/client" for ::1 at 2026-06-16 09:31:44 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for ::1 at 2026-06-16 09:34:33 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.3ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.4ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.4ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 4.4ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 11.3ms | GC: 0.0ms)
+Completed 200 OK in 79ms (Views: 13.6ms | ActiveRecord: 3.2ms (6 queries, 1 cached) | GC: 8.9ms)
+
+
+Started GET "/levels" for ::1 at 2026-06-16 09:34:33 +0800
+Processing by LevelsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC, "levels"."name" ASC /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:12
+  [1m[36mGameSession Maximum (0.1ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:14
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:15
+  [1m[36mGameSession Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/index.html.erb:16
+  Rendered levels/index.html.erb within layouts/application (Duration: 6.4ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 7.1ms | GC: 0.0ms)
+Completed 200 OK in 10ms (Views: 7.2ms | ActiveRecord: 0.5ms (16 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/levels/1" for ::1 at 2026-06-16 09:34:33 +0800
+Processing by LevelsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:20:in 'LevelsController#set_level'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:31:in 'LevelsController#current_player'
+  [1m[36mGameSession Maximum (0.0ms)[0m  [1m[34mSELECT MAX("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/controllers/levels_controller.rb:14:in 'LevelsController#show'
+  Rendering layout layouts/application.html.erb
+  Rendering levels/show.html.erb within layouts/application
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 ORDER BY "containers"."id" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:60
+  [1m[36mBerth Load (0.2ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='levels'*/[0m
+  ↳ app/views/levels/show.html.erb:88
+  Rendered levels/show.html.erb within layouts/application (Duration: 19.0ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 19.9ms | GC: 0.0ms)
+Completed 200 OK in 24ms (Views: 19.6ms | ActiveRecord: 0.8ms (7 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/players/1" for ::1 at 2026-06-16 09:34:33 +0800
+Processing by PlayersController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/controllers/players_controller.rb:53:in 'PlayersController#set_player'
+  Rendering layout layouts/application.html.erb
+  Rendering players/show.html.erb within layouts/application
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:48
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='show',application='Q302',controller='players'*/[0m
+  ↳ app/views/players/show.html.erb:95
+  Rendered players/show.html.erb within layouts/application (Duration: 1.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 2.4ms | GC: 0.0ms)
+Completed 200 OK in 5ms (Views: 2.7ms | ActiveRecord: 0.3ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/leaderboards" for ::1 at 2026-06-16 09:34:33 +0800
+Processing by LeaderboardsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 50 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:10:in 'Enumerable#group_by'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:12:in 'LeaderboardsController#index'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:21:in 'LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 1 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 4 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 3 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."level_id" = 2 AND "game_sessions"."status" = 'won' ORDER BY "game_sessions"."score" DESC LIMIT 10 /*action='index',application='Q302',controller='leaderboards'*/[0m
+  ↳ app/controllers/leaderboards_controller.rb:23:in 'block in LeaderboardsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering leaderboards/index.html.erb within layouts/application
+  Rendered leaderboards/index.html.erb within layouts/application (Duration: 0.6ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.2ms | GC: 0.0ms)
+Completed 200 OK in 9ms (Views: 1.6ms | ActiveRecord: 0.4ms (9 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/game_sessions" for ::1 at 2026-06-16 09:34:33 +0800
+Processing by GameSessionsController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:161:in 'GameSessionsController#current_player'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'playing' ORDER BY "game_sessions"."id" ASC LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:14:in 'GameSessionsController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering game_sessions/index.html.erb within layouts/application
+  [1m[36mGameSession Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/index.html.erb:28
+  Rendered game_sessions/index.html.erb within layouts/application (Duration: 0.8ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.4ms | GC: 0.0ms)
+Completed 200 OK in 5ms (Views: 1.7ms | ActiveRecord: 0.2ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/" for ::1 at 2026-06-16 09:34:55 +0800
+Processing by HomeController#index as HTML
+  [1m[36mPlayer Load (0.3ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 2.7ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 4.3ms | GC: 0.0ms)
+Completed 200 OK in 35ms (Views: 4.6ms | ActiveRecord: 0.7ms (5 queries, 1 cached) | GC: 0.0ms)
+
+
+Started GET "/@vite/client" for ::1 at 2026-06-16 09:34:55 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  
+Started GET "/" for ::1 at 2026-06-16 09:35:03 +0800
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.0ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 1.0ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 1.8ms | GC: 0.0ms)
+Completed 200 OK in 5ms (Views: 1.9ms | ActiveRecord: 0.3ms (6 queries, 1 cached) | GC: 0.2ms)
+
+
+Started GET "/" for ::1 at 2026-06-16 09:35:09 +0800
+Processing by HomeController#index as HTML
+  [1m[36mPlayer Load (5.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 2.5ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 3.8ms | GC: 0.0ms)
+Completed 200 OK in 24ms (Views: 4.0ms | ActiveRecord: 5.2ms (5 queries, 1 cached) | GC: 2.4ms)
+
+
+Started GET "/@vite/client" for ::1 at 2026-06-16 09:35:09 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  

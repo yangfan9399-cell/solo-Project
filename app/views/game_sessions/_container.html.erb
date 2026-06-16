@@ -1,0 +1,29 @@
+<div class="container-card cursor-grab active:cursor-grabbing bg-slate-700/80 hover:bg-slate-600/80 rounded-lg p-3 border border-slate-600 hover:border-<%= container.color %>-400/50 transition-all duration-200 shadow-lg hover:shadow-<%= container.color %>-500/20"
+     draggable="true"
+     data-container-id="<%= container.id %>"
+     data-container-weight="<%= container.weight %>"
+     data-container-destination="<%= container.destination %>"
+     data-container-priority="<%= container.priority %>"
+     data-container-color="<%= container.color %>"
+     data-action="dragstart->game#dragStart dragend->game#dragEnd">
+  <div class="flex items-center justify-between mb-2">
+    <span class="font-bold text-sm"><%= container.label %></span>
+    <span class="text-xs px-2 py-0.5 rounded-full bg-<%= container.color %>-500/30 text-<%= container.color %>-400">
+      P<%= container.priority %>
+    </span>
+  </div>
+  <div class="grid grid-cols-2 gap-2 text-xs">
+    <div>
+      <span class="text-slate-400">重量:</span>
+      <span class="font-mono font-bold text-cyan-400"><%= container.weight %></span>
+    </div>
+    <div>
+      <span class="text-slate-400">目的地:</span>
+      <span class="font-mono text-purple-400"><%= container.destination %></span>
+    </div>
+  </div>
+  <div class="mt-2 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+    <div class="h-full bg-gradient-to-r from-<%= container.color %>-400 to-<%= container.color %>-600 rounded-full"
+         style="width: <%= [container.weight.to_f / 50 * 100, 100].min %>%"></div>
+  </div>
+</div>

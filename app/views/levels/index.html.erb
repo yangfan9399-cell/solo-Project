@@ -1,0 +1,67 @@
+<% content_for :title, "关卡选择 - 星港货柜调度竞速" %>
+
+<div class="mb-8">
+  <h2 class="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+    🎯 选择关卡
+  </h2>
+  <p class="text-slate-400">根据你的技能水平选择合适的挑战</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <% @levels.each do |level| %>
+    <%
+      best_score = @player.game_sessions.where(level: level, status: 'won').maximum(:score) || 0
+      attempts = @player.game_sessions.where(level: level).count
+      wins = @player.game_sessions.where(level: level, status: 'won').count
+    %>
+    <div class="group bg-slate-800/60 backdrop-blur rounded-xl p-6 border border-purple-500/20 hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
+      <div class="flex items-center justify-between mb-4">
+        <span class="px-3 py-1 rounded-full text-xs font-medium <%= difficulty_class(level.difficulty) %>">
+          <%= difficulty_label(level.difficulty) %>
+        </span>
+        <span class="text-3xl"><%= difficulty_emoji(level.difficulty) %></span>
+      </div>
+
+      <h4 class="text-xl font-bold mb-2 group-hover:text-cyan-400 transition"><%= level.name %></h4>
+      <p class="text-slate-400 text-sm mb-4 h-12"><%= level.description %></p>
+
+      <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 mb-4">
+        <div>⏱️ <%= level.time_limit %>秒</div>
+        <div>🎯 <%= number_with_delimiter(level.target_score) %>分</div>
+        <div>📦 <%= level.container_count %>个货柜</div>
+        <div>⚓ <%= level.berth_count %>个泊位</div>
+      </div>
+
+      <% if best_score > 0 %>
+        <div class="mb-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+          <div class="text-xs text-yellow-400 mb-1">🏆 最佳成绩</div>
+          <div class="text-2xl font-mono font-bold text-yellow-400"><%= number_with_delimiter(best_score) %></div>
+          <div class="text-xs text-slate-400">尝试 <%= attempts %> 次，胜利 <%= wins %> 次</div>
+        </div>
+      <% end %>
+
+      <%= link_to level_game_sessions_path(level), method: :post,
+        class: "w-full block text-center py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 font-medium transition" do %>
+        <%= best_score > 0 ? '再次挑战' : '开始挑战' %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="mt-12 bg-slate-800/40 backdrop-blur rounded-xl p-8 border border-purple-500/20">
+  <h3 class="text-xl font-bold mb-4">💡 游戏技巧</h3>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-300 text-sm">
+    <div>
+      <h4 class="font-semibold text-cyan-400 mb-2">重量优化</h4>
+      <p>尽量将重货柜放在不同泊位，平衡重量分布，获得更高的利用率奖励。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold text-purple-400 mb-2">目的地匹配</h4>
+      <p>货柜目的地与泊位匹配可获得 200 分额外奖励，注意查看泊位的允许目的地。</p>
+    </div>
+    <div>
+      <h4 class="font-semibold text-pink-400 mb-2">时间管理</h4>
+      <p>剩余时间会转化为分数，操作越快奖励越高。善用撤销功能优化排程。</p>
+    </div>
+  </div>
+</div>
