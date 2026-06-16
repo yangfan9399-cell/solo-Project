@@ -11,12 +11,16 @@ export async function action({ request }: { request: Request }) {
   const submittedElapsed = Number(formData.get("elapsed_seconds"));
 
   if (!sessionId) {
-    return json({ error: "sessionId is required" }, { status: 400 });
+    return json({ error: "缺少局次编号" }, { status: 400 });
   }
 
   const session = getOne<GameSession>(db, "SELECT * FROM game_sessions WHERE id = ?", [sessionId]);
   if (!session) {
-    return json({ error: "Session not found" }, { status: 404 });
+    return json({ error: "局次不存在" }, { status: 404 });
+  }
+
+  if (session.status !== "in_progress") {
+    return json({ error: "该局次已结算，不可重复提交" }, { status: 409 });
   }
 
   const annotationsJson = submittedAnnotationsJson ?? session.annotations_json;

@@ -12,7 +12,7 @@ export async function action({ request }: { request: Request }) {
     const levelId = Number(formData.get("levelId"));
 
     if (!playerId || !levelId) {
-      return json({ error: "playerId and levelId are required" }, { status: 400 });
+      return json({ error: "缺少玩家编号或关卡编号" }, { status: 400 });
     }
 
     const id = runInsert(db, "INSERT INTO game_sessions (player_id, level_id, status) VALUES (?, ?, 'in_progress')", [playerId, levelId]);
@@ -26,12 +26,16 @@ export async function action({ request }: { request: Request }) {
     const elapsedSeconds = Number(formData.get("elapsed_seconds"));
 
     if (!id) {
-      return json({ error: "id is required" }, { status: 400 });
+      return json({ error: "缺少局次编号" }, { status: 400 });
     }
 
     const session = getOne<GameSession>(db, "SELECT * FROM game_sessions WHERE id = ?", [id]);
     if (!session) {
-      return json({ error: "Session not found" }, { status: 404 });
+      return json({ error: "局次不存在" }, { status: 404 });
+    }
+
+    if (session.status !== "in_progress") {
+      return json({ error: "该局次已结算，不可修改" }, { status: 409 });
     }
 
     db.run(
@@ -55,5 +59,5 @@ export async function action({ request }: { request: Request }) {
     return json(updated);
   }
 
-  return json({ error: "Method not allowed" }, { status: 405 });
+  return json({ error: "不支持的请求方法" }, { status: 405 });
 }

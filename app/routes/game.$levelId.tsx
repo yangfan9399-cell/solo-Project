@@ -36,7 +36,7 @@ type DrawState = {
   startY: number;
 };
 
-const defectColors: Record<DefectType, { stroke: string; fill: string; label: string }> = {
+const allDefectColors: Record<DefectType, { stroke: string; fill: string; label: string }> = {
   scratch: { stroke: "#ff6b6b", fill: "rgba(255,107,107,0.15)", label: "划伤" },
   particle: { stroke: "#ffd43b", fill: "rgba(255,212,59,0.15)", label: "颗粒" },
   edge: { stroke: "#69db7c", fill: "rgba(105,219,124,0.15)", label: "边缘" },
@@ -63,8 +63,14 @@ export default function Game() {
   const { level, images, existingSession, playerId } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
+  const availableDefectTypes: DefectType[] = JSON.parse(level.defect_types);
+  const defectColors: Partial<typeof allDefectColors> = {};
+  for (const dt of availableDefectTypes) {
+    defectColors[dt] = allDefectColors[dt];
+  }
+
   const restoredAnnotations: DefectAnnotation[] = existingSession?.annotations_json
-    ? JSON.parse(existingSession.annotations_json)
+    ? (() => { try { return JSON.parse(existingSession.annotations_json); } catch { return []; } })()
     : [];
 
   const restoredElapsed = existingSession?.elapsed_seconds ?? 0;
@@ -72,7 +78,7 @@ export default function Game() {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [annotations, setAnnotations] = useState<DefectAnnotation[]>(restoredAnnotations);
-  const [selectedDefectType, setSelectedDefectType] = useState<DefectType>("scratch");
+  const [selectedDefectType, setSelectedDefectType] = useState<DefectType>(availableDefectTypes[0] ?? "scratch");
   const [drawState, setDrawState] = useState<DrawState>({ isDrawing: false, startX: 0, startY: 0 });
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [undoStack, setUndoStack] = useState<DefectAnnotation[][]>([restoredAnnotations]);
@@ -80,17 +86,18 @@ export default function Game() {
   const [timeLeft, setTimeLeft] = useState(restoredTimeLeft);
   const [sessionId, setSessionId] = useState<number | null>(existingSession?.id ?? null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const currentImage = images[currentImageIndex];
   const imageConfig = currentImage
-    ? JSON.parse(currentImage.image_data)
+    ? (() => { try { return JSON.parse(currentImage.image_data); } catch { return null; } })()
     : null;
 
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || restoredTimeLeft === 0) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -111,6 +118,7 @@ export default function Game() {
 
   useEffect(() => {
     if (sessionId && !submitted) {
+      if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
       autoSaveTimerRef.current = setInterval(() => {
         saveToHistory(
           sessionId,
@@ -124,7 +132,7 @@ export default function Game() {
         if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
       };
     }
-  }, [sessionId, annotations, submitted]);
+  }, [sessionId, submitted]);
 
   const getSvgCoords = useCallback(
     (e: React.MouseEvent) => {
@@ -262,6 +270,7 @@ export default function Game() {
   async function handleSubmit() {
     if (submitted) return;
     setSubmitted(true);
+    setSubmitError(null);
     if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
 
     try {
@@ -273,14 +282,22 @@ export default function Game() {
       submitForm.append("annotations_json", JSON.stringify(annotations));
       submitForm.append("elapsed_seconds", String(elapsed));
 
-      await fetch("/api/submit", {
+      const res = await fetch("/api/submit", {
         method: "POST",
         body: submitForm,
       });
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "提交失败" }));
+        setSubmitError(errData.error || "提交失败");
+        setSubmitted(false);
+        return;
+      }
+
       navigate(`/result/${sid}`);
     } catch (err) {
-      console.error(err);
+      setSubmitError("网络错误，请重试");
+      setSubmitted(false);
     }
   }
 
@@ -312,6 +329,12 @@ export default function Game() {
           {timeDisplay}
         </div>
       </header>
+
+      {submitError && (
+        <div className="bg-red-900/80 text-red-200 text-center py-2 text-sm">
+          {submitError}
+        </div>
+      )}
 
       <div className="flex-1 flex">
         <div className="flex-1 flex items-center justify-center p-6 overflow-auto">
@@ -347,19 +370,19 @@ export default function Game() {
                     y={ann.y}
                     width={ann.width}
                     height={ann.height}
-                    fill={defectColors[ann.type].fill}
-                    stroke={defectColors[ann.type].stroke}
+                    fill={allDefectColors[ann.type]?.fill || "rgba(255,255,255,0.1)"}
+                    stroke={allDefectColors[ann.type]?.stroke || "#ffffff"}
                     strokeWidth={2}
                     strokeDasharray={ann.type === "scratch" ? "6 3" : undefined}
                   />
                   <text
                     x={ann.x + 4}
                     y={ann.y - 4}
-                    fill={defectColors[ann.type].stroke}
+                    fill={allDefectColors[ann.type]?.stroke || "#ffffff"}
                     fontSize={12}
                     fontWeight="bold"
                   >
-                    {defectColors[ann.type].label}
+                    {allDefectColors[ann.type]?.label || ann.type}
                   </text>
                 </g>
               ))}
@@ -369,8 +392,8 @@ export default function Game() {
                   y={currentRect.y}
                   width={currentRect.width}
                   height={currentRect.height}
-                  fill={defectColors[selectedDefectType].fill}
-                  stroke={defectColors[selectedDefectType].stroke}
+                  fill={allDefectColors[selectedDefectType]?.fill || "rgba(255,255,255,0.1)"}
+                  stroke={allDefectColors[selectedDefectType]?.stroke || "#ffffff"}
                   strokeWidth={2}
                   strokeDasharray="4 4"
                 />
@@ -385,7 +408,7 @@ export default function Game() {
               缺陷类型
             </h3>
             <div className="flex flex-col gap-2">
-              {(["scratch", "particle", "edge"] as DefectType[]).map((dt) => (
+              {availableDefectTypes.map((dt) => (
                 <button
                   key={dt}
                   onClick={() => setSelectedDefectType(dt)}
@@ -399,7 +422,7 @@ export default function Game() {
                       : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-750"
                   }`}
                 >
-                  {defectColors[dt].label}
+                  {allDefectColors[dt].label}
                 </button>
               ))}
             </div>
@@ -414,10 +437,10 @@ export default function Game() {
                 <span className="text-gray-500">总标注</span>
                 <span className="text-wafer-300 font-mono">{annotations.length}</span>
               </div>
-              {(["scratch", "particle", "edge"] as DefectType[]).map((dt) => (
+              {availableDefectTypes.map((dt) => (
                 <div key={dt} className="flex justify-between">
-                  <span className="text-gray-500">{defectColors[dt].label}</span>
-                  <span className="font-mono" style={{ color: defectColors[dt].stroke }}>
+                  <span className="text-gray-500">{allDefectColors[dt].label}</span>
+                  <span className="font-mono" style={{ color: allDefectColors[dt].stroke }}>
                     {annotations.filter((a) => a.type === dt).length}
                   </span>
                 </div>

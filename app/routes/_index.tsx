@@ -31,10 +31,12 @@ export default function Index() {
   const [playerName, setPlayerName] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(player);
   const [loading, setLoading] = useState(false);
+  const [playerError, setPlayerError] = useState<string | null>(null);
 
   async function handleEnter() {
     if (!playerName.trim()) return;
     setLoading(true);
+    setPlayerError(null);
     try {
       const form = new FormData();
       form.append("name", playerName.trim());
@@ -42,8 +44,15 @@ export default function Index() {
         method: "POST",
         body: form,
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "创建失败" }));
+        setPlayerError(errData.error || "创建失败");
+        return;
+      }
       const data = (await res.json()) as Player;
       setCurrentPlayer(data);
+    } catch {
+      setPlayerError("网络错误，请重试");
     } finally {
       setLoading(false);
     }
@@ -62,22 +71,27 @@ export default function Index() {
 
       <section className="max-w-md mx-auto mb-12 px-4">
         {!currentPlayer ? (
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleEnter()}
-              placeholder="输入工程师代号"
-              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-gray-100 placeholder-gray-500 focus:border-wafer-500 focus:outline-none focus:ring-1 focus:ring-wafer-500"
-            />
-            <button
-              onClick={handleEnter}
-              disabled={loading || !playerName.trim()}
-              className="rounded-lg bg-wafer-600 px-6 py-3 font-semibold text-white hover:bg-wafer-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "..." : "进入工位"}
-            </button>
+          <div>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => { setPlayerName(e.target.value); setPlayerError(null); }}
+                onKeyDown={(e) => e.key === "Enter" && handleEnter()}
+                placeholder="输入工程师代号"
+                className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-gray-100 placeholder-gray-500 focus:border-wafer-500 focus:outline-none focus:ring-1 focus:ring-wafer-500"
+              />
+              <button
+                onClick={handleEnter}
+                disabled={loading || !playerName.trim()}
+                className="rounded-lg bg-wafer-600 px-6 py-3 font-semibold text-white hover:bg-wafer-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? "..." : "进入工位"}
+              </button>
+            </div>
+            {playerError && (
+              <p className="mt-2 text-sm text-red-400">{playerError}</p>
+            )}
           </div>
         ) : (
           <div className="rounded-lg border border-gray-700 bg-gray-900 p-4 flex items-center justify-between">
