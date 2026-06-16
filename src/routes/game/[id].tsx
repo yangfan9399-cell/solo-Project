@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show, For } from "solid-js";
+import { createSignal, createEffect, Show, For, onCleanup } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { getLevelById } from "~/data/levels";
 import {
@@ -11,8 +11,16 @@ import {
   getSonarStrengthColor,
   countTotalSonarScans
 } from "~/utils/gameLogic";
-import type { GameState, HistoryAction, Relic, ScoreCalculationResponse } from "~/types/game";
-import { submitScore, type SubmitScoreResponse } from "~/utils/apiClient";
+import type { GameState, HistoryAction, Relic, ScoreCalculationResponse, GameSession } from "~/types/game";
+import {
+  submitScore,
+  type SubmitScoreResponse,
+  getActiveSession,
+  createGameSession,
+  updateGameSession,
+  completeGameSession,
+  abandonGameSession
+} from "~/utils/apiClient";
 
 type Tool = "sonar" | "excavate";
 
@@ -28,14 +36,77 @@ export default function GamePage() {
   const [showResult, setShowResult] = createSignal(false);
   const [scoreResult, setScoreResult] = createSignal<SubmitScoreResponse | null>(null);
   const [discoveryPopup, setDiscoveryPopup] = createSignal<Relic | null>(null);
+  const [sessionId, setSessionId] = createSignal<string | null>(null);
+  const [loading, setLoading] = createSignal(true);
+  const [sessionRestored, setSessionRestored] = createSignal(false);
+  const [saving, setSaving] = createSignal(false);
+
+  const saveSessionToBackend = async (
+    state: GameState,
+    hist: HistoryAction[]
+  ) => {
+    const sid = sessionId();
+    if (!sid || state.gameStatus !== "playing") return;
+
+    setSaving(true);
+    try {
+      await updateGameSession(sid, state, hist);
+    } catch (e) {
+      console.error("Failed to save session:", e);
+    }
+    setSaving(false);
+  };
 
   createEffect(() => {
     const lvl = getLevelById(levelId || "");
     setLevel(lvl);
+
     if (lvl) {
-      const state = initGameState(lvl);
-      setGameState(state);
-      setHistory([]);
+      setLoading(true);
+      getActiveSession(lvl.id)
+        .then(async ({ session }) => {
+          if (session) {
+            const confirmRestore = confirm(
+              "检测到未完成的游戏进程，是否继续？\n\n" +
+                `已进行 ${session.history.length} 步操作，` +
+                `发现 ${session.gameState.discoveredRelics.length} 件遗物`
+            );
+
+            if (confirmRestore) {
+              setGameState(session.gameState);
+              setHistory(session.history);
+              setSessionId(session.id);
+              setSessionRestored(true);
+              setLoading(false);
+              return;
+            } else {
+              await abandonGameSession(session.id);
+            }
+          }
+
+          const newState = initGameState(lvl);
+          const newSession = await createGameSession(lvl.id, newState);
+          setGameState(newState);
+          setHistory([]);
+          setSessionId(newSession.id);
+          setSessionRestored(false);
+          setLoading(false);
+        })
+        .catch((e) => {
+          console.error("Session load error:", e);
+          const newState = initGameState(lvl);
+          setGameState(newState);
+          setHistory([]);
+          setLoading(false);
+        });
+    }
+  });
+
+  onCleanup(() => {
+    const sid = sessionId();
+    const state = gameState();
+    if (sid && state && state.gameStatus === "playing") {
+      saveSessionToBackend(state, history()).catch(() => {});
     }
   });
 
@@ -43,17 +114,27 @@ export default function GamePage() {
     const state = gameState();
     if (!state || state.gameStatus !== "playing") return;
 
+    let newState = state;
+    let newHistory = history();
+    let shouldSave = false;
+
     if (selectedTool() === "sonar") {
       const result = performSonarScan(state, { row, col });
       if (result) {
-        setGameState(result.state);
-        setHistory((h) => [...h, result.action]);
+        newState = result.state;
+        newHistory = [...history(), result.action];
+        setGameState(newState);
+        setHistory(newHistory);
+        shouldSave = true;
       }
     } else {
       const result = excavateCell(state, { row, col });
       if (result) {
-        setGameState(result.state);
-        setHistory((h) => [...h, result.action]);
+        newState = result.state;
+        newHistory = [...history(), result.action];
+        setGameState(newState);
+        setHistory(newHistory);
+        shouldSave = true;
 
         if (result.discoveredRelic) {
           setDiscoveryPopup(result.discoveredRelic);
@@ -65,9 +146,14 @@ export default function GamePage() {
           const endCheck = checkGameEnd(result.state, lvl.requiredRelics);
           if (endCheck.ended) {
             endGame(result.state, endCheck.won);
+            return;
           }
         }
       }
+    }
+
+    if (shouldSave && sessionId()) {
+      saveSessionToBackend(newState, newHistory);
     }
   };
 
@@ -77,8 +163,13 @@ export default function GamePage() {
 
     const result = nextDive(state);
     if (result) {
+      const newHistory = [...history(), result.action];
       setGameState(result.state);
-      setHistory((h) => [...h, result.action]);
+      setHistory(newHistory);
+
+      if (sessionId()) {
+        saveSessionToBackend(result.state, newHistory);
+      }
     }
   };
 
@@ -87,19 +178,23 @@ export default function GamePage() {
     if (h.length === 0) return;
 
     const lastAction = h[h.length - 1];
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        cells: lastAction.previousState.cells,
-        discoveredRelics: lastAction.previousState.discoveredRelics,
-        score: lastAction.previousState.score,
-        currentDive: lastAction.previousState.currentDive,
-        gameStatus: "playing"
-      };
-    });
-    setHistory((prev) => prev.slice(0, -1));
+    const newHistory = h.slice(0, -1);
+    const newState: GameState = {
+      ...(gameState() as GameState),
+      cells: lastAction.previousState.cells,
+      discoveredRelics: lastAction.previousState.discoveredRelics,
+      score: lastAction.previousState.score,
+      currentDive: lastAction.previousState.currentDive,
+      gameStatus: "playing"
+    };
+
+    setGameState(newState);
+    setHistory(newHistory);
     setShowResult(false);
+
+    if (sessionId()) {
+      saveSessionToBackend(newState, newHistory);
+    }
   };
 
   const endGame = async (state: GameState, won: boolean) => {
@@ -112,6 +207,15 @@ export default function GamePage() {
     setGameState((prev) =>
       prev ? { ...prev, gameStatus: won ? "won" : "lost" } : prev
     );
+
+    const sid = sessionId();
+    if (sid) {
+      try {
+        await completeGameSession(sid);
+      } catch (e) {
+        console.error("Failed to complete session:", e);
+      }
+    }
 
     try {
       const result = await submitScore({
@@ -142,27 +246,45 @@ export default function GamePage() {
     setTimeout(() => setShowResult(true), 800);
   };
 
-  const restartGame = () => {
+  const restartGame = async () => {
     const lvl = level();
-    if (lvl) {
-      setGameState(initGameState(lvl));
-      setHistory([]);
-      setShowResult(false);
-      setScoreResult(null);
+    if (!lvl) return;
+
+    const sid = sessionId();
+    if (sid) {
+      try {
+        await abandonGameSession(sid);
+      } catch (e) {
+        console.error("Failed to abandon session:", e);
+      }
     }
+
+    const newState = initGameState(lvl);
+    const newSession = await createGameSession(lvl.id, newState);
+    setGameState(newState);
+    setHistory([]);
+    setShowResult(false);
+    setScoreResult(null);
+    setSessionId(newSession.id);
+    setSessionRestored(false);
   };
 
-  const goBack = () => {
+  const goBack = async () => {
+    const sid = sessionId();
+    const state = gameState();
+    if (sid && state && state.gameStatus === "playing") {
+      await saveSessionToBackend(state, history());
+    }
     navigate("/");
   };
 
   const lvl = level();
   const state = gameState();
 
-  if (!lvl || !state) {
+  if (loading() || !lvl || !state) {
     return (
       <div class="game-page">
-        <div class="loading">加载中...</div>
+        <div class="loading">{loading() ? "加载中..." : "加载失败"}</div>
       </div>
     );
   }
@@ -175,6 +297,18 @@ export default function GamePage() {
 
   return (
     <div class="game-page">
+      <Show when={sessionRestored()}>
+        <div class="session-restore-banner">
+          ✅ 已恢复上次游戏进程
+        </div>
+      </Show>
+
+      <Show when={saving()}>
+        <div class="saving-indicator">
+          💾 保存中...
+        </div>
+      </Show>
+
       <div class="game-header">
         <button class="btn btn-back" onClick={goBack}>
           ← 返回

@@ -1,10 +1,11 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { PlayerProfile, GameHistory } from "~/types/game";
+import type { PlayerProfile, GameHistory, GameSession, GameState, HistoryAction } from "~/types/game";
 
 const DATA_DIR = join(process.cwd(), "data");
 const PLAYER_FILE = join(DATA_DIR, "player.json");
 const HISTORY_FILE = join(DATA_DIR, "gameHistory.json");
+const SESSIONS_FILE = join(DATA_DIR, "sessions.json");
 
 function ensureDataFiles(): void {
   if (!existsSync(PLAYER_FILE)) {
@@ -23,6 +24,10 @@ function ensureDataFiles(): void {
 
   if (!existsSync(HISTORY_FILE)) {
     writeFileSync(HISTORY_FILE, JSON.stringify([], null, 2), "utf-8");
+  }
+
+  if (!existsSync(SESSIONS_FILE)) {
+    writeFileSync(SESSIONS_FILE, JSON.stringify([], null, 2), "utf-8");
   }
 }
 
@@ -146,8 +151,128 @@ export function resetPlayerData(): PlayerProfile {
   savePlayerProfile(newProfile);
   try {
     writeFileSync(HISTORY_FILE, JSON.stringify([], null, 2), "utf-8");
+    writeFileSync(SESSIONS_FILE, JSON.stringify([], null, 2), "utf-8");
   } catch (error) {
-    console.error("Failed to reset game history:", error);
+    console.error("Failed to reset game data:", error);
   }
   return newProfile;
+}
+
+export function getAllSessions(): GameSession[] {
+  ensureDataFiles();
+  try {
+    const data = readFileSync(SESSIONS_FILE, "utf-8");
+    return JSON.parse(data) as GameSession[];
+  } catch (error) {
+    console.error("Failed to read sessions:", error);
+    return [];
+  }
+}
+
+export function saveSessions(sessions: GameSession[]): void {
+  ensureDataFiles();
+  try {
+    writeFileSync(SESSIONS_FILE, JSON.stringify(sessions, null, 2), "utf-8");
+  } catch (error) {
+    console.error("Failed to save sessions:", error);
+  }
+}
+
+export function getActiveSession(
+  playerId: string,
+  levelId: string
+): GameSession | null {
+  const sessions = getAllSessions();
+  return (
+    sessions.find(
+      (s) =>
+        s.playerId === playerId && s.levelId === levelId && s.status === "active"
+    ) || null
+  );
+}
+
+export function createSession(
+  playerId: string,
+  levelId: string,
+  gameState: GameState
+): GameSession {
+  const sessions = getAllSessions();
+
+  const existing = sessions.find(
+    (s) =>
+      s.playerId === playerId && s.levelId === levelId && s.status === "active"
+  );
+  if (existing) {
+    existing.status = "abandoned";
+    existing.updatedAt = Date.now();
+  }
+
+  const session: GameSession = {
+    id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    playerId,
+    levelId,
+    gameState: JSON.parse(JSON.stringify(gameState)),
+    history: [],
+    status: "active",
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  sessions.push(session);
+  saveSessions(sessions);
+  return session;
+}
+
+export function updateSessionState(
+  sessionId: string,
+  gameState: GameState,
+  history: HistoryAction[]
+): GameSession | null {
+  const sessions = getAllSessions();
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return null;
+
+  session.gameState = JSON.parse(JSON.stringify(gameState));
+  session.history = JSON.parse(JSON.stringify(history));
+  session.updatedAt = Date.now();
+  saveSessions(sessions);
+  return session;
+}
+
+export function completeSession(sessionId: string): GameSession | null {
+  const sessions = getAllSessions();
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return null;
+
+  session.status = "completed";
+  session.updatedAt = Date.now();
+  saveSessions(sessions);
+  return session;
+}
+
+export function abandonSession(sessionId: string): GameSession | null {
+  const sessions = getAllSessions();
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return null;
+
+  session.status = "abandoned";
+  session.updatedAt = Date.now();
+  saveSessions(sessions);
+  return session;
+}
+
+export function cleanOldSessions(maxAgeMs: number = 7 * 24 * 60 * 60 * 1000): number {
+  const sessions = getAllSessions();
+  const now = Date.now();
+  const initialCount = sessions.length;
+
+  const activeSessions = sessions.filter(
+    (s) => s.status === "active" || now - s.updatedAt < maxAgeMs
+  );
+
+  if (activeSessions.length !== initialCount) {
+    saveSessions(activeSessions);
+  }
+
+  return initialCount - activeSessions.length;
 }

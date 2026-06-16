@@ -81,6 +81,17 @@ export interface GameHistory {
   timestamp: number;
 }
 
+export interface GameSession {
+  id: string;
+  playerId: string;
+  levelId: string;
+  gameState: GameState;
+  history: HistoryAction[];
+  status: "active" | "completed" | "abandoned";
+  createdAt: number;
+  updatedAt: number;
+}
+
 export type ActionType = "sonar" | "excavate" | "new_dive";
 
 export interface HistoryAction {

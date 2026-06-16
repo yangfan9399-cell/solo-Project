@@ -1,4 +1,4 @@
-import type { PlayerProfile, GameHistory, ScoreCalculationResponse } from "~/types/game";
+import type { PlayerProfile, GameHistory, ScoreCalculationResponse, GameState, HistoryAction, GameSession } from "~/types/game";
 
 const API_BASE = "/api";
 
@@ -83,6 +83,71 @@ export async function fetchLeaderboard(
   const response = await fetch(`${API_BASE}/leaderboard?levelId=${levelId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch leaderboard");
+  }
+  return response.json();
+}
+
+export async function getActiveSession(
+  levelId: string
+): Promise<{ session: GameSession | null }> {
+  const response = await fetch(`${API_BASE}/session?levelId=${levelId}`);
+  if (!response.ok) {
+    throw new Error("Failed to get session");
+  }
+  return response.json();
+}
+
+export async function createGameSession(
+  levelId: string,
+  gameState: GameState
+): Promise<GameSession> {
+  const response = await fetch(`${API_BASE}/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ levelId, gameState })
+  });
+  if (!response.ok) {
+    throw new Error("Failed to create session");
+  }
+  return response.json();
+}
+
+export async function updateGameSession(
+  sessionId: string,
+  gameState: GameState,
+  history: HistoryAction[]
+): Promise<GameSession> {
+  const response = await fetch(`${API_BASE}/session/${sessionId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gameState, history })
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update session");
+  }
+  return response.json();
+}
+
+export async function completeGameSession(
+  sessionId: string
+): Promise<GameSession> {
+  const response = await fetch(`${API_BASE}/session/${sessionId}?complete=true`, {
+    method: "DELETE"
+  });
+  if (!response.ok) {
+    throw new Error("Failed to complete session");
+  }
+  return response.json();
+}
+
+export async function abandonGameSession(
+  sessionId: string
+): Promise<GameSession> {
+  const response = await fetch(`${API_BASE}/session/${sessionId}`, {
+    method: "DELETE"
+  });
+  if (!response.ok) {
+    throw new Error("Failed to abandon session");
   }
   return response.json();
 }
