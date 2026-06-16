@@ -176,7 +176,10 @@ class GameController extends Controller
                     'icon' => $clueCard->icon,
                     'category' => $clueCard->getCategoryLabel(),
                     'importance' => $clueCard->importance_score,
+                    'is_required' => $clueCard->is_required,
                 ],
+                'required_found' => $game->getRequiredCluesFoundCount(),
+                'required_total' => $game->level->requiredClues->count(),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -233,6 +236,8 @@ class GameController extends Controller
                 'is_relevant' => $analysis['is_relevant'],
                 'relevance_score' => $analysis['relevance_score'],
                 'round' => $game->current_round,
+                'related_clue_id' => $analysis['related_clue_id'],
+                'triggers_clue' => $analysis['triggers_clue'],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -468,7 +473,14 @@ class GameController extends Controller
                 }
             }
 
-            if ($matchCount >= 1 && $relevanceScore >= 30) {
+            $clueKeywords = array_keys($keywords);
+            foreach ($clueKeywords as $keyword) {
+                if (mb_strlen($keyword) >= 2 && str_contains($clueText, $keyword) && str_contains($question, $keyword)) {
+                    $matchCount += 2;
+                }
+            }
+
+            if ($matchCount >= 1 && $relevanceScore >= 25) {
                 $matchedClue = $clue;
                 break;
             }
@@ -501,7 +513,7 @@ class GameController extends Controller
 
         $response = $responses[$level][array_rand($responses[$level])];
 
-        if ($matchedClue && $relevanceScore >= 40) {
+        if ($matchedClue && $relevanceScore >= 25) {
             $triggersClue = true;
             $relatedClueId = $matchedClue->id;
             $response .= " 说到这里，我想起了一件事——或许「{$matchedClue->title}」这条线索能给你一些启发。";

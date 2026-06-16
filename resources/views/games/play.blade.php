@@ -18,9 +18,9 @@
                     <span class="text-gray-400 text-sm">⏱️ 剩余</span>
                     <span id="timer" class="text-white font-bold ml-2">{{ $game->getRemainingMinutes() }}:00</span>
                 </div>
-                <div class="bg-black/30 rounded-lg px-4 py-2">
+                <div id="required-clues-container" class="bg-black/30 rounded-lg px-4 py-2">
                     <span class="text-gray-400 text-sm">🔑 关键线索</span>
-                    <span class="text-yellow-400 font-bold ml-2">{{ $requiredFound }}/{{ $requiredTotal }}</span>
+                    <span id="required-clues-count" class="text-yellow-400 font-bold ml-2">{{ $requiredFound }}/{{ $requiredTotal }}</span>
                 </div>
                 <div class="bg-black/30 rounded-lg px-4 py-2">
                     <span class="text-gray-400 text-sm">📊 分数预估</span>
@@ -127,7 +127,7 @@
 
         <div class="space-y-6">
             <div class="bg-white/5 backdrop-blur rounded-xl p-6 border border-white/10">
-                <h2 class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+                <h2 id="clue-library-title" class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
                     <span>🎴</span>
                     <span>线索库 ({{ $undistributedClues->count() }})</span>
                 </h2>
@@ -259,7 +259,9 @@
 const gameId = {{ $game->id }};
 const distributeUrl = "{{ route('games.distribute-clue', $game) }}";
 const askQuestionUrl = "{{ route('games.ask-question', $game) }}";
+const scoreEstimateUrl = "{{ route('games.score-estimate', $game) }}";
 let remainingSeconds = {{ $game->getRemainingMinutes() * 60 }};
+let cluesDistributedCount = {{ $distributedClues->count() }};
 
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
@@ -284,9 +286,56 @@ function updateTimer() {
 }
 setInterval(updateTimer, 1000);
 
-function distibuteClue(clueId) {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-    fetch(distributeUrl, {
+function updateClueCounts() {
+    const libraryCount = document.querySelectorAll('#clue-library .clue-card').length;
+    document.querySelector('#drop-zone h2').innerHTML = `
+        <span>🗂️</span>
+        <span>已收集线索 (${cluesDistributedCount})</span>
+        <span class="text-sm text-gray-400 ml-2">- 拖动线索到此处进行发放</span>
+    `;
+    const libraryTitle = document.getElementById('clue-library-title');
+    if (libraryTitle) {
+        libraryTitle.innerHTML = `
+            <span>🎴</span>
+            <span>线索库 (${libraryCount})</span>
+        `;
+    }
+}
+
+function updateScoreEstimate() {
+    return fetch(scoreEstimateUrl, {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.score !== undefined) {
+            const scoreEl = document.getElementById('score-estimate');
+            scoreEl.textContent = data.score;
+            scoreEl.classList.add('text-yellow-400');
+            setTimeout(() => scoreEl.classList.remove('text-yellow-400'), 1000);
+        }
+        return data;
+    })
+    .catch(err => {
+        console.error('分数更新失败:', err);
+    });
+}
+
+function updateRequiredCluesCount(found, total) {
+    const requiredEl = document.getElementById('required-clues-count');
+    if (requiredEl) {
+        requiredEl.textContent = `${found}/${total}`;
+        const container = document.getElementById('required-clues-container');
+        container.classList.add('ring-2', 'ring-yellow-400', 'ring-opacity-50');
+        setTimeout(() => {
+            container.classList.remove('ring-2', 'ring-yellow-400', 'ring-opacity-50');
+        }, 1500);
+    }
+}
+
+function distributeClue(clueId) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    return fetch(distributeUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -298,37 +347,47 @@ function distibuteClue(clueId) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(data.message);
+            showToast('✅ ' + data.message);
             addDistributedClue(data.clue);
             removeClueFromLibrary(clueId);
-            updateScoreEstimate();
+            cluesDistributedCount++;
+            updateClueCounts();
+            if (data.required_found !== undefined && data.required_total !== undefined) {
+                updateRequiredCluesCount(data.required_found, data.required_total);
+            }
+            return updateScoreEstimate().then(() => data);
         } else {
-            showToast(data.error || '发放失败', 'error');
+            showToast('❌ ' + (data.error || '发放失败'), 'error');
+            throw new Error(data.error || '发放失败');
         }
     })
     .catch(err => {
         console.error(err);
-        showToast('网络错误', 'error');
+        if (!err.message.includes('发放失败')) {
+            showToast('❌ 网络错误', 'error');
+        }
+        throw err;
     });
 }
 
 function addDistributedClue(clue) {
-    const container = document.getElementById('distributed-clues');
+    let container = document.getElementById('distributed-clues');
     if (!container) {
         const dropZone = document.getElementById('drop-zone');
         dropZone.innerHTML = `
             <h2 class="text-xl font-bold text-white mb-4 flex items-center space-x-2">
                 <span>🗂️</span>
-                <span>已收集线索</span>
+                <span>已收集线索 (1)</span>
                 <span class="text-sm text-gray-400 ml-2">- 拖动线索到此处进行发放</span>
             </h2>
             <div id="distributed-clues" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         `;
+        container = document.getElementById('distributed-clues');
     }
 
-    const cluesContainer = document.getElementById('distributed-clues');
     const div = document.createElement('div');
     div.className = 'bg-gradient-to-br from-purple-600/30 to-pink-600/30 rounded-lg p-4 border border-purple-500/30 fade-in';
+    div.setAttribute('data-clue-id', clue.id);
     div.innerHTML = `
         <div class="flex items-start justify-between mb-2">
             <div class="flex items-center space-x-2">
@@ -338,20 +397,16 @@ function addDistributedClue(clue) {
                     <span class="text-xs text-purple-300">${clue.category}</span>
                 </div>
             </div>
-            ${clue.importance >= 70 ? '<span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">🔑 关键</span>' : ''}
+            ${clue.is_required ? '<span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">🔑 关键</span>' : ''}
         </div>
         <p class="text-gray-300 text-sm leading-relaxed">${clue.content}</p>
         <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
             <span>重要度: ${clue.importance}%</span>
         </div>
     `;
-    cluesContainer.appendChild(div);
+    container.appendChild(div);
 
-    const countSpan = document.querySelector('h2 span:has(+ span:contains("已收集线索")) + span');
-    if (countSpan) {
-        const currentCount = parseInt(countSpan.textContent.match(/\d+/)?.[0] || '0') + 1;
-        countSpan.textContent = `(${currentCount})`;
-    }
+    div.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function removeClueFromLibrary(clueId) {
@@ -359,20 +414,12 @@ function removeClueFromLibrary(clueId) {
     if (card) {
         card.style.transition = 'all 0.3s ease';
         card.style.opacity = '0';
-        card.style.transform = 'scale(0.8)';
-        setTimeout(() => card.remove(), 300);
+        card.style.transform = 'translateX(100px) scale(0.8)';
+        setTimeout(() => {
+            card.remove();
+            updateClueCounts();
+        }, 300);
     }
-}
-
-function updateScoreEstimate() {
-    fetch('/games/' + gameId + '/score-estimate')
-        .then(res => res.json())
-        .then(data => {
-            if (data.score !== undefined) {
-                document.getElementById('score-estimate').textContent = data.score;
-            }
-        })
-        .catch(() => {});
 }
 
 document.querySelectorAll('.clue-card').forEach(card => {
@@ -392,15 +439,17 @@ dropZone.addEventListener('dragover', (e) => {
     e.dataTransfer.dropEffect = 'move';
     dropZone.classList.add('drag-over');
 });
-dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('drag-over');
+dropZone.addEventListener('dragleave', (e) => {
+    if (!dropZone.contains(e.relatedTarget)) {
+        dropZone.classList.remove('drag-over');
+    }
 });
 dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
     const clueId = e.dataTransfer.getData('text/plain');
     if (clueId) {
-        distibuteClue(parseInt(clueId));
+        distributeClue(parseInt(clueId));
     }
 });
 
@@ -408,7 +457,14 @@ document.querySelectorAll('.distribute-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const clueId = btn.dataset.clueId;
-        distibuteClue(parseInt(clueId));
+        const btnOriginalText = btn.textContent;
+        btn.textContent = '发放中...';
+        btn.disabled = true;
+        distributeClue(parseInt(clueId))
+            .catch(() => {
+                btn.textContent = btnOriginalText;
+                btn.disabled = false;
+            });
     });
 });
 
@@ -418,7 +474,7 @@ document.getElementById('question-form').addEventListener('submit', (e) => {
     const question = input.value.trim();
     if (!question) return;
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     const submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = '发送中...';
@@ -435,16 +491,31 @@ document.getElementById('question-form').addEventListener('submit', (e) => {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(data.is_relevant ? '好问题！' : '问题已记录', data.is_relevant ? 'success' : 'info');
+            const toastMsg = data.is_relevant ? '💡 好问题！获得了主持人的详细回答' : '📝 问题已记录';
+            showToast(toastMsg, data.is_relevant ? 'success' : 'info');
             addQuestionToHistory(data);
             input.value = '';
+
+            if (data.related_clue_id && !document.querySelector(`#distributed-clues [data-clue-id="${data.related_clue_id}"]`)) {
+                showToast('🔍 你的提问触发了新线索！正在发放...', 'info');
+                setTimeout(() => {
+                    distributeClue(data.related_clue_id)
+                        .then(() => {
+                            showToast('🎴 新线索已加入收集区！', 'success');
+                            updateScoreEstimate();
+                        })
+                        .catch(() => {});
+                }, 800);
+            } else {
+                updateScoreEstimate();
+            }
         } else {
-            showToast(data.error || '提问失败', 'error');
+            showToast('❌ ' + (data.error || '提问失败'), 'error');
         }
     })
     .catch(err => {
         console.error(err);
-        showToast('网络错误', 'error');
+        showToast('❌ 网络错误', 'error');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -460,18 +531,26 @@ function addQuestionToHistory(data) {
         <div class="flex items-start space-x-3">
             <span class="text-2xl">{{ $player->avatar }}</span>
             <div class="flex-1">
-                <p class="text-white font-medium">${data.question}</p>
-                <p class="text-xs text-gray-500 mt-1">第 ${data.round} 轮 · 相关度: ${data.relevance_score}%</p>
+                <p class="text-white font-medium">${escapeHtml(data.question)}</p>
+                <p class="text-xs text-gray-500 mt-1">第 ${data.round} 轮 · 相关度: <span class="${data.is_relevant ? 'text-green-400' : 'text-gray-400'}">${data.relevance_score}%</span></p>
             </div>
             ${data.is_relevant
                 ? '<span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">相关</span>'
                 : '<span class="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">一般</span>'}
         </div>
         <div class="mt-3 ml-10 p-3 bg-purple-500/10 border-l-2 border-purple-500 rounded">
-            <p class="text-purple-200 text-sm">🎙️ 主持人：${data.response}</p>
+            <p class="text-purple-200 text-sm">🎙️ 主持人：${escapeHtml(data.response)}</p>
         </div>
+        ${data.related_clue_id ? '<div class="mt-2 ml-10 text-xs text-yellow-400">🔍 此提问触发了新线索！</div>' : ''}
     `;
     container.insertBefore(div, container.firstChild);
+    div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 const solveBtn = document.getElementById('solve-btn');
