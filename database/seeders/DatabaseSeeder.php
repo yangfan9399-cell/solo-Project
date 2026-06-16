@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
 
     private function createLevel1(): void
     {
-        $level = Level::firstOrCreate(
+        $level = Level::updateOrCreate(
             ['name' => '失踪的档案'],
             [
                 'description' => '一批档案的索引卡被打乱了。根据残留的线索，将每个档案盒放回正确的楼层。',
@@ -65,32 +65,54 @@ class DatabaseSeeder extends Seeder
             ['label' => 'A-05', 'era' => '1990年代', 'classification' => '秘密', 'correct_floor' => 1, 'color' => '#f59e0b'],
         ];
 
+        $savedBoxes = [];
         foreach ($boxes as $i => $box) {
-            ArchiveBox::firstOrCreate(
+            $saved = ArchiveBox::updateOrCreate(
                 ['level_id' => $level->id, 'label' => $box['label']],
                 array_merge($box, ['level_id' => $level->id, 'sort_order' => $i])
             );
+            $savedBoxes[$box['label']] = $saved->id;
         }
+
+        $mutexRules = [
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['A-02'], $savedBoxes['A-05']],
+                'description' => '互斥约束：A-02 与 A-05 必须在同一楼层',
+            ],
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['A-01'], $savedBoxes['A-04']],
+                'description' => '互斥约束：A-01 与 A-04 必须在同一楼层',
+            ],
+            [
+                'type' => 'different_floor',
+                'box_ids' => [$savedBoxes['A-03'], $savedBoxes['A-04']],
+                'description' => '互斥约束：A-03（公开）与 A-04（绝密）不可放在同一楼层',
+            ],
+        ];
+        $level->mutex_rules = $mutexRules;
+        $level->save();
 
         $clues = [
             ['content' => '所有80年代的档案都放在第2层。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 1],
             ['content' => '公开级档案全部存放在第3层。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 2],
-            ['content' => 'A-02和A-05存放在同一楼层。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 3],
-            ['content' => '绝密级档案存放在第3层。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 4],
-            ['content' => 'A-03的密级是最低的。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 5],
+            ['content' => 'A-02和A-05存放在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 3],
+            ['content' => 'A-01和A-04存放在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 4],
+            ['content' => 'A-03（公开）与A-04（绝密）绝不可以放在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 5],
+            ['content' => '绝密级档案存放在第3层。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 6],
+            ['content' => 'A-03的密级是最低的。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 7],
         ];
 
+        Clue::where('level_id', $level->id)->delete();
         foreach ($clues as $clue) {
-            Clue::firstOrCreate(
-                ['level_id' => $level->id, 'content' => $clue['content']],
-                array_merge($clue, ['level_id' => $level->id])
-            );
+            Clue::create(array_merge($clue, ['level_id' => $level->id]));
         }
     }
 
     private function createLevel2(): void
     {
-        $level = Level::firstOrCreate(
+        $level = Level::updateOrCreate(
             ['name' => '混乱的索引'],
             [
                 'description' => '索引系统遭到破坏，更多的档案需要归位。注意：有些线索可能是被人故意篡改的噪声信息。',
@@ -113,35 +135,75 @@ class DatabaseSeeder extends Seeder
             ['label' => 'B-08', 'era' => '1970年代', 'classification' => '绝密', 'correct_floor' => 4, 'color' => '#dc2626'],
         ];
 
+        $savedBoxes = [];
         foreach ($boxes as $i => $box) {
-            ArchiveBox::firstOrCreate(
+            $saved = ArchiveBox::updateOrCreate(
                 ['level_id' => $level->id, 'label' => $box['label']],
                 array_merge($box, ['level_id' => $level->id, 'sort_order' => $i])
             );
+            $savedBoxes[$box['label']] = $saved->id;
         }
+
+        $mutexRules = [
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['B-02'], $savedBoxes['B-08']],
+                'description' => '互斥约束：B-02 与 B-08 必须在同一楼层',
+            ],
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['B-03'], $savedBoxes['B-06']],
+                'description' => '互斥约束：B-03 与 B-06 必须在同一楼层',
+            ],
+            [
+                'type' => 'exclusive_floor',
+                'attribute' => 'classification',
+                'value' => '绝密',
+                'floor' => 4,
+                'description' => '互斥约束：第4层是绝密档案专属楼层，不能放置非绝密档案',
+            ],
+            [
+                'type' => 'classification_order',
+                'higher_classification_floor' => 4,
+                'lower_classification_floor' => 1,
+                'higher_classification' => '绝密',
+                'lower_classification' => '公开',
+                'description' => '互斥约束：密级楼层顺序（第4层绝密 / 第1层不可有绝密）',
+            ],
+            [
+                'type' => 'max_on_floor',
+                'attribute' => 'classification',
+                'value' => '公开',
+                'max' => 1,
+                'floor' => 3,
+                'description' => '互斥约束：第3层的公开级档案最多只能有1个',
+            ],
+        ];
+        $level->mutex_rules = $mutexRules;
+        $level->save();
 
         $clues = [
             ['content' => '绝密级档案全部存放在最深的第4层。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 1],
             ['content' => '1990年代的档案都在第1层。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 2],
             ['content' => '公开级档案在第2层。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 3],
-            ['content' => 'B-02和B-08在同一楼层。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 4],
-            ['content' => '2000年代的档案全部在第3层。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 5],
-            ['content' => 'B-01的密级是绝密。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 6],
-            ['content' => 'B-03和B-06都在入口层（第1层）。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 7],
-            ['content' => 'B-05的年代比B-03更早。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 8],
+            ['content' => 'B-02和B-08在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 4],
+            ['content' => 'B-03和B-06必须在同一楼层（入口层）。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 5],
+            ['content' => '2000年代的档案全部在第3层。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 6],
+            ['content' => '第4层是绝密档案专属楼层，绝不允许其他密级档案混入。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 7],
+            ['content' => '第3层最多只能放1个公开级档案（其余必须是更高密级）。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 8],
+            ['content' => 'B-01的密级是绝密。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 9],
+            ['content' => 'B-05的年代比B-03更早。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 10],
         ];
 
+        Clue::where('level_id', $level->id)->delete();
         foreach ($clues as $clue) {
-            Clue::firstOrCreate(
-                ['level_id' => $level->id, 'content' => $clue['content']],
-                array_merge($clue, ['level_id' => $level->id])
-            );
+            Clue::create(array_merge($clue, ['level_id' => $level->id]));
         }
     }
 
     private function createLevel3(): void
     {
-        $level = Level::firstOrCreate(
+        $level = Level::updateOrCreate(
             ['name' => '尘封的秘密'],
             [
                 'description' => '地下档案馆最深处的档案被重新翻出。更多楼层、更多档案、更多噪声线索。你能找出真相吗？',
@@ -168,33 +230,94 @@ class DatabaseSeeder extends Seeder
             ['label' => 'C-12', 'era' => '1990年代', 'classification' => '秘密', 'correct_floor' => 3, 'color' => '#d97706'],
         ];
 
+        $savedBoxes = [];
         foreach ($boxes as $i => $box) {
-            ArchiveBox::firstOrCreate(
+            $saved = ArchiveBox::updateOrCreate(
                 ['level_id' => $level->id, 'label' => $box['label']],
                 array_merge($box, ['level_id' => $level->id, 'sort_order' => $i])
             );
+            $savedBoxes[$box['label']] = $saved->id;
         }
+
+        $mutexRules = [
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['C-01'], $savedBoxes['C-06'], $savedBoxes['C-11']],
+                'description' => '互斥约束：C-01、C-06、C-11 必须在同一楼层',
+            ],
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['C-04'], $savedBoxes['C-05']],
+                'description' => '互斥约束：C-04 与 C-05 必须在同一楼层',
+            ],
+            [
+                'type' => 'same_floor',
+                'box_ids' => [$savedBoxes['C-08'], $savedBoxes['C-09']],
+                'description' => '互斥约束：C-08 与 C-09 必须在同一楼层',
+            ],
+            [
+                'type' => 'exclusive_floor',
+                'attribute' => 'classification',
+                'value' => '绝密',
+                'floor' => 5,
+                'description' => '互斥约束：第5层是绝密档案专属楼层，不可放置其他密级',
+            ],
+            [
+                'type' => 'min_on_floor',
+                'attribute' => 'classification',
+                'value' => '公开',
+                'min' => 2,
+                'floor' => 1,
+                'description' => '互斥约束：第1层至少要有2个公开级档案',
+            ],
+            [
+                'type' => 'max_on_floor',
+                'attribute' => 'era',
+                'value' => '1960年代',
+                'max' => 1,
+                'floor' => 5,
+                'description' => '互斥约束：第5层最多只能有1个60年代的档案',
+            ],
+            [
+                'type' => 'different_floor',
+                'box_ids' => [$savedBoxes['C-10'], $savedBoxes['C-12'], $savedBoxes['C-02']],
+                'description' => '互斥约束：C-10、C-12、C-02 不可全部放在同一楼层',
+            ],
+            [
+                'type' => 'classification_order',
+                'higher_classification_floor' => 5,
+                'lower_classification_floor' => 1,
+                'higher_classification' => '绝密',
+                'lower_classification' => '公开',
+                'description' => '互斥约束：第5层绝密 / 第1层公开的密级楼层顺序不可倒置',
+            ],
+        ];
+        $level->mutex_rules = $mutexRules;
+        $level->save();
 
         $clues = [
             ['content' => '所有绝密级档案都在第5层。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 1],
             ['content' => '公开级档案都在第1层。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 2],
             ['content' => '所有1960年代的档案都是绝密。', 'type' => 'era_class', 'is_noise' => true, 'sort_order' => 3],
-            ['content' => 'C-04和C-05在同一层。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 4],
+            ['content' => 'C-04和C-05在同一层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 4],
             ['content' => '1980年代的档案分布在第3、4、5层。', 'type' => 'era', 'is_noise' => false, 'sort_order' => 5],
-            ['content' => 'C-08和C-09都在第2层。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 6],
+            ['content' => 'C-08和C-09都在第2层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 6],
             ['content' => '秘密级档案都在第4层。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 7],
-            ['content' => 'C-01和C-06、C-11在同一楼层。', 'type' => 'same_floor', 'is_noise' => false, 'sort_order' => 8],
+            ['content' => 'C-01、C-06、C-11必须在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 8],
             ['content' => '2000年代的档案密级都不是秘密。', 'type' => 'era_class', 'is_noise' => false, 'sort_order' => 9],
             ['content' => 'C-10的密级是内部。', 'type' => 'classification', 'is_noise' => true, 'sort_order' => 10],
-            ['content' => '第3层有内部级和秘密级两种档案。', 'type' => 'floor_class', 'is_noise' => false, 'sort_order' => 11],
+            ['content' => '第3层有内部级和秘密级两种档案。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 11],
             ['content' => 'C-07比C-03的密级更高。', 'type' => 'classification', 'is_noise' => false, 'sort_order' => 12],
+            ['content' => '第5层是绝密档案专属楼层，绝不允许其他密级档案混入。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 13],
+            ['content' => '第1层至少需要有2个公开级档案。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 14],
+            ['content' => '第5层最多只能放置1个60年代的档案。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 15],
+            ['content' => 'C-10、C-12、C-02 绝不可全放在同一楼层。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 16],
+            ['content' => '密级楼层顺序不可倒置：第5层（绝密）不得有公开，第1层（公开）不得有绝密。', 'type' => 'mutex', 'is_noise' => false, 'sort_order' => 17],
         ];
 
+        Clue::where('level_id', $level->id)->delete();
         foreach ($clues as $clue) {
-            Clue::firstOrCreate(
-                ['level_id' => $level->id, 'content' => $clue['content']],
-                array_merge($clue, ['level_id' => $level->id])
-            );
+            Clue::create(array_merge($clue, ['level_id' => $level->id]));
         }
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 require __DIR__ . '/vendor/autoload.php';
 
 $app = require_once __DIR__ . '/bootstrap/app.php';
@@ -37,12 +39,21 @@ $score = $service->calculateScore(
     $session,
     []
 );
-echo "\n=== Score Calculation ===\n";
+echo "\n=== Score Calculation (partial placement) ===\n";
 echo "Base: {$score['base_score']}\n";
 echo "Placement: {$score['placement_score']}\n";
 echo "Correct: {$score['correct_count']}/{$score['total_boxes']}\n";
 echo "Wrong: {$score['wrong_count']}\n";
 echo "Undo penalty: {$score['undo_penalty']}\n";
+echo "--- Mutex Result ---\n";
+echo "Mutex satisfied: {$score['mutex_satisfied']}/{$score['mutex_total']}\n";
+echo "Mutex bonus: {$score['mutex_bonus']}\n";
+echo "Mutex penalty: {$score['mutex_penalty']}\n";
+foreach ($score['mutex_rules'] as $r) {
+    $st = $r['satisfied'] ? '[OK ]' : '[ERR]';
+    echo "  {$st} #" . ($r['rule_index']+1) . ": {$r['description']} - {$r['details']}\n";
+}
+echo "---\n";
 echo "Final: {$score['final_score']}\n";
 echo "Complete success: " . ($score['is_complete_success'] ? 'YES' : 'NO') . "\n";
 
@@ -55,6 +66,12 @@ foreach ($boxes as $box) {
 $result = $service->submitReport($session2, ['noise_clue_ids' => [4]]);
 echo "Final score: {$result['final_score']}\n";
 echo "Status: {$session2->status}\n";
-echo "Player score: {$player->total_score}\n";
+echo "Mutex satisfied: {$result['mutex_satisfied']}/{$result['mutex_total']}\n";
+echo "Mutex bonus: {$result['mutex_bonus']}, penalty: {$result['mutex_penalty']}\n";
+foreach ($result['mutex_rules'] as $r) {
+    $st = $r['satisfied'] ? '[OK ]' : '[ERR]';
+    echo "  {$st} #" . ($r['rule_index']+1) . ": {$r['description']} - {$r['details']}\n";
+}
+echo "Player total score: {$player->total_score}\n";
 
 echo "\n=== All tests passed! ===\n";

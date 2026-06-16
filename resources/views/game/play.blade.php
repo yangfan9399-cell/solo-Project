@@ -157,6 +157,60 @@
         text-decoration: line-through;
         opacity: 0.7;
     }
+    .clue-item.clue-mutex {
+        border-left-color: #0ea5e9;
+        background: #0c2a4a;
+    }
+
+    .mutex-preview {
+        max-height: 340px;
+        overflow-y: auto;
+    }
+    .mutex-rule-item {
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        background: #0f3460;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.5;
+        border-left: 3px solid #888;
+    }
+    .mutex-rule-item.satisfied {
+        border-left-color: #10b981;
+        background: #0d2e4f;
+    }
+    .mutex-rule-item.violated {
+        border-left-color: #ef4444;
+        background: #2a1a2e;
+    }
+    .mutex-rule-item .rule-title {
+        font-weight: 600;
+        color: #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 3px;
+    }
+    .mutex-rule-item.satisfied .rule-title { color: #10b981; }
+    .mutex-rule-item.violated .rule-title { color: #ef4444; }
+    .mutex-rule-item .rule-details {
+        font-size: 11px;
+        color: #888;
+    }
+    .mutex-rule-item.satisfied .rule-details { color: #6ee7b7; }
+    .mutex-rule-item.violated .rule-details { color: #fca5a5; }
+
+    .mutex-summary {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 6px 10px;
+        background: #0f3460;
+        border-radius: 4px;
+        margin-bottom: 8px;
+    }
+    .mutex-summary .ok { color: #10b981; font-weight: 600; }
+    .mutex-summary .bad { color: #ef4444; font-weight: 600; }
 
     .game-stats {
         display: flex;
@@ -352,9 +406,19 @@
 
     <div class="game-sidebar">
         <div class="card">
-            <h2>🔍 线索档案</h2>
+            <h2>� 互斥约束监控</h2>
             <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
-                点击线索标记为「噪声」（你认为是假线索）
+                实时显示每条互斥条件的当前状态
+            </p>
+            <div id="mutexPreviewContainer">
+                <p style="color: #666; font-size: 12px;">加载中...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>� 线索档案</h2>
+            <p style="font-size: 12px; color: #888; margin-bottom: 10px;">
+                点击线索标记为「噪声」（你认为是假线索）。🔗 前缀为互斥约束线索
             </p>
             <ul class="clue-list" id="clueList">
             </ul>
@@ -443,6 +507,7 @@ function renderGame() {
     renderFloors();
     renderUnplacedBoxes();
     renderClues();
+    renderMutexPreview();
 }
 
 function renderFloors() {
@@ -537,12 +602,51 @@ function renderClues() {
         if (markedNoiseClues.has(clue.id)) {
             li.classList.add('marked-noise');
         }
+        const isMutex = clue.type === 'mutex';
+        if (isMutex) {
+            li.classList.add('clue-mutex');
+        }
+        const icon = isMutex ? '🔗' : '📎';
         li.innerHTML = `
-            <span>📎 ${clue.content}</span>
+            <span>${icon} ${clue.content}</span>
         `;
         li.addEventListener('click', () => toggleNoiseMark(clue.id));
         list.appendChild(li);
     });
+}
+
+function renderMutexPreview() {
+    const container = document.getElementById('mutexPreviewContainer');
+    const preview = gameState.mutex_preview;
+
+    if (!preview || preview.total_count === 0) {
+        container.innerHTML = '<p style="color: #666; font-size: 12px;">本关暂无互斥约束</p>';
+        return;
+    }
+
+    let html = '';
+    const allOk = preview.satisfied_count === preview.total_count;
+    html += '<div class="mutex-summary">';
+    html += '<span>满足进度</span>';
+    html += '<span class="' + (allOk ? 'ok' : 'bad') + '">' + preview.satisfied_count + '/' + preview.total_count + '</span>';
+    html += '</div>';
+
+    html += '<div class="mutex-preview">';
+    preview.rules.forEach(rule => {
+        const cls = rule.satisfied ? 'satisfied' : 'violated';
+        const icon = rule.satisfied ? '✓' : '✗';
+        const desc = rule.description || ('规则 #' + (rule.rule_index + 1));
+        const details = rule.details || '';
+        html += '<div class="mutex-rule-item ' + cls + '">';
+        html += '<div class="rule-title"><span>' + icon + '</span><span>' + desc + '</span></div>';
+        if (details) {
+            html += '<div class="rule-details">' + details + '</div>';
+        }
+        html += '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
 }
 
 function toggleNoiseMark(clueId) {
@@ -727,8 +831,27 @@ function showResults(result, status) {
         html += '<div class="score-row ' + (result.noise_clue_bonus >= 0 ? 'positive' : 'negative') + '">';
         html += '<span>噪声线索识别</span><span>' + (result.noise_clue_bonus >= 0 ? '+' : '') + result.noise_clue_bonus + '</span></div>';
     }
+    if (result.mutex_total > 0) {
+        html += '<div class="score-row"><span>互斥约束（满足 ' + result.mutex_satisfied + '/' + result.mutex_total + '）</span><span style="color:#aaa;">—</span></div>';
+        if (result.mutex_bonus > 0) {
+            html += '<div class="score-row positive"><span>&nbsp;&nbsp;└ 全满足奖励</span><span>+' + result.mutex_bonus + '</span></div>';
+        }
+        if (result.mutex_penalty > 0) {
+            html += '<div class="score-row negative"><span>&nbsp;&nbsp;└ 违规惩罚（每条-60）</span><span>-' + result.mutex_penalty + '</span></div>';
+        }
+    }
     html += '<div class="score-row total"><span>最终得分</span><span>' + result.final_score + '</span></div>';
     html += '</div>';
+
+    let statusTags = [];
+    if (!result.all_placed) statusTags.push('⚠ 档案盒未全部放置');
+    if (!result.all_correct) statusTags.push('⚠ 存在楼层放置错误');
+    if (!result.all_mutex_ok && result.mutex_total > 0) statusTags.push('⚠ 互斥约束未全部满足');
+    if (statusTags.length > 0) {
+        html += '<div style="background:#2a1a2e; border:1px solid #ef4444; border-radius:6px; padding:10px 12px; margin:10px 0;">';
+        statusTags.forEach(t => { html += '<div style="color:#ef4444; font-size:12px;">' + t + '</div>'; });
+        html += '</div>';
+    }
 
     html += '<p style="color: #aaa; font-size: 13px;">用时：' + formatTime(result.time_taken_seconds) + '</p>';
 
@@ -767,6 +890,28 @@ function showResults(result, status) {
         html += '</div>';
     });
     html += '</div>';
+
+    if (result.mutex_total > 0) {
+        html += '<div class="box-results">';
+        html += '<h3 style="color: #d4af37; margin-bottom: 10px; font-size: 14px;">🔗 互斥约束审核结果</h3>';
+        result.mutex_rules.forEach(rule => {
+            const cls = rule.satisfied ? 'correct' : 'wrong';
+            const icon = rule.satisfied ? '✓' : '✗';
+            const statusText = rule.satisfied ? '满足' : '违规';
+            const desc = rule.description || ('规则 #' + (rule.rule_index + 1));
+            const details = rule.details || '';
+            html += '<div class="box-result-item ' + cls + '" style="flex-direction:column; align-items:flex-start; gap:4px;">';
+            html += '<div style="display:flex; justify-content:space-between; width:100%;">';
+            html += '<span>' + icon + ' ' + desc + '</span>';
+            html += '<span class="status">' + statusText + '</span>';
+            html += '</div>';
+            if (details) {
+                html += '<div style="font-size:11px; color:#888; padding-left:14px;">📝 ' + details + '</div>';
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+    }
 
     body.innerHTML = html;
     modal.classList.remove('hidden');

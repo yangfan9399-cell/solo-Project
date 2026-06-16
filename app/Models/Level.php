@@ -15,7 +15,15 @@ class Level extends Model
         'base_score',
         'time_bonus_seconds',
         'undo_penalty',
+        'mutex_rules',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'mutex_rules' => 'array',
+        ];
+    }
 
     public function archiveBoxes(): HasMany
     {

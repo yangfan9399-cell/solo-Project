@@ -7,7 +7,6 @@ use App\Models\Player;
 use App\Models\GameSession;
 use App\Models\GameOperation;
 use App\Models\ArchiveBox;
-use Illuminate\Support\Facades\DB;
 
 class GameService
 {
@@ -212,12 +211,20 @@ class GameService
         $noiseClueBonus = (count($correctlyIdentifiedNoise) * 50)
             - (count($falselyIdentifiedNoise) * 30);
 
+        $mutexResult = $this->checkMutualExclusions($level, $state, $boxes);
+        $mutexSatisfied = $mutexResult['satisfied_count'] ?? 0;
+        $mutexTotal = $mutexResult['total_count'] ?? 0;
+        $mutexViolated = $mutexTotal - $mutexSatisfied;
+        $mutexPenalty = $mutexViolated * 60;
+        $mutexBonus = ($mutexTotal > 0 && $mutexSatisfied === $mutexTotal) ? 150 : 0;
+
         $finalScore = $baseScore + $placementScore - $undoPenalty + $perfectBonusScore
-            + $timeBonus + $noiseClueBonus;
+            + $timeBonus + $noiseClueBonus + $mutexBonus - $mutexPenalty;
         $finalScore = max(0, $finalScore);
 
         $allPlaced = $unplacedCount == 0;
-        $isCompleteSuccess = $allCorrect && $allPlaced;
+        $allMutexOk = $mutexTotal === 0 || $mutexSatisfied === $mutexTotal;
+        $isCompleteSuccess = $allCorrect && $allPlaced && $allMutexOk;
 
         return [
             'base_score' => $baseScore,
@@ -234,18 +241,35 @@ class GameService
             'noise_clue_bonus' => $noiseClueBonus,
             'noise_correctly_identified' => count($correctlyIdentifiedNoise),
             'noise_falsely_identified' => count($falselyIdentifiedNoise),
+            'mutex_bonus' => $mutexBonus,
+            'mutex_penalty' => $mutexPenalty,
+            'mutex_satisfied' => $mutexSatisfied,
+            'mutex_total' => $mutexTotal,
+            'mutex_rules' => $mutexResult['rules'] ?? [],
             'final_score' => $finalScore,
             'is_complete_success' => $isCompleteSuccess,
             'box_details' => $boxDetails,
             'all_correct' => $allCorrect,
             'all_placed' => $allPlaced,
+            'all_mutex_ok' => $allMutexOk,
         ];
     }
 
-    public function checkMutualExclusions(Level $level, array $state): array
+    public function checkMutualExclusions(Level $level, array $state, $boxes = null): array
     {
-        $boxes = $level->archiveBoxes->keyBy('id');
-        $violations = [];
+        if ($boxes === null) {
+            $boxes = $level->archiveBoxes->keyBy('id');
+        }
+
+        $rules = $level->mutex_rules ?? [];
+        if (empty($rules)) {
+            return [
+                'satisfied_count' => 0,
+                'total_count' => 0,
+                'violations' => [],
+                'rules' => [],
+            ];
+        }
 
         $floorBoxes = [];
         foreach ($state as $boxId => $floor) {
@@ -257,9 +281,195 @@ class GameService
             }
         }
 
-        $clues = $level->clues->where('is_noise', false);
+        $ruleResults = [];
+        $satisfied = 0;
 
-        return $violations;
+        foreach ($rules as $idx => $rule) {
+            $ruleResult = $this->evaluateSingleRule($rule, $boxes, $state, $floorBoxes);
+            if ($ruleResult['satisfied']) {
+                $satisfied++;
+            }
+            $ruleResults[] = array_merge($ruleResult, ['rule_index' => $idx]);
+        }
+
+        return [
+            'satisfied_count' => $satisfied,
+            'total_count' => count($rules),
+            'violations' => array_values(array_filter($ruleResults, fn($r) => !$r['satisfied'])),
+            'rules' => $ruleResults,
+        ];
+    }
+
+    private function evaluateSingleRule(array $rule, $boxes, array $state, array $floorBoxes): array
+    {
+        $type = $rule['type'] ?? 'unknown';
+        $description = $rule['description'] ?? '未命名规则';
+        $details = '';
+        $satisfied = true;
+
+        switch ($type) {
+            case 'different_floor':
+                $boxIds = $rule['box_ids'] ?? [];
+                $floorsOfTarget = [];
+                $unplaced = 0;
+                foreach ($boxIds as $bid) {
+                    $f = $state[$bid] ?? null;
+                    if ($f === null) {
+                        $unplaced++;
+                    } else {
+                        $floorsOfTarget[] = $f;
+                    }
+                }
+                $uniqueFloors = array_unique($floorsOfTarget);
+                if (count($uniqueFloors) < count($floorsOfTarget)) {
+                    $satisfied = false;
+                    $dup = array_unique(array_diff_assoc($floorsOfTarget, $uniqueFloors));
+                    $details = '存在冲突：有档案盒被放在了同一层';
+                } elseif ($unplaced > 0) {
+                    $satisfied = true;
+                    $details = "尚有 {$unplaced} 个档案盒未放置，暂未冲突";
+                } else {
+                    $details = '所有指定档案盒都在不同楼层';
+                }
+                break;
+
+            case 'same_floor':
+                $boxIds = $rule['box_ids'] ?? [];
+                $targetFloors = [];
+                $unplaced = 0;
+                foreach ($boxIds as $bid) {
+                    $f = $state[$bid] ?? null;
+                    if ($f === null) {
+                        $unplaced++;
+                    } else {
+                        $targetFloors[] = $f;
+                    }
+                }
+                if (count(array_unique($targetFloors)) > 1) {
+                    $satisfied = false;
+                    $details = '指定档案盒被放在了不同楼层';
+                } elseif ($unplaced > 0) {
+                    $satisfied = true;
+                    $details = "尚有 {$unplaced} 个档案盒未放置";
+                } else {
+                    $details = '所有指定档案盒在同一楼层 ✓';
+                }
+                break;
+
+            case 'exclusive_floor':
+                $attr = $rule['attribute'] ?? 'classification';
+                $value = $rule['value'] ?? '';
+                $floor = $rule['floor'] ?? null;
+                $boxesOnFloor = $floorBoxes[$floor] ?? [];
+                $violationCount = 0;
+                $countTarget = 0;
+                foreach ($boxesOnFloor as $bid) {
+                    $box = $boxes[$bid] ?? null;
+                    if ($box) {
+                        $actual = $box->$attr ?? null;
+                        if ($actual == $value) {
+                            $countTarget++;
+                        } else {
+                            $violationCount++;
+                        }
+                    }
+                }
+                if ($violationCount > 0) {
+                    $satisfied = false;
+                    $details = "第 {$floor} 层有 {$violationCount} 个非【{$value}】档案盒，违反独占";
+                } elseif ($countTarget === 0) {
+                    $satisfied = true;
+                    $details = "第 {$floor} 层尚无【{$value}】档案盒";
+                } else {
+                    $satisfied = true;
+                    $details = "第 {$floor} 层的档案盒均为【{$value}】✓";
+                }
+                break;
+
+            case 'max_on_floor':
+                $attr = $rule['attribute'] ?? 'era';
+                $value = $rule['value'] ?? '';
+                $max = $rule['max'] ?? 1;
+                $floor = $rule['floor'] ?? null;
+                $boxesOnFloor = $floorBoxes[$floor] ?? [];
+                $countMatch = 0;
+                foreach ($boxesOnFloor as $bid) {
+                    $box = $boxes[$bid] ?? null;
+                    if ($box && ($box->$attr ?? null) == $value) {
+                        $countMatch++;
+                    }
+                }
+                if ($countMatch > $max) {
+                    $satisfied = false;
+                    $details = "第 {$floor} 层的【{$value}】档案盒有 {$countMatch} 个，超过上限 {$max}";
+                } else {
+                    $satisfied = true;
+                    $details = "第 {$floor} 层的【{$value}】档案盒数量 ({$countMatch}/{$max}) 合规 ✓";
+                }
+                break;
+
+            case 'min_on_floor':
+                $attr = $rule['attribute'] ?? 'era';
+                $value = $rule['value'] ?? '';
+                $min = $rule['min'] ?? 1;
+                $floor = $rule['floor'] ?? null;
+                $boxesOnFloor = $floorBoxes[$floor] ?? [];
+                $countMatch = 0;
+                foreach ($boxesOnFloor as $bid) {
+                    $box = $boxes[$bid] ?? null;
+                    if ($box && ($box->$attr ?? null) == $value) {
+                        $countMatch++;
+                    }
+                }
+                if ($countMatch < $min) {
+                    $satisfied = false;
+                    $details = "第 {$floor} 层的【{$value}】档案盒有 {$countMatch} 个，未达下限 {$min}";
+                } else {
+                    $satisfied = true;
+                    $details = "第 {$floor} 层的【{$value}】档案盒数量 ({$countMatch}/{$min}) 达标 ✓";
+                }
+                break;
+
+            case 'classification_order':
+                $highFloor = $rule['higher_classification_floor'] ?? null;
+                $lowFloor = $rule['lower_classification_floor'] ?? null;
+                $classHigh = $rule['higher_classification'] ?? '绝密';
+                $classLow = $rule['lower_classification'] ?? '公开';
+                $violations = 0;
+                $lowBoxesOnHigh = $floorBoxes[$highFloor] ?? [];
+                foreach ($lowBoxesOnHigh as $bid) {
+                    $box = $boxes[$bid] ?? null;
+                    if ($box && $box->classification == $classLow) {
+                        $violations++;
+                    }
+                }
+                $highBoxesOnLow = $floorBoxes[$lowFloor] ?? [];
+                foreach ($highBoxesOnLow as $bid) {
+                    $box = $boxes[$bid] ?? null;
+                    if ($box && $box->classification == $classHigh) {
+                        $violations++;
+                    }
+                }
+                if ($violations > 0) {
+                    $satisfied = false;
+                    $details = "有 {$violations} 个档案盒违反了密级楼层顺序";
+                } else {
+                    $satisfied = true;
+                    $details = "密级顺序正确（第{$highFloor}层{$classHigh} / 第{$lowFloor}层{$classLow}）✓";
+                }
+                break;
+
+            default:
+                $satisfied = true;
+                $details = '未知规则类型';
+        }
+
+        return [
+            'type' => $type,
+            'description' => $description,
+            'satisfied' => $satisfied,
+            'details' => $details,
+        ];
     }
 
     public function getGameState(GameSession $session): array
@@ -291,6 +501,11 @@ class GameService
             }
         }
 
+        $mutexPreview = null;
+        if ($session->status === 'playing') {
+            $mutexPreview = $this->checkMutualExclusions($level, $state, $boxes);
+        }
+
         return [
             'session_id' => $session->id,
             'status' => $session->status,
@@ -301,17 +516,21 @@ class GameService
             'unplaced_boxes' => $unplaced,
             'operation_count' => $session->operation_count,
             'undo_count' => $session->undo_count,
-            'clues' => $level->clues->map(fn($c) => [
-                'id' => $c->id,
-                'content' => $c->content,
-                'type' => $c->type,
-            ])->values()->toArray(),
+            'clues' => $level->clues->map(function ($c) {
+                $data = [
+                    'id' => $c->id,
+                    'content' => $c->content,
+                    'type' => $c->type,
+                ];
+                return $data;
+            })->values()->toArray(),
             'boxes_info' => $boxes->map(fn($b) => [
                 'id' => $b->id,
                 'label' => $b->label,
                 'era' => $b->era,
                 'classification' => $b->classification,
             ])->values()->toArray(),
+            'mutex_preview' => $mutexPreview,
         ];
     }
 }
