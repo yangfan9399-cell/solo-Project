@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { LevelSelect } from "@/components/LevelSelect";
 import { GamePage } from "@/components/GamePage";
-import type { Level, Player } from "@/types/game";
+import type { Level, Player, GameSession, Bridge, Operation } from "@/types/game";
 
 export default function Home() {
   const [levels, setLevels] = useState<Level[]>([]);
   const [player, setPlayer] = useState<Player | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [initialBridge, setInitialBridge] = useState<Bridge | null>(null);
+  const [initialHistory, setInitialHistory] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -87,24 +89,51 @@ export default function Home() {
   const handleSelectLevel = async (level: Level) => {
     if (!player) return;
 
-    try {
-      const res = await fetch("/api/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerId: player.id,
-          levelId: level.id,
-        }),
-      });
+    const storageKey = `paper_bridge_session_${level.id}`;
+    let savedSessionId = localStorage.getItem(storageKey);
+    let session: GameSession | null = null;
 
-      if (res.ok) {
-        const session = await res.json();
-        setSessionId(session.id);
-        setSelectedLevel(level);
+    if (savedSessionId) {
+      try {
+        const res = await fetch(`/api/session?id=${savedSessionId}`);
+        if (res.ok) {
+          session = await res.json();
+          if (session?.status !== "designing") {
+            session = null;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load saved session:", e);
       }
-    } catch (e) {
-      const fakeId = `session-${Date.now()}`;
-      setSessionId(fakeId);
+    }
+
+    if (!session) {
+      try {
+        const res = await fetch("/api/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            playerId: player.id,
+            levelId: level.id,
+          }),
+        });
+
+        if (res.ok) {
+          session = await res.json();
+          localStorage.setItem(storageKey, session!.id);
+        }
+      } catch (e) {
+        const fakeId = `session-${Date.now()}`;
+        setSessionId(fakeId);
+        setSelectedLevel(level);
+        return;
+      }
+    }
+
+    if (session) {
+      setSessionId(session.id);
+      setInitialBridge(session.bridge);
+      setInitialHistory(session.operationHistory || []);
       setSelectedLevel(level);
     }
   };
@@ -139,6 +168,8 @@ export default function Home() {
       <GamePage
         level={selectedLevel}
         sessionId={sessionId}
+        initialBridge={initialBridge}
+        initialHistory={initialHistory}
         onBack={handleBackToLevels}
       />
     );

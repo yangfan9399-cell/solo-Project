@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useBridgeEditor } from "@/hooks/useBridgeEditor";
 import { BridgeCanvas } from "@/components/BridgeCanvas";
 import { Toolbar } from "@/components/Toolbar";
 import { MaterialBudget } from "@/components/MaterialBudget";
 import { ResultModal } from "@/components/ResultModal";
-import type { Level, FoldType, PhysicsResult, Point } from "@/types/game";
+import type { Level, FoldType, PhysicsResult, Point, Bridge, Operation } from "@/types/game";
 import { simulateBridge, calculateScore, validateBridgeDesign } from "@/lib/physics";
 
 interface GamePageProps {
   level: Level;
   sessionId: string;
+  initialBridge?: Bridge | null;
+  initialHistory?: Operation[];
   onBack: () => void;
 }
 
-export function GamePage({ level, sessionId, onBack }: GamePageProps) {
+export function GamePage({ level, sessionId, initialBridge, initialHistory, onBack }: GamePageProps) {
   const {
     bridge,
     selectedSegmentId,
@@ -29,7 +31,10 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
     canUndo,
     canRedo,
     resetBridge,
-  } = useBridgeEditor();
+    loadBridge,
+    history,
+    historyIndex,
+  } = useBridgeEditor(initialBridge || undefined);
 
   const [foldType, setFoldType] = useState<FoldType>("flat");
   const [mode, setMode] = useState<"add" | "select" | "move">("add");
@@ -41,6 +46,28 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
   const [serverValidated, setServerValidated] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLoadInitialRef = useRef(false);
+
+  useEffect(() => {
+    if (didLoadInitialRef.current) return;
+    if (!initialHistory || initialHistory.length === 0) {
+      didLoadInitialRef.current = true;
+      return;
+    }
+
+    const snapshots = initialHistory
+      .filter((op) => op.snapshot)
+      .map((op) => op.snapshot);
+
+    if (snapshots.length > 0) {
+      const latest = snapshots[snapshots.length - 1];
+      loadBridge(latest);
+    }
+
+    didLoadInitialRef.current = true;
+  }, [initialHistory, loadBridge]);
 
   useEffect(() => {
     const validation = validateBridgeDesign(bridge.segments, level);
@@ -48,8 +75,56 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
     setValidationWarnings(validation.warnings);
   }, [bridge.segments, level]);
 
+  const saveToSession = useCallback(async () => {
+    try {
+      setIsSaving(true);
+
+      const ops: Operation[] = history.map((b, idx) => ({
+        id: `snap-${idx}`,
+        type: idx === 0 ? "initial" : "snapshot",
+        timestamp: Date.now(),
+        data: { index: idx },
+        snapshot: b,
+      }));
+
+      await fetch("/api/session", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          bridge,
+          operations: ops,
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to save session:", e);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [sessionId, bridge, history]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      saveToSession();
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [bridge, sessionId, saveToSession]);
+
   const handleTest = useCallback(async () => {
     if (bridge.segments.length === 0) return;
+
+    await saveToSession();
 
     setIsSimulating(true);
     setSimulationWeight(0);
@@ -90,7 +165,7 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
     };
 
     requestAnimationFrame(animate);
-  }, [bridge, level]);
+  }, [bridge, level, saveToSession]);
 
   const validateScoreServer = async (
     physicsResult: PhysicsResult,
@@ -132,6 +207,8 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
 
   const handleShare = async () => {
     try {
+      await saveToSession();
+
       const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,6 +220,9 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
         const shareUrl = `${window.location.origin}/share/${data.shareId}`;
         await navigator.clipboard.writeText(shareUrl);
         alert("分享链接已复制到剪贴板！");
+      } else {
+        const err = await res.json();
+        alert(`分享失败：${err.error || "未知错误"}`);
       }
     } catch (e) {
       alert("分享失败，请稍后再试");
@@ -184,6 +264,9 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
             <div className="text-lg font-semibold text-amber-700">
               目标: {level.targetWeight}g
             </div>
+            {isSaving && (
+              <div className="text-xs text-amber-500">保存中...</div>
+            )}
           </div>
         </div>
 
@@ -309,6 +392,18 @@ export function GamePage({ level, sessionId, onBack }: GamePageProps) {
                   <strong>筒状</strong>：卷成圆筒，最强约2.2倍
                 </p>
               </div>
+            </div>
+
+            <div className="bg-blue-50/80 backdrop-blur rounded-lg border border-blue-200 p-3 shadow-sm">
+              <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                💾 操作历史
+              </h3>
+              <p className="text-xs text-blue-700">
+                当前步数：{historyIndex + 1} / {history.length}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                自动保存到云端，刷新不丢失
+              </p>
             </div>
           </div>
         </div>

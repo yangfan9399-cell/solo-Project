@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { Bridge, PaperSegment, Operation, FoldType, Point } from "@/types/game";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,45 +18,52 @@ function createEmptyBridge(): Bridge {
   };
 }
 
+function cloneBridge(bridge: Bridge): Bridge {
+  return JSON.parse(JSON.stringify(bridge));
+}
+
 export function useBridgeEditor(initialBridge?: Bridge) {
   const [bridge, setBridge] = useState<Bridge>(() => initialBridge || createEmptyBridge());
-  const [history, setHistory] = useState<Operation[]>([]);
-  const [historyIndex, setHistoryIndex] = useState<number>(-1);
+  const [history, setHistory] = useState<Bridge[]>(() => [
+    initialBridge ? cloneBridge(initialBridge) : createEmptyBridge(),
+  ]);
+  const [historyIndex, setHistoryIndex] = useState<number>(0);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  const isUndoingRedoing = useRef(false);
 
-  const saveSnapshot = useCallback(
-    (type: Operation["type"], data: Record<string, unknown>) => {
-      const newOp: Operation = {
-        id: uuidv4(),
-        type,
-        timestamp: Date.now(),
-        data,
-        snapshot: JSON.parse(JSON.stringify(bridge)),
-      };
+  const pushHistory = useCallback((newBridge: Bridge) => {
+    if (isUndoingRedoing.current) {
+      isUndoingRedoing.current = false;
+      return;
+    }
 
-      const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newOp);
-      setHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
-    },
-    [bridge, history, historyIndex]
-  );
+    setHistory((prev) => {
+      const truncated = prev.slice(0, historyIndex + 1);
+      truncated.push(cloneBridge(newBridge));
+      return truncated;
+    });
+    setHistoryIndex((prev) => prev + 1);
+  }, [historyIndex]);
 
   const undo = useCallback(() => {
-    if (historyIndex < 0) return;
+    if (historyIndex <= 0) return;
 
-    const op = history[historyIndex];
-    setBridge(op.snapshot);
-    setHistoryIndex(historyIndex - 1);
+    const prevIndex = historyIndex - 1;
+    const prevBridge = history[prevIndex];
+
+    isUndoingRedoing.current = true;
+    setBridge(cloneBridge(prevBridge));
+    setHistoryIndex(prevIndex);
   }, [history, historyIndex]);
 
   const redo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
 
     const nextIndex = historyIndex + 1;
-    const nextOp = history[nextIndex];
+    const nextBridge = history[nextIndex];
 
-    setBridge(nextOp.snapshot);
+    isUndoingRedoing.current = true;
+    setBridge(cloneBridge(nextBridge));
     setHistoryIndex(nextIndex);
   }, [history, historyIndex]);
 
@@ -74,16 +81,17 @@ export function useBridgeEditor(initialBridge?: Bridge) {
         length,
       };
 
-      setBridge((prev) => ({
-        ...prev,
-        segments: [...prev.segments, newSegment],
-        totalPaperLength: prev.totalPaperLength + length,
-      }));
+      const newBridge: Bridge = {
+        ...bridge,
+        segments: [...bridge.segments, newSegment],
+        totalPaperLength: bridge.totalPaperLength + length,
+      };
 
-      saveSnapshot("add_segment", { segmentId: newSegment.id });
+      setBridge(newBridge);
+      pushHistory(newBridge);
       return newSegment;
     },
-    [saveSnapshot]
+    [bridge, pushHistory]
   );
 
   const removeSegment = useCallback(
@@ -91,85 +99,87 @@ export function useBridgeEditor(initialBridge?: Bridge) {
       const segment = bridge.segments.find((s) => s.id === segmentId);
       if (!segment) return;
 
-      setBridge((prev) => ({
-        ...prev,
-        segments: prev.segments.filter((s) => s.id !== segmentId),
-        totalPaperLength: prev.totalPaperLength - segment.length,
-      }));
+      const newBridge: Bridge = {
+        ...bridge,
+        segments: bridge.segments.filter((s) => s.id !== segmentId),
+        totalPaperLength: bridge.totalPaperLength - segment.length,
+      };
+
+      setBridge(newBridge);
+      pushHistory(newBridge);
 
       if (selectedSegmentId === segmentId) {
         setSelectedSegmentId(null);
       }
-
-      saveSnapshot("remove_segment", { segmentId });
     },
-    [bridge.segments, selectedSegmentId, saveSnapshot]
+    [bridge, selectedSegmentId, pushHistory]
   );
 
   const moveSegment = useCallback(
     (segmentId: string, newStart: Point, newEnd: Point) => {
       const newLength = distance(newStart, newEnd);
+      const oldSegment = bridge.segments.find((s) => s.id === segmentId);
+      if (!oldSegment) return;
 
-      setBridge((prev) => {
-        const oldSegment = prev.segments.find((s) => s.id === segmentId);
-        if (!oldSegment) return prev;
+      const lengthDiff = newLength - oldSegment.length;
 
-        const lengthDiff = newLength - oldSegment.length;
+      const newBridge: Bridge = {
+        ...bridge,
+        segments: bridge.segments.map((s) =>
+          s.id === segmentId
+            ? { ...s, start: newStart, end: newEnd, length: newLength }
+            : s
+        ),
+        totalPaperLength: bridge.totalPaperLength + lengthDiff,
+      };
 
-        return {
-          ...prev,
-          segments: prev.segments.map((s) =>
-            s.id === segmentId
-              ? { ...s, start: newStart, end: newEnd, length: newLength }
-              : s
-          ),
-          totalPaperLength: prev.totalPaperLength + lengthDiff,
-        };
-      });
-
-      saveSnapshot("move_segment", { segmentId });
+      setBridge(newBridge);
+      pushHistory(newBridge);
     },
-    [saveSnapshot]
+    [bridge, pushHistory]
   );
 
   const changeFoldType = useCallback(
     (segmentId: string, foldType: FoldType) => {
-      setBridge((prev) => ({
-        ...prev,
-        segments: prev.segments.map((s) =>
+      const newBridge: Bridge = {
+        ...bridge,
+        segments: bridge.segments.map((s) =>
           s.id === segmentId ? { ...s, foldType } : s
         ),
-      }));
+      };
 
-      saveSnapshot("change_fold", { segmentId, foldType });
+      setBridge(newBridge);
+      pushHistory(newBridge);
     },
-    [saveSnapshot]
+    [bridge, pushHistory]
   );
 
   const setBridgeName = useCallback(
     (name: string) => {
-      setBridge((prev) => ({ ...prev, name }));
-      saveSnapshot("set_bridge_name", { name });
+      const newBridge = { ...bridge, name };
+      setBridge(newBridge);
+      pushHistory(newBridge);
     },
-    [saveSnapshot]
+    [bridge, pushHistory]
   );
 
   const resetBridge = useCallback(() => {
     const empty = createEmptyBridge();
     setBridge(empty);
-    setHistory([]);
-    setHistoryIndex(-1);
+    setHistory([empty]);
+    setHistoryIndex(0);
     setSelectedSegmentId(null);
   }, []);
 
   const loadBridge = useCallback((loadedBridge: Bridge) => {
-    setBridge(loadedBridge);
-    setHistory([]);
-    setHistoryIndex(-1);
+    const clone = cloneBridge(loadedBridge);
+    setBridge(clone);
+    setHistory([clone]);
+    setHistoryIndex(0);
     setSelectedSegmentId(null);
   }, []);
 
-  const canUndo = historyIndex >= 0;
+  const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
   return {

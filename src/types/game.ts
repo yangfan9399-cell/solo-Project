@@ -61,7 +61,9 @@ export type OperationType =
   | "remove_segment"
   | "move_segment"
   | "change_fold"
-  | "set_bridge_name";
+  | "set_bridge_name"
+  | "initial"
+  | "snapshot";
 
 export interface Operation {
   id: string;
