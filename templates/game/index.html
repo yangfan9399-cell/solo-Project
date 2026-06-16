@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚂 火车餐车备餐节奏游戏</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/game.css' %}">
+</head>
+<body>
+    <div id="app">
+        <header class="game-header">
+            <div class="logo">
+                <span class="train-icon">🚂</span>
+                <h1>火车餐车备餐节奏</h1>
+            </div>
+            <div id="player-info" class="player-info hidden">
+                <span id="player-avatar">👨‍🍳</span>
+                <span id="player-nickname">厨师</span>
+                <span class="score">分数: <span id="total-score">0</span></span>
+                <button id="logout-btn" class="btn btn-small">退出</button>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <div id="auth-screen" class="screen auth-screen">
+                <div class="auth-container">
+                    <h2>🚂 欢迎来到火车餐车</h2>
+                    <p class="subtitle">作为列车厨师，在站点间的短暂时间里，为乘客们准备美味佳肴吧！</p>
+
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" data-tab="login">登录</button>
+                        <button class="tab-btn" data-tab="register">注册</button>
+                    </div>
+
+                    <form id="login-form" class="auth-form active">
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input type="text" id="login-username" placeholder="输入用户名" value="demo">
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" id="login-password" placeholder="输入密码" value="demo123456">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">登录游戏</button>
+                        <p class="tip">测试账号: demo / demo123456</p>
+                    </form>
+
+                    <form id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input type="text" id="register-username" placeholder="设置用户名">
+                        </div>
+                        <div class="form-group">
+                            <label>昵称</label>
+                            <input type="text" id="register-nickname" placeholder="设置昵称">
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" id="register-password" placeholder="设置密码">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">注册账号</button>
+                    </form>
+
+                    <div id="auth-message" class="message hidden"></div>
+                </div>
+            </div>
+
+            <div id="level-select-screen" class="screen hidden">
+                <div class="level-header">
+                    <h2>选择线路</h2>
+                    <div class="player-stats">
+                        <span>🏆 最高关卡: <span id="highest-level">1</span></span>
+                        <span>🎮 游戏次数: <span id="games-played">0</span></span>
+                        <span>⭐ 胜利次数: <span id="games-won">0</span></span>
+                    </div>
+                </div>
+
+                <div id="levels-container" class="levels-grid"></div>
+
+                <div class="level-actions">
+                    <button id="view-history-btn" class="btn btn-secondary">查看历史记录</button>
+                    <button id="view-stats-btn" class="btn btn-secondary">查看统计数据</button>
+                </div>
+            </div>
+
+            <div id="game-screen" class="screen hidden">
+                <div class="game-info-bar">
+                    <div class="info-item">
+                        <span class="label">当前站点</span>
+                        <span id="current-station" class="value">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">剩余时间</span>
+                        <span id="time-remaining" class="value">00:00</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">当前分数</span>
+                        <span id="current-score" class="value score-positive">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">目标分数</span>
+                        <span id="target-score" class="value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">已完成订单</span>
+                        <span id="completed-orders" class="value">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">金额</span>
+                        <span id="current-money" class="value money-positive">¥0</span>
+                    </div>
+                    <button id="pause-btn" class="btn btn-small">暂停</button>
+                </div>
+
+                <div class="game-content">
+                    <div class="game-sidebar">
+                        <div class="panel stations-panel">
+                            <h3>🚉 站点信息</h3>
+                            <div id="stations-list" class="stations-list"></div>
+                        </div>
+
+                        <div class="panel carriages-panel">
+                            <h3>🚃 车厢分布</h3>
+                            <div id="carriages-list" class="carriages-list"></div>
+                        </div>
+
+                        <div class="panel workers-panel">
+                            <h3>👥 工作人员</h3>
+                            <div id="workers-list" class="workers-list"></div>
+                        </div>
+
+                        <div class="panel stations-panel">
+                            <h3>🔥 备料台</h3>
+                            <div id="prep-stations" class="prep-stations"></div>
+                        </div>
+                    </div>
+
+                    <div class="game-main-area">
+                        <div class="orders-section">
+                            <div class="orders-column">
+                                <h3>📋 待处理订单 <span id="pending-count" class="count-badge">0</span></h3>
+                                <div id="pending-orders" class="orders-list"></div>
+                            </div>
+
+                            <div class="orders-column">
+                                <h3>🍳 备料中 <span id="preparing-count" class="count-badge">0</span></h3>
+                                <div id="preparing-orders" class="orders-list"></div>
+                            </div>
+
+                            <div class="orders-column">
+                                <h3>✅ 待配送 <span id="ready-count" class="count-badge">0</span></h3>
+                                <div id="ready-orders" class="orders-list"></div>
+                            </div>
+
+                            <div class="orders-column">
+                                <h3>🚚 配送中 <span id="delivering-count" class="count-badge">0</span></h3>
+                                <div id="delivering-orders" class="orders-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pause-overlay" class="overlay hidden">
+                    <div class="overlay-content">
+                        <h2>⏸️ 游戏暂停</h2>
+                        <div class="overlay-buttons">
+                            <button id="resume-btn" class="btn btn-primary">继续游戏</button>
+                            <button id="restore-btn" class="btn btn-secondary">恢复进度</button>
+                            <button id="abandon-btn" class="btn btn-danger">放弃游戏</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settlement-screen" class="screen hidden">
+                <div class="settlement-container">
+                    <h2 id="settlement-title">📊 日终账单</h2>
+                    <div id="settlement-stars" class="stars"></div>
+                    <p id="settlement-result" class="result-text"></p>
+
+                    <div class="settlement-grid">
+                        <div class="settlement-card">
+                            <h3>💰 收支明细</h3>
+                            <div class="detail-row">
+                                <span>订单收入</span>
+                                <span id="income-orders">¥0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>小费收入</span>
+                                <span id="income-tips">¥0</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>总收入</span>
+                                <span id="income-total">¥0</span>
+                            </div>
+                            <hr>
+                            <div class="detail-row">
+                                <span>食材成本</span>
+                                <span id="cost-ingredients">¥0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>超时罚款</span>
+                                <span id="cost-fines">¥0</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>总支出</span>
+                                <span id="cost-total">¥0</span>
+                            </div>
+                            <hr>
+                            <div class="detail-row profit">
+                                <span>今日利润</span>
+                                <span id="profit-total">¥0</span>
+                            </div>
+                        </div>
+
+                        <div class="settlement-card">
+                            <h3>📦 订单统计</h3>
+                            <div class="detail-row">
+                                <span>完成订单</span>
+                                <span id="orders-completed">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>失败订单</span>
+                                <span id="orders-failed">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>完美订单</span>
+                                <span id="orders-perfect">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>超时订单</span>
+                                <span id="orders-late">0</span>
+                            </div>
+                            <div class="detail-row total">
+                                <span>完成率</span>
+                                <span id="completion-rate">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="settlement-card">
+                            <h3>⭐ 评分详情</h3>
+                            <div class="detail-row">
+                                <span>基础得分</span>
+                                <span id="score-base">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>效率得分</span>
+                                <span id="score-efficiency">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>速度得分</span>
+                                <span id="score-speed">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>质量得分</span>
+                                <span id="score-quality">0</span>
+                            </div>
+                            <div class="detail-row total final-score">
+                                <span>最终得分</span>
+                                <span id="score-final">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>目标分数</span>
+                                <span id="score-target">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recalculation-note">
+                        ✅ 本账单所有分数已由后端独立重新核算，确保数据真实有效
+                    </div>
+
+                    <div class="settlement-actions">
+                        <button id="replay-level-btn" class="btn btn-primary">重玩本关</button>
+                        <button id="back-to-levels-btn" class="btn btn-secondary">返回选关</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history-screen" class="screen hidden">
+                <div class="history-header">
+                    <h2>📜 游戏历史</h2>
+                    <button id="back-from-history-btn" class="btn btn-secondary">返回</button>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+
+            <div id="stats-screen" class="screen hidden">
+                <div class="stats-header">
+                    <h2>📊 玩家统计</h2>
+                    <button id="back-from-stats-btn" class="btn btn-secondary">返回</button>
+                </div>
+                <div id="stats-content" class="stats-content"></div>
+            </div>
+        </main>
+
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    {% load static %}
+    <script src="{% static 'js/game.js' %}"></script>
+</body>
+</html>
