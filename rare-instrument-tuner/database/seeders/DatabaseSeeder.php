@@ -149,8 +149,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => true,
             'anomaly_description' => '第3泛音偏差超过25音分，疑似竹节内壁不规则导致气流扰动。',
         ]);
-        $s1->createVersion('初始录制');
-        $s1->createVersion('频谱分析完成，标记异常');
         $sessions['尺八-1'] = $s1;
 
         $s2 = TuningSession::create([
@@ -163,7 +161,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => false,
             'anomaly_description' => null,
         ]);
-        $s2->createVersion('换弦后首次测量');
         $sessions['冬不拉-1'] = $s2;
 
         $s3 = TuningSession::create([
@@ -176,7 +173,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => true,
             'anomaly_description' => '第7弦和第22弦频率漂移严重（>30音分），可能因雁柱位移导致。',
         ]);
-        $s3->createVersion('创建校准任务');
         $sessions['箜篌-1'] = $s3;
 
         $s4 = TuningSession::create([
@@ -189,9 +185,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => false,
             'anomaly_description' => null,
         ]);
-        $s4->createVersion('湿度40%基准测量');
-        $s4->createVersion('湿度70%复测');
-        $s4->createVersion('分析完成，记录湿度响应曲线');
         $sessions['马头琴-1'] = $s4;
 
         $s5 = TuningSession::create([
@@ -204,8 +197,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => true,
             'anomaly_description' => '共鸣弦#7与主弦3的二次谐波重合，偏差叠加至+42音分，需重新调整共鸣弦频率。',
         ]);
-        $s5->createVersion('初始共鸣弦状态记录');
-        $s5->createVersion('标记#7弦共振异常');
         $sessions['西塔尔-1'] = $s5;
 
         $s6 = TuningSession::create([
@@ -218,8 +209,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => false,
             'anomaly_description' => null,
         ]);
-        $s6->createVersion('出厂默认状态');
-        $s6->createVersion('灵敏度微调后');
         $sessions['特雷门琴-1'] = $s6;
 
         $s7 = TuningSession::create([
@@ -232,7 +221,6 @@ class DatabaseSeeder extends Seeder
             'has_anomaly' => false,
             'anomaly_description' => null,
         ]);
-        $s7->createVersion('首次录制');
         $sessions['尺八-2'] = $s7;
 
         return $sessions;
@@ -366,6 +354,80 @@ class DatabaseSeeder extends Seeder
 
     private function seedSessionVersions($sessions)
     {
+        $service = app(\App\Services\SpectrumAnalyzerService::class);
+
+        $versions = [
+            '尺八-1' => [
+                ['initial_only', '初始录制'],
+                ['with_spectrum', '频谱分析完成，标记异常'],
+                ['full', '调弦建议生成，分析完成'],
+            ],
+            '冬不拉-1' => [
+                ['initial_only', '换弦后首次测量'],
+                ['with_spectrum', '频谱分析完成，新弦张力不稳定'],
+            ],
+            '箜篌-1' => [
+                ['initial_only', '创建校准任务'],
+                ['with_spectrum', '初检完成，标记12根偏差弦'],
+                ['full', '异常弦详细分析完成，待调整'],
+            ],
+            '马头琴-1' => [
+                ['initial_only', '湿度40%基准测量'],
+                ['with_spectrum', '湿度70%复测，记录偏移曲线'],
+                ['full', '分析完成，建议湿度变化后等待30分钟'],
+            ],
+            '西塔尔-1' => [
+                ['initial_only', '初始共鸣弦状态记录'],
+                ['with_spectrum', '频谱分析完成，发现共振异常'],
+                ['full', '标记#7弦共振偏差，建议调整'],
+            ],
+            '特雷门琴-1' => [
+                ['initial_only', '出厂默认状态'],
+                ['full', '灵敏度校准完成，偏差+2.3Hz，在可接受范围内'],
+            ],
+            '尺八-2' => [
+                ['full', '首次录制，低音域分析完成'],
+            ],
+        ];
+
+        foreach ($versions as $sessionKey => $versionDefs) {
+            $session = $sessions[$sessionKey];
+            $originalSpectrum = $session->spectrumData()->get()->toArray();
+            $originalSuggestions = $session->tuningSuggestions()->get()->toArray();
+
+            foreach ($versionDefs as $idx => $def) {
+                $session->spectrumData()->delete();
+                $session->tuningSuggestions()->delete();
+
+                if ($def[0] !== 'initial_only') {
+                    foreach ($originalSpectrum as $sd) {
+                        unset($sd['id'], $sd['tuning_session_id'], $sd['created_at'], $sd['updated_at']);
+                        $session->spectrumData()->create($sd);
+                    }
+                }
+
+                if ($def[0] === 'full') {
+                    foreach ($originalSuggestions as $sg) {
+                        unset($sg['id'], $sg['tuning_session_id'], $sg['created_at'], $sg['updated_at']);
+                        $session->tuningSuggestions()->create($sg);
+                    }
+                }
+
+                $session->fresh();
+                $session->createVersion($def[1]);
+            }
+
+            $session->spectrumData()->delete();
+            $session->tuningSuggestions()->delete();
+            foreach ($originalSpectrum as $sd) {
+                unset($sd['id'], $sd['tuning_session_id'], $sd['created_at'], $sd['updated_at']);
+                $session->spectrumData()->create($sd);
+            }
+            foreach ($originalSuggestions as $sg) {
+                unset($sg['id'], $sg['tuning_session_id'], $sg['created_at'], $sg['updated_at']);
+                $session->tuningSuggestions()->create($sg);
+            }
+        }
     }
 
     private function seedPracticeRecords($instruments, $sessions)
