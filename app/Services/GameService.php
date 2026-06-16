@@ -44,6 +44,8 @@ class GameService
             'hints_used' => 0,
             'rotor_positions' => $initialRotorPositions,
             'substitution_table' => [],
+            'caesar_shift' => 0,
+            'vigenere_key' => '',
             'partial_solution' => '',
             'started_at' => now(),
         ]);
