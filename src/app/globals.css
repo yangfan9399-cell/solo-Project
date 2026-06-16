@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fdfaf5;
+  --foreground: #2c1810;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Georgia, serif;
+}
+
+.paper-texture {
+  background-color: #fdfaf5;
+  background-image:
+    radial-gradient(ellipse at 50% 50%, rgba(212, 154, 66, 0.08) 0%, transparent 70%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(133, 81, 43, 0.02) 2px,
+      rgba(133, 81, 43, 0.02) 4px
+    );
+}
+
+.wood-pattern {
+  background: repeating-linear-gradient(
+    90deg,
+    #8b5a2b 0px,
+    #a0522d 2px,
+    #8b4513 4px,
+    #cd853f 6px,
+    #8b5a2b 8px
+  );
+}
+
+.bridge-anchor {
+  background: linear-gradient(180deg, #696969 0%, #4a4a4a 50%, #2f2f2f 100%);
+  border: 2px solid #1a1a1a;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes crack-spread {
+  from { stroke-dashoffset: 100%; }
+  to { stroke-dashoffset: 0%; }
+}
+
+.crack-animation {
+  stroke-dasharray: 100%;
+  animation: crack-spread 0.5s ease-out forwards;
+}
