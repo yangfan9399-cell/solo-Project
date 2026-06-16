@@ -20,7 +20,7 @@
 
 	onMount(async () => {
 		if (levelId) {
-			await sessionStore.startSession(levelId);
+			await sessionStore.findOrStartSession(levelId);
 		}
 	});
 

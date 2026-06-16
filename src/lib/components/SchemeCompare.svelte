@@ -9,11 +9,13 @@
 
 	let schemes = $derived(session?.schemes ?? []);
 
-	function saveScheme() {
+	async function saveScheme() {
 		if (!schemeName.trim()) return;
 		if (!windData.scores) return;
-		sessionStore.saveScheme(schemeName.trim(), windData.sensors, windData.scores);
-		schemeName = '';
+		const ok = await sessionStore.saveScheme(schemeName.trim(), windData.sensors, windData.scores);
+		if (ok) {
+			schemeName = '';
+		}
 	}
 
 	function scoreColor(score: number): string {

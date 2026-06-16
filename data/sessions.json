@@ -1,1 +1,51 @@
-[]
+[
+  {
+    "id": "session-test-1",
+    "levelId": "level-1",
+    "playerId": "player-1",
+    "buildings": [
+      {
+        "id": "preset-1",
+        "type": "mid-rise",
+        "cell": {
+          "row": 1,
+          "col": 1
+        }
+      }
+    ],
+    "operations": [
+      {
+        "id": "op-1",
+        "type": "place",
+        "building": {
+          "id": "preset-1",
+          "type": "mid-rise",
+          "cell": {
+            "row": 1,
+            "col": 1
+          }
+        },
+        "timestamp": 1
+      }
+    ],
+    "schemes": [
+      {
+        "id": "scheme-test-1",
+        "name": "测试方案A",
+        "buildings": [],
+        "sensors": [],
+        "scores": {
+          "comfort": 80,
+          "safety": 90,
+          "efficiency": 70,
+          "total": 80
+        },
+        "timestamp": 1
+      }
+    ],
+    "scores": null,
+    "status": "playing",
+    "createdAt": 1,
+    "updatedAt": 1
+  }
+]

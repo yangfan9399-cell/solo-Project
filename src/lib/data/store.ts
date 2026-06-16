@@ -43,6 +43,12 @@ function createSessionStore() {
 	const operationStack = writable<Operation[]>([]);
 	const redoStack = writable<Operation[]>([]);
 
+	function syncFromServer(session: Session) {
+		set(session);
+		operationStack.set(session.operations || []);
+		redoStack.set([]);
+	}
+
 	return {
 		subscribe,
 		operationStack: { subscribe: operationStack.subscribe },
@@ -74,19 +80,29 @@ function createSessionStore() {
 
 			if (res.ok) {
 				const created = await res.json();
-				set(created);
-				operationStack.set([]);
-				redoStack.set([]);
+				syncFromServer(created);
 			}
+		},
+
+		findOrStartSession: async (levelId: string) => {
+			const playerId = 'player-1';
+			const existingRes = await fetch(`/api/session?playerId=${playerId}&levelId=${levelId}`);
+			if (existingRes.ok) {
+				const sessions = (await existingRes.json()) as Session[];
+				const playing = sessions.find((s) => s.status === 'playing');
+				if (playing) {
+					syncFromServer(playing);
+					return;
+				}
+			}
+			await sessionStore.startSession(levelId);
 		},
 
 		loadSession: async (sessionId: string) => {
 			const res = await fetch(`/api/session?id=${sessionId}`);
 			if (res.ok) {
 				const session = await res.json();
-				set(session);
-				operationStack.set(session.operations || []);
-				redoStack.set([]);
+				syncFromServer(session);
 			}
 		},
 
@@ -126,9 +142,7 @@ function createSessionStore() {
 
 			if (res.ok) {
 				const updated = await res.json();
-				set(updated);
-				operationStack.update((s) => [...s, operation]);
-				redoStack.set([]);
+				syncFromServer(updated);
 				return true;
 			}
 			return false;
@@ -159,18 +173,13 @@ function createSessionStore() {
 
 			if (res.ok) {
 				const updated = await res.json();
-				set(updated);
-				operationStack.update((s) => [...s, operation]);
-				redoStack.set([]);
+				syncFromServer(updated);
 			}
 		},
 
 		undo: async () => {
 			const session = get({ subscribe });
 			if (!session) return;
-
-			const ops = get(operationStack);
-			if (ops.length === 0) return;
 
 			const res = await fetch('/api/history', {
 				method: 'PUT',
@@ -179,11 +188,17 @@ function createSessionStore() {
 			});
 
 			if (res.ok) {
-				const updated = await res.json();
+				const updated: Session = await res.json();
 				set(updated);
-				const lastOp = ops[ops.length - 1];
-				operationStack.update((s) => s.slice(0, -1));
-				redoStack.update((s) => [...s, lastOp]);
+
+				const oldOps = get(operationStack);
+				if (oldOps.length > 0) {
+					const lastOp = oldOps[oldOps.length - 1];
+					operationStack.update((s) => s.slice(0, -1));
+					redoStack.update((s) => [...s, lastOp]);
+				} else {
+					operationStack.set(updated.operations || []);
+				}
 			}
 		},
 
@@ -202,14 +217,15 @@ function createSessionStore() {
 			});
 
 			if (res.ok) {
-				const updated = await res.json();
-				set(updated);
-				redoStack.update((s) => s.slice(0, -1));
-				operationStack.update((s) => [...s, lastRedo]);
+				const updated: Session = await res.json();
+				syncFromServer(updated);
 			}
 		},
 
-		saveScheme: (name: string, sensors: SensorReading[], scores: GameScores) => {
+		saveScheme: async (name: string, sensors: SensorReading[], scores: GameScores): Promise<boolean> => {
+			let saved = false;
+			let sessionId: string | null = null;
+
 			update((session) => {
 				if (!session) return session;
 				const scheme: Scheme = {
@@ -220,8 +236,28 @@ function createSessionStore() {
 					scores: { ...scores },
 					timestamp: Date.now()
 				};
+				sessionId = session.id;
+				saved = true;
 				return { ...session, schemes: [...session.schemes, scheme] };
 			});
+
+			if (saved && sessionId) {
+				const latest = get({ subscribe });
+				if (latest) {
+					latest.updatedAt = Date.now();
+					const res = await fetch('/api/session', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(latest)
+					});
+					if (res.ok) {
+						const updated = await res.json();
+						set(updated);
+						return true;
+					}
+				}
+			}
+			return false;
 		},
 
 		updateSessionStatus: async (status: 'playing' | 'passed' | 'failed', scores: GameScores | null) => {
@@ -254,6 +290,23 @@ function createSessionStore() {
 					await playerStore.save(player);
 				}
 			}
+		},
+
+		persistSession: async (): Promise<boolean> => {
+			const session = get({ subscribe });
+			if (!session) return false;
+			session.updatedAt = Date.now();
+			const res = await fetch('/api/session', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(session)
+			});
+			if (res.ok) {
+				const updated = await res.json();
+				set(updated);
+				return true;
+			}
+			return false;
 		}
 	};
 }
