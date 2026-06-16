@@ -5,7 +5,12 @@ namespace Database\Seeders;
 use App\Models\Level;
 use App\Models\ClueCard;
 use App\Models\Player;
+use App\Models\Game;
+use App\Models\DistributedClue;
+use App\Models\PlayerQuestion;
+use App\Models\OperationHistory;
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class GameDataSeeder extends Seeder
 {
@@ -14,6 +19,7 @@ class GameDataSeeder extends Seeder
         $this->seedPlayers();
         $this->seedLevel1();
         $this->seedLevel2();
+        $this->seedDemoGame();
     }
 
     private function seedPlayers(): void
@@ -307,5 +313,86 @@ class GameDataSeeder extends Seeder
             10 => [0],
         ];
         return $relations[$currentIndex] ?? [];
+    }
+
+    private function seedDemoGame(): void
+    {
+        $player = Player::first();
+        $level = Level::find(2);
+
+        $game = Game::create([
+            'player_id' => $player->id,
+            'level_id' => $level->id,
+            'status' => 'playing',
+            'current_round' => 1,
+            'started_at' => Carbon::now()->subMinutes(5),
+            'clues_distributed' => 4,
+            'questions_asked' => 1,
+            'spoiler_risk_accumulated' => 12,
+        ]);
+
+        $distributedClueIds = [
+            11,
+            15,
+            13,
+            19,
+        ];
+
+        foreach ($distributedClueIds as $idx => $clueId) {
+            DistributedClue::create([
+                'game_id' => $game->id,
+                'clue_card_id' => $clueId,
+                'distributed_at_round' => 1,
+                'distributed_at' => Carbon::now()->subMinutes(5)->addMinutes($idx),
+                'distributed_reason' => $idx === 3 ? '提问触发' : '主持发放',
+            ]);
+
+            OperationHistory::create([
+                'game_id' => $game->id,
+                'operation_type' => 'distribute_clue',
+                'payload' => [
+                    'clue_card_id' => $clueId,
+                    'clue_title' => ClueCard::find($clueId)->title,
+                ],
+                'state_before' => [
+                    'clues_distributed' => $idx,
+                    'spoiler_risk' => 0,
+                ],
+                'state_after' => [
+                    'clues_distributed' => $idx + 1,
+                    'spoiler_risk' => 12,
+                ],
+                'sequence_number' => $idx + 1,
+                'can_undo' => true,
+                'created_at' => Carbon::now()->subMinutes(5)->addMinutes($idx),
+            ]);
+        }
+
+        PlayerQuestion::create([
+            'game_id' => $game->id,
+            'question' => '监控有什么发现？那幅画是怎么从保险库里消失的？修复室有什么异常？',
+            'host_response' => '你问到了点子上！让我仔细想想...或许有些线索可以帮助你。 说到这里，我想起了一件事——或许「监控维护工单」这条线索能给你一些启发。',
+            'round_number' => 1,
+            'is_relevant' => true,
+            'triggers_clue' => true,
+            'related_clue_id' => 19,
+            'relevance_score' => 85,
+            'created_at' => Carbon::now()->subMinutes(2),
+        ]);
+
+        OperationHistory::create([
+            'game_id' => $game->id,
+            'operation_type' => 'ask_question',
+            'payload' => [
+                'question' => '监控有什么发现？那幅画是怎么从保险库里消失的？修复室有什么异常？',
+                'is_relevant' => true,
+                'related_clue_id' => 19,
+            ],
+            'state_before' => ['questions_asked' => 0],
+            'state_after' => ['questions_asked' => 1],
+            'sequence_number' => 5,
+            'can_undo' => true,
+            'created_at' => Carbon::now()->subMinutes(2),
+        ]);
     }
 }
