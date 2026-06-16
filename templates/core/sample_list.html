@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}岩心台账 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}岩心台账{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:export_summary' %}" class="btn btn-outline btn-sm">📥 导出CSV</a>
+  <a href="{% url 'core:sample_create' %}" class="btn btn-primary btn-sm">+ 新建样本</a>
+{% endblock %}
+
+{% block content %}
+  <div class="filter-bar">
+    <form method="get" class="filter-form">
+      <div class="filter-item" style="flex:2;min-width:240px;">
+        <label class="form-label">关键词搜索</label>
+        <input type="text" name="q" value="{{ query }}" class="form-input" placeholder="搜索样本编号、井号、描述...">
+      </div>
+      <div class="filter-item">
+        <label class="form-label">优先级</label>
+        <select name="priority" class="form-input form-select">
+          <option value="">全部</option>
+          {% for val, label in priority_choices %}
+            <option value="{{ val }}" {% if priority == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label class="form-label">状态</label>
+        <select name="status" class="form-input form-select">
+          <option value="">全部</option>
+          {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label class="form-label">岩性</label>
+        <select name="lithology" class="form-input form-select">
+          <option value="">全部</option>
+          {% for lith in lithologies %}
+            <option value="{{ lith }}" {% if lithology == lith %}selected{% endif %}>{{ lith }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{% url 'core:sample_list' %}" class="btn btn-outline">重置</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">岩心样本列表</div>
+      <span class="text-sm text-muted">共 {{ samples|length }} 条记录</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>样本编号</th>
+            <th>井号</th>
+            <th>深度区间</th>
+            <th>总长度</th>
+            <th>剩余长度</th>
+            <th>使用率</th>
+            <th>岩性</th>
+            <th>优先级</th>
+            <th>状态</th>
+            <th>异常</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sample in samples %}
+            <tr>
+              <td>
+                <a href="{% url 'core:sample_detail' sample.pk %}" class="font-medium">
+                  {{ sample.sample_no }}
+                </a>
+              </td>
+              <td>{{ sample.well_name }}</td>
+              <td>{{ sample.depth_start }} - {{ sample.depth_end }}m</td>
+              <td>{{ sample.total_length }}m</td>
+              <td>{{ sample.remaining_length }}m</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="progress-bar" style="width:80px;">
+                    <div class="progress-fill {% if sample.usage_rate > 80 %}danger{% elif sample.usage_rate > 50 %}warning{% else %}success{% endif %}"
+                         style="width:{{ sample.usage_rate }}%;"></div>
+                  </div>
+                  <span class="text-sm">{{ sample.usage_rate }}%</span>
+                </div>
+              </td>
+              <td>{{ sample.lithology|default:"-" }}</td>
+              <td>
+                <span class="badge badge-{{ sample.priority }}">
+                  {{ sample.get_priority_display }}
+                </span>
+              </td>
+              <td>
+                <span class="badge
+                  {% if sample.status == 'completed' %}badge-success
+                  {% elif sample.status == 'in_progress' %}badge-warning
+                  {% elif sample.status == 'on_hold' %}badge-secondary
+                  {% elif sample.status == 'archived' %}badge-info
+                  {% else %}badge-info{% endif %}">
+                  {{ sample.get_status_display }}
+                </span>
+              </td>
+              <td>
+                {% if sample.has_anomaly %}
+                  <span class="badge badge-danger">异常</span>
+                {% else %}
+                  <span class="badge badge-success">正常</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'core:sample_detail' sample.pk %}" class="text-sm">详情</a>
+                <span style="color:#cbd5e1;margin:0 6px;">|</span>
+                <a href="{% url 'core:sample_edit' sample.pk %}" class="text-sm">编辑</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="11" style="text-align:center;padding:48px;color:#94a3b8;">
+                <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+                暂无岩心样本数据
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

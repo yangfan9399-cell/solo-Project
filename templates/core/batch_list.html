@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}批次版本 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}批次版本{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:batch_create' %}" class="btn btn-primary btn-sm">+ 创建新版本</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">版本历史</div>
+      <span class="text-sm text-muted">共 {{ batches|length }} 个批次版本</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>版本号</th>
+            <th>批次号</th>
+            <th>类型</th>
+            <th>状态</th>
+            <th>任务数</th>
+            <th>创建人</th>
+            <th>创建时间</th>
+            <th>描述</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for batch in batches %}
+            <tr>
+              <td>
+                <a href="{% url 'core:batch_detail' batch.pk %}" class="font-medium">
+                  {{ batch.version_no }}
+                  {% if batch.is_current %}
+                    <span class="badge badge-success" style="margin-left:6px;">当前</span>
+                  {% endif %}
+                </a>
+              </td>
+              <td>{{ batch.batch_no }}</td>
+              <td>
+                <span class="badge
+                  {% if batch.batch_type == 'daily' %}badge-info
+                  {% elif batch.batch_type == 'weekly' %}badge-primary
+                  {% elif batch.batch_type == 'project' %}badge-success
+                  {% else %}badge-secondary{% endif %}">
+                  {{ batch.get_batch_type_display }}
+                </span>
+              </td>
+              <td>
+                {% if batch.is_current %}
+                  <span class="badge badge-success">当前版本</span>
+                {% else %}
+                  <span class="badge badge-secondary">历史版本</span>
+                {% endif %}
+              </td>
+              <td>{{ batch.tasks.count }}</td>
+              <td>{{ batch.created_by|default:"系统" }}</td>
+              <td>{{ batch.created_at|date:"Y-m-d H:i" }}</td>
+              <td class="text-muted text-sm">{{ batch.description|truncatechars:30 }}</td>
+              <td>
+                <a href="{% url 'core:batch_detail' batch.pk %}" class="text-sm">详情</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" style="text-align:center;padding:48px;color:#94a3b8;">
+                <div style="font-size:48px;margin-bottom:12px;">📦</div>
+                暂无批次版本记录
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

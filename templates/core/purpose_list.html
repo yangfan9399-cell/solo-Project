@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}切割目的 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}切割目的{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">切割目的列表</div>
+      <span class="text-sm text-muted">共 {{ purposes|length }} 种</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>代码</th>
+            <th>名称</th>
+            <th>标准损耗率</th>
+            <th>典型切片厚度</th>
+            <th>需要质检</th>
+            <th>状态</th>
+            <th>描述</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for purpose in purposes %}
+            <tr>
+              <td class="font-medium">{{ purpose.code }}</td>
+              <td>{{ purpose.name }}</td>
+              <td>{{ purpose.standard_loss_rate }}%</td>
+              <td>{{ purpose.typical_length }}m</td>
+              <td>
+                {% if purpose.requires_quality_check %}
+                  <span class="badge badge-success">是</span>
+                {% else %}
+                  <span class="badge badge-secondary">否</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if purpose.is_active %}
+                  <span class="badge badge-success">启用</span>
+                {% else %}
+                  <span class="badge badge-secondary">停用</span>
+                {% endif %}
+              </td>
+              <td class="text-muted text-sm">{{ purpose.description|default:"-"|truncatechars:40 }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" style="text-align:center;padding:48px;color:#94a3b8;">
+                暂无切割目的数据
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

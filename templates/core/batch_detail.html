@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ batch.version_no }} - 批次详情{% endblock %}
+{% block page_title %}批次版本详情{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:batch_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card mb-20">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <h2 style="font-size:22px;margin-bottom:8px;">
+            {{ batch.version_no }}
+            {% if batch.is_current %}
+              <span class="badge badge-success" style="margin-left:8px;">当前版本</span>
+            {% endif %}
+          </h2>
+          <p class="text-muted">
+            批次号：{{ batch.batch_no }} · 
+            {{ batch.get_batch_type_display }} · 
+            创建于 {{ batch.created_at|date:"Y-m-d H:i" }}
+          </p>
+        </div>
+        <div class="text-right">
+          <div class="text-lg font-bold">{{ tasks|length }}</div>
+          <div class="text-sm text-muted">个任务</div>
+        </div>
+      </div>
+      {% if batch.description %}
+        <p style="margin-top:12px;padding:12px;background:#f8fafc;border-radius:6px;">
+          {{ batch.description }}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if prev_batches %}
+    <div class="card mb-20">
+      <div class="card-header">
+        <div class="card-title">版本对比 - 同批次历史版本</div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          {% for prev in prev_batches %}
+            <a href="{% url 'core:batch_detail' prev.pk %}" class="btn btn-outline btn-sm">
+              {{ prev.version_no }}
+              {% if prev.is_current %}(当前){% endif %}
+            </a>
+          {% endfor %}
+          <span class="btn btn-primary btn-sm" style="cursor:default;">{{ batch.version_no }}</span>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">排程任务 ({{ tasks|length }})</div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>任务编号</th>
+              <th>岩心样本</th>
+              <th>切割机</th>
+              <th>切割目的</th>
+              <th>计划长度</th>
+              <th>状态</th>
+              <th>开始时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+              <tr>
+                <td><a href="{% url 'core:task_detail' task.pk %}">{{ task.task_no }}</a></td>
+                <td>
+                  {% if task.core_sample %}
+                    <a href="{% url 'core:sample_detail' task.core_sample.pk %}">
+                      {{ task.core_sample.sample_no }}
+                    </a>
+                  {% else %}-{% endif %}
+                </td>
+                <td>{{ task.cutter.cutter_no|default:"-" }}</td>
+                <td>{{ task.purpose.name|default:"-" }}</td>
+                <td>{{ task.planned_cut_length }}m</td>
+                <td>
+                  <span class="badge
+                    {% if task.status == 'completed' %}badge-success
+                    {% elif task.status == 'in_progress' %}badge-warning
+                    {% elif task.status == 'scheduled' %}badge-info
+                    {% else %}badge-secondary{% endif %}">
+                    {{ task.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ task.scheduled_start_time|default:"-" }}</td>
+                <td><a href="{% url 'core:task_detail' task.pk %}" class="text-sm">详情</a></td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">
+                  该版本暂无任务
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">快照数据</div>
+      </div>
+      <div class="card-body">
+        <p class="text-sm text-muted mb-12">
+          创建版本时保存的任务排程快照，用于历史追溯。
+        </p>
+        {% if snapshot %}
+          <div class="snapshot-box">{{ batch.snapshot_data }}</div>
+        {% else %}
+          <p class="text-muted">无快照数据</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

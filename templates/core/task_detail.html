@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ task.task_no }} - 任务详情{% endblock %}
+{% block page_title %}切割任务详情{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:task_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+  <a href="{% url 'core:task_edit' task.pk %}" class="btn btn-primary btn-sm">✏️ 编辑</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card mb-20">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <h2 style="font-size:22px;margin-bottom:8px;">
+            {{ task.task_no }}
+            <span class="badge
+              {% if task.status == 'completed' %}badge-success
+              {% elif task.status == 'in_progress' %}badge-warning
+              {% elif task.status == 'scheduled' %}badge-info
+              {% elif task.status == 'failed' or task.status == 'cancelled' %}badge-danger
+              {% else %}badge-secondary{% endif %}" style="margin-left:8px;">
+              {{ task.get_status_display }}
+            </span>
+            {% if task.has_anomaly %}
+              <span class="badge badge-danger" style="margin-left:6px;">⚠️ 异常</span>
+            {% endif %}
+            {% if task.quality_checked %}
+              <span class="badge badge-success" style="margin-left:6px;">✓ 已质检</span>
+            {% endif %}
+          </h2>
+          <p class="text-muted">
+            {% if task.core_sample %}
+              <a href="{% url 'core:sample_detail' task.core_sample.pk %}">{{ task.core_sample.sample_no }}</a>
+            {% else %}未关联岩心{% endif %}
+            · {{ task.purpose.name|default:"未指定目的" }}
+          </p>
+        </div>
+        {% if task.batch_version %}
+          <div class="text-sm text-muted">
+            所属批次：
+            <a href="{% url 'core:batch_detail' task.batch_version.pk %}">
+              {{ task.batch_version.version_no }}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+    <div>
+      <div class="detail-section">
+        <h3 class="detail-section-title">切割参数</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-item-label">计划切割长度</div>
+            <div class="detail-item-value">{{ task.planned_cut_length }}m</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">实际切割长度</div>
+            <div class="detail-item-value">{{ task.actual_cut_length|default:"-" }}{% if task.actual_cut_length %}m{% endif %}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">损耗长度</div>
+            <div class="detail-item-value">
+              {{ task.loss_length }}m
+              <span class="text-sm text-muted">({{ task.loss_rate }}%)</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">预期损耗</div>
+            <div class="detail-item-value">{{ task.expected_loss }}m</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">切片数量</div>
+            <div class="detail-item-value">{{ task.slice_count }} 片</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">切片厚度</div>
+            <div class="detail-item-value">{{ task.slice_thickness }}m</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">排程信息</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-item-label">切割机</div>
+            <div class="detail-item-value">
+              {% if task.cutter %}
+                {{ task.cutter.cutter_no }} - {{ task.cutter.name }}
+              {% else %}-{% endif %}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">计划日期</div>
+            <div class="detail-item-value">{{ task.scheduled_date|default:"-" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">计划开始</div>
+            <div class="detail-item-value">{{ task.scheduled_start_time|default:"-" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">计划结束</div>
+            <div class="detail-item-value">{{ task.scheduled_end_time|default:"-" }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">执行信息</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-item-label">实际开始</div>
+            <div class="detail-item-value">{{ task.actual_start_time|date:"Y-m-d H:i"|default:"-" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">实际结束</div>
+            <div class="detail-item-value">{{ task.actual_end_time|date:"Y-m-d H:i"|default:"-" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">操作人员</div>
+            <div class="detail-item-value">{{ task.operator|default:"-" }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-item-label">质检状态</div>
+            <div class="detail-item-value">
+              {% if task.quality_checked %}
+                <span class="badge badge-success">{{ task.quality_result|default:"合格" }}</span>
+              {% else %}
+                <span class="badge badge-secondary">未质检</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if task.remarks %}
+        <div class="detail-section">
+          <h3 class="detail-section-title">备注</h3>
+          <div class="card">
+            <div class="card-body">{{ task.remarks|linebreaks }}</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">关联岩心信息</div>
+        </div>
+        <div class="card-body">
+          {% if task.core_sample %}
+            <div style="margin-bottom:12px;">
+              <a href="{% url 'core:sample_detail' task.core_sample.pk %}" class="font-medium">
+                {{ task.core_sample.sample_no }}
+              </a>
+            </div>
+            <div class="text-sm text-muted" style="margin-bottom:8px;">
+              {{ task.core_sample.well_name }}
+            </div>
+            <div class="text-sm" style="margin-bottom:8px;">
+              <span class="text-muted">岩性：</span>{{ task.core_sample.lithology|default:"-" }}
+            </div>
+            <div class="text-sm" style="margin-bottom:12px;">
+              <span class="text-muted">优先级：</span>
+              <span class="badge badge-{{ task.core_sample.priority }}">
+                {{ task.core_sample.get_priority_display }}
+              </span>
+            </div>
+            <div class="detail-item" style="background:#fff;border:1px solid #e2e8f0;">
+              <div class="detail-item-label">剩余长度</div>
+              <div class="detail-item-value">{{ task.core_sample.remaining_length }}m / {{ task.core_sample.total_length }}m</div>
+              <div class="progress-bar" style="margin-top:8px;">
+                <div class="progress-fill {% if task.core_sample.usage_rate > 80 %}danger{% elif task.core_sample.usage_rate > 50 %}warning{% else %}success{% endif %}"
+                     style="width:{{ task.core_sample.usage_rate }}%;"></div>
+              </div>
+              <div class="text-sm text-muted" style="margin-top:4px;">使用率 {{ task.core_sample.usage_rate }}%</div>
+            </div>
+          {% else %}
+            <p class="text-muted">未关联岩心样本</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if anomalies %}
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <div class="card-title">异常记录</div>
+          </div>
+          <div class="card-body">
+            {% for anomaly in anomalies %}
+              <div class="anomaly-item {% if anomaly.severity == 'critical' %}critical{% elif anomaly.severity == 'info' %}info{% endif %} {% if anomaly.resolved %}resolved{% endif %}" style="margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:start;">
+                  <span class="badge
+                    {% if anomaly.severity == 'critical' %}badge-danger
+                    {% elif anomaly.severity == 'warning' %}badge-warning
+                    {% else %}badge-info{% endif %}">
+                    {{ anomaly.get_severity_display }}
+                  </span>
+                  {% if anomaly.resolved %}
+                    <span class="badge badge-success">已解决</span>
+                  {% endif %}
+                </div>
+                <p style="margin-top:6px;font-size:13px;">{{ anomaly.description }}</p>
+                <p class="text-xs text-muted" style="margin-top:4px;">
+                  {{ anomaly.detected_at|date:"m-d H:i" }}
+                </p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

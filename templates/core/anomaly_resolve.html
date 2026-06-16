@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}处理异常 - 异常中心{% endblock %}
+{% block page_title %}处理异常{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:anomaly_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <div class="anomaly-item
+        {% if anomaly.severity == 'critical' %}critical
+        {% elif anomaly.severity == 'info' %}info{% endif %}"
+        style="margin-bottom:24px;padding:16px;">
+        <div style="margin-bottom:8px;">
+          <span class="badge
+            {% if anomaly.severity == 'critical' %}badge-danger
+            {% elif anomaly.severity == 'warning' %}badge-warning
+            {% else %}badge-info{% endif %}" style="margin-right:8px;">
+            {{ anomaly.get_severity_display }}
+          </span>
+          <span style="font-weight:600;font-size:16px;">{{ anomaly.get_anomaly_type_display }}</span>
+        </div>
+        <p style="font-size:14px;">{{ anomaly.description }}</p>
+        <p class="text-sm text-muted" style="margin-top:8px;">
+          检测时间：{{ anomaly.detected_at|date:"Y-m-d H:i" }}
+        </p>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">{{ form.resolution.label }}</label>
+          {{ form.resolution }}
+          <p class="text-sm text-muted" style="margin-top:4px;">
+            请输入处理方案或备注说明（可选）
+          </p>
+        </div>
+
+        <div class="form-actions">
+          <a href="{% url 'core:anomaly_list' %}" class="btn btn-outline">取消</a>
+          <button type="submit" class="btn btn-success">✓ 标记为已解决</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

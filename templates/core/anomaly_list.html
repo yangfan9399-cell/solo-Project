@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}异常中心 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}异常中心{% endblock %}
+
+{% block topbar_actions %}
+  <span class="text-sm text-muted">
+    共 {{ anomalies|length }} 条记录
+  </span>
+{% endblock %}
+
+{% block content %}
+  <div class="filter-bar">
+    <form method="get" class="filter-form">
+      <div class="filter-item">
+        <label class="form-label">严重程度</label>
+        <select name="severity" class="form-input form-select">
+          <option value="">全部</option>
+          {% for val, label in severity_choices %}
+            <option value="{{ val }}" {% if severity == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label class="form-label">异常类型</label>
+        <select name="type" class="form-input form-select">
+          <option value="">全部</option>
+          {% for val, label in type_choices %}
+            <option value="{{ val }}" {% if anomaly_type == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <label class="form-label">处理状态</label>
+        <select name="resolved" class="form-input form-select">
+          <option value="">全部</option>
+          <option value="no" {% if resolved == 'no' %}selected{% endif %}>未解决</option>
+          <option value="yes" {% if resolved == 'yes' %}selected{% endif %}>已解决</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{% url 'core:anomaly_list' %}" class="btn btn-outline">重置</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">异常记录列表</div>
+    </div>
+    <div class="card-body">
+      {% for anomaly in anomalies %}
+        <div class="anomaly-item
+          {% if anomaly.severity == 'critical' %}critical
+          {% elif anomaly.severity == 'info' %}info{% endif %}
+          {% if anomaly.resolved %}resolved{% endif %}"
+          style="margin-bottom:12px;padding:14px 18px;">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div>
+              <span class="badge
+                {% if anomaly.severity == 'critical' %}badge-danger
+                {% elif anomaly.severity == 'warning' %}badge-warning
+                {% else %}badge-info{% endif %}" style="margin-right:8px;">
+                {{ anomaly.get_severity_display }}
+              </span>
+              <span style="font-weight:600;font-size:15px;">{{ anomaly.get_anomaly_type_display }}</span>
+              {% if anomaly.resolved %}
+                <span class="badge badge-success" style="margin-left:8px;">已解决</span>
+              {% endif %}
+            </div>
+            <span class="text-sm text-muted">{{ anomaly.detected_at|date:"Y-m-d H:i" }}</span>
+          </div>
+          <p style="margin-top:10px;font-size:14px;line-height:1.6;">{{ anomaly.description }}</p>
+          <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#64748b;">
+            {% if anomaly.core_sample %}
+              <span>
+                关联岩心：
+                <a href="{% url 'core:sample_detail' anomaly.core_sample.pk %}">
+                  {{ anomaly.core_sample.sample_no }}
+                </a>
+              </span>
+            {% endif %}
+            {% if anomaly.cutting_task %}
+              <span>
+                关联任务：
+                <a href="{% url 'core:task_detail' anomaly.cutting_task.pk %}">
+                  {{ anomaly.cutting_task.task_no }}
+                </a>
+              </span>
+            {% endif %}
+            {% if anomaly.cutter %}
+              <span>关联设备：{{ anomaly.cutter.cutter_no }}</span>
+            {% endif %}
+          </div>
+          {% if anomaly.resolution %}
+            <div style="margin-top:10px;padding:10px 12px;background:rgba(16,185,129,0.1);border-radius:6px;font-size:13px;color:#065f46;">
+              <strong>解决方案：</strong>{{ anomaly.resolution }}
+            </div>
+          {% endif %}
+          {% if not anomaly.resolved %}
+            <div style="margin-top:12px;text-align:right;">
+              <a href="{% url 'core:anomaly_resolve' anomaly.pk %}" class="btn btn-success btn-sm">
+                ✓ 标记已解决
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div style="text-align:center;padding:48px;color:#94a3b8;">
+          <div style="font-size:48px;margin-bottom:12px;">✓</div>
+          暂无异常记录
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

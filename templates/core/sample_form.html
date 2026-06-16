@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - 岩心样本{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_actions %}
+  {% if sample %}
+    <a href="{% url 'core:sample_detail' sample.pk %}" class="btn btn-outline btn-sm">← 返回详情</a>
+  {% else %}
+    <a href="{% url 'core:sample_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="detail-section">
+          <h3 class="detail-section-title">基本信息</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.sample_no.label }}</label>
+              {{ form.sample_no }}
+              {% if form.sample_no.errors %}
+                <div class="text-danger text-sm">{{ form.sample_no.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.well_name.label }}</label>
+              {{ form.well_name }}
+              {% if form.well_name.errors %}
+                <div class="text-danger text-sm">{{ form.well_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.lithology.label }}</label>
+              {{ form.lithology }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.formation.label }}</label>
+              {{ form.formation }}
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="detail-section-title">深度与长度</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.depth_start.label }}</label>
+              {{ form.depth_start }}
+              {% if form.depth_start.errors %}
+                <div class="text-danger text-sm">{{ form.depth_start.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.depth_end.label }}</label>
+              {{ form.depth_end }}
+              {% if form.depth_end.errors %}
+                <div class="text-danger text-sm">{{ form.depth_end.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.total_length.label }}</label>
+              {{ form.total_length }}
+              {% if form.total_length.errors %}
+                <div class="text-danger text-sm">{{ form.total_length.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.remaining_length.label }}</label>
+              {{ form.remaining_length }}
+              {% if form.remaining_length.errors %}
+                <div class="text-danger text-sm">{{ form.remaining_length.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="detail-section-title">管理信息</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.priority.label }}</label>
+              {{ form.priority }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.status.label }}</label>
+              {{ form.status }}
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.storage_location.label }}</label>
+              {{ form.storage_location }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.collected_date.label }}</label>
+              {{ form.collected_date }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ form.description.label }}</label>
+          {{ form.description }}
+        </div>
+
+        <div class="form-actions">
+          {% if sample %}
+            <a href="{% url 'core:sample_detail' sample.pk %}" class="btn btn-outline">取消</a>
+          {% else %}
+            <a href="{% url 'core:sample_list' %}" class="btn btn-outline">取消</a>
+          {% endif %}
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

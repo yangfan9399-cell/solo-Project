@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}切割工作台 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}切割工作台{% endblock %}
+
+{% block topbar_actions %}
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="?date={{ prev_date|date:'Y-m-d' }}" class="btn btn-outline btn-sm">← 前一天</a>
+    <span style="font-weight:500;">{{ target_date|date:"Y年m月d日 l" }}</span>
+    <a href="?date={{ next_date|date:'Y-m-d' }}" class="btn btn-outline btn-sm">后一天 →</a>
+  </div>
+  <a href="{% url 'core:task_create' %}" class="btn btn-primary btn-sm">+ 新建任务</a>
+{% endblock %}
+
+{% block content %}
+  <div class="workbench">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">切割机排程</div>
+          <span class="text-sm text-muted">按日查看各切割机排程情况</span>
+        </div>
+        <div class="card-body">
+          {% if schedule %}
+            {% for item in schedule %}
+              <div class="cutter-timeline">
+                <div class="cutter-header">
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="cutter-name">
+                      {{ item.cutter.cutter_no }} - {{ item.cutter.name }}
+                    </span>
+                    <span class="badge
+                      {% if item.cutter.status == 'available' %}badge-success
+                      {% elif item.cutter.status == 'busy' %}badge-warning
+                      {% elif item.cutter.status == 'maintenance' %}badge-secondary
+                      {% else %}badge-danger{% endif %}">
+                      {{ item.cutter.get_status_display }}
+                    </span>
+                  </div>
+                  <div style="font-size:12px;color:#64748b;">
+                    日产能 {{ item.cutter.daily_capacity }}m · 
+                    {{ item.cutter.work_start_time }} - {{ item.cutter.work_end_time }}
+                  </div>
+                </div>
+                <div class="timeline-container" style="height:80px;">
+                  {% if item.tasks %}
+                    {% for task in item.tasks %}
+                      <div class="timeline-task priority-{{ task.core_sample.priority }}"
+                           style="left:{% if task.scheduled_start_time %}{% widthratio task.scheduled_start_time.hour 24 100 %}%{% else %}10%{% endif %};
+                                  width:{% widthratio task.planned_cut_length|divisibleby:item.cutter.daily_capacity 1 100 %}%;
+                                  min-width:60px;
+                                  top:10px;bottom:10px;"
+                           onclick="window.location.href='{% url 'core:task_detail' task.pk %}'">
+                        <div style="font-weight:500;">{{ task.task_no }}</div>
+                        <div style="opacity:0.8;font-size:10px;">{{ task.planned_cut_length }}m · {{ task.core_sample.sample_no }}</div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px;">
+                      当日暂无排程任务
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="timeline-hours">
+                  <span>06:00</span><span>08:00</span><span>10:00</span>
+                  <span>12:00</span><span>14:00</span><span>16:00</span>
+                  <span>18:00</span><span>20:00</span><span>22:00</span>
+                </div>
+                {% if item.tasks %}
+                  <div style="margin-top:8px;padding:8px 12px;background:#f8fafc;border-radius:6px;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">任务列表</div>
+                    {% for task in item.tasks %}
+                      <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px dashed #e2e8f0;">
+                        <span>
+                          <span class="badge badge-{{ task.core_sample.priority }}" style="margin-right:6px;">
+                            {{ task.core_sample.get_priority_display }}
+                          </span>
+                          <a href="{% url 'core:task_detail' task.pk %}">{{ task.task_no }}</a>
+                          - {{ task.core_sample.sample_no }}
+                        </span>
+                        <span class="text-muted">
+                          {% if task.scheduled_start_time %}{{ task.scheduled_start_time|date:"H:i" }}{% else %}待排程{% endif %}
+                          · {{ task.planned_cut_length }}m
+                        </span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted">暂无切割机数据</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="pending-tasks-panel">
+      <div class="pending-tasks-header">
+        待排程任务
+        <span class="badge badge-secondary" style="float:right;">{{ pending_tasks|length }}</span>
+      </div>
+      <div style="max-height:500px;overflow-y:auto;">
+        {% for task in pending_tasks %}
+          <div class="pending-task-item" onclick="window.location.href='{% url 'core:task_detail' task.pk %}'">
+            <div class="pending-task-title">
+              <span class="badge badge-{{ task.core_sample.priority }}" style="margin-right:6px;">
+                {{ task.core_sample.get_priority_display }}
+              </span>
+              {{ task.task_no }}
+            </div>
+            <div class="pending-task-meta">
+              <span>{{ task.core_sample.sample_no }}</span>
+              <span>{{ task.planned_cut_length }}m</span>
+            </div>
+            <div class="text-sm text-muted" style="margin-top:4px;">
+              {{ task.purpose.name|default:"未指定目的" }}
+            </div>
+          </div>
+        {% empty %}
+          <div style="padding:24px;text-align:center;color:#94a3b8;">
+            暂无待排程任务
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}岩心样本切割排程系统{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>岩心切割排程</h1>
+        <p>Core Scheduler v1.0</p>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="{% url 'core:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <span class="nav-icon">📊</span><span>总览仪表盘</span>
+        </a></li>
+        <li><a href="{% url 'core:workbench' %}" class="{% if request.resolver_match.url_name == 'workbench' %}active{% endif %}">
+          <span class="nav-icon">⚙️</span><span>切割工作台</span>
+        </a></li>
+        <li><a href="{% url 'core:sample_list' %}" class="{% if 'sample' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon">🧪</span><span>岩心台账</span>
+        </a></li>
+        <li><a href="{% url 'core:task_list' %}" class="{% if 'task' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon">📋</span><span>切割任务</span>
+        </a></li>
+        <li><a href="{% url 'core:batch_list' %}" class="{% if 'batch' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon">📦</span><span>批次版本</span>
+        </a></li>
+        <li><a href="{% url 'core:anomaly_list' %}" class="{% if 'anomaly' in request.resolver_match.url_name %}active{% endif %}">
+          <span class="nav-icon">⚠️</span><span>异常中心</span>
+        </a></li>
+        <li><hr style="border-color:#334155;margin:12px 20px;"></li>
+        <li><a href="{% url 'core:cutter_list' %}" class="{% if request.resolver_match.url_name == 'cutter_list' %}active{% endif %}">
+          <span class="nav-icon">🔧</span><span>切割机管理</span>
+        </a></li>
+        <li><a href="{% url 'core:purpose_list' %}" class="{% if request.resolver_match.url_name == 'purpose_list' %}active{% endif %}">
+          <span class="nav-icon">🎯</span><span>切割目的</span>
+        </a></li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div class="topbar-title">{% block page_title %}总览仪表盘{% endblock %}</div>
+        <div class="topbar-actions">
+          {% block topbar_actions %}{% endblock %}
+        </div>
+      </div>
+
+      <div class="content-wrapper">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}切割机管理 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}切割机管理{% endblock %}
+
+{% block content %}
+  <div class="stats-grid">
+    <div class="stat-card success">
+      <span class="stat-icon">✓</span>
+      <div class="stat-value">{{ cutters|length }}</div>
+      <div class="stat-label">设备总数</div>
+    </div>
+    <div class="stat-card primary">
+      <span class="stat-icon">🟢</span>
+      <div class="stat-value">{{ cutters|dictsort:"status"|length }}</div>
+      <div class="stat-label">可用设备</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">设备列表</div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>设备编号</th>
+            <th>设备名称</th>
+            <th>类型</th>
+            <th>状态</th>
+            <th>切割范围</th>
+            <th>日产能</th>
+            <th>刀片损耗率</th>
+            <th>工作时段</th>
+            <th>位置</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cutter in cutters %}
+            <tr>
+              <td class="font-medium">{{ cutter.cutter_no }}</td>
+              <td>{{ cutter.name }}</td>
+              <td>{{ cutter.get_cutter_type_display }}</td>
+              <td>
+                <span class="badge
+                  {% if cutter.status == 'available' %}badge-success
+                  {% elif cutter.status == 'busy' %}badge-warning
+                  {% elif cutter.status == 'maintenance' %}badge-secondary
+                  {% else %}badge-danger{% endif %}">
+                  {{ cutter.get_status_display }}
+                </span>
+              </td>
+              <td>{{ cutter.min_cut_length }} - {{ cutter.max_cut_length }}m</td>
+              <td>{{ cutter.daily_capacity }}m/天</td>
+              <td>{{ cutter.blade_loss_rate }}%</td>
+              <td>{{ cutter.work_start_time }} - {{ cutter.work_end_time }}</td>
+              <td>{{ cutter.location|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" style="text-align:center;padding:48px;color:#94a3b8;">
+                暂无切割机数据
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

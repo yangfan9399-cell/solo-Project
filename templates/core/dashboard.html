@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}总览仪表盘 - 岩心样本切割排程系统{% endblock %}
+{% block page_title %}总览仪表盘{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:export_summary' %}" class="btn btn-outline btn-sm">
+    📥 导出CSV摘要
+  </a>
+  <a href="{% url 'core:export_summary_xlsx' %}" class="btn btn-primary btn-sm">
+    📊 导出Excel报告
+  </a>
+{% endblock %}
+
+{% block content %}
+  <div class="stats-grid">
+    <div class="stat-card primary">
+      <span class="stat-icon">🧪</span>
+      <div class="stat-value">{{ summary.total_samples }}</div>
+      <div class="stat-label">岩心样本总数</div>
+    </div>
+    <div class="stat-card warning">
+      <span class="stat-icon">⏳</span>
+      <div class="stat-value">{{ summary.pending_samples }}</div>
+      <div class="stat-label">待切割样本</div>
+    </div>
+    <div class="stat-card success">
+      <span class="stat-icon">✅</span>
+      <div class="stat-value">{{ summary.completed_samples }}</div>
+      <div class="stat-label">已完成样本</div>
+    </div>
+    <div class="stat-card info">
+      <span class="stat-icon">📋</span>
+      <div class="stat-value">{{ summary.total_tasks }}</div>
+      <div class="stat-label">切割任务总数</div>
+    </div>
+    <div class="stat-card success">
+      <span class="stat-icon">📏</span>
+      <div class="stat-value">{{ summary.total_cut_length|floatformat:2 }}m</div>
+      <div class="stat-label">累计切割长度</div>
+    </div>
+    <div class="stat-card warning">
+      <span class="stat-icon">📉</span>
+      <div class="stat-value">{{ summary.total_loss|floatformat:3 }}m</div>
+      <div class="stat-label">累计损耗</div>
+    </div>
+    <div class="stat-card danger">
+      <span class="stat-icon">⚠️</span>
+      <div class="stat-value">{{ summary.open_anomalies }}</div>
+      <div class="stat-label">未处理异常</div>
+    </div>
+    <div class="stat-card secondary">
+      <span class="stat-icon">📦</span>
+      <div class="stat-value">{{ summary.batches }}</div>
+      <div class="stat-label">批次版本数</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">今日排程 - {{ today|date:"Y年m月d日" }}</div>
+        <a href="{% url 'core:workbench' %}" class="btn btn-outline btn-sm">进入工作台 →</a>
+      </div>
+      <div class="card-body">
+        {% if today_schedule %}
+          {% for item in today_schedule %}
+            <div class="cutter-timeline">
+              <div class="cutter-header">
+                <span class="cutter-name">
+                  {{ item.cutter.cutter_no }} - {{ item.cutter.name }}
+                </span>
+                <span class="badge
+                  {% if item.cutter.status == 'available' %}badge-success
+                  {% elif item.cutter.status == 'busy' %}badge-warning
+                  {% elif item.cutter.status == 'maintenance' %}badge-secondary
+                  {% else %}badge-danger{% endif %}">
+                  {{ item.cutter.get_status_display }}
+                </span>
+              </div>
+              <div class="timeline-container">
+                {% for task in item.tasks %}
+                  <div class="timeline-task priority-{{ task.core_sample.priority }}"
+                       style="left: {% widthratio task.scheduled_start_time.hour|add:task.scheduled_start_time.minute|divisibleby:60 24 100 %}%;
+                              width: {% widthratio task.planned_cut_length|divisibleby:item.cutter.daily_capacity|add:0.05 1 100 %}%;"
+                       title="{{ task.task_no }} - {{ task.core_sample.sample_no }}">
+                    {{ task.task_no }}
+                  </div>
+                {% empty %}
+                  <div style="padding:16px;text-align:center;color:#94a3b8;font-size:13px;">
+                    今日暂无排程
+                  </div>
+                {% endfor %}
+              </div>
+              <div class="timeline-hours">
+                <span>08:00</span><span>10:00</span><span>12:00</span>
+                <span>14:00</span><span>16:00</span><span>18:00</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">暂无可用切割机</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">异常告警</div>
+        <a href="{% url 'core:anomaly_list' %}?resolved=no" class="btn btn-outline btn-sm">查看全部</a>
+      </div>
+      <div class="card-body">
+        {% if open_anomalies %}
+          {% for anomaly in open_anomalies %}
+            <div class="anomaly-item {% if anomaly.severity == 'critical' %}critical{% elif anomaly.severity == 'info' %}info{% endif %}">
+              <div style="display:flex;justify-content:space-between;align-items:start;">
+                <div>
+                  <span class="badge
+                    {% if anomaly.severity == 'critical' %}badge-danger
+                    {% elif anomaly.severity == 'warning' %}badge-warning
+                    {% else %}badge-info{% endif %}">
+                    {{ anomaly.get_severity_display }}
+                  </span>
+                  <span style="margin-left:8px;font-weight:500;">{{ anomaly.get_anomaly_type_display }}</span>
+                </div>
+              </div>
+              <p class="text-sm text-muted" style="margin-top:6px;">{{ anomaly.description|truncatechars:60 }}</p>
+              <p class="text-sm text-muted" style="margin-top:4px;">
+                {{ anomaly.detected_at|date:"m-d H:i" }}
+              </p>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align:center;padding:24px;color:#10b981;">
+            <div style="font-size:32px;margin-bottom:8px;">✓</div>
+            <p>暂无异常，运行良好</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <div class="card-header">
+      <div class="card-title">最近任务</div>
+      <a href="{% url 'core:task_list' %}" class="btn btn-outline btn-sm">全部任务 →</a>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>任务编号</th>
+            <th>岩心样本</th>
+            <th>切割机</th>
+            <th>切割目的</th>
+            <th>计划长度</th>
+            <th>状态</th>
+            <th>计划日期</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in recent_tasks %}
+            <tr>
+              <td><a href="{% url 'core:task_detail' task.pk %}">{{ task.task_no }}</a></td>
+              <td>
+                {% if task.core_sample %}
+                  <a href="{% url 'core:sample_detail' task.core_sample.pk %}">{{ task.core_sample.sample_no }}</a>
+                {% else %}-{% endif %}
+              </td>
+              <td>{{ task.cutter.cutter_no|default:"-" }}</td>
+              <td>{{ task.purpose.name|default:"-" }}</td>
+              <td>{{ task.planned_cut_length }}m</td>
+              <td>
+                <span class="badge
+                  {% if task.status == 'completed' %}badge-success
+                  {% elif task.status == 'in_progress' %}badge-warning
+                  {% elif task.status == 'scheduled' %}badge-info
+                  {% elif task.status == 'failed' or task.status == 'cancelled' %}badge-danger
+                  {% else %}badge-secondary{% endif %}">
+                  {{ task.get_status_display }}
+                </span>
+              </td>
+              <td>{{ task.scheduled_date|default:"-" }}</td>
+              <td>
+                <a href="{% url 'core:task_detail' task.pk %}" class="text-sm">详情</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" style="text-align:center;padding:32px;color:#94a3b8;">暂无任务记录</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

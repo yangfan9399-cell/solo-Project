@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ sample.sample_no }} - 岩心详情{% endblock %}
+{% block page_title %}岩心样本详情{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% url 'core:sample_list' %}" class="btn btn-outline btn-sm">← 返回列表</a>
+  <a href="{% url 'core:sample_edit' sample.pk %}" class="btn btn-primary btn-sm">✏️ 编辑</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card mb-20">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <h2 style="font-size:22px;margin-bottom:8px;">
+            {{ sample.sample_no }}
+            <span class="badge badge-{{ sample.priority }}" style="margin-left:8px;">
+              {{ sample.get_priority_display }}优先级
+            </span>
+            <span class="badge
+              {% if sample.status == 'completed' %}badge-success
+              {% elif sample.status == 'in_progress' %}badge-warning
+              {% elif sample.status == 'on_hold' %}badge-secondary
+              {% elif sample.status == 'archived' %}badge-info
+              {% else %}badge-info{% endif %}" style="margin-left:6px;">
+              {{ sample.get_status_display }}
+            </span>
+            {% if sample.has_anomaly %}
+              <span class="badge badge-danger" style="margin-left:6px;">⚠️ 有异常</span>
+            {% endif %}
+          </h2>
+          <p class="text-muted">{{ sample.well_name }} · {{ sample.lithology|default:"未知岩性" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3 class="detail-section-title">基本信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-item-label">样本编号</div>
+        <div class="detail-item-value">{{ sample.sample_no }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">井号</div>
+        <div class="detail-item-value">{{ sample.well_name }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">岩性</div>
+        <div class="detail-item-value">{{ sample.lithology|default:"-" }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">地层</div>
+        <div class="detail-item-value">{{ sample.formation|default:"-" }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">起始深度</div>
+        <div class="detail-item-value">{{ sample.depth_start }}m</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">结束深度</div>
+        <div class="detail-item-value">{{ sample.depth_end }}m</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3 class="detail-section-title">长度与使用情况</h3>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-item-label">总长度</div>
+        <div class="detail-item-value">{{ sample.total_length }}m</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">剩余长度</div>
+        <div class="detail-item-value">{{ sample.remaining_length }}m</div>
+      </div>
+      <div class="detail-item" style="grid-column:span 2;">
+        <div class="detail-item-label">使用率</div>
+        <div style="margin-top:8px;">
+          <div class="progress-bar" style="height:12px;">
+            <div class="progress-fill {% if sample.usage_rate > 80 %}danger{% elif sample.usage_rate > 50 %}warning{% else %}success{% endif %}"
+                 style="width:{{ sample.usage_rate }}%;"></div>
+          </div>
+          <div style="margin-top:6px;font-weight:600;font-size:16px;">{{ sample.usage_rate }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3 class="detail-section-title">管理信息</h3>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <div class="detail-item-label">存放位置</div>
+        <div class="detail-item-value">{{ sample.storage_location|default:"-" }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">采集日期</div>
+        <div class="detail-item-value">{{ sample.collected_date|default:"-" }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">创建时间</div>
+        <div class="detail-item-value">{{ sample.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-item-label">更新时间</div>
+        <div class="detail-item-value">{{ sample.updated_at|date:"Y-m-d H:i" }}</div>
+      </div>
+    </div>
+  </div>
+
+  {% if sample.description %}
+    <div class="detail-section">
+      <h3 class="detail-section-title">描述</h3>
+      <div class="card">
+        <div class="card-body">
+          {{ sample.description|linebreaks }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="detail-section">
+    <h3 class="detail-section-title">切割任务历史 ({{ tasks|length }})</h3>
+    <div class="card">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>任务编号</th>
+              <th>切割机</th>
+              <th>切割目的</th>
+              <th>计划长度</th>
+              <th>实际长度</th>
+              <th>损耗</th>
+              <th>状态</th>
+              <th>计划日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+              <tr>
+                <td><a href="{% url 'core:task_detail' task.pk %}">{{ task.task_no }}</a></td>
+                <td>{{ task.cutter.cutter_no|default:"-" }}</td>
+                <td>{{ task.purpose.name|default:"-" }}</td>
+                <td>{{ task.planned_cut_length }}m</td>
+                <td>{{ task.actual_cut_length|default:"-" }}{% if task.actual_cut_length %}m{% endif %}</td>
+                <td>
+                  {{ task.loss_length }}m
+                  {% if task.loss_rate > 10 %}
+                    <span class="badge badge-danger" style="margin-left:4px;">高</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge
+                    {% if task.status == 'completed' %}badge-success
+                    {% elif task.status == 'in_progress' %}badge-warning
+                    {% elif task.status == 'scheduled' %}badge-info
+                    {% elif task.status == 'failed' or task.status == 'cancelled' %}badge-danger
+                    {% else %}badge-secondary{% endif %}">
+                    {{ task.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ task.scheduled_date|default:"-" }}</td>
+                <td>
+                  <a href="{% url 'core:task_detail' task.pk %}" class="text-sm">详情</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" style="text-align:center;padding:32px;color:#94a3b8;">
+                  暂无切割任务记录
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if anomalies %}
+    <div class="detail-section">
+      <h3 class="detail-section-title">异常记录</h3>
+      {% for anomaly in anomalies %}
+        <div class="anomaly-item {% if anomaly.severity == 'critical' %}critical{% elif anomaly.severity == 'info' %}info{% endif %} {% if anomaly.resolved %}resolved{% endif %}">
+          <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div>
+              <span class="badge
+                {% if anomaly.severity == 'critical' %}badge-danger
+                {% elif anomaly.severity == 'warning' %}badge-warning
+                {% else %}badge-info{% endif %}">
+                {{ anomaly.get_severity_display }}
+              </span>
+              <span style="margin-left:8px;font-weight:500;">{{ anomaly.get_anomaly_type_display }}</span>
+              {% if anomaly.resolved %}
+                <span class="badge badge-success" style="margin-left:8px;">已解决</span>
+              {% endif %}
+            </div>
+            <span class="text-sm text-muted">{{ anomaly.detected_at|date:"m-d H:i" }}</span>
+          </div>
+          <p style="margin-top:6px;">{{ anomaly.description }}</p>
+          {% if anomaly.resolution %}
+            <p class="text-sm" style="margin-top:6px;color:#10b981;">
+              <strong>解决方案：</strong>{{ anomaly.resolution }}
+            </p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}
