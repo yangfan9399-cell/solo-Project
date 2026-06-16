@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-ssr
+server
+tmp
+*.local
+.DS_Store
+.env
+.env.*

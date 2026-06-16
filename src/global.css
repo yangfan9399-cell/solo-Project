@@ -1,0 +1,236 @@
+:root {
+  --color-bg: #1a1410;
+  --color-bg-alt: #2a1f18;
+  --color-panel: #3d2e24;
+  --color-border: #5a4535;
+  --color-text: #e8dcc8;
+  --color-text-dim: #a89880;
+  --color-accent: #d4a574;
+  --color-accent-light: #e8c49a;
+  --color-water: #6ba3c4;
+  --color-water-deep: #3d6a8a;
+  --color-success: #7ab648;
+  --color-warning: #d4a040;
+  --color-danger: #c45a4a;
+  --font-serif: 'Georgia', 'Songti SC', serif;
+  --font-mono: 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  line-height: 1.6;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(90, 69, 53, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(90, 69, 53, 0.2) 0%, transparent 50%);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.panel {
+  background: var(--color-panel);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.panel-title {
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border-radius: 4px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--color-accent-light);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-text-dim);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #d46a5a;
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.col {
+  flex: 1;
+  min-width: 280px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(90, 69, 53, 0.5);
+}
+
+.stat-label {
+  color: var(--color-text-dim);
+}
+
+.stat-value {
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.text-dim {
+  color: var(--color-text-dim);
+}
+
+.page-title {
+  font-size: 2rem;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.page-subtitle {
+  color: var(--color-text-dim);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  color: var(--color-text-dim);
+  font-size: 0.9rem;
+}
+
+.input-group input,
+.input-group select {
+  padding: 0.5rem;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: var(--color-border);
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
+.badge-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--color-warning);
+  color: var(--color-bg);
+}
+
+.badge-danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+@import './components.css';

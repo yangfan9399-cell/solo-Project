@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "古代水钟校时经营游戏",
+  "short_name": "水钟经营",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1410",
+  "theme_color": "#d4a574",
+  "description": "调节漏壶孔径，校准浮标刻度，经营古代水钟铺"
+}

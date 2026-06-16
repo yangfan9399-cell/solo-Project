@@ -1,0 +1,227 @@
+.water-clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.water-clock-info {
+  width: 100%;
+  max-width: 300px;
+}
+
+.order-card {
+  padding: 1rem;
+  background: var(--color-bg-alt);
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.order-selected {
+  border-color: var(--color-accent) !important;
+  background: rgba(212, 165, 116, 0.1);
+  box-shadow: 0 0 12px rgba(212, 165, 116, 0.2);
+}
+
+.order-urgent {
+  border-color: var(--color-danger);
+  animation: pulse-danger 2s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 90, 74, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(196, 90, 74, 0); }
+}
+
+.order-completed {
+  opacity: 0.7;
+  border-left: 4px solid var(--color-success);
+}
+
+.order-failed {
+  opacity: 0.7;
+  border-left: 4px solid var(--color-danger);
+}
+
+.game-header {
+  margin-bottom: 1rem;
+}
+
+.calibration-result {
+  padding: 1rem;
+  background: var(--color-bg-alt);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--color-panel);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.history-item {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(90, 69, 53, 0.5);
+  transition: background 0.2s;
+}
+
+.history-item:hover {
+  background: rgba(212, 165, 116, 0.05);
+}
+
+.history-current {
+  background: rgba(122, 182, 72, 0.1) !important;
+  border-left: 3px solid var(--color-success);
+}
+
+.history-future {
+  opacity: 0.5;
+}
+
+.level-card {
+  padding: 1rem;
+  background: var(--color-bg-alt);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.level-card:hover:not(.level-locked) {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.level-completed {
+  border-color: var(--color-success);
+}
+
+.level-current {
+  border-color: var(--color-warning);
+}
+
+.level-locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, var(--color-panel) 0%, var(--color-bg-alt) 100%);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.home-hero h1 {
+  font-size: 2.5rem;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+.home-hero p {
+  color: var(--color-text-dim);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.home-section {
+  margin-bottom: 2rem;
+}
+
+.home-section h2 {
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.instructions {
+  background: var(--color-bg-alt);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--color-accent);
+}
+
+.instructions ol {
+  padding-left: 1.5rem;
+  line-height: 2;
+}
+
+.instructions li {
+  color: var(--color-text);
+}
+
+.instructions strong {
+  color: var(--color-accent);
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-card {
+  padding: 1rem;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.next-day-bar {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--color-bg-alt);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.next-day-bar p {
+  color: var(--color-text-dim);
+  margin-bottom: 0.75rem;
+}
