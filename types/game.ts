@@ -38,14 +38,21 @@ export interface DyeAction {
 export interface DyeingSession {
   id: string
   orderId: string
+  orderName?: string
+  targetColor?: RGB
   currentColor: RGB
+  finalColor?: RGB
   temperature: number
   dipCount: number
   totalDipTime: number
   actions: DyeAction[]
   dyeUsed: Record<string, number>
+  operationHistory?: OperationHistory[]
+  result?: DyeResult
+  reward?: number
   startTime: number
-  status: 'active' | 'completed' | 'failed'
+  endTime?: number
+  status: 'active' | 'completed' | 'failed' | 'cancelled'
 }
 
 export interface Level {
@@ -80,6 +87,7 @@ export interface GameRecord {
   goldEarned: number
   ordersCompleted: number
   ordersFailed: number
+  ordersCancelled?: number
   totalColorDiff: number
   startTime: number
   endTime: number

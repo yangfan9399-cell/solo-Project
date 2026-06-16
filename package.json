@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "prepare": "nuxt prepare"
+    "prepare": "nuxt prepare",
+    "postinstall": "node scripts/fix-rollup.cjs"
   },
   "dependencies": {
     "nuxt": "3.6.5",

@@ -197,6 +197,7 @@ const {
   inventory,
   completedOrders,
   failedOrders,
+  cancelledOrders,
   goldEarned,
   goldSpent,
   timeRemaining,
@@ -207,6 +208,8 @@ const {
   canUndo,
   canRedo,
   levelPassed,
+  levelFailed,
+  dyeingSessionsHistory,
   startLevel,
   selectOrder,
   addDye,
@@ -337,13 +340,16 @@ const handleResultConfirm = () => {
   showResult.value = false
   closeSession()
 
-  if (remainingOrders.value.length === 0 || levelPassed.value) {
+  if (remainingOrders.value.length === 0 || levelPassed.value || levelFailed.value) {
     setTimeout(() => endLevel(), 500)
   }
 }
 
 const handleCloseSession = () => {
   closeSession()
+  if (levelFailed.value) {
+    setTimeout(() => endLevel(), 500)
+  }
 }
 
 const handleBuyDye = (dyeId: string, quantity: number) => {
@@ -352,6 +358,12 @@ const handleBuyDye = (dyeId: string, quantity: number) => {
     // 购买成功
   }
 }
+
+watch([levelPassed, levelFailed], ([passed, failed]) => {
+  if ((passed || failed) && isGameActive.value && !showLevelEnd.value && !showResult.value) {
+    setTimeout(() => endLevel(), 300)
+  }
+}, { immediate: false })
 
 const endLevel = async () => {
   if (timerInterval) clearInterval(timerInterval)
@@ -404,6 +416,7 @@ const endLevel = async () => {
 
   if (profile.value && currentLevel.value) {
     try {
+      const cancelledCount = cancelledOrders.value?.length || 0
       await $fetch('/api/records/create', {
         method: 'post',
         body: {
@@ -413,12 +426,13 @@ const endLevel = async () => {
           goldEarned: goldEarned.value - goldSpent.value,
           ordersCompleted: completedOrders.value.length,
           ordersFailed: failedOrders.value.length,
+          ordersCancelled: cancelledCount,
           totalColorDiff: completedOrders.value.reduce(
             (sum, item) => sum + item.result.colorDiff,
             0
           ),
           status: levelPassed.value ? 'completed' : 'failed',
-          dyeingSessions: []
+          dyeingSessions: [...dyeingSessionsHistory.value]
         }
       })
     } catch (e) {

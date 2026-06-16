@@ -23,9 +23,11 @@ import {
 const currentLevel = ref<Level | null>(null)
 const currentOrder = ref<Order | null>(null)
 const currentSession = ref<DyeingSession | null>(null)
+const dyeingSessionsHistory = ref<DyeingSession[]>([])
 const inventory = ref<InventoryItem[]>([])
-const completedOrders = ref<{ order: Order; result: DyeResult; reward: number }[]>([])
-const failedOrders = ref<Order[]>([])
+const completedOrders = ref<{ order: Order; result: DyeResult; reward: number; session: DyeingSession }[]>([])
+const failedOrders = ref<{ order: Order; session: DyeingSession }[]>([])
+const cancelledOrders = ref<{ order: Order; session: DyeingSession }[]>([])
 const goldEarned = ref(0)
 const goldSpent = ref(0)
 const timeRemaining = ref(0)
@@ -42,6 +44,8 @@ export function useGame() {
     inventory.value = level.initialInventory.map((i) => ({ ...i }))
     completedOrders.value = []
     failedOrders.value = []
+    cancelledOrders.value = []
+    dyeingSessionsHistory.value = []
     goldEarned.value = 0
     goldSpent.value = 0
     timeRemaining.value = level.timeLimit
@@ -63,6 +67,8 @@ export function useGame() {
     currentSession.value = {
       id: generateId(),
       orderId: order.id,
+      orderName: order.name,
+      targetColor: { ...order.targetColor },
       currentColor: { ...WHITE_COLOR },
       temperature: BASE_TEMP,
       dipCount: 0,
@@ -329,13 +335,29 @@ export function useGame() {
 
     const finalReward = Math.round(currentOrder.value.reward * result.rewardMultiplier)
 
+    const completedSession: DyeingSession = {
+      ...currentSession.value,
+      finalColor: { ...result.finalColor },
+      result: { ...result },
+      reward: finalReward,
+      operationHistory: [...operationHistory.value],
+      endTime: Date.now(),
+      status: result.quality === 'poor' ? 'failed' : 'completed'
+    }
+
+    dyeingSessionsHistory.value.push(completedSession)
+
     if (result.quality === 'poor') {
-      failedOrders.value.push(currentOrder.value)
+      failedOrders.value.push({
+        order: currentOrder.value,
+        session: completedSession
+      })
     } else {
       completedOrders.value.push({
         order: currentOrder.value,
         result: result!,
-        reward: finalReward
+        reward: finalReward,
+        session: completedSession
       })
       goldEarned.value += finalReward
     }
@@ -347,6 +369,19 @@ export function useGame() {
   }
 
   const closeSession = () => {
+    if (currentSession.value && currentOrder.value && currentSession.value.status === 'active') {
+      const cancelledSession: DyeingSession = {
+        ...currentSession.value,
+        operationHistory: [...operationHistory.value],
+        endTime: Date.now(),
+        status: 'cancelled'
+      }
+      dyeingSessionsHistory.value.push(cancelledSession)
+      cancelledOrders.value.push({
+        order: currentOrder.value,
+        session: cancelledSession
+      })
+    }
     currentSession.value = null
     currentOrder.value = null
     operationHistory.value = []
@@ -443,7 +478,8 @@ export function useGame() {
 
   const levelFailed = computed(() => {
     if (!currentLevel.value) return false
-    const remaining = currentLevel.value.orders.length - completedOrders.value.length - failedOrders.value.length
+    const totalProcessed = completedOrders.value.length + failedOrders.value.length + cancelledOrders.value.length
+    const remaining = currentLevel.value.orders.length - totalProcessed
     return (
       timeRemaining.value <= 0 ||
       (completedOrders.value.length + remaining < currentLevel.value.targetOrders)
@@ -454,9 +490,11 @@ export function useGame() {
     currentLevel,
     currentOrder,
     currentSession,
+    dyeingSessionsHistory,
     inventory,
     completedOrders,
     failedOrders,
+    cancelledOrders,
     goldEarned,
     goldSpent,
     timeRemaining,

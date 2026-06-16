@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
     goldEarned,
     ordersCompleted,
     ordersFailed,
+    ordersCancelled,
     totalColorDiff,
     status,
     dyeingSessions
@@ -23,6 +24,7 @@ export default defineEventHandler(async (event) => {
     goldEarned: number
     ordersCompleted: number
     ordersFailed: number
+    ordersCancelled?: number
     totalColorDiff: number
     status: 'completed' | 'failed' | 'quit'
     dyeingSessions: any[]
