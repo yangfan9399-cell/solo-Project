@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量子仓库 - 游戏大厅</title>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        background: linear-gradient(135deg, #0a0a1a 0%, #12082e 50%, #0d0d2b 100%);
+        min-height: 100vh;
+        color: #e0e0ff;
+        overflow-x: hidden;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(75, 0, 130, 0.12) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .navbar {
+        background: linear-gradient(90deg, rgba(30, 10, 60, 0.9) 0%, rgba(60, 20, 120, 0.85) 50%, rgba(30, 10, 60, 0.9) 100%);
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        border-radius: 16px;
+        padding: 18px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 30px rgba(138, 43, 226, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        margin-bottom: 30px;
+    }
+
+    .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .logo-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #9333ea, #581c87);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+        animation: quantumPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes quantumPulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.5); }
+        50% { box-shadow: 0 0 35px rgba(147, 51, 234, 0.8); }
+    }
+
+    .game-title {
+        font-size: 26px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #7c3aed 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 2px;
+    }
+
+    .player-section {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .player-stats {
+        display: flex;
+        gap: 20px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 16px;
+        background: rgba(147, 51, 234, 0.1);
+        border: 1px solid rgba(147, 51, 234, 0.25);
+        border-radius: 10px;
+        min-width: 90px;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: #a78bfa;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e9d5ff;
+    }
+
+    .player-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px;
+        background: rgba(147, 51, 234, 0.15);
+        border: 1px solid rgba(147, 51, 234, 0.35);
+        border-radius: 10px;
+    }
+
+    .player-avatar {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, #c084fc, #7c3aed);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        color: #fff;
+    }
+
+    .player-nickname {
+        font-weight: 600;
+        color: #e9d5ff;
+    }
+
+    .anonymous-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: rgba(251, 191, 36, 0.2);
+        border: 1px solid rgba(251, 191, 36, 0.4);
+        color: #fbbf24;
+        border-radius: 4px;
+        margin-left: 4px;
+    }
+
+    .main-content {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 28px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #e9d5ff;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title::before {
+        content: '';
+        display: block;
+        width: 4px;
+        height: 22px;
+        background: linear-gradient(180deg, #c084fc, #7c3aed);
+        border-radius: 2px;
+    }
+
+    .levels-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 18px;
+    }
+
+    .level-card {
+        background: linear-gradient(145deg, rgba(30, 15, 60, 0.95) 0%, rgba(50, 20, 100, 0.85) 100%);
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        border-radius: 14px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .level-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #9333ea, transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .level-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(147, 51, 234, 0.6);
+        box-shadow: 0 12px 40px rgba(138, 43, 226, 0.3);
+    }
+
+    .level-card:hover::before {
+        opacity: 1;
+    }
+
+    .level-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+
+    .level-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #9333ea, #6d28d9);
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 16px;
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(147, 51, 234, 0.4);
+    }
+
+    .difficulty-stars {
+        font-size: 15px;
+        letter-spacing: 2px;
+    }
+
+    .star-active {
+        color: #fbbf24;
+        text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+    }
+
+    .star-inactive {
+        color: #4c1d95;
+    }
+
+    .level-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #f3e8ff;
+        margin-bottom: 12px;
+    }
+
+    .level-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+    }
+
+    .meta-label {
+        color: #a78bfa;
+    }
+
+    .meta-value {
+        color: #e9d5ff;
+        font-weight: 600;
+    }
+
+    .best-score-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        background: rgba(34, 197, 94, 0.15);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        color: #4ade80;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .start-btn {
+        width: 100%;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #9333ea 0%, #7c3aed 50%, #6d28d9 100%);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(147, 51, 234, 0.4);
+    }
+
+    .start-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(147, 51, 234, 0.6);
+        background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 50%, #7c3aed 100%);
+    }
+
+    .start-btn:active {
+        transform: translateY(0);
+    }
+
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .panel {
+        background: linear-gradient(145deg, rgba(30, 15, 60, 0.95) 0%, rgba(45, 18, 90, 0.85) 100%);
+        border: 1px solid rgba(147, 51, 234, 0.3);
+        border-radius: 14px;
+        padding: 20px;
+    }
+
+    .recent-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .recent-item {
+        padding: 14px;
+        background: rgba(147, 51, 234, 0.08);
+        border: 1px solid rgba(147, 51, 234, 0.18);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+
+    .recent-item:hover {
+        background: rgba(147, 51, 234, 0.15);
+        border-color: rgba(147, 51, 234, 0.35);
+    }
+
+    .recent-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .recent-level {
+        font-weight: 600;
+        color: #e9d5ff;
+        font-size: 14px;
+    }
+
+    .status-badge {
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .status-won {
+        background: rgba(34, 197, 94, 0.18);
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        color: #4ade80;
+    }
+
+    .status-playing {
+        background: rgba(59, 130, 246, 0.18);
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        color: #60a5fa;
+    }
+
+    .status-lost {
+        background: rgba(239, 68, 68, 0.18);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #f87171;
+    }
+
+    .recent-bottom {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #a78bfa;
+    }
+
+    .recent-detail span {
+        color: #c4b5fd;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        padding: 30px 20px;
+        text-align: center;
+        color: #a78bfa;
+    }
+
+    .empty-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+        opacity: 0.5;
+    }
+
+    .empty-text {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .footer-tips {
+        margin-top: 30px;
+        background: linear-gradient(145deg, rgba(30, 15, 60, 0.8) 0%, rgba(45, 18, 90, 0.7) 100%);
+        border: 1px solid rgba(147, 51, 234, 0.2);
+        border-radius: 14px;
+        padding: 20px 24px;
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .tip-icon {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(109, 40, 217, 0.3));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
+    .tip-text {
+        color: #c4b5fd;
+    }
+
+    .tip-title {
+        font-weight: 600;
+        color: #e9d5ff;
+        margin-bottom: 2px;
+    }
+
+    .login-prompt {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(245, 158, 11, 0.08));
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 10px;
+        margin-top: 16px;
+    }
+
+    .login-text {
+        font-size: 13px;
+        color: #fde68a;
+    }
+
+    .login-text strong {
+        color: #fbbf24;
+    }
+
+    .login-btn {
+        padding: 8px 18px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .login-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    @media (max-width: 1024px) {
+        .main-content {
+            grid-template-columns: 1fr;
+        }
+        .navbar {
+            flex-direction: column;
+            gap: 18px;
+        }
+        .player-section {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .container {
+            padding: 12px;
+        }
+        .levels-grid {
+            grid-template-columns: 1fr;
+        }
+        .player-stats {
+            gap: 10px;
+        }
+        .stat-item {
+            min-width: 70px;
+            padding: 6px 10px;
+        }
+        .stat-value {
+            font-size: 15px;
+        }
+        .game-title {
+            font-size: 20px;
+        }
+        .login-prompt {
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <nav class="navbar">
+        <div class="logo-section">
+            <div class="logo-icon">⚛</div>
+            <h1 class="game-title">量子仓库</h1>
+        </div>
+        <div class="player-section">
+            <div class="player-stats">
+                <div class="stat-item">
+                    <span class="stat-label">总得分</span>
+                    <span class="stat-value">{{ player.total_score }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">游玩次数</span>
+                    <span class="stat-value">{{ player.play_count }}</span>
+                </div>
+            </div>
+            <div class="player-info">
+                <div class="player-avatar">{{ player.nickname|slice:":1" }}</div>
+                <span class="player-nickname">
+                    {{ player.nickname }}
+                    {% if player.is_anonymous %}
+                        <span class="anonymous-badge">游客</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="levels-section">
+            <h2 class="section-title">关卡选择</h2>
+            <div class="levels-grid">
+                {% for level in levels %}
+                    <div class="level-card">
+                        <div class="level-header">
+                            <span class="level-number">{{ level.id }}</span>
+                            <div class="difficulty-stars">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= level.difficulty %}
+                                        <span class="star-active">★</span>
+                                    {% else %}
+                                        <span class="star-inactive">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <h3 class="level-name">{{ level.name }}</h3>
+                        <div class="level-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">最佳步数</span>
+                                <span class="meta-value">{{ level.best_steps }} 步</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">你的最佳</span>
+                                <span class="meta-value">
+                                    {% if level.best_score %}
+                                        <span class="best-score-badge">🏆 {{ level.best_score }}分</span>
+                                    {% else %}
+                                        <span style="color:#6d28d9;">未通关</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <a href="{% url 'game:start_game' level.id %}" class="start-btn">
+                            ▶ 开始游戏
+                        </a>
+                    </div>
+                {% empty %}
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">🔮</div>
+                        <div class="empty-text">暂无关卡数据<br>请等待管理员添加关卡</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <aside class="sidebar">
+            <div class="panel">
+                <h2 class="section-title">最近游戏</h2>
+                <div class="recent-list">
+                    {% for game in recent_sessions %}
+                        <div class="recent-item">
+                            <div class="recent-top">
+                                <span class="recent-level">{{ game.level_name }}</span>
+                                <span class="status-badge 
+                                    {% if game.status == 'won' %}status-won
+                                    {% elif game.status == 'playing' %}status-playing
+                                    {% else %}status-lost{% endif %}">
+                                    {% if game.status == 'won' %}✓ 通关
+                                    {% elif game.status == 'playing' %}⏵ 进行中
+                                    {% else %}✗ 失败{% endif %}
+                                </span>
+                            </div>
+                            <div class="recent-bottom">
+                                <div class="recent-detail">步数: <span>
+                                    {% if game.score %}{{ game.score }}{% else %}-{% endif %}
+                                </span></div>
+                                <div class="recent-detail">{{ game.start_time|date:"m-d H:i" }}</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">
+                            <div class="empty-icon">📜</div>
+                            <div class="empty-text">
+                                {% if player.is_anonymous %}
+                                    游客模式不保存游戏记录<br>登录后可查看历史记录
+                                {% else %}
+                                    还没有游戏记录<br>选择一个关卡开始吧！
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="section-title">游戏说明</h2>
+                <div style="font-size:13px; line-height:1.8; color:#c4b5fd;">
+                    <p style="margin-bottom:10px;">🎯 <strong style="color:#e9d5ff;">目标：</strong>将所有箱子推到目标点上</p>
+                    <p style="margin-bottom:10px;">🕹 <strong style="color:#e9d5ff;">操作：</strong>方向键 / WASD 移动</p>
+                    <p style="margin-bottom:10px;">↩️ <strong style="color:#e9d5ff;">撤销：</strong>按 Z 键撤销上一步</p>
+                    <p>⚛ <strong style="color:#e9d5ff;">量子坍缩：</strong>利用量子特性获得额外分数</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="footer-tips">
+        <div class="tips-grid">
+            <div class="tip-item">
+                <div class="tip-icon">⌨️</div>
+                <div>
+                    <div class="tip-title">快捷键</div>
+                    <div class="tip-text">方向键移动，Z键撤销，R键重开</div>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">🏆</div>
+                <div>
+                    <div class="tip-title">评分机制</div>
+                    <div class="tip-text">步数越少、坍缩越多，得分越高</div>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">💾</div>
+                <div>
+                    <div class="tip-title">进度保存</div>
+                    <div class="tip-text">登录账号可永久保存游戏进度</div>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">🎮</div>
+                <div>
+                    <div class="tip-title">挑战自己</div>
+                    <div class="tip-text">尝试用最少的步数完成每一关</div>
+                </div>
+            </div>
+        </div>
+
+        {% if player.is_anonymous %}
+            <div class="login-prompt">
+                <div class="login-text">
+                    <strong>🔒 温馨提示：</strong>当前为游客模式，游戏进度和成绩将不会被保存。登录后可解锁完整功能！
+                </div>
+                <a href="/admin/login/" class="login-btn">立即登录</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.level-card').forEach(function(card) {
+        card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            card.style.background = 'radial-gradient(circle at ' + x + 'px ' + y + 'px, rgba(147, 51, 234, 0.25) 0%, rgba(30, 15, 60, 0.95) 50%, rgba(50, 20, 100, 0.85) 100%)';
+        });
+        card.addEventListener('mouseleave', function() {
+            card.style.background = 'linear-gradient(145deg, rgba(30, 15, 60, 0.95) 0%, rgba(50, 20, 100, 0.85) 100%)';
+        });
+    });
+
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.level-card, .recent-item').forEach(function(el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(el);
+    });
+</script>
+</body>
+</html>
