@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}控制台 - 低多边形城堡攻防{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+    <div class="lg:col-span-1">
+        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white">
+            <h3 class="text-lg font-semibold mb-4">👤 玩家档案</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">昵称</span>
+                    <span class="font-bold">{{ profile.display_name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">💰 金币</span>
+                    <span class="font-bold text-yellow-300">{{ profile.gold }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">🏆 总分</span>
+                    <span class="font-bold">{{ profile.total_score }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">✓ 胜利</span>
+                    <span class="font-bold text-green-300">{{ profile.wins }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">✗ 失败</span>
+                    <span class="font-bold text-red-300">{{ profile.losses }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-indigo-200">📍 当前关卡</span>
+                    <span class="font-bold text-amber-300">第 {{ profile.current_level }} 关</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-3">
+        <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-6">🗺️ 选择关卡</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for level in levels %}
+                <div class="bg-slate-700/50 rounded-xl p-5 border border-slate-600 hover:border-indigo-500 transition group">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="text-lg font-bold text-white">第 {{ level.number }} 关</h4>
+                            <p class="text-indigo-400 font-semibold">{{ level.name }}</p>
+                        </div>
+                        <div class="text-3xl">
+                            {% if level.number == 1 %}🏠{% elif level.number == 2 %}🏰{% elif level.number == 3 %}🏯{% elif level.number == 4 %}👹{% else %}🔥{% endif %}
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-sm mb-4">{{ level.description }}</p>
+                    <div class="flex items-center justify-between text-sm mb-4">
+                        <span class="text-slate-300">难度: <span class="text-yellow-400">{{ level.difficulty }}x</span></span>
+                        <span class="text-slate-300">奖励: <span class="text-green-400">{{ level.base_reward }}金</span></span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xs text-slate-400">敌人波次:</span>
+                        {% for wave in level.enemy_waves %}
+                        <span class="px-2 py-1 bg-slate-600 rounded text-xs text-white">
+                            T{{ wave.turn }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% if level.unlocked %}
+                    <a href="{% url 'start_game' level.id %}"
+                       class="block w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl text-center transition transform group-hover:scale-105">
+                        ⚔️ 开始战斗
+                    </a>
+                    {% else %}
+                    <button disabled
+                            class="block w-full py-3 bg-slate-600 text-slate-400 font-bold rounded-xl text-center cursor-not-allowed">
+                        🔒 未解锁
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">📜 最近战局</h3>
+        {% if recent_sessions %}
+        <div class="space-y-3">
+            {% for session in recent_sessions %}
+            <a href="{% url 'battle_report' session.id %}"
+               class="block bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition border border-slate-600 hover:border-indigo-500">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">
+                            {% if session.status == 'won' %}🏆{% elif session.status == 'lost' %}💀{% else %}⏳{% endif %}
+                        </span>
+                        <div>
+                            <p class="text-white font-semibold">第 {{ session.level.number }} 关 - {{ session.level.name }}</p>
+                            <p class="text-slate-400 text-sm">
+                                回合: {{ session.current_turn }} | 得分: {{ session.score }} |
+                                {{ session.created_at|date:"m-d H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-lg text-sm font-bold
+                        {% if session.status == 'won' %}bg-green-600 text-white
+                        {% elif session.status == 'lost' %}bg-red-600 text-white
+                        {% else %}bg-yellow-600 text-white{% endif %}">
+                        {% if session.status == 'won' %}胜利{% elif session.status == 'lost' %}失败{% else %}进行中{% endif %}
+                    </span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-center py-8">还没有战斗记录，开始你的第一局吧！</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">🏆 排行榜</h3>
+        {% if high_scores %}
+        <div class="space-y-2">
+            {% for score in high_scores %}
+            <div class="flex items-center gap-3 bg-slate-700/50 rounded-xl p-3 border border-slate-600">
+                <span class="text-2xl font-bold
+                    {% if forloop.counter == 1 %}text-yellow-400
+                    {% elif forloop.counter == 2 %}text-slate-300
+                    {% elif forloop.counter == 3 %}text-amber-600
+                    {% else %}text-slate-500{% endif %}">
+                    #{{ forloop.counter }}
+                </span>
+                <span class="text-xl">
+                    {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% endif %}
+                </span>
+                <div class="flex-1">
+                    <p class="text-white font-semibold">{{ score.player.display_name }}</p>
+                    <p class="text-slate-400 text-sm">第 {{ score.level.number }} 关</p>
+                </div>
+                <span class="text-xl font-bold text-indigo-400">{{ score.score }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="{% url 'leaderboard' %}" class="block text-center mt-4 text-indigo-400 hover:text-indigo-300 transition">
+            查看完整排行榜 →
+        </a>
+        {% else %}
+        <p class="text-slate-400 text-center py-8">暂无排行数据</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

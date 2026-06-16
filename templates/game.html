@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}第 {{ session.level.number }} 关 - 低多边形城堡攻防{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-4 border border-slate-700">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-white">
+                    <span class="text-3xl mr-2">
+                        {% if session.level.number == 1 %}🏠{% elif session.level.number == 2 %}🏰{% elif session.level.number == 3 %}🏯{% elif session.level.number == 4 %}👹{% else %}🔥{% endif %}
+                    </span>
+                    第 {{ session.level.number }} 关: {{ session.level.name }}
+                </h1>
+                <span id="status-badge" class="px-4 py-2 rounded-lg font-bold
+                    {% if session.status == 'setup' %}bg-blue-600 text-white
+                    {% elif session.status == 'playing' %}bg-green-600 text-white
+                    {% elif session.status == 'won' %}bg-yellow-500 text-black
+                    {% else %}bg-red-600 text-white{% endif %}">
+                    {% if session.status == 'setup' %}布置阶段{% elif session.status == 'playing' %}战斗中{% elif session.status == 'won' %}胜利!{% else %}失败{% endif %}
+                </span>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">回合</div>
+                    <div id="turn-display" class="text-2xl font-bold text-white">{{ session.current_turn }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">💰 金币</div>
+                    <div id="gold-display" class="text-2xl font-bold text-yellow-400">{{ session.gold }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">🏆 得分</div>
+                    <div id="score-display" class="text-2xl font-bold text-indigo-400">{{ session.score }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">💀 击杀</div>
+                    <div id="kills-display" class="text-2xl font-bold text-red-400">{{ session.enemies_killed }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-slate-300">🏰 城墙生命值:</span>
+                <div class="flex-1 h-6 bg-slate-700 rounded-full overflow-hidden">
+                    <div id="wall-health-bar" class="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500" style="width: {{ session.wall_health }}%"></div>
+                </div>
+                <span id="wall-health-text" class="text-white font-bold min-w-[80px] text-right">{{ session.wall_health }}/{{ session.max_wall_health }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="lg:col-span-3">
+        <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+            <div id="game-grid" class="relative bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl overflow-hidden"
+                 data-width="{{ grid_width }}" data-height="{{ grid_height }}" data-wall-x="{{ wall_x }}">
+            </div>
+
+            <div class="mt-6 flex flex-wrap gap-4 justify-center">
+                {% if session.status == 'setup' %}
+                <button id="start-attack-btn"
+                        class="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                    ⚔️ 开始进攻！
+                </button>
+                {% endif %}
+                {% if session.status == 'playing' %}
+                <button id="next-turn-btn"
+                        class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                    ▶️ 下一回合
+                </button>
+                {% endif %}
+                {% if session.status == 'won' or session.status == 'lost' %}
+                <a href="{% url 'battle_report' session.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                    📊 查看战报
+                </a>
+                <a href="{% url 'replay_view' session.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                    🎬 回放战斗
+                </a>
+                <a href="{% url 'start_game' session.level.id %}"
+                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold text-xl rounded-xl transition transform hover:scale-105 shadow-lg">
+                    🔄 重新开始
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 border border-slate-700">
+            <h3 class="text-lg font-bold text-white mb-4">🧰 陷阱商店</h3>
+            <div id="trap-shop" class="space-y-3">
+                {% for trap in trap_types %}
+                <div class="trap-card bg-slate-700/50 rounded-xl p-3 border border-slate-600 hover:border-indigo-500 cursor-pointer transition"
+                     data-trap-id="{{ trap.id }}" data-cost="{{ trap.cost }}"
+                     data-name="{{ trap.name }}" data-emoji="{{ trap.emoji }}" data-color="{{ trap.color }}">
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl" style="color: {{ trap.color }}">{{ trap.emoji }}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center">
+                                <span class="text-white font-semibold truncate">{{ trap.name }}</span>
+                                <span class="text-yellow-400 font-bold">💰{{ trap.cost }}</span>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-1">
+                                <span class="text-red-400">伤害:{{ trap.damage }}</span> |
+                                <span class="text-blue-400">范围:{{ trap.range }}</span> |
+                                <span class="text-green-400">冷却:{{ trap.cooldown }}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1 truncate">{{ trap.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <p id="trap-hint" class="text-xs text-slate-400 mt-3 text-center">
+                点击选择陷阱，然后点击网格放置
+            </p>
+        </div>
+
+        <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 border border-slate-700">
+            <h3 class="text-lg font-bold text-white mb-4">👷 工匠任务</h3>
+            <div class="space-y-2">
+                <button class="craftsman-task w-full text-left bg-slate-700/50 hover:bg-slate-700 rounded-xl p-3 border border-slate-600 transition"
+                        data-task="repair_wall" data-cost="30">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-white font-semibold">🔧 修复城墙</span>
+                            <p class="text-xs text-slate-400 mt-1">2回合 +25城墙HP</p>
+                        </div>
+                        <span class="text-yellow-400 font-bold text-sm">💰30</span>
+                    </div>
+                </button>
+                <button class="craftsman-task w-full text-left bg-slate-700/50 hover:bg-slate-700 rounded-xl p-3 border border-slate-600 transition"
+                        data-task="build_arrow_trap" data-cost="20">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-white font-semibold">🏹 建造箭塔</span>
+                            <p class="text-xs text-slate-400 mt-1">3回合 免费箭塔</p>
+                        </div>
+                        <span class="text-yellow-400 font-bold text-sm">💰20</span>
+                    </div>
+                </button>
+                <button class="craftsman-task w-full text-left bg-slate-700/50 hover:bg-slate-700 rounded-xl p-3 border border-slate-600 transition"
+                        data-task="mine_gold" data-cost="10">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-white font-semibold">⛏️ 开采金矿</span>
+                            <p class="text-xs text-slate-400 mt-1">2回合 +50金币</p>
+                        </div>
+                        <span class="text-yellow-400 font-bold text-sm">💰10</span>
+                    </div>
+                </button>
+                <button class="craftsman-task w-full text-left bg-slate-700/50 hover:bg-slate-700 rounded-xl p-3 border border-slate-600 transition"
+                        data-task="forge_spike" data-cost="25">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-white font-semibold">⚔️ 锻造尖刺</span>
+                            <p class="text-xs text-slate-400 mt-1">4回合 免费尖刺</p>
+                        </div>
+                        <span class="text-yellow-400 font-bold text-sm">💰25</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div id="active-tasks-panel" class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 border border-slate-700 hidden">
+            <h3 class="text-lg font-bold text-white mb-4">📋 进行中的任务</h3>
+            <div id="active-tasks-list" class="space-y-2">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+    <h3 class="text-xl font-bold text-white mb-4">📜 战斗日志</h3>
+    <div id="action-log" class="h-48 overflow-y-auto bg-slate-900/50 rounded-xl p-4 space-y-2 font-mono text-sm">
+    </div>
+</div>
+
+<div id="game-over-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-slate-800 rounded-3xl p-8 max-w-md w-full mx-4 text-center border-2 border-yellow-500 shadow-2xl">
+        <div id="modal-icon" class="text-8xl mb-4">🏆</div>
+        <h2 id="modal-title" class="text-3xl font-bold text-white mb-2">胜利!</h2>
+        <p id="modal-subtitle" class="text-slate-400 mb-6">你成功守住了城堡！</p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-700/50 rounded-xl p-4">
+                <div class="text-slate-400 text-sm">最终得分</div>
+                <div id="modal-score" class="text-3xl font-bold text-indigo-400">0</div>
+            </div>
+            <div class="bg-slate-700/50 rounded-xl p-4">
+                <div class="text-slate-400 text-sm">击杀敌人</div>
+                <div id="modal-kills" class="text-3xl font-bold text-red-400">0</div>
+            </div>
+        </div>
+        <div class="flex gap-4 justify-center">
+            <a href="{% url 'battle_report' session.id %}"
+               class="px-6 py-3 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white font-bold rounded-xl transition">
+                📊 战报
+            </a>
+            <a href="{% url 'replay_view' session.id %}"
+               class="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition">
+                🎬 回放
+            </a>
+            <a href="{% url 'dashboard' %}"
+               class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition">
+                🏠 主页
+            </a>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+{% endblock %}
+
+{% block scripts %}
+{% load static %}
+<script>
+    const SESSION_ID = {{ session.id }};
+    const GRID_WIDTH = {{ grid_width }};
+    const GRID_HEIGHT = {{ grid_height }};
+    const WALL_X = {{ wall_x }};
+    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+</script>
+<script src="{% static 'js/game.js' %}"></script>
+{% endblock %}

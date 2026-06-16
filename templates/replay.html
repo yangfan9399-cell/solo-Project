@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}回放 - 第 {{ session.level.number }} 关{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'battle_report' session.id %}" class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-4">
+        ← 返回战报
+    </a>
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-4 border border-slate-700">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white">
+                    🎬 回放: 第 {{ session.level.number }} 关 - {{ session.level.name }}
+                </h1>
+                <p class="text-slate-400">玩家: {{ session.player.display_name }} | 总回合: {{ max_turn }}</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">当前回合</div>
+                    <div id="replay-turn" class="text-2xl font-bold text-white">0 / {{ max_turn }}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">💰 金币</div>
+                    <div id="replay-gold" class="text-2xl font-bold text-yellow-400">100</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-slate-400 text-sm">🏆 得分</div>
+                    <div id="replay-score" class="text-2xl font-bold text-indigo-400">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="text-slate-300">🏰 城墙:</span>
+                <div class="flex-1 h-6 bg-slate-700 rounded-full overflow-hidden">
+                    <div id="replay-wall-bar" class="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500" style="width: 100%"></div>
+                </div>
+                <span id="replay-wall-text" class="text-white font-bold min-w-[80px] text-right">100/100</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+    <div id="replay-grid" class="relative bg-gradient-to-b from-slate-900 to-slate-800 rounded-xl overflow-hidden mb-6">
+    </div>
+
+    <div class="flex items-center justify-center gap-4 flex-wrap">
+        <button id="play-pause-btn" class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition">
+            ▶️ 播放
+        </button>
+        <button id="prev-frame-btn" class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl transition">
+            ⏮️ 上一帧
+        </button>
+        <button id="next-frame-btn" class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl transition">
+            ⏭️ 下一帧
+        </button>
+        <button id="reset-btn" class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl transition">
+            ⏹️ 重置
+        </button>
+        <div class="flex items-center gap-2">
+            <span class="text-slate-300">速度:</span>
+            <select id="speed-select" class="bg-slate-700 text-white rounded-lg px-3 py-2 border border-slate-600">
+                <option value="2000">0.5x</option>
+                <option value="1000" selected>1x</option>
+                <option value="500">2x</option>
+                <option value="250">4x</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+            <span class="text-slate-400 text-sm">0</span>
+            <input type="range" id="frame-slider" min="0" value="0" class="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+            <span class="text-slate-400 text-sm">{{ max_turn }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="mt-6 bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+    <h3 class="text-xl font-bold text-white mb-4">📜 回放松述</h3>
+    <div id="replay-log" class="h-48 overflow-y-auto bg-slate-900/50 rounded-xl p-4 space-y-2 font-mono text-sm">
+    </div>
+</div>
+
+<script>
+    const SESSION_ID = {{ session.id }};
+    let frames = [];
+    let currentFrame = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let playSpeed = 1000;
+
+    async function loadFrames() {
+        const response = await fetch(`/api/replay/${SESSION_ID}/`);
+        const data = await response.json();
+        frames = data.frames;
+        document.getElementById('frame-slider').max = frames.length - 1;
+        renderFrame(0);
+    }
+
+    function renderFrame(index) {
+        if (index < 0 || index >= frames.length) return;
+        currentFrame = index;
+        const frame = frames[index];
+
+        document.getElementById('replay-turn').textContent = `${frame.turn} / {{ max_turn }}`;
+        document.getElementById('replay-gold').textContent = frame.gold;
+        document.getElementById('replay-score').textContent = frame.score;
+
+        const wallPct = (frame.wall_health / frame.max_wall_health) * 100;
+        document.getElementById('replay-wall-bar').style.width = `${wallPct}%`;
+        document.getElementById('replay-wall-text').textContent = `${frame.wall_health}/${frame.max_wall_health}`;
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `px-3 py-1 rounded text-sm font-bold ml-2 ${
+            frame.status === 'setup' ? 'bg-blue-600' :
+            frame.status === 'playing' ? 'bg-green-600' :
+            frame.status === 'won' ? 'bg-yellow-500 text-black' : 'bg-red-600'
+        }`;
+        statusBadge.textContent = frame.status === 'setup' ? '布置' :
+                                    frame.status === 'playing' ? '战斗' :
+                                    frame.status === 'won' ? '胜利' : '失败';
+
+        renderReplayGrid(frame);
+        document.getElementById('frame-slider').value = index;
+        addReplayLog(frame);
+    }
+
+    function renderReplayGrid(frame) {
+        const grid = document.getElementById('replay-grid');
+        const GRID_WIDTH = 10;
+        const GRID_HEIGHT = 5;
+        const CELL_SIZE = 70;
+
+        grid.innerHTML = '';
+        grid.style.width = `${GRID_WIDTH * CELL_SIZE}px`;
+        grid.style.height = `${GRID_HEIGHT * CELL_SIZE}px`;
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', GRID_WIDTH * CELL_SIZE);
+        svg.setAttribute('height', GRID_HEIGHT * CELL_SIZE);
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', x * CELL_SIZE);
+                rect.setAttribute('y', y * CELL_SIZE);
+                rect.setAttribute('width', CELL_SIZE);
+                rect.setAttribute('height', CELL_SIZE);
+                rect.setAttribute('fill', (x + y) % 2 === 0 ? '#1e293b' : '#0f172a');
+                rect.setAttribute('stroke', '#334155');
+                rect.setAttribute('stroke-width', '1');
+                svg.appendChild(rect);
+
+                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                const cx = x * CELL_SIZE + CELL_SIZE / 2;
+                const cy = y * CELL_SIZE + CELL_SIZE / 2;
+                const size = CELL_SIZE * 0.35;
+                if ((x + y) % 2 === 0) {
+                    poly.setAttribute('points', `${cx},${cy-size} ${cx+size},${cy} ${cx},${cy+size} ${cx-size},${cy}`);
+                    poly.setAttribute('fill', 'rgba(99, 102, 241, 0.05)');
+                } else {
+                    poly.setAttribute('points', `${cx-size},${cy-size} ${cx+size},${cy-size} ${cx},${cy+size}`);
+                    poly.setAttribute('fill', 'rgba(139, 92, 246, 0.05)');
+                }
+                svg.appendChild(poly);
+            }
+        }
+
+        for (let i = 0; i < GRID_HEIGHT; i++) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = '';
+            for (let x = 0; x < GRID_WIDTH - 1; x++) {
+                const y = i * CELL_SIZE + CELL_SIZE / 2;
+                if (x === 0) d += `M ${x * CELL_SIZE + CELL_SIZE/2},${y}`;
+                else d += ` L ${x * CELL_SIZE + CELL_SIZE/2},${y}`;
+            }
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', 'rgba(239, 68, 68, 0.2)');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-dasharray', '10,5');
+            path.setAttribute('fill', 'none');
+            svg.appendChild(path);
+        }
+
+        const wallX = (GRID_WIDTH - 1) * CELL_SIZE;
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            const tower = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            const bx = wallX + CELL_SIZE / 2;
+            const by = y * CELL_SIZE + CELL_SIZE / 2;
+            const h = CELL_SIZE * 0.8;
+            const w = CELL_SIZE * 0.6;
+            const healthPct = frame.wall_health / frame.max_wall_health;
+            const r = Math.floor(234 * (1 - healthPct));
+            const g = Math.floor(179 * healthPct + 52 * (1 - healthPct));
+            const b = Math.floor(179 * healthPct);
+            tower.setAttribute('points', `${bx-w/2},${by+h/2} ${bx-w/2},${by-h/3} ${bx},${by-h/2} ${bx+w/2},${by-h/3} ${bx+w/2},${by+h/2}`);
+            tower.setAttribute('fill', `rgb(${r}, ${g}, ${b})`);
+            tower.setAttribute('stroke', '#1e293b');
+            tower.setAttribute('stroke-width', '2');
+            svg.appendChild(tower);
+        }
+
+        grid.appendChild(svg);
+
+        frame.traps.forEach(trap => {
+            const div = document.createElement('div');
+            div.className = 'absolute flex items-center justify-center text-3xl transform transition-all duration-300';
+            div.style.left = `${trap.x * CELL_SIZE}px`;
+            div.style.top = `${trap.y * CELL_SIZE}px`;
+            div.style.width = `${CELL_SIZE}px`;
+            div.style.height = `${CELL_SIZE}px`;
+            div.style.color = trap.color;
+            div.innerHTML = `<span class="drop-shadow-lg">${trap.emoji}</span>`;
+            grid.appendChild(div);
+        });
+
+        frame.enemies.forEach(enemy => {
+            if (!enemy.is_alive) return;
+            const div = document.createElement('div');
+            div.className = 'absolute transition-all duration-500';
+            div.style.left = `${enemy.x * CELL_SIZE}px`;
+            div.style.top = `${enemy.y * CELL_SIZE}px`;
+            div.style.width = `${CELL_SIZE}px`;
+            div.style.height = `${CELL_SIZE}px`;
+
+            const emoji = enemy.type === 'grunt' ? '👹' :
+                         enemy.type === 'fast' ? '🏃' :
+                         enemy.type === 'tank' ? '🛡️' : '👑';
+            const bgColor = enemy.type === 'grunt' ? 'bg-red-900/80' :
+                           enemy.type === 'fast' ? 'bg-yellow-900/80' :
+                           enemy.type === 'tank' ? 'bg-slate-700/80' : 'bg-purple-900/80';
+
+            div.innerHTML = `
+                <div class="w-full h-full flex flex-col items-center justify-center ${bgColor} rounded-lg border-2 border-slate-600">
+                    <span class="text-2xl">${emoji}</span>
+                    <div class="w-12 h-1.5 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                        <div class="h-full bg-red-500" style="width: ${(enemy.health / enemy.max_health) * 100}%"></div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    function addReplayLog(frame) {
+        const log = document.getElementById('replay-log');
+        const entry = document.createElement('div');
+        entry.className = 'py-1 border-b border-slate-800';
+        let enemiesAlive = frame.enemies.filter(e => e.is_alive).length;
+        entry.innerHTML = `<span class="text-slate-500">[T${frame.turn}]</span> <span class="text-cyan-400 font-semibold">状态:${frame.status}</span> | 💰${frame.gold} 🏆${frame.score} 陷阱:${frame.traps.length} 敌人:${enemiesAlive} 任务:${frame.tasks.length}`;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function togglePlay() {
+        isPlaying = !isPlaying;
+        const btn = document.getElementById('play-pause-btn');
+        if (isPlaying) {
+            btn.innerHTML = '⏸️ 暂停';
+            btn.className = 'px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold rounded-xl transition';
+            playInterval = setInterval(() => {
+                if (currentFrame < frames.length - 1) {
+                    renderFrame(currentFrame + 1);
+                } else {
+                    togglePlay();
+                }
+            }, playSpeed);
+        } else {
+            btn.innerHTML = '▶️ 播放';
+            btn.className = 'px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition';
+            clearInterval(playInterval);
+        }
+    }
+
+    document.getElementById('play-pause-btn').addEventListener('click', togglePlay);
+    document.getElementById('prev-frame-btn').addEventListener('click', () => {
+        if (isPlaying) togglePlay();
+        renderFrame(currentFrame - 1);
+    });
+    document.getElementById('next-frame-btn').addEventListener('click', () => {
+        if (isPlaying) togglePlay();
+        renderFrame(currentFrame + 1);
+    });
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (isPlaying) togglePlay();
+        renderFrame(0);
+        document.getElementById('replay-log').innerHTML = '';
+    });
+    document.getElementById('speed-select').addEventListener('change', (e) => {
+        playSpeed = parseInt(e.target.value);
+        if (isPlaying) {
+            clearInterval(playInterval);
+            togglePlay();
+            togglePlay();
+        }
+    });
+    document.getElementById('frame-slider').addEventListener('input', (e) => {
+        if (isPlaying) togglePlay();
+        renderFrame(parseInt(e.target.value));
+    });
+
+    loadFrames();
+</script>
+{% endblock %}

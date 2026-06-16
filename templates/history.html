@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}历史记录{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-white mb-6">📜 历史记录</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">⚔️ 战斗记录</h3>
+        {% if sessions %}
+        <div class="space-y-3">
+            {% for session in sessions %}
+            <div class="bg-slate-700/50 rounded-xl p-4 border border-slate-600 hover:border-indigo-500 transition">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">
+                            {% if session.status == 'won' %}🏆{% else %}💀{% endif %}
+                        </span>
+                        <div>
+                            <p class="text-white font-semibold">第 {{ session.level.number }} 关 - {{ session.level.name }}</p>
+                            <p class="text-slate-400 text-sm">
+                                回合: {{ session.current_turn }} | 得分: {{ session.score }} | 击杀: {{ session.enemies_killed }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-3 py-1 rounded-lg text-sm font-bold
+                            {% if session.status == 'won' %}bg-green-600 text-white
+                            {% else %}bg-red-600 text-white{% endif %}">
+                            {% if session.status == 'won' %}胜利{% else %}失败{% endif %}
+                        </span>
+                        <p class="text-slate-500 text-xs mt-1">{{ session.created_at|date:"Y-m-d H:i" }}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-3">
+                    <a href="{% url 'battle_report' session.id %}"
+                       class="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg text-center transition">
+                        📊 战报
+                    </a>
+                    <a href="{% url 'replay_view' session.id %}"
+                       class="flex-1 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold rounded-lg text-center transition">
+                        🎬 回放
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-center py-8">还没有战斗记录</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">🏆 分数记录</h3>
+        {% if score_records %}
+        <div class="space-y-3">
+            {% for sr in score_records %}
+            <div class="bg-slate-700/50 rounded-xl p-4 border {% if sr.is_valid %}border-green-600{% else %}border-red-600{% endif %}">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">
+                            {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}🎖️{% endif %}
+                        </span>
+                        <div>
+                            <p class="text-white font-semibold">第 {{ sr.level.number }} 关</p>
+                            <p class="text-slate-400 text-sm">
+                                上报: {{ sr.score }} | 服务器重算: {{ sr.server_calculated_score }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xl font-bold {% if sr.is_valid %}text-green-400{% else %}text-red-400{% endif %}">
+                            {{ sr.score }}
+                        </span>
+                        <p class="text-xs {% if sr.is_valid %}text-green-500{% else %}text-red-500{% endif %}">
+                            {% if sr.is_valid %}✓ 有效{% else %}✗ 异常{% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if sr.validation_note %}
+                <p class="text-xs text-red-400 mt-2 bg-red-900/30 rounded p-2">{{ sr.validation_note }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-center py-8">还没有分数记录</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

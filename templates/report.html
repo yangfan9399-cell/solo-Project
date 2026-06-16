@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}战报 - 第 {{ session.level.number }} 关{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'dashboard' %}" class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition mb-4">
+        ← 返回控制台
+    </a>
+    <div class="bg-gradient-to-r {% if session.status == 'won' %}from-yellow-900/50 to-amber-900/50 border-yellow-600{% else %}from-red-900/50 to-rose-900/50 border-red-600{% endif %} rounded-2xl p-6 border">
+        <div class="flex items-center gap-6">
+            <div class="text-7xl">
+                {% if session.status == 'won' %}🏆{% else %}💀{% endif %}
+            </div>
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">{{ report.title }}</h1>
+                <p class="text-slate-300 text-lg">
+                    第 {{ session.level.number }} 关: {{ session.level.name }} |
+                    玩家: {{ session.player.display_name }} |
+                    {{ session.created_at|date:"Y-m-d H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">最终得分</div>
+        <div class="text-3xl font-bold text-indigo-400">{{ report.final_score }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">金币收益</div>
+        <div class="text-3xl font-bold text-yellow-400">+{{ report.gold_earned }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">击杀敌人</div>
+        <div class="text-3xl font-bold text-red-400">{{ report.enemies_killed }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">使用陷阱</div>
+        <div class="text-3xl font-bold text-purple-400">{{ report.traps_used }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">完成任务</div>
+        <div class="text-3xl font-bold text-green-400">{{ report.tasks_completed }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">城墙损伤</div>
+        <div class="text-3xl font-bold text-orange-400">{{ report.damage_to_wall }}</div>
+    </div>
+    <div class="bg-slate-800/60 backdrop-blur rounded-xl p-4 border border-slate-700 text-center">
+        <div class="text-slate-400 text-sm mb-1">总回合</div>
+        <div class="text-3xl font-bold text-cyan-400">{{ session.current_turn }}</div>
+    </div>
+</div>
+
+{% if score_record %}
+<div class="mb-8 bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+    <h3 class="text-xl font-bold text-white mb-4">🔍 服务器分数校验</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-700/50 rounded-xl p-4 border {% if score_record.is_valid %}border-green-500{% else %}border-red-500{% endif %}">
+            <div class="text-slate-400 text-sm mb-1">客户端上报</div>
+            <div class="text-2xl font-bold text-white">{{ score_record.score }}</div>
+        </div>
+        <div class="bg-slate-700/50 rounded-xl p-4 border border-indigo-500">
+            <div class="text-slate-400 text-sm mb-1">服务器重算</div>
+            <div class="text-2xl font-bold text-indigo-400">{{ score_record.server_calculated_score }}</div>
+        </div>
+        <div class="bg-slate-700/50 rounded-xl p-4 border {% if score_record.is_valid %}border-green-500{% else %}border-red-500{% endif %}">
+            <div class="text-slate-400 text-sm mb-1">校验状态</div>
+            <div class="text-2xl font-bold {% if score_record.is_valid %}text-green-400{% else %}text-red-400{% endif %}">
+                {% if score_record.is_valid %}✓ 有效{% else %}✗ 异常{% endif %}
+            </div>
+            {% if score_record.validation_note %}
+            <p class="text-xs text-red-400 mt-1">{{ score_record.validation_note }}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mt-4 text-sm text-slate-400">
+        <p>服务器根据击杀得分({{ session.enemies_killed }}个敌人) + 陷阱使用({{ report.traps_used }}个×20) + 任务完成({{ report.tasks_completed }}个×50) + 胜利/失败加成 + 城墙剩余血量奖励重新计算分数。</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">📋 战斗摘要</h3>
+        <div class="bg-slate-900/50 rounded-xl p-4 whitespace-pre-line text-slate-300 font-mono text-sm">
+{{ report.summary }}
+        </div>
+        <div class="mt-6 flex gap-4">
+            <a href="{% url 'replay_view' session.id %}"
+               class="flex-1 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl text-center transition">
+                🎬 观看回放
+            </a>
+            <a href="{% url 'start_game' session.level.id %}"
+               class="flex-1 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl text-center transition">
+                🔄 再来一局
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+        <h3 class="text-xl font-bold text-white mb-4">📜 详细战斗日志</h3>
+        <div id="detailed-log" class="h-96 overflow-y-auto bg-slate-900/50 rounded-xl p-4 space-y-2 font-mono text-sm">
+        </div>
+    </div>
+</div>
+
+{% if session.traps.all %}
+<div class="mt-6 bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+    <h3 class="text-xl font-bold text-white mb-4">🧰 陷阱部署</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {% for trap in session.traps.all %}
+        <div class="bg-slate-700/50 rounded-xl p-4 text-center border border-slate-600">
+            <div class="text-4xl mb-2" style="color: {{ trap.trap_type.color }}">{{ trap.trap_type.emoji }}</div>
+            <div class="text-white font-semibold">{{ trap.trap_type.name }}</div>
+            <div class="text-slate-400 text-xs">位置: ({{ trap.position_x }}, {{ trap.position_y }})</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    const logData = {{ report.detailed_log|safe }};
+    const logContainer = document.getElementById('detailed-log');
+
+    const actionColors = {
+        'place_trap': 'text-green-400',
+        'remove_trap': 'text-orange-400',
+        'start_task': 'text-blue-400',
+        'complete_task': 'text-cyan-400',
+        'next_turn': 'text-slate-400',
+        'start_attack': 'text-red-400',
+        'trigger_trap': 'text-yellow-400',
+        'enemy_move': 'text-purple-400',
+        'enemy_damage': 'text-red-300',
+        'wall_damage': 'text-red-500',
+    };
+
+    const actionNames = {
+        'place_trap': '放置陷阱',
+        'remove_trap': '移除陷阱',
+        'start_task': '开始任务',
+        'complete_task': '完成任务',
+        'next_turn': '下一回合',
+        'start_attack': '开始进攻',
+        'trigger_trap': '陷阱触发',
+        'enemy_move': '敌人移动',
+        'enemy_damage': '敌人受伤',
+        'wall_damage': '城墙受伤',
+    };
+
+    logData.forEach(log => {
+        const div = document.createElement('div');
+        div.className = 'py-1 border-b border-slate-800';
+        const color = actionColors[log.type] || 'text-slate-400';
+        const name = actionNames[log.type] || log.type;
+        let detailStr = '';
+        if (log.details.message) {
+            detailStr = log.details.message;
+        } else if (log.details.trap_type) {
+            detailStr = `${log.details.trap_type} at (${log.details.x}, ${log.details.y})`;
+            if (log.details.enemies_hit) detailStr += ` 击中${log.details.enemies_hit}个敌人`;
+        } else if (log.details.task_name) {
+            detailStr = log.details.task_name;
+            if (log.details.reward_gold) detailStr += ` +${log.details.reward_gold}金`;
+            if (log.details.reward_score) detailStr += ` +${log.details.reward_score}分`;
+        } else if (log.details.enemy_type) {
+            detailStr = `${log.details.enemy_type}`;
+            if (log.details.damage) detailStr += ` 伤害:${log.details.damage}`;
+            if (log.details.new_x !== undefined) detailStr += ` →(${log.details.new_x}, ${log.details.y})`;
+        } else if (log.details.turn) {
+            detailStr = `回合 ${log.details.turn}`;
+        }
+        div.innerHTML = `<span class="text-slate-500">[T${log.turn}]</span> <span class="${color} font-semibold">${name}</span>: <span class="text-slate-300">${detailStr}</span>`;
+        logContainer.appendChild(div);
+    });
+</script>
+{% endblock %}
