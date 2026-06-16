@@ -8,6 +8,8 @@ import {
   createSession,
   addAction,
   getActionHistory,
+  getInProgressSession,
+  getLatestStateChange,
   completeSession,
   failSession,
   createWork,
@@ -32,16 +34,36 @@ export const loader = async ({ params }: { params: { levelId: string } }) => {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const sessionId = `session-${uuidv4()}`;
   const player = await getPlayer("player-local");
   if (!player) {
     throw new Response("Player not found", { status: 404 });
   }
 
-  await createSession(sessionId, player.id, level.id);
-  await addAction(sessionId, "session_start", { levelId: level.id });
+  const existingSession = await getInProgressSession(player.id, level.id);
+  let sessionId: string;
+  let recoveredState: {
+    subtitleText: string;
+    fontStyle: string;
+    fontSize: number;
+    timingStart: number;
+    timingEnd: number;
+  } | null = null;
 
-  return json({ level, sessionId, playerId: player.id });
+  if (existingSession) {
+    sessionId = existingSession.id;
+    const latestChange = await getLatestStateChange(sessionId);
+    if (latestChange && latestChange.action_data) {
+      try {
+        recoveredState = JSON.parse(latestChange.action_data);
+      } catch {}
+    }
+  } else {
+    sessionId = `session-${uuidv4()}`;
+    await createSession(sessionId, player.id, level.id);
+    await addAction(sessionId, "session_start", { levelId: level.id });
+  }
+
+  return json({ level, sessionId, playerId: player.id, recoveredState });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -90,7 +112,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         score: scoreResult.total
       });
     } else {
-      await failSession(sessionId);
+      await failSession(sessionId, scoreResult.total);
     }
 
     return redirect(`/result/${sessionId}`);
@@ -107,13 +129,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Play() {
-  const { level, sessionId, playerId } = useLoaderData<typeof loader>();
+  const { level, sessionId, playerId, recoveredState } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
 
-  const [gameState, setGameState] = useState<GameState>(() =>
-    createInitialState(level.duration)
-  );
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const initial = createInitialState(level.duration);
+    if (recoveredState) {
+      return {
+        ...initial,
+        subtitleText: recoveredState.subtitleText ?? initial.subtitleText,
+        fontStyle: recoveredState.fontStyle ?? initial.fontStyle,
+        fontSize: recoveredState.fontSize ?? initial.fontSize,
+        timingStart: recoveredState.timingStart ?? initial.timingStart,
+        timingEnd: recoveredState.timingEnd ?? initial.timingEnd,
+      };
+    }
+    return initial;
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showSubtitle, setShowSubtitle] = useState(false);
@@ -297,7 +330,19 @@ export default function Play() {
           <h2 style={{ color: "var(--sepia)", fontSize: "1.2rem" }}>
             第 {level.id.replace("level-", "")} 幕 · {level.title}
           </h2>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            {recoveredState && (
+              <span style={{
+                fontSize: "0.75rem",
+                color: "var(--accent)",
+                background: "rgba(212, 165, 116, 0.15)",
+                padding: "0.2rem 0.6rem",
+                border: "1px solid var(--accent-dark)",
+                marginRight: "0.5rem"
+              }}>
+                已恢复
+              </span>
+            )}
             <button
               onClick={handleUndo}
               disabled={!canUndo(gameState)}

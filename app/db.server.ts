@@ -188,6 +188,27 @@ export async function getPlayerSessions(playerId: string): Promise<Session[]> {
   return stmtAll<Session>(stmt, [playerId]);
 }
 
+export async function getInProgressSession(
+  playerId: string,
+  levelId: string
+): Promise<Session | undefined> {
+  const db = await getDb();
+  const stmt = db.prepare(
+    "SELECT * FROM sessions WHERE player_id = ? AND level_id = ? AND status = 'in_progress' ORDER BY started_at DESC LIMIT 1"
+  );
+  return stmtGet<Session>(stmt, [playerId, levelId]);
+}
+
+export async function getLatestStateChange(
+  sessionId: string
+): Promise<ActionRecord | undefined> {
+  const db = await getDb();
+  const stmt = db.prepare(
+    "SELECT * FROM action_history WHERE session_id = ? AND action_type = 'state_change' ORDER BY id DESC LIMIT 1"
+  );
+  return stmtGet<ActionRecord>(stmt, [sessionId]);
+}
+
 export async function completeSession(
   sessionId: string,
   score: number
@@ -200,12 +221,12 @@ export async function completeSession(
   saveDb();
 }
 
-export async function failSession(sessionId: string): Promise<void> {
+export async function failSession(sessionId: string, score: number): Promise<void> {
   const db = await getDb();
   const stmt = db.prepare(
-    "UPDATE sessions SET status = 'failed', ended_at = datetime('now') WHERE id = ?"
+    "UPDATE sessions SET status = 'failed', final_score = ?, ended_at = datetime('now') WHERE id = ?"
   );
-  stmtRun(stmt, [sessionId]);
+  stmtRun(stmt, [score, sessionId]);
   saveDb();
 }
 

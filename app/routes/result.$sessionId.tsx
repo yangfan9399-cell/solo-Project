@@ -31,7 +31,7 @@ export const loader = async ({ params }: { params: { sessionId: string } }) => {
   }
 
   let scoreResult = null;
-  if (session.final_score !== null && submission) {
+  if (submission) {
     scoreResult = calculateScore(submission, level);
   }
 
