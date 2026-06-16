@@ -49,7 +49,7 @@ class WatermillGame {
 
   loadGearsFromData() {
     try {
-      const gearsData = JSON.parse(window.__INITIAL_GEARS_STATE__ || '[]');
+      const gearsData = window.__INITIAL_GEARS_STATE__ || [];
       this.gears = gearsData.map(g => ({
         ...g,
         rotation: parseFloat(g.rotation) || 0,
@@ -206,12 +206,7 @@ class WatermillGame {
     }
   }
 
-  createGearSVG(gear) {
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('transform', `translate(${gear.x}, ${gear.y})`);
-    g.setAttribute('data-gear-id', gear.id);
-    g.classList.add('gear-group');
-
+  createGearSVGString(gear) {
     let content = '';
     if (gear.type === 'waterwheel') {
       content = this.createWaterwheelContent(gear);
@@ -221,8 +216,7 @@ class WatermillGame {
       content = this.createRegularGearContent(gear);
     }
 
-    g.innerHTML = content;
-    return g;
+    return `<g transform="translate(${gear.x}, ${gear.y})" data-gear-id="${gear.id}" class="gear-group">${content}</g>`;
   }
 
   createRegularGearContent(gear) {
@@ -328,15 +322,16 @@ class WatermillGame {
   }
 
   renderAllGears() {
-    this.gearsLayer.innerHTML = '';
+    let html = '';
     this.gears.forEach(gear => {
-      const gearEl = this.createGearSVG(gear);
-      this.gearsLayer.appendChild(gearEl);
+      html += this.createGearSVGString(gear);
     });
+    this.gearsLayer.innerHTML = html;
   }
 
   updateConnections() {
-    this.connectionsLayer.innerHTML = '';
+    let html = '';
+    const drawn = new Set();
 
     this.gears.forEach(gear => {
       if (!gear.connected_to || gear.connected_to.length === 0) return;
@@ -344,16 +339,16 @@ class WatermillGame {
       gear.connected_to.forEach(connectedId => {
         const connected = this.gears.find(g => g.id === connectedId);
         if (!connected) return;
-        if (connectedId > gear.id) return;
 
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', gear.x);
-        line.setAttribute('y1', gear.y);
-        line.setAttribute('x2', connected.x);
-        line.setAttribute('y2', connected.y);
-        this.connectionsLayer.appendChild(line);
+        const key = [gear.id, connectedId].sort().join('|');
+        if (drawn.has(key)) return;
+        drawn.add(key);
+
+        html += `<line x1="${gear.x}" y1="${gear.y}" x2="${connected.x}" y2="${connected.y}"/>`;
       });
     });
+
+    this.connectionsLayer.innerHTML = html;
   }
 
   startAnimation() {

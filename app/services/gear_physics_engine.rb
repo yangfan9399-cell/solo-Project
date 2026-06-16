@@ -66,7 +66,6 @@ class GearPhysicsEngine
     connected = []
     @gears.each do |other_id, other|
       next if other_id == gear_id
-      next if other[:type] == 'waterwheel' && gear[:type] != 'waterwheel'
 
       if gears_connected?(gear, other)
         connected << other_id

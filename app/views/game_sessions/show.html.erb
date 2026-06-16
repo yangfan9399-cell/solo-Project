@@ -4,7 +4,7 @@
   <meta name="game-session-id" content="<%= @game_session.id %>">
   <meta name="csrf-token" content="<%= form_authenticity_token %>">
   <script>
-    window.__INITIAL_GEARS_STATE__ = <%= raw @game_session.gears_state || '[]' %>;
+    window.__INITIAL_GEARS_STATE__ = <%= raw (@game_session.gears_state.presence || '[]') %>;
     window.__TARGET_RPM__ = <%= @level.target_rpm %>;
     window.__RPM_TOLERANCE__ = <%= @level.rpm_tolerance %>;
     window.__WATER_FORCE__ = <%= @level.water_force %>;
