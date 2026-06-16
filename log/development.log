@@ -1427,3 +1427,1284 @@ Started GET "/@vite/client" for ::1 at 2026-06-16 09:43:11 +0800
   
 ActionController::RoutingError (No route matches [GET] "/@vite/client"):
   
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.3ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[35m (0.7ms)[0m  [1m[35mDROP TABLE IF EXISTS "berths" /*application='Q302'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCREATE TABLE "berths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_berths_on_level_id" ON "berths" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.3ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "containers" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "containers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_containers_on_level_id" ON "containers" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "levels" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "levels" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_count" integer DEFAULT 3, "container_count" integer DEFAULT 5, "created_at" datetime(6) NOT NULL, "description" text, "difficulty" varchar DEFAULT 'easy', "max_weight_per_berth" integer DEFAULT 100, "name" varchar NOT NULL, "target_score" integer DEFAULT 1000, "time_limit" integer DEFAULT 120, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_levels_on_name" ON "levels" ("name") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "players" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "players" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "current_score" integer DEFAULT 0, "name" varchar NOT NULL, "total_games" integer DEFAULT 0, "updated_at" datetime(6) NOT NULL, "wins" integer DEFAULT 0) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_players_on_name" ON "players" ("name") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aberths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aberths_on_level_id" ON "aberths" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aberths" ("id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at")
+                     SELECT "id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at" FROM "berths" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "berths" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "berths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_90a0c0f777"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_berths_on_level_id" ON "berths" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at")
+                     SELECT "id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at" FROM "aberths" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "aberths" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_c34c42bad8"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_c34c42bad8"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_a542fa44a5"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainers_on_level_id" ON "acontainers" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainers" ("id","color","created_at","destination","label","level_id","priority","updated_at","weight")
+                     SELECT "id","color","created_at","destination","label","level_id","priority","updated_at","weight" FROM "containers" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "containers" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "containers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer, CONSTRAINT "fk_rails_c407d2ec55"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_containers_on_level_id" ON "containers" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("id","color","created_at","destination","label","level_id","priority","updated_at","weight")
+                     SELECT "id","color","created_at","destination","label","level_id","priority","updated_at","weight" FROM "acontainers" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "acontainers" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "agame_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_status" ON "agame_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id" ON "agame_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id_and_status" ON "agame_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_level_id" ON "agame_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "agame_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_00a44236a7"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "game_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "agame_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "agame_sessions" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "agame_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_status" ON "agame_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id" ON "agame_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id_and_status" ON "agame_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_level_id" ON "agame_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "agame_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_00a44236a7"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+, CONSTRAINT "fk_rails_b0ccb90bc8"
+FOREIGN KEY ("player_id")
+  REFERENCES "players" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "game_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "agame_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "agame_sessions" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_383f290f94"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_383f290f94"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_79acb49312"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (1.5ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" varchar NOT NULL PRIMARY KEY) /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES (20260616010743) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES
+(20260616010734),
+(20260616010727),
+(20260616010720),
+(20260616010712),
+(20260616010704),
+(20260616010655); /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" varchar NOT NULL PRIMARY KEY, "value" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.1ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-16 01:47:09.368807', '2026-06-16 01:47:09.368809') RETURNING "key" /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'schema_sha1' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.0ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('schema_sha1', 'a94bf75ccbd299cda9147b25c74be3b061b446b3', '2026-06-16 01:47:09.370213', '2026-06-16 01:47:09.370214') RETURNING "key" /*application='Q302'*/[0m
+  [1m[35m (0.5ms)[0m  [1m[35mDROP TABLE IF EXISTS "berths" /*application='Q302'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCREATE TABLE "berths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_berths_on_level_id" ON "berths" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "containers" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "containers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_containers_on_level_id" ON "containers" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "levels" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "levels" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_count" integer DEFAULT 3, "container_count" integer DEFAULT 5, "created_at" datetime(6) NOT NULL, "description" text, "difficulty" varchar DEFAULT 'easy', "max_weight_per_berth" integer DEFAULT 100, "name" varchar NOT NULL, "target_score" integer DEFAULT 1000, "time_limit" integer DEFAULT 120, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_levels_on_name" ON "levels" ("name") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.2ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE IF EXISTS "players" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "players" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "current_score" integer DEFAULT 0, "name" varchar NOT NULL, "total_games" integer DEFAULT 0, "updated_at" datetime(6) NOT NULL, "wins" integer DEFAULT 0) /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_players_on_name" ON "players" ("name") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aberths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aberths_on_level_id" ON "aberths" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aberths" ("id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at")
+                     SELECT "id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at" FROM "berths" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "berths" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "berths" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "allowed_destinations" varchar, "created_at" datetime(6) NOT NULL, "level_id" integer NOT NULL, "max_weight" integer, "name" varchar, "position" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_90a0c0f777"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_berths_on_level_id" ON "berths" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at")
+                     SELECT "id","allowed_destinations","created_at","level_id","max_weight","name","position","updated_at" FROM "aberths" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "aberths" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_c34c42bad8"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainer_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id" ON "acontainer_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "tindex_acontainer_placements_on_game_session_id_and_container_id" ON "acontainer_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_game_session_id_and_berth_id" ON "acontainer_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_container_id" ON "acontainer_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainer_placements_on_berth_id" ON "acontainer_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainer_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "container_placements" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "container_placements" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "berth_id" integer NOT NULL, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "placed_at" datetime(6), "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_c34c42bad8"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_eacf15d619"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_a542fa44a5"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_berth_id" ON "container_placements" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_container_id" ON "container_placements" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id_and_berth_id" ON "container_placements" ("game_session_id", "berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE UNIQUE INDEX "index_container_placements_on_game_session_id_and_container_id" ON "container_placements" ("game_session_id", "container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_container_placements_on_game_session_id" ON "container_placements" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "container_placements" ("id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at")
+                     SELECT "id","berth_id","container_id","created_at","game_session_id","placed_at","updated_at" FROM "acontainer_placements" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "acontainer_placements" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "acontainers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_acontainers_on_level_id" ON "acontainers" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "acontainers" ("id","color","created_at","destination","label","level_id","priority","updated_at","weight")
+                     SELECT "id","color","created_at","destination","label","level_id","priority","updated_at","weight" FROM "containers" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "containers" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "containers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "color" varchar, "created_at" datetime(6) NOT NULL, "destination" varchar, "label" varchar, "level_id" integer NOT NULL, "priority" integer, "updated_at" datetime(6) NOT NULL, "weight" integer, CONSTRAINT "fk_rails_c407d2ec55"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_containers_on_level_id" ON "containers" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("id","color","created_at","destination","label","level_id","priority","updated_at","weight")
+                     SELECT "id","color","created_at","destination","label","level_id","priority","updated_at","weight" FROM "acontainers" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "acontainers" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "agame_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_status" ON "agame_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id" ON "agame_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id_and_status" ON "agame_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_level_id" ON "agame_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "agame_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_00a44236a7"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "game_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "agame_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "agame_sessions" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "agame_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_status" ON "agame_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id" ON "agame_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_player_id_and_status" ON "agame_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_agame_sessions_on_level_id" ON "agame_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.1ms)[0m  [1m[32mINSERT INTO "agame_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "game_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "game_sessions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "created_at" datetime(6) NOT NULL, "finished_at" datetime(6), "level_id" integer NOT NULL, "player_id" integer NOT NULL, "score" integer DEFAULT 0, "started_at" datetime(6), "status" varchar DEFAULT 'playing', "time_remaining" integer, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_00a44236a7"
+FOREIGN KEY ("level_id")
+  REFERENCES "levels" ("id")
+, CONSTRAINT "fk_rails_b0ccb90bc8"
+FOREIGN KEY ("player_id")
+  REFERENCES "players" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_level_id" ON "game_sessions" ("level_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id_and_status" ON "game_sessions" ("player_id", "status") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_player_id" ON "game_sessions" ("player_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_game_sessions_on_status" ON "game_sessions" ("status") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "game_sessions" ("id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at")
+                     SELECT "id","created_at","finished_at","level_id","player_id","score","started_at","status","time_remaining","updated_at" FROM "agame_sessions" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "agame_sessions" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_383f290f94"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mPRAGMA defer_foreign_keys = ON /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = OFF /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TEMPORARY TABLE "aoperations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id" ON "aoperations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_game_session_id_and_sequence" ON "aoperations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_container_id" ON "aoperations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "tindex_aoperations_on_berth_id" ON "aoperations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "aoperations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "operations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "operations" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action_type" varchar NOT NULL, "berth_id" integer, "container_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "game_session_id" integer NOT NULL, "sequence" integer NOT NULL, "timestamp" datetime(6), "undone" boolean DEFAULT FALSE, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_383f290f94"
+FOREIGN KEY ("container_id")
+  REFERENCES "containers" ("id")
+, CONSTRAINT "fk_rails_4b30ad060c"
+FOREIGN KEY ("berth_id")
+  REFERENCES "berths" ("id")
+, CONSTRAINT "fk_rails_79acb49312"
+FOREIGN KEY ("game_session_id")
+  REFERENCES "game_sessions" ("id")
+) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_berth_id" ON "operations" ("berth_id") /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE INDEX "index_operations_on_container_id" ON "operations" ("container_id") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id_and_sequence" ON "operations" ("game_session_id", "sequence") /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mCREATE INDEX "index_operations_on_game_session_id" ON "operations" ("game_session_id") /*application='Q302'*/[0m
+  [1m[35mSQL (0.0ms)[0m  [1m[32mINSERT INTO "operations" ("id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at")
+                     SELECT "id","action_type","berth_id","container_id","created_at","game_session_id","sequence","timestamp","undone","updated_at" FROM "aoperations" /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mDROP TABLE "aoperations" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA defer_foreign_keys = 0 /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[35mPRAGMA foreign_keys = 1 /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "schema_migrations" ("version" varchar NOT NULL PRIMARY KEY) /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES (20260616010743) /*application='Q302'*/[0m
+  [1m[35m (0.0ms)[0m  [1m[32mINSERT INTO "schema_migrations" (version) VALUES
+(20260616010734),
+(20260616010727),
+(20260616010720),
+(20260616010712),
+(20260616010704),
+(20260616010655); /*application='Q302'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[35mCREATE TABLE "ar_internal_metadata" ("key" varchar NOT NULL PRIMARY KEY, "value" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL) /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.0ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('environment', 'development', '2026-06-16 01:47:09.536512', '2026-06-16 01:47:09.536513') RETURNING "key" /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Update (0.0ms)[0m  [1m[33mUPDATE "ar_internal_metadata" SET "value" = 'test', "updated_at" = '2026-06-16 01:47:09.537388' WHERE "ar_internal_metadata"."key" = 'environment' /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (0.0ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'schema_sha1' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Create (0.0ms)[0m  [1m[32mINSERT INTO "ar_internal_metadata" ("key", "value", "created_at", "updated_at") VALUES ('schema_sha1', 'a94bf75ccbd299cda9147b25c74be3b061b446b3', '2026-06-16 01:47:09.538143', '2026-06-16 01:47:09.538144') RETURNING "key" /*application='Q302'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.0ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '新手泊位' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '新手泊位' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.1ms)[0m  [1m[32mINSERT INTO "levels" ("berth_count", "container_count", "created_at", "description", "difficulty", "max_weight_per_berth", "name", "target_score", "time_limit", "updated_at") VALUES (3, 5, '2026-06-16 01:47:09.560699', '学习基础操作，掌握拖拽调度的基本要领', 'easy', 80, '新手泊位', 1500, 180, '2026-06-16 01:47:09.560699') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '货运中转站' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '货运中转站' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.0ms)[0m  [1m[32mINSERT INTO "levels" ("berth_count", "container_count", "created_at", "description", "difficulty", "max_weight_per_berth", "name", "target_score", "time_limit", "updated_at") VALUES (4, 7, '2026-06-16 01:47:09.564182', '管理更多货柜，优化重量分配', 'medium', 100, '货运中转站', 3500, 150, '2026-06-16 01:47:09.564182') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '星际货运港' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '星际货运港' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.0ms)[0m  [1m[32mINSERT INTO "levels" ("berth_count", "container_count", "created_at", "description", "difficulty", "max_weight_per_berth", "name", "target_score", "time_limit", "updated_at") VALUES (4, 9, '2026-06-16 01:47:09.567222', '高难度调度，需要精准的目的地匹配', 'hard', 120, '星际货运港', 6000, 120, '2026-06-16 01:47:09.567222') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."name" = '银河枢纽' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "levels" WHERE "levels"."name" = '银河枢纽' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Create (0.1ms)[0m  [1m[32mINSERT INTO "levels" ("berth_count", "container_count", "created_at", "description", "difficulty", "max_weight_per_berth", "name", "target_score", "time_limit", "updated_at") VALUES (5, 12, '2026-06-16 01:47:09.570467', '终极挑战！在最短时间内完成最复杂的调度', 'expert', 150, '银河枢纽', 10000, 90, '2026-06-16 01:47:09.570467') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.585665', '地球', 'C-001', 1, 3, '2026-06-16 01:47:09.585665', 29) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('purple', '2026-06-16 01:47:09.586788', '火星', 'C-002', 1, 2, '2026-06-16 01:47:09.586788', 23) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('pink', '2026-06-16 01:47:09.587618', '地球', 'C-003', 1, 5, '2026-06-16 01:47:09.587618', 19) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('yellow', '2026-06-16 01:47:09.590790', '月球', 'C-004', 1, 2, '2026-06-16 01:47:09.590790', 24) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('green', '2026-06-16 01:47:09.591602', '火星', 'C-005', 1, 4, '2026-06-16 01:47:09.591602', 19) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 1 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('地球', '2026-06-16 01:47:09.597016', 1, 78, '泊位 Alpha', 0, '2026-06-16 01:47:09.597016') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('火星,月球', '2026-06-16 01:47:09.598244', 1, 81, '泊位 Beta', 1, '2026-06-16 01:47:09.598244') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('*', '2026-06-16 01:47:09.599012', 1, 100, '泊位 Gamma', 2, '2026-06-16 01:47:09.599012') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 2 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.600306', '地球', 'C-001', 2, 3, '2026-06-16 01:47:09.600306', 35) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('purple', '2026-06-16 01:47:09.601065', '火星', 'C-002', 2, 2, '2026-06-16 01:47:09.601065', 25) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('pink', '2026-06-16 01:47:09.602266', '木卫二', 'C-003', 2, 4, '2026-06-16 01:47:09.602266', 17) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('yellow', '2026-06-16 01:47:09.603269', '地球', 'C-004', 2, 3, '2026-06-16 01:47:09.603269', 22) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('green', '2026-06-16 01:47:09.604065', '月球', 'C-005', 2, 1, '2026-06-16 01:47:09.604065', 13) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('orange', '2026-06-16 01:47:09.604828', '火星', 'C-006', 2, 5, '2026-06-16 01:47:09.604828', 32) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('blue', '2026-06-16 01:47:09.605589', '木卫二', 'C-007', 2, 3, '2026-06-16 01:47:09.605589', 15) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 2 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('地球', '2026-06-16 01:47:09.607646', 2, 119, '泊位 Alpha', 0, '2026-06-16 01:47:09.607646') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('火星', '2026-06-16 01:47:09.608413', 2, 112, '泊位 Beta', 1, '2026-06-16 01:47:09.608413') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('木卫二,月球', '2026-06-16 01:47:09.609160', 2, 97, '泊位 Gamma', 2, '2026-06-16 01:47:09.609160') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.1ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('*', '2026-06-16 01:47:09.609898', 2, 91, '泊位 Delta', 3, '2026-06-16 01:47:09.609898') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 3 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.612322', '地球', 'C-001', 3, 4, '2026-06-16 01:47:09.612322', 27) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('purple', '2026-06-16 01:47:09.613105', '火星', 'C-002', 3, 2, '2026-06-16 01:47:09.613105', 17) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('pink', '2026-06-16 01:47:09.613847', '木卫二', 'C-003', 3, 1, '2026-06-16 01:47:09.613847', 17) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('yellow', '2026-06-16 01:47:09.614579', '土卫六', 'C-004', 3, 5, '2026-06-16 01:47:09.614579', 39) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('green', '2026-06-16 01:47:09.615306', '地球', 'C-005', 3, 4, '2026-06-16 01:47:09.615306', 19) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('orange', '2026-06-16 01:47:09.616526', '月球', 'C-006', 3, 5, '2026-06-16 01:47:09.616526', 22) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('blue', '2026-06-16 01:47:09.617286', '火星', 'C-007', 3, 5, '2026-06-16 01:47:09.617286', 30) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('red', '2026-06-16 01:47:09.618052', '木卫二', 'C-008', 3, 1, '2026-06-16 01:47:09.618052', 34) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.618949', '土卫六', 'C-009', 3, 5, '2026-06-16 01:47:09.618949', 39) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 3 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('地球,月球', '2026-06-16 01:47:09.620890', 3, 115, '泊位 Alpha', 0, '2026-06-16 01:47:09.620890') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('火星', '2026-06-16 01:47:09.621790', 3, 102, '泊位 Beta', 1, '2026-06-16 01:47:09.621790') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('木卫二', '2026-06-16 01:47:09.622905', 3, 104, '泊位 Gamma', 2, '2026-06-16 01:47:09.622905') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('土卫六', '2026-06-16 01:47:09.623839', 3, 103, '泊位 Delta', 3, '2026-06-16 01:47:09.623839') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 4 /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.625106', '地球', 'C-001', 4, 3, '2026-06-16 01:47:09.625106', 15) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('purple', '2026-06-16 01:47:09.625856', '火星', 'C-002', 4, 1, '2026-06-16 01:47:09.625856', 38) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('pink', '2026-06-16 01:47:09.626673', '木卫二', 'C-003', 4, 2, '2026-06-16 01:47:09.626673', 19) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('yellow', '2026-06-16 01:47:09.627657', '土卫六', 'C-004', 4, 3, '2026-06-16 01:47:09.627657', 32) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('green', '2026-06-16 01:47:09.628673', '海卫一', 'C-005', 4, 1, '2026-06-16 01:47:09.628673', 37) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('orange', '2026-06-16 01:47:09.629516', '地球', 'C-006', 4, 4, '2026-06-16 01:47:09.629516', 33) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('blue', '2026-06-16 01:47:09.630274', '月球', 'C-007', 4, 3, '2026-06-16 01:47:09.630274', 38) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.1ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('red', '2026-06-16 01:47:09.631207', '火星', 'C-008', 4, 2, '2026-06-16 01:47:09.631207', 36) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('cyan', '2026-06-16 01:47:09.632383', '木卫二', 'C-009', 4, 3, '2026-06-16 01:47:09.632383', 35) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('purple', '2026-06-16 01:47:09.633366', '土卫六', 'C-010', 4, 1, '2026-06-16 01:47:09.633366', 16) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('pink', '2026-06-16 01:47:09.634200', '海卫一', 'C-011', 4, 4, '2026-06-16 01:47:09.634200', 18) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mContainer Create (0.0ms)[0m  [1m[32mINSERT INTO "containers" ("color", "created_at", "destination", "label", "level_id", "priority", "updated_at", "weight") VALUES ('yellow', '2026-06-16 01:47:09.634962', '冥王星', 'C-012', 4, 4, '2026-06-16 01:47:09.634962', 13) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 4 /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('地球,月球', '2026-06-16 01:47:09.636336', 4, 169, '泊位 Alpha', 0, '2026-06-16 01:47:09.636336') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('火星', '2026-06-16 01:47:09.637099', 4, 166, '泊位 Beta', 1, '2026-06-16 01:47:09.637099') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('木卫二,土卫六', '2026-06-16 01:47:09.637861', 4, 169, '泊位 Gamma', 2, '2026-06-16 01:47:09.637861') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('海卫一', '2026-06-16 01:47:09.638622', 4, 143, '泊位 Delta', 3, '2026-06-16 01:47:09.638622') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mBerth Create (0.0ms)[0m  [1m[32mINSERT INTO "berths" ("allowed_destinations", "created_at", "level_id", "max_weight", "name", "position", "updated_at") VALUES ('冥王星,*', '2026-06-16 01:47:09.639365', 4, 159, '泊位 Epsilon', 4, '2026-06-16 01:47:09.639365') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('LocalPlayer') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("created_at", "current_score", "name", "total_games", "updated_at", "wins") VALUES ('2026-06-16 01:47:09.645112', 0, 'LocalPlayer', 0, '2026-06-16 01:47:09.645112', 0) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '指挥官Nova' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('指挥官Nova') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("created_at", "current_score", "name", "total_games", "updated_at", "wins") VALUES ('2026-06-16 01:47:09.648090', 9452, '指挥官Nova', 37, '2026-06-16 01:47:09.648090', 15) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '领航员Aria' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.9ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('领航员Aria') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("created_at", "current_score", "name", "total_games", "updated_at", "wins") VALUES ('2026-06-16 01:47:09.651237', 11255, '领航员Aria', 22, '2026-06-16 01:47:09.651237', 30) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '工程师Kai' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('工程师Kai') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("created_at", "current_score", "name", "total_games", "updated_at", "wins") VALUES ('2026-06-16 01:47:09.654228', 13418, '工程师Kai', 48, '2026-06-16 01:47:09.654228', 19) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = '飞行员Zoe' LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mSAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mPlayer Exists? (0.7ms)[0m  [1m[34mSELECT 1 AS one FROM "players" WHERE LOWER("players"."name") = LOWER('飞行员Zoe') LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mPlayer Create (0.0ms)[0m  [1m[32mINSERT INTO "players" ("created_at", "current_score", "name", "total_games", "updated_at", "wins") VALUES ('2026-06-16 01:47:09.657091', 9154, '飞行员Zoe', 49, '2026-06-16 01:47:09.657091', 12) RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mRELEASE SAVEPOINT active_record_1 /*application='Q302'*/[0m
+  [1m[36mLevel Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "levels" /*application='Q302'*/[0m
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" /*application='Q302'*/[0m
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" /*application='Q302'*/[0m
+  [1m[36mPlayer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "players" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Started POST "/game_sessions/1/place_container" for ::1 at 2026-06-16 09:49:46 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Q302'*/[0m
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 1, "berth_id" => 1, "id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+Completed 404 Not Found in 38ms (ActiveRecord: 1.6ms (1 query, 0 cached) | GC: 0.7ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find GameSession with 'id'="1"):
+  
+app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+Started POST "/game_sessions/1/place_container" for ::1 at 2026-06-16 09:49:54 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 1, "berth_id" => 1, "id" => "1", "game_session" => {}}
+  [1m[36mGameSession Load (0.5ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 1 LIMIT 1 /*action='place_container',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+Completed 404 Not Found in 6ms (ActiveRecord: 0.5ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+  
+ActiveRecord::RecordNotFound (Couldn't find GameSession with 'id'="1"):
+  
+app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+Started GET "/" for ::1 at 2026-06-16 09:50:18 +0800
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.5ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.5ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 22.4ms | GC: 12.4ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 56.6ms | GC: 13.6ms)
+Completed 200 OK in 107ms (Views: 59.1ms | ActiveRecord: 2.1ms (6 queries, 1 cached) | GC: 13.6ms)
+
+
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" ORDER BY "game_sessions"."id" DESC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Count (1.5ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[36mPlayer Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "players" /*application='Q302'*/[0m
+  [1m[36mGameSession Count (2.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[36mPlayer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "players" /*application='Q302'*/[0m
+  [1m[36mGameSession Count (1.6ms)[0m  [1m[34mSELECT COUNT(*) FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[36mPlayer Count (1.7ms)[0m  [1m[34mSELECT COUNT(*) FROM "players" /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.2ms)[0m  [1m[34mSELECT "players".* FROM "players" ORDER BY "players"."id" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."id" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mCACHE Level Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."id" ASC LIMIT 1[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mGameSession Create (1.1ms)[0m  [1m[32mINSERT INTO "game_sessions" ("created_at", "finished_at", "level_id", "player_id", "score", "started_at", "status", "time_remaining", "updated_at") VALUES ('2026-06-16 01:51:30.217388', NULL, 1, 1, 0, '2026-06-16 01:51:30.217445', 'playing', 180, '2026-06-16 01:51:30.217388') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" ORDER BY "players"."id" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."id" ASC LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mCACHE Level Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."id" ASC LIMIT 1[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mGameSession Create (0.9ms)[0m  [1m[32mINSERT INTO "game_sessions" ("created_at", "finished_at", "level_id", "player_id", "score", "started_at", "status", "time_remaining", "updated_at") VALUES ('2026-06-16 01:51:38.925489', NULL, 1, 1, 0, '2026-06-16 01:51:38.925541', 'playing', 180, '2026-06-16 01:51:38.925489') RETURNING "id" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Started GET "/game_sessions/2" for ::1 at 2026-06-16 09:51:46 +0800
+Processing by GameSessionsController#show as */*
+  Parameters: {"id" => "2"}
+  [1m[36mPlayer Load (0.3ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mGameSession Load (0.2ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:150:in 'GameSessionsController#set_game_session'
+  [1m[36mLevel Load (0.2ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/controllers/game_sessions_controller.rb:18:in 'GameSessionsController#show'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/services/game_score_calculator.rb:50:in 'GameScoreCalculator#calculate_detailed'
+  Rendering layout layouts/application.html.erb
+  Rendering game_sessions/show.html.erb within layouts/application
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:51
+  [1m[36mContainer Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "containers" WHERE "containers"."level_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:51
+  [1m[36mBerth Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "berths" WHERE "berths"."level_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:69
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."level_id" = 1 ORDER BY "berths"."position" ASC /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:70
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.1ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 AND "container_placements"."berth_id" = 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 2 AND "container_placements"."game_session_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 AND "container_placements"."berth_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 3 AND "container_placements"."game_session_id" = 2 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 AND "container_placements"."berth_id" = 3 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:96
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:113
+  Rendered game_sessions/_container.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered game_sessions/_container.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND 1=1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:116
+  [1m[36mOperation Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "operations" WHERE "operations"."game_session_id" = 2 AND "operations"."undone" = FALSE /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:146
+  [1m[36mOperation Load (0.0ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 2 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" ASC /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/game_sessions/show.html.erb:156
+  Rendered game_sessions/show.html.erb within layouts/application (Duration: 25.8ms | GC: 1.1ms)
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='show',application='Q302',controller='game_sessions'*/[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 27.6ms | GC: 1.1ms)
+Completed 200 OK in 65ms (Views: 27.7ms | ActiveRecord: 2.7ms (23 queries, 3 cached) | GC: 4.2ms)
+
+
+Started POST "/game_sessions/2/place_container" for ::1 at 2026-06-16 09:51:56 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 1, "berth_id" => 1, "id" => "2", "game_session" => {}}
+Can't verify CSRF token authenticity.
+Completed 422 Unprocessable Content in 1ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActionController::InvalidAuthenticityToken (Can't verify CSRF token authenticity.):
+  
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:321:in 'ActionController::RequestForgeryProtection::ProtectionMethods::Exception#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:415:in 'ActionController::RequestForgeryProtection#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:404:in 'ActionController::RequestForgeryProtection#verify_authenticity_token'
+activesupport (8.1.3) lib/active_support/callbacks.rb:362:in 'block in ActiveSupport::Callbacks::CallTemplate::MethodCall#make_lambda'
+activesupport (8.1.3) lib/active_support/callbacks.rb:179:in 'block in ActiveSupport::Callbacks::Filters::Before#call'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:36:in 'block (2 levels) in <module:Callbacks>'
+activesupport (8.1.3) lib/active_support/callbacks.rb:180:in 'ActiveSupport::Callbacks::Filters::Before#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'block in ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'Array#each'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:119:in 'block in ActiveSupport::Callbacks#run_callbacks'
+activesupport (8.1.3) lib/active_support/callbacks.rb:141:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:266:in 'AbstractController::Callbacks#process_action'
+actionpack (8.1.3) lib/action_controller/metal/rescue.rb:36:in 'ActionController::Rescue#process_action'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
+activesupport (8.1.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
+actionpack (8.1.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
+activerecord (8.1.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
+actionpack (8.1.3) lib/abstract_controller/base.rb:154:in 'AbstractController::Base#process'
+actionview (8.1.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
+actionpack (8.1.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
+actionpack (8.1.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:65:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:35:in 'block in ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:86:in 'block in ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'Array#each'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:31:in 'ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:906:in 'ActionDispatch::Routing::RouteSet#call'
+railties (8.1.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
+rack (3.2.6) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
+rack (3.2.6) lib/rack/etag.rb:29:in 'Rack::ETag#call'
+rack (3.2.6) lib/rack/conditional_get.rb:44:in 'Rack::ConditionalGet#call'
+rack (3.2.6) lib/rack/head.rb:15:in 'Rack::Head#call'
+actionpack (8.1.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/cookies.rb:708:in 'ActionDispatch::Cookies#call'
+activerecord (8.1.3) lib/active_record/migration.rb:671:in 'ActiveRecord::Migration::CheckPending#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:101:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
+web-console (4.3.0) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
+web-console (4.3.0) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'Kernel#catch'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
+railties (8.1.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
+railties (8.1.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
+propshaft (1.3.2) lib/propshaft/quiet_assets.rb:11:in 'Propshaft::QuietAssets#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/remote_ip.rb:98:in 'ActionDispatch::RemoteIp#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
+rack (3.2.6) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
+rack (3.2.6) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
+activesupport (8.1.3) lib/active_support/cache/strategy/local_cache_middleware.rb:30:in 'ActiveSupport::Cache::Strategy::LocalCache::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+propshaft (1.3.2) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
+rack (3.2.6) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
+railties (8.1.3) lib/rails/engine.rb:534:in 'Rails::Engine#call'
+puma (8.0.2) lib/puma/configuration.rb:305:in 'Puma::Configuration::ConfigMiddleware#call'
+puma (8.0.2) lib/puma/response.rb:79:in 'block in Puma::Response#handle_request'
+puma (8.0.2) lib/puma/thread_pool.rb:434:in 'Puma::ThreadPool#with_force_shutdown'
+puma (8.0.2) lib/puma/response.rb:78:in 'Puma::Response#handle_request'
+puma (8.0.2) lib/puma/server.rb:508:in 'Puma::Server#process_client'
+puma (8.0.2) lib/puma/server.rb:263:in 'block in Puma::Server#run'
+puma (8.0.2) lib/puma/thread_pool.rb:246:in 'block in Puma::ThreadPool#spawn_thread'
+Started POST "/game_sessions/2/place_container" for ::1 at 2026-06-16 09:52:05 +0800
+Processing by GameSessionsController#place_container as */*
+  Parameters: {"container_id" => 1, "berth_id" => 1, "id" => "2", "game_session" => {}}
+Can't verify CSRF token authenticity.
+Completed 422 Unprocessable Content in 0ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActionController::InvalidAuthenticityToken (Can't verify CSRF token authenticity.):
+  
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:321:in 'ActionController::RequestForgeryProtection::ProtectionMethods::Exception#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:415:in 'ActionController::RequestForgeryProtection#handle_unverified_request'
+actionpack (8.1.3) lib/action_controller/metal/request_forgery_protection.rb:404:in 'ActionController::RequestForgeryProtection#verify_authenticity_token'
+activesupport (8.1.3) lib/active_support/callbacks.rb:362:in 'block in ActiveSupport::Callbacks::CallTemplate::MethodCall#make_lambda'
+activesupport (8.1.3) lib/active_support/callbacks.rb:179:in 'block in ActiveSupport::Callbacks::Filters::Before#call'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:36:in 'block (2 levels) in <module:Callbacks>'
+activesupport (8.1.3) lib/active_support/callbacks.rb:180:in 'ActiveSupport::Callbacks::Filters::Before#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'block in ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'Array#each'
+activesupport (8.1.3) lib/active_support/callbacks.rb:560:in 'ActiveSupport::Callbacks::CallbackSequence#invoke_before'
+activesupport (8.1.3) lib/active_support/callbacks.rb:119:in 'block in ActiveSupport::Callbacks#run_callbacks'
+activesupport (8.1.3) lib/active_support/callbacks.rb:141:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/abstract_controller/callbacks.rb:266:in 'AbstractController::Callbacks#process_action'
+actionpack (8.1.3) lib/action_controller/metal/rescue.rb:36:in 'ActionController::Rescue#process_action'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:76:in 'block in ActionController::Instrumentation#process_action'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'block in ActiveSupport::Notifications.instrument'
+activesupport (8.1.3) lib/active_support/notifications/instrumenter.rb:58:in 'ActiveSupport::Notifications::Instrumenter#instrument'
+activesupport (8.1.3) lib/active_support/notifications.rb:210:in 'ActiveSupport::Notifications.instrument'
+actionpack (8.1.3) lib/action_controller/metal/instrumentation.rb:75:in 'ActionController::Instrumentation#process_action'
+actionpack (8.1.3) lib/action_controller/metal/params_wrapper.rb:259:in 'ActionController::ParamsWrapper#process_action'
+activerecord (8.1.3) lib/active_record/railties/controller_runtime.rb:39:in 'ActiveRecord::Railties::ControllerRuntime#process_action'
+actionpack (8.1.3) lib/abstract_controller/base.rb:154:in 'AbstractController::Base#process'
+actionview (8.1.3) lib/action_view/rendering.rb:40:in 'ActionView::Rendering#process'
+actionpack (8.1.3) lib/action_controller/metal.rb:252:in 'ActionController::Metal#dispatch'
+actionpack (8.1.3) lib/action_controller/metal.rb:335:in 'ActionController::Metal.dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:65:in 'ActionDispatch::Routing::RouteSet::Dispatcher#dispatch'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:50:in 'ActionDispatch::Routing::RouteSet::Dispatcher#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:35:in 'block in ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:86:in 'block in ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'Array#each'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:66:in 'ActionDispatch::Journey::Router#recognize'
+actionpack (8.1.3) lib/action_dispatch/journey/router.rb:31:in 'ActionDispatch::Journey::Router#serve'
+actionpack (8.1.3) lib/action_dispatch/routing/route_set.rb:906:in 'ActionDispatch::Routing::RouteSet#call'
+railties (8.1.3) lib/rails/engine/lazy_route_set.rb:60:in 'Rails::Engine::LazyRouteSet#call'
+rack (3.2.6) lib/rack/tempfile_reaper.rb:20:in 'Rack::TempfileReaper#call'
+rack (3.2.6) lib/rack/etag.rb:29:in 'Rack::ETag#call'
+rack (3.2.6) lib/rack/conditional_get.rb:44:in 'Rack::ConditionalGet#call'
+rack (3.2.6) lib/rack/head.rb:15:in 'Rack::Head#call'
+actionpack (8.1.3) lib/action_dispatch/http/content_security_policy.rb:38:in 'ActionDispatch::ContentSecurityPolicy::Middleware#call'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:274:in 'Rack::Session::Abstract::Persisted#context'
+rack-session (2.1.2) lib/rack/session/abstract/id.rb:268:in 'Rack::Session::Abstract::Persisted#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/cookies.rb:708:in 'ActionDispatch::Cookies#call'
+activerecord (8.1.3) lib/active_record/migration.rb:671:in 'ActiveRecord::Migration::CheckPending#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:31:in 'block in ActionDispatch::Callbacks#call'
+activesupport (8.1.3) lib/active_support/callbacks.rb:101:in 'ActiveSupport::Callbacks#run_callbacks'
+actionpack (8.1.3) lib/action_dispatch/middleware/callbacks.rb:30:in 'ActionDispatch::Callbacks#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/actionable_exceptions.rb:18:in 'ActionDispatch::ActionableExceptions#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/debug_exceptions.rb:31:in 'ActionDispatch::DebugExceptions#call'
+web-console (4.3.0) lib/web_console/middleware.rb:132:in 'WebConsole::Middleware#call_app'
+web-console (4.3.0) lib/web_console/middleware.rb:28:in 'block in WebConsole::Middleware#call'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'Kernel#catch'
+web-console (4.3.0) lib/web_console/middleware.rb:17:in 'WebConsole::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'
+railties (8.1.3) lib/rails/rack/logger.rb:41:in 'Rails::Rack::Logger#call_app'
+railties (8.1.3) lib/rails/rack/logger.rb:29:in 'Rails::Rack::Logger#call'
+propshaft (1.3.2) lib/propshaft/quiet_assets.rb:11:in 'Propshaft::QuietAssets#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/remote_ip.rb:98:in 'ActionDispatch::RemoteIp#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/request_id.rb:34:in 'ActionDispatch::RequestId#call'
+rack (3.2.6) lib/rack/method_override.rb:28:in 'Rack::MethodOverride#call'
+rack (3.2.6) lib/rack/runtime.rb:24:in 'Rack::Runtime#call'
+activesupport (8.1.3) lib/active_support/cache/strategy/local_cache_middleware.rb:30:in 'ActiveSupport::Cache::Strategy::LocalCache::Middleware#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:61:in 'block in ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:26:in 'ActionDispatch::ServerTiming::Subscriber#collect_events'
+actionpack (8.1.3) lib/action_dispatch/middleware/server_timing.rb:60:in 'ActionDispatch::ServerTiming#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/executor.rb:20:in 'ActionDispatch::Executor#call'
+propshaft (1.3.2) lib/propshaft/server.rb:37:in 'Propshaft::Server#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/static.rb:27:in 'ActionDispatch::Static#call'
+rack (3.2.6) lib/rack/sendfile.rb:131:in 'Rack::Sendfile#call'
+actionpack (8.1.3) lib/action_dispatch/middleware/host_authorization.rb:143:in 'ActionDispatch::HostAuthorization#call'
+railties (8.1.3) lib/rails/engine.rb:534:in 'Rails::Engine#call'
+puma (8.0.2) lib/puma/configuration.rb:305:in 'Puma::Configuration::ConfigMiddleware#call'
+puma (8.0.2) lib/puma/response.rb:79:in 'block in Puma::Response#handle_request'
+puma (8.0.2) lib/puma/thread_pool.rb:434:in 'Puma::ThreadPool#with_force_shutdown'
+puma (8.0.2) lib/puma/response.rb:78:in 'Puma::Response#handle_request'
+puma (8.0.2) lib/puma/server.rb:508:in 'Puma::Server#process_client'
+puma (8.0.2) lib/puma/server.rb:263:in 'block in Puma::Server#run'
+puma (8.0.2) lib/puma/thread_pool.rb:246:in 'block in Puma::ThreadPool#spawn_thread'
+  [1m[36mGameSession Load (0.3ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mOperation Maximum (0.6ms)[0m  [1m[34mSELECT MAX("operations"."sequence") FROM "operations" WHERE "operations"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Create (0.1ms)[0m  [1m[32mINSERT INTO "operations" ("action_type", "berth_id", "container_id", "created_at", "game_session_id", "sequence", "timestamp", "undone", "updated_at") VALUES ('place', 1, 1, '2026-06-16 01:52:35.475766', 2, 1, '2026-06-16 01:52:35.474729', FALSE, '2026-06-16 01:52:35.475766') RETURNING "id" /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."container_id" = 1 AND "container_placements"."game_session_id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Create (0.1ms)[0m  [1m[32mINSERT INTO "container_placements" ("berth_id", "container_id", "created_at", "game_session_id", "placed_at", "updated_at") VALUES (1, 1, '2026-06-16 01:52:35.483278', 2, '2026-06-16 01:52:35.482450', '2026-06-16 01:52:35.483278') RETURNING "id" /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 508, "updated_at" = '2026-06-16 01:52:35.491479' WHERE "game_sessions"."id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:54:in 'GameSession#check_completion!'
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:31:in 'OperationProcessor#place_container'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:42:in 'GameSession#available_containers'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Sum (0.0ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.1ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:42:in 'GameSession#available_containers'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Load (0.3ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Pluck (0.1ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mLevel Load (0.1ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:42:in 'GameSession#available_containers'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*application='Q302'*/[0m
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Load (0.4ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainer Load (0.0ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 3 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/conflict_detector.rb:12:in 'ConflictDetector#initialize'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainerPlacement Sum (0.2ms)[0m  [1m[34mSELECT SUM("containers"."weight") FROM "container_placements" INNER JOIN "containers" ON "containers"."id" = "container_placements"."container_id" WHERE "container_placements"."berth_id" = 1 AND "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/berth.rb:24:in 'Berth#current_weight'
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mOperation Maximum (0.2ms)[0m  [1m[34mSELECT MAX("operations"."sequence") FROM "operations" WHERE "operations"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:18:in 'GameSession#next_sequence'
+  [1m[36mOperation Create (0.1ms)[0m  [1m[32mINSERT INTO "operations" ("action_type", "berth_id", "container_id", "created_at", "game_session_id", "sequence", "timestamp", "undone", "updated_at") VALUES ('place', 1, 3, '2026-06-16 01:53:53.473766', 2, 2, '2026-06-16 01:53:53.472732', FALSE, '2026-06-16 01:53:53.473766') RETURNING "id" /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:32:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."container_id" = 3 AND "container_placements"."game_session_id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Create (0.1ms)[0m  [1m[32mINSERT INTO "container_placements" ("berth_id", "container_id", "created_at", "game_session_id", "placed_at", "updated_at") VALUES (1, 3, '2026-06-16 01:53:53.481901', 2, '2026-06-16 01:53:53.480961', '2026-06-16 01:53:53.481901') RETURNING "id" /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:39:in 'block in OperationProcessor#place_container'
+  [1m[36mContainerPlacement Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.0ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (0.2ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" IN (1, 3) /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 1346, "updated_at" = '2026-06-16 01:53:53.491133' WHERE "game_sessions"."id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:54:in 'GameSession#check_completion!'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:31:in 'OperationProcessor#place_container'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:42:in 'GameSession#available_containers'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" NOT IN (1, 3) /*application='Q302'*/[0m
+  [1m[36mGameSession Load (0.1ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mOperation Load (0.3ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 2 AND "operations"."undone" = FALSE ORDER BY "operations"."sequence" DESC LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:22:in 'GameSession#last_operation'
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:114:in 'block in OperationProcessor#undo'
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 3 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:115:in 'block in OperationProcessor#undo'
+  [1m[36mBerth Load (0.0ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:116:in 'block in OperationProcessor#undo'
+  [1m[36mContainerPlacement Load (0.2ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 AND "container_placements"."container_id" = 3 AND "container_placements"."berth_id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:114:in 'block in OperationProcessor#undo'
+  [1m[36mContainerPlacement Destroy (0.1ms)[0m  [1m[31mDELETE FROM "container_placements" WHERE "container_placements"."id" = 2 /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:118:in 'block in OperationProcessor#undo'
+  [1m[36mOperation Update (0.1ms)[0m  [1m[33mUPDATE "operations" SET "undone" = TRUE, "updated_at" = '2026-06-16 01:54:05.528066' WHERE "operations"."id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/operation.rb:18:in 'Operation#undo!'
+  [1m[36mLevel Load (0.3ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:15:in 'GameScoreCalculator#initialize'
+  [1m[36mContainerPlacement Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:20:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Load (0.5ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainer Load (0.1ms)[0m  [1m[34mSELECT "containers".* FROM "containers" WHERE "containers"."id" = 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mBerth Load (0.1ms)[0m  [1m[34mSELECT "berths".* FROM "berths" WHERE "berths"."id" = 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:24:in 'GameScoreCalculator#calculate'
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/services/game_score_calculator.rb:134:in 'GameScoreCalculator#calculate_perfect_completion_bonus'
+  [1m[36mGameSession Update (0.0ms)[0m  [1m[33mUPDATE "game_sessions" SET "score" = 508, "updated_at" = '2026-06-16 01:54:05.564538' WHERE "game_sessions"."id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:47:in 'GameSession#recalculate_score!'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  ↳ app/services/operation_processor.rb:111:in 'OperationProcessor#undo'
+  [1m[36mGameSession Load (0.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" WHERE "game_sessions"."id" = 2 LIMIT 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mLevel Load (0.0ms)[0m  [1m[34mSELECT "levels".* FROM "levels" WHERE "levels"."id" = 1 LIMIT 1 /*application='Q302'*/[0m
+  ↳ app/models/game_session.rb:42:in 'GameSession#available_containers'
+  [1m[36mCACHE ContainerPlacement Pluck (0.0ms)[0m  [1m[34mSELECT "container_placements"."container_id" FROM "container_placements" WHERE "container_placements"."game_session_id" = 2[0m
+  ↳ app/models/game_session.rb:38:in 'GameSession#placed_container_ids'
+  [1m[36mContainer Pluck (0.0ms)[0m  [1m[34mSELECT "containers"."id" FROM "containers" WHERE "containers"."level_id" = 1 AND "containers"."id" != 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Load (2.0ms)[0m  [1m[34mSELECT "game_sessions".* FROM "game_sessions" /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mOperation Load (0.4ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 1 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Load (0.1ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Destroy (0.2ms)[0m  [1m[31mDELETE FROM "game_sessions" WHERE "game_sessions"."id" = 1 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='Q302'*/[0m
+  [1m[36mOperation Load (0.8ms)[0m  [1m[34mSELECT "operations".* FROM "operations" WHERE "operations"."game_session_id" = 2 /*application='Q302'*/[0m
+  [1m[36mOperation Destroy (0.1ms)[0m  [1m[31mDELETE FROM "operations" WHERE "operations"."id" = 1 /*application='Q302'*/[0m
+  [1m[36mOperation Destroy (0.0ms)[0m  [1m[31mDELETE FROM "operations" WHERE "operations"."id" = 2 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Load (0.1ms)[0m  [1m[34mSELECT "container_placements".* FROM "container_placements" WHERE "container_placements"."game_session_id" = 2 /*application='Q302'*/[0m
+  [1m[36mContainerPlacement Destroy (0.0ms)[0m  [1m[31mDELETE FROM "container_placements" WHERE "container_placements"."id" = 1 /*application='Q302'*/[0m
+  [1m[36mGameSession Destroy (0.1ms)[0m  [1m[31mDELETE FROM "game_sessions" WHERE "game_sessions"."id" = 2 /*application='Q302'*/[0m
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='Q302'*/[0m
+Started GET "/" for ::1 at 2026-06-16 09:54:34 +0800
+Processing by HomeController#index as */*
+  [1m[36mPlayer Load (0.4ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."name" = 'LocalPlayer' LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/models/player.rb:7:in 'Player.find_or_create_local_player'
+  [1m[36mPlayer Load (0.1ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:5:in 'HomeController#index'
+  [1m[36mGameSession Sum (0.1ms)[0m  [1m[34mSELECT SUM("game_sessions"."score") FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" = 'won' /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/controllers/home_controller.rb:7:in 'HomeController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering home/index.html.erb within layouts/application
+  [1m[36mLevel Load (0.6ms)[0m  [1m[34mSELECT "levels".* FROM "levels" ORDER BY "levels"."difficulty" ASC /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:44
+  [1m[36mGameSession Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "game_sessions" WHERE "game_sessions"."player_id" = 1 AND "game_sessions"."status" IN ('won', 'lost') LIMIT 1 /*action='index',application='Q302',controller='home'*/[0m
+  ↳ app/views/home/index.html.erb:69
+  Rendered home/index.html.erb within layouts/application (Duration: 2.4ms | GC: 0.0ms)
+  [1m[36mCACHE Player Load (0.0ms)[0m  [1m[34mSELECT "players".* FROM "players" WHERE "players"."id" = 1 LIMIT 1[0m
+  ↳ app/views/layouts/application.html.erb:36
+  Rendered layout layouts/application.html.erb (Duration: 6.2ms | GC: 0.0ms)
+Completed 200 OK in 22ms (Views: 6.1ms | ActiveRecord: 1.3ms (6 queries, 1 cached) | GC: 0.0ms)
+
+

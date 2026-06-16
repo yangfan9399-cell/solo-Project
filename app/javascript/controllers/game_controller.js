@@ -328,10 +328,19 @@ export default class extends Controller {
     const containerPool = document.getElementById('containers-pool')
     if (!containerPool) return
 
-    const allContainerEls = new Map()
+    const containerDataMap = new Map()
     document.querySelectorAll('.container-card, .placed-container').forEach(el => {
       const id = el.dataset.containerId
-      if (id) allContainerEls.set(id, el)
+      if (!id) return
+      containerDataMap.set(id, {
+        id: id,
+        color: el.dataset.containerColor || el.classList.toString().match(/border-(\w+)-500/)?.[1] || 'cyan',
+        label: el.querySelector('span.font-bold')?.textContent || `C-${id}`,
+        weight: el.dataset.containerWeight || el.querySelector('span.text-slate-400')?.textContent?.replace('吨', '') || '0',
+        destination: el.dataset.containerDestination || el.querySelector('span.text-purple-400')?.textContent || '',
+        priority: el.dataset.containerPriority || '1'
+      })
+      el.remove()
     })
 
     berths.forEach(berth => {
@@ -341,96 +350,77 @@ export default class extends Controller {
       const berthContainer = berthEl.querySelector('.min-h-\\[80px\\]')
       if (!berthContainer) return
 
-      const placedContainerIds = berth.container_ids || []
-      placedContainerIds.forEach(containerId => {
-        const containerEl = allContainerEls.get(String(containerId))
-        if (containerEl) {
-          const placedEl = this.convertToPlacedContainer(containerEl, berth.id)
-          berthContainer.appendChild(placedEl)
-          allContainerEls.set(String(containerId), placedEl)
-        }
+      berthContainer.querySelectorAll('.placed-container').forEach(el => el.remove())
+
+      const placedIds = berth.container_ids || []
+      placedIds.forEach(containerId => {
+        const sid = String(containerId)
+        const data = containerDataMap.get(sid)
+        if (!data) return
+
+        const placedEl = document.createElement('div')
+        placedEl.className = `placed-container bg-slate-600/80 rounded-lg p-2 border border-${data.color}-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-${data.color}-500/20 cursor-pointer animate-fade-in`
+        placedEl.dataset.containerId = sid
+        placedEl.dataset.berthId = String(berth.id)
+        placedEl.dataset.action = 'click->game#removeContainer'
+
+        placedEl.innerHTML = `
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold">${data.label}</span>
+            <span class="text-slate-400">${data.weight}吨</span>
+          </div>
+          <div class="text-xs text-slate-400 mt-1">
+            目的地: <span class="text-purple-400">${data.destination}</span>
+            <span class="ml-2 text-red-400 opacity-0 hover:opacity-100 transition">点击移除</span>
+          </div>
+        `
+        berthContainer.appendChild(placedEl)
       })
     })
 
+    containerPool.querySelectorAll('.container-card').forEach(el => el.remove())
+
     availableContainerIds.forEach(containerId => {
-      let containerEl = allContainerEls.get(String(containerId))
-      if (containerEl && containerEl.classList.contains('placed-container')) {
-        containerEl = this.convertToPoolContainer(containerEl)
-        allContainerEls.set(String(containerId), containerEl)
-      }
-      if (containerEl && !containerPool.contains(containerEl)) {
-        containerPool.appendChild(containerEl)
-      }
+      const sid = String(containerId)
+      const data = containerDataMap.get(sid)
+      if (!data) return
+
+      const poolEl = document.createElement('div')
+      poolEl.className = `container-card cursor-grab active:cursor-grabbing bg-slate-700/80 hover:bg-slate-600/80 rounded-lg p-3 border border-slate-600 hover:border-${data.color}-400/50 transition-all duration-200 shadow-lg hover:shadow-${data.color}-500/20 animate-fade-in`
+      poolEl.draggable = true
+      poolEl.dataset.containerId = sid
+      poolEl.dataset.containerWeight = data.weight
+      poolEl.dataset.containerDestination = data.destination
+      poolEl.dataset.containerPriority = data.priority
+      poolEl.dataset.containerColor = data.color
+      poolEl.dataset.action = 'dragstart->game#dragStart dragend->game#dragEnd'
+
+      poolEl.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-bold text-sm">${data.label}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-${data.color}-500/30 text-${data.color}-400">
+            P${data.priority}
+          </span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-slate-400">重量:</span>
+            <span class="font-mono font-bold text-cyan-400">${data.weight}</span>
+          </div>
+          <div>
+            <span class="text-slate-400">目的地:</span>
+            <span class="font-mono text-purple-400">${data.destination}</span>
+          </div>
+        </div>
+        <div class="mt-2 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-${data.color}-400 to-${data.color}-600 rounded-full"
+               style="width: ${Math.min(parseInt(data.weight) / 50 * 100, 100)}%"></div>
+        </div>
+      `
+      containerPool.appendChild(poolEl)
     })
 
     this.updateEmptyState(containerPool, availableContainerIds)
-  }
-
-  convertToPlacedContainer(poolEl, berthId) {
-    const containerId = poolEl.dataset.containerId
-    const color = poolEl.dataset.containerColor
-    const label = poolEl.querySelector('span.font-bold')?.textContent || `C-${containerId}`
-    const weight = poolEl.dataset.containerWeight
-
-    const placedEl = document.createElement('div')
-    placedEl.className = `placed-container bg-slate-600/80 rounded-lg p-2 border border-${color}-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-${color}-500/20 cursor-pointer animate-fade-in`
-    placedEl.dataset.containerId = containerId
-    placedEl.dataset.berthId = berthId
-    placedEl.dataset.action = 'click->game#removeContainer'
-
-    placedEl.innerHTML = `
-      <div class="flex items-center justify-between text-xs">
-        <span class="font-bold">${label}</span>
-        <span class="text-slate-400">${weight}吨</span>
-      </div>
-      <div class="text-xs text-slate-400 mt-1">
-        目的地: <span class="text-purple-400">${poolEl.dataset.containerDestination}</span>
-        <span class="ml-2 text-red-400 opacity-0 hover:opacity-100 transition">点击移除</span>
-      </div>
-    `
-    return placedEl
-  }
-
-  convertToPoolContainer(placedEl) {
-    const containerId = placedEl.dataset.containerId
-    const color = placedEl.classList.toString().match(/border-(\w+)-500/)?.[1] || 'cyan'
-    const label = placedEl.querySelector('span.font-bold')?.textContent || `C-${containerId}`
-    const weight = placedEl.querySelector('span.text-slate-400')?.textContent?.replace('吨', '') || '0'
-    const destination = placedEl.querySelector('span.text-purple-400')?.textContent || ''
-
-    const poolEl = document.createElement('div')
-    poolEl.className = `container-card cursor-grab active:cursor-grabbing bg-slate-700/80 hover:bg-slate-600/80 rounded-lg p-3 border border-slate-600 hover:border-${color}-400/50 transition-all duration-200 shadow-lg hover:shadow-${color}-500/20 animate-fade-in`
-    poolEl.draggable = true
-    poolEl.dataset.containerId = containerId
-    poolEl.dataset.containerWeight = weight
-    poolEl.dataset.containerDestination = destination
-    poolEl.dataset.containerPriority = '1'
-    poolEl.dataset.containerColor = color
-    poolEl.dataset.action = 'dragstart->game#dragStart dragend->game#dragEnd'
-
-    poolEl.innerHTML = `
-      <div class="flex items-center justify-between mb-2">
-        <span class="font-bold text-sm">${label}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-${color}-500/30 text-${color}-400">
-          P1
-        </span>
-      </div>
-      <div class="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <span class="text-slate-400">重量:</span>
-          <span class="font-mono font-bold text-cyan-400">${weight}</span>
-        </div>
-        <div>
-          <span class="text-slate-400">目的地:</span>
-          <span class="font-mono text-purple-400">${destination}</span>
-        </div>
-      </div>
-      <div class="mt-2 h-1.5 bg-slate-600 rounded-full overflow-hidden">
-        <div class="h-full bg-gradient-to-r from-${color}-400 to-${color}-600 rounded-full"
-             style="width: ${Math.min(parseInt(weight) / 50 * 100, 100)}%"></div>
-      </div>
-    `
-    return poolEl
   }
 
   updateEmptyState(containerPool, availableContainerIds) {
