@@ -22,7 +22,14 @@ export const POST: RequestHandler = async ({ params }) => {
       return json({ error: '关卡不存在' }, { status: 404 });
     }
 
-    const recalculatedBreakdown = recalculateScoreFromHistory(gameState.operationHistory, level);
+    const recalculatedBreakdown = recalculateScoreFromHistory(
+      gameState.operationHistory,
+      level,
+      gameState.playerId,
+      gameState.currentTime,
+      gameState.isGameOver,
+      gameState.victory
+    );
     const liveBreakdown = calculateScoreBreakdown(gameState, level);
 
     const gameResult = createGameResult(gameState, level, recalculatedBreakdown);

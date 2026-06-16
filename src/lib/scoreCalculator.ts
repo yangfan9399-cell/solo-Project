@@ -1,4 +1,5 @@
 import type { GameState, GameResult, Level } from '../types';
+import { createGameState, tickGame, adjustValve, switchJunction, resolveAnomaly } from './gameEngine';
 
 export interface ScoreBreakdown {
   baseDeliveryScore: number;
@@ -76,23 +77,61 @@ export function calculateScoreBreakdown(state: GameState, level: Level): ScoreBr
   };
 }
 
-export function recalculateScoreFromHistory(operations: GameState['operationHistory'], level: Level): ScoreBreakdown {
-  if (operations.length === 0) {
-    return {
-      baseDeliveryScore: 0,
-      onTimeBonus: 0,
-      priorityBonus: 0,
-      anomalyResolutionBonus: 0,
-      timeBonus: 0,
-      efficiencyBonus: 0,
-      delayPenalty: 0,
-      lossPenalty: 0,
-      total: 0
-    };
+export function recalculateScoreFromHistory(
+  operations: GameState['operationHistory'],
+  level: Level,
+  playerId: string,
+  finalCurrentTime: number,
+  finalIsGameOver: boolean,
+  finalVictory: boolean
+): ScoreBreakdown {
+  const simState = createGameState(level, playerId);
+
+  const sortedOps = [...operations].sort((a, b) => a.timestamp - b.timestamp);
+  const startTime = simState.startTime;
+
+  let simTime = 0;
+  const tickStep = 0.016;
+
+  for (const op of sortedOps) {
+    const targetSimTime = (op.timestamp - startTime) / 1000;
+
+    while (simTime < targetSimTime && !simState.isGameOver) {
+      const delta = Math.min(tickStep, targetSimTime - simTime);
+      tickGame(simState, level, delta);
+      simTime += delta;
+    }
+
+    switch (op.type) {
+      case 'valve_adjust':
+        adjustValve(simState, op.targetId, op.newValue as number);
+        break;
+      case 'junction_switch': {
+        const junction = simState.junctions.find(j => j.id === op.targetId);
+        if (junction) {
+          junction.direction = op.newValue as GameState['junctions'][0]['direction'];
+          simState.operationHistory.pop();
+          simState.operationHistory.push(op);
+        }
+        break;
+      }
+      case 'anomaly_resolve':
+        resolveAnomaly(simState, op.targetId);
+        break;
+    }
   }
 
-  const finalState = operations[operations.length - 1].gameStateSnapshot;
-  return calculateScoreBreakdown(finalState, level);
+  while (simTime < finalCurrentTime && !simState.isGameOver) {
+    const delta = Math.min(tickStep, finalCurrentTime - simTime);
+    tickGame(simState, level, delta);
+    simTime += delta;
+  }
+
+  simState.isGameOver = finalIsGameOver;
+  simState.victory = finalVictory;
+  simState.currentTime = finalCurrentTime;
+
+  return calculateScoreBreakdown(simState, level);
 }
 
 export function calculateRating(score: number, minScore: number, victory: boolean): GameResult['rating'] {

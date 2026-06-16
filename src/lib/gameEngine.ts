@@ -51,9 +51,9 @@ export function adjustValve(state: GameState, valveId: string, newPressure: numb
 
   const oldPressure = valve.pressure;
   const clampedPressure = Math.max(valve.minPressure, Math.min(valve.maxPressure, newPressure));
-  valve.pressure = clampedPressure;
 
   const record = createOperationRecord('valve_adjust', valveId, oldPressure, clampedPressure, state);
+  valve.pressure = clampedPressure;
   state.operationHistory.push(record);
 
   return state;
@@ -66,9 +66,10 @@ export function switchJunction(state: GameState, junctionId: string): GameState 
   const directions: Array<Junction['direction']> = ['up', 'right', 'down', 'left'];
   const currentIndex = directions.indexOf(junction.direction);
   const oldDirection = junction.direction;
-  junction.direction = directions[(currentIndex + 1) % 4];
+  const newDirection = directions[(currentIndex + 1) % 4];
 
-  const record = createOperationRecord('junction_switch', junctionId, oldDirection, junction.direction, state);
+  const record = createOperationRecord('junction_switch', junctionId, oldDirection, newDirection, state);
+  junction.direction = newDirection;
   state.operationHistory.push(record);
 
   return state;
@@ -79,10 +80,12 @@ export function resolveAnomaly(state: GameState, anomalyId: string): GameState {
   if (!anomaly || anomaly.resolved) return state;
 
   const oldResolved = anomaly.resolved;
-  anomaly.resolved = true;
-  state.score += 200 * anomaly.config.severity;
+  const oldScore = state.score;
+  const bonusScore = 200 * anomaly.config.severity;
 
-  const record = createOperationRecord('anomaly_resolve', anomalyId, oldResolved, true, state);
+  const record = createOperationRecord('anomaly_resolve', anomalyId, { resolved: oldResolved, score: oldScore }, { resolved: true, score: oldScore + bonusScore }, state);
+  anomaly.resolved = true;
+  state.score += bonusScore;
   state.operationHistory.push(record);
 
   return state;
@@ -312,13 +315,36 @@ export function undoOperation(state: GameState): GameState | null {
   if (state.operationHistory.length === 0) return null;
 
   const lastRecord = state.operationHistory.pop()!;
-  return JSON.parse(JSON.stringify(lastRecord.gameStateSnapshot));
+  const previousState = JSON.parse(JSON.stringify(lastRecord.gameStateSnapshot)) as GameState;
+
+  previousState.id = state.id;
+  previousState.levelId = state.levelId;
+  previousState.playerId = state.playerId;
+  previousState.startTime = state.startTime;
+  previousState.operationHistory = state.operationHistory;
+
+  return previousState;
 }
 
-export function replayOperations(operations: OperationRecord[]): GameState {
+export function replayOperations(operations: OperationRecord[], level: Level, playerId: string): GameState {
   if (operations.length === 0) {
     throw new Error('No operations to replay');
   }
 
-  return JSON.parse(JSON.stringify(operations[operations.length - 1].gameStateSnapshot));
+  const initialState = createGameState(level, playerId);
+  const sortedOps = [...operations].sort((a, b) => a.timestamp - b.timestamp);
+  let currentState = initialState;
+
+  for (const op of sortedOps) {
+    const snapshot = JSON.parse(JSON.stringify(op.gameStateSnapshot)) as GameState;
+    snapshot.id = initialState.id;
+    snapshot.levelId = initialState.levelId;
+    snapshot.playerId = initialState.playerId;
+    snapshot.startTime = initialState.startTime;
+    snapshot.operationHistory = currentState.operationHistory;
+    snapshot.operationHistory.push(op);
+    currentState = snapshot;
+  }
+
+  return currentState;
 }
