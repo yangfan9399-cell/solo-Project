@@ -3,9 +3,9 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getDb, getAll, getOne } from "~/lib/db";
-import type { Level, WaferImage, DefectAnnotation, DefectType } from "~/lib/db";
+import type { Level, WaferImage, DefectAnnotation, DefectType, GameSession } from "~/lib/db";
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
   const db = await getDb();
   const levelId = Number(params.levelId);
   const level = getOne<Level>(db, "SELECT * FROM levels WHERE id = ?", [levelId]);
@@ -13,7 +13,21 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Response("关卡未找到", { status: 404 });
   }
   const images = getAll<WaferImage>(db, "SELECT * FROM wafer_images WHERE level_id = ?", [levelId]);
-  return json({ level, images });
+
+  const url = new URL(request.url);
+  const playerId = Number(url.searchParams.get("playerId")) || 1;
+
+  let existingSession: GameSession | null = null;
+  const inProgress = getOne<GameSession>(
+    db,
+    "SELECT * FROM game_sessions WHERE player_id = ? AND level_id = ? AND status = 'in_progress' ORDER BY started_at DESC LIMIT 1",
+    [playerId, levelId]
+  );
+  if (inProgress) {
+    existingSession = inProgress;
+  }
+
+  return json({ level, images, existingSession, playerId });
 }
 
 type DrawState = {
@@ -28,19 +42,43 @@ const defectColors: Record<DefectType, { stroke: string; fill: string; label: st
   edge: { stroke: "#69db7c", fill: "rgba(105,219,124,0.15)", label: "边缘" },
 };
 
+async function saveToHistory(
+  sessionId: number,
+  operationType: "add" | "remove" | "modify",
+  before: DefectAnnotation[] | null,
+  after: DefectAnnotation[],
+  elapsed: number
+) {
+  const form = new FormData();
+  form.append("id", String(sessionId));
+  form.append("annotations_json", JSON.stringify(after));
+  form.append("elapsed_seconds", String(elapsed));
+  form.append("operation_type", operationType);
+  form.append("annotation_before_json", before ? JSON.stringify(before) : "null");
+  form.append("annotation_after_json", JSON.stringify(after));
+  await fetch("/api/sessions", { method: "PATCH", body: form });
+}
+
 export default function Game() {
-  const { level, images } = useLoaderData<typeof loader>();
+  const { level, images, existingSession, playerId } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
+  const restoredAnnotations: DefectAnnotation[] = existingSession?.annotations_json
+    ? JSON.parse(existingSession.annotations_json)
+    : [];
+
+  const restoredElapsed = existingSession?.elapsed_seconds ?? 0;
+  const restoredTimeLeft = Math.max(0, level.time_limit_seconds - restoredElapsed);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [annotations, setAnnotations] = useState<DefectAnnotation[]>([]);
+  const [annotations, setAnnotations] = useState<DefectAnnotation[]>(restoredAnnotations);
   const [selectedDefectType, setSelectedDefectType] = useState<DefectType>("scratch");
   const [drawState, setDrawState] = useState<DrawState>({ isDrawing: false, startX: 0, startY: 0 });
   const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [undoStack, setUndoStack] = useState<DefectAnnotation[][]>([[]]);
+  const [undoStack, setUndoStack] = useState<DefectAnnotation[][]>([restoredAnnotations]);
   const [redoStack, setRedoStack] = useState<DefectAnnotation[][]>([]);
-  const [timeLeft, setTimeLeft] = useState(level.time_limit_seconds);
-  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(restoredTimeLeft);
+  const [sessionId, setSessionId] = useState<number | null>(existingSession?.id ?? null);
   const [submitted, setSubmitted] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -74,14 +112,13 @@ export default function Game() {
   useEffect(() => {
     if (sessionId && !submitted) {
       autoSaveTimerRef.current = setInterval(() => {
-        const autoForm = new FormData();
-          autoForm.append("id", String(sessionId));
-          autoForm.append("annotations_json", JSON.stringify(annotations));
-          autoForm.append("elapsed_seconds", String(level.time_limit_seconds - timeLeft));
-          fetch("/api/sessions", {
-            method: "PATCH",
-            body: autoForm,
-          });
+        saveToHistory(
+          sessionId,
+          "modify",
+          annotations,
+          annotations,
+          level.time_limit_seconds - timeLeft
+        );
       }, 10000);
       return () => {
         if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
@@ -101,6 +138,20 @@ export default function Game() {
     []
   );
 
+  async function ensureSession(): Promise<number> {
+    if (sessionId) return sessionId;
+    const sessionForm = new FormData();
+    sessionForm.append("playerId", String(playerId));
+    sessionForm.append("levelId", String(level.id));
+    const sessionRes = await fetch("/api/sessions", {
+      method: "POST",
+      body: sessionForm,
+    });
+    const sessionData = await sessionRes.json();
+    setSessionId(sessionData.id);
+    return sessionData.id;
+  }
+
   function handleMouseDown(e: React.MouseEvent) {
     if (submitted) return;
     const { x, y } = getSvgCoords(e);
@@ -119,8 +170,9 @@ export default function Game() {
     });
   }
 
-  function handleMouseUp() {
+  async function handleMouseUp() {
     if (!drawState.isDrawing || submitted) return;
+    const beforeAnnotations = [...annotations];
     setDrawState({ isDrawing: false, startX: 0, startY: 0 });
 
     if (currentRect && currentRect.width > 5 && currentRect.height > 5) {
@@ -136,33 +188,75 @@ export default function Game() {
       setAnnotations(newAnnotations);
       setUndoStack([...undoStack, newAnnotations]);
       setRedoStack([]);
+
+      const sid = await ensureSession();
+      saveToHistory(
+        sid,
+        "add",
+        beforeAnnotations,
+        newAnnotations,
+        level.time_limit_seconds - timeLeft
+      );
     }
     setCurrentRect(null);
   }
 
-  function handleUndo() {
+  async function handleUndo() {
     if (undoStack.length <= 1) return;
+    const beforeAnnotations = [...annotations];
     const newUndoStack = [...undoStack];
     const current = newUndoStack.pop()!;
     setUndoStack(newUndoStack);
     setRedoStack([...redoStack, current]);
-    setAnnotations(newUndoStack[newUndoStack.length - 1] || []);
+    const restored = newUndoStack[newUndoStack.length - 1] || [];
+    setAnnotations(restored);
+
+    if (sessionId) {
+      saveToHistory(
+        sessionId,
+        "remove",
+        beforeAnnotations,
+        restored,
+        level.time_limit_seconds - timeLeft
+      );
+    }
   }
 
-  function handleRedo() {
+  async function handleRedo() {
     if (redoStack.length === 0) return;
+    const beforeAnnotations = [...annotations];
     const newRedoStack = [...redoStack];
     const restored = newRedoStack.pop()!;
     setRedoStack(newRedoStack);
     setUndoStack([...undoStack, restored]);
     setAnnotations(restored);
+
+    if (sessionId) {
+      saveToHistory(
+        sessionId,
+        "add",
+        beforeAnnotations,
+        restored,
+        level.time_limit_seconds - timeLeft
+      );
+    }
   }
 
-  function handleClear() {
+  async function handleClear() {
     if (annotations.length === 0) return;
+    const beforeAnnotations = [...annotations];
     setUndoStack([...undoStack, []]);
     setRedoStack([]);
     setAnnotations([]);
+
+    const sid = await ensureSession();
+    saveToHistory(
+      sid,
+      "remove",
+      beforeAnnotations,
+      [],
+      level.time_limit_seconds - timeLeft
+    );
   }
 
   async function handleSubmit() {
@@ -171,23 +265,7 @@ export default function Game() {
     if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
 
     try {
-      const params = new URLSearchParams(window.location.search);
-      const playerId = Number(params.get("playerId")) || 1;
-
-      let sid = sessionId;
-      if (!sid) {
-        const sessionForm = new FormData();
-        sessionForm.append("playerId", String(playerId));
-        sessionForm.append("levelId", String(level.id));
-        const sessionRes = await fetch("/api/sessions", {
-          method: "POST",
-          body: sessionForm,
-        });
-        const sessionData = await sessionRes.json();
-        sid = sessionData.id;
-        setSessionId(sid);
-      }
-
+      const sid = await ensureSession();
       const elapsed = level.time_limit_seconds - timeLeft;
 
       const submitForm = new FormData();
@@ -210,6 +288,7 @@ export default function Game() {
   const seconds = timeLeft % 60;
   const timeDisplay = `${minutes}:${seconds.toString().padStart(2, "0")}`;
   const timeWarning = timeLeft <= 30;
+  const isRestored = existingSession !== null;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
@@ -218,6 +297,9 @@ export default function Game() {
           <h1 className="text-xl font-bold text-wafer-300">{level.name}</h1>
           <span className="text-sm text-gray-500">
             图像 {currentImageIndex + 1} / {images.length}
+            {isRestored && (
+              <span className="ml-3 text-yellow-400">● 已恢复上次进度</span>
+            )}
           </span>
         </div>
         <div
