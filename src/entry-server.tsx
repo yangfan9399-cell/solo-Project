@@ -1,9 +1,20 @@
-import { renderToString } from "solid-js/web";
-import App from "./root";
+import { createHandler, StartServer } from "@solidjs/start/server";
 
-export default function handleServerRequest() {
-  const html = renderToString(() => <App />);
-  return new Response(html, {
-    headers: { "content-type": "text/html" },
-  });
-}
+export default createHandler(() => (
+  <StartServer
+    document={({ assets, children, scripts }) => (
+      <html lang="zh-CN">
+        <head>
+          <meta charset="utf-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>管线机器人巡检缺陷帧标注平台</title>
+          {assets}
+        </head>
+        <body class="bg-gray-50 text-gray-900 antialiased">
+          <div id="app">{children}</div>
+          {scripts}
+        </body>
+      </html>
+    )}
+  />
+));

@@ -1,13 +1,4 @@
 // @refresh reload
-import { hydrate, render } from "solid-js/web";
-import App from "./root";
+import { mount, StartClient } from "@solidjs/start/client";
 
-const root = document.getElementById("app");
-
-if (root) {
-  if (root.hasChildNodes()) {
-    hydrate(() => <App />, root);
-  } else {
-    render(() => <App />, root);
-  }
-}
+mount(() => <StartClient />, document.getElementById("app")!);
