@@ -4573,11 +4573,1061 @@
         "comments": "已完成现场勘察，提交复核。"
       }
     ],
-    "versionHistory": [],
-    "currentVersion": "v1.0",
-    "currentBatch": "B4102",
+    "versionHistory": [
+      {
+        "version": "v1.1",
+        "batch": "B9528",
+        "createdAt": "2026-06-17T17:12:59.528Z",
+        "createdBy": "系统测试",
+        "changeLog": "测试版本快照",
+        "snapshot": {
+          "liftPoints": [
+            {
+              "id": "lp-2-1",
+              "name": "LP-MAIN 主升降吊点",
+              "type": "fixed",
+              "x": 0,
+              "y": 0,
+              "z": 32,
+              "maxLoad": 1200,
+              "equipment": "PFEIFER FZL 1200重型变频绞车",
+              "anchorMethod": "屋架节点板M30高强度螺栓双固定",
+              "materialSpec": "7×37镀锌钢丝绳 Φ14mm 破断力120kN"
+            },
+            {
+              "id": "lp-2-2",
+              "name": "LP-GUIDE 导索吊点",
+              "type": "fixed",
+              "x": 1.5,
+              "y": 0,
+              "z": 30,
+              "maxLoad": 300,
+              "equipment": "张紧导索 + 防摆阻尼器",
+              "anchorMethod": "附加桁架横担",
+              "materialSpec": "7×19不锈钢钢丝绳 Φ6mm 破断力22kN"
+            },
+            {
+              "id": "lp-2-3",
+              "name": "LP-SAFETY 安全冗余吊点",
+              "type": "fixed",
+              "x": -1.5,
+              "y": 0,
+              "z": 30,
+              "maxLoad": 800,
+              "equipment": "SALA Talon 坠落制动器 8kN",
+              "anchorMethod": "独立结构吊点",
+              "materialSpec": "7×37镀锌钢丝绳 Φ12mm 破断力82kN"
+            },
+            {
+              "id": "lp-2-4",
+              "name": "LP-WIND 风载测试点",
+              "type": "fixed",
+              "x": 0,
+              "y": 1,
+              "z": 15,
+              "maxLoad": 500,
+              "equipment": "张力传感器 + 实时监控",
+              "anchorMethod": "辅助安装点",
+              "materialSpec": "7×19镀锌钢丝绳 Φ8mm 破断力38kN"
+            }
+          ],
+          "performers": [
+            {
+              "id": "pf-2-1",
+              "name": "周俊杰（歌手）",
+              "role": "主唱",
+              "weight": 68,
+              "costumeWeight": 12,
+              "propWeight": 8,
+              "totalWeight": 88,
+              "safetyHarness": "Petzl Newton EASYFIT 全身安全带 + 胸升",
+              "remarks": "手持金属麦克风约0.8kg，佩戴无线耳返。服装含金属亮片装饰。"
+            },
+            {
+              "id": "pf-2-2",
+              "name": "伴舞A",
+              "role": "空中伴舞",
+              "weight": 55,
+              "costumeWeight": 6,
+              "propWeight": 2,
+              "totalWeight": 63,
+              "safetyHarness": "Petzl Avao Body"
+            }
+          ],
+          "motionPaths": [
+            {
+              "id": "mp-2-1",
+              "name": "30米垂直缓降",
+              "type": "linear",
+              "duration": 45,
+              "maxSpeed": 1.2,
+              "maxAcceleration": 0.5,
+              "waypoints": [
+                {
+                  "id": "w-1",
+                  "sequence": 1,
+                  "x": 0,
+                  "y": 0,
+                  "z": 30,
+                  "timestamp": 0,
+                  "velocity": 0,
+                  "acceleration": 0
+                },
+                {
+                  "id": "w-2",
+                  "sequence": 2,
+                  "x": 0,
+                  "y": 0,
+                  "z": 28,
+                  "timestamp": 5,
+                  "velocity": 0.5,
+                  "acceleration": 0.3
+                },
+                {
+                  "id": "w-3",
+                  "sequence": 3,
+                  "x": 0,
+                  "y": 0,
+                  "z": 22,
+                  "timestamp": 15,
+                  "velocity": 1.2,
+                  "acceleration": 0.1
+                },
+                {
+                  "id": "w-4",
+                  "sequence": 4,
+                  "x": 0,
+                  "y": 0,
+                  "z": 15,
+                  "timestamp": 25,
+                  "velocity": 1,
+                  "acceleration": -0.1
+                },
+                {
+                  "id": "w-5",
+                  "sequence": 5,
+                  "x": 0,
+                  "y": 0,
+                  "z": 8,
+                  "timestamp": 35,
+                  "velocity": 0.6,
+                  "acceleration": -0.2
+                },
+                {
+                  "id": "w-6",
+                  "sequence": 6,
+                  "x": 0,
+                  "y": 0,
+                  "z": 3,
+                  "timestamp": 43,
+                  "velocity": 0.2,
+                  "acceleration": -0.3
+                },
+                {
+                  "id": "w-7",
+                  "sequence": 7,
+                  "x": 0,
+                  "y": 0,
+                  "z": 1.5,
+                  "timestamp": 45,
+                  "velocity": 0,
+                  "acceleration": -0.1
+                }
+              ]
+            }
+          ],
+          "defaultSafetyFactor": 5,
+          "dynamicCoefficient": 1.2,
+          "impactCoefficient": 1.5
+        },
+        "calculationResults": [
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 88,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 30
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 63,
+            "dynamicLoad": 65.08,
+            "impactLoad": 94.5,
+            "maxLoad": 94.5,
+            "safetyFactor": 12.7,
+            "designSafetyFactor": 5,
+            "utilization": 7.9,
+            "alertLevel": "normal",
+            "timestamp": 0.1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 28.2
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 90.37,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 0.2,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 25.6
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 63,
+            "dynamicLoad": 64,
+            "impactLoad": 94.5,
+            "maxLoad": 94.5,
+            "safetyFactor": 12.7,
+            "designSafetyFactor": 5,
+            "utilization": 7.9,
+            "alertLevel": "normal",
+            "timestamp": 0.3,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 22.9
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 88.43,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 0.4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 19.9
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 63,
+            "dynamicLoad": 63,
+            "impactLoad": 94.5,
+            "maxLoad": 94.5,
+            "safetyFactor": 12.7,
+            "designSafetyFactor": 5,
+            "utilization": 7.9,
+            "alertLevel": "normal",
+            "timestamp": 0.5,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 16.75
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 88,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 0.6,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 13.6
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 63,
+            "dynamicLoad": 63,
+            "impactLoad": 94.5,
+            "maxLoad": 94.5,
+            "safetyFactor": 12.7,
+            "designSafetyFactor": 5,
+            "utilization": 7.9,
+            "alertLevel": "normal",
+            "timestamp": 0.7,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 10.450000000000003
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 88,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 0.8,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 7.375
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 63,
+            "dynamicLoad": 63,
+            "impactLoad": 94.5,
+            "maxLoad": 94.5,
+            "safetyFactor": 12.7,
+            "designSafetyFactor": 5,
+            "utilization": 7.9,
+            "alertLevel": "normal",
+            "timestamp": 0.9,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 4.5625
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-1",
+            "pointName": "LP-MAIN 主升降吊点",
+            "staticLoad": 88,
+            "dynamicLoad": 88,
+            "impactLoad": 132,
+            "maxLoad": 132,
+            "safetyFactor": 9.09,
+            "designSafetyFactor": 5,
+            "utilization": 11,
+            "alertLevel": "normal",
+            "timestamp": 1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 1.5
+            },
+            "tensionAngle": 90,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 880,
+            "dynamicLoad": 880,
+            "impactLoad": 1320,
+            "maxLoad": 1320,
+            "safetyFactor": 0.23,
+            "designSafetyFactor": 5,
+            "utilization": 440,
+            "alertLevel": "danger",
+            "timestamp": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 30
+            },
+            "tensionAngle": 0,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 82.01,
+            "dynamicLoad": 84.72,
+            "impactLoad": 123.01,
+            "maxLoad": 123.01,
+            "safetyFactor": 2.44,
+            "designSafetyFactor": 5,
+            "utilization": 41,
+            "alertLevel": "danger",
+            "timestamp": 0.1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 28.2
+            },
+            "tensionAngle": 50.2,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 92.97,
+            "dynamicLoad": 95.48,
+            "impactLoad": 139.46,
+            "maxLoad": 139.46,
+            "safetyFactor": 2.15,
+            "designSafetyFactor": 5,
+            "utilization": 46.5,
+            "alertLevel": "danger",
+            "timestamp": 0.2,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 25.6
+            },
+            "tensionAngle": 71.2,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 64.39,
+            "dynamicLoad": 65.41,
+            "impactLoad": 96.59,
+            "maxLoad": 96.59,
+            "safetyFactor": 3.11,
+            "designSafetyFactor": 5,
+            "utilization": 32.2,
+            "alertLevel": "danger",
+            "timestamp": 0.3,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 22.9
+            },
+            "tensionAngle": 78.1,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 88.97,
+            "dynamicLoad": 89.4,
+            "impactLoad": 133.45,
+            "maxLoad": 133.45,
+            "safetyFactor": 2.25,
+            "designSafetyFactor": 5,
+            "utilization": 44.5,
+            "alertLevel": "danger",
+            "timestamp": 0.4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 19.9
+            },
+            "tensionAngle": 81.6,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 63.4,
+            "dynamicLoad": 63.4,
+            "impactLoad": 95.1,
+            "maxLoad": 95.1,
+            "safetyFactor": 3.15,
+            "designSafetyFactor": 5,
+            "utilization": 31.7,
+            "alertLevel": "danger",
+            "timestamp": 0.5,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 16.75
+            },
+            "tensionAngle": 83.5,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 88.37,
+            "dynamicLoad": 88.37,
+            "impactLoad": 132.55,
+            "maxLoad": 132.55,
+            "safetyFactor": 2.26,
+            "designSafetyFactor": 5,
+            "utilization": 44.2,
+            "alertLevel": "danger",
+            "timestamp": 0.6,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 13.6
+            },
+            "tensionAngle": 84.8,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 63.19,
+            "dynamicLoad": 63.19,
+            "impactLoad": 94.78,
+            "maxLoad": 94.78,
+            "safetyFactor": 3.17,
+            "designSafetyFactor": 5,
+            "utilization": 31.6,
+            "alertLevel": "danger",
+            "timestamp": 0.7,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 10.450000000000003
+            },
+            "tensionAngle": 85.6,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 88.19,
+            "dynamicLoad": 88.19,
+            "impactLoad": 132.29,
+            "maxLoad": 132.29,
+            "safetyFactor": 2.27,
+            "designSafetyFactor": 5,
+            "utilization": 44.1,
+            "alertLevel": "danger",
+            "timestamp": 0.8,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 7.375
+            },
+            "tensionAngle": 86.2,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 63.11,
+            "dynamicLoad": 63.11,
+            "impactLoad": 94.66,
+            "maxLoad": 94.66,
+            "safetyFactor": 3.17,
+            "designSafetyFactor": 5,
+            "utilization": 31.6,
+            "alertLevel": "danger",
+            "timestamp": 0.9,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 4.5625
+            },
+            "tensionAngle": 86.6,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-2",
+            "pointName": "LP-GUIDE 导索吊点",
+            "staticLoad": 88.12,
+            "dynamicLoad": 88.12,
+            "impactLoad": 132.18,
+            "maxLoad": 132.18,
+            "safetyFactor": 2.27,
+            "designSafetyFactor": 5,
+            "utilization": 44.1,
+            "alertLevel": "danger",
+            "timestamp": 1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 1.5
+            },
+            "tensionAngle": 87,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 880,
+            "dynamicLoad": 880,
+            "impactLoad": 1320,
+            "maxLoad": 1320,
+            "safetyFactor": 0.61,
+            "designSafetyFactor": 5,
+            "utilization": 165,
+            "alertLevel": "danger",
+            "timestamp": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 30
+            },
+            "tensionAngle": 0,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 82.01,
+            "dynamicLoad": 84.72,
+            "impactLoad": 123.01,
+            "maxLoad": 123.01,
+            "safetyFactor": 6.5,
+            "designSafetyFactor": 5,
+            "utilization": 15.4,
+            "alertLevel": "normal",
+            "timestamp": 0.1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 28.2
+            },
+            "tensionAngle": 50.2,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 92.97,
+            "dynamicLoad": 95.48,
+            "impactLoad": 139.46,
+            "maxLoad": 139.46,
+            "safetyFactor": 5.74,
+            "designSafetyFactor": 5,
+            "utilization": 17.4,
+            "alertLevel": "normal",
+            "timestamp": 0.2,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 25.6
+            },
+            "tensionAngle": 71.2,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 64.39,
+            "dynamicLoad": 65.41,
+            "impactLoad": 96.59,
+            "maxLoad": 96.59,
+            "safetyFactor": 8.28,
+            "designSafetyFactor": 5,
+            "utilization": 12.1,
+            "alertLevel": "normal",
+            "timestamp": 0.3,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 22.9
+            },
+            "tensionAngle": 78.1,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 88.97,
+            "dynamicLoad": 89.4,
+            "impactLoad": 133.45,
+            "maxLoad": 133.45,
+            "safetyFactor": 5.99,
+            "designSafetyFactor": 5,
+            "utilization": 16.7,
+            "alertLevel": "normal",
+            "timestamp": 0.4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 19.9
+            },
+            "tensionAngle": 81.6,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 63.4,
+            "dynamicLoad": 63.4,
+            "impactLoad": 95.1,
+            "maxLoad": 95.1,
+            "safetyFactor": 8.41,
+            "designSafetyFactor": 5,
+            "utilization": 11.9,
+            "alertLevel": "normal",
+            "timestamp": 0.5,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 16.75
+            },
+            "tensionAngle": 83.5,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 88.37,
+            "dynamicLoad": 88.37,
+            "impactLoad": 132.55,
+            "maxLoad": 132.55,
+            "safetyFactor": 6.04,
+            "designSafetyFactor": 5,
+            "utilization": 16.6,
+            "alertLevel": "normal",
+            "timestamp": 0.6,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 13.6
+            },
+            "tensionAngle": 84.8,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 63.19,
+            "dynamicLoad": 63.19,
+            "impactLoad": 94.78,
+            "maxLoad": 94.78,
+            "safetyFactor": 8.44,
+            "designSafetyFactor": 5,
+            "utilization": 11.8,
+            "alertLevel": "normal",
+            "timestamp": 0.7,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 10.450000000000003
+            },
+            "tensionAngle": 85.6,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 88.19,
+            "dynamicLoad": 88.19,
+            "impactLoad": 132.29,
+            "maxLoad": 132.29,
+            "safetyFactor": 6.05,
+            "designSafetyFactor": 5,
+            "utilization": 16.5,
+            "alertLevel": "normal",
+            "timestamp": 0.8,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 7.375
+            },
+            "tensionAngle": 86.2,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 63.11,
+            "dynamicLoad": 63.11,
+            "impactLoad": 94.66,
+            "maxLoad": 94.66,
+            "safetyFactor": 8.45,
+            "designSafetyFactor": 5,
+            "utilization": 11.8,
+            "alertLevel": "normal",
+            "timestamp": 0.9,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 4.5625
+            },
+            "tensionAngle": 86.6,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-3",
+            "pointName": "LP-SAFETY 安全冗余吊点",
+            "staticLoad": 88.12,
+            "dynamicLoad": 88.12,
+            "impactLoad": 132.18,
+            "maxLoad": 132.18,
+            "safetyFactor": 6.05,
+            "designSafetyFactor": 5,
+            "utilization": 16.5,
+            "alertLevel": "normal",
+            "timestamp": 1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 1.5
+            },
+            "tensionAngle": 87,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 88.2,
+            "dynamicLoad": 88.2,
+            "impactLoad": 132.29,
+            "maxLoad": 132.29,
+            "safetyFactor": 3.78,
+            "designSafetyFactor": 5,
+            "utilization": 26.5,
+            "alertLevel": "warning",
+            "timestamp": 0,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 30
+            },
+            "tensionAngle": 86.2,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 63.18,
+            "dynamicLoad": 65.27,
+            "impactLoad": 94.77,
+            "maxLoad": 94.77,
+            "safetyFactor": 5.28,
+            "designSafetyFactor": 5,
+            "utilization": 19,
+            "alertLevel": "normal",
+            "timestamp": 0.1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 28.2
+            },
+            "tensionAngle": 85.7,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 88.39,
+            "dynamicLoad": 90.77,
+            "impactLoad": 132.59,
+            "maxLoad": 132.59,
+            "safetyFactor": 3.77,
+            "designSafetyFactor": 5,
+            "utilization": 26.5,
+            "alertLevel": "warning",
+            "timestamp": 0.2,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 25.6
+            },
+            "tensionAngle": 84.6,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 63.5,
+            "dynamicLoad": 64.51,
+            "impactLoad": 95.25,
+            "maxLoad": 95.25,
+            "safetyFactor": 5.25,
+            "designSafetyFactor": 5,
+            "utilization": 19.1,
+            "alertLevel": "normal",
+            "timestamp": 0.3,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 22.9
+            },
+            "tensionAngle": 82.8,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 89.81,
+            "dynamicLoad": 90.25,
+            "impactLoad": 134.72,
+            "maxLoad": 134.72,
+            "safetyFactor": 3.71,
+            "designSafetyFactor": 5,
+            "utilization": 26.9,
+            "alertLevel": "warning",
+            "timestamp": 0.4,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 19.9
+            },
+            "tensionAngle": 78.5,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 72.56,
+            "dynamicLoad": 72.56,
+            "impactLoad": 108.84,
+            "maxLoad": 108.84,
+            "safetyFactor": 4.59,
+            "designSafetyFactor": 5,
+            "utilization": 21.8,
+            "alertLevel": "warning",
+            "timestamp": 0.5,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 16.75
+            },
+            "tensionAngle": 60.3,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 108.14,
+            "dynamicLoad": 108.14,
+            "impactLoad": 162.22,
+            "maxLoad": 162.22,
+            "safetyFactor": 3.08,
+            "designSafetyFactor": 5,
+            "utilization": 32.4,
+            "alertLevel": "danger",
+            "timestamp": 0.6,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 13.6
+            },
+            "tensionAngle": 54.5,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 64.5,
+            "dynamicLoad": 64.5,
+            "impactLoad": 96.76,
+            "maxLoad": 96.76,
+            "safetyFactor": 5.17,
+            "designSafetyFactor": 5,
+            "utilization": 19.4,
+            "alertLevel": "normal",
+            "timestamp": 0.7,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 10.450000000000003
+            },
+            "tensionAngle": 77.6,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 88.75,
+            "dynamicLoad": 88.75,
+            "impactLoad": 133.13,
+            "maxLoad": 133.13,
+            "safetyFactor": 3.76,
+            "designSafetyFactor": 5,
+            "utilization": 26.6,
+            "alertLevel": "warning",
+            "timestamp": 0.8,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 7.375
+            },
+            "tensionAngle": 82.5,
+            "performerId": "pf-2-1"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 63.29,
+            "dynamicLoad": 63.29,
+            "impactLoad": 94.93,
+            "maxLoad": 94.93,
+            "safetyFactor": 5.27,
+            "designSafetyFactor": 5,
+            "utilization": 19,
+            "alertLevel": "normal",
+            "timestamp": 0.9,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 4.5625
+            },
+            "tensionAngle": 84.5,
+            "performerId": "pf-2-2"
+          },
+          {
+            "pointId": "lp-2-4",
+            "pointName": "LP-WIND 风载测试点",
+            "staticLoad": 88.24,
+            "dynamicLoad": 88.24,
+            "impactLoad": 132.36,
+            "maxLoad": 132.36,
+            "safetyFactor": 3.78,
+            "designSafetyFactor": 5,
+            "utilization": 26.5,
+            "alertLevel": "warning",
+            "timestamp": 1,
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 1.5
+            },
+            "tensionAngle": 85.8,
+            "performerId": "pf-2-1"
+          }
+        ]
+      }
+    ],
+    "currentVersion": "v1.1",
+    "currentBatch": "B9528",
     "createdAt": "2026-06-12T16:59:36.823Z",
-    "updatedAt": "2026-06-17T16:59:36.823Z",
+    "updatedAt": "2026-06-17T17:12:59.528Z",
     "createdBy": "技术组 - 钱工",
     "tags": [
       "演唱会",
