@@ -109,6 +109,10 @@ export function updateProject(id: string, data: Partial<Project>): Project | und
   const now = new Date().toISOString();
   const updated: Project = { ...projects[idx], ...data, updatedAt: now } as Project;
 
+  if (projects[idx].status === 'approved' && updated.status !== 'approved') {
+    updated.approvalSignatures = [];
+  }
+
   updated.calculationResults = calculateAllLoads(
     updated.liftPoints,
     updated.performers,
@@ -262,6 +266,7 @@ export function revertToVersion(
 
   if (project.status === 'approved') {
     project.status = 'review';
+    project.approvalSignatures = [];
   }
 
   projects[idx] = project;

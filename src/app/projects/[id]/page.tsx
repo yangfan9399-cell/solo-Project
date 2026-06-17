@@ -67,12 +67,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [sigPadOpen, setSigPadOpen] = useState(false);
   const [sigInfo, setSigInfo] = useState({ signerName: '', signerRole: '项目经理', comments: '' });
 
+  const getNextUnsignedRole = (sigs: { signerRole: string }[]) => {
+    const roles = ['项目经理', '技术总监', '安全主管'];
+    return roles.find((r) => !sigs.find((s) => s.signerRole === r)) || roles[0];
+  };
+
   const loadProject = async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/projects/${id}`);
       const json = await res.json();
-      if (json.success) setProject(json.data);
+      if (json.success) {
+        setProject(json.data);
+        setSigInfo((prev) => ({ ...prev, signerRole: getNextUnsignedRole(json.data.approvalSignatures || []) }));
+      }
     } catch {}
     setLoading(false);
   };
@@ -102,7 +110,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       setProject(json.data);
       setDirty(false);
       if (project.status === 'approved') {
-        showToast('success', '保存成功，项目状态已回到审批中');
+        showToast('success', '保存成功，三方签名已清除，需重新审批');
       } else {
         showToast('success', '保存成功，载荷计算已重新执行');
       }
@@ -113,7 +121,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const update = (patch: Partial<Project>) => {
     if (!project) return;
-    if (project.status === 'approved' && !confirm('该项目已审批通过，修改将使状态回到"审批中"。确认继续？')) return;
+    if (project.status === 'approved' && !confirm('该项目已审批通过，修改将清除已有三方签名并使状态回到「审批中」，需重新走审批流程。确认继续？')) return;
     setProject((prev) => (prev ? { ...prev, ...patch } : prev));
     setDirty(true);
   };
@@ -335,7 +343,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const json = await res.json();
     if (json.success) {
       showToast('success', `${sigInfo.signerRole} ${sigInfo.signerName} 签署成功`);
-      setSigInfo({ signerName: '', signerRole: '项目经理', comments: '' });
+      const remaining = [...(project?.approvalSignatures || []), json.data];
+      setSigInfo({ signerName: '', signerRole: getNextUnsignedRole(remaining), comments: '' });
       loadProject();
     } else {
       showToast('error', json.error || '签署失败');
@@ -436,7 +445,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {/* ===== 异常数据提示 ===== */}
       {project.status === 'approved' && (
         <div className="mb-5">
-          <Alert type="info" title="项目已审批通过" message={'修改数据后保存将使项目状态回到「审批中」，需重新走审批流程。'} />
+          <Alert type="info" title="项目已审批通过" message={'修改数据后保存将清除已有三方签名，状态回到「审批中」，需重新走审批流程。'} />
         </div>
       )}
       {project.hasAbnormalData && project.abnormalNotes && (
