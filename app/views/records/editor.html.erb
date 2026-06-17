@@ -260,6 +260,31 @@
 <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
 </div>
 
+<style>
+  @keyframes pulse-highlight {
+    0%, 100% { background-color: rgba(254, 243, 199, 0.6); }
+    50% { background-color: rgba(251, 191, 36, 0.4); }
+  }
+  .annotation-new-item {
+    animation: pulse-highlight 1.5s ease-in-out 3;
+  }
+  @keyframes scale-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .annotation-box.selected-flash {
+    animation: scale-bounce 0.3s ease-in-out;
+  }
+  .count-change {
+    transition: all 0.3s ease;
+  }
+  .count-change.flash {
+    color: #f59e0b;
+    font-weight: 700;
+    transform: scale(1.2);
+  }
+</style>
+
 <%= content_for :javascript do %>
 <script>
   const projectId = <%= @project.id %>;

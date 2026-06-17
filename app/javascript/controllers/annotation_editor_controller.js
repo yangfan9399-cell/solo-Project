@@ -324,6 +324,7 @@ export default class extends Controller {
       this.addAnnotationToList(annotation)
       this.selectAnnotation(String(annotation.id))
       this.updateAnnotationCount()
+      this.flashCount()
       this.showToast('标注创建成功')
     })
     .catch(error => {
@@ -349,7 +350,7 @@ export default class extends Controller {
     if (!this.annotationListContainer) return
 
     const item = document.createElement('div')
-    item.className = 'annotation-item p-3 hover:bg-slate-50 cursor-pointer'
+    item.className = 'annotation-item p-3 hover:bg-slate-50 cursor-pointer annotation-new-item'
     item.dataset.id = String(annotation.id)
 
     item.innerHTML = `
@@ -559,6 +560,7 @@ export default class extends Controller {
       document.getElementById('annotation-properties').classList.add('hidden')
       document.getElementById('selected-info').textContent = '未选择标注'
       this.updateAnnotationCount()
+      this.flashCount()
       this.showToast('标注已删除', 'warning')
     })
   }
@@ -611,10 +613,13 @@ export default class extends Controller {
     const dy = coords.y - this.resizeStartY
     const w = Math.max(10, this.resizeStartWidth + dx)
     const h = Math.max(10, this.resizeStartHeight + dy)
-    box.style.width = Math.round(w) + 'px'
-    box.style.height = Math.round(h) + 'px'
-    document.getElementById('prop-width').value = Math.round(w)
-    document.getElementById('prop-height').value = Math.round(h)
+    const newW = Math.round(w)
+    const newH = Math.round(h)
+    box.style.width = newW + 'px'
+    box.style.height = newH + 'px'
+    document.getElementById('prop-width').value = newW
+    document.getElementById('prop-height').value = newH
+    this.updateListItemSize(this.selectedAnnotationId, newW, newH)
   }
 
   endResize() {
@@ -622,6 +627,7 @@ export default class extends Controller {
     this.isResizing = false
     this.saveAnnotationProperties()
     this.updateCursor()
+    this.showToast('尺寸已更新', 'info')
   }
 
   startDrawScale(e) {
@@ -695,6 +701,7 @@ export default class extends Controller {
     .then(marker => {
       this.addScaleMarkerToCanvas(marker)
       this.updateAnnotationCount()
+      this.flashCount()
       this.showToast(`尺度尺已添加 (${marker.length_cm}cm)`)
     })
   }
@@ -806,6 +813,28 @@ export default class extends Controller {
       toast.classList.add('translate-x-full')
       setTimeout(() => toast.remove(), 300)
     }, 2500)
+  }
+
+  flashCount() {
+    const countInfo = document.getElementById('annotation-count-info')
+    if (!countInfo) return
+    countInfo.classList.add('count-change')
+    countInfo.classList.add('flash')
+    setTimeout(() => {
+      countInfo.classList.remove('flash')
+    }, 500)
+  }
+
+  updateListItemSize(id, width, height) {
+    if (!this.annotationListContainer) return
+    const item = this.annotationListContainer.querySelector(`.annotation-item[data-id="${id}"]`)
+    if (!item) return
+    const sizeEl = item.querySelector('.text-xs.text-slate-500')
+    if (sizeEl) {
+      sizeEl.textContent = `${width} × ${height} px`
+      sizeEl.classList.add('count-change', 'flash')
+      setTimeout(() => sizeEl.classList.remove('count-change', 'flash'), 500)
+    }
   }
 
   updateAnnotationCount() {

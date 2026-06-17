@@ -3,6 +3,18 @@
 <% content_for :page_subtitle, "#{@project.name} · 年度变化对比" %>
 
 <div class="space-y-6">
+  <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 0 0118 0z" />
+      </svg>
+    </div>
+    <div>
+      <p class="font-semibold text-amber-800">版本历史视图</p>
+      <p class="text-sm text-amber-600">按年度组织的普查/复查/专项记录批次，可多选版本进行对比分析</p>
+    </div>
+  </div>
+
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-4">
       <%= link_to project_path(@project), class: "text-slate-600 hover:text-slate-800 text-sm" do %>
