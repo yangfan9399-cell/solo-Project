@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f5efe4;
+  --ink: #2b1d16;
+}
+
+html, body {
+  background: linear-gradient(135deg, #f5efe4 0%, #ebe2d0 100%);
+  color: #2b1d16;
+  font-family: Georgia, 'Noto Serif SC', 'Songti SC', serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(184, 134, 11, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(192, 57, 43, 0.04) 0%, transparent 40%);
+  min-height: 100vh;
+}
+
+@layer components {
+  .paper-card {
+    @apply bg-[#fdfaf3] border border-stone-200/80 shadow-[0_1px_2px_rgba(43,29,22,0.04),0_4px_16px_-4px_rgba(43,29,22,0.06)] rounded-lg;
+  }
+  .wood-title {
+    @apply font-serif tracking-wide text-ink;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md bg-ink text-paper hover:bg-ink/90 active:bg-ink/80 text-sm font-medium transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md bg-paper border border-stone-300 text-ink hover:bg-stone-50 active:bg-stone-100 text-sm font-medium transition;
+  }
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-sm font-medium transition;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .input-field {
+    @apply block w-full rounded-md border border-stone-300 bg-white/80 px-3 py-2 text-sm text-ink placeholder:text-stone-400 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold/50 transition;
+  }
+  .section-title {
+    @apply text-base font-serif font-semibold text-ink flex items-center gap-2 pb-2 border-b border-stone-200/60;
+  }
+  .stat-card {
+    @apply bg-paper/70 border border-stone-200 rounded-lg p-3 flex flex-col gap-1;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgba(43, 29, 22, 0.2);
+    border-radius: 3px;
+  }
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.wood-pattern {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(43, 29, 22, 0.03) 0px,
+    rgba(43, 29, 22, 0.03) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
