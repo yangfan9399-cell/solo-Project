@@ -47,9 +47,12 @@ export default async function ProjectDetailPage({
               )}
             </div>
             <div className="flex gap-2">
-              <button className="px-4 py-2 border border-stone-300 rounded-lg text-sm text-stone-600 hover:bg-stone-50 transition-colors">
+              <Link
+                href={`/projects/${project.id}/edit`}
+                className="px-4 py-2 border border-stone-300 rounded-lg text-sm text-stone-600 hover:bg-stone-50 transition-colors"
+              >
                 编辑项目
-              </button>
+              </Link>
               <Link
                 href={`/api/export?projectId=${project.id}&format=json`}
                 className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"

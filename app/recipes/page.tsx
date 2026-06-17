@@ -78,25 +78,43 @@ export default async function RecipesPage({
 
       <div className="bg-white rounded-xl shadow-sm border border-stone-200 mb-6 overflow-hidden">
         <div className="p-4 border-b border-stone-100 space-y-4">
-          <div className="flex gap-4 items-center">
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="搜索配方名称、编号、描述、标签..."
-                defaultValue={query}
-                className="w-full px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              />
+          <form method="GET" action="/recipes">
+            {statusFilter && (
+              <input type="hidden" name="status" value={statusFilter} />
+            )}
+            {matrixFilter && (
+              <input type="hidden" name="matrix" value={matrixFilter} />
+            )}
+            <div className="flex gap-4 items-center">
+              <div className="flex-1">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="搜索配方名称、编号、描述、标签..."
+                    defaultValue={query}
+                    className="flex-1 px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-medium"
+                  >
+                    搜索
+                  </button>
+                </div>
+              </div>
+              <select
+                name="projectId"
+                defaultValue={projectFilter}
+                className="px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+              >
+                <option value="">全部项目</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
             </div>
-            <select
-              defaultValue={projectFilter}
-              className="px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
-            >
-              <option value="">全部项目</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
+          </form>
 
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex gap-2">

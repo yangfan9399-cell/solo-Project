@@ -50,12 +50,26 @@ export default async function ProjectsPage({
         <div className="p-4 border-b border-stone-100">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-64">
-              <input
-                type="text"
-                placeholder="搜索项目名称、编号、标签..."
-                defaultValue={query}
-                className="w-full px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              />
+              <form method="GET" action="/projects">
+                {statusFilter && (
+                  <input type="hidden" name="status" value={statusFilter} />
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="搜索项目名称、编号、标签..."
+                    defaultValue={query}
+                    className="flex-1 px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-medium"
+                  >
+                    搜索
+                  </button>
+                </div>
+              </form>
             </div>
             <div className="flex gap-2">
               <Link
