@@ -171,9 +171,19 @@ class PlateController extends Controller
         $plates = $query->paginate($perPage)->appends($request->all());
 
         $materials = Plate::distinct()->pluck('material');
-        $statuses = ['正常', '待保养', '维修中', '已报废'];
+        $statuses = Plate::getStatusOptions();
 
-        return view('plates.index', compact('plates', 'materials', 'statuses', 'request'));
+        $stats = [
+            'total' => Plate::count(),
+            'warning' => Plate::warning()->count(),
+            'active' => Plate::active()->count(),
+            'normal' => Plate::where('status', '正常')->count(),
+            'maintenance' => Plate::where('status', '待保养')->count(),
+            'repairing' => Plate::where('status', '维修中')->count(),
+            'retired' => Plate::where('status', '已报废')->count(),
+        ];
+
+        return view('plates.index', compact('plates', 'materials', 'statuses', 'request', 'stats'));
     }
 
     public function show(Plate $plate)
@@ -197,8 +207,8 @@ class PlateController extends Controller
 
     public function create()
     {
-        $materials = ['黄铜', '锌版', '镁版', '铜锌合金', '其他'];
-        $statuses = ['正常', '待保养', '维修中'];
+        $materials = Plate::getMaterialOptions();
+        $statuses = array_filter(Plate::getStatusOptions(), fn($s) => $s !== '已报废');
         return view('plates.create', compact('materials', 'statuses'));
     }
 
@@ -251,8 +261,8 @@ class PlateController extends Controller
 
     public function edit(Plate $plate)
     {
-        $materials = ['黄铜', '锌版', '镁版', '铜锌合金', '其他'];
-        $statuses = ['正常', '待保养', '维修中', '已报废'];
+        $materials = Plate::getMaterialOptions();
+        $statuses = Plate::getStatusOptions();
         $changeTypes = ['图案修改', '尺寸调整', '材质更换', '维护记录', '修复重做', '其他变更'];
         return view('plates.edit', compact('plate', 'materials', 'statuses', 'changeTypes'));
     }
@@ -519,10 +529,13 @@ class PlateController extends Controller
 
             foreach ($plates as $plate) {
                 $flags = [];
-                if ($plate->is_overdue_maintenance) $flags[] = '保养逾期';
-                if ($plate->usage_count > $plate->max_usage) $flags[] = '超期使用';
-                if ($plate->usage_rate >= 85) $flags[] = '高频使用';
-                if ($plate->status === '维修中') $flags[] = '维修中';
+                if (!$plate->is_retired) {
+                    if ($plate->is_overdue_maintenance) $flags[] = '保养逾期';
+                    if ($plate->is_over_usage) $flags[] = '超期使用';
+                    elseif ($plate->is_high_usage) $flags[] = '高频使用';
+                    if ($plate->status === '待保养') $flags[] = '待保养';
+                    if ($plate->status === '维修中') $flags[] = '维修中';
+                }
 
                 fputcsv($handle, [
                     $plate->plate_code,

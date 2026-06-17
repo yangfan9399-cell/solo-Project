@@ -29,7 +29,7 @@
                     <label class="form-label">版号编码<span class="required">*</span></label>
                     <input type="text" name="plate_code" class="form-control" required
                            value="{{ old('plate_code', $plate->plate_code) }}">
-                    @error('plate_code')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('plate_code')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">图案名称<span class="required">*</span></label>

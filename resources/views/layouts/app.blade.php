@@ -271,6 +271,8 @@
         .table tbody tr.warning-row { background: #FFFBEB; }
         .table tbody tr.warning-row:hover { background: #FFF4D1; }
         .table tbody tr.danger-row { background: #FEF2F2; }
+        .table tbody tr.retired-row { opacity: 0.55; }
+        .table tbody tr.retired-row td { color: #9CA3AF; }
 
         /* 徽章/标签 */
         .badge {
@@ -340,6 +342,15 @@
         }
         .form-textarea { resize: vertical; min-height: 80px; }
         .form-hint { margin-top: 4px; font-size: 11px; color: var(--text-muted); }
+        .form-error { margin-top: 4px; font-size: 11px; color: var(--danger); }
+        .form-control.is-invalid, .form-select.is-invalid, .form-textarea.is-invalid {
+            border-color: var(--danger);
+            background: #FEF2F2;
+        }
+        .form-control.is-invalid:focus, .form-select.is-invalid:focus, .form-textarea.is-invalid:focus {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+        }
 
         /* 筛选栏 */
         .filter-bar {

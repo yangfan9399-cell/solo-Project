@@ -82,15 +82,65 @@ class Plate extends Model
         return $this->usage_rate >= 85;
     }
 
+    public function getIsOverUsageAttribute(): bool
+    {
+        return $this->usage_count > $this->max_usage;
+    }
+
+    public function getUsageLevelAttribute(): string
+    {
+        if ($this->usage_count > $this->max_usage) return 'danger';
+        if ($this->usage_rate >= 85) return 'warn';
+        return 'normal';
+    }
+
     public function getIsWarningAttribute(): bool
     {
-        return $this->is_overdue_maintenance || $this->is_high_usage || $this->status === '待保养' || $this->status === '维修中';
+        return $this->is_overdue_maintenance || $this->is_high_usage || in_array($this->status, ['待保养', '维修中']);
+    }
+
+    public function getIsRetiredAttribute(): bool
+    {
+        return $this->status === '已报废';
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status) {
+            '正常' => 'badge-success',
+            '待保养' => 'badge-warning',
+            '维修中' => 'badge-info',
+            '已报废' => 'badge-secondary',
+            default => 'badge-secondary',
+        };
+    }
+
+    public function getWarningTagsAttribute(): array
+    {
+        $tags = [];
+        if ($this->is_retired) return $tags;
+        if ($this->is_overdue_maintenance) $tags[] = ['⏰ 保养逾期', 'danger'];
+        if ($this->is_over_usage) $tags[] = ['🔥 超期使用', 'danger'];
+        elseif ($this->is_high_usage) $tags[] = ['⚡ 高频使用', 'warning'];
+        if ($this->status === '待保养') $tags[] = ['🔧 待保养', 'warning'];
+        if ($this->status === '维修中') $tags[] = ['🛠 维修中', 'info'];
+        return $tags;
     }
 
     public function getMaintenanceDaysLeftAttribute(): ?int
     {
         if (!$this->next_maintenance_date) return null;
         return Carbon::today()->diffInDays($this->next_maintenance_date, false);
+    }
+
+    public function getMaintenanceStatusTextAttribute(): string
+    {
+        if ($this->is_retired || !$this->next_maintenance_date) return '—';
+        $days = $this->maintenance_days_left;
+        if ($days < 0) return '逾期 ' . abs($days) . ' 天';
+        if ($days == 0) return '今日到期';
+        if ($days <= 7) return "{$days} 天后";
+        return $this->next_maintenance_date->format('Y-m-d');
     }
 
     public function scopeActive($query)
@@ -103,13 +153,26 @@ class Plate extends Model
         $today = Carbon::today()->toDateString();
         return $query->where(function ($q) use ($today) {
             $q->whereColumn('usage_count', '>=', \DB::raw('max_usage * 0.85'))
-                ->orWhereDate('next_maintenance_date', '<', $today)
+                ->orWhere(function ($q2) use ($today) {
+                    $q2->whereDate('next_maintenance_date', '<', $today)
+                        ->whereNotNull('next_maintenance_date');
+                })
                 ->orWhereIn('status', ['待保养', '维修中']);
-        });
+        })->whereNotIn('status', ['已报废']);
     }
 
     public function scopeNormal($query)
     {
         return $query->where('status', '正常');
+    }
+
+    public static function getStatusOptions(): array
+    {
+        return ['正常', '待保养', '维修中', '已报废'];
+    }
+
+    public static function getMaterialOptions(): array
+    {
+        return ['黄铜', '锌版', '镁版', '铜锌合金', '不锈钢'];
     }
 }

@@ -86,17 +86,22 @@
 <div class="d-flex gap-8 mb-16 flex-wrap">
     @php
         $quickLinks = [
-            ['全部记录', [], $plates->total()],
-            ['⚠ 异常项', ['status' => 'warning'], $warningCount = \App\Models\Plate::warning()->count()],
-            ['正常在用', ['status' => 'active'], \App\Models\Plate::active()->count()],
-            ['待保养', ['status' => '待保养'], \App\Models\Plate::where('status','待保养')->count()],
-            ['维修中', ['status' => '维修中'], \App\Models\Plate::where('status','维修中')->count()],
-            ['已报废', ['status' => '已报废'], \App\Models\Plate::where('status','已报废')->count()],
+            ['全部记录', [], $stats['total']],
+            ['⚠ 异常项', ['status' => 'warning'], $stats['warning']],
+            ['正常在用', ['status' => 'active'], $stats['active']],
+            ['待保养', ['status' => '待保养'], $stats['maintenance']],
+            ['维修中', ['status' => '维修中'], $stats['repairing']],
+            ['已报废', ['status' => '已报废'], $stats['retired']],
         ];
+        $activeStatus = $request->status ?? '';
     @endphp
     @foreach($quickLinks as $link)
+        @php
+            $linkStatus = $link[1]['status'] ?? '';
+            $isActive = ($activeStatus === '' && $linkStatus === '') || ($activeStatus !== '' && $activeStatus === $linkStatus);
+        @endphp
         <a href="{{ route('plates.index', $link[1]) }}"
-           class="badge {{ $request->status == ($link[1]['status'] ?? '') || (!$request->status && !$link[1]) ? 'badge-gold' : 'badge-secondary' }}"
+           class="badge {{ $isActive ? 'badge-gold' : 'badge-secondary' }}"
            style="font-size:12px; padding:6px 14px;">
             {{ $link[0] }} · {{ $link[2] }}
         </a>
@@ -129,7 +134,7 @@
                 @forelse($plates as $plate)
                 @php
                     $rowClass = '';
-                    if ($plate->status === '已报废') $rowClass = '';
+                    if ($plate->is_retired) $rowClass = 'retired-row';
                     elseif ($plate->is_warning) $rowClass = 'warning-row';
                 @endphp
                 <tr class="{{ $rowClass }}">
@@ -137,12 +142,11 @@
                         <a href="{{ route('plates.show', $plate) }}" class="fw-bold">
                             <span class="badge badge-gold" style="font-size:11px;">{{ $plate->plate_code }}</span>
                         </a>
-                        @if($plate->is_high_usage && $plate->status !== '已报废')
-                            <span class="badge badge-warning" style="margin-left:4px; font-size:10px;">🔥高</span>
-                        @endif
-                        @if($plate->is_overdue_maintenance && $plate->status !== '已报废')
-                            <span class="badge badge-danger" style="margin-left:4px; font-size:10px;">⏰逾期</span>
-                        @endif
+                        <div class="mt-4">
+                            @foreach($plate->warning_tags as $tag)
+                                <span class="badge badge-{{ $tag[1] }}" style="font-size:10px; margin-right:2px;">{{ $tag[0] }}</span>
+                            @endforeach
+                        </div>
                     </td>
                     <td style="min-width:200px;">
                         <div class="fw-bold mb-4">{{ $plate->pattern_name }}</div>
@@ -169,49 +173,32 @@
                             <span class="text-muted">/ {{ number_format($plate->max_usage) }}</span>
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill {{ $plate->usage_rate >= 100 ? 'danger' : ($plate->usage_rate >= 85 ? 'warn' : 'normal') }}"
+                            <div class="progress-fill {{ $plate->usage_level }}"
                                  style="width: {{ min(100, $plate->usage_rate) }}%"></div>
                         </div>
                         <div class="text-sm mt-4">
-                            <span class="{{ $plate->usage_rate >= 100 ? 'text-danger fw-bold' : ($plate->usage_rate >= 85 ? 'text-warning fw-bold' : '') }}">
+                            <span class="{{ $plate->usage_level === 'danger' ? 'text-danger fw-bold' : ($plate->usage_level === 'warn' ? 'text-warning fw-bold' : '') }}">
                                 {{ $plate->usage_rate }}%
                             </span>
-                            @if($plate->usage_count > $plate->max_usage)
+                            @if($plate->is_over_usage)
                                 <span class="text-danger text-sm">超 {{ $plate->usage_count - $plate->max_usage }}次</span>
                             @endif
                         </div>
                     </td>
                     <td>
-                        @php
-                            $stClass = match($plate->status) {
-                                '正常' => 'badge-success',
-                                '待保养' => 'badge-warning',
-                                '维修中' => 'badge-info',
-                                '已报废' => 'badge-secondary',
-                                default => 'badge-secondary',
-                            };
-                        @endphp
-                        <span class="badge {{ $stClass }}">{{ $plate->status }}</span>
+                        <span class="badge {{ $plate->status_badge_class }}">{{ $plate->status }}</span>
                     </td>
                     <td>{{ $plate->location ?: '—' }}</td>
                     <td class="nowrap">
-                        @if($plate->next_maintenance_date && $plate->status !== '已报废')
+                        @if(!$plate->is_retired && $plate->next_maintenance_date)
                             <div class="fw-bold {{ $plate->is_overdue_maintenance ? 'text-danger' : '' }}">
                                 {{ $plate->next_maintenance_date->format('Y-m-d') }}
                             </div>
                             <div class="text-sm text-muted">
-                                @if($plate->maintenance_days_left < 0)
-                                    逾期 {{ abs($plate->maintenance_days_left) }} 天
-                                @elseif($plate->maintenance_days_left == 0)
-                                    今日到期
-                                @elseif($plate->maintenance_days_left <= 7)
-                                    <span class="text-warning">{{ $plate->maintenance_days_left }} 天后</span>
-                                @else
-                                    {{ $plate->maintenance_days_left }} 天后
-                                @endif
+                                {{ $plate->maintenance_status_text }}
                             </div>
                         @else
-                            <span class="text-muted">未设定</span>
+                            <span class="text-muted">—</span>
                         @endif
                     </td>
                     <td>

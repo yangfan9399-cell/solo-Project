@@ -23,13 +23,13 @@
                     <input type="text" name="plate_code" class="form-control" placeholder="例：TG-2026-001" required
                            value="{{ old('plate_code', 'TG-' . date('Y') . '-' . str_pad(App\Models\Plate::count() + 1, 3, '0', STR_PAD_LEFT)) }}">
                     <div class="form-hint">推荐格式：TG-年份-流水号，需全站唯一</div>
-                    @error('plate_code')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('plate_code')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">图案名称<span class="required">*</span></label>
                     <input type="text" name="pattern_name" class="form-control" placeholder="例：古典云纹图案" required
                            value="{{ old('pattern_name') }}">
-                    @error('pattern_name')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('pattern_name')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">材质<span class="required">*</span></label>
@@ -60,7 +60,7 @@
                 <textarea name="applicable_books" class="form-textarea" rows="3" required
                           placeholder="每行一本书名，或用逗号、顿号分隔。例：&#10;《红楼梦》精装版&#10;《西游记》收藏版">{{ old('applicable_books') }}</textarea>
                 <div class="form-hint">支持多行、逗号、顿号分隔，系统将自动拆分为多个书名标签</div>
-                @error('applicable_books')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                @error('applicable_books')<div class="form-error">{{ $message }}</div>@enderror
             </div>
         </div>
     </div>
@@ -75,19 +75,19 @@
                     <label class="form-label">宽度 (mm)<span class="required">*</span></label>
                     <input type="number" name="plate_width" class="form-control" step="0.01" min="1" required
                            value="{{ old('plate_width', 180) }}" placeholder="180.00">
-                    @error('plate_width')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('plate_width')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">高度 (mm)<span class="required">*</span></label>
                     <input type="number" name="plate_height" class="form-control" step="0.01" min="1" required
                            value="{{ old('plate_height', 240) }}" placeholder="240.00">
-                    @error('plate_height')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('plate_height')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">厚度 (mm)<span class="required">*</span></label>
                     <input type="number" name="plate_thickness" class="form-control" step="0.1" min="0.5" max="10" required
                            value="{{ old('plate_thickness', 1.5) }}" placeholder="1.5">
-                    @error('plate_thickness')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('plate_thickness')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">存放位置</label>
@@ -109,7 +109,7 @@
                     <input type="number" name="max_usage" class="form-control" min="100" required
                            value="{{ old('max_usage', 5000) }}">
                     <div class="form-hint">黄铜版通常5000-20000次，锌/镁版3000-5000次</div>
-                    @error('max_usage')<div class="text-danger text-sm mt-4">{{ $message }}</div>@enderror
+                    @error('max_usage')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 <div class="form-group">
                     <label class="form-label">下次保养日期</label>

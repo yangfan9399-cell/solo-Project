@@ -86,7 +86,10 @@
         <div class="stat-value" style="font-size:20px;">{{ $plate->plate_width }}×{{ $plate->plate_height }}</div>
         <div class="stat-foot">厚度 {{ $plate->plate_thickness }} mm · {{ $plate->material }}</div>
     </div>
-    <div class="stat-card" style="--accent-color:{{ $plate->usage_rate >= 85 ? '#DC2626' : '#16A34A' }};">
+    @php
+        $levelColors = ['normal' => '#16A34A', 'warn' => '#F59E0B', 'danger' => '#DC2626'];
+    @endphp
+    <div class="stat-card" style="--accent-color:{{ $levelColors[$plate->usage_level] }};">
         <div class="stat-icon">📊</div>
         <div class="stat-label">使用进度</div>
         <div class="stat-value">{{ $plate->usage_rate }}<small>%</small></div>
@@ -221,11 +224,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">订单号<span class="required">*</span></label>
-                                <input type="text" name="order_number" class="form-control" placeholder="例：OR-2026-0618-001" required value="{{ old('order_number') }}">
+                                <input type="text" name="order_number" class="form-control @error('order_number') is-invalid @enderror" placeholder="例：OR-2026-0618-001" required value="{{ old('order_number') }}">
+                                @error('order_number')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">书名<span class="required">*</span></label>
-                                <input type="text" name="book_title" class="form-control" placeholder="书籍全称" required value="{{ old('book_title') }}">
+                                <input type="text" name="book_title" class="form-control @error('book_title') is-invalid @enderror" placeholder="书籍全称" required value="{{ old('book_title') }}">
+                                @error('book_title')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">客户名称</label>
@@ -235,29 +240,33 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">数量<span class="required">*</span></label>
-                                <input type="number" name="quantity" class="form-control" min="1" value="{{ old('quantity', 1000) }}" required>
+                                <input type="number" name="quantity" class="form-control @error('quantity') is-invalid @enderror" min="1" value="{{ old('quantity', 1000) }}" required>
+                                @error('quantity')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">单价 (元)</label>
-                                <input type="number" name="unit_price" class="form-control" step="0.01" min="0" value="{{ old('unit_price') }}">
+                                <input type="number" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" step="0.01" min="0" value="{{ old('unit_price') }}">
+                                @error('unit_price')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">下单日期<span class="required">*</span></label>
-                                <input type="date" name="order_date" class="form-control" required value="{{ old('order_date', now()->format('Y-m-d')) }}">
+                                <input type="date" name="order_date" class="form-control @error('order_date') is-invalid @enderror" required value="{{ old('order_date', now()->format('Y-m-d')) }}">
+                                @error('order_date')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">交付日期</label>
-                                <input type="date" name="delivery_date" class="form-control" value="{{ old('delivery_date') }}">
+                                <input type="date" name="delivery_date" class="form-control @error('delivery_date') is-invalid @enderror" value="{{ old('delivery_date') }}">
+                                @error('delivery_date')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">状态<span class="required">*</span></label>
-                                <select name="status" class="form-select" required>
-                                    <option value="进行中" {{ old('status') === '进行中' ? 'selected' : '' }}>进行中</option>
-                                    <option value="已完成" {{ old('status') === '已完成' ? 'selected' : '' }}>已完成</option>
-                                    <option value="已延期" {{ old('status') === '已延期' ? 'selected' : '' }}>已延期</option>
-                                    <option value="已取消" {{ old('status') === '已取消' ? 'selected' : '' }}>已取消</option>
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    @foreach(['进行中', '已完成', '已延期', '已取消'] as $st)
+                                    <option value="{{ $st }}" {{ old('status', '进行中') === $st ? 'selected' : '' }}>{{ $st }}</option>
+                                    @endforeach
                                 </select>
                                 <div class="form-hint">选择「已完成」会自动累计使用次数</div>
+                                @error('status')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                         </div>
                         <div class="form-group">
@@ -401,26 +410,26 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">保养类型<span class="required">*</span></label>
-                                <select name="maintenance_type" class="form-select" required>
-                                    <option value="日常清洁">日常清洁</option>
-                                    <option value="防锈处理">防锈处理</option>
-                                    <option value="抛光修复">抛光修复</option>
-                                    <option value="图案修复">图案修复</option>
-                                    <option value="深度保养">深度保养</option>
-                                    <option value="更换重做">更换重做</option>
+                                <select name="maintenance_type" class="form-select @error('maintenance_type') is-invalid @enderror" required>
+                                    @foreach(['日常清洁', '防锈处理', '抛光修复', '图案修复', '深度保养', '更换重做'] as $type)
+                                    <option value="{{ $type }}" {{ old('maintenance_type', '日常清洁') === $type ? 'selected' : '' }}>{{ $type }}</option>
+                                    @endforeach
                                 </select>
+                                @error('maintenance_type')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">保养状态<span class="required">*</span></label>
-                                <select name="status" class="form-select" required>
-                                    <option value="已完成">已完成</option>
-                                    <option value="进行中">进行中</option>
-                                    <option value="待处理">待处理</option>
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    @foreach(['已完成', '进行中', '待处理'] as $st)
+                                    <option value="{{ $st }}" {{ old('status', '已完成') === $st ? 'selected' : '' }}>{{ $st }}</option>
+                                    @endforeach
                                 </select>
+                                @error('status')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">保养日期<span class="required">*</span></label>
-                                <input type="date" name="maintenance_date" class="form-control" required value="{{ old('maintenance_date', now()->format('Y-m-d')) }}">
+                                <input type="date" name="maintenance_date" class="form-control @error('maintenance_date') is-invalid @enderror" required value="{{ old('maintenance_date', now()->format('Y-m-d')) }}">
+                                @error('maintenance_date')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">操作人</label>
@@ -428,17 +437,20 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">成本 (元)</label>
-                                <input type="number" name="cost" class="form-control" step="0.01" min="0" value="{{ old('cost', 0) }}">
+                                <input type="number" name="cost" class="form-control @error('cost') is-invalid @enderror" step="0.01" min="0" value="{{ old('cost', 0) }}">
+                                @error('cost')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                             <div class="form-group">
                                 <label class="form-label">下次保养</label>
-                                <input type="date" name="next_maintenance_date" class="form-control" value="{{ old('next_maintenance_date') }}">
+                                <input type="date" name="next_maintenance_date" class="form-control @error('next_maintenance_date') is-invalid @enderror" value="{{ old('next_maintenance_date') }}">
                                 <div class="form-hint">仅当状态为「已完成」时自动更新版号信息</div>
+                                @error('next_maintenance_date')<div class="form-error">{{ $message }}</div>@enderror
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">保养详情描述</label>
-                            <textarea name="description" class="form-textarea" rows="2" placeholder="详细说明保养操作内容">{{ old('description') }}</textarea>
+                            <textarea name="description" class="form-textarea @error('description') is-invalid @enderror" rows="2" placeholder="详细说明保养操作内容">{{ old('description') }}</textarea>
+                            @error('description')<div class="form-error">{{ $message }}</div>@enderror
                         </div>
                         <div class="form-group">
                             <label class="form-label">备注</label>
@@ -512,13 +524,13 @@
                         <span>设计上限 <span class="fw-bold">{{ number_format($plate->max_usage) }}</span> 次</span>
                     </div>
                     <div class="progress-bar" style="height:16px; border-radius:8px;">
-                        <div class="progress-fill {{ $plate->usage_rate >= 100 ? 'danger' : ($plate->usage_rate >= 85 ? 'warn' : 'normal') }}"
+                        <div class="progress-fill {{ $plate->usage_level }}"
                              style="width: {{ min(100, $plate->usage_rate) }}%; border-radius:8px;"></div>
                     </div>
                     <div class="d-flex justify-between mt-6">
-                        <span class="text-sm text-muted">使用率: <span class="fw-bold {{ $plate->usage_rate >= 100 ? 'text-danger' : '' }}">{{ $plate->usage_rate }}%</span></span>
+                        <span class="text-sm text-muted">使用率: <span class="fw-bold {{ $plate->usage_level === 'danger' ? 'text-danger' : ($plate->usage_level === 'warn' ? 'text-warning' : '') }}">{{ $plate->usage_rate }}%</span></span>
                         <span class="text-sm text-muted">
-                            @if($plate->usage_count >= $plate->max_usage)
+                            @if($plate->is_over_usage)
                                 <span class="text-danger">已超上限 {{ $plate->usage_count - $plate->max_usage }} 次</span>
                             @else
                                 剩余 {{ number_format($plate->max_usage - $plate->usage_count) }} 次额度
@@ -606,4 +618,30 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var isOrderSubmit = {{ old('order_number') !== null ? 'true' : 'false' }};
+    var isMaintSubmit = {{ old('maintenance_type') !== null ? 'true' : 'false' }};
+    var hasOrderError = isOrderSubmit && {!! $errors->any() ? 'true' : 'false' !!};
+    var hasMaintError = isMaintSubmit && {!! $errors->any() ? 'true' : 'false' !!};
+
+    if (hasOrderError) {
+        setTimeout(function() {
+            var tab = document.querySelector('[data-target="tab-orders"]');
+            if (tab) tab.click();
+            var panel = document.getElementById('addOrderPanel');
+            if (panel) panel.style.display = 'block';
+        }, 50);
+    }
+    if (hasMaintError) {
+        setTimeout(function() {
+            var tab = document.querySelector('[data-target="tab-maint"]');
+            if (tab) tab.click();
+            var panel = document.getElementById('addMaintPanel');
+            if (panel) panel.style.display = 'block';
+        }, 50);
+    }
+});
+</script>
 @endsection

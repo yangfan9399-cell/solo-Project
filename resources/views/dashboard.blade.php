@@ -165,7 +165,7 @@
                         </div>
                         <div class="text-sm text-muted mb-6">{{ \Illuminate\Support\Str::limit($plate->pattern_name, 18) }}</div>
                         <div class="progress-bar mb-4">
-                            <div class="progress-fill {{ $plate->usage_rate >= 100 ? 'danger' : ($plate->usage_rate >= 85 ? 'warn' : 'normal') }}"
+                            <div class="progress-fill {{ $plate->usage_level }}"
                                  style="width: {{ min(100, $plate->usage_rate) }}%"></div>
                         </div>
                         <div class="text-sm d-flex justify-between">
