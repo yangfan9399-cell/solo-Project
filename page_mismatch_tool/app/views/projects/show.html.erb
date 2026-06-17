@@ -75,8 +75,8 @@
                 <%= link_to project_page_mappings_path(@project, anchor: dom_id(mapping)), class: "block" do %>
                   <div class="aspect-[3/4] w-full rounded-md border-2 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.05] transition-all <%= page_mapping_thumbnail_status_class(mapping.status) %> <%= page_mapping_thumbnail_bg_class(mapping.status) %>">
                     <div class="h-full flex flex-col">
-                      <div class="flex-1 flex items-center justify-center">
-                        <span class="text-sm font-bold text-slate-700 opacity-40"><%= mapping.pdf_page_index %></span>
+                      <div class="flex-1 overflow-hidden">
+                        <%= render "page_mappings/thumbnail", mapping: mapping %>
                       </div>
                       <div class="border-t border-gray-100 px-1 py-0.5 bg-white/90">
                         <div class="text-center text-[9px] font-bold text-slate-800 leading-tight"><%= mapping.actual_page_number.presence || "—" %></div>

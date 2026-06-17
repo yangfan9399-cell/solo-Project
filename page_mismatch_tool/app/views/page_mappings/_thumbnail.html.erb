@@ -1,0 +1,10 @@
+<div class="thumbnail-container w-full h-full">
+  <% size ||= nil %>
+  <% if size %>
+    <%= content_tag :div, class: "thumbnail-wrapper", style: "width: #{size}px; height: auto;" do %>
+      <%= render_thumbnail(mapping) %>
+    <% end %>
+  <% else %>
+    <%= render_thumbnail(mapping) %>
+  <% end %>
+</div>

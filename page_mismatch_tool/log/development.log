@@ -8954,3 +8954,1584 @@ Started GET "/@vite/client" for 127.0.0.1 at 2026-06-18 07:05:42 +0800
   
 ActionController::RoutingError (No route matches [GET] "/@vite/client"):
   
+  [1m[36mProject Load (0.4ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.4ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.4ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:12:56 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (1.5ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.4ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 8.6ms | GC: 0.4ms)
+  Rendered layout layouts/application.html.erb (Duration: 8.8ms | GC: 0.4ms)
+Completed 500 Internal Server Error in 21ms (ActiveRecord: 2.1ms (4 queries, 0 cached) | GC: 1.8ms)
+
+
+  
+ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+Caused by: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+
+Information for: ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+    1: <div class="thumbnail-container w-full h-full">
+    2:   <% if size %>
+    3:     <%= content_tag :div, class: "thumbnail-wrapper", style: "width: #{size}px; height: auto;" do %>
+    4:       <%= render_thumbnail(mapping) %>
+    5:     <% end %>
+    6:   <% else %>
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+
+Information for cause: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:13:11 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.3ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 16.3ms | GC: 5.5ms)
+  Rendered layout layouts/application.html.erb (Duration: 16.4ms | GC: 5.5ms)
+Completed 500 Internal Server Error in 23ms (ActiveRecord: 0.7ms (4 queries, 0 cached) | GC: 5.5ms)
+
+
+  
+ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+Caused by: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+
+Information for: ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+    1: <div class="thumbnail-container w-full h-full">
+    2:   <% if size %>
+    3:     <%= content_tag :div, class: "thumbnail-wrapper", style: "width: #{size}px; height: auto;" do %>
+    4:       <%= render_thumbnail(mapping) %>
+    5:     <% end %>
+    6:   <% else %>
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+
+Information for cause: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:13:28 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.6ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 5.6ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 5.6ms | GC: 0.0ms)
+Completed 500 Internal Server Error in 18ms (ActiveRecord: 0.9ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+  
+ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+Caused by: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>)
+
+Information for: ActionView::Template::Error (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+    1: <div class="thumbnail-container w-full h-full">
+    2:   <% if size %>
+    3:     <%= content_tag :div, class: "thumbnail-wrapper", style: "width: #{size}px; height: auto;" do %>
+    4:       <%= render_thumbnail(mapping) %>
+    5:     <% end %>
+    6:   <% else %>
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+
+Information for cause: NameError (undefined local variable or method 'size' for an instance of #<Class:0x000000012cfbd998>):
+  
+app/views/page_mappings/_thumbnail.html.erb:3
+app/views/page_mappings/index.html.erb:88
+app/views/page_mappings/index.html.erb:83
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:14:17 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 4.6ms | GC: 1.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 1.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 15.9ms | GC: 12.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 18.2ms | GC: 15.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.9ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.7ms | GC: 1.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 1.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 1.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.5ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.3ms | GC: 1.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 233.6ms | GC: 79.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.3ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 237.5ms | GC: 79.2ms)
+Completed 200 OK in 258ms (Views: 240.0ms | ActiveRecord: 2.8ms (4 queries, 0 cached) | GC: 79.2ms)
+
+
+Started GET "/projects/1" for 127.0.0.1 at 2026-06-18 07:14:25 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mProject Load (0.2ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.8ms | GC: 1.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.4ms | GC: 1.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 12.1ms | GC: 11.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 11.4ms | GC: 10.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.8ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 0.3ms)
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mAnomaly Load (0.0ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:131
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (1.2ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 111.5ms | GC: 44.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 112.3ms | GC: 44.0ms)
+Completed 200 OK in 122ms (Views: 110.6ms | ActiveRecord: 3.0ms (17 queries, 4 cached) | GC: 44.5ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:14:26 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 1.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 3.4ms | GC: 2.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 12.2ms | GC: 11.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 8.5ms | GC: 7.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 3.2ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 3.3ms | GC: 1.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 1.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.7ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 164.0ms | GC: 51.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 164.9ms | GC: 51.0ms)
+Completed 200 OK in 166ms (Views: 164.9ms | ActiveRecord: 0.3ms (4 queries, 0 cached) | GC: 51.0ms)
+
+
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'normal' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'missing' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'duplicate' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mCACHE PageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1[0m
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'inserted' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'blank' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mCACHE PageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1[0m
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 AND "page_mappings"."status" = 'misnumbered' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mCACHE PageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."id" ASC LIMIT 1[0m
+Started GET "/" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by DashboardController#index as */*
+  [1m[36mProject Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "projects" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:3:in 'DashboardController#index'
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."resolved" = FALSE /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:4:in 'DashboardController#index'
+  [1m[36mProject Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) AS "count_all", "projects"."status" AS "projects_status" FROM "projects" GROUP BY "projects"."status" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:7:in 'DashboardController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  [1m[36mProject Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "projects" LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:55
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."created_at" DESC LIMIT 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:57
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 4 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."resolved" = FALSE LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:87
+  [1m[36mAnomaly Load (0.1ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."resolved" = FALSE ORDER BY "anomalies"."created_at" DESC LIMIT 10 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:89
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 10.5ms | GC: 0.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 16.9ms | GC: 0.0ms)
+Completed 200 OK in 25ms (Views: 18.0ms | ActiveRecord: 0.8ms (15 queries, 3 cached) | GC: 0.0ms)
+
+
+Started GET "/projects" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by ProjectsController#index as */*
+  Rendering layout layouts/application.html.erb
+  Rendering projects/index.html.erb within layouts/application
+  [1m[36mProject Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "projects" LIMIT 1 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:41
+  [1m[36mProject Load (0.2ms)[0m  [1m[34mSELECT "projects".* FROM "projects" /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:42
+  [1m[36mAnomaly Load (0.1ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" IN (1, 2, 3, 4, 5) /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:42
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 4 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  Rendered projects/index.html.erb within layouts/application (Duration: 21.1ms | GC: 2.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 21.7ms | GC: 2.7ms)
+Completed 200 OK in 24ms (Views: 21.4ms | ActiveRecord: 0.6ms (8 queries, 0 cached) | GC: 2.7ms)
+
+
+Started GET "/projects/1" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.9ms | GC: 1.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 1.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 1.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mAnomaly Load (0.0ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:131
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (0.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 67.3ms | GC: 16.9ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 68.0ms | GC: 16.9ms)
+Completed 200 OK in 70ms (Views: 67.4ms | ActiveRecord: 0.9ms (17 queries, 4 cached) | GC: 16.9ms)
+
+
+Started GET "/projects/2" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "2"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 2 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 2 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 2 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 2[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 2[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 2 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 1.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 2 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 2 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mBatch Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 2 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 2 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 2 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  Rendered projects/show.html.erb within layouts/application (Duration: 59.4ms | GC: 14.3ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 60.1ms | GC: 14.3ms)
+Completed 200 OK in 62ms (Views: 59.8ms | ActiveRecord: 0.6ms (14 queries, 4 cached) | GC: 14.4ms)
+
+
+Started GET "/projects/3" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "3"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 1.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mBatch Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 3 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (0.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 3 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 3 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 53.8ms | GC: 12.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 54.5ms | GC: 12.7ms)
+Completed 200 OK in 56ms (Views: 54.1ms | ActiveRecord: 0.7ms (16 queries, 4 cached) | GC: 12.7ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 111.9ms | GC: 26.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 112.7ms | GC: 26.7ms)
+Completed 200 OK in 114ms (Views: 112.7ms | ActiveRecord: 0.2ms (4 queries, 0 cached) | GC: 26.7ms)
+
+
+Started GET "/projects/1/batches" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by BatchesController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='batches'*/[0m
+  ↳ app/controllers/batches_controller.rb:57:in 'BatchesController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering batches/index.html.erb within layouts/application
+  [1m[36mBatch Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='batches'*/[0m
+  ↳ app/views/batches/index.html.erb:23
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='batches'*/[0m
+  ↳ app/views/batches/index.html.erb:25
+  [1m[36mBatch Load (0.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='index',application='PageMismatchTool',controller='batches'*/[0m
+  ↳ app/views/batches/index.html.erb:37
+  Rendered batches/index.html.erb within layouts/application (Duration: 2.8ms | GC: 0.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 3.3ms | GC: 0.1ms)
+Completed 200 OK in 5ms (Views: 3.5ms | ActiveRecord: 0.3ms (4 queries, 0 cached) | GC: 0.1ms)
+
+
+Started GET "/projects/1/export_records" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by ExportRecordsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='export_records'*/[0m
+  ↳ app/controllers/export_records_controller.rb:43:in 'ExportRecordsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering export_records/index.html.erb within layouts/application
+  [1m[36mExportRecord Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "export_records" WHERE "export_records"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='export_records'*/[0m
+  ↳ app/views/export_records/index.html.erb:20
+  [1m[36mExportRecord Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='export_records'*/[0m
+  ↳ app/views/export_records/index.html.erb:22
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC /*action='index',application='PageMismatchTool',controller='export_records'*/[0m
+  ↳ app/views/export_records/index.html.erb:34
+  Rendered export_records/index.html.erb within layouts/application (Duration: 4.4ms | GC: 0.1ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 4.9ms | GC: 0.1ms)
+Completed 200 OK in 7ms (Views: 5.1ms | ActiveRecord: 0.5ms (4 queries, 0 cached) | GC: 0.1ms)
+
+
+Started GET "/projects/1/anomalies" for 127.0.0.1 at 2026-06-18 07:15:30 +0800
+Processing by AnomaliesController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/controllers/anomalies_controller.rb:24:in 'AnomaliesController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering anomalies/index.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:23
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:25
+  [1m[36mAnomaly Load (0.1ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 ORDER BY "anomalies"."created_at" DESC /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:38
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 89 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 88 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 46 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 45 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 16 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  [1m[36mPageMapping Load (0.0ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."id" = 15 LIMIT 1 /*action='index',application='PageMismatchTool',controller='anomalies'*/[0m
+  ↳ app/views/anomalies/index.html.erb:43
+  Rendered anomalies/index.html.erb within layouts/application (Duration: 9.9ms | GC: 0.2ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 10.6ms | GC: 0.2ms)
+Completed 200 OK in 13ms (Views: 10.6ms | ActiveRecord: 0.6ms (10 queries, 0 cached) | GC: 0.2ms)
+
+
+Started GET "/projects/1" for 127.0.0.1 at 2026-06-18 07:15:31 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 3.7ms | GC: 3.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 8.6ms | GC: 6.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 7.7ms | GC: 6.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 8.4ms | GC: 6.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 6.0ms | GC: 4.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.1ms | GC: 1.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 1.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.4ms | GC: 1.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mAnomaly Load (0.0ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:131
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (0.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 106.7ms | GC: 41.6ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 107.4ms | GC: 41.6ms)
+Completed 200 OK in 109ms (Views: 106.4ms | ActiveRecord: 1.3ms (17 queries, 4 cached) | GC: 41.6ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:15:31 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.1ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.9ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.8ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 125.3ms | GC: 26.1ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 126.4ms | GC: 26.1ms)
+Completed 200 OK in 130ms (Views: 126.3ms | ActiveRecord: 0.5ms (4 queries, 0 cached) | GC: 26.1ms)
+
+
+Started GET "/projects/3" for 127.0.0.1 at 2026-06-18 07:15:31 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "3"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 3[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.1ms | GC: 1.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.7ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.3ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 14.7ms | GC: 1.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 3.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 5.6ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 5.0ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.8ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 3 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 3 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (0.0ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 3 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 3 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.0ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 3 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 102.2ms | GC: 15.5ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 103.0ms | GC: 15.5ms)
+Completed 200 OK in 105ms (Views: 102.6ms | ActiveRecord: 0.7ms (16 queries, 4 cached) | GC: 15.5ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:15:48 +0800
+Processing by PageMappingsController#index as HTML
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.3ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.5ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 4.6ms | GC: 3.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.3ms | GC: 1.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.8ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.7ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 2.0ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.4ms | GC: 0.6ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.0ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.2ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.1ms | GC: 0.5ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.4ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.6ms | GC: 1.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.9ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.6ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.1ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.4ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.5ms | GC: 0.0ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 1.3ms | GC: 0.9ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.3ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.7ms | GC: 0.2ms)
+  Rendered page_mappings/_thumbnail.html.erb (Duration: 0.8ms | GC: 0.2ms)
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 134.9ms | GC: 32.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 135.9ms | GC: 32.7ms)
+Completed 200 OK in 141ms (Views: 136.3ms | ActiveRecord: 0.6ms (4 queries, 0 cached) | GC: 32.7ms)
+
+
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-18 07:15:48 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  

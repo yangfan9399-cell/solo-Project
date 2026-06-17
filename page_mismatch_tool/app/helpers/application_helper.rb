@@ -92,4 +92,8 @@ module ApplicationHelper
             end
     tag.span(label, class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{classes}")
   end
+
+  def render_thumbnail(mapping)
+    ThumbnailGenerator.new(mapping).generate.html_safe
+  end
 end
