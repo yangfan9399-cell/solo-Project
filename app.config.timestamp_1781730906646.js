@@ -1,0 +1,14 @@
+// app.config.ts
+import { defineConfig } from "@solidjs/start/config";
+var app_config_default = defineConfig({
+  vite: {
+    resolve: {
+      alias: {
+        "~": "/src"
+      }
+    }
+  }
+});
+export {
+  app_config_default as default
+};
