@@ -169,10 +169,13 @@ class RubbingsController < ApplicationController
     headers['Content-Type'] = 'application/pdf'
 
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
-    pdf.font('SimSun', fallback: ['Helvetica'])
+
+    chinese_fonts = ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']
+    available_font = chinese_fonts.find { |f| pdf.fonts.include?(f) } || 'Helvetica'
+    pdf.font(available_font)
 
     pdf.text '旧城门铭文拓片整理系统 - 导出报告', size: 18, align: :center, style: :bold
-    pdf.text "导出时间: #{Time.now.strftime('%Y年%m月%d日 %H:%M')}", size: 10, align: :center
+    pdf.text "导出时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 20
 
     table_data = [['编号', '标题', '朝代', '状态', '释文数', '断字数', '字框数']]
@@ -201,10 +204,13 @@ class RubbingsController < ApplicationController
     headers['Content-Type'] = 'application/pdf'
 
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
-    pdf.font('SimSun', fallback: ['Helvetica'])
+
+    chinese_fonts = ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']
+    available_font = chinese_fonts.find { |f| pdf.fonts.include?(f) } || 'Helvetica'
+    pdf.font(available_font)
 
     pdf.text '旧城门铭文拓片整理系统 - 摘要报告', size: 18, align: :center, style: :bold
-    pdf.text "报告时间: #{Time.now.strftime('%Y年%m月%d日 %H:%M')}", size: 10, align: :center
+    pdf.text "报告时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 30
 
     pdf.text '一、统计概览', size: 14, style: :bold

@@ -29,6 +29,9 @@
       <%= f.text_field :dynasty_cont, placeholder: '朝代', class: 'search-input' %>
       <%= f.select :status_eq, Rubbing::STATUS_OPTIONS, include_blank: '状态', class: 'search-input' %>
       <%= f.text_field :location_cont, placeholder: '出土地点', class: 'search-input' %>
+      <%= f.text_field :inscriptions_content_cont, placeholder: '释文内容', class: 'search-input' %>
+      <%= f.text_field :footnotes_content_cont, placeholder: '脚注引用', class: 'search-input' %>
+      <%= f.text_field :footnotes_source_cont, placeholder: '引用来源', class: 'search-input' %>
       <%= f.submit '搜索', class: 'btn btn-primary' %>
       <%= link_to '重置', rubbings_path, class: 'btn btn-secondary' %>
     <% end %>

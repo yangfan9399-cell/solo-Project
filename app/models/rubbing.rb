@@ -4,6 +4,10 @@ class Rubbing < ApplicationRecord
   has_many :footnotes, dependent: :destroy
   has_many :versions, dependent: :destroy
 
+  accepts_nested_attributes_for :inscriptions, allow_destroy: true
+  accepts_nested_attributes_for :character_boxes, allow_destroy: true
+  accepts_nested_attributes_for :footnotes, allow_destroy: true
+
   validates :no, presence: true, uniqueness: true
   validates :title, presence: true
 
