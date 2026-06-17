@@ -97,19 +97,25 @@ class ComponentsController < ApplicationController
     @reassembly_record = @component.reassembly_records.new(reassembly_params)
     @reassembly_record.checked_at = Time.current
     if @reassembly_record.save
+      @component.create_version("reassembly", @reassembly_record.checked_by.presence || "系统", "新增复装核对记录")
       flash[:notice] = "复装核对记录创建成功"
-      redirect_to project_component_path(@project, @component)
     else
       flash[:alert] = "复装核对记录创建失败"
-      redirect_to project_component_path(@project, @component)
     end
+    redirect_to project_component_path(@project, @component)
   end
 
   def rollback
     version = @component.component_versions.find_by(version_number: params[:version_number])
     if version && version.object_snapshot.present?
-      snapshot = JSON.parse(version.object_snapshot) rescue {}
-      if @component.update(snapshot.except("id", "created_at", "updated_at"))
+      snapshot = version.snapshot_object
+      restore_attrs = {}
+      %w[code component_type position orientation status notes].each do |key|
+        restore_attrs[key] = snapshot[key] if snapshot.key?(key)
+      end
+      @component.skip_version_track = true
+      if @component.update(restore_attrs)
+        @component.create_version("update", "系统", "回滚到版本 #{version.version_number}")
         flash[:notice] = "构件已回滚到版本 #{version.version_number}"
       else
         flash[:alert] = "回滚失败"
@@ -130,20 +136,6 @@ class ComponentsController < ApplicationController
     @component = @project.components.find(params[:id])
   end
 
-  def create_version
-    last_version = @component.component_versions.maximum(:version_number) || 0
-    @component.component_versions.create!(
-      version_number: last_version + 1,
-      event_type: "update",
-      batch_tag: @component.batch_tag,
-      operator: current_user.try(:name) || "系统",
-      recorded_at: Time.current,
-      changed_fields: @component.previous_changes.keys,
-      object_snapshot: @component.attributes.to_json,
-      notes: "构件信息更新"
-    )
-  end
-
   def component_params
     params.require(:component).permit(:code, :component_type, :status, :orientation,
       :batch_tag, :material, :position, :layer, :sequence, :length, :width, :height,
@@ -151,6 +143,10 @@ class ComponentsController < ApplicationController
   end
 
   def reassembly_params
-    params.require(:reassembly_record).permit(:checked_by, :result, :position_deviation, :verified, :notes)
+    if params[:reassembly_record]
+      params.require(:reassembly_record).permit(:checked_by, :result, :position_deviation, :verified, :notes)
+    else
+      params.permit(:checked_by, :result, :position_deviation, :verified, :notes)
+    end
   end
 end

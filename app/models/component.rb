@@ -38,6 +38,8 @@ class Component < ApplicationRecord
   before_create :set_sequence
   after_update :track_version
 
+  attr_accessor :skip_version_track
+
   def full_code
     "#{project.code}-#{code}"
   end
@@ -100,6 +102,7 @@ class Component < ApplicationRecord
 
   def track_version
     return unless saved_changes?
+    return if skip_version_track
 
     event_type = if saved_changes.key?("status")
       "status_change"
