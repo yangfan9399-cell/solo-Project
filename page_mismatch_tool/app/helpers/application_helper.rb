@@ -37,6 +37,30 @@ module ApplicationHelper
     tag.span(label, class: "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{classes}")
   end
 
+  def page_mapping_thumbnail_status_class(status)
+    case status
+    when "normal" then "border-green-300"
+    when "missing" then "border-red-400"
+    when "duplicate" then "border-orange-400"
+    when "inserted" then "border-purple-400"
+    when "blank" then "border-gray-300"
+    when "misnumbered" then "border-yellow-400"
+    else "border-gray-300"
+    end
+  end
+
+  def page_mapping_thumbnail_bg_class(status)
+    case status
+    when "normal" then "bg-white"
+    when "missing" then "bg-red-50"
+    when "duplicate" then "bg-orange-50"
+    when "inserted" then "bg-purple-50"
+    when "blank" then "bg-gray-100"
+    when "misnumbered" then "bg-yellow-50"
+    else "bg-white"
+    end
+  end
+
   def anomaly_type_badge(anomaly_type)
     classes = case anomaly_type
               when "missing" then "bg-red-100 text-red-700"

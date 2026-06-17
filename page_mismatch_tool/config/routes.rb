@@ -8,6 +8,7 @@ Rails.application.routes.draw do
       collection do
         post :batch_update
         post :generate_mappings
+        post :batch_number
       end
     end
     resources :batches do

@@ -8389,3 +8389,568 @@ Processing by ProjectsController#index as */*
 Completed 200 OK in 37ms (Views: 16.4ms | ActiveRecord: 1.3ms (8 queries, 0 cached) | GC: 0.1ms)
 
 
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:04:43 +0800
+  [1m[36mActiveRecord::SchemaMigration Load (0.3ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='PageMismatchTool'*/[0m
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.2ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.4ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 30.6ms | GC: 0.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.2ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 38.6ms | GC: 0.0ms)
+Completed 200 OK in 68ms (Views: 40.1ms | ActiveRecord: 2.3ms (4 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:04:50 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.3ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 61.5ms | GC: 30.6ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 62.3ms | GC: 30.6ms)
+Completed 200 OK in 67ms (Views: 62.4ms | ActiveRecord: 0.7ms (4 queries, 0 cached) | GC: 30.6ms)
+
+
+  [1m[36mProject Load (1.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."id" ASC LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mTRANSACTION (0.0ms)[0m  [1m[35mBEGIN immediate TRANSACTION /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:29:in 'block in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Load (1.5ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:29:in 'block in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.8ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 10, "notes" = 'P10', "updated_at" = '2026-06-17 23:05:17.254239' WHERE "page_mappings"."id" = 1 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 11, "notes" = 'P11', "updated_at" = '2026-06-17 23:05:17.255944' WHERE "page_mappings"."id" = 2 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 12, "notes" = 'P12', "updated_at" = '2026-06-17 23:05:17.256809' WHERE "page_mappings"."id" = 3 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 13, "notes" = 'P13', "updated_at" = '2026-06-17 23:05:17.257426' WHERE "page_mappings"."id" = 4 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 14, "notes" = 'P14', "updated_at" = '2026-06-17 23:05:17.257904' WHERE "page_mappings"."id" = 5 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 15, "notes" = 'P15', "updated_at" = '2026-06-17 23:05:17.258368' WHERE "page_mappings"."id" = 6 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 16, "notes" = 'P16', "updated_at" = '2026-06-17 23:05:17.258819' WHERE "page_mappings"."id" = 7 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 17, "notes" = 'P17', "updated_at" = '2026-06-17 23:05:17.259403' WHERE "page_mappings"."id" = 8 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 18, "notes" = 'P18', "updated_at" = '2026-06-17 23:05:17.260034' WHERE "page_mappings"."id" = 9 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 19, "notes" = 'P19', "updated_at" = '2026-06-17 23:05:17.260832' WHERE "page_mappings"."id" = 10 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 20, "notes" = 'P20', "updated_at" = '2026-06-17 23:05:17.261323' WHERE "page_mappings"."id" = 11 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 21, "notes" = 'P21', "updated_at" = '2026-06-17 23:05:17.262565' WHERE "page_mappings"."id" = 12 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 22, "notes" = 'P22', "updated_at" = '2026-06-17 23:05:17.263192' WHERE "page_mappings"."id" = 13 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 23, "notes" = 'P23', "updated_at" = '2026-06-17 23:05:17.263992' WHERE "page_mappings"."id" = 14 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 24, "notes" = 'P24', "status" = 'normal', "updated_at" = '2026-06-17 23:05:17.264996' WHERE "page_mappings"."id" = 15 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 25, "notes" = 'P25', "status" = 'normal', "updated_at" = '2026-06-17 23:05:17.265792' WHERE "page_mappings"."id" = 16 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 26, "notes" = 'P26', "updated_at" = '2026-06-17 23:05:17.266277' WHERE "page_mappings"."id" = 17 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 27, "notes" = 'P27', "updated_at" = '2026-06-17 23:05:17.266742' WHERE "page_mappings"."id" = 18 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 28, "notes" = 'P28', "updated_at" = '2026-06-17 23:05:17.267188' WHERE "page_mappings"."id" = 19 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 29, "notes" = 'P29', "updated_at" = '2026-06-17 23:05:17.267630' WHERE "page_mappings"."id" = 20 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 30, "notes" = 'P30', "updated_at" = '2026-06-17 23:05:17.268071' WHERE "page_mappings"."id" = 21 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 31, "notes" = 'P31', "updated_at" = '2026-06-17 23:05:17.268510' WHERE "page_mappings"."id" = 22 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 32, "notes" = 'P32', "updated_at" = '2026-06-17 23:05:17.268945' WHERE "page_mappings"."id" = 23 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 33, "notes" = 'P33', "updated_at" = '2026-06-17 23:05:17.269383' WHERE "page_mappings"."id" = 24 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 34, "notes" = 'P34', "updated_at" = '2026-06-17 23:05:17.269820' WHERE "page_mappings"."id" = 25 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 35, "notes" = 'P35', "updated_at" = '2026-06-17 23:05:17.270271' WHERE "page_mappings"."id" = 26 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 36, "notes" = 'P36', "updated_at" = '2026-06-17 23:05:17.271549' WHERE "page_mappings"."id" = 27 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 37, "notes" = 'P37', "updated_at" = '2026-06-17 23:05:17.272328' WHERE "page_mappings"."id" = 28 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 38, "notes" = 'P38', "updated_at" = '2026-06-17 23:05:17.272821' WHERE "page_mappings"."id" = 29 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 39, "notes" = 'P39', "updated_at" = '2026-06-17 23:05:17.273356' WHERE "page_mappings"."id" = 30 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 40, "notes" = 'P40', "updated_at" = '2026-06-17 23:05:17.273912' WHERE "page_mappings"."id" = 31 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 41, "notes" = 'P41', "updated_at" = '2026-06-17 23:05:17.274420' WHERE "page_mappings"."id" = 32 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 42, "notes" = 'P42', "updated_at" = '2026-06-17 23:05:17.274887' WHERE "page_mappings"."id" = 33 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 43, "notes" = 'P43', "updated_at" = '2026-06-17 23:05:17.275367' WHERE "page_mappings"."id" = 34 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 44, "notes" = 'P44', "updated_at" = '2026-06-17 23:05:17.275829' WHERE "page_mappings"."id" = 35 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 45, "notes" = 'P45', "updated_at" = '2026-06-17 23:05:17.276328' WHERE "page_mappings"."id" = 36 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 46, "notes" = 'P46', "updated_at" = '2026-06-17 23:05:17.276785' WHERE "page_mappings"."id" = 37 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 47, "notes" = 'P47', "updated_at" = '2026-06-17 23:05:17.277254' WHERE "page_mappings"."id" = 38 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 48, "notes" = 'P48', "updated_at" = '2026-06-17 23:05:17.277710' WHERE "page_mappings"."id" = 39 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 49, "notes" = 'P49', "updated_at" = '2026-06-17 23:05:17.278167' WHERE "page_mappings"."id" = 40 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 50, "notes" = 'P50', "updated_at" = '2026-06-17 23:05:17.278602' WHERE "page_mappings"."id" = 41 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 51, "notes" = 'P51', "updated_at" = '2026-06-17 23:05:17.279300' WHERE "page_mappings"."id" = 42 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 52, "notes" = 'P52', "updated_at" = '2026-06-17 23:05:17.280123' WHERE "page_mappings"."id" = 43 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 53, "notes" = 'P53', "updated_at" = '2026-06-17 23:05:17.280595' WHERE "page_mappings"."id" = 44 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 54, "notes" = 'P54', "status" = 'normal', "updated_at" = '2026-06-17 23:05:17.281044' WHERE "page_mappings"."id" = 45 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 55, "notes" = 'P55', "updated_at" = '2026-06-17 23:05:17.281493' WHERE "page_mappings"."id" = 46 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 56, "notes" = 'P56', "updated_at" = '2026-06-17 23:05:17.281935' WHERE "page_mappings"."id" = 47 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 57, "notes" = 'P57', "updated_at" = '2026-06-17 23:05:17.282377' WHERE "page_mappings"."id" = 48 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 58, "notes" = 'P58', "updated_at" = '2026-06-17 23:05:17.282831' WHERE "page_mappings"."id" = 49 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 59, "notes" = 'P59', "updated_at" = '2026-06-17 23:05:17.283273' WHERE "page_mappings"."id" = 50 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 60, "notes" = 'P60', "updated_at" = '2026-06-17 23:05:17.283900' WHERE "page_mappings"."id" = 51 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 61, "notes" = 'P61', "updated_at" = '2026-06-17 23:05:17.284352' WHERE "page_mappings"."id" = 52 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 62, "notes" = 'P62', "updated_at" = '2026-06-17 23:05:17.284800' WHERE "page_mappings"."id" = 53 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 63, "notes" = 'P63', "updated_at" = '2026-06-17 23:05:17.285243' WHERE "page_mappings"."id" = 54 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 64, "notes" = 'P64', "updated_at" = '2026-06-17 23:05:17.285699' WHERE "page_mappings"."id" = 55 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 65, "notes" = 'P65', "updated_at" = '2026-06-17 23:05:17.286134' WHERE "page_mappings"."id" = 56 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 66, "notes" = 'P66', "updated_at" = '2026-06-17 23:05:17.286715' WHERE "page_mappings"."id" = 57 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 67, "notes" = 'P67', "updated_at" = '2026-06-17 23:05:17.287190' WHERE "page_mappings"."id" = 58 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 68, "notes" = 'P68', "updated_at" = '2026-06-17 23:05:17.287652' WHERE "page_mappings"."id" = 59 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 69, "notes" = 'P69', "updated_at" = '2026-06-17 23:05:17.288363' WHERE "page_mappings"."id" = 60 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 70, "notes" = 'P70', "updated_at" = '2026-06-17 23:05:17.289132' WHERE "page_mappings"."id" = 61 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 71, "notes" = 'P71', "updated_at" = '2026-06-17 23:05:17.289656' WHERE "page_mappings"."id" = 62 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 72, "notes" = 'P72', "updated_at" = '2026-06-17 23:05:17.290149' WHERE "page_mappings"."id" = 63 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 73, "notes" = 'P73', "updated_at" = '2026-06-17 23:05:17.290638' WHERE "page_mappings"."id" = 64 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 74, "notes" = 'P74', "updated_at" = '2026-06-17 23:05:17.291125' WHERE "page_mappings"."id" = 65 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 75, "notes" = 'P75', "updated_at" = '2026-06-17 23:05:17.291582' WHERE "page_mappings"."id" = 66 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 76, "notes" = 'P76', "updated_at" = '2026-06-17 23:05:17.292119' WHERE "page_mappings"."id" = 67 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 77, "notes" = 'P77', "updated_at" = '2026-06-17 23:05:17.292613' WHERE "page_mappings"."id" = 68 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 78, "notes" = 'P78', "updated_at" = '2026-06-17 23:05:17.293121' WHERE "page_mappings"."id" = 69 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 79, "notes" = 'P79', "updated_at" = '2026-06-17 23:05:17.293641' WHERE "page_mappings"."id" = 70 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 80, "notes" = 'P80', "updated_at" = '2026-06-17 23:05:17.294118' WHERE "page_mappings"."id" = 71 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 81, "notes" = 'P81', "updated_at" = '2026-06-17 23:05:17.294590' WHERE "page_mappings"."id" = 72 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 82, "notes" = 'P82', "updated_at" = '2026-06-17 23:05:17.295049' WHERE "page_mappings"."id" = 73 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 83, "notes" = 'P83', "updated_at" = '2026-06-17 23:05:17.296026' WHERE "page_mappings"."id" = 74 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 84, "notes" = 'P84', "updated_at" = '2026-06-17 23:05:17.296807' WHERE "page_mappings"."id" = 75 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 85, "notes" = 'P85', "updated_at" = '2026-06-17 23:05:17.297733' WHERE "page_mappings"."id" = 76 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 86, "notes" = 'P86', "updated_at" = '2026-06-17 23:05:17.298311' WHERE "page_mappings"."id" = 77 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 87, "notes" = 'P87', "updated_at" = '2026-06-17 23:05:17.298802' WHERE "page_mappings"."id" = 78 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 88, "notes" = 'P88', "updated_at" = '2026-06-17 23:05:17.299391' WHERE "page_mappings"."id" = 79 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 89, "notes" = 'P89', "updated_at" = '2026-06-17 23:05:17.300009' WHERE "page_mappings"."id" = 80 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 90, "notes" = 'P90', "updated_at" = '2026-06-17 23:05:17.300486' WHERE "page_mappings"."id" = 81 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 91, "notes" = 'P91', "updated_at" = '2026-06-17 23:05:17.301001' WHERE "page_mappings"."id" = 82 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 92, "notes" = 'P92', "updated_at" = '2026-06-17 23:05:17.301497' WHERE "page_mappings"."id" = 83 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 93, "notes" = 'P93', "updated_at" = '2026-06-17 23:05:17.302029' WHERE "page_mappings"."id" = 84 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 94, "notes" = 'P94', "updated_at" = '2026-06-17 23:05:17.302555' WHERE "page_mappings"."id" = 85 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 95, "notes" = 'P95', "updated_at" = '2026-06-17 23:05:17.303622' WHERE "page_mappings"."id" = 86 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 96, "notes" = 'P96', "updated_at" = '2026-06-17 23:05:17.304717' WHERE "page_mappings"."id" = 87 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 97, "notes" = 'P97', "status" = 'normal', "updated_at" = '2026-06-17 23:05:17.305486' WHERE "page_mappings"."id" = 88 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 98, "notes" = 'P98', "status" = 'normal', "updated_at" = '2026-06-17 23:05:17.306026' WHERE "page_mappings"."id" = 89 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 99, "notes" = 'P99', "updated_at" = '2026-06-17 23:05:17.306617' WHERE "page_mappings"."id" = 90 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 100, "notes" = 'P100', "updated_at" = '2026-06-17 23:05:17.307370' WHERE "page_mappings"."id" = 91 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 101, "notes" = 'P101', "updated_at" = '2026-06-17 23:05:17.307986' WHERE "page_mappings"."id" = 92 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 102, "notes" = 'P102', "updated_at" = '2026-06-17 23:05:17.308560' WHERE "page_mappings"."id" = 93 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 103, "notes" = 'P103', "updated_at" = '2026-06-17 23:05:17.309084' WHERE "page_mappings"."id" = 94 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.2ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 104, "notes" = 'P104', "updated_at" = '2026-06-17 23:05:17.309571' WHERE "page_mappings"."id" = 95 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 105, "notes" = 'P105', "updated_at" = '2026-06-17 23:05:17.311061' WHERE "page_mappings"."id" = 96 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 106, "notes" = 'P106', "updated_at" = '2026-06-17 23:05:17.311643' WHERE "page_mappings"."id" = 97 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 107, "notes" = 'P107', "updated_at" = '2026-06-17 23:05:17.312283' WHERE "page_mappings"."id" = 98 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.1ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 108, "notes" = 'P108', "updated_at" = '2026-06-17 23:05:17.313120' WHERE "page_mappings"."id" = 99 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 109, "notes" = 'P109', "updated_at" = '2026-06-17 23:05:17.314140' WHERE "page_mappings"."id" = 100 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 110, "notes" = 'P110', "updated_at" = '2026-06-17 23:05:17.314670' WHERE "page_mappings"."id" = 101 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 111, "notes" = 'P111', "updated_at" = '2026-06-17 23:05:17.315404' WHERE "page_mappings"."id" = 102 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 112, "notes" = 'P112', "updated_at" = '2026-06-17 23:05:17.316006' WHERE "page_mappings"."id" = 103 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 113, "notes" = 'P113', "updated_at" = '2026-06-17 23:05:17.316631' WHERE "page_mappings"."id" = 104 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 114, "notes" = 'P114', "updated_at" = '2026-06-17 23:05:17.317126' WHERE "page_mappings"."id" = 105 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 115, "notes" = 'P115', "updated_at" = '2026-06-17 23:05:17.317615' WHERE "page_mappings"."id" = 106 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 116, "notes" = 'P116', "updated_at" = '2026-06-17 23:05:17.318088' WHERE "page_mappings"."id" = 107 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 117, "notes" = 'P117', "updated_at" = '2026-06-17 23:05:17.318567' WHERE "page_mappings"."id" = 108 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 118, "notes" = 'P118', "updated_at" = '2026-06-17 23:05:17.320585' WHERE "page_mappings"."id" = 109 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 119, "notes" = 'P119', "updated_at" = '2026-06-17 23:05:17.321062' WHERE "page_mappings"."id" = 110 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 120, "notes" = 'P120', "updated_at" = '2026-06-17 23:05:17.322268' WHERE "page_mappings"."id" = 111 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 121, "notes" = 'P121', "updated_at" = '2026-06-17 23:05:17.322887' WHERE "page_mappings"."id" = 112 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 122, "notes" = 'P122', "updated_at" = '2026-06-17 23:05:17.323540' WHERE "page_mappings"."id" = 113 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 123, "notes" = 'P123', "updated_at" = '2026-06-17 23:05:17.324093' WHERE "page_mappings"."id" = 114 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 124, "notes" = 'P124', "updated_at" = '2026-06-17 23:05:17.324635' WHERE "page_mappings"."id" = 115 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 125, "notes" = 'P125', "updated_at" = '2026-06-17 23:05:17.325099' WHERE "page_mappings"."id" = 116 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 126, "notes" = 'P126', "updated_at" = '2026-06-17 23:05:17.325581' WHERE "page_mappings"."id" = 117 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 127, "notes" = 'P127', "updated_at" = '2026-06-17 23:05:17.326036' WHERE "page_mappings"."id" = 118 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 128, "notes" = 'P128', "updated_at" = '2026-06-17 23:05:17.326532' WHERE "page_mappings"."id" = 119 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Update (0.0ms)[0m  [1m[33mUPDATE "page_mappings" SET "actual_page_number" = 129, "notes" = 'P129', "updated_at" = '2026-06-17 23:05:17.327010' WHERE "page_mappings"."id" = 120 /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:33:in 'block (2 levels) in PageMappingBatchNumberer#number!'
+  [1m[36mTRANSACTION (0.5ms)[0m  [1m[35mCOMMIT TRANSACTION /*application='PageMismatchTool'*/[0m
+  ↳ app/services/page_mapping_batch_numberer.rb:28:in 'PageMappingBatchNumberer#number!'
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 3 /*application='PageMismatchTool'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.1ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."name" = '明史稿·本纪 第一册' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."name" = '四库全书·经部 春秋左传' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."name" = '永乐大典·卷2272-2274' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."name" = '资治通鉴·周纪' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Load (0.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."name" = '清实录·乾隆朝 第一册' LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 2 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 3 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Exists? (0.2ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 4 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 5 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mAnomaly Exists? (0.3ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 3 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 5 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 3 LIMIT 1 /*application='PageMismatchTool'*/[0m
+  [1m[36mProject Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "projects" /*application='PageMismatchTool'*/[0m
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" /*application='PageMismatchTool'*/[0m
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" /*application='PageMismatchTool'*/[0m
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" /*application='PageMismatchTool'*/[0m
+  [1m[36mExportRecord Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "export_records" /*application='PageMismatchTool'*/[0m
+Started GET "/" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by DashboardController#index as */*
+  [1m[36mProject Count (1.3ms)[0m  [1m[34mSELECT COUNT(*) FROM "projects" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:3:in 'DashboardController#index'
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."resolved" = FALSE /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:4:in 'DashboardController#index'
+  [1m[36mProject Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) AS "count_all", "projects"."status" AS "projects_status" FROM "projects" GROUP BY "projects"."status" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:7:in 'DashboardController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  [1m[36mProject Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "projects" LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:55
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."created_at" DESC LIMIT 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:57
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 4 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."resolved" = FALSE LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:87
+  [1m[36mAnomaly Load (0.1ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."resolved" = FALSE ORDER BY "anomalies"."created_at" DESC LIMIT 10 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:89
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 24.4ms | GC: 0.4ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 25.9ms | GC: 0.4ms)
+Completed 200 OK in 46ms (Views: 26.1ms | ActiveRecord: 2.2ms (15 queries, 3 cached) | GC: 1.8ms)
+
+
+Started GET "/projects" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by ProjectsController#index as */*
+  Rendering layout layouts/application.html.erb
+  Rendering projects/index.html.erb within layouts/application
+  [1m[36mProject Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "projects" LIMIT 1 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:41
+  [1m[36mProject Load (0.0ms)[0m  [1m[34mSELECT "projects".* FROM "projects" /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:42
+  [1m[36mAnomaly Load (0.2ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" IN (1, 2, 3, 4, 5) /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/index.html.erb:42
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 4 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5 /*action='index',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  Rendered projects/index.html.erb within layouts/application (Duration: 23.3ms | GC: 0.0ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 23.8ms | GC: 0.0ms)
+Completed 200 OK in 26ms (Views: 23.7ms | ActiveRecord: 0.5ms (8 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/projects/1" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mAnomaly Load (0.1ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:131
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (1.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.1ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 37.2ms | GC: 12.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 38.3ms | GC: 13.2ms)
+Completed 200 OK in 43ms (Views: 36.3ms | ActiveRecord: 2.7ms (17 queries, 4 cached) | GC: 13.2ms)
+
+
+Started GET "/projects/1" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by ProjectsController#show as */*
+  Parameters: {"id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/controllers/projects_controller.rb:102:in 'ProjectsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering projects/show.html.erb within layouts/application
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:34
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:53
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:61
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mCACHE PageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1[0m
+  ↳ app/views/projects/show.html.erb:64
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC LIMIT 60 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:75
+  [1m[36mPageMapping Load (0.2ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:103
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE[0m
+  ↳ app/views/projects/show.html.erb:126
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:129
+  [1m[36mAnomaly Load (0.0ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."project_id" = 1 AND "anomalies"."resolved" = FALSE /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:131
+  [1m[36mBatch Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "batches" WHERE "batches"."project_id" = 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:153
+  [1m[36mBatch Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "batches" WHERE "batches"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:156
+  [1m[36mBatch Load (0.1ms)[0m  [1m[34mSELECT "batches".* FROM "batches" WHERE "batches"."project_id" = 1 ORDER BY "batches"."created_at" DESC /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:158
+  [1m[36mExportRecord Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "export_records" WHERE "export_records"."project_id" = 1 LIMIT 1 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:193
+  [1m[36mExportRecord Load (0.0ms)[0m  [1m[34mSELECT "export_records".* FROM "export_records" WHERE "export_records"."project_id" = 1 ORDER BY "export_records"."created_at" DESC LIMIT 5 /*action='show',application='PageMismatchTool',controller='projects'*/[0m
+  ↳ app/views/projects/show.html.erb:195
+  Rendered projects/show.html.erb within layouts/application (Duration: 16.0ms | GC: 0.9ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 16.5ms | GC: 0.9ms)
+Completed 200 OK in 18ms (Views: 15.9ms | ActiveRecord: 0.9ms (17 queries, 4 cached) | GC: 0.9ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.3ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 23.5ms | GC: 1.4ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 24.2ms | GC: 1.4ms)
+Completed 200 OK in 26ms (Views: 24.1ms | ActiveRecord: 0.4ms (4 queries, 0 cached) | GC: 1.5ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 31.9ms | GC: 9.7ms)
+  Rendered shared/_flash.html.erb (Duration: 0.1ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 32.7ms | GC: 9.7ms)
+Completed 200 OK in 34ms (Views: 32.7ms | ActiveRecord: 0.4ms (4 queries, 0 cached) | GC: 9.7ms)
+
+
+Started GET "/projects/1/page_mappings" for 127.0.0.1 at 2026-06-18 07:05:36 +0800
+Processing by PageMappingsController#index as */*
+  Parameters: {"project_id" => "1"}
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" WHERE "projects"."id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/controllers/page_mappings_controller.rb:87:in 'PageMappingsController#set_project'
+  Rendering layout layouts/application.html.erb
+  Rendering page_mappings/index.html.erb within layouts/application
+  [1m[36mPageMapping Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:12
+  [1m[36mPageMapping Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 LIMIT 1 /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:80
+  [1m[36mPageMapping Load (0.1ms)[0m  [1m[34mSELECT "page_mappings".* FROM "page_mappings" WHERE "page_mappings"."project_id" = 1 ORDER BY "page_mappings"."pdf_page_index" ASC /*action='index',application='PageMismatchTool',controller='page_mappings'*/[0m
+  ↳ app/views/page_mappings/index.html.erb:83
+  Rendered page_mappings/index.html.erb within layouts/application (Duration: 21.5ms | GC: 0.5ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 22.2ms | GC: 0.5ms)
+Completed 200 OK in 24ms (Views: 22.3ms | ActiveRecord: 0.3ms (4 queries, 0 cached) | GC: 0.5ms)
+
+
+Started GET "/" for 127.0.0.1 at 2026-06-18 07:05:42 +0800
+Processing by DashboardController#index as HTML
+  [1m[36mProject Count (0.2ms)[0m  [1m[34mSELECT COUNT(*) FROM "projects" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:3:in 'DashboardController#index'
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."resolved" = FALSE /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:4:in 'DashboardController#index'
+  [1m[36mProject Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) AS "count_all", "projects"."status" AS "projects_status" FROM "projects" GROUP BY "projects"."status" /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/controllers/dashboard_controller.rb:7:in 'DashboardController#index'
+  Rendering layout layouts/application.html.erb
+  Rendering dashboard/index.html.erb within layouts/application
+  [1m[36mProject Exists? (0.1ms)[0m  [1m[34mSELECT 1 AS one FROM "projects" LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:55
+  [1m[36mProject Load (0.1ms)[0m  [1m[34mSELECT "projects".* FROM "projects" ORDER BY "projects"."created_at" DESC LIMIT 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:57
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 5[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 4 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 3[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.1ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 2 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mCACHE Anomaly Count (0.0ms)[0m  [1m[34mSELECT COUNT(*) FROM "anomalies" WHERE "anomalies"."project_id" = 1[0m
+  ↳ app/models/project.rb:13:in 'Project#anomaly_count'
+  [1m[36mAnomaly Exists? (0.0ms)[0m  [1m[34mSELECT 1 AS one FROM "anomalies" WHERE "anomalies"."resolved" = FALSE LIMIT 1 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:87
+  [1m[36mAnomaly Load (0.3ms)[0m  [1m[34mSELECT "anomalies".* FROM "anomalies" WHERE "anomalies"."resolved" = FALSE ORDER BY "anomalies"."created_at" DESC LIMIT 10 /*action='index',application='PageMismatchTool',controller='dashboard'*/[0m
+  ↳ app/views/dashboard/index.html.erb:89
+  Rendered dashboard/index.html.erb within layouts/application (Duration: 9.7ms | GC: 0.6ms)
+  Rendered shared/_flash.html.erb (Duration: 0.0ms | GC: 0.0ms)
+  Rendered layout layouts/application.html.erb (Duration: 15.7ms | GC: 1.1ms)
+Completed 200 OK in 41ms (Views: 15.4ms | ActiveRecord: 1.1ms (15 queries, 3 cached) | GC: 15.6ms)
+
+
+Started GET "/@vite/client" for 127.0.0.1 at 2026-06-18 07:05:42 +0800
+  
+ActionController::RoutingError (No route matches [GET] "/@vite/client"):
+  

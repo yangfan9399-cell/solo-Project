@@ -48,6 +48,13 @@ class PageMappingsController < ApplicationController
     redirect_to project_page_mappings_path(@project), alert: "批量更新失败: #{e.message}"
   end
 
+  def batch_number
+    numberer = PageMappingBatchNumberer.new(@project, batch_number_params)
+    count = numberer.number!
+
+    redirect_to project_page_mappings_path(@project), notice: "已为#{count}条映射编号。"
+  end
+
   def destroy
     @page_mapping.destroy!
 
@@ -86,5 +93,9 @@ class PageMappingsController < ApplicationController
 
   def page_mapping_params
     params.expect(page_mapping: [:pdf_page_index, :actual_page_number, :status, :notes])
+  end
+
+  def batch_number_params
+    params.permit(:start_number, :prefix, :suffix, :increment).with_defaults(start_number: 1, increment: 1)
   end
 end

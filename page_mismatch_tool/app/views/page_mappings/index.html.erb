@@ -1,21 +1,74 @@
-<% content_for :title, "页码映射 - #{@project.name}" %>
+<% content_for :title, "页码映射工作台 - #{@project.name}" %>
 <% content_for :header_actions do %>
   <%= link_to "← 返回项目", @project, class: "inline-flex items-center px-3 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors" %>
 <% end %>
 
 <div class="space-y-6">
-  <div class="flex flex-col sm:flex-row gap-3">
-    <div class="flex items-center space-x-2">
-      <%= button_to "生成映射", generate_mappings_project_page_mappings_path(@project), method: :post, class: "inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer", data: { turbo_confirm: "将清除现有映射并重新生成，确定继续？" } %>
+  <div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl shadow-sm p-6 text-white">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-bold">影印本缩略图工作台</h3>
+        <p class="mt-1 text-slate-300 text-sm"><%= @project.pdf_filename.presence || '未上传PDF' %> · 共 <%= @page_mappings.count %> 页</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <%= button_to "生成映射", generate_mappings_project_page_mappings_path(@project), method: :post, class: "inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer", data: { turbo_confirm: "将清除现有映射并重新生成，确定继续？" } %>
+        <%= button_to "检测异常", detect_anomalies_project_path(@project), method: :post, class: "inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+        <%= form_with url: project_anomalies_path(@project), method: :get, class: "inline" do |f| %>
+          <%= f.submit "查看异常", class: "inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+        <% end %>
+      </div>
     </div>
-    <%= form_with url: generate_mappings_project_page_mappings_path(@project), method: :post, class: "flex items-center space-x-2", data: { turbo_confirm: "将清除现有映射并重新生成，确定继续？" } do |f| %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h4 class="text-sm font-semibold text-gray-900">批量编号工具</h4>
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-gray-500">按PDF物理页顺序依次分配实际页码</span>
+      </div>
+    </div>
+    <%= form_with url: batch_number_project_page_mappings_path(@project), method: :post, class: "grid grid-cols-1 md:grid-cols-5 gap-4 items-end" do |f| %>
+      <div>
+        <%= f.label :start_number, "起始编号", class: "block text-xs font-medium text-gray-600 mb-1" %>
+        <%= f.number_field :start_number, value: 1, min: 1, class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div>
+        <%= f.label :increment, "增量", class: "block text-xs font-medium text-gray-600 mb-1" %>
+        <%= f.number_field :increment, value: 1, min: 1, class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div>
+        <%= f.label :prefix, "前缀（可选）", class: "block text-xs font-medium text-gray-600 mb-1" %>
+        <%= f.text_field :prefix, placeholder: "如：第、P、Vol-", class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div>
+        <%= f.label :suffix, "后缀（可选）", class: "block text-xs font-medium text-gray-600 mb-1" %>
+        <%= f.text_field :suffix, placeholder: "如：页、-A", class: "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+      </div>
+      <div>
+        <%= f.submit "执行批量编号", class: "w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer", data: { turbo_confirm: "将覆盖所有页面的实际页码，确定继续？" } %>
+      </div>
     <% end %>
+    <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-500">
+      <div class="flex items-start"><span class="font-medium text-gray-700 mr-1.5">示例：</span>起始=1, 增量=1 → 1, 2, 3, 4...</div>
+      <div class="flex items-start"><span class="font-medium text-gray-700 mr-1.5">示例：</span>起始=1, 前缀="第", 后缀="页" → 第1页, 第2页...</div>
+      <div class="flex items-start"><span class="font-medium text-gray-700 mr-1.5">示例：</span>起始=101, 增量=1 → 101, 102, 103...</div>
+    </div>
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-gray-200">
     <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <h4 class="text-sm font-semibold text-gray-900">页码映射列表 (<%= @page_mappings.count %>)</h4>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-3">
+        <h4 class="text-sm font-semibold text-gray-900">PDF缩略图视图</h4>
+        <span class="text-xs text-gray-500">点击缩略图可编辑页码映射</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center space-x-1 text-xs text-gray-500 mr-2">
+          <span class="w-3 h-3 rounded bg-white border-2 border-green-300 inline-block"></span><span>正常</span>
+          <span class="w-3 h-3 rounded bg-red-50 border-2 border-red-400 inline-block ml-2"></span><span>缺页</span>
+          <span class="w-3 h-3 rounded bg-orange-50 border-2 border-orange-400 inline-block ml-2"></span><span>重复</span>
+          <span class="w-3 h-3 rounded bg-purple-50 border-2 border-purple-400 inline-block ml-2"></span><span>插入</span>
+          <span class="w-3 h-3 rounded bg-yellow-50 border-2 border-yellow-400 inline-block ml-2"></span><span>错码</span>
+        </div>
         <%= form_with url: project_page_mappings_path(@project), method: :get, class: "flex items-center space-x-2" do |f| %>
           <%= f.select :status, options_for_select([["全部状态", ""], ["正常", "normal"], ["缺页", "missing"], ["重复", "duplicate"], ["插入", "inserted"], ["空白", "blank"], ["错码", "misnumbered"]], params[:status]), {}, class: "px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
           <%= f.submit "筛选", class: "px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors cursor-pointer" %>
@@ -24,50 +77,68 @@
     </div>
 
     <% if @page_mappings.any? %>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">PDF页码</th>
-              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">实际页码</th>
-              <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs">状态</th>
-              <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">备注</th>
-              <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs">操作</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100" id="page_mappings_body">
-            <% @page_mappings.each do |mapping| %>
-              <%= render "page_mappings/page_mapping", mapping: mapping, project: @project %>
-            <% end %>
-          </tbody>
-        </table>
+      <div class="p-4">
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3" id="thumbnails_grid">
+          <% @page_mappings.each do |mapping| %>
+            <div id="<%= dom_id mapping, :thumb %>" class="group relative cursor-pointer" data-controller="thumbnail" data-mapping-id="<%= mapping.id %>" data-action="click->thumbnail#openEditor">
+              <div class="aspect-[3/4] w-full rounded-lg border-2 shadow-sm overflow-hidden transition-all group-hover:shadow-md group-hover:scale-[1.02] <%= page_mapping_thumbnail_status_class(mapping.status) %> <%= page_mapping_thumbnail_bg_class(mapping.status) %>">
+                <div class="h-full flex flex-col">
+                  <div class="flex-1 flex items-center justify-center p-2 bg-gradient-to-b from-gray-50 to-white">
+                    <div class="text-center">
+                      <div class="text-3xl font-bold text-slate-700 opacity-40"><%= mapping.pdf_page_index %></div>
+                      <div class="mt-1 text-[10px] text-gray-400">PDF页</div>
+                    </div>
+                  </div>
+                  <div class="border-t border-gray-100 px-2 py-1.5 bg-white/90">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <div class="text-xs font-bold text-slate-800"><%= mapping.actual_page_number.presence || "—" %></div>
+                        <div class="text-[9px] text-gray-400">实际页码</div>
+                      </div>
+                      <% if mapping.status != PageMapping::NORMAL %>
+                        <div class="flex flex-col items-end">
+                          <%= page_mapping_status_badge(mapping.status) %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <% if mapping.notes.present? %>
+                <div class="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center" title="<%= mapping.notes %>">
+                  <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
       </div>
     <% else %>
-      <div class="px-6 py-12 text-center">
-        <svg class="mx-auto w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <p class="mt-2 text-sm text-gray-500">暂无页码映射数据</p>
-        <p class="text-xs text-gray-400 mt-1">点击"生成映射"按钮自动创建映射</p>
+      <div class="px-6 py-16 text-center">
+        <svg class="mx-auto w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <p class="mt-3 text-sm text-gray-500">暂无页码映射数据</p>
+        <p class="text-xs text-gray-400 mt-1">点击上方"生成映射"按钮自动创建映射</p>
       </div>
     <% end %>
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <h4 class="text-sm font-semibold text-gray-900 mb-4">批量更新</h4>
+    <h4 class="text-sm font-semibold text-gray-900 mb-4">批量编辑（表格形式）</h4>
     <%= form_with url: batch_update_project_page_mappings_path(@project), method: :post, class: "space-y-4" do |f| %>
-      <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
+      <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
         <table class="w-full text-sm">
-          <thead class="bg-gray-50 sticky top-0">
+          <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 text-xs">PDF页码</th>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 text-xs">实际页码</th>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 text-xs">状态</th>
-              <th class="px-3 py-2 text-left font-semibold text-gray-600 text-xs">备注</th>
+              <th class="px-3 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">PDF页码</th>
+              <th class="px-3 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">实际页码</th>
+              <th class="px-3 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">状态</th>
+              <th class="px-3 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">备注</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
             <% @page_mappings.each do |mapping| %>
-              <tr>
-                <td class="px-3 py-2 font-mono text-gray-700"><%= mapping.pdf_page_index %></td>
+              <tr id="<%= dom_id mapping %>" data-mapping-id="<%= mapping.id %>" class="hover:bg-gray-50 transition-colors <%= mapping.status != PageMapping::NORMAL ? page_mapping_thumbnail_bg_class(mapping.status) : '' %>">
+                <td class="px-3 py-2 font-mono text-gray-700 whitespace-nowrap"><%= mapping.pdf_page_index %></td>
                 <td class="px-3 py-2">
                   <%= f.fields_for "page_mappings[]", mapping do |mf| %>
                     <%= mf.hidden_field :id, value: mapping.id %>
@@ -81,7 +152,7 @@
                 </td>
                 <td class="px-3 py-2">
                   <%= f.fields_for "page_mappings[]", mapping do |mf| %>
-                    <%= mf.text_field :notes, value: mapping.notes, placeholder: "备注", class: "w-40 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+                    <%= mf.text_field :notes, value: mapping.notes, placeholder: "备注说明", class: "w-full md:w-64 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
                   <% end %>
                 </td>
               </tr>
@@ -89,7 +160,7 @@
           </tbody>
         </table>
       </div>
-      <%= f.submit "批量保存", class: "px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
+      <%= f.submit "保存所有更改", class: "px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer" %>
     <% end %>
   </div>
 </div>

@@ -49,27 +49,58 @@
     <div data-tabs-target="panel" data-panel="mappings" class="mt-6">
       <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h4 class="text-sm font-semibold text-gray-900">页码映射表 (<%= @page_mappings.count %>)</h4>
+          <h4 class="text-sm font-semibold text-gray-900">页码映射概览 (<%= @page_mappings.count %>)</h4>
           <div class="flex items-center space-x-2">
             <%= button_to "生成映射", generate_mappings_project_page_mappings_path(@project), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer", data: { turbo_confirm: "将清除现有映射并重新生成，确定继续？" } %>
-            <%= link_to "批量编号", project_page_mappings_path(@project), class: "inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-md transition-colors" %>
+            <%= link_to "打开工作台", project_page_mappings_path(@project), class: "inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-md transition-colors" %>
             <%= button_to "检测异常", detect_anomalies_project_path(@project), method: :post, class: "inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer" %>
           </div>
         </div>
+
         <% if @page_mappings.any? %>
-          <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+          <div class="px-6 py-4 border-b border-gray-100 bg-slate-50">
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="text-xs font-semibold text-gray-700">PDF缩略图快速预览（<%= [@page_mappings.count, 60].min %>/<%= @page_mappings.count %> 页）</h5>
+              <%= link_to "完整工作台 →", project_page_mappings_path(@project), class: "text-xs text-blue-600 hover:text-blue-800 font-medium" %>
+            </div>
+            <div class="flex items-center space-x-3 mb-3 text-[10px] text-gray-500">
+              <span class="flex items-center"><span class="w-2.5 h-2.5 rounded bg-white border-2 border-green-300 inline-block mr-1"></span>正常</span>
+              <span class="flex items-center"><span class="w-2.5 h-2.5 rounded bg-red-50 border-2 border-red-400 inline-block mr-1"></span>缺页</span>
+              <span class="flex items-center"><span class="w-2.5 h-2.5 rounded bg-orange-50 border-2 border-orange-400 inline-block mr-1"></span>重复</span>
+              <span class="flex items-center"><span class="w-2.5 h-2.5 rounded bg-purple-50 border-2 border-purple-400 inline-block mr-1"></span>插入</span>
+              <span class="flex items-center"><span class="w-2.5 h-2.5 rounded bg-yellow-50 border-2 border-yellow-400 inline-block mr-1"></span>错码</span>
+            </div>
+            <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-15 gap-2">
+              <% @page_mappings.order(:pdf_page_index).limit(60).each do |mapping| %>
+                <%= link_to project_page_mappings_path(@project, anchor: dom_id(mapping)), class: "block" do %>
+                  <div class="aspect-[3/4] w-full rounded-md border-2 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.05] transition-all <%= page_mapping_thumbnail_status_class(mapping.status) %> <%= page_mapping_thumbnail_bg_class(mapping.status) %>">
+                    <div class="h-full flex flex-col">
+                      <div class="flex-1 flex items-center justify-center">
+                        <span class="text-sm font-bold text-slate-700 opacity-40"><%= mapping.pdf_page_index %></span>
+                      </div>
+                      <div class="border-t border-gray-100 px-1 py-0.5 bg-white/90">
+                        <div class="text-center text-[9px] font-bold text-slate-800 leading-tight"><%= mapping.actual_page_number.presence || "—" %></div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
             <table class="w-full text-sm">
-              <thead class="bg-gray-50 sticky top-0">
+              <thead class="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">PDF页码</th>
-                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">实际页码</th>
-                  <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs">状态</th>
-                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs">备注</th>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">PDF页码</th>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">实际页码</th>
+                  <th class="px-4 py-2.5 text-center font-semibold text-gray-600 text-xs whitespace-nowrap">状态</th>
+                  <th class="px-4 py-2.5 text-left font-semibold text-gray-600 text-xs whitespace-nowrap">备注</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
                 <% @page_mappings.each do |mapping| %>
-                  <tr class="hover:bg-gray-50">
+                  <tr id="<%= dom_id mapping %>" class="hover:bg-gray-50 <%= mapping.status != PageMapping::NORMAL ? page_mapping_thumbnail_bg_class(mapping.status) : '' %>">
                     <td class="px-4 py-2 font-mono text-gray-700"><%= mapping.pdf_page_index %></td>
                     <td class="px-4 py-2 font-mono text-gray-900 font-medium"><%= mapping.actual_page_number.presence || "—" %></td>
                     <td class="px-4 py-2 text-center"><%= page_mapping_status_badge(mapping.status) %></td>
