@@ -25,8 +25,8 @@ class BatchController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('batch_code', 'like', "%{$search}%')
-                  ->orWhere('trace_code', 'like', "%{$search}%')
+                $q->where('batch_code', 'like', "%{$search}%")
+                  ->orWhere('trace_code', 'like', "%{$search}%")
                   ->orWhere('operator', 'like', "%{$search}%");
             });
         }
