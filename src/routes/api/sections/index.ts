@@ -10,6 +10,7 @@ import {
   opticsDao,
   associationDao,
 } from '~/server/dao';
+import { prepare } from '~/server/db';
 import type { Micrograph, MineralOptics, Association } from '~/types/mineral';
 
 const sectionSchema = z.object({
@@ -122,7 +123,7 @@ export const useCreateSection = routeAction$(async (data, requestEvent) => {
         if (assoc.associatedMineral) {
           const assocData: Omit<Association, 'id'> = {
             sectionId: section.id,
-            associatedMineral: assoc.associatedMineral,
+            associatedMineral: assoc.associatedMineral || '',
             relationshipType: assoc.relationshipType || '共生',
             texturalRelation: assoc.texturalRelation || '',
             abundancePercent: assoc.abundancePercent ?? 0,
@@ -178,31 +179,42 @@ export const useUpdateSection = routeAction$(async (data, requestEvent) => {
     const userId = requestEvent.cookie.get('userId')?.value || 'system';
     const sectionId = validated.id;
     const batchId = `batch-${Date.now()}`;
+    const existing = await sectionDao.getById(sectionId);
+    if (!existing) {
+      return { success: false, error: '记录不存在' };
+    }
 
     const { id, ...updateData } = validated;
-    await sectionDao.update(sectionId, updateData as any, userId);
+    const updateResult = await sectionDao.update(sectionId, updateData as any, userId);
+
+    let hasRelatedChanges = false;
+    const changeDescriptions: string[] = [];
 
     if (validated.photos) {
       const existingPhotos = await micrographDao.listBySection(sectionId);
+      const newValidPhotos = validated.photos.filter(p => p.hasPhoto || p.imagePath);
+      if (existingPhotos.length !== newValidPhotos.length) {
+        hasRelatedChanges = true;
+        changeDescriptions.push(`显微照片: ${existingPhotos.length}张 → ${newValidPhotos.length}张`);
+      }
       for (const ep of existingPhotos) {
         await micrographDao.delete(ep.id);
       }
-      for (const photo of validated.photos) {
-        if (photo.hasPhoto || photo.imagePath) {
-          const micrographData: Omit<Micrograph, 'id'> = {
-            sectionId,
-            mode: photo.mode,
-            magnification: photo.magnification,
-            scaleBarMicrometers: photo.scaleBarMicrometers || 100,
-            imagePath: photo.imagePath || `/images/placeholder-${photo.mode}-${photo.magnification}.svg`,
-            notes: photo.notes,
-          };
-          await micrographDao.create(micrographData);
-        }
+      for (const photo of newValidPhotos) {
+        const micrographData: Omit<Micrograph, 'id'> = {
+          sectionId,
+          mode: photo.mode,
+          magnification: photo.magnification,
+          scaleBarMicrometers: photo.scaleBarMicrometers || 100,
+          imagePath: photo.imagePath || `/images/placeholder-${photo.mode}-${photo.magnification}.svg`,
+          notes: photo.notes,
+        };
+        await micrographDao.create(micrographData);
       }
     }
 
     if (validated.optics) {
+      const existingOptics = await opticsDao.getBySection(sectionId);
       const opticsData = {
         sectionId,
         relief: validated.optics.relief ?? 0,
@@ -221,36 +233,66 @@ export const useUpdateSection = routeAction$(async (data, requestEvent) => {
         zoning: validated.optics.zoning ?? 0,
         inclusionsDescription: validated.optics.inclusionsDescription || '',
       } as Omit<MineralOptics, 'id'>;
+
+      if (!existingOptics) {
+        hasRelatedChanges = true;
+        changeDescriptions.push('光学性质: 新增');
+      } else {
+        const fieldsChanged = Object.keys(opticsData).filter(k => {
+          if (k === 'sectionId') return false;
+          const oldVal = (existingOptics as any)[k];
+          const newVal = (opticsData as any)[k];
+          return String(oldVal) !== String(newVal);
+        });
+        if (fieldsChanged.length > 0) {
+          hasRelatedChanges = true;
+          changeDescriptions.push(`光学性质更新: ${fieldsChanged.join(', ')}`);
+        }
+      }
       await opticsDao.save(opticsData);
     }
 
     if (validated.associations) {
       const existingAssocs = await associationDao.listBySection(sectionId);
+      const newValidAssocs = validated.associations.filter(a => a.associatedMineral);
+      if (existingAssocs.length !== newValidAssocs.length) {
+        hasRelatedChanges = true;
+        changeDescriptions.push(`伴生矿物: ${existingAssocs.length}种 → ${newValidAssocs.length}种`);
+      }
       for (const ea of existingAssocs) {
         await associationDao.delete(ea.id);
       }
-      for (const assoc of validated.associations) {
-        if (assoc.associatedMineral) {
-          const assocData: Omit<Association, 'id'> = {
-            sectionId,
-            associatedMineral: assoc.associatedMineral,
-            relationshipType: assoc.relationshipType || '共生',
-            texturalRelation: assoc.texturalRelation || '',
-            abundancePercent: assoc.abundancePercent ?? 0,
-            grainSizeMm: assoc.grainSizeMm,
-            parageneticStage: assoc.parageneticStage || '',
-            notes: assoc.notes || '',
-          };
-          await associationDao.create(assocData);
-        }
+      for (const assoc of newValidAssocs) {
+        const assocData: Omit<Association, 'id'> = {
+          sectionId,
+          associatedMineral: assoc.associatedMineral || '',
+          relationshipType: assoc.relationshipType || '共生',
+          texturalRelation: assoc.texturalRelation || '',
+          abundancePercent: assoc.abundancePercent ?? 0,
+          grainSizeMm: assoc.grainSizeMm,
+          parageneticStage: assoc.parageneticStage || '',
+          notes: assoc.notes || '',
+        };
+        await associationDao.create(assocData);
       }
     }
+
+    const newVersion = existing.currentVersion + 1;
+    if (hasRelatedChanges && !(updateResult as any).updatedFields) {
+      const bumpStmt = await prepare('UPDATE thin_sections SET current_version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+      bumpStmt.run([newVersion, sectionId]);
+    }
+    const finalVersion = hasRelatedChanges ? newVersion : existing.currentVersion;
+
+    const finalDesc = changeDescriptions.length > 0
+      ? changeDescriptions.join('；')
+      : '更新薄片记录';
 
     await versionDao.create({
       sectionId,
       changeType: 'update',
-      version: (await sectionDao.getById(sectionId))?.currentVersion || 1,
-      changeDescription: '更新薄片记录',
+      version: finalVersion,
+      changeDescription: finalDesc,
       changedBy: userId,
       batchId,
     });
@@ -261,6 +303,7 @@ export const useUpdateSection = routeAction$(async (data, requestEvent) => {
       success: true,
       id: sectionId,
       message: '保存成功',
+      version: finalVersion,
     };
   } catch (error: any) {
     console.error('更新薄片失败:', error);

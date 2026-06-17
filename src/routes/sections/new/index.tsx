@@ -48,10 +48,10 @@ export default component$(() => {
   });
 
   const photos = useStore([
-    { mode: 'ppl' as const, magnification: 40, hasPhoto: false },
-    { mode: 'xpl' as const, magnification: 40, hasPhoto: false },
-    { mode: 'xpl' as const, magnification: 100, hasPhoto: false },
-    { mode: 'cnl' as const, magnification: 40, hasPhoto: false },
+    { mode: 'ppl' as const, magnification: 40, hasPhoto: false, imagePath: undefined as string | undefined, scaleBarMicrometers: undefined as number | undefined, notes: undefined as string | undefined },
+    { mode: 'xpl' as const, magnification: 40, hasPhoto: false, imagePath: undefined as string | undefined, scaleBarMicrometers: undefined as number | undefined, notes: undefined as string | undefined },
+    { mode: 'xpl' as const, magnification: 100, hasPhoto: false, imagePath: undefined as string | undefined, scaleBarMicrometers: undefined as number | undefined, notes: undefined as string | undefined },
+    { mode: 'cnl' as const, magnification: 40, hasPhoto: false, imagePath: undefined as string | undefined, scaleBarMicrometers: undefined as number | undefined, notes: undefined as string | undefined },
   ]);
 
   const optics = useStore({
@@ -414,11 +414,17 @@ export default component$(() => {
                     <span class="text-mineral-300 text-sm">{photo.magnification}×</span>
                   </div>
                   
-                  <div class="aspect-video rounded-lg bg-mineral-900 flex items-center justify-center mb-3">
-                    {photo.hasPhoto ? (
+                  <label class="block aspect-video rounded-lg bg-mineral-900 flex items-center justify-center mb-3 cursor-pointer hover:bg-mineral-800/80 transition-colors overflow-hidden">
+                    {photo.imagePath ? (
+                      <img 
+                        src={photo.imagePath} 
+                        alt={`${photo.mode} ${photo.magnification}x`}
+                        class="w-full h-full object-contain"
+                      />
+                    ) : photo.hasPhoto ? (
                       <div class="text-center text-mineral-300">
                         <span class="text-3xl block mb-2">📷</span>
-                        <span class="text-sm">已上传照片</span>
+                        <span class="text-sm">点击替换照片</span>
                       </div>
                     ) : (
                       <div class="text-center text-mineral-600">
@@ -426,12 +432,35 @@ export default component$(() => {
                         <span class="text-sm">点击上传照片</span>
                       </div>
                     )}
-                  </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      onChange$={(e) => {
+                        const input = e.target as HTMLInputElement;
+                        const file = input.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const dataUrl = ev.target?.result as string;
+                            photos[index].imagePath = dataUrl;
+                            photos[index].hasPhoto = true;
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
 
                   <div class="flex gap-2">
                     <button
                       type="button"
-                      onClick$={() => photos[index].hasPhoto = !photos[index].hasPhoto}
+                      onClick$={() => {
+                        photos[index].hasPhoto = !photos[index].hasPhoto;
+                        if (!photos[index].hasPhoto) {
+                          photos[index].imagePath = undefined;
+                        }
+                      }}
                       class={[
                         'flex-1 py-2 rounded text-sm transition-colors',
                         photo.hasPhoto
@@ -439,8 +468,16 @@ export default component$(() => {
                           : 'bg-mineral-700 hover:bg-mineral-600 text-mineral-200'
                       ]}
                     >
-                      {photo.hasPhoto ? '移除' : '标记已拍摄'}
+                      {photo.hasPhoto ? '移除照片' : '标记已拍摄'}
                     </button>
+                  </div>
+                  <div class="mt-2">
+                    <input
+                      type="number"
+                      class="input-field text-xs py-1"
+                      placeholder="比例尺(μm)"
+                      value={photo.scaleBarMicrometers} onInput$={(e) => { const v = (e.target as HTMLInputElement).value; photos[index].scaleBarMicrometers = v === '' ? undefined as any : parseFloat(v); }}
+                    />
                   </div>
                 </div>
               ))}
