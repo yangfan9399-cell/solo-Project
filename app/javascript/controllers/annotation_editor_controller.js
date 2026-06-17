@@ -277,9 +277,61 @@ export default class extends Controller {
     .then(response => response.json())
     .then(annotation => {
       this.addAnnotationToCanvas(annotation)
+      this.addAnnotationToList(annotation)
       this.selectAnnotation(annotation.id)
       this.updateAnnotationCount()
     })
+  }
+
+  addAnnotationToList(annotation) {
+    const diseaseNames = { flaking: '起甲', efflorescence: '酥碱', discoloration: '变色', crack: '裂隙', other: '其他' }
+    const sevNames = { mild: '轻微', moderate: '中等', severe: '重度' }
+    const sevClasses = {
+      mild: 'text-emerald-600 bg-emerald-50',
+      moderate: 'text-amber-600 bg-amber-50',
+      severe: 'text-red-600 bg-red-50'
+    }
+    const color = annotation.color || this.defaultColor(annotation.disease_type)
+
+    let listContainer = document.querySelector('.flex-1.overflow-y-auto > .divide-y')
+    let emptyState = document.querySelector('.flex-1.overflow-y-auto > .p-8.text-center')
+
+    if (!listContainer) {
+      if (emptyState) emptyState.remove()
+      listContainer = document.createElement('div')
+      listContainer.className = 'divide-y divide-slate-100'
+      document.querySelector('.flex-1.overflow-y-auto').insertBefore(
+        listContainer,
+        document.getElementById('annotation-properties')
+      )
+    }
+
+    const item = document.createElement('div')
+    item.className = 'annotation-item p-3 hover:bg-slate-50 cursor-pointer'
+    item.dataset.id = annotation.id
+    item.dataset.disease = annotation.disease_type
+    item.dataset.severity = annotation.severity
+    item.dataset.description = annotation.description || ''
+
+    item.innerHTML = `
+      <div class="flex items-start gap-3">
+        <span class="w-3 h-3 rounded-sm mt-0.5 shrink-0" style="background-color: ${color}"></span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-slate-800">${diseaseNames[annotation.disease_type] || annotation.disease_type}</span>
+            <span class="px-1.5 py-0.5 text-xs font-medium rounded ${sevClasses[annotation.severity] || sevClasses.moderate}">${sevNames[annotation.severity] || annotation.severity}</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">${annotation.width} × ${annotation.height} px</p>
+          ${annotation.description ? `<p class="text-xs text-slate-400 mt-1 truncate">${annotation.description}</p>` : ''}
+        </div>
+      </div>
+    `
+
+    item.addEventListener('click', () => {
+      this.selectAnnotation(annotation.id)
+    })
+
+    listContainer.insertBefore(item, listContainer.firstChild)
   }
 
   addAnnotationToCanvas(annotation) {

@@ -135,6 +135,14 @@ projects.each do |project|
     version_type = i == 0 ? "survey" : (i == num_records - 1 ? "special" : "review")
     is_abnormal = (project.code == "MGK-017-CJD" && i >= 2) || (project.code == "MGK-257-XB" && i == 3)
 
+    image_url_map = {
+      "MGK-257-XB" => "/mural_images/mgk-257.svg",
+      "MGK-320-NB" => "/mural_images/mgk-320.svg",
+      "MGK-017-CJD" => "/mural_images/mgk-017.svg",
+      "YLK-025-MAIN" => "/mural_images/ylk-025.svg",
+      "BLS-169-MAIN" => "/mural_images/bls-169.svg"
+    }
+
     record = project.records.create!(
       batch_number: "#{year}-#{version_type[0].upcase}-%03d" % (i + 1),
       record_date: Date.new(year, 6 + i, 15),
@@ -143,7 +151,7 @@ projects.each do |project|
       weather: ["晴", "多云", "阴", "小雨"][i % 4],
       temperature: is_abnormal ? (40 + rand(0..5)) : (18 + rand(0..10)),
       humidity: is_abnormal ? (85 + rand(0..10)) : (40 + rand(0..25)),
-      image_url: nil,
+      image_url: image_url_map[project.code],
       notes: is_abnormal ? "本次监测发现环境参数异常，需加强关注。部分病害区域有扩大迹象。" : (i == 0 ? "首次普查，建立基线数据。" : "定期复查，对比分析病害发展。"),
       version_type: version_type
     )

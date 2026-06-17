@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="wallBase3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a070;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#b89050;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9a7040;stop-opacity:1" />
+    </linearGradient>
+    <pattern id="stucco3" patternUnits="userSpaceOnUse" width="5" height="5">
+      <rect width="5" height="5" fill="transparent"/>
+      <circle cx="1" cy="2" r="0.35" fill="rgba(80,50,20,0.25)"/>
+      <circle cx="3" cy="4" r="0.3" fill="rgba(80,50,20,0.2)"/>
+    </pattern>
+    <radialGradient id="darkCorner" cx="10%" cy="90%" r="50%">
+      <stop offset="0%" style="stop-color:rgba(40,20,10,0.3);stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:rgba(0,0,0,0);stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#wallBase3)"/>
+  <rect width="1200" height="800" fill="url(#stucco3)"/>
+
+  <g opacity="0.85">
+    <rect x="80" y="60" width="1040" height="680" fill="rgba(180,140,90,0.25)" stroke="#6a4020" stroke-width="3" rx="5"/>
+
+    <g transform="translate(600, 280)">
+      <ellipse cx="0" cy="-80" rx="70" ry="80" fill="#c4956a" stroke="#6a4020" stroke-width="2"/>
+      <circle cx="-25" cy="-95" r="7" fill="#1a0a00"/>
+      <circle cx="25" cy="-95" r="7" fill="#1a0a00"/>
+      <path d="M-18,-65 Q0,-55 18,-65" stroke="#4a2a10" stroke-width="3" fill="none"/>
+      <path d="M-60,-50 Q0,-10 60,-50" stroke="#4a2a10" stroke-width="4" fill="none"/>
+      <ellipse cx="0" cy="60" rx="110" ry="140" fill="#c44d3a" stroke="#7a1212" stroke-width="2.5"/>
+      <path d="M-85,40 L-60,60 L-75,85 L-50,100 L-70,130 L-45,155 L-55,180" stroke="#f0d76e" stroke-width="3" fill="none"/>
+      <path d="M85,40 L60,60 L75,85 L50,100 L70,130 L45,155 L55,180" stroke="#f0d76e" stroke-width="3" fill="none"/>
+      <path d="M0,20 L-15,60 L0,95 L15,60 Z" fill="#f0d76e" stroke="#c4a510" stroke-width="1.5"/>
+      <ellipse cx="0" cy="250" rx="120" ry="35" fill="#5a3810" stroke="#3a2008" stroke-width="2"/>
+    </g>
+
+    <g transform="translate(200, 350)">
+      <rect x="-50" y="-120" width="100" height="240" fill="#4a3828" stroke="#2a1810" stroke-width="2"/>
+      <rect x="-40" y="-110" width="80" height="220" fill="#8b4513"/>
+      <line x1="-40" y1="-70" x2="40" y2="-70" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="-20" x2="40" y2="-20" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="30" x2="40" y2="30" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="80" x2="40" y2="80" stroke="#2a1810" stroke-width="2"/>
+      <text x="0" y="-85" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">藏</text>
+      <text x="0" y="-35" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">经</text>
+      <text x="0" y="15" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">洞</text>
+      <text x="0" y="65" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">寶</text>
+    </g>
+
+    <g transform="translate(1000, 350)">
+      <rect x="-50" y="-120" width="100" height="240" fill="#4a3828" stroke="#2a1810" stroke-width="2"/>
+      <rect x="-40" y="-110" width="80" height="220" fill="#8b4513"/>
+      <line x1="-40" y1="-70" x2="40" y2="-70" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="-20" x2="40" y2="-20" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="30" x2="40" y2="30" stroke="#2a1810" stroke-width="2"/>
+      <line x1="-40" y1="80" x2="40" y2="80" stroke="#2a1810" stroke-width="2"/>
+      <text x="0" y="-85" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">洪</text>
+      <text x="0" y="-35" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">辯</text>
+      <text x="0" y="15" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">法</text>
+      <text x="0" y="65" fill="#f0d76e" font-size="14" font-family="serif" text-anchor="middle">師</text>
+    </g>
+
+    <g fill="#3a6a40" stroke="#1e3a20" stroke-width="1.5">
+      <path d="M100,680 Q140,620 130,550 Q120,480 150,420 Q160,360 130,300 Q110,240 150,180"/>
+      <path d="M130,380 Q170,360 200,400 Q220,440 180,480"/>
+      <path d="M125,520 Q175,500 205,550 Q220,595 180,630"/>
+    </g>
+    <g fill="#4a8a50" stroke="#1e3a20" stroke-width="1.5">
+      <path d="M1100,680 Q1060,620 1070,550 Q1080,480 1050,420 Q1040,360 1070,300 Q1090,240 1050,180"/>
+      <path d="M1070,380 Q1030,360 1000,400 Q980,440 1020,480"/>
+      <path d="M1075,520 Q1025,500 995,550 Q980,595 1020,630"/>
+    </g>
+
+    <g font-family="serif" fill="#3a1a08">
+      <text x="600" y="100" font-size="22" font-weight="bold" text-anchor="middle">第 十 七 窟 藏 经 洞</text>
+    </g>
+  </g>
+
+  <g opacity="0.45">
+    <rect x="320" y="380" width="140" height="100" fill="rgba(50,25,5,0.45)" rx="4"/>
+    <rect x="720" y="420" width="100" height="80" fill="rgba(50,25,5,0.35)" rx="4"/>
+    <ellipse cx="450" cy="200" rx="50" ry="30" fill="rgba(255,255,255,0.3)"/>
+    <ellipse cx="780" cy="220" rx="45" ry="25" fill="rgba(255,255,255,0.25)"/>
+    <ellipse cx="600" cy="580" rx="60" ry="35" fill="rgba(255,255,255,0.35)"/>
+  </g>
+
+  <g opacity="0.35" stroke="rgba(60,30,10,0.5)" stroke-width="2.5" fill="none">
+    <path d="M420,80 L440,350 L410,600 L435,750"/>
+    <path d="M780,60 L765,300 L790,550 L770,750"/>
+  </g>
+
+  <rect width="1200" height="800" fill="url(#darkCorner)"/>
+  <rect x="1100" y="0" width="100" height="800" fill="rgba(60,30,10,0.25)"/>
+</svg>
