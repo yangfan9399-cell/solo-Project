@@ -23,7 +23,7 @@
   </div>
 
   <div class="search-form">
-    <%= search_form_for @search do |f| %>
+    <%= search_form_for @search, url: search_rubbings_path, method: :get do |f| %>
       <%= f.text_field :no_cont, placeholder: '编号', class: 'search-input' %>
       <%= f.text_field :title_cont, placeholder: '标题', class: 'search-input' %>
       <%= f.text_field :dynasty_cont, placeholder: '朝代', class: 'search-input' %>

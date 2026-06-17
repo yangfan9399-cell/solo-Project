@@ -2,7 +2,7 @@ class RubbingsController < ApplicationController
   before_action :set_rubbing, only: [:show, :edit, :update, :destroy, :versions, :warnings]
 
   def index
-    @search = Rubbing.ransack(params[:q])
+    @search = Rubbing.includes(:inscriptions, :footnotes, :character_boxes).ransack(params[:q])
     @rubbings = @search.result(distinct: true).order(created_at: :desc).page(params[:page]).per(10)
     @status_counts = Rubbing.group(:status).count
   end
@@ -62,13 +62,13 @@ class RubbingsController < ApplicationController
   end
 
   def search
-    @search = Rubbing.ransack(params[:q])
+    @search = Rubbing.includes(:inscriptions, :footnotes, :character_boxes).ransack(params[:q])
     @rubbings = @search.result(distinct: true).order(created_at: :desc).page(params[:page]).per(10)
     render :index
   end
 
   def export
-    rubbings = Rubbing.all.includes(:inscriptions, :footnotes)
+    rubbings = Rubbing.all.includes(:inscriptions, :footnotes, :character_boxes)
     respond_to do |format|
       format.csv { export_csv(rubbings) }
       format.pdf { export_pdf(rubbings) }
@@ -76,10 +76,8 @@ class RubbingsController < ApplicationController
   end
 
   def export_summary
-    rubbings = Rubbing.all.includes(:inscriptions, :footnotes)
-    respond_to do |format|
-      format.pdf { export_summary_pdf(rubbings) }
-    end
+    rubbings = Rubbing.all.includes(:inscriptions, :footnotes, :character_boxes)
+    export_summary_pdf(rubbings)
   end
 
   def versions
@@ -128,7 +126,7 @@ class RubbingsController < ApplicationController
 
     @rubbing.versions.create(
       version: new_version,
-      changelog: params[:changelog] || '更新记录',
+      changelog: params[:rubbing].try(:[], :changelog) || '更新记录',
       changed_by: @rubbing.created_by || '系统',
       batch: "BATCH_#{Time.now.strftime('%Y%m%d')}"
     )
@@ -144,11 +142,7 @@ class RubbingsController < ApplicationController
   end
 
   def export_csv(rubbings)
-    filename = "rubbings_export_#{Time.now.strftime('%Y%m%d')}.csv"
-    headers['Content-Disposition'] = "attachment; filename=\"#{filename}\""
-    headers['Content-Type'] = 'text/csv; charset=utf-8'
-
-    response.body = CSV.generate(encoding: 'utf-8') do |csv|
+    csv_output = CSV.generate(encoding: 'utf-8') do |csv|
       csv << ['编号', '标题', '朝代', '出土地点', '年代', '状态', '释文数', '断字数', '字框数', '脚注数', '创建人', '创建时间']
       rubbings.each do |r|
         csv << [
@@ -158,110 +152,139 @@ class RubbingsController < ApplicationController
         ]
       end
     end
+
+    filename = "rubbings_export_#{Time.now.strftime('%Y%m%d')}.csv"
+    send_data csv_output, filename: filename, type: 'text/csv', disposition: 'attachment'
   end
 
   def export_pdf(rubbings)
     require 'prawn'
-    require 'prawn/table'
-
-    filename = "rubbings_export_#{Time.now.strftime('%Y%m%d')}.pdf"
-    headers['Content-Disposition'] = "attachment; filename=\"#{filename}\""
-    headers['Content-Type'] = 'application/pdf'
 
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
 
-    chinese_fonts = ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']
-    available_font = chinese_fonts.find { |f| pdf.fonts.include?(f) } || 'Helvetica'
-    pdf.font(available_font)
+    # 使用支持中文的日文字体
+    font_path = '/System/Library/Fonts/Hiragino Sans GB.ttc'
+    if File.exist?(font_path)
+      pdf.font_families['Chinese'] = {
+        normal: { file: font_path, font: 0 },
+        bold: { file: font_path, font: 2 }
+      }
+      pdf.font 'Chinese'
+    else
+      pdf.font 'Helvetica'
+    end
 
-    pdf.text '旧城门铭文拓片整理系统 - 导出报告', size: 18, align: :center, style: :bold
-    pdf.text "导出时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
+    pdf.text "Rubbing Export Report", size: 18, align: :center, style: :bold
+    pdf.text "Date: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 20
 
-    table_data = [['编号', '标题', '朝代', '状态', '释文数', '断字数', '字框数']]
+    table_data = [['No', 'Title', 'Dynasty', 'Status', 'Inscriptions', 'Broken', 'CharBoxes']]
     rubbings.each do |r|
       table_data << [
-        r.no, r.title, r.dynasty, r.status,
-        r.inscriptions.count, r.broken_count, r.char_count
+        r.no.to_s,
+        r.title.to_s,
+        r.dynasty.to_s,
+        r.status.to_s,
+        r.inscriptions.count.to_s,
+        r.broken_count.to_s,
+        r.char_count.to_s
       ]
     end
 
     pdf.table(table_data, header: true, cell_style: { size: 8 }, column_widths: [60, 150, 60, 60, 50, 50, 50])
 
     pdf.move_down 20
-    pdf.text "总记录数: #{rubbings.count}", size: 10
-    pdf.text "断字记录: #{rubbings.select { |r| r.broken_count > 0 }.count}", size: 10
+    pdf.text "Total: #{rubbings.count}", size: 10
+    pdf.text "With Broken: #{rubbings.select { |r| r.broken_count > 0 }.count}", size: 10
 
-    send_data pdf.render, filename: filename, type: 'application/pdf'
+    send_data pdf.render, filename: "rubbings_export_#{Time.now.strftime('%Y%m%d')}.pdf", type: 'application/pdf', disposition: 'attachment'
+  rescue => e
+    Rails.logger.error "PDF export error: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+    send_data "PDF export failed: #{e.message}", type: 'text/plain', disposition: 'attachment', filename: 'error.txt'
   end
 
   def export_summary_pdf(rubbings)
     require 'prawn'
-    require 'prawn/table'
 
-    filename = "rubbings_summary_#{Time.now.strftime('%Y%m%d')}.pdf"
-    headers['Content-Disposition'] = "attachment; filename=\"#{filename}\""
-    headers['Content-Type'] = 'application/pdf'
-
+    # 使用支持中文的日文字体
     pdf = Prawn::Document.new(page_size: 'A4', page_layout: :portrait, margin: [40, 40, 40, 40])
 
-    chinese_fonts = ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'SimHei', 'Arial Unicode MS']
-    available_font = chinese_fonts.find { |f| pdf.fonts.include?(f) } || 'Helvetica'
-    pdf.font(available_font)
+    font_path = '/System/Library/Fonts/Hiragino Sans GB.ttc'
+    if File.exist?(font_path)
+      pdf.font_families['Chinese'] = {
+        normal: { file: font_path, font: 0 },
+        bold: { file: font_path, font: 2 }
+      }
+      pdf.font 'Chinese'
+    else
+      pdf.font 'Helvetica'
+    end
 
-    pdf.text '旧城门铭文拓片整理系统 - 摘要报告', size: 18, align: :center, style: :bold
-    pdf.text "报告时间: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
+    pdf.text "Rubbing Summary Report", size: 18, align: :center, style: :bold
+    pdf.text "Date: #{Time.now.strftime('%Y-%m-%d %H:%M')}", size: 10, align: :center
     pdf.move_down 30
 
-    pdf.text '一、统计概览', size: 14, style: :bold
+    pdf.text "Statistics Overview", size: 14, style: :bold
     pdf.move_down 10
 
     stats = [
-      ['总拓片数', rubbings.count],
-      ['待整理', rubbings.where(status: '待整理').count],
-      ['整理中', rubbings.where(status: '整理中').count],
-      ['已完成', rubbings.where(status: '已完成').count],
-      ['待审核', rubbings.where(status: '待审核').count],
-      ['已审核', rubbings.where(status: '已审核').count],
-      ['总释文数', rubbings.sum { |r| r.inscriptions.count }],
-      ['总字数', rubbings.sum { |r| r.char_count }],
-      ['断字总数', rubbings.sum { |r| r.broken_count }],
-      ['总脚注数', rubbings.sum { |r| r.footnotes.count }]
+      ['Total Rubbings', rubbings.count.to_s],
+      ['Pending', rubbings.select { |r| r.status == '待整理' }.count.to_s],
+      ['In Progress', rubbings.select { |r| r.status == '整理中' }.count.to_s],
+      ['Completed', rubbings.select { |r| r.status == '已完成' }.count.to_s],
+      ['Pending Review', rubbings.select { |r| r.status == '待审核' }.count.to_s],
+      ['Reviewed', rubbings.select { |r| r.status == '已审核' }.count.to_s],
+      ['Total Inscriptions', rubbings.sum { |r| r.inscriptions.count }.to_s],
+      ['Total Characters', rubbings.sum { |r| r.char_count }.to_s],
+      ['Broken Characters', rubbings.sum { |r| r.broken_count }.to_s],
+      ['Total Footnotes', rubbings.sum { |r| r.footnotes.count }.to_s]
     ]
 
-    pdf.table(stats, cell_style: { size: 10 }, column_widths: [120, 80])
+    pdf.table(stats, cell_style: { size: 10 }, column_widths: [150, 80])
 
     pdf.move_down 30
-    pdf.text '二、拓片清单', size: 14, style: :bold
+    pdf.text "Rubbing List", size: 14, style: :bold
     pdf.move_down 10
 
-    table_data = [['编号', '标题', '朝代', '出土地点', '年代', '状态']]
+    table_data = [['No', 'Title', 'Dynasty', 'Location', 'Dating', 'Status']]
     rubbings.each do |r|
-      table_data << [r.no, r.title, r.dynasty, r.location, r.dating, r.status]
+      table_data << [
+        r.no.to_s,
+        r.title.to_s,
+        r.dynasty.to_s,
+        r.location.to_s,
+        r.dating.to_s,
+        r.status.to_s
+      ]
     end
 
     pdf.table(table_data, header: true, cell_style: { size: 8 }, column_widths: [60, 120, 60, 100, 80, 60])
 
     pdf.move_down 20
-    pdf.text '三、异常数据提示', size: 14, style: :bold
+    pdf.text "Data Warnings", size: 14, style: :bold
     pdf.move_down 10
 
     warning_items = []
     rubbings.each do |r|
       if r.broken_count > 0
-        warning_items << ["#{r.no} #{r.title}", "存在 #{r.broken_count} 处断字"]
+        warning_items << ["#{r.no} #{r.title}", "#{r.broken_count} broken chars"]
       end
       if r.inscriptions.empty?
-        warning_items << ["#{r.no} #{r.title}", "未添加释文"]
+        warning_items << ["#{r.no} #{r.title}", "No inscriptions"]
       end
     end
 
     if warning_items.empty?
-      pdf.text '无异常数据', size: 10
+      pdf.text "No warnings", size: 10
     else
       pdf.table(warning_items, cell_style: { size: 8 }, column_widths: [200, 200])
     end
 
-    send_data pdf.render, filename: filename, type: 'application/pdf'
+    send_data pdf.render, filename: "rubbings_summary_#{Time.now.strftime('%Y%m%d')}.pdf", type: 'application/pdf', disposition: 'attachment'
+  rescue => e
+    Rails.logger.error "Summary PDF export error: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+    send_data "PDF export failed: #{e.message}", type: 'text/plain', disposition: 'attachment', filename: 'error.txt'
   end
 end

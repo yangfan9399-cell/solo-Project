@@ -21,6 +21,14 @@ class Rubbing < ApplicationRecord
     ["character_boxes", "footnotes", "inscriptions", "versions"]
   end
 
+  def self.ransackable_aliases(auth_object = nil)
+    {
+      'inscriptions_content' => 'inscriptions_content',
+      'footnotes_content' => 'footnotes_content',
+      'footnotes_source' => 'footnotes_source'
+    }
+  end
+
   def full_text
     inscriptions.pluck(:content).join(' ')
   end

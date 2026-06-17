@@ -10,13 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_17_113008) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_17_115501) do
   create_table "character_boxes", force: :cascade do |t|
     t.string "char"
     t.integer "char_index"
     t.datetime "created_at", null: false
     t.integer "height"
-    t.integer "inscription_id", null: false
+    t.integer "inscription_id"
     t.text "note"
     t.integer "rubbing_id", null: false
     t.datetime "updated_at", null: false
