@@ -56,6 +56,9 @@
                         <a href="{% url 'calibration:transport_detail' transport.pk %}" class="btn btn-sm btn-outline-primary" title="详情">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <a href="{% url 'calibration:transport_edit' transport.pk %}" class="btn btn-sm btn-outline-secondary" title="编辑">
+                            <i class="bi bi-pencil"></i>
+                        </a>
                     </td>
                 </tr>
             {% empty %}

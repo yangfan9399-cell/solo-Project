@@ -154,7 +154,13 @@ class CalibrationRecord(models.Model):
         verbose_name_plural = '校准记录'
 
     def __str__(self):
-        return f'{self.instrument} @ {self.test_point}'
+        inst_display = '未关联仪器'
+        try:
+            if self.instrument_id:
+                inst_display = str(self.instrument)
+        except Exception:
+            pass
+        return f'{inst_display} @ {self.test_point or "未设置测试点"}'
 
     def save(self, *args, **kwargs):
         if self.standard_value is not None:
@@ -188,7 +194,13 @@ class TransportRecord(models.Model):
         verbose_name_plural = '运输记录'
 
     def __str__(self):
-        return f'{self.instrument} {self.from_station.name}→{self.to_station.name}'
+        try:
+            inst = self.instrument_id and str(self.instrument) or '未关联仪器'
+            from_name = self.from_station_id and self.from_station.name or '?'
+            to_name = self.to_station_id and self.to_station.name or '?'
+            return f'{inst} {from_name}→{to_name}'
+        except Exception:
+            return f'运输记录 {self.id}'
 
     def save(self, *args, **kwargs):
         if self.pre_transport_reading is not None and self.post_transport_reading is not None:

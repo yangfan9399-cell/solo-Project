@@ -133,7 +133,7 @@ class StationCreateView(CreateView):
     model = Station
     form_class = StationForm
     template_name = 'calibration/station_form.html'
-    success_url = reverse_lazy('station_list')
+    success_url = reverse_lazy('calibration:station_list')
 
     def form_valid(self, form):
         messages.success(self.request, f'站点 {form.instance.name} 创建成功')
@@ -146,7 +146,7 @@ class StationUpdateView(UpdateView):
     template_name = 'calibration/station_form.html'
 
     def get_success_url(self):
-        return reverse_lazy('station_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('calibration:station_detail', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
         messages.success(self.request, f'站点 {form.instance.name} 更新成功')
@@ -200,7 +200,7 @@ class InstrumentCreateView(CreateView):
     model = Instrument
     form_class = InstrumentForm
     template_name = 'calibration/instrument_form.html'
-    success_url = reverse_lazy('instrument_list')
+    success_url = reverse_lazy('calibration:instrument_list')
 
     def form_valid(self, form):
         messages.success(self.request, f'仪器 {form.instance.serial_number} 创建成功')
@@ -213,7 +213,7 @@ class InstrumentUpdateView(UpdateView):
     template_name = 'calibration/instrument_form.html'
 
     def get_success_url(self):
-        return reverse_lazy('instrument_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('calibration:instrument_detail', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
         messages.success(self.request, f'仪器 {form.instance.serial_number} 更新成功')
@@ -325,7 +325,7 @@ class CalibrationRecordCreateView(CreateView):
     model = CalibrationRecord
     form_class = CalibrationRecordForm
     template_name = 'calibration/calibration_form.html'
-    success_url = reverse_lazy('calibration_list')
+    success_url = reverse_lazy('calibration:calibration_list')
 
     def form_valid(self, form):
         messages.success(self.request, '校准记录创建成功')
@@ -338,7 +338,7 @@ class CalibrationRecordUpdateView(UpdateView):
     template_name = 'calibration/calibration_form.html'
 
     def get_success_url(self):
-        return reverse_lazy('calibration_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('calibration:calibration_detail', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
         messages.success(self.request, '校准记录更新成功')
@@ -391,7 +391,7 @@ class BatchCreateView(CreateView):
     model = CalibrationBatch
     form_class = CalibrationBatchForm
     template_name = 'calibration/batch_form.html'
-    success_url = reverse_lazy('batch_list')
+    success_url = reverse_lazy('calibration:batch_list')
 
     def form_valid(self, form):
         messages.success(self.request, f'批次 {form.instance.batch_number} 创建成功')
@@ -412,7 +412,7 @@ class TransportCreateView(CreateView):
     model = TransportRecord
     form_class = TransportRecordForm
     template_name = 'calibration/transport_form.html'
-    success_url = reverse_lazy('transport_list')
+    success_url = reverse_lazy('calibration:transport_list')
 
     def form_valid(self, form):
         messages.success(self.request, '运输记录创建成功')
@@ -423,6 +423,19 @@ class TransportDetailView(DetailView):
     model = TransportRecord
     template_name = 'calibration/transport_detail.html'
     context_object_name = 'transport'
+
+
+class TransportUpdateView(UpdateView):
+    model = TransportRecord
+    form_class = TransportRecordForm
+    template_name = 'calibration/transport_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('calibration:transport_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, '运输记录更新成功')
+        return super().form_valid(form)
 
 
 class CertificateListView(ListView):
@@ -439,7 +452,7 @@ class CertificateCreateView(CreateView):
     model = Certificate
     form_class = CertificateForm
     template_name = 'calibration/certificate_form.html'
-    success_url = reverse_lazy('certificate_list')
+    success_url = reverse_lazy('calibration:certificate_list')
 
     def form_valid(self, form):
         messages.success(self.request, f'证书 {form.instance.certificate_number} 创建成功')
@@ -450,6 +463,19 @@ class CertificateDetailView(DetailView):
     model = Certificate
     template_name = 'calibration/certificate_detail.html'
     context_object_name = 'certificate'
+
+
+class CertificateUpdateView(UpdateView):
+    model = Certificate
+    form_class = CertificateForm
+    template_name = 'calibration/certificate_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('calibration:certificate_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, f'证书 {form.instance.certificate_number} 更新成功')
+        return super().form_valid(form)
 
 
 def anomaly_overview(request):
