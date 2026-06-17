@@ -4,7 +4,6 @@ import {
   ExportSummary,
   ApprovalSignature,
   ProjectVersion,
-  LoadCalculationResult,
 } from './types';
 import { calculateAllLoads, getPeakLoads } from './calculations';
 import { v4 as uuidv4 } from 'uuid';
@@ -127,6 +126,8 @@ export function updateProject(id: string, data: Partial<Project>): Project | und
       .map((r) => r.pointName)
       .join('、');
     updated.abnormalNotes = `存在危险载荷吊点：${dangerPts}`;
+  } else {
+    updated.abnormalNotes = undefined;
   }
 
   projects[idx] = updated;
@@ -249,6 +250,19 @@ export function revertToVersion(
 
   const peakLoads = getPeakLoads(project.calculationResults);
   project.hasAbnormalData = peakLoads.some((r) => r.alertLevel === 'danger');
+  if (project.hasAbnormalData) {
+    const dangerPts = peakLoads
+      .filter((r) => r.alertLevel === 'danger')
+      .map((r) => r.pointName)
+      .join('、');
+    project.abnormalNotes = `存在危险载荷吊点：${dangerPts}`;
+  } else {
+    project.abnormalNotes = undefined;
+  }
+
+  if (project.status === 'approved') {
+    project.status = 'review';
+  }
 
   projects[idx] = project;
   writeProjects(projects);
@@ -264,6 +278,9 @@ export function addApproval(
   if (idx === -1) return undefined;
 
   const project = projects[idx];
+  const alreadySigned = project.approvalSignatures.find((s) => s.signerRole === signature.signerRole);
+  if (alreadySigned) return undefined;
+
   const now = new Date().toISOString();
   const newSignature: ApprovalSignature = {
     ...signature,

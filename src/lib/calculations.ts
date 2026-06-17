@@ -120,13 +120,11 @@ export function calculateLoadForPoint(
   );
 
   let pos = { x: point.x, y: point.y, z: point.z - 2 };
-  let velocity = 0;
   let acceleration = 0;
 
   if (path) {
     const wp = interpolateWaypoint(path, progress);
     pos = wp.position;
-    velocity = wp.velocity;
     acceleration = wp.acceleration;
   }
 

@@ -69,9 +69,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const loadProject = async () => {
     setLoading(true);
-    const res = await fetch(`/api/projects/${id}`);
-    const json = await res.json();
-    if (json.success) setProject(json.data);
+    try {
+      const res = await fetch(`/api/projects/${id}`);
+      const json = await res.json();
+      if (json.success) setProject(json.data);
+    } catch {}
     setLoading(false);
   };
 
@@ -85,23 +87,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const saveChanges = async () => {
     if (!project) return;
     setSaving(true);
+    const payload = { ...project };
+    if (payload.status === 'approved') {
+      payload.status = 'review';
+    }
     const res = await fetch(`/api/projects/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project),
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
     setSaving(false);
     if (json.success) {
       setProject(json.data);
       setDirty(false);
-      showToast('success', '保存成功，载荷计算已重新执行');
+      if (project.status === 'approved') {
+        showToast('success', '保存成功，项目状态已回到审批中');
+      } else {
+        showToast('success', '保存成功，载荷计算已重新执行');
+      }
     } else {
       showToast('error', '保存失败: ' + json.error);
     }
   };
 
   const update = (patch: Partial<Project>) => {
+    if (!project) return;
+    if (project.status === 'approved' && !confirm('该项目已审批通过，修改将使状态回到"审批中"。确认继续？')) return;
     setProject((prev) => (prev ? { ...prev, ...patch } : prev));
     setDirty(true);
   };
@@ -290,6 +302,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (json.success) {
       showToast('success', `版本 ${json.data.version} 已保存`);
       loadProject();
+    } else {
+      showToast('error', json.error || '版本保存失败');
     }
   };
   const revertTo = async (version: string) => {
@@ -304,9 +318,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       showToast('success', `已回滚到 ${version}`);
       loadProject();
       setDirty(false);
+    } else {
+      showToast('error', json.error || '回滚失败');
     }
   };
-  const submitApproval = () => update({ status: 'review' });
+  const submitApproval = () => {
+    if (project.hasAbnormalData && !confirm('项目存在异常载荷数据，确认提交审批？')) return;
+    update({ status: 'review' });
+  };
   const submitSign = async (sigData: string) => {
     const res = await fetch(`/api/projects/${id}/approvals`, {
       method: 'POST',
@@ -318,6 +337,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       showToast('success', `${sigInfo.signerRole} ${sigInfo.signerName} 签署成功`);
       setSigInfo({ signerName: '', signerRole: '项目经理', comments: '' });
       loadProject();
+    } else {
+      showToast('error', json.error || '签署失败');
     }
   };
 
@@ -374,6 +395,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <FileCheck2 size={16} /> 提交审批
             </button>
           )}
+          {project.status === 'rejected' && (
+            <button
+              onClick={() => { if (confirm('确认将项目恢复为草稿状态？')) update({ status: 'draft' }); }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-sm font-medium hover:bg-amber-100 transition"
+            >
+              <RotateCcw size={16} /> 恢复草稿
+            </button>
+          )}
           <button
             onClick={saveVersion}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-violet-300 bg-violet-50 text-violet-700 text-sm font-medium hover:bg-violet-100 transition"
@@ -405,6 +434,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* ===== 异常数据提示 ===== */}
+      {project.status === 'approved' && (
+        <div className="mb-5">
+          <Alert type="info" title="项目已审批通过" message={'修改数据后保存将使项目状态回到「审批中」，需重新走审批流程。'} />
+        </div>
+      )}
       {project.hasAbnormalData && project.abnormalNotes && (
         <div className="mb-5">
           <Alert type="danger" title="⚠ 危险载荷警告" message={project.abnormalNotes} />
@@ -680,7 +714,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                               <Badge label={liftPointTypeLabel(lp.type)} />
                               <select value={lp.type} onChange={(e) => updateLiftPoint(lp.id, { type: e.target.value as any })}
                                 className="text-xs px-2 py-0.5 rounded border border-slate-200 bg-white">
-                                <option value="fixed">固定吊点</option><option value="mobile">移动吊点</option><option value="rotation">旋转吊点</option>
+                                <option value="fixed">固定吊点</option><option value="mobile">移动吊点</option><option value="rotation">旋转吊点</option><option value="swing">摆动吊点</option>
                               </select>
                               {peak && <Badge label={alertLabel(peak.alertLevel)} variant={peak.alertLevel} pulse={danger} />}
                             </div>
@@ -983,7 +1017,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <div className="absolute -left-[22px] top-4 w-4 h-4 rounded-full bg-slate-300 border-4 border-white"/>
                     <History size={24} className="mx-auto mb-2 text-slate-400"/>
                     <p className="text-sm font-medium text-slate-600">暂无已保存版本</p>
-                    <p className="text-xs text-slate-500 mt-1">点击右上角"保存新版本"创建快照</p>
+                    <p className="text-xs text-slate-500 mt-1">点击右上角「保存新版本」创建快照</p>
                   </div>
                 ) : (
                   project.versionHistory.map((v, i) => (
@@ -1063,36 +1097,48 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <PenLine size={16} className="text-indigo-600"/> 新增审批签名
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">签署角色</label>
-                    <select value={sigInfo.signerRole} onChange={(e)=>setSigInfo({...sigInfo,signerRole:e.target.value})}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
-                      <option>项目经理</option><option>技术总监</option><option>安全主管</option>
-                    </select>
+                {project.approvalSignatures.length >= 3 ? (
+                  <div className="text-center py-4">
+                    <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500"/>
+                    <p className="text-sm font-medium text-emerald-700">三方审批已全部完成</p>
+                    <p className="text-xs text-slate-500 mt-1">项目状态已自动更新为「已通过」</p>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">签署人姓名</label>
-                    <input value={sigInfo.signerName} onChange={(e)=>setSigInfo({...sigInfo,signerName:e.target.value})}
-                      placeholder="请输入姓名"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-indigo-400"/>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">审批意见</label>
-                    <input value={sigInfo.comments} onChange={(e)=>setSigInfo({...sigInfo,comments:e.target.value})}
-                      placeholder="同意/附意见..."
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-indigo-400"/>
-                  </div>
-                </div>
-                <button
-                  onClick={()=>{
-                    if(!sigInfo.signerName.trim()){alert('请输入签署人姓名');return;}
-                    setSigPadOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow"
-                >
-                  <PenLine size={16}/> 开始签名
-                </button>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">签署角色</label>
+                        <select value={sigInfo.signerRole} onChange={(e)=>setSigInfo({...sigInfo,signerRole:e.target.value})}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm">
+                          {['项目经理','技术总监','安全主管']
+                            .filter(r => !project.approvalSignatures.find(s => s.signerRole === r))
+                            .map(r => <option key={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">签署人姓名</label>
+                        <input value={sigInfo.signerName} onChange={(e)=>setSigInfo({...sigInfo,signerName:e.target.value})}
+                          placeholder="请输入姓名"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-indigo-400"/>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">审批意见</label>
+                        <input value={sigInfo.comments} onChange={(e)=>setSigInfo({...sigInfo,comments:e.target.value})}
+                          placeholder="同意/附意见..."
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:border-indigo-400"/>
+                      </div>
+                    </div>
+                    <button
+                      onClick={()=>{
+                        if(!sigInfo.signerName.trim()){alert('请输入签署人姓名');return;}
+                        setSigPadOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow"
+                    >
+                      <PenLine size={16}/> 开始签名
+                    </button>
+                  </>
+                )}
               </div>
 
               {project.approvalSignatures.length>0 && (

@@ -58,19 +58,23 @@ export default function DashboardPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const qs = new URLSearchParams();
-    if (keyword) qs.set('keyword', keyword);
-    if (statusFilter && statusFilter !== 'all') qs.set('status', statusFilter);
-    if (abnormalFilter !== 'all') qs.set('hasAbnormal', String(abnormalFilter));
-    if (tagFilter) qs.set('tag', tagFilter);
-    if (dateFrom) qs.set('dateFrom', dateFrom);
-    if (dateTo) qs.set('dateTo', dateTo);
-    const res = await fetch(`/api/projects?${qs.toString()}`);
-    const json: ListResponse = await res.json();
-    if (json.success) {
-      setProjects(json.data);
-      setTags(json.meta.tags);
-      setStats(json.meta.stats);
+    try {
+      const qs = new URLSearchParams();
+      if (keyword) qs.set('keyword', keyword);
+      if (statusFilter && statusFilter !== 'all') qs.set('status', statusFilter);
+      if (abnormalFilter !== 'all') qs.set('hasAbnormal', String(abnormalFilter));
+      if (tagFilter) qs.set('tag', tagFilter);
+      if (dateFrom) qs.set('dateFrom', dateFrom);
+      if (dateTo) qs.set('dateTo', dateTo);
+      const res = await fetch(`/api/projects?${qs.toString()}`);
+      const json: ListResponse = await res.json();
+      if (json.success) {
+        setProjects(json.data);
+        setTags(json.meta.tags);
+        setStats(json.meta.stats);
+      }
+    } catch {
+      setProjects([]);
     }
     setLoading(false);
   }, [keyword, statusFilter, abnormalFilter, tagFilter, dateFrom, dateTo]);
@@ -120,15 +124,25 @@ export default function DashboardPage() {
       setShowCreate(false);
       setNewProject({ name: '', venue: '', performance: '', description: '', tags: '' });
       router.push(`/projects/${json.data.id}`);
+    } else {
+      alert('创建失败: ' + (json.error || '未知错误'));
     }
     setCreating(false);
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('确认删除该项目？此操作不可撤销。')) return;
-    await fetch(`/api/projects/${id}`, { method: 'DELETE' });
-    loadData();
+    const p = projects.find((x) => x.id === id);
+    const extra = p && (p.status === 'review' || p.status === 'approved')
+      ? '该项目正在审批中或已通过，删除后不可恢复。' : '';
+    if (!confirm(`确认删除该项目？此操作不可撤销。${extra}`)) return;
+    const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success) {
+      loadData();
+    } else {
+      alert('删除失败: ' + (json.error || '未知错误'));
+    }
   };
 
   const abnormalCount = stats.abnormal || 0;

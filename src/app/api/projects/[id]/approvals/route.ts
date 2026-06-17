@@ -13,8 +13,8 @@ export async function POST(
     const signature = addApproval(id, body);
     if (!signature) {
       return NextResponse.json(
-        { success: false, error: '项目不存在' },
-        { status: 404 }
+        { success: false, error: '项目不存在或该角色已签署' },
+        { status: 400 }
       );
     }
     return NextResponse.json({ success: true, data: signature }, { status: 201 });

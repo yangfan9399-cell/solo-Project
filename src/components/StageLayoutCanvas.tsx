@@ -40,7 +40,6 @@ export default function StageLayoutCanvas({
   });
 
   const peakMap = new Map(peakLoads.map((p) => [p.pointId, p]));
-  const paths = motionPaths.flatMap((mp) => mp.waypoints);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-md overflow-hidden">
@@ -125,9 +124,6 @@ export default function StageLayoutCanvas({
           {liftPoints.map((lp) => {
             const { cx, cy } = toCanvas(lp.x, lp.y);
             const peak = peakMap.get(lp.id);
-            const alertCls = peak
-              ? alertLevelClasses[peak.alertLevel as keyof typeof alertLevelClasses] || ''
-              : '';
             const fillColor = peak
               ? peak.alertLevel === 'danger' ? '#ef4444'
               : peak.alertLevel === 'warning' ? '#f59e0b' : '#6366f1'
