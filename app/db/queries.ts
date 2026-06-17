@@ -200,9 +200,60 @@ export interface CreateVersionInput {
   note?: string | null;
 }
 
+function snapshotVersionData(db: ReturnType<typeof getDb>, projectId: number, fromVersionId: number, toVersionId: number) {
+  const sectionMap = new Map<number, number>();
+
+  const fromSections = db
+    .prepare("SELECT * FROM cross_sections WHERE project_id = ? AND version_id = ?")
+    .all(projectId, fromVersionId) as CrossSection[];
+  for (const s of fromSections) {
+    const info = db.prepare(
+      `INSERT INTO cross_sections (project_id, version_id, station_no, name, width, depth, slope, area, wetted_perimeter, hydraulic_radius, bottom_elevation, remark)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(projectId, toVersionId, s.station_no, s.name, s.width, s.depth, s.slope, s.area, s.wetted_perimeter, s.hydraulic_radius, s.bottom_elevation, s.remark);
+    sectionMap.set(s.id, Number(info.lastInsertRowid));
+  }
+
+  const childTables = [
+    { table: "water_levels", cols: "project_id, version_id, section_id, upstream_level, downstream_level, water_depth, flow_rate, measure_date, remark" },
+    { table: "roughnesses", cols: "project_id, version_id, section_id, n_value, type, description" },
+    { table: "obstacles", cols: "project_id, version_id, section_id, type, position_m, height_m, width_m, description" },
+    { table: "flow_segments", cols: "project_id, version_id, section_id, segment_index, start_m, end_m, velocity_ms, depth_m, suitability" },
+    { table: "unsuitable_zones", cols: "project_id, version_id, section_id, zone_type, start_m, end_m, max_velocity, min_depth, description" },
+  ];
+  for (const ct of childTables) {
+    for (const [oldSid, newSid] of sectionMap) {
+      const rows = db
+        .prepare(`SELECT * FROM ${ct.table} WHERE section_id = ? AND version_id = ?`)
+        .all(oldSid, fromVersionId) as any[];
+      for (const r of rows) {
+        const colNames = ct.cols.split(", ");
+        const vals = colNames.map((c) => {
+          if (c === "version_id") return toVersionId;
+          if (c === "section_id") return newSid;
+          return r[c];
+        });
+        db.prepare(`INSERT INTO ${ct.table} (${ct.cols}) VALUES (${colNames.map(() => "?").join(", ")})`).run(...vals);
+      }
+    }
+  }
+
+  const anomalies = db
+    .prepare("SELECT * FROM anomaly_records WHERE project_id = ? AND version_id = ?")
+    .all(projectId, fromVersionId) as AnomalyRecord[];
+  for (const a of anomalies) {
+    const newSectionId = a.section_id ? (sectionMap.get(a.section_id) ?? null) : null;
+    db.prepare(
+      `INSERT INTO anomaly_records (project_id, version_id, section_id, type, severity, field, value, message, resolved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(projectId, toVersionId, newSectionId, a.type, a.severity, a.field, a.value, a.message, a.resolved);
+  }
+}
+
 export function createVersion(input: CreateVersionInput): Version {
   const db = getDb();
   return runInTransaction(db, () => {
+    const currentV = getCurrentVersion(input.project_id);
     if (input.is_current) {
       db.prepare("UPDATE versions SET is_current = 0 WHERE project_id = ?").run(input.project_id);
     }
@@ -220,6 +271,9 @@ export function createVersion(input: CreateVersionInput): Version {
         input.note ?? null
       );
     const v = getVersion(Number(info.lastInsertRowid))!;
+    if (currentV) {
+      snapshotVersionData(db, input.project_id, currentV.id, v.id);
+    }
     if (input.is_current) {
       db.prepare("UPDATE projects SET current_version = ?, updated_at = datetime('now') WHERE id = ?").run(v.version_tag, input.project_id);
     }

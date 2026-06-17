@@ -13,6 +13,7 @@ import {
   createVersion, setCurrentVersion,
   createAnomaly, clearAnomalies, resolveAnomaly,
 } from "~/db/queries";
+import { getDb } from "~/db/schema";
 import { seed } from "~/db/seed";
 import { classifyVelocity, THRESHOLDS, type FishType } from "~/types";
 import {
@@ -57,10 +58,24 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const anomalies = listAnomalies(id, current.id);
   const summary = computeSummary(allSegments, allZones);
 
+  const versionStats: Record<number, { sections: number; segments: number; zones: number; anomalies: number }> = {};
+  const db = getDb();
+  for (const v of versions) {
+    const vSections = listSections(id, v.id);
+    let vSegCount = 0;
+    let vZoneCount = 0;
+    for (const vs of vSections) {
+      vSegCount += (db.prepare("SELECT COUNT(*) as n FROM flow_segments WHERE section_id = ?").get(vs.id) as { n: number }).n;
+      vZoneCount += (db.prepare("SELECT COUNT(*) as n FROM unsuitable_zones WHERE section_id = ?").get(vs.id) as { n: number }).n;
+    }
+    const vAnomalyCount = (db.prepare("SELECT COUNT(*) as n FROM anomaly_records WHERE project_id = ? AND version_id = ? AND resolved = 0").get(id, v.id) as { n: number }).n;
+    versionStats[v.id] = { sections: vSections.length, segments: vSegCount, zones: vZoneCount, anomalies: vAnomalyCount };
+  }
+
   return json({
     project, versions, currentVersion: current,
     sections, waterLevelsBySection, roughnessBySection, obstaclesBySection,
-    segmentsBySection, zonesBySection, anomalies, summary,
+    segmentsBySection, zonesBySection, anomalies, summary, versionStats,
   });
 }
 
@@ -790,6 +805,7 @@ function ZonesPanel({ selectedSection, zones, zonesBySection, sections }: any) {
 }
 
 function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: any) {
+  const stats = data.versionStats as Record<number, { sections: number; segments: number; zones: number; anomalies: number }>;
   return (
     <div className="card">
       <div className="card-header">
@@ -798,7 +814,9 @@ function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: an
       </div>
       <div className="card-body">
         <div className="version-timeline">
-          {data.versions.map((v: any) => (
+          {data.versions.map((v: any) => {
+            const s = stats?.[v.id] ?? { sections: 0, segments: 0, zones: 0, anomalies: 0 };
+            return (
             <div key={v.id} className={"version-item" + (v.is_current ? " current" : "")}>
               <div>
                 <span className="version-tag-badge">{v.version_tag}</span>
@@ -807,6 +825,9 @@ function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: an
               </div>
               <div className="version-meta">{v.author} · {v.created_at.slice(0, 16).replace("T", " ")}</div>
               {v.note && <div className="version-note">{v.note}</div>}
+              <div style={{ marginTop: 4, fontSize: 12, color: "var(--color-text-muted)" }}>
+                📐 {s.sections} 断面 · 🌊 {s.segments} 子段 · ⚠️ {s.zones} 不适宜区 · 🔴 {s.anomalies} 异常
+              </div>
               <div style={{ marginTop: 8 }}>
                 {!v.is_current && (
                   <Form method="post" style={{ display: "inline" }}>
@@ -818,7 +839,8 @@ function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: an
                 <button className="btn btn-ghost btn-sm" onClick={() => onSwitch(v.id)} style={{ marginLeft: 8 }}>仅预览</button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

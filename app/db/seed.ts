@@ -10,6 +10,8 @@ import {
   createAnomaly,
   getProjectByCode,
   createVersion,
+  listVersions,
+  getCurrentVersion,
   type CreateSectionInput,
 } from "./queries";
 import { classifyVelocity } from "~/types";
@@ -531,6 +533,55 @@ export function seed() {
 
       if (s.status !== "draft") {
         db.prepare("UPDATE projects SET status = ?, updated_at = datetime('now') WHERE id = ?").run(s.status, projectId);
+      }
+
+      const curV = getCurrentVersion(projectId);
+      if (curV) {
+        const allV = listVersions(projectId);
+        for (const ov of allV) {
+          if (ov.id === curV.id) continue;
+          const secCount = (db.prepare("SELECT COUNT(*) as n FROM cross_sections WHERE version_id = ?").get(ov.id) as { n: number }).n;
+          if (secCount === 0) {
+            const sections = db.prepare("SELECT * FROM cross_sections WHERE version_id = ?").all(curV.id) as any[];
+            const sMap = new Map<number, number>();
+            for (const sec of sections) {
+              const info = db.prepare(
+                `INSERT INTO cross_sections (project_id, version_id, station_no, name, width, depth, slope, area, wetted_perimeter, hydraulic_radius, bottom_elevation, remark)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              ).run(projectId, ov.id, sec.station_no, sec.name, sec.width, sec.depth, sec.slope, sec.area, sec.wetted_perimeter, sec.hydraulic_radius, sec.bottom_elevation, sec.remark);
+              sMap.set(sec.id, Number(info.lastInsertRowid));
+            }
+            const childTables = [
+              { table: "water_levels", cols: "project_id, version_id, section_id, upstream_level, downstream_level, water_depth, flow_rate, measure_date, remark" },
+              { table: "roughnesses", cols: "project_id, version_id, section_id, n_value, type, description" },
+              { table: "obstacles", cols: "project_id, version_id, section_id, type, position_m, height_m, width_m, description" },
+              { table: "flow_segments", cols: "project_id, version_id, section_id, segment_index, start_m, end_m, velocity_ms, depth_m, suitability" },
+              { table: "unsuitable_zones", cols: "project_id, version_id, section_id, zone_type, start_m, end_m, max_velocity, min_depth, description" },
+            ];
+            for (const ct of childTables) {
+              for (const [oldSid, newSid] of sMap) {
+                const rows = db.prepare(`SELECT * FROM ${ct.table} WHERE section_id = ? AND version_id = ?`).all(oldSid, curV.id) as any[];
+                for (const r of rows) {
+                  const colNames = ct.cols.split(", ");
+                  const vals = colNames.map((c: string) => {
+                    if (c === "version_id") return ov.id;
+                    if (c === "section_id") return newSid;
+                    return r[c];
+                  });
+                  db.prepare(`INSERT INTO ${ct.table} (${ct.cols}) VALUES (${colNames.map(() => "?").join(", ")})`).run(...vals);
+                }
+              }
+            }
+            const anomalies = db.prepare("SELECT * FROM anomaly_records WHERE project_id = ? AND version_id = ?").all(projectId, curV.id) as any[];
+            for (const a of anomalies) {
+              const newSid = a.section_id ? (sMap.get(a.section_id) ?? null) : null;
+              db.prepare(
+                `INSERT INTO anomaly_records (project_id, version_id, section_id, type, severity, field, value, message, resolved)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              ).run(projectId, ov.id, newSid, a.type, a.severity, a.field, a.value, a.message, a.resolved);
+            }
+          }
+        }
       }
     }
   });
