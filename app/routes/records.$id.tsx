@@ -6,11 +6,12 @@ import AppShell from "~/components/AppShell";
 import { StatusBadge, SeverityDot } from "~/components/ui";
 import DeviationCurveChart from "~/components/DeviationCurveChart";
 import { buildLedgerSummary, generateSummaryReport, generateCsvExport } from "~/services/report-generator";
-import { getRecordWithPoints, getCorrectionTable, getVersionHistory, updateRecordStatus, updateRecord } from "~/db/repositories/records";
+import { getRecordWithPoints, getCorrectionTable, getVersionHistory, updateRecordStatus, updateRecord, getRecordById } from "~/db/repositories/records";
 import { getShipById, updateShip } from "~/db/repositories/ships";
 import { detectAnomalies } from "~/services/anomaly-detector";
 import type { DeviationRecordWithPoints, CorrectionTableEntry, VersionHistory, Ship, AnomalyReport, DeviationRecord, DeviationPoint } from "~/types";
 import clsx from "clsx";
+import { getDb, run, saveDb } from "~/db/connection";
 
 interface LoaderData {
   summary: Awaited<ReturnType<typeof buildLedgerSummary>>;
@@ -54,10 +55,23 @@ export const action: ActionFunction = async ({ request, params }) => {
       notes: (formData.get('notes') as string) || null,
     };
     await updateShip(shipId, data);
+
+    const record = await getRecordById(id);
+    const newVersion = (record?.version || 1) + 1;
+    const db = await getDb();
+    run(db, `UPDATE deviation_records SET version = $version, updated_at = datetime('now') WHERE id = $id`, {
+      $version: newVersion, $id: id
+    });
+    const summary = formData.get('change_summary') as string || '更新船舶与罗经档案信息';
+    run(db, `INSERT INTO version_history (record_id, version_number, action, changed_by, change_summary) VALUES ($record_id, $version_number, $action, $changed_by, $change_summary)`, {
+      $record_id: id, $version_number: newVersion, $action: 'update', $changed_by: by, $change_summary: summary
+    });
+    saveDb();
   }
 
   if (actionType === 'saveRecord') {
     const recordData: Partial<DeviationRecord> = {
+      batch_code: formData.get('batch_code') as string,
       record_date: formData.get('record_date') as string,
       location: (formData.get('location') as string) || null,
       latitude: formData.get('latitude') ? Number(formData.get('latitude')) : null,
@@ -80,7 +94,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       notes: (formData.get('notes') as string) || null,
     };
 
-    const headings = [0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 270, 285, 300, 315, 330, 345];
+    const headings = HEADINGS;
     const points: Array<Omit<DeviationPoint, 'id' | 'record_id'>> = [];
     for (const h of headings) {
       const deviation = formData.get(`dev_${h}`);
@@ -101,7 +115,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       }
     }
 
-    const corrHeadings = [0, 45, 90, 135, 180, 225, 270, 315];
+    const corrHeadings = CORR_HEADINGS;
     const corrections: Array<Omit<CorrectionTableEntry, 'id' | 'record_id'>> = [];
     for (const ch of corrHeadings) {
       const val = formData.get(`corr_${ch}`);
@@ -121,6 +135,53 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const summary = formData.get('change_summary') as string || '更新校正作业信息、自差点及校正表';
     await updateRecord(id, recordData, points, corrections, by, summary);
+  }
+
+  if (actionType === 'savePoints') {
+    const headings = HEADINGS;
+    const points: Array<Omit<DeviationPoint, 'id' | 'record_id'>> = [];
+    for (const h of headings) {
+      const deviation = formData.get(`dev_${h}`);
+      const direction = formData.get(`dir_${h}`) as 'E' | 'W';
+      const magnetic = formData.get(`mag_${h}`);
+      const trueHd = formData.get(`true_${h}`);
+      const measured = formData.get(`meas_${h}`) === '1';
+      if (deviation && direction) {
+        points.push({
+          ship_heading: h,
+          deviation: Number(deviation),
+          deviation_direction: direction,
+          magnetic_heading: magnetic ? Number(magnetic) : null,
+          true_heading: trueHd ? Number(trueHd) : null,
+          measured,
+          notes: null,
+        });
+      }
+    }
+    const summary = formData.get('change_summary') as string || '更新24航向自差点观测数据';
+    await updateRecord(id, {}, points, undefined, by, summary);
+  }
+
+  if (actionType === 'saveCorrections') {
+    const corrHeadings = CORR_HEADINGS;
+    const corrections: Array<Omit<CorrectionTableEntry, 'id' | 'record_id'>> = [];
+    for (const ch of corrHeadings) {
+      const val = formData.get(`corr_${ch}`);
+      const dir = formData.get(`corrdir_${ch}`) as 'E' | 'W';
+      const range = formData.get(`corrrange_${ch}`) as string;
+      const rule = formData.get(`corrrule_${ch}`) as string;
+      if (val && dir) {
+        corrections.push({
+          heading: ch,
+          correction_value: Number(val),
+          correction_direction: dir,
+          ship_heading_range: range || `${(ch - 22 + 360) % 360}° - ${(ch + 22) % 360}°`,
+          apply_rule: rule || null,
+        });
+      }
+    }
+    const summary = formData.get('change_summary') as string || '更新8主航向校正使用表';
+    await updateRecord(id, {}, undefined, corrections, by, summary);
   }
 
   if (actionType === 'downloadCsv') {
@@ -358,6 +419,7 @@ export default function RecordDetail() {
                 fd.set('by', data.record.inspector_name || '系统');
                 submit(fd, { method: 'post' });
                 setIsEditing(false);
+                e.preventDefault();
               }}>
                 <div className="grid-2">
                   <EditField label="船名" name="name" value={data.ship.name} required />
@@ -377,7 +439,11 @@ export default function RecordDetail() {
                   </div>
                 </div>
                 <input type="hidden" name="ship_id" value={data.ship.id} />
-                <div style={{ marginTop: '20px', textAlign: 'right' }}>
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label className="form-label">变更说明（记入版本历史）</label>
+                  <input name="change_summary" className="form-input" placeholder="请简要描述本次修改内容..." />
+                </div>
+                <div style={{ marginTop: '16px', textAlign: 'right' }}>
                   <button type="submit" className="btn btn-gold">💾 保存船舶档案</button>
                 </div>
               </form>
@@ -450,9 +516,23 @@ export default function RecordDetail() {
             )}
 
             {editingTab === 'points' && (
-              <div>
+              <form method="post" onSubmit={(e) => {
+                const fd = new FormData(e.currentTarget);
+                fd.set('action', 'savePoints');
+                fd.set('by', data.record.inspector_name || '系统');
+                editPoints.forEach(p => {
+                  fd.set(`dev_${p.heading}`, String(p.deviation));
+                  fd.set(`dir_${p.heading}`, p.direction);
+                  fd.set(`mag_${p.heading}`, p.magnetic != null ? String(p.magnetic) : '');
+                  fd.set(`true_${p.heading}`, p.trueHd != null ? String(p.trueHd) : '');
+                  fd.set(`meas_${p.heading}`, p.measured ? '1' : '0');
+                });
+                submit(fd, { method: 'post' });
+                setIsEditing(false);
+                e.preventDefault();
+              }}>
                 <div className="flex-gap mb-4">
-                  <span className="text-sm text-muted">编辑 24 个航向的自差数据。切换方向会自动计算磁航向，修改后点击"保存全部修改"提交。</span>
+                  <span className="text-sm text-muted">编辑 24 个航向的自差数据。切换方向会自动计算磁航向，修改后点击下方"保存自差数据"提交。</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="data-table">
@@ -547,13 +627,33 @@ export default function RecordDetail() {
                     <DeviationCurveChart points={previewPoints} title="编辑中 - 自差曲线预览" />
                   </div>
                 </div>
-              </div>
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label className="form-label">变更说明（记入版本历史）</label>
+                  <input name="change_summary" className="form-input" placeholder="请简要描述本次修改内容..." />
+                </div>
+                <div style={{ marginTop: '16px', textAlign: 'right' }}>
+                  <button type="submit" className="btn btn-gold">💾 保存自差数据</button>
+                </div>
+              </form>
             )}
 
             {editingTab === 'corrections' && (
-              <div>
+              <form method="post" onSubmit={(e) => {
+                const fd = new FormData(e.currentTarget);
+                fd.set('action', 'saveCorrections');
+                fd.set('by', data.record.inspector_name || '系统');
+                editCorrs.forEach(c => {
+                  fd.set(`corr_${c.heading}`, String(c.correction_value));
+                  fd.set(`corrdir_${c.heading}`, c.correction_direction);
+                  fd.set(`corrrange_${c.heading}`, c.ship_heading_range);
+                  fd.set(`corrrule_${c.heading}`, c.apply_rule || '');
+                });
+                submit(fd, { method: 'post' });
+                setIsEditing(false);
+                e.preventDefault();
+              }}>
                 <div className="flex-gap mb-4">
-                  <span className="text-sm text-muted">编辑 8 个主航向的校正表数据。建议配合自差点数据进行调整。</span>
+                  <span className="text-sm text-muted">编辑 8 个主航向的校正表数据。建议配合自差点数据进行调整，修改后点击下方"保存校正表"提交。</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="data-table">
@@ -615,7 +715,7 @@ export default function RecordDetail() {
                   </table>
                 </div>
                 <div style={{ marginTop: '20px', textAlign: 'right' }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => {
+                  <button type="button" className="btn btn-outline btn-sm" style={{ marginRight: '8px' }} onClick={() => {
                     const fromPoints = CORR_HEADINGS.map(h => {
                       const p = editPoints.find(x => x.heading === h);
                       return {
@@ -629,7 +729,14 @@ export default function RecordDetail() {
                     setEditCorrs(fromPoints);
                   }}>🔄 从自差数据填充</button>
                 </div>
-              </div>
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label className="form-label">变更说明（记入版本历史）</label>
+                  <input name="change_summary" className="form-input" placeholder="请简要描述本次修改内容..." />
+                </div>
+                <div style={{ marginTop: '16px', textAlign: 'right' }}>
+                  <button type="submit" className="btn btn-gold">💾 保存校正表</button>
+                </div>
+              </form>
             )}
           </div>
         </div>
