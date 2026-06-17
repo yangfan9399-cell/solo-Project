@@ -28,6 +28,7 @@
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @if($instruments->count() > 0)
         @foreach($instruments as $instrument)
         <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
             <div class="p-5">
@@ -50,6 +51,13 @@
             </div>
         </div>
         @endforeach
+        @else
+        <div class="col-span-full bg-white rounded-lg shadow p-12 text-center text-gray-400">
+            <div class="text-4xl mb-3">🎸</div>
+            <p class="mb-1">暂无乐器记录</p>
+            <p class="text-xs">点击右上角「添加乐器」创建第一条记录</p>
+        </div>
+        @endif
     </div>
 
     <div class="flex justify-center">

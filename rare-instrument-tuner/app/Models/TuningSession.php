@@ -23,6 +23,25 @@ class TuningSession extends Model
         'has_anomaly' => 'boolean',
     ];
 
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'draft' => '草稿',
+            'in_progress' => '进行中',
+            'completed' => '已完成',
+            default => $this->status ?? '未知',
+        };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status) {
+            'completed' => 'bg-green-100 text-green-700',
+            'in_progress' => 'bg-yellow-100 text-yellow-700',
+            default => 'bg-gray-100 text-gray-600',
+        };
+    }
+
     public function instrument(): BelongsTo
     {
         return $this->belongsTo(Instrument::class);

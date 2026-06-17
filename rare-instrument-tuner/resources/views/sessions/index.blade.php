@@ -67,6 +67,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y">
+                @if($sessions->count() > 0)
                 @foreach($sessions as $session)
                 <tr class="hover:bg-gray-50 {{ $session->has_anomaly ? 'bg-red-50' : '' }}">
                     <td class="px-4 py-3">
@@ -75,8 +76,8 @@
                     <td class="px-4 py-3 text-gray-600">{{ $session->instrument->name }}</td>
                     <td class="px-4 py-3 font-mono text-gray-700">{{ $session->fundamental_freq ?? '-' }}</td>
                     <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded text-xs {{ match($session->status) { 'completed' => 'bg-green-100 text-green-700', 'in_progress' => 'bg-yellow-100 text-yellow-700', default => 'bg-gray-100 text-gray-600' } }}">
-                            {{ match($session->status) { 'completed' => '已完成', 'in_progress' => '进行中', 'draft' => '草稿', default => $session->status } }}
+                        <span class="px-2 py-0.5 rounded text-xs {{ $session->status_badge_class }}">
+                            {{ $session->status_label }}
                         </span>
                     </td>
                     <td class="px-4 py-3">
@@ -100,6 +101,15 @@
                     </td>
                 </tr>
                 @endforeach
+                @else
+                <tr>
+                    <td colspan="8" class="px-4 py-16 text-center text-gray-400">
+                        <div class="text-4xl mb-3">📋</div>
+                        <p class="mb-2">暂无调音会话记录</p>
+                        <p class="text-xs">点击右上角「新建会话」创建第一条记录</p>
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>

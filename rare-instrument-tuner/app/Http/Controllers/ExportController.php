@@ -7,10 +7,16 @@ use App\Models\Instrument;
 use App\Models\PracticeRecord;
 use App\Models\ToneLibrary;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
+    public function index(): View
+    {
+        return view('export.index');
+    }
+
     public function sessionsSummary(Request $request): StreamedResponse
     {
         $query = TuningSession::with('instrument', 'spectrumData', 'tuningSuggestions');

@@ -29,8 +29,8 @@
         <div class="bg-white rounded-lg shadow p-4">
             <div class="text-sm text-gray-500">状态</div>
             <div class="mt-1">
-                <span class="px-3 py-1 rounded text-sm {{ match($session->status) { 'completed' => 'bg-green-100 text-green-700', 'in_progress' => 'bg-yellow-100 text-yellow-700', default => 'bg-gray-100 text-gray-600' } }}">
-                    {{ match($session->status) { 'completed' => '已完成', 'in_progress' => '进行中', 'draft' => '草稿', default => $session->status } }}
+                <span class="px-3 py-1 rounded text-sm {{ $session->status_badge_class }}">
+                    {{ $session->status_label }}
                 </span>
             </div>
         </div>
@@ -157,6 +157,12 @@
         });
     });
     </script>
+    @else
+    <div class="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+        <div class="text-4xl mb-3">🎵</div>
+        <p class="mb-1">暂无频谱数据</p>
+        <p class="text-xs">在上方「音频上传与分析」区域填写基频并执行频谱分析</p>
+    </div>
     @endif
 
     @if($session->tuningSuggestions->count() > 0)
@@ -167,8 +173,8 @@
             <div class="border rounded-lg p-3 {{ $suggestion->action === 'note' ? 'border-yellow-300 bg-yellow-50' : '' }}">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-3">
-                        <span class="px-2 py-0.5 rounded text-xs font-bold {{ match($suggestion->action) { 'adjust' => 'bg-blue-100 text-blue-700', 'compensate' => 'bg-purple-100 text-purple-700', 'wait' => 'bg-yellow-100 text-yellow-700', 'note' => 'bg-orange-100 text-orange-700', default => 'bg-gray-100' } }}">
-                            {{ match($suggestion->action) { 'adjust' => '调弦', 'compensate' => '补偿', 'wait' => '等待', 'note' => '备注', default => $suggestion->action } }}
+                        <span class="px-2 py-0.5 rounded text-xs font-bold {{ $suggestion->action_badge_class }}">
+                            {{ $suggestion->action_label }}
                         </span>
                         <span class="text-sm font-medium">弦/泛音 #{{ $suggestion->string_index }}</span>
                     </div>
@@ -185,6 +191,12 @@
             </div>
             @endforeach
         </div>
+    </div>
+    @else
+    <div class="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+        <div class="text-4xl mb-3">💡</div>
+        <p class="mb-1">暂无调弦建议</p>
+        <p class="text-xs">执行频谱分析后将自动生成调弦建议</p>
     </div>
     @endif
 

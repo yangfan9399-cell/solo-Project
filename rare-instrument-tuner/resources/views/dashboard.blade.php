@@ -66,8 +66,8 @@
                         @if($session->has_anomaly)
                         <span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded">异常</span>
                         @endif
-                        <span class="text-xs {{ match($session->status) { 'completed' => 'text-green-600', 'in_progress' => 'text-yellow-600', default => 'text-gray-400' } }}">
-                            {{ match($session->status) { 'completed' => '已完成', 'in_progress' => '进行中', 'draft' => '草稿', default => $session->status } }}
+                        <span class="text-xs {{ $session->status_badge_class }}">
+                            {{ $session->status_label }}
                         </span>
                     </div>
                 </div>

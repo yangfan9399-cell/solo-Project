@@ -39,6 +39,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y">
+                @if($tones->count() > 0)
                 @foreach($tones as $tone)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3">{{ $tone->instrument->name }}</td>
@@ -57,6 +58,15 @@
                     </td>
                 </tr>
                 @endforeach
+                @else
+                <tr>
+                    <td colspan="6" class="px-4 py-16 text-center text-gray-400">
+                        <div class="text-4xl mb-3">🎼</div>
+                        <p class="mb-1">暂无目标音库记录</p>
+                        <p class="text-xs">点击右上角「添加音库条目」创建第一条记录</p>
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>

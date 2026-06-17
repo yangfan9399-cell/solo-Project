@@ -11,6 +11,7 @@
     </div>
 
     <div class="space-y-3">
+        @if($versions->count() > 0)
         @foreach($versions as $version)
         <div class="bg-white rounded-lg shadow p-4">
             <div class="flex items-center justify-between">
@@ -27,18 +28,28 @@
                     </form>
                 </div>
             </div>
-            <div class="mt-2 grid grid-cols-4 gap-2 text-xs text-gray-500">
+            <div class="mt-2 grid grid-cols-5 gap-2 text-xs text-gray-500">
                 <div>基频: {{ $version->snapshot_data['fundamental_freq'] ?? '-' }}Hz</div>
-                <div>状态: {{ $version->snapshot_data['status'] ?? '-' }}</div>
+                <div>状态: {{ match(($version->snapshot_data['status'] ?? null)) { 'draft' => '草稿', 'in_progress' => '进行中', 'completed' => '已完成', default => $version->snapshot_data['status'] ?? '-' } }}</div>
                 <div>异常: {{ ($version->snapshot_data['has_anomaly'] ?? false) ? '是' : '否' }}</div>
                 <div>泛音数: {{ count($version->snapshot_data['spectrum_data'] ?? []) }}</div>
+                <div>建议数: {{ count($version->snapshot_data['suggestions'] ?? []) }}</div>
             </div>
         </div>
         @endforeach
+        @else
+        <div class="bg-white rounded-lg shadow p-12 text-center text-gray-400">
+            <div class="text-4xl mb-3">📚</div>
+            <p class="mb-1">暂无版本记录</p>
+            <p class="text-xs">每次修改会话信息或执行分析会自动创建版本快照</p>
+        </div>
+        @endif
     </div>
 
+    @if($versions->count() > 0)
     <div class="flex justify-center">
         {{ $versions->withQueryString()->links() }}
     </div>
+    @endif
 </div>
 @endsection

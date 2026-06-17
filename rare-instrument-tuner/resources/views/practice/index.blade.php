@@ -44,6 +44,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y">
+                @if($records->count() > 0)
                 @foreach($records as $record)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3">{{ $record->session_date->format('Y-m-d') }}</td>
@@ -73,6 +74,15 @@
                     </td>
                 </tr>
                 @endforeach
+                @else
+                <tr>
+                    <td colspan="7" class="px-4 py-16 text-center text-gray-400">
+                        <div class="text-4xl mb-3">📝</div>
+                        <p class="mb-1">暂无练习记录</p>
+                        <p class="text-xs">点击右上角「添加记录」创建第一条记录</p>
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>

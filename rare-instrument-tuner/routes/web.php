@@ -27,6 +27,7 @@ Route::resource('tone-libraries', ToneLibraryController::class)->except(['show']
 Route::resource('practice', PracticeRecordController::class);
 Route::get('practice-chart', [PracticeRecordController::class, 'chart'])->name('practice.chart');
 
+Route::get('export', [ExportController::class, 'index'])->name('export.index');
 Route::get('export/sessions', [ExportController::class, 'sessionsSummary'])->name('export.sessions');
 Route::get('export/practice', [ExportController::class, 'practiceSummary'])->name('export.practice');
 Route::get('export/tones', [ExportController::class, 'toneLibraries'])->name('export.tones');

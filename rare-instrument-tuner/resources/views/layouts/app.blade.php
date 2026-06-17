@@ -28,7 +28,7 @@
                     <a href="{{ route('tone-libraries.index') }}" class="px-3 py-2 rounded hover:bg-indigo-700 {{ request()->routeIs('tone-libraries.*') ? 'bg-indigo-900' : '' }}">目标音库</a>
                     <a href="{{ route('practice.index') }}" class="px-3 py-2 rounded hover:bg-indigo-700 {{ request()->routeIs('practice.*') ? 'bg-indigo-900' : '' }}">练习记录</a>
                     <a href="{{ route('practice.chart') }}" class="px-3 py-2 rounded hover:bg-indigo-700 {{ request()->routeIs('practice.chart') ? 'bg-indigo-900' : '' }}">练习曲线</a>
-                    <a href="{{ route('export.sessions') }}" class="px-3 py-2 rounded hover:bg-indigo-700">导出</a>
+                    <a href="{{ route('export.index') }}" class="px-3 py-2 rounded hover:bg-indigo-700 {{ request()->routeIs('export.*') ? 'bg-indigo-900' : '' }}">导出</a>
                 </div>
             </div>
         </div>
