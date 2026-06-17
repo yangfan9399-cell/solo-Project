@@ -1,6 +1,6 @@
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate, useNavigation, useSubmit, Link } from "@remix-run/react";
-import { useState } from "react";
+import { Form, useLoaderData, useActionData, useNavigate, useNavigation, useSubmit, Link } from "@remix-run/react";
+import { useState, useEffect } from "react";
 import {
   getProject, listVersions, getCurrentVersion, listSections, listWaterLevels, listRoughnesses,
   listObstacles, listFlowSegments, listUnsuitableZones, listAnomalies,
@@ -39,6 +39,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     : getCurrentVersion(id);
   if (!current) throw new Response("No version", { status: 500 });
 
+  const currentDefault = getCurrentVersion(id);
+  const isPreview = currentDefault ? current.id !== currentDefault.id : false;
+
   const sections = listSections(id, current.id);
   const sectionIds = sections.map((s) => s.id);
   const waterLevelsBySection: Record<number, any[]> = {};
@@ -73,7 +76,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   }
 
   return json({
-    project, versions, currentVersion: current,
+    project, versions, currentVersion: current, isPreview,
     sections, waterLevelsBySection, roughnessBySection, obstaclesBySection,
     segmentsBySection, zonesBySection, anomalies, summary, versionStats,
   });
@@ -141,7 +144,10 @@ export async function action({ params, request }: ActionFunctionArgs) {
   if (!pid) return json({ error: "invalid project" }, { status: 400 });
   const form = await request.formData();
   const _action = String(form.get("_action") || "");
-  const versionId = Number(form.get("version_id") || 0);
+
+  const currentV = getCurrentVersion(pid);
+  if (!currentV) return json({ error: "no version" }, { status: 500 });
+  const versionId = currentV.id;
 
   switch (_action) {
     case "update_basic":
@@ -254,16 +260,27 @@ export async function action({ params, request }: ActionFunctionArgs) {
       regenerateAnomalies(pid, versionId, fishType);
       return json({ ok: true });
     }
-    case "add_version":
-      createVersion({
-        project_id: pid,
-        version_tag: String(form.get("version_tag")),
-        batch_no: String(form.get("batch_no")),
-        is_current: form.get("is_current") === "1",
-        author: String(form.get("author") || "系统"),
-        note: String(form.get("note") || "") || null,
-      });
-      return json({ ok: true });
+    case "add_version": {
+      const version_tag = String(form.get("version_tag") || "").trim();
+      const batch_no = String(form.get("batch_no") || "").trim();
+      if (!version_tag) return json({ ok: false, error: "请输入版本号", _action: "add_version" }, { status: 400 });
+      if (!batch_no) return json({ ok: false, error: "请输入批次号", _action: "add_version" }, { status: 400 });
+      const existing = listVersions(pid).find((v) => v.version_tag === version_tag);
+      if (existing) return json({ ok: false, error: `版本号 ${version_tag} 已存在，请使用不同的版本号`, _action: "add_version" }, { status: 400 });
+      try {
+        createVersion({
+          project_id: pid,
+          version_tag,
+          batch_no,
+          is_current: form.get("is_current") === "1",
+          author: String(form.get("author") || "系统"),
+          note: String(form.get("note") || "") || null,
+        });
+      } catch (e: any) {
+        return json({ ok: false, error: e?.message || "创建版本失败", _action: "add_version" }, { status: 500 });
+      }
+      return json({ ok: true, _action: "add_version" });
+    }
     case "use_version":
       setCurrentVersion(pid, Number(form.get("id")));
       return json({ ok: true });
@@ -278,6 +295,7 @@ type TabKey = "sections" | "velocity" | "zones" | "versions" | "anomalies";
 
 export default function ProjectWorkbench() {
   const data = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
   const nav = useNavigation();
   const navigate = useNavigate();
   const submit = useSubmit();
@@ -301,6 +319,12 @@ export default function ProjectWorkbench() {
   const obs = selectedSection ? (data.obstaclesBySection as any)[selectedSection.id] ?? [] : [];
   const busy = nav.state !== "idle";
 
+  useEffect(() => {
+    if (showAddVersion && actionData && (actionData as any)._action === "add_version" && (actionData as any).ok) {
+      setShowAddVersion(false);
+    }
+  }, [actionData, showAddVersion]);
+
   return (
     <div>
       <div className="page-header">
@@ -311,6 +335,7 @@ export default function ProjectWorkbench() {
             {"  · 当前版本 "}
             <strong style={{ color: "var(--color-primary)" }}>{data.currentVersion.version_tag}</strong>
             {" ("}{data.currentVersion.batch_no}{")"}
+            {data.isPreview && <span className="badge badge-warning" style={{ marginLeft: 8 }}>👁 预览模式</span>}
           </div>
         </div>
         <div className="section-actions">
@@ -331,16 +356,33 @@ export default function ProjectWorkbench() {
               </option>
             ))}
           </select>
-          <Link to={`/projects/${data.project.id}/report`} className="btn btn-secondary">📄 导出报告</Link>
-          <Form method="post" style={{ display: "inline" }}>
-            <input type="hidden" name="_action" value="set_status" />
-            <input type="hidden" name="status" value={data.project.status === "completed" ? "in_progress" : "completed"} />
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              {data.project.status === "completed" ? "↻ 恢复编辑" : "✓ 标记完成"}
+          <Link to={`/projects/${data.project.id}/report${data.isPreview ? `?vid=${data.currentVersion.id}` : ""}`} className="btn btn-secondary">📄 查看报告</Link>
+          {!data.isPreview && (
+            <Form method="post" style={{ display: "inline" }}>
+              <input type="hidden" name="_action" value="set_status" />
+              <input type="hidden" name="status" value={data.project.status === "completed" ? "in_progress" : "completed"} />
+              <button type="submit" className="btn btn-primary" disabled={busy}>
+                {data.project.status === "completed" ? "↻ 恢复编辑" : "✓ 标记完成"}
+              </button>
+            </Form>
+          )}
+          {data.isPreview && (
+            <button className="btn btn-primary" onClick={() => navigate(`/projects/${data.project.id}`)}>
+              → 返回当前版本
             </button>
-          </Form>
+          )}
         </div>
       </div>
+
+      {data.isPreview && (
+        <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+          <span className="alert-icon">👁</span>
+          <div>
+            <strong>历史版本预览</strong>：当前查看的是版本 {data.currentVersion.version_tag}（{data.currentVersion.batch_no}）的只读快照。
+            所有编辑操作已禁用，如需修改请"切换到此版本"或返回当前版本。
+          </div>
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card"><div className="stat-icon">📐</div><div className="stat-value metric-value">{data.summary.total_sections}</div><div className="stat-label">评估断面</div></div>
@@ -354,7 +396,7 @@ export default function ProjectWorkbench() {
           <div className="card">
             <div className="card-header">
               <div className="card-title">ℹ️ 项目信息</div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowBasicEdit(true)}>编辑</button>
+              {!data.isPreview && <button className="btn btn-ghost btn-sm" onClick={() => setShowBasicEdit(true)}>编辑</button>}
             </div>
             <div className="card-body">
               <div className="info-row"><span className="info-label">项目编号</span><span className="info-value metric-value">{data.project.code}</span></div>
@@ -430,9 +472,9 @@ export default function ProjectWorkbench() {
 
           {tab === "sections" && (
             <SectionsPanel
-              data={data} selectedSection={selectedSection} segments={segments}
-              wls={wls} rss={rss} obs={obs} busy={busy}
-              submit={submit} currentVersionId={data.currentVersion.id}
+              data={data} selectedSection={selectedSection} segments={segments} wls={wls} rss={rss} obs={obs}
+              busy={busy} submit={submit} currentVersionId={data.currentVersion.id}
+              isPreview={data.isPreview}
               editingSection={editingSection} setEditingSection={setEditingSection}
               showAdd={showAddSection} setShowAdd={setShowAddSection}
               setSelected={setSelectedSectionId}
@@ -442,7 +484,7 @@ export default function ProjectWorkbench() {
             />
           )}
           {tab === "velocity" && (
-            <VelocityPanel data={data} selectedSection={selectedSection} busy={busy} submit={submit} currentVersionId={data.currentVersion.id} />
+            <VelocityPanel data={data} selectedSection={selectedSection} busy={busy} submit={submit} currentVersionId={data.currentVersion.id} isPreview={data.isPreview} />
           )}
           {tab === "zones" && (
             <ZonesPanel selectedSection={selectedSection} zones={zones} zonesBySection={data.zonesBySection as any} sections={data.sections as any} />
@@ -451,7 +493,7 @@ export default function ProjectWorkbench() {
             <VersionsPanel data={data} busy={busy} submit={submit} onSwitch={(vid: number) => navigate(`/projects/${data.project.id}?vid=${vid}`)} showAdd={showAddVersion} setShowAdd={setShowAddVersion} />
           )}
           {tab === "anomalies" && (
-            <AnomaliesPanel anomalies={data.anomalies as any} sections={data.sections as any} busy={busy} submit={submit} />
+            <AnomaliesPanel anomalies={data.anomalies as any} sections={data.sections as any} busy={busy} submit={submit} isPreview={data.isPreview} />
           )}
         </section>
       </div>
@@ -473,14 +515,14 @@ export default function ProjectWorkbench() {
         <ObstacleModal sectionId={selectedSection.id} versionId={data.currentVersion.id} onClose={() => setShowObstacleModal(false)} submit={submit} busy={busy} />
       )}
       {showAddVersion && (
-        <VersionModal project={data.project} onClose={() => setShowAddVersion(false)} submit={submit} busy={busy} />
+        <VersionModal project={data.project} onClose={() => setShowAddVersion(false)} submit={submit} busy={busy} actionError={(actionData as any)?.error} />
       )}
     </div>
   );
 }
 
 function SectionsPanel(props: any) {
-  const { data, selectedSection, segments, wls, rss, obs, busy, submit, currentVersionId, editingSection, setEditingSection, showAdd, setShowAdd, setSelected, showWater, setShowWater, showRough, setShowRough, showObst, setShowObst } = props;
+  const { data, selectedSection, segments, wls, rss, obs, busy, submit, currentVersionId, isPreview, editingSection, setEditingSection, showAdd, setShowAdd, setSelected, showWater, setShowWater, showRough, setShowRough, showObst, setShowObst } = props;
   const [tab, setTab] = useState<"basic" | "water" | "roughness" | "obstacles">("basic");
   return (
     <>
@@ -488,8 +530,12 @@ function SectionsPanel(props: any) {
         <div className="card-header">
           <div className="card-title">📐 {selectedSection ? `${selectedSection.station_no} ${selectedSection.name}` : "断面与水力参数"}</div>
           <div className="section-actions">
-            <button className="btn btn-sm btn-secondary" onClick={() => setEditingSection(selectedSection)} disabled={!selectedSection}>✏️ 编辑</button>
-            <button className="btn btn-sm btn-primary" onClick={() => setShowAdd(true)}>➕ 添加断面</button>
+            {!isPreview && (
+              <>
+                <button className="btn btn-sm btn-secondary" onClick={() => setEditingSection(selectedSection)} disabled={!selectedSection}>✏️ 编辑</button>
+                <button className="btn btn-sm btn-primary" onClick={() => setShowAdd(true)}>➕ 添加断面</button>
+              </>
+            )}
           </div>
         </div>
         <div className="card-body">
@@ -542,27 +588,29 @@ function SectionsPanel(props: any) {
                     <div className="form-group"><label className="form-label">水力半径 (m)</label><input className="form-input metric-value" value={Number(selectedSection.hydraulic_radius).toFixed(3)} readOnly /></div>
                     <div className="form-group full"><label className="form-label">备注</label><textarea className="form-textarea" value={selectedSection.remark ?? ""} readOnly /></div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
-                    <Form method="post" onSubmit={(e) => { if (!confirm(`确定删除断面 ${selectedSection.station_no}？`)) e.preventDefault(); }}>
-                      <input type="hidden" name="_action" value="delete_section" />
-                      <input type="hidden" name="id" value={selectedSection.id} />
-                      <button type="submit" className="btn btn-danger btn-sm" disabled={busy}>🗑️ 删除断面</button>
-                    </Form>
-                  </div>
+                  {!isPreview && (
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+                      <Form method="post" onSubmit={(e) => { if (!confirm(`确定删除断面 ${selectedSection.station_no}？`)) e.preventDefault(); }}>
+                        <input type="hidden" name="_action" value="delete_section" />
+                        <input type="hidden" name="id" value={selectedSection.id} />
+                        <button type="submit" className="btn btn-danger btn-sm" disabled={busy}>🗑️ 删除断面</button>
+                      </Form>
+                    </div>
+                  )}
                 </div>
               )}
               {tab === "water" && (
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                     <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>共 {wls.length} 条水位流量记录</div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowWater(true)}>➕ 新增记录</button>
+                    {!isPreview && <button className="btn btn-primary btn-sm" onClick={() => setShowWater(true)}>➕ 新增记录</button>}
                   </div>
                   <div className="table-container">
                     <table>
-                      <thead><tr><th>测量日期</th><th>上游(m)</th><th>下游(m)</th><th>水深(m)</th><th>流量(m³/s)</th><th>备注</th><th></th></tr></thead>
+                      <thead><tr><th>测量日期</th><th>上游(m)</th><th>下游(m)</th><th>水深(m)</th><th>流量(m³/s)</th><th>备注</th>{!isPreview && <th></th>}</tr></thead>
                       <tbody>
                         {wls.length === 0 ? (
-                          <tr><td colSpan={7}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">💧</div><div className="empty-state-title">暂无水位记录</div></div></td></tr>
+                          <tr><td colSpan={!isPreview ? 7 : 6}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">💧</div><div className="empty-state-title">暂无水位记录</div></div></td></tr>
                         ) : wls.map((w: any) => (
                           <tr key={w.id}>
                             <td>{w.measure_date}</td>
@@ -571,11 +619,13 @@ function SectionsPanel(props: any) {
                             <td className="metric-value">{Number(w.water_depth).toFixed(2)}</td>
                             <td className="metric-value">{Number(w.flow_rate).toFixed(2)}</td>
                             <td style={{ color: "var(--color-text-muted)" }}>{w.remark ?? "—"}</td>
-                            <td>
-                              <Form method="post"><input type="hidden" name="_action" value="delete_water_level" /><input type="hidden" name="id" value={w.id} />
-                                <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
-                              </Form>
-                            </td>
+                            {!isPreview && (
+                              <td>
+                                <Form method="post"><input type="hidden" name="_action" value="delete_water_level" /><input type="hidden" name="id" value={w.id} />
+                                  <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
+                                </Form>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -587,24 +637,26 @@ function SectionsPanel(props: any) {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                     <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>糙率参数用于曼宁公式计算流速</div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowRough(true)} disabled={rss.length > 0}>➕ 录入糙率</button>
+                    {!isPreview && <button className="btn btn-primary btn-sm" onClick={() => setShowRough(true)} disabled={rss.length > 0}>➕ 录入糙率</button>}
                   </div>
                   <div className="table-container">
                     <table>
-                      <thead><tr><th>类型</th><th>糙率 n 值</th><th>说明</th><th></th></tr></thead>
+                      <thead><tr><th>类型</th><th>糙率 n 值</th><th>说明</th>{!isPreview && <th></th>}</tr></thead>
                       <tbody>
                         {rss.length === 0 ? (
-                          <tr><td colSpan={4}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">🧱</div><div className="empty-state-title">未录入糙率</div></div></td></tr>
+                          <tr><td colSpan={!isPreview ? 4 : 3}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">🧱</div><div className="empty-state-title">未录入糙率</div></div></td></tr>
                         ) : rss.map((r: any) => (
                           <tr key={r.id}>
                             <td>{roughnessTypeLabel(r.type)}</td>
                             <td className="metric-value" style={{ fontWeight: 600, color: "var(--color-primary)" }}>{Number(r.n_value).toFixed(4)}</td>
                             <td style={{ color: "var(--color-text-muted)" }}>{r.description ?? "—"}</td>
-                            <td>
-                              <Form method="post"><input type="hidden" name="_action" value="delete_roughness" /><input type="hidden" name="id" value={r.id} />
-                                <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
-                              </Form>
-                            </td>
+                            {!isPreview && (
+                              <td>
+                                <Form method="post"><input type="hidden" name="_action" value="delete_roughness" /><input type="hidden" name="id" value={r.id} />
+                                  <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
+                                </Form>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -616,14 +668,14 @@ function SectionsPanel(props: any) {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                     <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>抛石、墩柱、底槛等障碍物影响局部流速分布</div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowObst(true)}>➕ 添加障碍物</button>
+                    {!isPreview && <button className="btn btn-primary btn-sm" onClick={() => setShowObst(true)}>➕ 添加障碍物</button>}
                   </div>
                   <div className="table-container">
                     <table>
-                      <thead><tr><th>类型</th><th>位置(m)</th><th>高度(m)</th><th>宽度(m)</th><th>描述</th><th></th></tr></thead>
+                      <thead><tr><th>类型</th><th>位置(m)</th><th>高度(m)</th><th>宽度(m)</th><th>描述</th>{!isPreview && <th></th>}</tr></thead>
                       <tbody>
                         {obs.length === 0 ? (
-                          <tr><td colSpan={6}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">🪨</div><div className="empty-state-title">未记录障碍物</div></div></td></tr>
+                          <tr><td colSpan={!isPreview ? 6 : 5}><div className="empty-state" style={{ padding: "24px 12px" }}><div className="empty-state-icon">🪨</div><div className="empty-state-title">未记录障碍物</div></div></td></tr>
                         ) : obs.map((o: any) => (
                           <tr key={o.id}>
                             <td>{obstacleTypeLabel(o.type)}</td>
@@ -631,11 +683,13 @@ function SectionsPanel(props: any) {
                             <td className="metric-value">{Number(o.height_m).toFixed(2)}</td>
                             <td className="metric-value">{Number(o.width_m).toFixed(2)}</td>
                             <td style={{ color: "var(--color-text-muted)" }}>{o.description ?? "—"}</td>
-                            <td>
-                              <Form method="post"><input type="hidden" name="_action" value="delete_obstacle" /><input type="hidden" name="id" value={o.id} />
-                                <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
-                              </Form>
-                            </td>
+                            {!isPreview && (
+                              <td>
+                                <Form method="post"><input type="hidden" name="_action" value="delete_obstacle" /><input type="hidden" name="id" value={o.id} />
+                                  <button type="submit" className="link-btn danger" disabled={busy}>删除</button>
+                                </Form>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -651,7 +705,7 @@ function SectionsPanel(props: any) {
   );
 }
 
-function VelocityPanel({ data, selectedSection, busy, submit, currentVersionId }: any) {
+function VelocityPanel({ data, selectedSection, busy, submit, currentVersionId, isPreview }: any) {
   const project = data.project;
   const segmentsInit: any[] = (selectedSection ? (data.segmentsBySection as any)[selectedSection.id] ?? [] : []).map((s: any) => ({ ...s }));
   const [segs, setSegs] = useState<any[]>(segmentsInit.length ? segmentsInit : [{ start_m: 0, end_m: 1, velocity_ms: 0.5, depth_m: 1.0 }]);
@@ -676,8 +730,12 @@ function VelocityPanel({ data, selectedSection, busy, submit, currentVersionId }
       <div className="card-header">
         <div className="card-title">🧭 分段流速 — {selectedSection.station_no} {selectedSection.name}</div>
         <div className="section-actions">
-          <button className="btn btn-secondary btn-sm" onClick={() => setSegs(segmentsInit.slice())}>↺ 重置</button>
-          <button className="btn btn-sm btn-secondary" onClick={addSeg}>➕ 增加子段</button>
+          {!isPreview && (
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={() => setSegs(segmentsInit.slice())}>↺ 重置</button>
+              <button className="btn btn-sm btn-secondary" onClick={addSeg}>➕ 增加子段</button>
+            </>
+          )}
         </div>
       </div>
       <div className="card-body">
@@ -709,43 +767,78 @@ function VelocityPanel({ data, selectedSection, busy, submit, currentVersionId }
             </>
           )}
         </div>
-        <Form method="post" id="seg-form">
-          <input type="hidden" name="_action" value="save_segments" />
-          <input type="hidden" name="section_id" value={selectedSection.id} />
-          <input type="hidden" name="version_id" value={currentVersionId} />
-          <input type="hidden" name="seg_count" value={segs.length} />
-          {segs.map((s, i) => {
-            const suit = classifyVelocity(Number(s.velocity_ms), Number(s.depth_m), fishType);
-            const borderColor = suit === "danger" ? "rgba(239,68,68,0.4)" : suit === "warning" ? "rgba(245,158,11,0.4)" : "var(--color-border)";
-            const bgColor = suit === "danger" ? "rgba(239,68,68,0.04)" : suit === "warning" ? "rgba(245,158,11,0.04)" : "transparent";
-            return (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr 1fr 40px", gap: 10, alignItems: "center", marginBottom: 8, padding: 10, border: `1px solid ${borderColor}`, borderRadius: 8, background: bgColor }}>
-                <span style={{ fontWeight: 600, color: "var(--color-text-muted)" }}>#{i}</span>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">起点(m)</label>
-                  <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_start`} value={s.start_m} onChange={(e) => updateSeg(i, { start_m: e.target.value })} />
+        {!isPreview && (
+          <Form method="post" id="seg-form">
+            <input type="hidden" name="_action" value="save_segments" />
+            <input type="hidden" name="section_id" value={selectedSection.id} />
+            <input type="hidden" name="version_id" value={currentVersionId} />
+            <input type="hidden" name="seg_count" value={segs.length} />
+            {segs.map((s, i) => {
+              const suit = classifyVelocity(Number(s.velocity_ms), Number(s.depth_m), fishType);
+              const borderColor = suit === "danger" ? "rgba(239,68,68,0.4)" : suit === "warning" ? "rgba(245,158,11,0.4)" : "var(--color-border)";
+              const bgColor = suit === "danger" ? "rgba(239,68,68,0.04)" : suit === "warning" ? "rgba(245,158,11,0.04)" : "transparent";
+              return (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr 1fr 40px", gap: 10, alignItems: "center", marginBottom: 8, padding: 10, border: `1px solid ${borderColor}`, borderRadius: 8, background: bgColor }}>
+                  <span style={{ fontWeight: 600, color: "var(--color-text-muted)" }}>#{i}</span>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">起点(m)</label>
+                    <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_start`} value={s.start_m} onChange={(e) => updateSeg(i, { start_m: e.target.value })} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">终点(m)</label>
+                    <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_end`} value={s.end_m} onChange={(e) => updateSeg(i, { end_m: e.target.value })} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">流速(m/s)</label>
+                    <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_v`} value={s.velocity_ms} onChange={(e) => updateSeg(i, { velocity_ms: e.target.value })} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">水深(m)</label>
+                    <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_d`} value={s.depth_m} onChange={(e) => updateSeg(i, { depth_m: e.target.value })} />
+                  </div>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeSeg(i)} style={{ padding: "6px 8px" }}>🗑️</button>
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">终点(m)</label>
-                  <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_end`} value={s.end_m} onChange={(e) => updateSeg(i, { end_m: e.target.value })} />
+              );
+            })}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20, gap: 10 }}>
+              <button type="button" className="btn btn-secondary" onClick={addSeg}>➕ 增加子段</button>
+              <button type="submit" form="seg-form" className="btn btn-primary" disabled={busy}>💾 保存并重新评估</button>
+            </div>
+          </Form>
+        )}
+        {isPreview && (
+          <div style={{ opacity: 0.65 }}>
+            {segs.map((s, i) => {
+              const suit = classifyVelocity(Number(s.velocity_ms), Number(s.depth_m), fishType);
+              const borderColor = suit === "danger" ? "rgba(239,68,68,0.4)" : suit === "warning" ? "rgba(245,158,11,0.4)" : "var(--color-border)";
+              const bgColor = suit === "danger" ? "rgba(239,68,68,0.04)" : suit === "warning" ? "rgba(245,158,11,0.04)" : "transparent";
+              return (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr 1fr", gap: 10, alignItems: "center", marginBottom: 8, padding: 10, border: `1px solid ${borderColor}`, borderRadius: 8, background: bgColor }}>
+                  <span style={{ fontWeight: 600, color: "var(--color-text-muted)" }}>#{i}</span>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">起点(m)</label>
+                    <input className="form-input metric-value" readOnly value={s.start_m} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">终点(m)</label>
+                    <input className="form-input metric-value" readOnly value={s.end_m} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">流速(m/s)</label>
+                    <input className="form-input metric-value" readOnly value={s.velocity_ms} />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label">水深(m)</label>
+                    <input className="form-input metric-value" readOnly value={s.depth_m} />
+                  </div>
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">流速(m/s)</label>
-                  <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_v`} value={s.velocity_ms} onChange={(e) => updateSeg(i, { velocity_ms: e.target.value })} />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">水深(m)</label>
-                  <input className="form-input metric-value" type="number" step="0.01" name={`seg_${i}_d`} value={s.depth_m} onChange={(e) => updateSeg(i, { depth_m: e.target.value })} />
-                </div>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeSeg(i)} style={{ padding: "6px 8px" }}>🗑️</button>
-              </div>
-            );
-          })}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20, gap: 10 }}>
-            <button type="button" className="btn btn-secondary" onClick={addSeg}>➕ 增加子段</button>
-            <button type="submit" form="seg-form" className="btn btn-primary" disabled={busy}>💾 保存并重新评估</button>
+              );
+            })}
+            <div style={{ textAlign: "center", marginTop: 20, color: "var(--color-text-muted)", fontSize: 13 }}>
+              👁 历史版本预览模式，数据只读
+            </div>
           </div>
-        </Form>
+        )}
       </div>
     </div>
   );
@@ -847,7 +940,7 @@ function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: an
   );
 }
 
-function AnomaliesPanel({ anomalies, sections, busy, submit }: any) {
+function AnomaliesPanel({ anomalies, sections, busy, submit, isPreview }: any) {
   return (
     <div className="card">
       <div className="card-header">
@@ -875,9 +968,11 @@ function AnomaliesPanel({ anomalies, sections, busy, submit }: any) {
                 <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6 }}>记录于 {a.created_at.slice(0, 16).replace("T", " ")}</div>
               </div>
               {!a.resolved ? (
-                <Form method="post"><input type="hidden" name="_action" value="resolve_anomaly" /><input type="hidden" name="id" value={a.id} />
-                  <button type="submit" className="btn btn-sm btn-secondary" disabled={busy}>标记已处理</button>
-                </Form>
+                !isPreview ? (
+                  <Form method="post"><input type="hidden" name="_action" value="resolve_anomaly" /><input type="hidden" name="id" value={a.id} />
+                    <button type="submit" className="btn btn-sm btn-secondary" disabled={busy}>标记已处理</button>
+                  </Form>
+                ) : null
               ) : <span className="badge badge-success"><span className="dot"></span>已处理</span>}
             </div>
           );
@@ -1077,11 +1172,17 @@ function ObstacleModal({ sectionId, versionId, onClose, submit, busy }: any) {
   );
 }
 
-function VersionModal({ project, onClose, submit, busy }: any) {
+function VersionModal({ project, onClose, submit, busy, actionError }: any) {
   return (
     <Modal title="新建版本/批次" onClose={onClose}>
-      <Form method="post" onSubmit={(e) => { submit(e.currentTarget); onClose(); e.preventDefault(); }}>
+      <Form method="post" onSubmit={(e) => { submit(e.currentTarget); e.preventDefault(); }}>
         <input type="hidden" name="_action" value="add_version" />
+        {actionError && (
+          <div className="alert alert-danger" style={{ marginBottom: 16 }}>
+            <span className="alert-icon">⚠️</span>
+            <div><strong>创建失败</strong>：{actionError}</div>
+          </div>
+        )}
         <div className="form-grid">
           <div className="form-group"><label className="form-label">版本号<span className="required">*</span></label>
             <input className="form-input" name="version_tag" defaultValue="v1.0" placeholder="如 v1.2" /></div>

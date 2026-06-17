@@ -1,5 +1,5 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useNavigate } from "@remix-run/react";
 import {
   getProject, listVersions, getCurrentVersion, listSections, listWaterLevels, listRoughnesses,
   listObstacles, listFlowSegments, listUnsuitableZones, listAnomalies,
@@ -21,6 +21,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const versions = listVersions(id);
   const current = vid ? versions.find((v) => v.id === vid) ?? getCurrentVersion(id) : getCurrentVersion(id);
   if (!current) throw new Response("No version", { status: 500 });
+
+  const currentDefault = getCurrentVersion(id);
+  const isPreview = currentDefault ? current.id !== currentDefault.id : false;
 
   const sections = listSections(id, current.id);
   const sectionIds = sections.map((s) => s.id);
@@ -46,26 +49,51 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     segmentsBySection, zonesBySection, anomalies, summary,
     generated_at: new Date().toISOString(),
   });
-  return json({ project, version: current, sections, summary, anomalies, segmentsBySection, zonesBySection, waterLevelsBySection, roughnessBySection, obstaclesBySection, textReport });
+  return json({ project, version: current, versions, isPreview, sections, summary, anomalies, segmentsBySection, zonesBySection, waterLevelsBySection, roughnessBySection, obstaclesBySection, textReport });
 }
 
 export default function ReportPage() {
   const d = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
   return (
     <div>
       <div className="page-header">
         <div>
           <div className="page-title">📄 {d.project.name} — 评估报告</div>
           <div className="page-subtitle">
-            {d.project.code} · 版本 {d.version.version_tag} ({d.version.batch_no}) · 生成于 {new Date().toLocaleString("zh-CN")}
+            {d.project.code} · 版本 {d.version.version_tag} ({d.version.batch_no})
+            {" · 生成于 "}{new Date().toLocaleString("zh-CN")}
+            {d.isPreview && <span className="badge badge-warning" style={{ marginLeft: 8 }}>👁 历史版本</span>}
           </div>
         </div>
         <div className="section-actions">
+          <select
+            className="form-input"
+            style={{ width: 220 }}
+            value={d.version.id}
+            onChange={(e) => navigate(`/projects/${d.project.id}/report?vid=${e.target.value}`)}
+          >
+            {(d.versions as any[]).map((v: any) => (
+              <option key={v.id} value={v.id}>
+                {v.version_tag} {v.is_current ? "(当前)" : ""} — {v.batch_no}
+              </option>
+            ))}
+          </select>
           <Link to={`/projects/${d.project.id}`} className="btn btn-secondary">← 返回工作台</Link>
-          <Link to={`/projects/${d.project.id}/export.txt`} className="btn btn-secondary">⬇ 下载 TXT</Link>
-          <Link to={`/projects/${d.project.id}/export.csv`} className="btn btn-primary">⬇ 导出 CSV 摘要</Link>
+          <Link to={`/projects/${d.project.id}/export.txt?vid=${d.version.id}`} className="btn btn-secondary">⬇ 下载 TXT</Link>
+          <Link to={`/projects/${d.project.id}/export.csv?vid=${d.version.id}`} className="btn btn-primary">⬇ 导出 CSV 摘要</Link>
         </div>
       </div>
+
+      {d.isPreview && (
+        <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+          <span className="alert-icon">👁</span>
+          <div>
+            <strong>历史版本报告</strong>：当前查看的是版本 {d.version.version_tag}（{d.version.batch_no}）的报告。
+            导出的 TXT / CSV 文件也将基于此版本生成。
+          </div>
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card"><div className="stat-icon">📐</div><div className="stat-value metric-value">{d.summary.total_sections}</div><div className="stat-label">评估断面</div></div>

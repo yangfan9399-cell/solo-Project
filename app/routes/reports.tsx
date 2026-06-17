@@ -57,7 +57,17 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {list.data.map((p: any) => (
+                {list.data.length === 0 ? (
+                  <tr>
+                    <td colSpan={8}>
+                      <div className="empty-state">
+                        <div className="empty-state-icon">📄</div>
+                        <div className="empty-state-title">暂无评估项目</div>
+                        <div className="empty-state-desc">请先创建鱼道流速评估项目</div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : list.data.map((p: any) => (
                   <tr key={p.id}>
                     <td className="metric-value"><strong>{p.code}</strong></td>
                     <td>
