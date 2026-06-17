@@ -31,10 +31,12 @@ def index(request):
         records = records.filter(target_date__lte=end_date)
     
     abnormal_count = AbnormalData.objects.filter(resolved=False).count()
+    abnormal_list = AbnormalData.objects.filter(resolved=False)[:5]
     
     context = {
         'records': records,
         'abnormal_count': abnormal_count,
+        'abnormal_list': abnormal_list,
         'status_choices': CalculationRecord.STATUS_CHOICES,
         'query': query or '',
         'status_filter': status or '',

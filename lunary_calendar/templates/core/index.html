@@ -56,7 +56,7 @@
                     <tr>
                         <td><a href="{% url 'record_detail' record.pk %}">{{ record.title }}</a></td>
                         <td>{{ record.target_date }}</td>
-                        <td>{{ record.location_name or '-' }}</td>
+                        <td>{% if record.location_name %}{{ record.location_name }}{% else %}-{% endif %}</td>
                         <td>
                             {% if record.lunar_year %}
                                 {{ record.lunar_year }}年{{ record.lunar_month_name }}{% if record.is_leap_month %}闰{% endif %}{{ record.lunar_day_name }}
@@ -64,13 +64,13 @@
                                 -
                             {% endif %}
                         </td>
-                        <td>{{ record.moon_phase or '-' }}</td>
+                        <td>{% if record.moon_phase %}{{ record.moon_phase }}{% else %}-{% endif %}</td>
                         <td>
                             <span class="status-badge status-{{ record.status }}">
                                 {{ record.get_status_display }}
                             </span>
                         </td>
-                        <td>{{ record.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ record.created_at|date:"Y-m-d" }}</td>
                         <td>
                             <div class="action-buttons">
                                 <a href="{% url 'record_detail' record.pk %}" class="btn btn-sm btn-primary">详情</a>
@@ -94,13 +94,13 @@
         </table>
     </div>
     
-    {% if AbnormalData.objects.filter(resolved=False).exists %}
+    {% if abnormal_list %}
         <div class="card">
             <div class="card-header">
                 <h2>异常数据提示</h2>
             </div>
             <div class="abnormal-list">
-                {% for abnormal in AbnormalData.objects.filter(resolved=False)[:5] %}
+                {% for abnormal in abnormal_list %}
                     <div class="abnormal-item">
                         <div class="abnormal-type">{{ abnormal.get_type_display }}</div>
                         <div class="abnormal-message">{{ abnormal.message }}</div>

@@ -29,7 +29,7 @@
         
         {% if record.calculated_at %}
             <div class="success-message">
-                <strong>推算完成:</strong> {{ record.calculated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                <strong>推算完成:</strong> {{ record.calculated_at|date:"Y-m-d H:i:s" }}
             </div>
         {% endif %}
         
@@ -46,7 +46,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">地点</span>
-                    <span class="info-value">{{ record.location_name or '未指定' }}</span>
+                    <span class="info-value">{% if record.location_name %}{{ record.location_name }}{% else %}未指定{% endif %}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">纬度</span>
@@ -114,10 +114,10 @@
                             {% elif term.days_diff > 0 %}
                                 {{ term.days_diff }}天后
                             {% else %}
-                                {{ term.days_diff|abs }}天前
+                                {{ term.days_diff|cut:"-" }}天前
                             {% endif %}
                         </div>
-                        <div style="font-size: 0.75rem; color: #999;">{{ term.date.strftime('%m-%d %H:%M') }}</div>
+                        <div style="font-size: 0.75rem; color: #999;">{{ term.date }}</div>
                     </div>
                 {% endfor %}
             </div>

@@ -41,7 +41,7 @@
                 </div>
                 <div class="form-group">
                     <label>时区</label>
-                    <input type="number" name="timezone" value="{{ batch.timezone|default:8 }}" min="-12" max="14">
+                    <input type="number" name="timezone" value="{{ batch.timezone_offset|default:8 }}" min="-12" max="14">
                 </div>
             </div>
             

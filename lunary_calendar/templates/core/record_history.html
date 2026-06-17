@@ -37,8 +37,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ version.year_gan_zhi }}年 {{ version.month_gan_zhi }}月 {{ version.day_gan_zhi }}日</td>
-                            <td>{{ version.moon_phase or '-' }}</td>
-                            <td>{{ version.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{% if version.moon_phase %}{{ version.moon_phase }}{% else %}-{% endif %}</td>
+                            <td>{{ version.created_at|date:"Y-m-d H:i" }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

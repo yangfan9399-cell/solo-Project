@@ -70,12 +70,12 @@
                 <h3 style="margin-bottom: 1rem; color: #2c3e50;">时间信息</h3>
                 <div class="info-row">
                     <span class="info-label">创建时间</span>
-                    <span class="info-value">{{ batch.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="info-value">{{ batch.created_at|date:"Y-m-d H:i" }}</span>
                 </div>
                 {% if batch.completed_at %}
                     <div class="info-row">
                         <span class="info-label">完成时间</span>
-                        <span class="info-value">{{ batch.completed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span class="info-value">{{ batch.completed_at|date:"Y-m-d H:i" }}</span>
                     </div>
                 {% endif %}
             </div>
@@ -110,7 +110,7 @@
                                 {% endif %}
                             </td>
                             <td>{{ record.year_gan_zhi }}年 {{ record.month_gan_zhi }}月 {{ record.day_gan_zhi }}日</td>
-                            <td>{{ record.moon_phase or '-' }}</td>
+                            <td>{% if record.moon_phase %}{{ record.moon_phase }}{% else %}-{% endif %}</td>
                             <td>
                                 <span class="status-badge status-{{ record.status }}">
                                     {{ record.get_status_display }}
