@@ -5,7 +5,7 @@
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h4>🏔️ 工作台</h4>
-        <p class="text-muted mb-0">高山气象站仪器校准日志系统 — 全局概览</p>
+        <p class="text-muted mb-0">高山气象站仪器校准日志系统 — 全局概览 · 快捷操作 · 业务入口</p>
     </div>
     <div>
         <a href="{% url 'calibration:export_summary' %}?format=csv" class="btn btn-outline-secondary btn-sm">
@@ -14,6 +14,15 @@
         <a href="{% url 'calibration:export_summary' %}?format=json" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-file-earmark-code"></i> 导出JSON
         </a>
+    </div>
+</div>
+
+<div class="alert alert-info d-flex align-items-center" style="border-left:4px solid var(--alpine-secondary);">
+    <i class="bi bi-info-circle fs-4 me-3"></i>
+    <div>
+        <strong>工作台使用说明：</strong>
+        从本页可直接完成「新增 → 查看 → 编辑 → 离线同步 → 导出」完整台账流程。
+        下方快捷入口可直接进入各模块的新增页面；「离线同步演示卡」可一键验证离线录入 → 同步的端到端流程。
     </div>
 </div>
 
@@ -66,6 +75,134 @@
                 <div>
                     <div class="stat-value">{{ anomaly_records }}</div>
                     <div class="stat-label">异常记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-plus-circle"></i> 快捷新增入口（从工作台直接进入新增页）</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-2">
+                <a href="{% url 'calibration:station_create' %}" class="btn btn-outline-primary w-100 h-100 py-4">
+                    <i class="bi bi-building fs-3 d-block mb-1"></i>
+                    <small>新增气象站</small>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'calibration:instrument_create' %}" class="btn btn-outline-success w-100 h-100 py-4">
+                    <i class="bi bi-thermometer-half fs-3 d-block mb-1"></i>
+                    <small>新增仪器</small>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'calibration:calibration_create' %}" class="btn btn-outline-info w-100 h-100 py-4">
+                    <i class="bi bi-clipboard-check fs-3 d-block mb-1"></i>
+                    <small>新增校准记录</small>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'calibration:batch_create' %}" class="btn btn-outline-secondary w-100 h-100 py-4">
+                    <i class="bi bi-layers fs-3 d-block mb-1"></i>
+                    <small>新增校准批次</small>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'calibration:transport_create' %}" class="btn btn-outline-warning w-100 h-100 py-4">
+                    <i class="bi bi-truck fs-3 d-block mb-1"></i>
+                    <small>新增运输记录</small>
+                </a>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'calibration:certificate_create' %}" class="btn btn-outline-dark w-100 h-100 py-4">
+                    <i class="bi bi-award fs-3 d-block mb-1"></i>
+                    <small>新增校准证书</small>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-cloud-off"></i> 离线录入同步验证卡 · 已累计离线同步 <span id="synced-count-label" class="badge bg-primary">{{ offline_synced_count }}</span> 条</span>
+        <span class="text-muted small">使用 localStorage 暂存 → 一键同步至服务端 → 生成校准记录</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="bi bi-1-circle"></i> 快速填入样例数据</h6>
+                <div class="mb-2 small">
+                    样例仪器: <code>{{ sample_instrument.serial_number }}</code>
+                    ({{ sample_instrument.get_instrument_type_display }} / {{ sample_instrument.model_name }})
+                </div>
+                <div class="mb-3 small">
+                    样例批次: <code>{{ sample_batch.batch_number }}</code>
+                    ({{ sample_batch.calibration_date }} / {{ sample_batch.operator }})
+                </div>
+                <button class="btn btn-sm btn-outline-secondary me-2" onclick="fillSampleTemp()">
+                    <i class="bi bi-snow"></i> 填充-20°C 温度校准
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="fillSampleHumidity()">
+                    <i class="bi bi-droplet"></i> 填充50%RH湿度校准
+                </button>
+                <button class="btn btn-sm btn-outline-primary ms-2" onclick="openOfflineEntry()">
+                    <i class="bi bi-plus-square"></i> 打开离线录入窗口
+                </button>
+
+                <h6 class="mt-4 mb-2"><i class="bi bi-2-circle"></i> 本地暂存的校准数据</h6>
+                <div id="dashboard-offline-list" class="p-3 bg-light rounded" style="max-height: 260px; overflow-y: auto;">
+                    <p class="text-muted small mb-0">暂无暂存数据，点击上方「填充样例」或「打开离线录入窗口」开始录入。</p>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-danger me-2" onclick="clearAllOffline()">
+                        <i class="bi bi-trash"></i> 清空本地暂存
+                    </button>
+                    <button class="btn btn-alpine" onclick="syncFromDashboard()">
+                        <i class="bi bi-cloud-upload"></i> 同步至服务器 → 生成校准记录
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-3"><i class="bi bi-3-circle"></i> 同步状态 & 结果</h6>
+                <div id="sync-status-panel" class="alert alert-secondary">
+                    <i class="bi bi-clock"></i> 等待同步操作...
+                </div>
+                <div id="sync-result-panel" class="mt-3" style="display:none;">
+                    <h6><i class="bi bi-list-check"></i> 最近同步结果</h6>
+                    <table class="table table-sm">
+                        <thead><tr><th>仪器</th><th>测试点</th><th>校准前→后</th><th>结果</th></tr></thead>
+                        <tbody id="sync-result-tbody"></tbody>
+                    </table>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'calibration:calibration_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-list"></i> 查看全部校准记录
+                        </a>
+                        <a id="view-synced-link" href="#" class="btn btn-sm btn-primary" style="display:none;">
+                            <i class="bi bi-search"></i> 仅查看本次同步
+                        </a>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="mt-3 mb-2"><i class="bi bi-list-columns"></i> 工作台账导出</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'calibration:calibration_list' %}?export=csv" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> 校准记录 CSV
+                    </a>
+                    <a href="{% url 'calibration:calibration_list' %}?export=json" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-file-earmark-code"></i> 校准记录 JSON
+                    </a>
+                    <a href="{% url 'calibration:export_summary' %}?format=csv" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-bar-chart"></i> 全局摘要 CSV
+                    </a>
+                    <a href="{% url 'calibration:export_summary' %}?format=json" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-bar-chart"></i> 全局摘要 JSON
+                    </a>
                 </div>
             </div>
         </div>
@@ -130,7 +267,12 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>最近校准批次</span>
-                <a href="{% url 'calibration:batch_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+                <div>
+                    <a href="{% url 'calibration:batch_create' %}" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bi bi-plus"></i> 新增批次
+                    </a>
+                    <a href="{% url 'calibration:batch_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+                </div>
             </div>
             <div class="card-body">
                 {% if recent_batches %}
@@ -157,7 +299,12 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>最近校准记录</span>
-                <a href="{% url 'calibration:calibration_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+                <div>
+                    <a href="{% url 'calibration:calibration_create' %}" class="btn btn-sm btn-outline-secondary me-2">
+                        <i class="bi bi-plus"></i> 新增记录
+                    </a>
+                    <a href="{% url 'calibration:calibration_list' %}" class="btn btn-sm btn-outline-primary">全部</a>
+                </div>
             </div>
             <div class="card-body">
                 {% if recent_records %}
@@ -184,6 +331,13 @@
         </div>
     </div>
 </div>
+
+{% if sample_instrument and sample_batch %}
+<script>
+    window.SAMPLE_INSTRUMENT_SERIAL = '{{ sample_instrument.serial_number }}';
+    window.SAMPLE_BATCH_NUMBER = '{{ sample_batch.batch_number }}';
+</script>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -225,5 +379,155 @@
         },
         options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
+
+    function renderDashboardOffline() {
+        var records = getOfflineRecords();
+        var list = document.getElementById('dashboard-offline-list');
+        if (records.length === 0) {
+            list.innerHTML = '<p class="text-muted small mb-0">暂无暂存数据，点击上方「填充样例」或「打开离线录入窗口」开始录入。</p>';
+            return;
+        }
+        list.innerHTML = records.map(function(r, i) {
+            return '<div class="d-flex justify-content-between align-items-center border-bottom py-1 small">' +
+                '<span><i class="bi bi-cloud-off me-1 text-muted"></i>' +
+                '<b>' + r.instrument_serial + '</b> | ' + r.test_point +
+                ' | ' + r.before_value + '→' + r.after_value + '</span>' +
+                '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteOfflineRecord(' + i + '); renderDashboardOffline();">' +
+                '<i class="bi bi-x"></i></button></div>';
+        }).join('');
+    }
+
+    function clearAllOffline() {
+        if (!confirm('确定要清空本地暂存的 ' + getOfflineRecords().length + ' 条记录？')) return;
+        saveOfflineRecords([]);
+        renderDashboardOffline();
+        setSyncStatus('warning', '已清空本地暂存数据。');
+    }
+
+    function fillSampleTemp() {
+        if (!window.SAMPLE_INSTRUMENT_SERIAL) return;
+        var records = getOfflineRecords();
+        var timestamp = new Date().toISOString();
+        records.push({
+            instrument_serial: window.SAMPLE_INSTRUMENT_SERIAL,
+            batch_number: window.SAMPLE_BATCH_NUMBER,
+            test_point: '-20°C [离线同步演示]',
+            before_value: -20.8, after_value: -20.08, standard_value: -20.0,
+            tolerance: 0.5, result: 'pass', is_anomaly: false,
+            anomaly_note: '', notes: '工作台-离线同步样例（低温）', timestamp: timestamp
+        });
+        records.push({
+            instrument_serial: window.SAMPLE_INSTRUMENT_SERIAL,
+            batch_number: window.SAMPLE_BATCH_NUMBER,
+            test_point: '0°C [离线同步演示]',
+            before_value: 0.6, after_value: 0.09, standard_value: 0.0,
+            tolerance: 0.3, result: 'pass', is_anomaly: false,
+            anomaly_note: '', notes: '工作台-离线同步样例（零度）', timestamp: timestamp
+        });
+        records.push({
+            instrument_serial: window.SAMPLE_INSTRUMENT_SERIAL,
+            batch_number: window.SAMPLE_BATCH_NUMBER,
+            test_point: '25°C [离线同步演示]',
+            before_value: 25.7, after_value: 25.1, standard_value: 25.0,
+            tolerance: 0.3, result: 'pass', is_anomaly: false,
+            anomaly_note: '', notes: '工作台-离线同步样例（常温）', timestamp: timestamp
+        });
+        saveOfflineRecords(records);
+        renderDashboardOffline();
+        setSyncStatus('info', '已添加 3 条温度校准样例到本地暂存，请点击「同步至服务器」按钮。');
+    }
+
+    function fillSampleHumidity() {
+        if (!window.SAMPLE_INSTRUMENT_SERIAL) return;
+        var inst = 'HUM-QH001-001';
+        var records = getOfflineRecords();
+        var timestamp = new Date().toISOString();
+        var items = [
+            { tp: '20%RH [离线同步演示]', b: 21.2, a: 20.15, s: 20.0, tol: 2.0 },
+            { tp: '50%RH [离线同步演示]', b: 51.8, a: 50.2, s: 50.0, tol: 2.0 },
+            { tp: '80%RH [离线同步演示]', b: 82.5, a: 80.4, s: 80.0, tol: 2.5 },
+        ];
+        items.forEach(function(it) {
+            records.push({
+                instrument_serial: inst,
+                batch_number: window.SAMPLE_BATCH_NUMBER,
+                test_point: it.tp, before_value: it.b, after_value: it.a,
+                standard_value: it.s, tolerance: it.tol,
+                result: 'pass', is_anomaly: false,
+                anomaly_note: '', notes: '工作台-离线同步样例（湿度）',
+                timestamp: timestamp
+            });
+        });
+        saveOfflineRecords(records);
+        renderDashboardOffline();
+        setSyncStatus('info', '已添加 3 条湿度校准样例到本地暂存，请点击「同步至服务器」按钮。');
+    }
+
+    function setSyncStatus(type, text) {
+        var panel = document.getElementById('sync-status-panel');
+        var icons = { info: 'bi-info-circle', success: 'bi-check-circle', warning: 'bi-exclamation-triangle', danger: 'bi-exclamation-octagon' };
+        panel.className = 'alert alert-' + type;
+        panel.innerHTML = '<i class="bi ' + icons[type] + ' me-1"></i> ' + text;
+    }
+
+    async function syncFromDashboard() {
+        var records = getOfflineRecords();
+        if (records.length === 0) {
+            setSyncStatus('warning', '本地暂存为空，请先添加样例数据再同步。');
+            return;
+        }
+        setSyncStatus('info', '正在同步 ' + records.length + ' 条记录...');
+
+        try {
+            var resp = await fetch('{% url "calibration:offline_sync" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify({ records: records })
+            });
+            var data = await resp.json();
+            if (data.status === 'ok') {
+                var msg = '同步成功！已创建 ' + data.created + ' 条校准记录';
+                if (data.errors.length > 0) msg += '（失败 ' + data.errors.length + ' 条）';
+                setSyncStatus('success', msg + ' 结果详情见下方表格。');
+                document.getElementById('sync-result-panel').style.display = 'block';
+                var tbody = document.getElementById('sync-result-tbody');
+                var syncedRecords = records.slice(0, data.created);
+                tbody.innerHTML = syncedRecords.map(function(r) {
+                    var color = r.is_anomaly ? 'bg-danger bg-opacity-10' : '';
+                    var badge = r.result === 'pass' ? 'badge-pass' : (r.result === 'fail' ? 'badge-fail' : 'badge-conditional');
+                    return '<tr class="' + color + '">' +
+                        '<td>' + r.instrument_serial + '</td>' +
+                        '<td>' + r.test_point + '</td>' +
+                        '<td>' + r.before_value + ' → ' + r.after_value + '</td>' +
+                        '<td><span class="badge ' + badge + '">' +
+                        (r.result === 'pass' ? '合格' : (r.result === 'fail' ? '不合格' : '有条件合格')) +
+                        '</span></td></tr>';
+                }).join('');
+                var label = document.getElementById('synced-count-label');
+                var current = parseInt(label.textContent || '0') + data.created;
+                label.textContent = current;
+
+                var onlySyncedLink = document.getElementById('view-synced-link');
+                if (data.created_pks && data.created_pks.length > 0) {
+                    onlySyncedLink.href = '{% url "calibration:calibration_list" %}?q=' +
+                        encodeURIComponent('[离线同步]');
+                    onlySyncedLink.style.display = '';
+                }
+                saveOfflineRecords([]);
+                renderDashboardOffline();
+            } else {
+                setSyncStatus('danger', '同步失败：' + (data.message || '未知错误'));
+            }
+        } catch (e) {
+            setSyncStatus('danger', '同步请求异常：' + e.message);
+        }
+    }
+
+    renderDashboardOffline();
+    // 监听离线模态框中的记录变化，同步更新工作台
+    var origSaveOfflineRecord = window.saveOfflineRecord;
+    setInterval(function() {
+        try { renderDashboardOffline(); } catch(e) {}
+    }, 1500);
 </script>
 {% endblock %}

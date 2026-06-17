@@ -21,6 +21,7 @@ def dashboard(request):
     recent_batches = CalibrationBatch.objects.all()[:5]
     recent_records = CalibrationRecord.objects.select_related('instrument', 'batch')[:10]
     expired_certs = [c for c in Certificate.objects.filter(is_valid=True) if c.is_expired]
+    offline_synced_count = CalibrationRecord.objects.filter(notes__icontains='[离线同步]').count()
 
     stations_geo = Station.objects.filter(status='active')
     stations_data = [
@@ -47,6 +48,11 @@ def dashboard(request):
         count = CalibrationRecord.objects.filter(result=r[0]).count()
         result_stats[r[1]] = count
 
+    sample_instrument = Instrument.objects.filter(
+        status__in=['normal', 'needs_calibration']
+    ).first()
+    sample_batch = CalibrationBatch.objects.filter(is_superseded=False).first()
+
     context = {
         'total_stations': total_stations,
         'active_stations': active_stations,
@@ -57,9 +63,12 @@ def dashboard(request):
         'recent_batches': recent_batches,
         'recent_records': recent_records,
         'expired_certs': expired_certs,
+        'offline_synced_count': offline_synced_count,
         'stations_data': json.dumps(stations_data, ensure_ascii=False),
         'instrument_type_stats': json.dumps(instrument_type_stats, ensure_ascii=False),
         'result_stats': json.dumps(result_stats, ensure_ascii=False),
+        'sample_instrument': sample_instrument,
+        'sample_batch': sample_batch,
     }
     return render(request, 'calibration/dashboard.html', context)
 
@@ -507,13 +516,14 @@ def offline_sync(request):
             records = data.get('records', [])
             created_count = 0
             errors = []
+            created_pks = []
 
             for rec_data in records:
                 try:
                     instrument = Instrument.objects.get(serial_number=rec_data.get('instrument_serial'))
                     batch = CalibrationBatch.objects.get(batch_number=rec_data.get('batch_number'))
 
-                    CalibrationRecord.objects.create(
+                    obj = CalibrationRecord.objects.create(
                         instrument=instrument,
                         batch=batch,
                         test_point=rec_data.get('test_point', ''),
@@ -524,21 +534,37 @@ def offline_sync(request):
                         result=rec_data.get('result', 'pass'),
                         is_anomaly=rec_data.get('is_anomaly', False),
                         anomaly_note=rec_data.get('anomaly_note', ''),
-                        notes=rec_data.get('notes', ''),
+                        notes=rec_data.get('notes', '') + ' [离线同步]',
                     )
                     created_count += 1
+                    created_pks.append(str(obj.pk))
                 except Exception as e:
-                    errors.append(str(e))
+                    errors.append(f"{rec_data.get('test_point', '?')}: {str(e)}")
 
             return JsonResponse({
                 'status': 'ok',
                 'created': created_count,
                 'errors': errors,
+                'created_pks': created_pks,
             })
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-    return JsonResponse({'status': 'ready', 'message': '离线同步端点就绪'})
+    if request.method == 'GET':
+        instruments = list(Instrument.objects.filter(
+            status__in=['normal', 'needs_calibration']
+        ).values('serial_number', 'model_name', 'instrument_type')[:100])
+        batches = list(CalibrationBatch.objects.filter(
+            is_superseded=False
+        ).order_by('-calibration_date').values('batch_number', 'calibration_date', 'operator')[:50])
+        return JsonResponse({
+            'status': 'ready',
+            'message': '离线同步端点就绪',
+            'instruments': instruments,
+            'batches': batches,
+        })
+
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
 
 def export_summary(request):
