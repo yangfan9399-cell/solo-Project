@@ -543,16 +543,61 @@ export async function getAllRecipes(): Promise<GlazeRecipe[]> {
   return data.recipes;
 }
 
-export async function createRecipe(recipe: Omit<GlazeRecipe, 'id' | 'createdAt' | 'updatedAt' | 'versions' | 'currentVersionId'>): Promise<GlazeRecipe> {
+export async function createRecipe(recipe: Omit<GlazeRecipe, 'id' | 'createdAt' | 'updatedAt' | 'versions' | 'currentVersionId'> & {
+  initialComponents?: Array<{ ingredientId: string; ingredientName: string; percentage: number; locked?: boolean }>;
+  initialFiringTemperature?: number;
+  initialFiringType?: 'oxidation' | 'reduction' | 'soda' | 'wood' | 'salt';
+  initialHoldTime?: number;
+}): Promise<GlazeRecipe> {
   const data = await readData();
   const now = new Date().toISOString();
+  const newRecipeId = generateId('recipe');
+  const firstVersionId = generateId('ver');
+
+  const defaultComponents = recipe.initialComponents && recipe.initialComponents.length > 0
+    ? recipe.initialComponents.map(c => ({
+        ingredientId: c.ingredientId,
+        ingredientName: c.ingredientName,
+        percentage: c.percentage,
+        locked: c.locked ?? false,
+      }))
+    : [
+        { ingredientId: 'ing_feldspar', ingredientName: 'Potash Feldspar (钾长石)', percentage: 40, locked: false },
+        { ingredientId: 'ing_kaolin', ingredientName: 'Kaolin (高岭土)', percentage: 25, locked: false },
+        { ingredientId: 'ing_silica', ingredientName: 'Silica (石英)', percentage: 20, locked: false },
+        { ingredientId: 'ing_whiting', ingredientName: 'Whiting (石灰石)', percentage: 15, locked: false },
+      ];
+
+  const totalPercentage = defaultComponents.reduce((sum, c) => sum + c.percentage, 0);
+
+  const initialVersion: RecipeVersion = {
+    id: firstVersionId,
+    recipeId: newRecipeId,
+    versionNumber: 1,
+    batchNumber: undefined,
+    components: defaultComponents,
+    totalPercentage,
+    firingTemperature: recipe.initialFiringTemperature ?? 1230,
+    firingType: recipe.initialFiringType ?? 'oxidation',
+    firingAtmosphere: 'oxidizing',
+    coolingRate: 'normal',
+    holdTime: recipe.initialHoldTime ?? 30,
+    createdAt: now,
+    createdBy: '工作台用户',
+    changeNotes: '初始版本 - 通过工作台创建',
+    isLocked: false,
+    specimens: [],
+  };
+
+  const { initialComponents: _ic, initialFiringTemperature: _ift, initialFiringType: _ify, initialHoldTime: _iht, ...recipeRest } = recipe;
+
   const newRecipe: GlazeRecipe = {
-    ...recipe,
-    id: generateId('recipe'),
+    ...recipeRest,
+    id: newRecipeId,
     createdAt: now,
     updatedAt: now,
-    versions: [],
-    currentVersionId: '',
+    versions: [initialVersion],
+    currentVersionId: firstVersionId,
   };
   data.recipes.push(newRecipe);
 
@@ -575,47 +620,64 @@ export async function updateRecipe(id: string, updates: Partial<GlazeRecipe>): P
   return data.recipes[index];
 }
 
-export async function addRecipeVersion(recipeId: string, input: (Omit<RecipeVersion, 'id' | 'createdAt' | 'specimens' | 'versionNumber'> & { sourceVersionId?: string; changeNotes?: string })): Promise<RecipeVersion | null> {
+export async function addRecipeVersion(
+  recipeId: string,
+  input: (
+    Partial<Omit<RecipeVersion, 'id' | 'createdAt' | 'specimens' | 'versionNumber' | 'recipeId' | 'components' | 'totalPercentage' | 'firingTemperature' | 'firingType' | 'holdTime' | 'createdBy' | 'changeNotes' | 'isLocked'>> &
+    { sourceVersionId?: string; changeNotes?: string }
+  )
+): Promise<RecipeVersion | null> {
   const data = await readData();
   const recipe = data.recipes.find(r => r.id === recipeId);
   if (!recipe) return null;
 
   const now = new Date().toISOString();
-  let base: Partial<RecipeVersion> = {};
+  const base: Partial<RecipeVersion> = {};
 
   if (input.sourceVersionId) {
     const source = recipe.versions.find(v => v.id === input.sourceVersionId);
     if (source) {
-      base = {
-        components: source.components.map(c => ({ ...c })),
-        firingTemperature: source.firingTemperature,
-        firingType: source.firingType,
-        holdTime: source.holdTime,
-        batchNumber: undefined,
-        totalPercentage: source.totalPercentage,
-        firingAtmosphere: source.firingAtmosphere,
-        coolingRate: source.coolingRate,
-      };
+      base.components = source.components.map(c => ({ ...c }));
+      base.firingTemperature = source.firingTemperature;
+      base.firingType = source.firingType;
+      base.holdTime = source.holdTime;
+      base.totalPercentage = source.totalPercentage;
+      base.firingAtmosphere = source.firingAtmosphere;
+      base.coolingRate = source.coolingRate;
+      base.batchNumber = undefined;
     }
   }
 
-  const { sourceVersionId, changeNotes, ...rest } = input;
-
-  const newVersion: RecipeVersion = {
-    components: recipe.versions[0].components.map(c => ({ ...c })),
-    firingTemperature: 1230,
-    firingType: 'oxidation',
-    holdTime: 30,
-    totalPercentage: 100,
-    specimens: [],
-    changeNotes: changeNotes || '',
-    isLocked: false,
-    createdBy: '工作台用户',
-    ...base,
-    ...rest,
+  const defaults: RecipeVersion = {
     id: generateId('ver'),
-    createdAt: now,
+    recipeId,
     versionNumber: recipe.versions.length + 1,
+    components: recipe.versions.length > 0
+      ? recipe.versions[0].components.map(c => ({ ...c }))
+      : [],
+    totalPercentage: recipe.versions.length > 0 ? recipe.versions[0].totalPercentage : 100,
+    firingTemperature: recipe.versions.length > 0 ? recipe.versions[0].firingTemperature : 1230,
+    firingType: recipe.versions.length > 0 ? recipe.versions[0].firingType : 'oxidation',
+    holdTime: recipe.versions.length > 0 ? recipe.versions[0].holdTime : 30,
+    createdAt: now,
+    createdBy: '工作台用户',
+    changeNotes: input.changeNotes || '',
+    isLocked: false,
+    specimens: [],
+  };
+
+  const { sourceVersionId: _sv, changeNotes: _cn, ...inputRest } = input;
+  const newVersion: RecipeVersion = {
+    ...defaults,
+    ...base,
+    ...inputRest,
+    id: defaults.id,
+    recipeId: defaults.recipeId,
+    versionNumber: defaults.versionNumber,
+    createdAt: defaults.createdAt,
+    specimens: defaults.specimens,
+    isLocked: false,
+    changeNotes: input.changeNotes || defaults.changeNotes,
   };
 
   recipe.versions.push(newVersion);

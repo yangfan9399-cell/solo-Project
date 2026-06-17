@@ -38,6 +38,8 @@ export interface RecipeVersion {
   totalPercentage: number;
   firingTemperature: number;
   firingType: 'oxidation' | 'reduction' | 'soda' | 'wood' | 'salt';
+  firingAtmosphere?: 'neutral' | 'oxidizing' | 'reducing';
+  coolingRate?: 'slow' | 'normal' | 'fast';
   holdTime: number;
   createdAt: string;
   createdBy: string;

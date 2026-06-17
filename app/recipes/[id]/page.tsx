@@ -115,7 +115,13 @@ export default async function RecipeDetailPage({
                     </div>
                   )}
                 </div>
-                <div>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/recipes/${recipe.id}/edit`}
+                    className="px-4 py-2 border border-stone-300 rounded-lg text-sm text-stone-600 hover:bg-stone-50 transition-colors"
+                  >
+                    编辑
+                  </Link>
                   <NewVersionButton recipeId={recipe.id} currentVersionId={currentVersion.id} />
                 </div>
               </div>
