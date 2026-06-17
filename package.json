@@ -1,0 +1,26 @@
+{
+  "name": "incense-formula-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NAPI_RS_FORCE_WASI=1 nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "prepare": "nuxt prepare"
+  },
+  "dependencies": {
+    "@oxc-minify/binding-wasm32-wasi": "^0.136.0",
+    "@oxc-parser/binding-wasm32-wasi": "^0.136.0",
+    "@oxc-transform/binding-wasm32-wasi": "^0.136.0",
+    "nuxt": "^3.14.0",
+    "sql.js": "^1.14.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^1.6.0",
+    "typescript": "^5.7.3"
+  }
+}
