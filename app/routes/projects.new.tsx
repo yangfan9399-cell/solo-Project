@@ -52,7 +52,7 @@ export default function NewProject() {
       <div className="page-header">
         <div>
           <div className="page-title">➕ 新建鱼道流速评估项目</div>
-          <div className="page-subtitle">填写项目基础信息后，将自动创建初始版本（v1.0）并进入工作台</div>
+          <div className="page-subtitle">填写项目基础信息后，将自动创建初始版本（v1.0）并进入工作台 · 项目创建即为申请提交，数据实时留存</div>
         </div>
       </div>
 

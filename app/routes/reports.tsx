@@ -19,8 +19,8 @@ export default function ReportsPage() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">📊 批量报告导出</div>
-          <div className="page-subtitle">对已完成的评估项目进行摘要、批量 CSV / 单个 TXT 报告下载</div>
+          <div className="page-title">📊 批量报告导出 / 复盘聚合</div>
+          <div className="page-subtitle">汇总所有评估项目的关键指标，支持单项目 TXT 报告与批量 CSV 摘要导出，用于复盘分析与归档</div>
         </div>
       </div>
 

@@ -608,3 +608,33 @@ export function resolveAnomaly(id: number) {
   db.prepare("UPDATE anomaly_records SET resolved = 1 WHERE id = ?").run(id);
   updateProjectAnomalyFlags(row.project_id);
 }
+
+export function sectionBelongsToVersion(sectionId: number, versionId: number): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT id FROM cross_sections WHERE id = ? AND version_id = ?").get(sectionId, versionId);
+  return !!row;
+}
+
+export function waterLevelBelongsToVersion(id: number, versionId: number): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT w.id FROM water_levels w WHERE w.id = ? AND w.version_id = ?").get(id, versionId);
+  return !!row;
+}
+
+export function roughnessBelongsToVersion(id: number, versionId: number): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT r.id FROM roughnesses r WHERE r.id = ? AND r.version_id = ?").get(id, versionId);
+  return !!row;
+}
+
+export function obstacleBelongsToVersion(id: number, versionId: number): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT o.id FROM obstacles o WHERE o.id = ? AND o.version_id = ?").get(id, versionId);
+  return !!row;
+}
+
+export function anomalyBelongsToVersion(id: number, versionId: number): boolean {
+  const db = getDb();
+  const row = db.prepare("SELECT a.id FROM anomaly_records a WHERE a.id = ? AND a.version_id = ?").get(id, versionId);
+  return !!row;
+}

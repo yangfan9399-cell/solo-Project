@@ -12,6 +12,8 @@ import {
   createFlowSegment, clearFlowSegments, createUnsuitableZone, clearUnsuitableZones,
   createVersion, setCurrentVersion,
   createAnomaly, clearAnomalies, resolveAnomaly,
+  sectionBelongsToVersion, waterLevelBelongsToVersion, roughnessBelongsToVersion,
+  obstacleBelongsToVersion, anomalyBelongsToVersion,
 } from "~/db/queries";
 import { getDb } from "~/db/schema";
 import { seed } from "~/db/seed";
@@ -177,8 +179,10 @@ export async function action({ params, request }: ActionFunctionArgs) {
         remark: String(form.get("remark") || "") || null,
       });
       return json({ ok: true });
-    case "edit_section":
-      updateSection(Number(form.get("id")), {
+    case "edit_section": {
+      const sid = Number(form.get("id"));
+      if (!sectionBelongsToVersion(sid, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法修改" }, { status: 403 });
+      updateSection(sid, {
         project_id: pid, version_id: versionId,
         station_no: String(form.get("station_no")),
         name: String(form.get("name")),
@@ -189,13 +193,19 @@ export async function action({ params, request }: ActionFunctionArgs) {
         remark: String(form.get("remark") || "") || null,
       });
       return json({ ok: true });
-    case "delete_section":
-      deleteSection(Number(form.get("id")));
+    }
+    case "delete_section": {
+      const sid = Number(form.get("id"));
+      if (!sectionBelongsToVersion(sid, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法删除" }, { status: 403 });
+      deleteSection(sid);
       return json({ ok: true });
-    case "add_water_level":
+    }
+    case "add_water_level": {
+      const secId = Number(form.get("section_id"));
+      if (!sectionBelongsToVersion(secId, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法添加水位记录" }, { status: 403 });
       createWaterLevel({
         project_id: pid, version_id: versionId,
-        section_id: Number(form.get("section_id")),
+        section_id: secId,
         upstream_level: Number(form.get("upstream_level")),
         downstream_level: Number(form.get("downstream_level")),
         water_depth: Number(form.get("water_depth")),
@@ -204,21 +214,37 @@ export async function action({ params, request }: ActionFunctionArgs) {
         remark: String(form.get("remark") || "") || null,
       });
       return json({ ok: true });
-    case "delete_water_level": deleteWaterLevel(Number(form.get("id"))); return json({ ok: true });
-    case "add_roughness":
+    }
+    case "delete_water_level": {
+      const wid = Number(form.get("id"));
+      if (!waterLevelBelongsToVersion(wid, versionId)) return json({ ok: false, error: "该记录不属于当前版本，无法删除" }, { status: 403 });
+      deleteWaterLevel(wid);
+      return json({ ok: true });
+    }
+    case "add_roughness": {
+      const secId = Number(form.get("section_id"));
+      if (!sectionBelongsToVersion(secId, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法添加糙率" }, { status: 403 });
       createRoughness({
         project_id: pid, version_id: versionId,
-        section_id: Number(form.get("section_id")),
+        section_id: secId,
         n_value: Number(form.get("n_value")),
         type: form.get("type") as any,
         description: String(form.get("description") || "") || null,
       });
       return json({ ok: true });
-    case "delete_roughness": deleteRoughness(Number(form.get("id"))); return json({ ok: true });
-    case "add_obstacle":
+    }
+    case "delete_roughness": {
+      const rid = Number(form.get("id"));
+      if (!roughnessBelongsToVersion(rid, versionId)) return json({ ok: false, error: "该记录不属于当前版本，无法删除" }, { status: 403 });
+      deleteRoughness(rid);
+      return json({ ok: true });
+    }
+    case "add_obstacle": {
+      const secId = Number(form.get("section_id"));
+      if (!sectionBelongsToVersion(secId, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法添加障碍物" }, { status: 403 });
       createObstacle({
         project_id: pid, version_id: versionId,
-        section_id: Number(form.get("section_id")),
+        section_id: secId,
         type: form.get("type") as any,
         position_m: Number(form.get("position_m")),
         height_m: Number(form.get("height_m")),
@@ -226,9 +252,16 @@ export async function action({ params, request }: ActionFunctionArgs) {
         description: String(form.get("description") || "") || null,
       });
       return json({ ok: true });
-    case "delete_obstacle": deleteObstacle(Number(form.get("id"))); return json({ ok: true });
+    }
+    case "delete_obstacle": {
+      const oid = Number(form.get("id"));
+      if (!obstacleBelongsToVersion(oid, versionId)) return json({ ok: false, error: "该记录不属于当前版本，无法删除" }, { status: 403 });
+      deleteObstacle(oid);
+      return json({ ok: true });
+    }
     case "save_segments": {
       const sectionId = Number(form.get("section_id"));
+      if (!sectionBelongsToVersion(sectionId, versionId)) return json({ ok: false, error: "该断面不属于当前版本，无法保存流速分段" }, { status: 403 });
       clearFlowSegments(sectionId);
       clearUnsuitableZones(sectionId);
       const fishType = (getProject(pid)?.fish_type ?? "general") as FishType;
@@ -284,9 +317,12 @@ export async function action({ params, request }: ActionFunctionArgs) {
     case "use_version":
       setCurrentVersion(pid, Number(form.get("id")));
       return json({ ok: true });
-    case "resolve_anomaly":
-      resolveAnomaly(Number(form.get("id")));
+    case "resolve_anomaly": {
+      const aid = Number(form.get("id"));
+      if (!anomalyBelongsToVersion(aid, versionId)) return json({ ok: false, error: "该异常不属于当前版本，无法处理" }, { status: 403 });
+      resolveAnomaly(aid);
       return json({ ok: true });
+    }
   }
   return json({ ok: false }, { status: 400 });
 }
@@ -401,6 +437,9 @@ export default function ProjectWorkbench() {
             <div className="card-body">
               <div className="info-row"><span className="info-label">项目编号</span><span className="info-value metric-value">{data.project.code}</span></div>
               <div className="info-row"><span className="info-label">状态</span><span>{statusLabel(data.project.status)}</span></div>
+              <div style={{ fontSize: 11, color: "var(--color-text-muted)", marginTop: -4, paddingLeft: 2 }}>
+                标记完成即为审批通过，可在报告页导出正式成果
+              </div>
               <div className="info-row"><span className="info-label">电站</span><span>{data.project.station_name}</span></div>
               <div className="info-row"><span className="info-label">河流</span><span>{data.project.river_name}</span></div>
               <div className="info-row"><span className="info-label">河流类型</span><span>{riverTypeLabel(data.project.river_type)}</span></div>
@@ -906,6 +945,14 @@ function VersionsPanel({ data, busy, submit, onSwitch, showAdd, setShowAdd }: an
         <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}>➕ 新建版本</button>
       </div>
       <div className="card-body">
+        <div className="alert alert-info" style={{ marginBottom: 16 }}>
+          <span className="alert-icon">📌</span>
+          <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+            <strong>版本/批次即为归档副本</strong>：历史版本数据只读，不可编辑或删除。
+            新建版本时将完整快照当前断面、流速、糙率等全部数据，作为该批次的归档复核依据。
+            可通过「仅预览」查看历史数据，或「切换到此版本」恢复为当前工作版本。
+          </div>
+        </div>
         <div className="version-timeline">
           {data.versions.map((v: any) => {
             const s = stats?.[v.id] ?? { sections: 0, segments: 0, zones: 0, anomalies: 0 };
