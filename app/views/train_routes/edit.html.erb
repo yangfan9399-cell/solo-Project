@@ -1,0 +1,181 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1>编辑列车径路</h1>
+        <p class="text-muted">所属运行图: <%= @train_route.run_chart.name %></p>
+      </div>
+      <div class="btn-group">
+        <a href="<%= project_run_chart_train_route_path(@train_route.run_chart.project, @train_route.run_chart, @train_route) %>" class="btn btn-outline-secondary">返回详情</a>
+      </div>
+    </div>
+
+    <%= form_for([@train_route.run_chart.project, @train_route.run_chart, @train_route]) do |f| %>
+      <% if @train_route.errors.any? %>
+        <div class="alert alert-danger">
+          <h4>验证失败</h4>
+          <ul>
+            <% @train_route.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <span><i class="fa-solid fa-info-circle me-2"></i>基本信息</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label>车次 *</label>
+              <%= f.text_field :train_no, class: 'form-control', required: true %>
+            </div>
+            <div class="col-md-3">
+              <label>列车类型 *</label>
+              <%= f.select :train_type, TrainRoute.train_type_options, { include_blank: '请选择' }, class: 'form-select', required: true %>
+            </div>
+            <div class="col-md-3">
+              <label>状态</label>
+              <%= f.select :status, [['草稿', 'draft'], ['已校验', 'validated'], ['已校正', 'corrected']], {}, class: 'form-select' %>
+            </div>
+            <div class="col-md-3">
+              <label>颜色标记</label>
+              <div class="d-flex align-items-center">
+                <%= f.text_field :color, class: 'form-control', value: @train_route.color || '#0D6EFD' %>
+                <div class="w-8 h-8 rounded ml-2 border" style="background-color: <%= @train_route.color || '#0D6EFD' %>" id="color-preview"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <span><i class="fa-solid fa-map-pin me-2"></i>停站点列表</span>
+          <button type="button" onclick="addStation()" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-plus"></i> 添加站点
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="stations-container">
+            <%= f.fields_for :stations do |station| %>
+              <%= render 'station_fields', f: station %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <span><i class="fa-solid fa-arrows-line me-2"></i>径路预览</span>
+        </div>
+        <div class="card-body">
+          <div class="bg-light border rounded p-4" style="min-height: 300px;">
+            <svg width="100%" height="300" viewBox="0 0 400 250" class="border">
+              <defs>
+                <marker id="arrowhead-edit" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                </marker>
+              </defs>
+
+              <line x1="60" y1="220" x2="380" y2="220" stroke="#666" stroke-width="2"/>
+              <line x1="60" y1="220" x2="60" y2="30" stroke="#666" stroke-width="2"/>
+
+              <% (0..8).each do |i| %>
+                <line x1="60 + i * 40" y1="220" x2="60 + i * 40" y2="225" stroke="#666"/>
+                <text x="60 + i * 40 - 10" y="235" font-size="10" fill="#666"><%= i * 2 %></text>
+              <% end %>
+
+              <% (0..4).each do |i| %>
+                <line x1="60" y1="220 - i * 47.5" x2="55" y2="220 - i * 47.5" stroke="#666"/>
+                <text x="45" y="220 - i * 47.5 + 3" font-size="10" fill="#666"><%= i * 100 %></text>
+              <% end %>
+
+              <path d="<%= @train_route.path_data %>" stroke="<%= @train_route.color || '#0D6EFD' %>" stroke-width="3" fill="none" marker-end="url(#arrowhead-edit)"/>
+
+              <% @train_route.stations.order(:order).each do |station| %>
+                <circle cx="<%= station.x_coordinate %>" cy="<%= station.y_coordinate %>" r="6" fill="white" stroke="<%= @train_route.color || '#0D6EFD' %>" stroke-width="2"/>
+                <text x="<%= station.x_coordinate + 10 %>" y="<%= station.y_coordinate + 3 %>" font-size="11" fill="#333"><%= station.name %></text>
+              <% end %>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <%= f.submit '保存', class: 'btn btn-primary' %>
+        <%= link_to '删除', [@train_route.run_chart.project, @train_route.run_chart, @train_route], method: :delete, data: { confirm: '确定要删除这条列车径路吗？' }, class: 'btn btn-danger ms-2' %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+function addStation() {
+  const container = document.getElementById('stations-container');
+  const counter = container.querySelectorAll('.station-fields').length;
+  const fields = `
+    <div class="station-fields border rounded p-3 mb-3 bg-light">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>站点 #${counter + 1}</h5>
+        <button type="button" onclick="removeStation(this)" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-2">
+          <label>序号</label>
+          <input type="number" name="train_route[stations_attributes][${counter}][order]" class="form-control" value="${counter + 1}" required>
+        </div>
+        <div class="col-md-3">
+          <label>站点名称 *</label>
+          <input type="text" name="train_route[stations_attributes][${counter}][name]" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+          <label>到达时间</label>
+          <input type="time" name="train_route[stations_attributes][${counter}][arrival_time]" class="form-control">
+        </div>
+        <div class="col-md-2">
+          <label>出发时间</label>
+          <input type="time" name="train_route[stations_attributes][${counter}][departure_time]" class="form-control">
+        </div>
+        <div class="col-md-1">
+          <label>停站时长(分)</label>
+          <input type="number" name="train_route[stations_attributes][${counter}][stop_duration]" class="form-control" min="0">
+        </div>
+        <div class="col-md-1">
+          <label>X坐标</label>
+          <input type="number" name="train_route[stations_attributes][${counter}][x_coordinate]" class="form-control">
+        </div>
+        <div class="col-md-1">
+          <label>Y坐标</label>
+          <input type="number" name="train_route[stations_attributes][${counter}][y_coordinate]" class="form-control">
+        </div>
+      </div>
+      <input type="hidden" name="train_route[stations_attributes][${counter}][_destroy]" value="false">
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', fields);
+}
+
+function removeStation(btn) {
+  const fields = btn.closest('.station-fields');
+  const destroyInput = fields.querySelector('input[name*="_destroy"]');
+  if (destroyInput) {
+    destroyInput.value = 'true';
+  }
+  fields.style.display = 'none';
+}
+
+document.querySelector('input[name="train_route[color]"]').addEventListener('input', function(e) {
+  document.getElementById('color-preview').style.backgroundColor = e.target.value;
+});
+</script>
+
+<% content_for :extra_styles do %>
+<style>
+.station-fields {
+  transition: all 0.3s;
+}
+</style>
+<% end %>

@@ -1,0 +1,205 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1><%= @run_chart.name %></h1>
+        <p class="text-muted">所属项目: <%= @run_chart.project.name %> | 日期: <%= @run_chart.date.strftime('%Y-%m-%d') %></p>
+      </div>
+      <div class="btn-group">
+        <a href="<%= project_path(@run_chart.project) %>" class="btn btn-outline-secondary">返回项目</a>
+        <a href="<%= workbench_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success"><i class="fa-solid fa-wrench"></i>工作台</a>
+        <a href="<%= edit_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary">编辑</a>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fa-solid fa-train me-2"></i>列车径路</h5>
+            <p class="card-text text-2xl font-bold"><%= @run_chart.total_routes %></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fa-solid fa-map-pin me-2"></i>停站点</h5>
+            <p class="card-text text-2xl font-bold"><%= @run_chart.total_stations %></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fa-solid fa-exclamation-circle me-2"></i>异常标注</h5>
+            <p class="card-text text-2xl font-bold text-danger"><%= @run_chart.anomalies_count %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-8">
+        <div class="card mb-4">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-route me-2"></i>列车径路列表</span>
+            <a href="<%= new_project_run_chart_train_route_path(@run_chart.project, @run_chart) %>" class="btn btn-sm btn-primary">
+              <i class="fa-solid fa-plus"></i> 添加列车径路
+            </a>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th width="80">车次</th>
+                  <th width="60">类型</th>
+                  <th>起讫站</th>
+                  <th width="80">站点数</th>
+                  <th width="80">状态</th>
+                  <th width="120">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @train_routes.each do |route| %>
+                  <tr>
+                    <td><span class="badge" style="background-color: <%= route.color %>"><%= route.train_no %></span></td>
+                    <td><%= route.train_type_label %></td>
+                    <td><%= route.start_station&.name %> - <%= route.end_station&.name %></td>
+                    <td><%= route.stations.count %></td>
+                    <td>
+                      <span class="badge bg-<%= route.status == 'validated' ? 'success' : route.status == 'corrected' ? 'warning' : 'secondary' %>">
+                        <%= route.status_label %>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm">
+                        <a href="<%= project_run_chart_train_route_path(@run_chart.project, @run_chart, route) %>" class="btn btn-outline-primary"><i class="fa-solid fa-eye"></i></a>
+                        <a href="<%= edit_project_run_chart_train_route_path(@run_chart.project, @run_chart, route) %>" class="btn btn-outline-secondary"><i class="fa-solid fa-pencil"></i></a>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-light">
+            <span><i class="fa-solid fa-crop-simple me-2"></i>标定参数</span>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>X轴比例</label>
+                  <input type="text" class="form-control" value="<%= @run_chart.scale_x %> px/单位" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Y轴比例</label>
+                  <input type="text" class="form-control" value="<%= @run_chart.scale_y %> px/单位" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>X轴偏移</label>
+                  <input type="text" class="form-control" value="<%= @run_chart.offset_x %> px" readonly>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group">
+                  <label>Y轴偏移</label>
+                  <input type="text" class="form-control" value="<%= @run_chart.offset_y %> px" readonly>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-4">
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <span><i class="fa-solid fa-sticky-note me-2"></i>标注列表</span>
+          </div>
+          <div class="card-body">
+            <% if @annotations.any? %>
+              <div class="list-group">
+                <% @annotations.each do |annotation| %>
+                  <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <span class="badge bg-<%= annotation.severity_level == 'danger' ? 'danger' : annotation.severity_level == 'warning' ? 'warning' : annotation.severity_level == 'info' ? 'info' : 'secondary' %> me-2">
+                          <%= annotation.type_label %>
+                        </span>
+                        <span class="badge bg-<%= annotation.status == 'confirmed' ? 'warning' : annotation.status == 'resolved' ? 'success' : 'secondary' %>">
+                          <%= annotation.status_label %>
+                        </span>
+                      </div>
+                      <span class="text-xs text-muted"><%= annotation.created_at.strftime('%m-%d') %></span>
+                    </div>
+                    <p class="mt-1 text-sm"><%= annotation.content %></p>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="text-center py-4 text-muted">
+                <i class="fa-solid fa-sticky-note fa-3x mb-2"></i>
+                <p>暂无标注</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-light">
+            <span><i class="fa-solid fa-download me-2"></i>导出功能</span>
+          </div>
+          <div class="card-body">
+            <div class="grid gap-2">
+              <a href="<%= export_json_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-success w-100">
+                <i class="fa-solid fa-file-json me-2"></i>导出完整JSON
+              </a>
+              <a href="<%= export_summary_project_run_chart_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-primary w-100">
+                <i class="fa-solid fa-file-text me-2"></i>导出摘要
+              </a>
+              <button onclick="generateVersion()" class="btn btn-outline-warning w-100">
+                <i class="fa-solid fa-layer-group me-2"></i>生成新版本
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-light">
+            <span><i class="fa-solid fa-search-minus me-2"></i>数据检测</span>
+          </div>
+          <div class="card-body">
+            <button onclick="runDetection()" class="btn btn-danger w-100">
+              <i class="fa-solid fa-virus me-2"></i>检测异常数据
+            </button>
+            <p class="text-xs text-muted mt-2">自动检测到达时间早于出发时间等异常情况</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function generateVersion() {
+  fetch('<%= project_run_chart_path(@run_chart.project, @run_chart) %>/versions', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': '<%= form_authenticity_token %>' }
+  }).then(() => location.reload());
+}
+
+function runDetection() {
+  fetch('<%= detect_anomalies_project_run_chart_path(@run_chart.project, @run_chart) %>', {
+    method: 'GET'
+  }).then(() => location.reload());
+}
+</script>

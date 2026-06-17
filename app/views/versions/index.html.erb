@@ -1,0 +1,180 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1>版本历史</h1>
+        <% if @project %>
+          <p class="text-muted">所属项目: <%= @project.name %></p>
+        <% elsif @run_chart %>
+          <p class="text-muted">所属运行图: <%= @run_chart.name %></p>
+        <% end %>
+      </div>
+      <div class="btn-group">
+        <% if @run_chart %>
+          <a href="<%= project_run_chart_workbench_path(@run_chart.project, @run_chart) %>" class="btn btn-outline-secondary">返回工作台</a>
+        <% elsif @project %>
+          <a href="<%= project_path(@project) %>" class="btn btn-outline-secondary">返回项目</a>
+        <% else %>
+          <a href="/projects" class="btn btn-outline-secondary">返回项目台账</a>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <form class="row g-3">
+          <div class="col-md-4">
+            <input type="text" name="keyword" class="form-control" placeholder="搜索版本号、批次号" value="<%= params[:keyword] %>">
+          </div>
+          <div class="col-md-3">
+            <select name="status" class="form-select">
+              <option value="">全部状态</option>
+              <% Version.status_options.each do |label, value| %>
+                <option value="<%= value %>" <%= 'selected' if params[:status] == value %>><%= label %></option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100">
+              <i class="fa-solid fa-search"></i> 搜索
+            </button>
+          </div>
+          <div class="col-md-2">
+            <button type="button" onclick="location.href=location.pathname" class="btn btn-outline-secondary w-100">
+              <i class="fa-solid fa-rotate-right"></i> 重置
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-primary"><%= @versions.count %></div>
+            <div class="text-sm text-muted">总版本数</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-success"><%= @versions.where(status: 'exported').count %></div>
+            <div class="text-sm text-muted">已导出</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-warning"><%= @versions.where(status: 'generated').count %></div>
+            <div class="text-sm text-muted">已生成</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-secondary"><%= @versions.where(status: 'archived').count %></div>
+            <div class="text-sm text-muted">已归档</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="timeline">
+          <% @versions.each_with_index do |version, index| %>
+            <div class="timeline-item">
+              <div class="timeline-marker">
+                <div class="w-10 h-10 rounded-full bg-<%= version.status == 'exported' ? 'success' : version.status == 'generated' ? 'warning' : 'secondary' %> d-flex align-items-center justify-content-center text-white">
+                  <%= version.version_no.gsub('V', '') %>
+                </div>
+              </div>
+              <div class="timeline-content">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <h5 class="font-bold">版本 <%= version.version_no %></h5>
+                        <span class="badge bg-<%= version.status == 'exported' ? 'success' : version.status == 'generated' ? 'warning' : 'secondary' %>"><%= version.status_label %></span>
+                      </div>
+                      <div class="btn-group btn-group-sm">
+                        <a href="/versions/<%= version.id %>" class="btn btn-outline-primary"><i class="fa-solid fa-eye"></i></a>
+                        <% if version.status == 'exported' %>
+                          <a href="/versions/<%= version.id %>/export_json" class="btn btn-outline-success"><i class="fa-solid fa-download"></i></a>
+                          <a href="/versions/<%= version.id %>/export_summary" class="btn btn-outline-info"><i class="fa-solid fa-file-export"></i></a>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="row text-sm text-muted mb-2">
+                      <div class="col-md-4"><i class="fa-solid fa-layer-group me-1"></i><%= version.batch_no %></div>
+                      <div class="col-md-4"><i class="fa-solid fa-calendar me-1"></i><%= version.created_at.strftime('%Y-%m-%d %H:%M') %></div>
+                      <div class="col-md-4">
+                        <% if version.exported_at %>
+                          <i class="fa-solid fa-upload me-1"></i><%= version.exported_at.strftime('%Y-%m-%d %H:%M') %>
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <% if version.change_log %>
+                      <p class="text-sm mt-2"><i class="fa-solid fa-list-ul me-1"></i><%= version.change_log %></p>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @versions.empty? %>
+          <div class="text-center py-8 text-muted">
+            <i class="fa-solid fa-clock fa-4x mb-3"></i>
+            <p>暂无版本记录</p>
+            <% if @run_chart %>
+              <a href="<%= project_run_chart_workbench_path(@run_chart.project, @run_chart) %>" class="btn btn-primary mt-2">
+                <i class="fa-solid fa-plus"></i> 生成新版本
+              </a>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.timeline {
+  position: relative;
+  padding-left: 60px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 25px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #e9ecef;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -50px;
+  top: 0;
+  z-index: 1;
+}
+
+.timeline-content {
+  margin-left: 10px;
+}
+</style>

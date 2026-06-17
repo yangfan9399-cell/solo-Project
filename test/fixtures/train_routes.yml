@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  run_chart: one
+  train_no: MyString
+  train_type: MyString
+  color: MyString
+  path_data: MyText
+  status: MyString
+
+two:
+  run_chart: two
+  train_no: MyString
+  train_type: MyString
+  color: MyString
+  path_data: MyText
+  status: MyString

@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project: one
+  run_chart: one
+  batch_no: MyString
+  version_no: MyString
+  change_log: MyText
+  export_path: MyString
+  exported_at: 2026-06-17 16:34:31
+  status: MyString
+
+two:
+  project: two
+  run_chart: two
+  batch_no: MyString
+  version_no: MyString
+  change_log: MyText
+  export_path: MyString
+  exported_at: 2026-06-17 16:34:31
+  status: MyString

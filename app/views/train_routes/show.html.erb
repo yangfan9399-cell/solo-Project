@@ -1,0 +1,199 @@
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1><span class="badge me-2" style="background-color: <%= @train_route.color %>"><%= @train_route.train_no %></span> <%= @train_route.train_type_label %></h1>
+        <p class="text-muted">所属运行图: <%= @train_route.run_chart.name %></p>
+      </div>
+      <div class="btn-group">
+        <a href="<%= project_run_chart_path(@train_route.run_chart.project, @train_route.run_chart) %>" class="btn btn-outline-secondary">返回运行图</a>
+        <a href="<%= edit_project_run_chart_train_route_path(@train_route.run_chart.project, @train_route.run_chart, @train_route) %>" class="btn btn-outline-primary"><i class="fa-solid fa-pencil"></i> 编辑</a>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-primary"><%= @stations.count %></div>
+            <div class="text-sm text-muted">停站点数</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-success"><%= @train_route.start_station&.name || '-' %></div>
+            <div class="text-sm text-muted">起点站</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-info"><%= @train_route.end_station&.name || '-' %></div>
+            <div class="text-sm text-muted">终点站</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card">
+          <div class="card-body text-center">
+            <div class="text-3xl font-bold text-warning">
+              <span class="badge bg-<%= @train_route.status == 'validated' ? 'success' : @train_route.status == 'corrected' ? 'warning' : 'secondary' %>">
+                <%= @train_route.status_label %>
+              </span>
+            </div>
+            <div class="text-sm text-muted">状态</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <span><i class="fa-solid fa-info-circle me-2"></i>径路信息</span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <dl class="row">
+              <dt class="col-sm-3">车次</dt>
+              <dd class="col-sm-9"><span class="badge" style="background-color: <%= @train_route.color %>"><%= @train_route.train_no %></span></dd>
+              <dt class="col-sm-3">类型</dt>
+              <dd class="col-sm-9"><%= @train_route.train_type_label %></dd>
+              <dt class="col-sm-3">状态</dt>
+              <dd class="col-sm-9">
+                <span class="badge bg-<%= @train_route.status == 'validated' ? 'success' : @train_route.status == 'corrected' ? 'warning' : 'secondary' %>">
+                  <%= @train_route.status_label %>
+                </span>
+              </dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <dl class="row">
+              <dt class="col-sm-3">起始时间</dt>
+              <dd class="col-sm-9"><%= @train_route.start_station&.departure_str || '-' %></dd>
+              <dt class="col-sm-3">终到时间</dt>
+              <dd class="col-sm-9"><%= @train_route.end_station&.arrival_str || '-' %></dd>
+              <dt class="col-sm-3">颜色标记</dt>
+              <dd class="col-sm-9">
+                <div class="d-flex align-items-center">
+                  <div class="w-4 h-4 rounded" style="background-color: <%= @train_route.color %>"></div>
+                  <span class="ml-2"><%= @train_route.color %></span>
+                </div>
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-map-pin me-2"></i>停站点列表</span>
+        <a href="<%= edit_project_run_chart_train_route_path(@train_route.run_chart.project, @train_route.run_chart, @train_route) %>" class="btn btn-sm btn-primary">
+          <i class="fa-solid fa-plus"></i> 添加站点
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th width="60">序号</th>
+              <th width="120">站点名称</th>
+              <th width="100">到达时间</th>
+              <th width="100">出发时间</th>
+              <th width="80">停站时长</th>
+              <th width="120">坐标</th>
+              <th width="80">异常</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @stations.each do |station| %>
+              <tr>
+                <td><%= station.order %></td>
+                <td><%= station.name %></td>
+                <td><%= station.arrival_str %></td>
+                <td><%= station.departure_str %></td>
+                <td><%= station.stop_duration_str %></td>
+                <td>(<%= station.x_coordinate %>, <%= station.y_coordinate %>)</td>
+                <td>
+                  <% if station.is_anomalous? %>
+                    <span class="badge bg-danger" data-toggle="tooltip" title="<%= station.anomaly_reason %>">异常</span>
+                  <% else %>
+                    <span class="badge bg-success">正常</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <span><i class="fa-solid fa-arrows-line me-2"></i>径路图</span>
+      </div>
+      <div class="card-body">
+        <div class="bg-light border rounded p-4" style="min-height: 300px;">
+          <svg width="100%" height="300" viewBox="0 0 400 250" class="border">
+            <defs>
+              <marker id="arrowhead-show" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+              </marker>
+            </defs>
+
+            <line x1="60" y1="220" x2="380" y2="220" stroke="#666" stroke-width="2"/>
+            <line x1="60" y1="220" x2="60" y2="30" stroke="#666" stroke-width="2"/>
+
+            <% (0..8).each do |i| %>
+              <line x1="60 + i * 40" y1="220" x2="60 + i * 40" y2="225" stroke="#666"/>
+              <text x="60 + i * 40 - 10" y="235" font-size="10" fill="#666"><%= i * 2 %></text>
+            <% end %>
+
+            <% (0..4).each do |i| %>
+              <line x1="60" y1="220 - i * 47.5" x2="55" y2="220 - i * 47.5" stroke="#666"/>
+              <text x="45" y="220 - i * 47.5 + 3" font-size="10" fill="#666"><%= i * 100 %></text>
+            <% end %>
+
+            <path d="<%= @train_route.path_data %>" stroke="<%= @train_route.color %>" stroke-width="3" fill="none" marker-end="url(#arrowhead-show)"/>
+
+            <% @stations.each do |station| %>
+              <circle cx="<%= station.x_coordinate %>" cy="<%= station.y_coordinate %>" r="6" fill="white" stroke="<%= @train_route.color %>" stroke-width="2"/>
+              <text x="<%= station.x_coordinate + 10 %>" y="<%= station.y_coordinate + 3 %>" font-size="11" fill="#333"><%= station.name %></text>
+            <% end %>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header bg-light">
+        <span><i class="fa-solid fa-sticky-note me-2"></i>标注记录</span>
+      </div>
+      <div class="card-body">
+        <% if @annotations.any? %>
+          <div class="list-group">
+            <% @annotations.each do |annotation| %>
+              <div class="list-group-item">
+                <div class="d-flex align-items-center mb-1">
+                  <span class="badge bg-<%= annotation.severity_level == 'danger' ? 'danger' : annotation.severity_level == 'warning' ? 'warning' : 'info' %> me-2"><%= annotation.type_label %></span>
+                  <span class="badge bg-<%= annotation.status == 'pending' ? 'secondary' : annotation.status == 'confirmed' ? 'warning' : 'success' %>"><%= annotation.status_label %></span>
+                  <span class="text-xs text-muted ms-2"><%= annotation.created_at.strftime('%m-%d %H:%M') %></span>
+                </div>
+                <p class="text-sm"><%= annotation.content %></p>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-4 text-muted">
+            <i class="fa-solid fa-sticky-note fa-3x mb-2"></i>
+            <p>暂无标注记录</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
