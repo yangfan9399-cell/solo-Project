@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-mineral-600 hover:bg-mineral-500 text-white rounded-lg 
+           transition-colors duration-200 font-medium text-sm;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-mineral-800 hover:bg-mineral-700 text-mineral-100 rounded-lg 
+           border border-mineral-600 transition-colors duration-200 font-medium text-sm;
+  }
+  
+  .btn-danger {
+    @apply px-4 py-2 bg-red-900 hover:bg-red-800 text-red-100 rounded-lg 
+           transition-colors duration-200 font-medium text-sm;
+  }
+  
+  .btn-warning {
+    @apply px-4 py-2 bg-yellow-700 hover:bg-yellow-600 text-yellow-100 rounded-lg 
+           transition-colors duration-200 font-medium text-sm;
+  }
+  
+  .card {
+    @apply bg-mineral-900 border border-mineral-700 rounded-xl shadow-lg;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 bg-mineral-800 border border-mineral-600 rounded-lg 
+           text-mineral-50 placeholder-mineral-400 focus:outline-none focus:ring-2 
+           focus:ring-mineral-500 focus:border-transparent transition-all;
+  }
+  
+  .select-field {
+    @apply w-full px-3 py-2 bg-mineral-800 border border-mineral-600 rounded-lg 
+           text-mineral-50 focus:outline-none focus:ring-2 focus:ring-mineral-500 
+           focus:border-transparent transition-all;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-mineral-300 mb-1;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .divider {
+    @apply h-px bg-mineral-700 my-4;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #374765 #1d2330;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #1d2330;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #374765;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #42577d;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.interference-color-strip {
+  background: linear-gradient(
+    to right,
+    #000000 0%,
+    #808080 5%,
+    #ffffff 10%,
+    #ffe4c4 15%,
+    #ffd700 20%,
+    #ffa500 25%,
+    #ff6347 30%,
+    #ff0000 35%,
+    #8b008b 40%,
+    #4b0082 45%,
+    #0000cd 50%,
+    #00bfff 55%,
+    #00ff7f 60%,
+    #9acd32 65%,
+    #ffff00 70%,
+    #ffa500 75%,
+    #ff4500 80%,
+    #c71585 85%,
+    #9400d3 90%,
+    #4169e1 95%,
+    #00ced1 100%
+  );
+}
