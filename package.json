@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NAPI_RS_FORCE_WASI=1 nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "prepare": "nuxt prepare"
+    "postinstall": "node scripts/postinstall.mjs || true",
+    "dev": "node scripts/bootstrap.mjs nuxt dev",
+    "build": "node scripts/bootstrap.mjs nuxt build",
+    "generate": "node scripts/bootstrap.mjs nuxt generate",
+    "preview": "node scripts/bootstrap.mjs nuxt preview",
+    "prepare": "node scripts/bootstrap.mjs nuxt prepare"
   },
   "dependencies": {
     "@oxc-minify/binding-wasm32-wasi": "^0.136.0",
@@ -22,5 +23,8 @@
   "devDependencies": {
     "@nuxt/devtools": "^1.6.0",
     "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
