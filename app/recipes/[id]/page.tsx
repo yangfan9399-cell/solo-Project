@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRecipeById, getProjectById, validateRecipeComponents, validateFiringParams } from "@/lib/data-store";
+import { NewVersionButton, AddSpecimenButton } from "@/components/RecipeActions";
 
 export default async function RecipeDetailPage({
   params,
@@ -114,13 +115,8 @@ export default async function RecipeDetailPage({
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button className="px-4 py-2 border border-stone-300 rounded-lg text-sm text-stone-600 hover:bg-stone-50 transition-colors">
-                    编辑
-                  </button>
-                  <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
-                    新版本
-                  </button>
+                <div>
+                  <NewVersionButton recipeId={recipe.id} currentVersionId={currentVersion.id} />
                 </div>
               </div>
 
@@ -199,16 +195,15 @@ export default async function RecipeDetailPage({
             </div>
           )}
 
-          {currentVersion && currentVersion.specimens.length > 0 && (
+          {currentVersion && (
             <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
               <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
                 <h2 className="font-semibold text-stone-800">
                   试片效果 <span className="text-sm text-stone-400 font-normal">({currentVersion.specimens.length} 个)</span>
                 </h2>
-                <button className="text-sm text-amber-600 hover:text-amber-700">
-                  + 添加试片
-                </button>
+                <AddSpecimenButton recipeId={recipe.id} versionId={currentVersion.id} />
               </div>
+              {currentVersion.specimens.length > 0 && (
 
               <div className="p-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -251,6 +246,13 @@ export default async function RecipeDetailPage({
                   ))}
                 </div>
               </div>
+              )}
+              {currentVersion.specimens.length === 0 && (
+                <div className="p-8 text-center text-stone-500">
+                  <div className="text-3xl mb-2">🔬</div>
+                  <p className="text-sm">暂无试片记录，点击右上角添加</p>
+                </div>
+              )}
             </div>
           )}
         </div>

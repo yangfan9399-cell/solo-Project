@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRecipeById } from "@/lib/data-store";
+import { LockToggleButton, NewVersionButton, AddSpecimenButton } from "@/components/RecipeActions";
 
 export default async function VersionDetailPage({
   params,
@@ -79,19 +80,9 @@ export default async function VersionDetailPage({
               <h1 className="text-2xl font-bold text-stone-800 mb-2">{recipe.name}</h1>
               <p className="text-stone-600">版本详情与历史对比</p>
             </div>
-            <div className="flex gap-2">
-              {!version.isLocked ? (
-                <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
-                  🔒 锁定版本
-                </button>
-              ) : (
-                <button className="px-4 py-2 border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors text-sm">
-                  🔓 解锁版本
-                </button>
-              )}
-              <button className="px-4 py-2 border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors text-sm">
-                基于此版本新建
-              </button>
+            <div className="flex gap-2 flex-wrap">
+              <LockToggleButton recipeId={recipe.id} versionId={version.id} isLocked={version.isLocked} />
+              <NewVersionButton recipeId={recipe.id} currentVersionId={version.id} />
             </div>
           </div>
 
@@ -268,7 +259,7 @@ export default async function VersionDetailPage({
           <h2 className="font-semibold text-stone-800">
             试片记录 <span className="text-sm text-stone-400 font-normal">({version.specimens.length})</span>
           </h2>
-          <button className="text-sm text-amber-600 hover:text-amber-700">+ 添加试片</button>
+          <AddSpecimenButton recipeId={recipe.id} versionId={version.id} />
         </div>
 
         <div className="p-6">

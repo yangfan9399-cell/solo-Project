@@ -75,6 +75,11 @@ export default async function SpecimensPage({
     { value: 'has', label: '有缺陷' },
   ];
 
+  const recipeCounts: Record<string, number> = {};
+  allSpecimens.forEach(s => {
+    recipeCounts[s.recipeId] = (recipeCounts[s.recipeId] || 0) + 1;
+  });
+
   const qualityCounts = {
     excellent: allSpecimens.filter(s => s.surfaceQuality === 'excellent').length,
     good: allSpecimens.filter(s => s.surfaceQuality === 'good').length,
@@ -189,24 +194,36 @@ export default async function SpecimensPage({
             <label className="block text-sm font-medium text-stone-700 mb-2">
               配方筛选
             </label>
-            <select
-              defaultValue={recipeFilter}
-              onChange={(e) => {
-                const url = new URL(window.location.href);
-                if (e.target.value) {
-                  url.searchParams.set('recipeId', e.target.value);
-                } else {
-                  url.searchParams.delete('recipeId');
-                }
-                window.location.href = url.toString();
-              }}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
-            >
-              <option value="">全部配方</option>
+            <div className="space-y-1 max-h-56 overflow-y-auto">
+              <Link
+                href={`/specimens?${buildQuery({ quality: qualityFilter, gloss: glossFilter, defects: defectsFilter, recipeId: '' })}`}
+                className={`flex items-center justify-between px-3 py-1.5 rounded text-sm ${
+                  recipeFilter === ''
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'hover:bg-stone-50 text-stone-600'
+                }`}
+              >
+                <span className="truncate">全部配方</span>
+                <span className="text-xs text-stone-400 ml-2 flex-shrink-0">{allSpecimens.length}</span>
+              </Link>
               {recipes.map(r => (
-                <option key={r.id} value={r.id}>{r.code} - {r.name}</option>
+                <Link
+                  key={r.id}
+                  href={`/specimens?${buildQuery({ quality: qualityFilter, gloss: glossFilter, defects: defectsFilter, recipeId: r.id })}`}
+                  className={`flex items-center justify-between px-3 py-1.5 rounded text-sm ${
+                    recipeFilter === r.id
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'hover:bg-stone-50 text-stone-600'
+                  }`}
+                >
+                  <span className="truncate">
+                    <span className="font-mono text-stone-400 text-xs mr-1">{r.code}</span>
+                    {r.name}
+                  </span>
+                  <span className="text-xs text-stone-400 ml-2 flex-shrink-0">{recipeCounts[r.id] || 0}</span>
+                </Link>
               ))}
-            </select>
+            </div>
           </div>
         </div>
 

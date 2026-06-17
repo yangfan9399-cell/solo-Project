@@ -41,7 +41,7 @@ export default async function MatrixLabPage({
         </div>
         <div className="flex gap-2">
           <Link
-            href={`/recipes/matrix-lab?type=binary&steps=${steps}`}
+            href={`/recipes/matrix-lab?type=binary&steps=${steps}&ingredientA=${ingA}&ingredientB=${ingB}&ingredientC=${ingC}`}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               type === 'binary'
                 ? 'bg-blue-600 text-white'
@@ -51,7 +51,7 @@ export default async function MatrixLabPage({
             二元矩阵
           </Link>
           <Link
-            href={`/recipes/matrix-lab?type=ternary&steps=${steps}`}
+            href={`/recipes/matrix-lab?type=ternary&steps=${steps}&ingredientA=${ingA}&ingredientB=${ingB}&ingredientC=${ingC}`}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               type === 'ternary'
                 ? 'bg-purple-600 text-white'
@@ -65,7 +65,8 @@ export default async function MatrixLabPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-5 sticky top-6">
+          <form method="GET" action="/recipes/matrix-lab" className="bg-white rounded-xl shadow-sm border border-stone-200 p-5 sticky top-6">
+            <input type="hidden" name="type" value={type} />
             <h3 className="font-semibold text-stone-800 mb-4">矩阵参数</h3>
 
             <div className="space-y-5">
@@ -76,6 +77,7 @@ export default async function MatrixLabPage({
                 <div className="flex items-center gap-3">
                   <input
                     type="range"
+                    name="steps"
                     min="2"
                     max="9"
                     defaultValue={steps}
@@ -88,6 +90,9 @@ export default async function MatrixLabPage({
                 <p className="text-xs text-stone-400 mt-1">
                   共 {steps + 1} 个梯度点，{type === 'binary' ? steps + 1 : Math.round((steps + 1) * (steps + 2) / 2)} 个配方
                 </p>
+                <p className="text-xs text-stone-400 mt-1">
+                  拖动滑块后点击下方「应用配置」生效
+                </p>
               </div>
 
               <div>
@@ -95,6 +100,7 @@ export default async function MatrixLabPage({
                   变量原料 A
                 </label>
                 <select
+                  name="ingredientA"
                   defaultValue={ingA}
                   className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                 >
@@ -121,6 +127,7 @@ export default async function MatrixLabPage({
                   变量原料 B
                 </label>
                 <select
+                  name="ingredientB"
                   defaultValue={ingB}
                   className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                 >
@@ -148,6 +155,7 @@ export default async function MatrixLabPage({
                     变量原料 C
                   </label>
                   <select
+                    name="ingredientC"
                     defaultValue={ingC}
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                   >
@@ -187,14 +195,20 @@ export default async function MatrixLabPage({
             </div>
 
             <div className="mt-6 pt-4 border-t border-stone-100 space-y-2">
-              <button className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium">
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+              >
                 应用配置
               </button>
-              <button className="w-full px-4 py-2 border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors text-sm">
-                保存为配方
-              </button>
+              <Link
+                href={`/recipes/matrix-lab?type=${type}&steps=5&ingredientA=ing_feldspar&ingredientB=ing_kaolin&ingredientC=ing_silica`}
+                className="block w-full px-4 py-2 text-center border border-stone-300 text-stone-600 rounded-lg hover:bg-stone-50 transition-colors text-sm"
+              >
+                重置为默认
+              </Link>
             </div>
-          </div>
+          </form>
         </div>
 
         <div className="lg:col-span-3">

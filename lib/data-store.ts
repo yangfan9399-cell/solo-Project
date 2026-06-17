@@ -575,17 +575,46 @@ export async function updateRecipe(id: string, updates: Partial<GlazeRecipe>): P
   return data.recipes[index];
 }
 
-export async function addRecipeVersion(recipeId: string, version: Omit<RecipeVersion, 'id' | 'createdAt' | 'specimens' | 'versionNumber'>): Promise<RecipeVersion | null> {
+export async function addRecipeVersion(recipeId: string, input: (Omit<RecipeVersion, 'id' | 'createdAt' | 'specimens' | 'versionNumber'> & { sourceVersionId?: string; changeNotes?: string })): Promise<RecipeVersion | null> {
   const data = await readData();
   const recipe = data.recipes.find(r => r.id === recipeId);
   if (!recipe) return null;
 
   const now = new Date().toISOString();
+  let base: Partial<RecipeVersion> = {};
+
+  if (input.sourceVersionId) {
+    const source = recipe.versions.find(v => v.id === input.sourceVersionId);
+    if (source) {
+      base = {
+        components: source.components.map(c => ({ ...c })),
+        firingTemperature: source.firingTemperature,
+        firingType: source.firingType,
+        holdTime: source.holdTime,
+        batchNumber: undefined,
+        totalPercentage: source.totalPercentage,
+        firingAtmosphere: source.firingAtmosphere,
+        coolingRate: source.coolingRate,
+      };
+    }
+  }
+
+  const { sourceVersionId, changeNotes, ...rest } = input;
+
   const newVersion: RecipeVersion = {
-    ...version,
+    components: recipe.versions[0].components.map(c => ({ ...c })),
+    firingTemperature: 1230,
+    firingType: 'oxidation',
+    holdTime: 30,
+    totalPercentage: 100,
+    specimens: [],
+    changeNotes: changeNotes || '',
+    isLocked: false,
+    createdBy: '工作台用户',
+    ...base,
+    ...rest,
     id: generateId('ver'),
     createdAt: now,
-    specimens: [],
     versionNumber: recipe.versions.length + 1,
   };
 
