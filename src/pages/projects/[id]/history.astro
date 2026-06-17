@@ -61,7 +61,6 @@ const batches = getBatches(id);
           {batches.length > 0 ? (
             batches.map(batch => (
               <div 
-                key={batch.batchId}
                 onclick={`window.location.search='?batch=${batch.batchId}&type=${entityType}'`}
                 style={{
                   padding: '10px 12px',
@@ -101,7 +100,7 @@ const batches = getBatches(id);
       <div class="card">
         <div class="timeline">
           {history.items.map(version => (
-            <div key={version.id} class="timeline-item">
+            <div class="timeline-item">
               <div class="timeline-time">
                 {new Date(version.timestamp).toLocaleString('zh-CN')}
                 <span class={`badge badge-${version.action === 'create' ? 'info' : version.action === 'delete' ? 'error' : 'warning'}`} style="margin-left: 8px;">
@@ -131,7 +130,7 @@ const batches = getBatches(id);
                     overflow: 'auto'
                   }}>
                     {Object.entries(version.changes).map(([key, value]) => (
-                      <div key={key} style="margin-bottom: 2px;">
+                      <div style="margin-bottom: 2px;">
                         <span style="color: var(--color-primary);">{key}</span>: 
                         <span style="color: #c0392b; text-decoration: line-through;"> {JSON.stringify(value.old)}</span>
                         <span style="color: #27ae60;"> → {JSON.stringify(value.new)}</span>

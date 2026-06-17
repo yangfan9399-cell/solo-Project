@@ -49,7 +49,7 @@ export function getDb(): DatabaseData {
   
   try {
     const content = fs.readFileSync(dbFile, 'utf-8');
-    cachedDb = JSON.parse(content);
+    cachedDb = JSON.parse(content) as DatabaseData;
     lastModified = stats.mtimeMs;
     return cachedDb;
   } catch (e) {

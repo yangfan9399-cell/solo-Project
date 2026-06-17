@@ -11,6 +11,7 @@ import { generateHarrisMatrix } from '../../lib/harrisMatrix';
 import { generateExportSummary, generateMarkdownReport } from '../../lib/export';
 import HarrisMatrix from '../../components/HarrisMatrix.tsx';
 import UnitEditor from '../../components/UnitEditor.tsx';
+import PhotoGallery from '../../components/PhotoGallery.tsx';
 
 const { id } = Astro.params;
 if (!id) throw new Error('Project ID is required');
@@ -310,39 +311,10 @@ const activeTab = Astro.url.searchParams.get('tab') || 'overview';
           共 {photos.length} 张
         </span>
       </h3>
-      <div class="filter-bar">
-        <select class="select">
-          <option value="">全部类型</option>
-          <option value="overview">总览照</option>
-          <option value="detail">细节照</option>
-          <option value="section">剖面图</option>
-          <option value="plan">平面图</option>
-          <option value="artifact">器物照</option>
-        </select>
-      </div>
-      <div class="photo-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
-        {photos.map(photo => (
-          <div class="photo-item" title={photo.description}>
-            <div class="photo-placeholder">
-              <div style="font-size: 36px;">📷</div>
-              <div style="font-size: 11px; margin-top: 8px;">
-                <span class="badge badge-info">{photo.photoType}</span>
-              </div>
-            </div>
-            <div class="photo-caption">
-              <div style="font-weight: 500;">{photo.fileName}</div>
-              <div style="font-size: 10px; opacity: 0.8;">{photo.takenDate || ''}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      {photos.length === 0 && (
-        <div class="empty-state">
-          <div class="empty-icon">📷</div>
-          <div class="empty-title">暂无照片</div>
-          <div class="empty-desc">上传发掘现场和出土物照片</div>
-        </div>
-      )}
+      <PhotoGallery client:load
+        photos={photos}
+        unitsMap={Object.fromEntries(units.map(u => [u.id, { unitNumber: u.unitNumber }]))}
+      />
     </div>
   )}
 
@@ -413,7 +385,7 @@ const activeTab = Astro.url.searchParams.get('tab') || 'overview';
               <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); font-size: 12px;">
                 <div style="color: var(--color-text-muted); margin-bottom: 4px;">变更内容:</div>
                 {Object.entries(version.changes).map(([key, value]) => (
-                  <div key={key} style="margin-bottom: 2px;">
+                  <div style="margin-bottom: 2px;">
                     <span style="font-family: monospace;">{key}</span>: 
                     <span style="color: #c0392b; text-decoration: line-through;"> {JSON.stringify(value.old)}</span>
                     <span style="color: #27ae60;"> → {JSON.stringify(value.new)}</span>

@@ -92,9 +92,11 @@ export function getVersionByEntity(entityType: string, entityId: string): Versio
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
-export function getBatches(projectId: string): { batchId: string; count: number; firstTimestamp: string; lastTimestamp: string }[] {
+type BatchInfo = { batchId: string; count: number; firstTimestamp: string; lastTimestamp: string };
+
+export function getBatches(projectId: string): BatchInfo[] {
   const db = getDb();
-  const batchMap = new Map<string, { count: number; firstTimestamp: string; lastTimestamp: string }>();
+  const batchMap = new Map<string, BatchInfo>();
   
   db.versionHistory
     .filter(v => v.projectId === projectId && v.batchId)
@@ -115,7 +117,7 @@ export function getBatches(projectId: string): { batchId: string; count: number;
           count: 1,
           firstTimestamp: v.timestamp,
           lastTimestamp: v.timestamp
-        });
+        } as BatchInfo);
       }
     });
   

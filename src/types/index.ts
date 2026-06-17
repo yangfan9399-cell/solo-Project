@@ -46,19 +46,22 @@ export interface StratigraphicRelation {
 export interface Artifact {
   id: string;
   projectId: string;
-  unitId: string;
+  unitId: string | null;
   catalogNumber: string;
-  name: string;
+  name: string | null;
   type: string;
-  material: string;
-  description: string;
+  material: string | null;
+  description: string | null;
   quantity: number;
-  depthFound: number;
-  coordinates: string;
+  condition: string | null;
+  depthFound: number | null;
+  coordinates: string | null;
   photos: string[];
-  notes: string;
-  catalogedBy: string;
-  catalogDate: string;
+  notes: string | null;
+  recordedBy: string | null;
+  recordedDate: string | null;
+  catalogedBy: string | null;
+  catalogDate: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,15 +72,16 @@ export interface Photo {
   unitId: string | null;
   artifactId: string | null;
   fileName: string;
-  filePath: string;
-  thumbnailPath: string;
-  description: string;
+  filePath: string | null;
+  thumbnailPath: string | null;
+  description: string | null;
   photoType: 'overview' | 'detail' | 'section' | 'plan' | 'artifact';
-  takenBy: string;
-  takenDate: string;
-  coordinates: string;
-  scale: string;
-  northDirection: string;
+  takenBy: string | null;
+  takenDate: string | null;
+  coordinates: string | null;
+  scale: string | null;
+  northDirection: string | null;
+  notes: string | null;
   createdAt: string;
 }
 

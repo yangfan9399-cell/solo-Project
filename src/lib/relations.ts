@@ -68,7 +68,10 @@ export function createBidirectionalRelation(
   projectId: string,
   unitAId: string,
   unitBId: string,
-  relationType: StratigraphicRelation['relationType']
+  relationType: StratigraphicRelation['relationType'],
+  notes?: string,
+  confirmed?: boolean,
+  createdBy?: string
 ): StratigraphicRelation[] {
   const reverseMap: Record<string, StratigraphicRelation['relationType']> = {
     'above': 'below',
@@ -84,8 +87,8 @@ export function createBidirectionalRelation(
     fromUnitId: unitAId,
     toUnitId: unitBId,
     relationType,
-    confirmed: true,
-    notes: ''
+    confirmed: confirmed ?? true,
+    notes: notes ?? ''
   });
   
   const reverse = createRelation({

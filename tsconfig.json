@@ -13,7 +13,10 @@
   },
   "include": [
     "src/**/*",
-    "astro.config.mjs",
-    "scripts/**/*"
+    "astro.config.mjs"
+  ],
+  "exclude": [
+    "scripts/init-data.mjs",
+    "scripts/init-data.ts"
   ]
 }

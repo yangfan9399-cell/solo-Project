@@ -102,7 +102,7 @@ const exportFormat = Astro.url.searchParams.get('format') || 'summary';
       <h3 class="card-title">🎯 主要发现</h3>
       <ul style="margin-bottom: 24px;">
         {summary.keyFindings.map((finding, i) => (
-          <li key={i} style="margin-bottom: 8px;">{finding}</li>
+          <li style="margin-bottom: 8px;">{finding}</li>
         ))}
       </ul>
 
