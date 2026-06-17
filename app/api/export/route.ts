@@ -108,11 +108,13 @@ export async function GET(req: Request) {
   XLSX.utils.book_append_sheet(wb, ws, '项目摘要');
 
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as unknown as ArrayBuffer;
+  const safeName = `${project.code}-taose-analysis.xlsx`;
+  const utfName = encodeURIComponent(`${project.code}-套色分析摘要.xlsx`);
   return new NextResponse(buf, {
     status: 200,
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${project.code}-套色分析摘要.xlsx"`,
+      'Content-Disposition': `attachment; filename="${safeName}"; filename*=UTF-8''${utfName}`,
     },
   });
 }
