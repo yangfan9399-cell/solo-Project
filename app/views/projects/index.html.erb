@@ -1,0 +1,224 @@
+<% content_for :title, "项目台账 - 石窟壁画颜料病害观察系统" %>
+<% content_for :page_title, "项目台账" %>
+<% content_for :page_subtitle, "石窟壁画病害观察与记录" %>
+
+<div class="space-y-6">
+  <div class="grid grid-cols-4 gap-4">
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">项目总数</p>
+          <p class="text-2xl font-bold text-slate-800 mt-1"><%= @stats[:total] %></p>
+        </div>
+        <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">
+        <span class="text-emerald-600">●</span> 进行中 <%= @stats[:active] %> 个
+      </p>
+    </div>
+
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">记录批次</p>
+          <p class="text-2xl font-bold text-slate-800 mt-1"><%= @stats[:records] %></p>
+        </div>
+        <div class="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">累计普查与复查记录</p>
+    </div>
+
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">异常项目</p>
+          <p class="text-2xl font-bold text-amber-600 mt-1"><%= @stats[:abnormal] %></p>
+        </div>
+        <div class="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">
+        <% if @stats[:abnormal] > 0 %>
+          <span class="text-amber-600">⚠ 需关注</span>
+        <% else %>
+          <span class="text-emerald-600">● 全部正常</span>
+        <% end %>
+      </p>
+    </div>
+
+    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">病害类型</p>
+          <p class="text-2xl font-bold text-slate-800 mt-1">5</p>
+        </div>
+        <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+        </div>
+      </div>
+      <div class="flex gap-1 mt-3">
+        <span class="w-6 h-2 bg-red-500 rounded-full" title="起甲"></span>
+        <span class="w-6 h-2 bg-amber-500 rounded-full" title="酥碱"></span>
+        <span class="w-6 h-2 bg-purple-500 rounded-full" title="变色"></span>
+        <span class="w-6 h-2 bg-blue-500 rounded-full" title="裂隙"></span>
+        <span class="w-6 h-2 bg-slate-400 rounded-full" title="其他"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <h3 class="font-semibold text-slate-800">项目列表</h3>
+        <span class="text-sm text-slate-400"><%= @projects.size %> 个项目</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= link_to new_project_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新建项目
+        <% end %>
+      </div>
+    </div>
+
+    <div class="p-4 border-b border-slate-200 bg-slate-50">
+      <%= form_tag projects_path, method: :get, class: "flex items-center gap-4 flex-wrap" do %>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">状态:</label>
+          <%= select_tag :status, options_for_select([["全部", ""], ["进行中", "active"], ["已完成", "completed"], ["已归档", "archived"]], params[:status]), class: "h-9 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" %>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">朝代:</label>
+          <%= select_tag :dynasty, options_for_select([["全部", ""], ["北魏", "北魏"], ["隋代", "隋代"], ["唐代", "唐代"], ["宋代", "宋代"], ["元代", "元代"], ["明代", "明代"], ["清代", "清代"]], params[:dynasty]), class: "h-9 px-3 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" %>
+        </div>
+        <div class="flex items-center gap-2">
+          <%= check_box_tag :has_abnormal, "true", params[:has_abnormal] == "true", class: "w-4 h-4 text-amber-600 border-slate-300 rounded focus:ring-amber-500" %>
+          <label class="text-sm text-slate-600">仅显示异常</label>
+        </div>
+        <div class="flex items-center gap-2 ml-auto">
+          <div class="relative">
+            <%= text_field_tag :q, params[:q], placeholder: "搜索编号、名称、位置...", class: "h-9 w-56 pl-9 pr-4 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500" %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700">
+            筛选
+          </button>
+          <%= link_to "重置", projects_path, class: "px-4 py-2 text-sm text-slate-600 hover:text-slate-800" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">项目编号</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">项目名称</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">位置</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">朝代</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">记录数</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">病害数</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">状态</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">异常</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">最新记录</th>
+            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          <% @projects.each do |project| %>
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="font-mono text-sm text-slate-700 font-medium"><%= project.code %></span>
+              </td>
+              <td class="px-4 py-3">
+                <%= link_to project_path(project), class: "text-sm font-medium text-slate-900 hover:text-amber-600" do %>
+                  <%= project.name %>
+                <% end %>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm text-slate-600"><%= project.location %></span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm text-slate-600"><%= project.dynasty || "-" %></span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm text-slate-700"><%= project.records.count %></span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1">
+                  <span class="text-sm text-slate-700"><%= project.annotations.count %></span>
+                  <% if project.annotations.count > 0 %>
+                    <div class="flex -space-x-1">
+                      <% project.disease_summary.first(3).each do |type, count| %>
+                        <% color = { flaking: "bg-red-500", efflorescence: "bg-amber-500", discoloration: "bg-purple-500", crack: "bg-blue-500", other: "bg-slate-400" }[type.to_sym] || "bg-slate-400" %>
+                        <span class="w-2 h-2 rounded-full <%= color %>" title="<%= type %>"></span>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <% status_class = { active: "bg-emerald-100 text-emerald-700", completed: "bg-blue-100 text-blue-700", archived: "bg-slate-100 text-slate-600" }[project.status.to_sym] || "bg-slate-100 text-slate-600" %>
+                <% status_text = { active: "进行中", completed: "已完成", archived: "已归档" }[project.status.to_sym] || project.status %>
+                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full <%= status_class %>">
+                  <%= status_text %>
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <% if project.has_abnormal_data? %>
+                  <span class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    异常
+                  </span>
+                <% else %>
+                  <span class="text-sm text-slate-400">—</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3">
+                <% if project.latest_record %>
+                  <span class="text-sm text-slate-600"><%= project.latest_record.record_date %></span>
+                <% else %>
+                  <span class="text-sm text-slate-400">暂无</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-right text-sm">
+                <div class="flex items-center justify-end gap-2">
+                  <%= link_to "查看", project_path(project), class: "text-slate-600 hover:text-amber-600" %>
+                  <%= link_to "编辑", edit_project_path(project), class: "text-slate-600 hover:text-amber-600" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if @projects.empty? %>
+      <div class="p-12 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <p class="text-slate-500">暂无项目数据</p>
+        <%= link_to "创建第一个项目", new_project_path, class: "mt-3 inline-block text-amber-600 hover:text-amber-700 text-sm" %>
+      </div>
+    <% end %>
+  </div>
+</div>

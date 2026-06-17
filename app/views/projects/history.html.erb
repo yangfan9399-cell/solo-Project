@@ -1,0 +1,139 @@
+<% content_for :title, "版本历史 - #{@project.name}" %>
+<% content_for :page_title, "版本历史" %>
+<% content_for :page_subtitle, "#{@project.name} · 年度变化对比" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <%= link_to project_path(@project), class: "text-slate-600 hover:text-slate-800 text-sm" do %>
+        ← 返回项目
+      <% end %>
+      <span class="text-slate-300">|</span>
+      <span class="text-sm text-slate-500">共 <%= @records.size %> 个版本</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="compare-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        对比选中版本
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <h3 class="font-semibold text-slate-800 mb-4">病害年度变化趋势</h3>
+    <div class="h-48 flex items-end gap-4 px-4">
+      <% yearly_data = {} %>
+      <% @yearly_records.each do |year, year_records| %>
+        <% yearly_data[year] = year_records.sum { |r| r.annotations.count } %>
+      <% end %>
+      <% max_count = yearly_data.values.max || 1 %>
+      <% yearly_data.sort.each do |year, count| %>
+        <div class="flex-1 flex flex-col items-center">
+          <span class="text-xs text-slate-500 mb-1"><%= count %> 处</span>
+          <div class="w-full bg-amber-100 rounded-t relative" style="height: <%= (count.to_f / max_count * 100).round %>%">
+            <div class="absolute inset-0 bg-amber-500 rounded-t"></div>
+          </div>
+          <span class="text-sm font-medium text-slate-700 mt-2"><%= year %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <% @yearly_records.sort.reverse.each do |year, year_records| %>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <h3 class="font-semibold text-slate-800"><%= year %> 年度</h3>
+            <span class="text-sm text-slate-500"><%= year_records.size %> 条记录 · <%= year_records.sum { |r| r.annotations.count } %> 处病害</span>
+          </div>
+          <span class="text-xs text-slate-400">第 <%= @yearly_records.keys.size - @yearly_records.keys.sort.index(year) %> 次普查周期</span>
+        </div>
+        <div class="divide-y divide-slate-100">
+          <% year_records.sort_by(&:record_date).reverse.each do |record| %>
+            <div class="p-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-4">
+                  <input type="checkbox" class="record-checkbox mt-1 rounded border-slate-300 text-amber-600 focus:ring-amber-500" value="<%= record.id %>">
+                  <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                    <% if record.image_url.present? %>
+                      <img src="<%= record.image_url %>" class="w-full h-full object-cover" alt="">
+                    <% else %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    <% end %>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-medium text-slate-900"><%= record.batch_number %></h4>
+                      <% type_class = { survey: "bg-blue-100 text-blue-700", review: "bg-emerald-100 text-emerald-700", special: "bg-purple-100 text-purple-700" }[record.version_type.to_sym] %>
+                      <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full <%= type_class %>">
+                        <%= record.version_type_i18n %>
+                      </span>
+                      <% if record.abnormal? %>
+                        <span class="text-xs text-amber-600">⚠ 异常</span>
+                      <% end %>
+                    </div>
+                    <p class="text-sm text-slate-500 mt-1">
+                      <%= record.record_date %> · <%= record.photographer || "拍摄者未知" %>
+                    </p>
+                    <div class="flex items-center gap-4 mt-2">
+                      <span class="text-xs text-slate-500"><%= record.annotations.count %> 处标注</span>
+                      <div class="flex gap-1">
+                        <% record.disease_count_by_type.first(4).each do |type, count| %>
+                          <% color = { flaking: "bg-red-400", efflorescence: "bg-amber-400", discoloration: "bg-purple-400", crack: "bg-blue-400", other: "bg-slate-400" }[type.to_sym] || "bg-slate-400" %>
+                          <span class="w-2 h-2 rounded-full <%= color %>" title="<%= type %>"></span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <% if record.abnormal? %>
+                      <p class="text-xs text-amber-600 mt-1"><%= record.abnormal_reasons.join("、") %></p>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <%= link_to editor_project_record_path(@project, record), class: "text-sm text-amber-600 hover:text-amber-700" do %>
+                    编辑标注
+                  <% end %>
+                  <%= link_to "查看", project_record_path(@project, record), class: "text-sm text-slate-600 hover:text-slate-800" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @records.empty? %>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+      <p class="text-slate-500">暂无版本记录</p>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  const checkboxes = document.querySelectorAll('.record-checkbox');
+  const compareBtn = document.getElementById('compare-btn');
+  const projectId = <%= @project.id %>;
+
+  function updateCompareButton() {
+    const checked = document.querySelectorAll('.record-checkbox:checked');
+    compareBtn.disabled = checked.length < 2;
+    compareBtn.textContent = checked.length > 0 ? `对比选中版本 (${checked.length})` : '对比选中版本';
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateCompareButton);
+  });
+
+  compareBtn.addEventListener('click', function() {
+    const checked = Array.from(document.querySelectorAll('.record-checkbox:checked')).map(cb => cb.value);
+    if (checked.length >= 2) {
+      window.location.href = `/projects/${projectId}/compare?record_ids=${checked.join(',')}`;
+    }
+  });
+</script>

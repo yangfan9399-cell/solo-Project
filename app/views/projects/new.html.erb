@@ -1,0 +1,69 @@
+<% content_for :title, "新建项目" %>
+<% content_for :page_title, "新建项目" %>
+<% content_for :page_subtitle, "创建新的壁画病害观察项目" %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <%= form_with model: @project, url: projects_path do |form| %>
+      <div class="p-6 space-y-6">
+        <% if @project.errors.any? %>
+          <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 class="text-sm font-medium text-red-800">请修正以下错误：</h4>
+            <ul class="mt-2 text-sm text-red-600 list-disc list-inside">
+              <% @project.errors.full_messages.each do |msg| %>
+                <li><%= msg %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :name, "项目名称", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.text_field :name, class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+          <div>
+            <%= form.label :code, "项目编号", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.text_field :code, class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent font-mono" %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :location, "地理位置", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.text_field :location, placeholder: "如：莫高窟第257窟", class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+          <div>
+            <%= form.label :dynasty, "所属朝代", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.select :dynasty, options_for_select([["北魏", "北魏"], ["隋代", "隋代"], ["唐代", "唐代"], ["宋代", "宋代"], ["元代", "元代"], ["明代", "明代"], ["清代", "清代"]]), include_blank: "请选择朝代", class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :description, "项目描述", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+          <%= form.text_area :description, rows: 4, class: "w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <%= form.label :status, "项目状态", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.select :status, options_for_select([["进行中", "active"], ["已完成", "completed"], ["已归档", "archived"]], @project.status), {}, class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+          <div>
+            <%= form.label :start_date, "开始日期", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.date_field :start_date, class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+          <div>
+            <%= form.label :end_date, "结束日期", class: "block text-sm font-medium text-slate-700 mb-1.5" %>
+            <%= form.date_field :end_date, class: "w-full h-10 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-xl flex justify-end gap-3">
+        <%= link_to "取消", projects_path, class: "px-4 py-2 text-sm text-slate-600 hover:text-slate-800" %>
+        <%= form.submit "创建项目", class: "px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+</div>

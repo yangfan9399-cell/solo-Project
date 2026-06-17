@@ -1,0 +1,114 @@
+<% content_for :title, "导出详情 - #{@project.name}" %>
+<% content_for :page_title, "导出详情" %>
+<% content_for :page_subtitle, "#{@project.name} · 导出文件" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <%= link_to project_exports_path(@project), class: "text-slate-600 hover:text-slate-800 text-sm" do %>
+      ← 返回导出列表
+    <% end %>
+    <div class="flex items-center gap-2">
+      <%= link_to download_project_export_path(@project, @export), class: "inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        下载文件
+      <% end %>
+      <%= button_to "删除", project_export_path(@project, @export), method: :delete, data: { confirm: "确定删除此导出文件吗？" }, class: "inline-flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 bg-transparent cursor-pointer" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3 gap-6">
+    <div class="col-span-2">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div class="p-4 border-b border-slate-200">
+          <h3 class="font-semibold text-slate-800">文件内容预览</h3>
+        </div>
+        <div class="p-4">
+          <% if File.exist?(@export.file_path) %>
+            <% if @export.summary? %>
+              <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg text-xs overflow-x-auto font-mono whitespace-pre-wrap"><%= File.read(@export.file_path) %></pre>
+            <% elsif @export.csv? %>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <% CSV.foreach(@export.file_path, headers: true).with_index do |row, i| %>
+                    <% if i == 0 %>
+                      <thead class="bg-slate-50">
+                        <tr>
+                          <% row.headers.each do |header| %>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"><%= header %></th>
+                          <% end %>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100">
+                    <% end %>
+                    <tr class="<%= i.even? ? 'bg-white' : 'bg-slate-50/50' %>">
+                      <% row.fields.each do |field| %>
+                        <td class="px-3 py-2 text-sm text-slate-700"><%= field %></td>
+                      <% end %>
+                    </tr>
+                    <% if i > 50 %>
+                      <tr>
+                        <td colspan="100" class="px-3 py-2 text-center text-sm text-slate-400">... 更多内容请下载查看</td>
+                      </tr>
+                      <% break %>
+                    <% end %>
+                  <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% elsif @export.json? %>
+              <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg text-xs overflow-x-auto font-mono max-h-96"><%= JSON.pretty_generate(JSON.parse(File.read(@export.file_path))) %></pre>
+            <% end %>
+          <% else %>
+            <div class="p-8 text-center">
+              <p class="text-slate-400">文件不存在</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div class="p-4 border-b border-slate-200">
+          <h3 class="font-semibold text-slate-800">导出信息</h3>
+        </div>
+        <div class="p-4 space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-500">格式</span>
+            <span class="text-slate-800"><%= { csv: "CSV 数据", json: "JSON 数据", summary: "摘要报告" }[@export.format.to_sym] || @export.format %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">生成时间</span>
+            <span class="text-slate-800"><%= @export.generated_at_formatted %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">记录数量</span>
+            <span class="text-slate-800"><%= @export.record_count %> 条</span>
+          </div>
+          <% if File.exist?(@export.file_path) %>
+            <div class="flex justify-between">
+              <span class="text-slate-500">文件大小</span>
+              <span class="text-slate-800"><%= (File.size(@export.file_path).to_f / 1024).round(1) %> KB</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div class="p-4 border-b border-slate-200">
+          <h3 class="font-semibold text-slate-800">包含记录</h3>
+        </div>
+        <div class="p-4 space-y-2 max-h-64 overflow-y-auto">
+          <% @project.records.where(id: @export.record_ids).each do |record| %>
+            <div class="flex items-center justify-between p-2 bg-slate-50 rounded">
+              <span class="text-sm text-slate-700"><%= record.batch_number %></span>
+              <span class="text-xs text-slate-500"><%= record.record_date %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

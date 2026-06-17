@@ -1,0 +1,114 @@
+<% content_for :title, "导出报告 - #{@project.name}" %>
+<% content_for :page_title, "导出报告" %>
+<% content_for :page_subtitle, "#{@project.name} · 数据导出" %>
+
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <%= link_to project_path(@project), class: "text-slate-600 hover:text-slate-800 text-sm" do %>
+      ← 返回项目
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="p-4 border-b border-slate-200">
+      <h3 class="font-semibold text-slate-800">新建导出</h3>
+      <p class="text-sm text-slate-500 mt-1">选择导出格式和包含的记录批次</p>
+    </div>
+    <div class="p-4">
+      <%= form_with url: project_exports_path(@project), method: :post, class: "space-y-4" do |form| %>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">导出格式</label>
+          <div class="grid grid-cols-3 gap-3">
+            <% [["summary", "摘要报告", "txt", "生成文本格式的项目摘要报告"], ["csv", "CSV 数据", "csv", "导出所有标注数据为 CSV 格式"], ["json", "JSON 数据", "json", "导出完整数据为 JSON 格式"]].each do |fmt, label, ext, desc| %>
+              <label class="relative">
+                <input type="radio" name="format_type" value="<%= fmt %>" class="peer sr-only" <%= fmt == "summary" ? "checked" : "" %>>
+                <div class="p-4 border border-slate-200 rounded-lg cursor-pointer peer-checked:border-amber-500 peer-checked:bg-amber-50 transition-colors">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-medium text-slate-800"><%= label %></span>
+                    <span class="text-xs text-slate-400">.<%= ext %></span>
+                  </div>
+                  <p class="text-xs text-slate-500"><%= desc %></p>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">选择记录</label>
+          <div class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto">
+            <% @project.records.each do |record| %>
+              <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0">
+                <input type="checkbox" name="record_ids[]" value="<%= record.id %>" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500" checked>
+                <div class="flex-1">
+                  <span class="text-sm text-slate-800"><%= record.batch_number %></span>
+                  <span class="text-xs text-slate-400 ml-2"><%= record.record_date %></span>
+                </div>
+                <span class="text-xs text-slate-500"><%= record.annotations.count %> 处标注</span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit" class="inline-flex items-center gap-2 px-6 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            生成导出文件
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-800">导出历史</h3>
+      <span class="text-sm text-slate-400"><%= @exports.size %> 个文件</span>
+    </div>
+    <% if @exports.any? %>
+      <div class="divide-y divide-slate-100">
+        <% @exports.each do |export| %>
+          <div class="p-4 hover:bg-slate-50">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <% fmt_icon = { csv: "📊", json: "📋", summary: "📄" }[export.format.to_sym] || "📄" %>
+                  <span class="text-lg"><%= fmt_icon %></span>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-800">
+                    <%= { csv: "CSV 数据导出", json: "JSON 数据导出", summary: "摘要报告" }[export.format.to_sym] || export.format %>
+                  </h4>
+                  <div class="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                    <span><%= export.generated_at_formatted %></span>
+                    <span>·</span>
+                    <span><%= export.record_count %> 条记录</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <%= link_to download_project_export_path(@project, export), class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm text-amber-600 hover:bg-amber-50 rounded" do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  下载
+                <% end %>
+                <%= button_to "删除", project_export_path(@project, export), method: :delete, data: { confirm: "确定删除此导出文件吗？" }, class: "text-sm text-red-600 hover:text-red-700 bg-transparent border-0 cursor-pointer" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-12 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="text-slate-400 text-sm">暂无导出记录</p>
+        <p class="text-slate-400 text-xs mt-1">使用上方表单生成导出文件</p>
+      </div>
+    <% end %>
+  </div>
+</div>

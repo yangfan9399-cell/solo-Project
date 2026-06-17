@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .content-auto {
+    content-visibility: auto;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-slate {
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+:root {
+  --disease-flaking: #ef4444;
+  --disease-efflorescence: #f59e0b;
+  --disease-discoloration: #8b5cf6;
+  --disease-crack: #3b82f6;
+  --disease-other: #6b7280;
+}
+
+.disease-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.annotation-rect {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.annotation-rect:hover {
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.annotation-rect.selected {
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+.tool-btn {
+  transition: all 0.15s ease;
+}
+
+.tool-btn:hover {
+  transform: translateY(-1px);
+}
+
+.tool-btn.active {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+.canvas-container {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 10;
+}
+
+.data-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.chart-bar {
+  transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+  filter: brightness(0.9);
+}
+
+.canvas-wrapper {
+  cursor: crosshair;
+}
+
+.canvas-wrapper.panning {
+  cursor: grab;
+}
+
+.canvas-wrapper.panning:active {
+  cursor: grabbing;
+}
+
+.scale-ruler {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-warning 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.glow-amber {
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
+}
