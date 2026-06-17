@@ -136,20 +136,79 @@ export async function createRecord(
 
 export async function updateRecordStatus(id: number, status: DeviationRecord['status'], changedBy: string, summary: string): Promise<void> {
   const db = await getDb();
-  (async function tx() {
-    const old = await getRecordById(id);
-    const newVersion = (old?.version || 1) + 1;
-    run(db, `UPDATE deviation_records SET status = $st, version = $v, updated_at = datetime('now') WHERE id = $id`, {
-      $st: status, $v: newVersion, $id: id
+  const old = await getRecordById(id);
+  if (!old) return;
+  const newVersion = old.version + 1;
+  const actionMap: Record<DeviationRecord['status'], VersionHistory['action']> = {
+    draft: 'restore', verified: 'verify', approved: 'approve', archived: 'archive'
+  };
+  const action = actionMap[status] || 'update';
+  run(db, `UPDATE deviation_records SET status = $status, version = $version, updated_at = datetime('now') WHERE id = $id`, {
+    $status: status, $version: newVersion, $id: id
+  });
+  run(db, `INSERT INTO version_history (record_id, version_number, action, changed_by, change_summary) VALUES ($record_id, $version_number, $action, $changed_by, $change_summary)`, {
+    $record_id: id, $version_number: newVersion, $action: action, $changed_by: changedBy, $change_summary: summary
+  });
+  saveDb();
+}
+
+export async function updateRecord(
+  id: number,
+  recordData: Partial<Omit<DeviationRecord, 'id' | 'ship_id' | 'created_at' | 'updated_at' | 'version'>>,
+  points?: Array<Omit<DeviationPoint, 'id' | 'record_id'>>,
+  corrections?: Array<Omit<CorrectionTableEntry, 'id' | 'record_id'>>,
+  changedBy: string = '系统',
+  summary: string = '更新校正记录数据'
+): Promise<void> {
+  const db = await getDb();
+  const old = await getRecordById(id);
+  if (!old) return;
+  const newVersion = old.version + 1;
+
+  const fields = Object.keys(recordData).filter(k => !['id', 'ship_id', 'created_at', 'updated_at', 'version'].includes(k));
+  if (fields.length > 0) {
+    const sets = fields.map(f => `${f} = $${f}`).join(', ');
+    run(db, `UPDATE deviation_records SET ${sets}, version = $version, updated_at = datetime('now') WHERE id = $id`, {
+      ...dollar(recordData),
+      $version: newVersion,
+      $id: id
     });
-    const actionMap: Record<DeviationRecord['status'], VersionHistory['action']> = {
-      draft: 'restore', verified: 'verify', approved: 'approve', archived: 'archive'
-    };
-    run(db, `INSERT INTO version_history (record_id, version_number, action, changed_by, change_summary) VALUES (?,?,?,?,?)`, {
-      $1: id, $2: newVersion, $3: actionMap[status] || 'update', $4: changedBy, $5: summary
+  } else {
+    run(db, `UPDATE deviation_records SET version = $version, updated_at = datetime('now') WHERE id = $id`, {
+      $version: newVersion,
+      $id: id
     });
-    saveDb();
-  })();
+  }
+
+  if (points) {
+    run(db, 'DELETE FROM deviation_points WHERE record_id = $rid', { $rid: id });
+    for (const p of points) {
+      run(db, `
+        INSERT INTO deviation_points (record_id, ship_heading, magnetic_heading, true_heading,
+          deviation, deviation_direction, measured, notes)
+        VALUES ($record_id, $ship_heading, $magnetic_heading, $true_heading,
+          $deviation, $deviation_direction, $measured, $notes)
+      `, dollar({ ...p, record_id: id }));
+    }
+  }
+
+  if (corrections) {
+    run(db, 'DELETE FROM correction_tables WHERE record_id = $rid', { $rid: id });
+    for (const c of corrections) {
+      run(db, `
+        INSERT INTO correction_tables (record_id, heading, ship_heading_range, correction_value,
+          correction_direction, apply_rule)
+        VALUES ($record_id, $heading, $ship_heading_range, $correction_value,
+          $correction_direction, $apply_rule)
+      `, dollar({ ...c, record_id: id }));
+    }
+  }
+
+  run(db, `INSERT INTO version_history (record_id, version_number, action, changed_by, change_summary) VALUES ($record_id, $version_number, $action, $changed_by, $change_summary)`, {
+    $record_id: id, $version_number: newVersion, $action: 'update', $changed_by: changedBy, $change_summary: summary
+  });
+
+  saveDb();
 }
 
 export async function countRecords(status?: DeviationRecord['status']): Promise<number> {
